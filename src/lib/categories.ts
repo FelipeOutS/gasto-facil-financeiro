@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 
 export type CategoryId =
+  | "aluguel"
+  | "moradia"
   | "mercado"
   | "besteiras"
   | "cabeleireiro"
