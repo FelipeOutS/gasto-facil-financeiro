@@ -120,7 +120,10 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setCategoriaId(c.id)}
+                onClick={() => {
+                  userPickedCategoria.current = true;
+                  setCategoriaId(c.id);
+                }}
                 className={cn(
                   "flex shrink-0 flex-col items-center gap-1 rounded-2xl border px-3 py-2 transition-all",
                   active
