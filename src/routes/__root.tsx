@@ -1,6 +1,5 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/lib/auth-context";
 
 import appCss from "../styles.css?url";
 
@@ -38,13 +37,19 @@ export const Route = createRootRoute({
           "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
       },
       { name: "theme-color", content: "#181818" },
-      { property: "og:title", content: "Gasto Fácil" },
+      { property: "og:title", content: "Gasto Fácil — Controle de gastos do mês" },
       {
         property: "og:description",
         content: "Controle simples e visual dos seus gastos do mês.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Gasto Fácil — Controle de gastos do mês" },
+      { name: "description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
+      { property: "og:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
+      { name: "twitter:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d6618a1-4258-4191-814f-3125b565131f/id-preview-390ec87b--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1777051823289.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d6618a1-4258-4191-814f-3125b565131f/id-preview-390ec87b--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1777051823289.png" },
     ],
     links: [
       {
@@ -78,9 +83,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <AuthProvider>
+    <>
       <Outlet />
       <Toaster position="top-center" />
-    </AuthProvider>
+    </>
   );
 }
