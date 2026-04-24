@@ -306,7 +306,7 @@ export function getLimite(tipo: "total" | string, mes: number, ano: number): num
 export function rememberCategoryFor(estabelecimento: string, categoriaId: string) {
   const key = estabelecimento.trim().toLowerCase();
   if (!key) return;
-  const list = getAprendizado();
+  const list = [...getAprendizado()];
   const idx = list.findIndex((a) => a.estabelecimento === key);
   const now = new Date().toISOString();
   if (idx >= 0) {
@@ -315,6 +315,7 @@ export function rememberCategoryFor(estabelecimento: string, categoriaId: string
     list.push({ id: uid(), estabelecimento: key, categoriaId, criadoEm: now });
   }
   writeJSON(K.aprendizado, list);
+  invalidateAll();
 }
 
 export function suggestCategory(text: string): string {
