@@ -17,6 +17,12 @@ import {
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+
+type GastoInsert = TablesInsert<"gastos">;
+type GastoUpdate = TablesUpdate<"gastos">;
+type ReceitaInsert = TablesInsert<"receitas">;
+type CategoriaUpdate = TablesUpdate<"categorias">;
 
 // ============================================================
 // HYBRID STORE
