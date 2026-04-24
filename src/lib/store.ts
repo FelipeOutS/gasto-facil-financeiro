@@ -847,7 +847,7 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   memGastos = [...memGastos.slice(0, idx), updated, ...memGastos.slice(idx + 1)];
   emit();
 
-  const row: Record<string, unknown> = {};
+  const row: GastoUpdate = {};
   if (patch.descricao !== undefined) row.descricao = patch.descricao;
   if (patch.valor !== undefined) row.valor = patch.valor;
   if (patch.data !== undefined) {
