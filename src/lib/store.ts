@@ -39,9 +39,30 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-// ---------- pub/sub ----------
+// ---------- pub/sub + cached snapshots ----------
 const listeners = new Set<() => void>();
+
+// Stable empty arrays for SSR / first render (same reference across calls)
+const EMPTY_GASTOS: Gasto[] = [];
+const EMPTY_CATEGORIAS: Categoria[] = [];
+const EMPTY_LIMITES: Limite[] = [];
+const EMPTY_APRENDIZADO: AprendizadoCategoria[] = [];
+
+// Cached snapshots — only re-read from localStorage when invalidated
+let cacheGastos: Gasto[] | null = null;
+let cacheCategorias: Categoria[] | null = null;
+let cacheLimites: Limite[] | null = null;
+let cacheAprendizado: AprendizadoCategoria[] | null = null;
+
+function invalidateAll() {
+  cacheGastos = null;
+  cacheCategorias = null;
+  cacheLimites = null;
+  cacheAprendizado = null;
+}
+
 function emit() {
+  invalidateAll();
   listeners.forEach((l) => l());
 }
 function subscribe(l: () => void) {
@@ -54,7 +75,10 @@ function subscribe(l: () => void) {
 // ---------- bootstrap ----------
 export function bootstrapStore() {
   if (typeof window === "undefined") return;
-  if (localStorage.getItem(K.bootstrapped)) return;
+  if (localStorage.getItem(K.bootstrapped)) {
+    invalidateAll();
+    return;
+  }
   const cats: Categoria[] = DEFAULT_CATEGORIES.map((c) => ({
     id: c.id,
     nome: c.nome,
@@ -67,20 +91,31 @@ export function bootstrapStore() {
   writeJSON(K.limites, [] as Limite[]);
   writeJSON(K.aprendizado, [] as AprendizadoCategoria[]);
   localStorage.setItem(K.bootstrapped, "1");
+  invalidateAll();
 }
 
 // ---------- selectors / mutators ----------
 export function getGastos(): Gasto[] {
-  return readJSON<Gasto[]>(K.gastos, []);
+  if (typeof window === "undefined") return EMPTY_GASTOS;
+  if (cacheGastos === null) cacheGastos = readJSON<Gasto[]>(K.gastos, EMPTY_GASTOS);
+  return cacheGastos;
 }
 export function getCategorias(): Categoria[] {
-  return readJSON<Categoria[]>(K.categorias, []);
+  if (typeof window === "undefined") return EMPTY_CATEGORIAS;
+  if (cacheCategorias === null)
+    cacheCategorias = readJSON<Categoria[]>(K.categorias, EMPTY_CATEGORIAS);
+  return cacheCategorias;
 }
 export function getLimites(): Limite[] {
-  return readJSON<Limite[]>(K.limites, []);
+  if (typeof window === "undefined") return EMPTY_LIMITES;
+  if (cacheLimites === null) cacheLimites = readJSON<Limite[]>(K.limites, EMPTY_LIMITES);
+  return cacheLimites;
 }
 export function getAprendizado(): AprendizadoCategoria[] {
-  return readJSON<AprendizadoCategoria[]>(K.aprendizado, []);
+  if (typeof window === "undefined") return EMPTY_APRENDIZADO;
+  if (cacheAprendizado === null)
+    cacheAprendizado = readJSON<AprendizadoCategoria[]>(K.aprendizado, EMPTY_APRENDIZADO);
+  return cacheAprendizado;
 }
 
 export function getCategoriaById(id: string): Categoria | undefined {
@@ -197,7 +232,7 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
 }
 
 export function updateGasto(id: string, patch: Partial<Gasto>) {
-  const gastos = getGastos();
+  const gastos = [...getGastos()];
   const idx = gastos.findIndex((g) => g.id === id);
   if (idx < 0) return;
   const updated = { ...gastos[idx], ...patch, atualizadoEm: new Date().toISOString() };
@@ -253,7 +288,7 @@ export function deleteCategoria(id: string) {
 
 // ---------- Limites ----------
 export function setLimite(tipo: "total" | string, valor: number, mes: number, ano: number) {
-  const list = getLimites();
+  const list = [...getLimites()];
   const idx = list.findIndex((l) => l.tipo === tipo && l.mes === mes && l.ano === ano);
   if (idx >= 0) {
     list[idx] = { ...list[idx], valor };
@@ -271,7 +306,7 @@ export function getLimite(tipo: "total" | string, mes: number, ano: number): num
 export function rememberCategoryFor(estabelecimento: string, categoriaId: string) {
   const key = estabelecimento.trim().toLowerCase();
   if (!key) return;
-  const list = getAprendizado();
+  const list = [...getAprendizado()];
   const idx = list.findIndex((a) => a.estabelecimento === key);
   const now = new Date().toISOString();
   if (idx >= 0) {
@@ -280,6 +315,7 @@ export function rememberCategoryFor(estabelecimento: string, categoriaId: string
     list.push({ id: uid(), estabelecimento: key, categoriaId, criadoEm: now });
   }
   writeJSON(K.aprendizado, list);
+  invalidateAll();
 }
 
 export function suggestCategory(text: string): string {
