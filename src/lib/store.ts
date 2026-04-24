@@ -17,19 +17,77 @@ import {
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 
-// ---------- localStorage keys ----------
-const K = {
-  gastos: "gf:gastos",
-  categorias: "gf:categorias",
-  limites: "gf:limites",
-  aprendizado: "gf:aprendizado",
-  receitas: "gf:receitas",
-  bancos: "gf:bancos",
-  guardado: "gf:guardado",
-  metas: "gf:metas",
-  movMetas: "gf:movMetas",
-  bootstrapped: "gf:bootstrapped:v2",
-};
+// ---------- localStorage keys (per-user namespacing) ----------
+let activeUserId: string | null = null;
+
+const SUFFIXES = {
+  gastos: "gastos",
+  categorias: "categorias",
+  limites: "limites",
+  aprendizado: "aprendizado",
+  receitas: "receitas",
+  bancos: "bancos",
+  guardado: "guardado",
+  metas: "metas",
+  movMetas: "movMetas",
+  bootstrapped: "bootstrapped:v2",
+} as const;
+
+function ns(suffix: string): string {
+  // When no user is logged in, use a sandbox key so we never leak data into anonymous storage.
+  const uid = activeUserId ?? "anon";
+  return `gf:u:${uid}:${suffix}`;
+}
+
+const K = new Proxy({} as Record<keyof typeof SUFFIXES, string>, {
+  get(_t, prop: string) {
+    const s = (SUFFIXES as Record<string, string>)[prop];
+    if (!s) return undefined;
+    return ns(s);
+  },
+});
+
+export function setActiveUserId(uid: string | null) {
+  if (activeUserId === uid) return;
+  activeUserId = uid;
+  invalidateAll();
+  emitOnly();
+}
+
+/**
+ * Migrate legacy global keys (gf:gastos, gf:categorias, ...) into the user namespace,
+ * once per user. Safe to call multiple times.
+ */
+export function migrateLegacyDataToUser(uid: string) {
+  if (typeof window === "undefined") return;
+  const flagKey = `gf:u:${uid}:migrated:v1`;
+  if (localStorage.getItem(flagKey)) return;
+  const legacyKeys: Array<[string, keyof typeof SUFFIXES]> = [
+    ["gf:gastos", "gastos"],
+    ["gf:categorias", "categorias"],
+    ["gf:limites", "limites"],
+    ["gf:aprendizado", "aprendizado"],
+    ["gf:receitas", "receitas"],
+    ["gf:bancos", "bancos"],
+    ["gf:guardado", "guardado"],
+    ["gf:metas", "metas"],
+    ["gf:movMetas", "movMetas"],
+  ];
+  for (const [legacy, suffix] of legacyKeys) {
+    const v = localStorage.getItem(legacy);
+    const target = `gf:u:${uid}:${suffix}`;
+    if (v && !localStorage.getItem(target)) {
+      localStorage.setItem(target, v);
+    }
+  }
+  // Mark bootstrapped so we don't overwrite the migrated data.
+  if (localStorage.getItem("gf:bootstrapped:v2")) {
+    localStorage.setItem(`gf:u:${uid}:bootstrapped:v2`, "1");
+  }
+  localStorage.setItem(flagKey, "1");
+  invalidateAll();
+  emitOnly();
+}
 
 // ---------- low-level helpers ----------
 function readJSON<T>(key: string, fallback: T): T {
