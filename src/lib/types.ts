@@ -41,6 +41,10 @@ export type Gasto = {
   totalParcelas?: number;
   grupoParcelamentoId?: string;
   recorrenciaId?: string;
+  /** Marca o gasto como essencial (aluguel, contas, internet…) */
+  essencial?: boolean;
+  /** Indica que o gasto é fixo mensal (Netflix, academia, aluguel…) */
+  gastoFixo?: boolean;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -68,5 +72,107 @@ export type AprendizadoCategoria = {
   id: string;
   estabelecimento: string; // normalized lowercase
   categoriaId: string;
+  criadoEm: string;
+};
+
+// ---------- Receitas ----------
+export type TipoReceita =
+  | "salario"
+  | "freelance"
+  | "comissao"
+  | "venda"
+  | "reembolso"
+  | "pix"
+  | "bonus"
+  | "outros";
+
+export const TIPOS_RECEITA: Array<{ id: TipoReceita; label: string }> = [
+  { id: "salario", label: "Salário" },
+  { id: "freelance", label: "Freelance" },
+  { id: "comissao", label: "Comissão" },
+  { id: "venda", label: "Venda" },
+  { id: "reembolso", label: "Reembolso" },
+  { id: "pix", label: "Pix recebido" },
+  { id: "bonus", label: "Bônus" },
+  { id: "outros", label: "Outros" },
+];
+
+export type Receita = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  tipo: TipoReceita;
+  recorrente: boolean;
+  /** Quantos meses repetir (quando recorrente). Default 12. */
+  recorrenciaId?: string;
+  mes: number;
+  ano: number;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+// ---------- Bancos ----------
+export type Banco = {
+  id: string;
+  nome: string;
+  /** cor hex curta para o marcador */
+  colorHex: string;
+  criadoPeloUsuario: boolean;
+  criadoEm: string;
+};
+
+// ---------- Dinheiro guardado ----------
+export type TipoReserva =
+  | "emergencia"
+  | "investimento"
+  | "parado"
+  | "caixinha"
+  | "objetivo"
+  | "outros";
+
+export const TIPOS_RESERVA: Array<{ id: TipoReserva; label: string }> = [
+  { id: "emergencia", label: "Reserva de emergência" },
+  { id: "investimento", label: "Investimento" },
+  { id: "parado", label: "Dinheiro parado na conta" },
+  { id: "caixinha", label: "Caixinha" },
+  { id: "objetivo", label: "Objetivo específico" },
+  { id: "outros", label: "Outros" },
+];
+
+export type Guardado = {
+  id: string;
+  bancoId: string;
+  valor: number;
+  tipoReserva: TipoReserva;
+  observacao?: string;
+  dataAtualizacao: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+// ---------- Metas ----------
+export type StatusMeta = "nao_iniciada" | "em_andamento" | "quase" | "concluida";
+
+export type Meta = {
+  id: string;
+  nome: string;
+  valorObjetivo: number;
+  valorAtual: number;
+  prazo?: string; // YYYY-MM-DD opcional
+  descricao?: string;
+  colorHex: string;
+  bancoId?: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export type MovimentacaoMeta = {
+  id: string;
+  metaId: string;
+  valor: number;
+  data: string;
+  bancoId?: string;
+  observacao?: string;
   criadoEm: string;
 };

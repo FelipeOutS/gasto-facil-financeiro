@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResumoRouteImport } from './routes/resumo'
+import { Route as RendaRouteImport } from './routes/renda'
+import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
+import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
@@ -22,9 +25,24 @@ const ResumoRoute = ResumoRouteImport.update({
   path: '/resumo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RendaRoute = RendaRouteImport.update({
+  id: '/renda',
+  path: '/renda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetasRoute = MetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManualRoute = ManualRouteImport.update({
   id: '/manual',
   path: '/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuardadoRoute = GuardadoRouteImport.update({
+  id: '/guardado',
+  path: '/guardado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GastosRoute = GastosRouteImport.update({
@@ -59,7 +77,10 @@ export interface FileRoutesByFullPath {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
+  '/guardado': typeof GuardadoRoute
   '/manual': typeof ManualRoute
+  '/metas': typeof MetasRoute
+  '/renda': typeof RendaRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRoutesByTo {
@@ -68,7 +89,10 @@ export interface FileRoutesByTo {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
+  '/guardado': typeof GuardadoRoute
   '/manual': typeof ManualRoute
+  '/metas': typeof MetasRoute
+  '/renda': typeof RendaRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRoutesById {
@@ -78,7 +102,10 @@ export interface FileRoutesById {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
+  '/guardado': typeof GuardadoRoute
   '/manual': typeof ManualRoute
+  '/metas': typeof MetasRoute
+  '/renda': typeof RendaRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRouteTypes {
@@ -89,7 +116,10 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/gastos'
+    | '/guardado'
     | '/manual'
+    | '/metas'
+    | '/renda'
     | '/resumo'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -98,7 +128,10 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/gastos'
+    | '/guardado'
     | '/manual'
+    | '/metas'
+    | '/renda'
     | '/resumo'
   id:
     | '__root__'
@@ -107,7 +140,10 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/gastos'
+    | '/guardado'
     | '/manual'
+    | '/metas'
+    | '/renda'
     | '/resumo'
   fileRoutesById: FileRoutesById
 }
@@ -117,7 +153,10 @@ export interface RootRouteChildren {
   CategoriasRoute: typeof CategoriasRoute
   ConfirmarRoute: typeof ConfirmarRoute
   GastosRoute: typeof GastosRoute
+  GuardadoRoute: typeof GuardadoRoute
   ManualRoute: typeof ManualRoute
+  MetasRoute: typeof MetasRoute
+  RendaRoute: typeof RendaRoute
   ResumoRoute: typeof ResumoRoute
 }
 
@@ -130,11 +169,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResumoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/renda': {
+      id: '/renda'
+      path: '/renda'
+      fullPath: '/renda'
+      preLoaderRoute: typeof RendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metas': {
+      id: '/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof MetasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/manual': {
       id: '/manual'
       path: '/manual'
       fullPath: '/manual'
       preLoaderRoute: typeof ManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardado': {
+      id: '/guardado'
+      path: '/guardado'
+      fullPath: '/guardado'
+      preLoaderRoute: typeof GuardadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gastos': {
@@ -181,7 +241,10 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriasRoute: CategoriasRoute,
   ConfirmarRoute: ConfirmarRoute,
   GastosRoute: GastosRoute,
+  GuardadoRoute: GuardadoRoute,
   ManualRoute: ManualRoute,
+  MetasRoute: MetasRoute,
+  RendaRoute: RendaRoute,
   ResumoRoute: ResumoRoute,
 }
 export const routeTree = rootRouteImport

@@ -17,10 +17,14 @@ import {
   PawPrint,
   Briefcase,
   MoreHorizontal,
+  KeyRound,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
 export type CategoryId =
+  | "aluguel"
+  | "moradia"
   | "mercado"
   | "besteiras"
   | "cabeleireiro"
@@ -69,6 +73,8 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   PawPrint,
   Briefcase,
   MoreHorizontal,
+  KeyRound,
+  Building2,
 };
 
 export const DEFAULT_CATEGORIES: Array<{
@@ -77,6 +83,8 @@ export const DEFAULT_CATEGORIES: Array<{
   iconName: keyof typeof ICON_MAP;
   colorVar: string;
 }> = [
+  { id: "aluguel", nome: "Aluguel", iconName: "KeyRound", colorVar: "--cat-aluguel" },
+  { id: "moradia", nome: "Moradia", iconName: "Building2", colorVar: "--cat-moradia" },
   { id: "mercado", nome: "Mercado", iconName: "ShoppingCart", colorVar: "--cat-mercado" },
   { id: "besteiras", nome: "Besteiras", iconName: "Cookie", colorVar: "--cat-besteiras" },
   { id: "cabeleireiro", nome: "Cabeleireiro", iconName: "Scissors", colorVar: "--cat-cabeleireiro" },
@@ -133,6 +141,10 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
   {
     keywords: ["pet shop", "petshop", "petz", "ração", "racao", "veterinár", "veterinar", "banho e tosa"],
     categoryId: "pet",
+  },
+  {
+    keywords: ["aluguel", "imobiliária", "imobiliaria", "locação", "locacao"],
+    categoryId: "aluguel",
   },
   {
     keywords: ["luz", "energia", "água", "agua", "internet", "vivo", "claro", "tim ", "boleto", "fatura", "condomín", "condomin"],

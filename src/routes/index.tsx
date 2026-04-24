@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, TrendingUp, AlertTriangle, Receipt as ReceiptIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  TrendingUp,
+  AlertTriangle,
+  Receipt as ReceiptIcon,
+  Wallet,
+  Target,
+  ArrowDown,
+  ArrowUp,
+  Sparkles,
+  Lock,
+} from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -13,7 +26,11 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategoriaById,
   getGastos,
+  getGuardado,
   getLimite,
+  getMetas,
+  getReceitas,
+  statusMeta,
   useBootstrap,
   useStore,
 } from "@/lib/store";
@@ -34,17 +51,46 @@ function Index() {
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
 
   const gastos = useStore(() => getGastos());
+  const receitas = useStore(() => getReceitas());
+  const guardado = useStore(() => getGuardado());
+  const metas = useStore(() => getMetas());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
 
   const doMes = useMemo(
     () => gastos.filter((g) => g.mes === ym.mes && g.ano === ym.ano),
     [gastos, ym],
   );
+  const receitasMes = useMemo(
+    () => receitas.filter((r) => r.mes === ym.mes && r.ano === ym.ano),
+    [receitas, ym],
+  );
 
-  const total = doMes.reduce((s, g) => s + g.valor, 0);
-  const ultimos = [...doMes]
-    .sort((a, b) => (a.data < b.data ? 1 : -1) || (a.criadoEm < b.criadoEm ? 1 : -1))
-    .slice(0, 4);
+  const total = useMemo(() => doMes.reduce((s, g) => s + g.valor, 0), [doMes]);
+  const totalEntradas = useMemo(
+    () => receitasMes.reduce((s, r) => s + r.valor, 0),
+    [receitasMes],
+  );
+  const saldo = totalEntradas - total;
+
+  const totalGuardado = useMemo(
+    () => guardado.reduce((s, g) => s + g.valor, 0),
+    [guardado],
+  );
+  const gastosFixos = useMemo(
+    () => doMes.filter((g) => g.gastoFixo || g.tipoGasto === "recorrente").reduce((s, g) => s + g.valor, 0),
+    [doMes],
+  );
+
+  const ultimos = useMemo(
+    () =>
+      [...doMes]
+        .sort(
+          (a, b) =>
+            (a.data < b.data ? 1 : -1) || (a.criadoEm < b.criadoEm ? 1 : -1),
+        )
+        .slice(0, 4),
+    [doMes],
+  );
 
   const porCategoria = useMemo(() => {
     const map = new Map<string, number>();
@@ -69,6 +115,24 @@ function Index() {
   const usoLimite = limiteTotal && limiteTotal > 0 ? Math.min(150, (total / limiteTotal) * 100) : 0;
   const proximoLimite = limiteTotal && total >= limiteTotal * 0.8;
   const passouLimite = limiteTotal && total > limiteTotal;
+
+  // Metas
+  const metasAndamento = useMemo(
+    () => metas.filter((m) => statusMeta(m) !== "concluida"),
+    [metas],
+  );
+  const metaProxima = useMemo(() => {
+    let alvo: typeof metas[number] | null = null;
+    let melhorPct = -1;
+    for (const m of metasAndamento) {
+      const p = m.valorObjetivo > 0 ? m.valorAtual / m.valorObjetivo : 0;
+      if (p > melhorPct) {
+        melhorPct = p;
+        alvo = m;
+      }
+    }
+    return alvo;
+  }, [metasAndamento]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -105,23 +169,43 @@ function Index() {
         </div>
       </header>
 
-      {/* Hero total card */}
+      {/* Hero — Saldo do mês */}
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
-        <p className="text-xs font-medium text-muted-foreground">Total gasto no mês</p>
-        <p className="num mt-1 text-4xl font-extrabold tracking-tight">{formatBRL(total)}</p>
+        <p className="text-xs font-medium text-muted-foreground">Saldo do mês</p>
+        <p
+          className={cn(
+            "num mt-1 text-4xl font-extrabold tracking-tight",
+            saldo < 0 && "text-destructive",
+          )}
+        >
+          {formatBRL(saldo)}
+        </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Lançamentos</p>
-            <p className="num mt-1 text-lg font-semibold">{doMes.length}</p>
-          </div>
-          <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Maior categoria</p>
-            <p className="mt-1 truncate text-lg font-semibold" style={{ color: maior?.color }}>
-              {maior?.nome ?? "—"}
+            <p className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <ArrowUp className="h-3 w-3 text-success" />
+              Entradas
+            </p>
+            <p className="num mt-1 text-lg font-semibold text-success">
+              {formatBRL(totalEntradas)}
             </p>
           </div>
+          <div className="rounded-2xl bg-card-elevated p-3">
+            <p className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <ArrowDown className="h-3 w-3 text-destructive" />
+              Gastos
+            </p>
+            <p className="num mt-1 text-lg font-semibold">{formatBRL(total)}</p>
+          </div>
         </div>
+
+        {saldo < 0 && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Você gastou {formatBRL(-saldo)} a mais do que recebeu.
+          </p>
+        )}
 
         {limiteTotal ? (
           <div className="mt-4">
@@ -152,14 +236,36 @@ function Index() {
               </p>
             ) : null}
           </div>
-        ) : (
-          <Link
-            to="/categorias"
-            className="mt-4 block text-xs text-muted-foreground underline-offset-2 hover:underline"
-          >
-            Definir limite mensal
-          </Link>
-        )}
+        ) : null}
+      </section>
+
+      {/* Quick stats: Total guardado + Gastos fixos */}
+      <section className="mt-4 grid grid-cols-2 gap-3">
+        <Link
+          to="/guardado"
+          className="rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total guardado</p>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="num mt-1 text-xl font-bold">{formatBRL(totalGuardado)}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
+          </p>
+        </Link>
+        <div className="rounded-3xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Gastos fixos</p>
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="num mt-1 text-xl font-bold">{formatBRL(gastosFixos)}</p>
+          {totalEntradas > 0 && (
+            <p className="num mt-1 text-[11px] text-muted-foreground">
+              {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
+            </p>
+          )}
+        </div>
       </section>
 
       {/* Add expense button */}
@@ -169,6 +275,71 @@ function Index() {
           Adicionar gasto
         </Button>
       </Link>
+
+      {/* Renda + Metas quick links */}
+      <section className="mt-3 grid grid-cols-2 gap-3">
+        <Link
+          to="/renda"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-card-elevated"
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-success/15 text-success">
+            <ArrowUp className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">Minha renda</p>
+            <p className="num truncate text-[11px] text-muted-foreground">
+              {formatBRL(totalEntradas)}
+            </p>
+          </div>
+        </Link>
+        <Link
+          to="/metas"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-card-elevated"
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+            <Target className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">Metas</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {metasAndamento.length} em andamento
+            </p>
+          </div>
+        </Link>
+      </section>
+
+      {/* Meta mais próxima */}
+      {metaProxima && (
+        <section className="mt-4 rounded-3xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" style={{ color: metaProxima.colorHex }} />
+            <h2 className="text-sm font-semibold">Meta mais próxima de concluir</h2>
+          </div>
+          <div className="mt-3 flex items-baseline justify-between">
+            <p className="truncate text-base font-semibold">{metaProxima.nome}</p>
+            <p className="num text-xs text-muted-foreground">
+              {formatBRL(metaProxima.valorAtual)} / {formatBRL(metaProxima.valorObjetivo)}
+            </p>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(100, (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100)}%`,
+                background: metaProxima.colorHex,
+              }}
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs">
+            <span className="num font-semibold" style={{ color: metaProxima.colorHex }}>
+              {Math.min(100, Math.round((metaProxima.valorAtual / metaProxima.valorObjetivo) * 100))}%
+            </span>
+            <Link to="/metas" className="text-muted-foreground hover:text-foreground">
+              Ver todas →
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Pie chart */}
       {porCategoria.length > 0 && (
@@ -233,6 +404,24 @@ function Index() {
         </section>
       )}
 
+      {/* Resumo financeiro */}
+      <section className="mt-5 rounded-3xl border border-border bg-card p-4">
+        <h2 className="text-sm font-semibold">Resumo financeiro</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          <ResumoLinha label="Entradas" valor={formatBRL(totalEntradas)} positive />
+          <ResumoLinha label="Gastos" valor={formatBRL(total)} />
+          <ResumoLinha
+            label="Saldo restante"
+            valor={formatBRL(saldo)}
+            negative={saldo < 0}
+            strong
+          />
+          <ResumoLinha label="Total guardado" valor={formatBRL(totalGuardado)} />
+          <ResumoLinha label="Gastos fixos" valor={formatBRL(gastosFixos)} />
+          <ResumoLinha label="Maior categoria" valor={maior?.nome ?? "—"} mute />
+        </ul>
+      </section>
+
       {/* Last expenses */}
       <section className="mt-5">
         <div className="flex items-center justify-between">
@@ -276,27 +465,77 @@ function Index() {
       </section>
 
       {/* Insight */}
-      {maior && (
+      {(maior || gastosFixos > 0 || totalGuardado > 0) && (
         <section className="mt-5 rounded-3xl border border-border bg-card p-4">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
               <TrendingUp className="h-4 w-4" />
             </span>
-            <div>
+            <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Análise do mês
               </p>
-              <p className="mt-1 text-sm">
-                Sua maior categoria é{" "}
-                <span className="font-semibold" style={{ color: maior.color }}>
-                  {maior.nome}
-                </span>{" "}
-                — {formatBRL(maior.valor)} ({maior.pct.toFixed(0)}% do total).
-              </p>
+              {maior && (
+                <p className="text-sm">
+                  Sua maior categoria é{" "}
+                  <span className="font-semibold" style={{ color: maior.color }}>
+                    {maior.nome}
+                  </span>{" "}
+                  — {formatBRL(maior.valor)} ({maior.pct.toFixed(0)}% do total).
+                </p>
+              )}
+              {totalEntradas > 0 && gastosFixos > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Seus gastos fixos representam {Math.round((gastosFixos / totalEntradas) * 100)}% da sua renda.
+                </p>
+              )}
+              {totalGuardado > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Você tem {formatBRL(totalGuardado)} guardados no total.
+                </p>
+              )}
+              {metaProxima && (
+                <p className="text-sm text-muted-foreground">
+                  Sua meta “{metaProxima.nome}” está {Math.round((metaProxima.valorAtual / metaProxima.valorObjetivo) * 100)}% concluída.
+                </p>
+              )}
             </div>
           </div>
         </section>
       )}
     </MobileShell>
+  );
+}
+
+function ResumoLinha({
+  label,
+  valor,
+  positive,
+  negative,
+  strong,
+  mute,
+}: {
+  label: string;
+  valor: string;
+  positive?: boolean;
+  negative?: boolean;
+  strong?: boolean;
+  mute?: boolean;
+}) {
+  return (
+    <li className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "num",
+          strong && "font-semibold",
+          positive && "text-success",
+          negative && "text-destructive",
+          mute && "text-muted-foreground",
+        )}
+      >
+        {valor}
+      </span>
+    </li>
   );
 }
