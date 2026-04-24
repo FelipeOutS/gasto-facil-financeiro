@@ -14,6 +14,193 @@ export type Database = {
   }
   public: {
     Tables: {
+      aprendizado_categoria: {
+        Row: {
+          categoria_id: string
+          created_at: string
+          estabelecimento: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria_id: string
+          created_at?: string
+          estabelecimento: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria_id?: string
+          created_at?: string
+          estabelecimento?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aprendizado_categoria_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categorias: {
+        Row: {
+          color_var: string
+          created_at: string
+          criada_pelo_usuario: boolean
+          icon_name: string
+          id: string
+          legacy_id: string | null
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color_var: string
+          created_at?: string
+          criada_pelo_usuario?: boolean
+          icon_name: string
+          id?: string
+          legacy_id?: string | null
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color_var?: string
+          created_at?: string
+          criada_pelo_usuario?: boolean
+          icon_name?: string
+          id?: string
+          legacy_id?: string | null
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gastos: {
+        Row: {
+          ano: number
+          categoria_id: string | null
+          confirmado: boolean
+          created_at: string
+          data: string
+          descricao: string
+          essencial: boolean | null
+          estabelecimento: string
+          forma_pagamento: string
+          gasto_fixo: boolean | null
+          grupo_parcelamento_id: string | null
+          id: string
+          imagem_url: string | null
+          mes: number
+          observacao: string | null
+          parcela_atual: number | null
+          recorrencia_id: string | null
+          tipo_gasto: string
+          total_parcelas: number | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ano: number
+          categoria_id?: string | null
+          confirmado?: boolean
+          created_at?: string
+          data: string
+          descricao: string
+          essencial?: boolean | null
+          estabelecimento?: string
+          forma_pagamento: string
+          gasto_fixo?: boolean | null
+          grupo_parcelamento_id?: string | null
+          id?: string
+          imagem_url?: string | null
+          mes: number
+          observacao?: string | null
+          parcela_atual?: number | null
+          recorrencia_id?: string | null
+          tipo_gasto?: string
+          total_parcelas?: number | null
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          ano?: number
+          categoria_id?: string | null
+          confirmado?: boolean
+          created_at?: string
+          data?: string
+          descricao?: string
+          essencial?: boolean | null
+          estabelecimento?: string
+          forma_pagamento?: string
+          gasto_fixo?: boolean | null
+          grupo_parcelamento_id?: string | null
+          id?: string
+          imagem_url?: string | null
+          mes?: number
+          observacao?: string | null
+          parcela_atual?: number | null
+          recorrencia_id?: string | null
+          tipo_gasto?: string
+          total_parcelas?: number | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      limites: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          mes: number
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          mes: number
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          mes?: number
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -32,6 +219,51 @@ export type Database = {
           id?: string
           nome?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      receitas: {
+        Row: {
+          ano: number
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          mes: number
+          recorrencia_id: string | null
+          recorrente: boolean
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          data: string
+          descricao: string
+          id?: string
+          mes: number
+          recorrencia_id?: string | null
+          recorrente?: boolean
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          mes?: number
+          recorrencia_id?: string | null
+          recorrente?: boolean
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }
