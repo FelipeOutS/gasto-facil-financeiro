@@ -281,6 +281,21 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
               />
             </div>
           )}
+
+          <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Gasto fixo</p>
+              <p className="text-xs text-muted-foreground">Conta mensal recorrente</p>
+            </div>
+            <Switch checked={gastoFixo} onCheckedChange={setGastoFixo} />
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Essencial</p>
+              <p className="text-xs text-muted-foreground">Aluguel, contas, alimentação base…</p>
+            </div>
+            <Switch checked={essencial} onCheckedChange={setEssencial} />
+          </div>
         </div>
       )}
 
