@@ -653,13 +653,13 @@ export type NovoGastoInput = {
   gastoFixo?: boolean;
 };
 
-function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Record<string, unknown>; client: Gasto }[] {
+function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const tipo = input.tipoGasto ?? "unico";
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   const catUuid = categoriaUuidFor(input.categoriaId);
-  const out: { row: Record<string, unknown>; client: Gasto }[] = [];
+  const out: { row: GastoInsert; client: Gasto }[] = [];
 
   if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
     const total = input.totalParcelas!;
