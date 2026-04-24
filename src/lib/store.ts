@@ -151,6 +151,9 @@ function emit() {
   invalidateAll();
   listeners.forEach((l) => l());
 }
+function emitOnly() {
+  listeners.forEach((l) => l());
+}
 function subscribe(l: () => void) {
   listeners.add(l);
   return () => {
