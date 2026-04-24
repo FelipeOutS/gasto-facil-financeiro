@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { CategoryIcon } from "./CategoryIcon";
 import {
   getCategorias,
@@ -41,6 +42,8 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [categoriaId, setCategoriaId] = useState(
     initial?.categoriaId ?? categorias[0]?.id ?? "outros",
   );
+  // Tracks whether the user manually picked a category — once true, never auto-replace.
+  const userPickedCategoria = useRef(!!initial?.categoriaId);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>(
     initial?.formaPagamento ?? "credito",
   );
@@ -48,17 +51,18 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
+  const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
+  const [essencial, setEssencial] = useState<boolean>(initial?.essencial ?? false);
   const [showMore, setShowMore] = useState(false);
 
-  // Suggest category when establishment changes
+  // Suggest category when user types in establishment/description (only if not user-picked)
   useEffect(() => {
-    if (initial?.categoriaId) return;
+    if (userPickedCategoria.current) return;
     const t = `${estabelecimento} ${descricao}`.trim();
-    if (t.length >= 3) {
-      const sug = suggestCategory(t);
-      setCategoriaId(sug);
-    }
-  }, [estabelecimento, descricao, initial?.categoriaId]);
+    if (t.length < 3) return;
+    const sug = suggestCategory(t);
+    setCategoriaId((prev) => (prev === sug ? prev : sug));
+  }, [estabelecimento, descricao]);
 
   const valid = valor > 0 && !!data && !!categoriaId;
 
@@ -81,6 +85,8 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           tipoGasto,
           totalParcelas: tipoGasto === "parcelado" ? parcelas : undefined,
           recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
+          gastoFixo: gastoFixo || tipoGasto === "recorrente",
+          essencial,
         });
       }}
       className="space-y-5"
