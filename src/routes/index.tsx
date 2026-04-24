@@ -572,3 +572,34 @@ function ResumoLinha({
     </li>
   );
 }
+
+function WelcomeCard({
+  to,
+  icon,
+  title,
+  tint,
+}: {
+  to: "/renda" | "/adicionar" | "/guardado" | "/metas";
+  icon: React.ReactNode;
+  title: string;
+  tint: "primary" | "success" | "muted";
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+    >
+      <span
+        className={cn(
+          "grid h-10 w-10 place-items-center rounded-2xl",
+          tint === "primary" && "bg-primary/15 text-primary",
+          tint === "success" && "bg-success/15 text-success",
+          tint === "muted" && "bg-card-elevated text-foreground",
+        )}
+      >
+        {icon}
+      </span>
+      <p className="text-sm font-semibold leading-tight">{title}</p>
+    </Link>
+  );
+}
