@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import {
@@ -81,6 +81,21 @@ function CategoriasPage() {
           <h1 className="text-2xl font-bold tracking-tight">Categorias e limites</h1>
         </div>
       </header>
+
+      {/* Minha conta */}
+      <Link
+        to="/conta"
+        className="mt-5 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-card-elevated"
+      >
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+          <UserIcon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">Minha conta</p>
+          <p className="truncate text-xs text-muted-foreground">Perfil, sair da conta</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       {/* Limite mensal */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
