@@ -288,7 +288,7 @@ export function deleteCategoria(id: string) {
 
 // ---------- Limites ----------
 export function setLimite(tipo: "total" | string, valor: number, mes: number, ano: number) {
-  const list = getLimites();
+  const list = [...getLimites()];
   const idx = list.findIndex((l) => l.tipo === tipo && l.mes === mes && l.ano === ano);
   if (idx >= 0) {
     list[idx] = { ...list[idx], valor };
