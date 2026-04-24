@@ -1051,7 +1051,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
-  const rows: Record<string, unknown>[] = [];
+  const rows: ReceitaInsert[] = [];
 
   if (input.recorrente) {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
