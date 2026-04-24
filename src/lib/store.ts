@@ -506,10 +506,14 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
           categoria_id: keyToUuid.get(a.categoriaId) ?? fallbackUuid,
         }))
         .filter((r) => !!r.categoria_id);
-      if (rows.length > 0) {
+      const validRows = rows.filter(
+        (r): r is { user_id: string; estabelecimento: string; categoria_id: string } =>
+          typeof r.categoria_id === "string",
+      );
+      if (validRows.length > 0) {
         await supabase
           .from("aprendizado_categoria")
-          .upsert(rows, { onConflict: "user_id,estabelecimento" });
+          .upsert(validRows, { onConflict: "user_id,estabelecimento" });
       }
     }
 
