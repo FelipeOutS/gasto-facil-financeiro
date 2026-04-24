@@ -139,7 +139,40 @@ function Index() {
     setYm({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
   }
 
+  // Welcome state: brand new user with no data anywhere
+  const isEmpty =
+    gastos.length === 0 &&
+    receitas.length === 0 &&
+    guardado.length === 0 &&
+    metas.length === 0;
+
   if (!ready) return <MobileShell><div /></MobileShell>;
+
+  if (isEmpty) {
+    return (
+      <MobileShell>
+        <header className="pt-2">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Gasto Fácil</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bem-vindo(a)!</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Comece cadastrando sua renda, seus gastos ou seu dinheiro guardado.
+          </p>
+        </header>
+
+        <section className="mt-6 grid grid-cols-2 gap-3">
+          <WelcomeCard to="/renda" icon={<ArrowUp className="h-5 w-5" />} title="Cadastrar salário" tint="success" />
+          <WelcomeCard to="/adicionar" icon={<Plus className="h-5 w-5" />} title="Adicionar gasto" tint="primary" />
+          <WelcomeCard to="/guardado" icon={<Wallet className="h-5 w-5" />} title="Dinheiro guardado" tint="muted" />
+          <WelcomeCard to="/metas" icon={<Target className="h-5 w-5" />} title="Criar meta" tint="muted" />
+        </section>
+
+        <p className="mt-8 text-center text-xs text-muted-foreground">
+          Seus dados ficam vinculados à sua conta.
+        </p>
+      </MobileShell>
+    );
+  }
+
 
   return (
     <MobileShell>
@@ -537,5 +570,36 @@ function ResumoLinha({
         {valor}
       </span>
     </li>
+  );
+}
+
+function WelcomeCard({
+  to,
+  icon,
+  title,
+  tint,
+}: {
+  to: "/renda" | "/adicionar" | "/guardado" | "/metas";
+  icon: React.ReactNode;
+  title: string;
+  tint: "primary" | "success" | "muted";
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+    >
+      <span
+        className={cn(
+          "grid h-10 w-10 place-items-center rounded-2xl",
+          tint === "primary" && "bg-primary/15 text-primary",
+          tint === "success" && "bg-success/15 text-success",
+          tint === "muted" && "bg-card-elevated text-foreground",
+        )}
+      >
+        {icon}
+      </span>
+      <p className="text-sm font-semibold leading-tight">{title}</p>
+    </Link>
   );
 }
