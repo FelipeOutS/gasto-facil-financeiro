@@ -41,6 +41,8 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
+  --color-cat-aluguel: var(--cat-aluguel);
+  --color-cat-moradia: var(--cat-moradia);
   --color-cat-mercado: var(--cat-mercado);
   --color-cat-besteiras: var(--cat-besteiras);
   --color-cat-cabeleireiro: var(--cat-cabeleireiro);
@@ -100,6 +102,8 @@
   --ring: oklch(0.7 0.02 260);
 
   /* Category palette — vibrant on dark */
+  --cat-aluguel: oklch(0.62 0.16 25); /* terra/vermelho amarelado */
+  --cat-moradia: oklch(0.6 0.13 145); /* verde escuro */
   --cat-mercado: oklch(0.72 0.18 152); /* verde */
   --cat-besteiras: oklch(0.74 0.18 55); /* laranja */
   --cat-cabeleireiro: oklch(0.78 0.16 0); /* rosa */
