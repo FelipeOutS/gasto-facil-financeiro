@@ -35,11 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = sess?.user.id ?? null;
       setActiveUserId(uid);
       if (uid) {
-        // migrate legacy localStorage once per user
-        migrateLegacyDataToUser(uid);
-        // fetch profile (deferred)
+        // Defer cloud work to avoid blocking the auth callback
         setTimeout(() => {
-          void loadProfile(uid);
+          void (async () => {
+            await migrateLegacyDataToUser(uid);
+            await hydrateUser(uid);
+            void loadProfile(uid);
+          })();
         }, 0);
       } else {
         setProfile(null);
@@ -52,8 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = data.session?.user.id ?? null;
       setActiveUserId(uid);
       if (uid) {
-        migrateLegacyDataToUser(uid);
-        void loadProfile(uid);
+        void (async () => {
+          await migrateLegacyDataToUser(uid);
+          await hydrateUser(uid);
+          void loadProfile(uid);
+        })();
       }
       setLoading(false);
     });
