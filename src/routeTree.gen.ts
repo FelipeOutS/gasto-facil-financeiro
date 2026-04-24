@@ -10,13 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResumoRouteImport } from './routes/resumo'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -25,9 +29,19 @@ const ResumoRoute = ResumoRouteImport.update({
   path: '/resumo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RendaRoute = RendaRouteImport.update({
   id: '/renda',
   path: '/renda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetasRoute = MetasRouteImport.update({
@@ -38,6 +52,11 @@ const MetasRoute = MetasRouteImport.update({
 const ManualRoute = ManualRouteImport.update({
   id: '/manual',
   path: '/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuardadoRoute = GuardadoRouteImport.update({
@@ -60,6 +79,11 @@ const CategoriasRoute = CategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdicionarRoute = AdicionarRouteImport.update({
   id: '/adicionar',
   path: '/adicionar',
@@ -74,38 +98,50 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/renda': typeof RendaRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/renda': typeof RendaRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/renda': typeof RendaRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
 }
 export interface FileRouteTypes {
@@ -113,50 +149,66 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/adicionar'
+    | '/cadastro'
     | '/categorias'
     | '/confirmar'
     | '/gastos'
     | '/guardado'
+    | '/login'
     | '/manual'
     | '/metas'
+    | '/recuperar-senha'
     | '/renda'
+    | '/reset-password'
     | '/resumo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/adicionar'
+    | '/cadastro'
     | '/categorias'
     | '/confirmar'
     | '/gastos'
     | '/guardado'
+    | '/login'
     | '/manual'
     | '/metas'
+    | '/recuperar-senha'
     | '/renda'
+    | '/reset-password'
     | '/resumo'
   id:
     | '__root__'
     | '/'
     | '/adicionar'
+    | '/cadastro'
     | '/categorias'
     | '/confirmar'
     | '/gastos'
     | '/guardado'
+    | '/login'
     | '/manual'
     | '/metas'
+    | '/recuperar-senha'
     | '/renda'
+    | '/reset-password'
     | '/resumo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
+  CadastroRoute: typeof CadastroRoute
   CategoriasRoute: typeof CategoriasRoute
   ConfirmarRoute: typeof ConfirmarRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
+  LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
   MetasRoute: typeof MetasRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RendaRoute: typeof RendaRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
 }
 
@@ -169,11 +221,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResumoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/renda': {
       id: '/renda'
       path: '/renda'
       fullPath: '/renda'
       preLoaderRoute: typeof RendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metas': {
@@ -188,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/manual'
       fullPath: '/manual'
       preLoaderRoute: typeof ManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guardado': {
@@ -218,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/adicionar': {
       id: '/adicionar'
       path: '/adicionar'
@@ -238,13 +318,17 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
+  CadastroRoute: CadastroRoute,
   CategoriasRoute: CategoriasRoute,
   ConfirmarRoute: ConfirmarRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
+  LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
   MetasRoute: MetasRoute,
+  RecuperarSenhaRoute: RecuperarSenhaRoute,
   RendaRoute: RendaRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
 }
 export const routeTree = rootRouteImport
