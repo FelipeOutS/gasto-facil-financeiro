@@ -22,7 +22,6 @@ import {
   Tooltip as RTooltip,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
-import { AuthGate } from "@/components/AuthGate";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategoriaById,
@@ -43,16 +42,8 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [{ title: "Gasto Fácil — Resumo do mês" }],
   }),
-  component: IndexProtected,
+  component: Index,
 });
-
-function IndexProtected() {
-  return (
-    <AuthGate>
-      <Index />
-    </AuthGate>
-  );
-}
 
 function Index() {
   const ready = useBootstrap();
