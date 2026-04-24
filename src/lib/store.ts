@@ -942,7 +942,7 @@ export function updateCategoria(id: string, patch: Partial<Categoria>) {
   if (!activeUserId) return;
   const uuid = categoriaUuidFor(id);
   if (!uuid) return;
-  const row: Record<string, unknown> = {};
+  const row: CategoriaUpdate = {};
   if (patch.nome !== undefined) row.nome = patch.nome;
   if (patch.iconName !== undefined) row.icon_name = patch.iconName;
   if (patch.colorVar !== undefined) row.color_var = patch.colorVar;
