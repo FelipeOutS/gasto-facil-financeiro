@@ -232,7 +232,7 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
 }
 
 export function updateGasto(id: string, patch: Partial<Gasto>) {
-  const gastos = getGastos();
+  const gastos = [...getGastos()];
   const idx = gastos.findIndex((g) => g.id === id);
   if (idx < 0) return;
   const updated = { ...gastos[idx], ...patch, atualizadoEm: new Date().toISOString() };
