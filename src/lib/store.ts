@@ -574,24 +574,38 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
       allApr.push(...a);
     }
 
-    // Also migrate legacy local-only entities (bancos/guardado/metas/movMetas)
-    // into the user's namespace once.
-    const legacyLocal: Array<[string, keyof typeof SUFFIXES]> = [
-      ["gf:bancos", "bancos"],
-      ["gf:guardado", "guardado"],
-      ["gf:metas", "metas"],
-      ["gf:movMetas", "movMetas"],
-      ["gf:u:anon:bancos", "bancos"],
-      ["gf:u:anon:guardado", "guardado"],
-      ["gf:u:anon:metas", "metas"],
-      ["gf:u:anon:movMetas", "movMetas"],
-    ];
-    for (const [src, suffix] of legacyLocal) {
-      const v = localStorage.getItem(src);
-      const target = `gf:u:${userId}:${suffix}`;
-      if (v && !localStorage.getItem(target)) {
-        localStorage.setItem(target, v);
-      }
+    // Pull legacy local-only entities (bancos/guardado/metas/movMetas)
+    const legacyBancos: Banco[] = [];
+    const legacyGuardado: Guardado[] = [];
+    const legacyMetas: Meta[] = [];
+    const legacyMov: MovimentacaoMeta[] = [];
+    for (const src of [
+      "gf:bancos",
+      "gf:u:anon:bancos",
+      `gf:u:${userId}:bancos`,
+    ]) {
+      legacyBancos.push(...readJSON<Banco[]>(src, []));
+    }
+    for (const src of [
+      "gf:guardado",
+      "gf:u:anon:guardado",
+      `gf:u:${userId}:guardado`,
+    ]) {
+      legacyGuardado.push(...readJSON<Guardado[]>(src, []));
+    }
+    for (const src of [
+      "gf:metas",
+      "gf:u:anon:metas",
+      `gf:u:${userId}:metas`,
+    ]) {
+      legacyMetas.push(...readJSON<Meta[]>(src, []));
+    }
+    for (const src of [
+      "gf:movMetas",
+      "gf:u:anon:movMetas",
+      `gf:u:${userId}:movMetas`,
+    ]) {
+      legacyMov.push(...readJSON<MovimentacaoMeta[]>(src, []));
     }
 
     // Need categorias mapping — make sure they exist
