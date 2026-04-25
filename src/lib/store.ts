@@ -1392,41 +1392,84 @@ export function deleteReceita(id: string) {
 // ============================================================
 // PHASE 2: Bancos / Guardado / Metas (still localStorage)
 // ============================================================
+// ---------- Bancos ----------
+function bancoUuidFor(key: string): string | null {
+  return bancoKeyToUuid.get(key) ?? null;
+}
+function metaUuidFor(key: string): string | null {
+  return metaKeyToUuid.get(key) ?? null;
+}
+
 export function addBanco(input: { nome: string; colorHex: string }): Banco {
-  bootstrapLocalDefaults();
+  const now = new Date().toISOString();
   const novo: Banco = {
     id: uid(),
     nome: input.nome.trim(),
     colorHex: input.colorHex,
     criadoPeloUsuario: true,
-    criadoEm: new Date().toISOString(),
+    criadoEm: now,
   };
-  writeJSON(K.bancos, [...getBancos(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memBancos = [...memBancos, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memBancos = [...memBancos, novo];
+  bancoKeyToUuid.set(newUuid, newUuid);
   emit();
+  void supabase
+    .from("bancos")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      nome: novo.nome,
+      color_hex: novo.colorHex,
+      criado_pelo_usuario: true,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addBanco failed", error);
+    });
   return novo;
 }
+
 export function updateBanco(id: string, patch: Partial<Banco>) {
-  writeJSON(
-    K.bancos,
-    getBancos().map((b) => (b.id === id ? { ...b, ...patch } : b)),
-  );
-  invalidateLocal();
+  memBancos = memBancos.map((b) => (b.id === id ? { ...b, ...patch } : b));
   emit();
-}
-export function deleteBanco(id: string) {
-  writeJSON(
-    K.bancos,
-    getBancos().filter((b) => b.id !== id),
-  );
-  writeJSON(
-    K.guardado,
-    getGuardado().filter((g) => g.bancoId !== id),
-  );
-  invalidateLocal();
-  emit();
+  if (!activeUserId) return;
+  const uuid = bancoUuidFor(id);
+  if (!uuid) return;
+  const row: BancoUpdate = {};
+  if (patch.nome !== undefined) row.nome = patch.nome;
+  if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
+  void supabase
+    .from("bancos")
+    .update(row)
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateBanco failed", error);
+    });
 }
 
+export function deleteBanco(id: string) {
+  memBancos = memBancos.filter((b) => b.id !== id);
+  memGuardado = memGuardado.filter((g) => g.bancoId !== id);
+  emit();
+  if (!activeUserId) return;
+  const uuid = bancoUuidFor(id);
+  if (!uuid) return;
+  bancoKeyToUuid.delete(id);
+  void supabase
+    .from("bancos")
+    .delete()
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteBanco failed", error);
+    });
+}
+
+// ---------- Dinheiro guardado ----------
 export type NovoGuardadoInput = {
   bancoId: string;
   valor: number;
@@ -1434,7 +1477,6 @@ export type NovoGuardadoInput = {
   observacao?: string;
 };
 export function addGuardado(input: NovoGuardadoInput): Guardado {
-  bootstrapLocalDefaults();
   const now = new Date().toISOString();
   const novo: Guardado = {
     id: uid(),
@@ -1446,33 +1488,69 @@ export function addGuardado(input: NovoGuardadoInput): Guardado {
     criadoEm: now,
     atualizadoEm: now,
   };
-  writeJSON(K.guardado, [...getGuardado(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memGuardado = [...memGuardado, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memGuardado = [...memGuardado, novo];
   emit();
+  void supabase
+    .from("dinheiro_guardado")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      banco_id: bancoUuidFor(input.bancoId),
+      valor: input.valor,
+      tipo_reserva: input.tipoReserva,
+      observacao: input.observacao ?? null,
+      data_atualizacao: now.slice(0, 10),
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addGuardado failed", error);
+    });
   return novo;
 }
+
 export function updateGuardado(id: string, patch: Partial<Guardado>) {
   const now = new Date().toISOString();
-  writeJSON(
-    K.guardado,
-    getGuardado().map((g) =>
-      g.id === id
-        ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) }
-        : g,
-    ),
+  memGuardado = memGuardado.map((g) =>
+    g.id === id
+      ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) }
+      : g,
   );
-  invalidateLocal();
   emit();
-}
-export function deleteGuardado(id: string) {
-  writeJSON(
-    K.guardado,
-    getGuardado().filter((g) => g.id !== id),
-  );
-  invalidateLocal();
-  emit();
+  if (!activeUserId) return;
+  const row: GuardadoUpdate = { data_atualizacao: now.slice(0, 10) };
+  if (patch.valor !== undefined) row.valor = patch.valor;
+  if (patch.bancoId !== undefined) row.banco_id = bancoUuidFor(patch.bancoId);
+  if (patch.tipoReserva !== undefined) row.tipo_reserva = patch.tipoReserva;
+  if (patch.observacao !== undefined) row.observacao = patch.observacao ?? null;
+  void supabase
+    .from("dinheiro_guardado")
+    .update(row)
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateGuardado failed", error);
+    });
 }
 
+export function deleteGuardado(id: string) {
+  memGuardado = memGuardado.filter((g) => g.id !== id);
+  emit();
+  if (!activeUserId) return;
+  void supabase
+    .from("dinheiro_guardado")
+    .delete()
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteGuardado failed", error);
+    });
+}
+
+// ---------- Metas ----------
 export type NovaMetaInput = {
   nome: string;
   valorObjetivo: number;
@@ -1483,7 +1561,6 @@ export type NovaMetaInput = {
   bancoId?: string;
 };
 export function addMeta(input: NovaMetaInput): Meta {
-  bootstrapLocalDefaults();
   const now = new Date().toISOString();
   const novo: Meta = {
     id: uid(),
@@ -1497,44 +1574,88 @@ export function addMeta(input: NovaMetaInput): Meta {
     criadoEm: now,
     atualizadoEm: now,
   };
-  writeJSON(K.metas, [...getMetas(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memMetas = [...memMetas, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memMetas = [...memMetas, novo];
+  metaKeyToUuid.set(newUuid, newUuid);
   emit();
+  void supabase
+    .from("metas_financeiras")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      nome: novo.nome,
+      valor_objetivo: novo.valorObjetivo,
+      valor_atual: novo.valorAtual,
+      prazo: novo.prazo ?? null,
+      descricao: novo.descricao ?? null,
+      color_hex: novo.colorHex,
+      banco_id: input.bancoId ? bancoUuidFor(input.bancoId) : null,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addMeta failed", error);
+    });
   return novo;
 }
+
 export function updateMeta(id: string, patch: Partial<Meta>) {
-  writeJSON(
-    K.metas,
-    getMetas().map((m) =>
-      m.id === id ? { ...m, ...patch, atualizadoEm: new Date().toISOString() } : m,
-    ),
-  );
-  invalidateLocal();
+  const now = new Date().toISOString();
+  memMetas = memMetas.map((m) => (m.id === id ? { ...m, ...patch, atualizadoEm: now } : m));
   emit();
+  if (!activeUserId) return;
+  const uuid = metaUuidFor(id);
+  if (!uuid) return;
+  const row: MetaUpdate = {};
+  if (patch.nome !== undefined) row.nome = patch.nome;
+  if (patch.valorObjetivo !== undefined) row.valor_objetivo = patch.valorObjetivo;
+  if (patch.valorAtual !== undefined) row.valor_atual = patch.valorAtual;
+  if (patch.prazo !== undefined) row.prazo = patch.prazo ?? null;
+  if (patch.descricao !== undefined) row.descricao = patch.descricao ?? null;
+  if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
+  if (patch.bancoId !== undefined) row.banco_id = patch.bancoId ? bancoUuidFor(patch.bancoId) : null;
+  void supabase
+    .from("metas_financeiras")
+    .update(row)
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateMeta failed", error);
+    });
 }
+
 export function deleteMeta(id: string) {
-  writeJSON(
-    K.metas,
-    getMetas().filter((m) => m.id !== id),
-  );
-  writeJSON(
-    K.movMetas,
-    getMovimentacoesMeta().filter((mv) => mv.metaId !== id),
-  );
-  invalidateLocal();
+  memMetas = memMetas.filter((m) => m.id !== id);
+  memMov = memMov.filter((mv) => mv.metaId !== id);
   emit();
+  if (!activeUserId) return;
+  const uuid = metaUuidFor(id);
+  if (!uuid) return;
+  metaKeyToUuid.delete(id);
+  void supabase
+    .from("metas_financeiras")
+    .delete()
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMeta failed", error);
+    });
 }
+
 export function addMovimentacaoMeta(input: {
   metaId: string;
   valor: number;
   bancoId?: string;
   observacao?: string;
 }) {
-  const now = new Date().toISOString();
-  const meta = getMetas().find((m) => m.id === input.metaId);
+  const meta = memMetas.find((m) => m.id === input.metaId);
   if (!meta) return;
+  const now = new Date().toISOString();
+  const movId = activeUserId ? crypto.randomUUID() : uid();
   const mov: MovimentacaoMeta = {
-    id: uid(),
+    id: movId,
     metaId: input.metaId,
     valor: input.valor,
     data: now.slice(0, 10),
@@ -1542,8 +1663,46 @@ export function addMovimentacaoMeta(input: {
     observacao: input.observacao,
     criadoEm: now,
   };
-  writeJSON(K.movMetas, [...getMovimentacoesMeta(), mov]);
+  memMov = [...memMov, mov];
+  emit();
+  // Update meta value (optimistic + server)
   updateMeta(input.metaId, { valorAtual: meta.valorAtual + input.valor });
+
+  if (!activeUserId) return;
+  const metaUuid = metaUuidFor(input.metaId);
+  if (!metaUuid) return;
+  void supabase
+    .from("movimentacoes_meta")
+    .insert({
+      id: movId,
+      user_id: activeUserId,
+      meta_id: metaUuid,
+      valor: input.valor,
+      data: now.slice(0, 10),
+      banco_id: input.bancoId ? bancoUuidFor(input.bancoId) : null,
+      observacao: input.observacao ?? null,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addMovimentacaoMeta failed", error);
+    });
+}
+
+export function deleteMovimentacaoMeta(id: string) {
+  const mov = memMov.find((mv) => mv.id === id);
+  memMov = memMov.filter((mv) => mv.id !== id);
+  if (mov) {
+    const meta = memMetas.find((m) => m.id === mov.metaId);
+    if (meta) updateMeta(meta.id, { valorAtual: Math.max(0, meta.valorAtual - mov.valor) });
+  }
+  emit();
+  if (!activeUserId) return;
+  void supabase
+    .from("movimentacoes_meta")
+    .delete()
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMovimentacaoMeta failed", error);
+    });
 }
 
 // ---------- Helpers para metas ----------
