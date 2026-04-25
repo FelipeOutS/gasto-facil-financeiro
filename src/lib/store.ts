@@ -454,41 +454,76 @@ export async function hydrateUser(userId: string): Promise<void> {
   if (hydrationStatus === "loading") return;
   setHydrationStatus("loading");
   try {
-    await ensureDefaultCategorias(userId);
+    await Promise.all([
+      ensureDefaultCategorias(userId),
+      ensureDefaultBancos(userId),
+    ]);
 
-    // Load categorias first (needed for FK mapping)
-    const { data: catRows, error: catErr } = await supabase
-      .from("categorias")
-      .select("*")
-      .eq("user_id", userId);
-    if (catErr) throw catErr;
+    // Load categorias + bancos first (needed for FK mapping)
+    const [catRes, bancoRes] = await Promise.all([
+      supabase.from("categorias").select("*").eq("user_id", userId),
+      supabase.from("bancos").select("*").eq("user_id", userId),
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (bancoRes.error) throw bancoRes.error;
 
     categoriaKeyToUuid.clear();
+    bancoKeyToUuid.clear();
     const catUuidToKey = new Map<string, string>();
-    const cats: Categoria[] = (catRows ?? []).map((r: CategoriaRow) => {
+    const bancoUuidToKey = new Map<string, string>();
+
+    memCategorias = (catRes.data ?? []).map((r: CategoriaRow) => {
       categoriaKeyToUuid.set(r.legacy_id || r.id, r.id);
       catUuidToKey.set(r.id, r.legacy_id || r.id);
       return rowToCategoria(r);
     });
-    memCategorias = cats;
+    memBancos = (bancoRes.data ?? []).map((r: BancoRow) => {
+      const key = r.legacy_id || r.id;
+      bancoKeyToUuid.set(key, r.id);
+      bancoUuidToKey.set(r.id, key);
+      return rowToBanco(r);
+    });
 
-    // Now load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes] = await Promise.all([
+    // Load metas (needed before mov FK mapping)
+    const metasRes = await supabase
+      .from("metas_financeiras")
+      .select("*")
+      .eq("user_id", userId);
+    if (metasRes.error) throw metasRes.error;
+    metaKeyToUuid.clear();
+    const metaUuidToKey = new Map<string, string>();
+    memMetas = (metasRes.data ?? []).map((r: MetaRow) => {
+      const key = r.legacy_id || r.id;
+      metaKeyToUuid.set(key, r.id);
+      metaUuidToKey.set(r.id, key);
+      return rowToMeta(r, bancoUuidToKey);
+    });
+
+    // Load the rest in parallel
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
       supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
+      supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
+      supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
     if (receitasRes.error) throw receitasRes.error;
     if (limitesRes.error) throw limitesRes.error;
     if (aprendRes.error) throw aprendRes.error;
+    if (guardadoRes.error) throw guardadoRes.error;
+    if (movRes.error) throw movRes.error;
 
     memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
-    memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) => rowToAprendizado(r, catUuidToKey));
+    memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
+      rowToAprendizado(r, catUuidToKey),
+    );
+    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
+    memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
 
     setHydrationStatus("ready");
   } catch (e) {
