@@ -118,8 +118,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+const SSR_FALLBACK: AuthContextValue = {
+  session: null,
+  user: null,
+  profile: null,
+  loading: true,
+  async signIn() {
+    return { error: new Error("Auth not ready") };
+  },
+  async signUp() {
+    return { error: new Error("Auth not ready") };
+  },
+  async signOut() {},
+  async resetPassword() {
+    return { error: new Error("Auth not ready") };
+  },
+  async updatePassword() {
+    return { error: new Error("Auth not ready") };
+  },
+};
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  // During SSR or if provider isn't mounted yet, return safe defaults
+  // instead of throwing — this prevents render-time crashes.
+  if (!ctx) return SSR_FALLBACK;
   return ctx;
 }
