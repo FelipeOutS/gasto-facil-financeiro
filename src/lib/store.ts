@@ -23,6 +23,13 @@ type GastoInsert = TablesInsert<"gastos">;
 type GastoUpdate = TablesUpdate<"gastos">;
 type ReceitaInsert = TablesInsert<"receitas">;
 type CategoriaUpdate = TablesUpdate<"categorias">;
+type BancoInsert = TablesInsert<"bancos">;
+type BancoUpdate = TablesUpdate<"bancos">;
+type GuardadoInsert = TablesInsert<"dinheiro_guardado">;
+type GuardadoUpdate = TablesUpdate<"dinheiro_guardado">;
+type MetaInsert = TablesInsert<"metas_financeiras">;
+type MetaUpdate = TablesUpdate<"metas_financeiras">;
+type MovMetaInsert = TablesInsert<"movimentacoes_meta">;
 
 // ============================================================
 // HYBRID STORE
@@ -34,15 +41,10 @@ type CategoriaUpdate = TablesUpdate<"categorias">;
 let activeUserId: string | null = null;
 
 const SUFFIXES = {
-  // Phase 2 (still local-only)
-  bancos: "bancos",
-  guardado: "guardado",
-  metas: "metas",
-  movMetas: "movMetas",
   // bookkeeping
   bootstrappedLocal: "bootstrappedLocal:v3",
   hydratedFromCloud: "hydratedFromCloud:v1",
-  legacyMigrated: "legacyMigrated:v2",
+  legacyMigrated: "legacyMigrated:v3",
 } as const;
 
 function ns(suffix: string): string {
@@ -69,10 +71,6 @@ function readJSON<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
-function writeJSON<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
-}
 function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
@@ -89,7 +87,7 @@ function subscribe(l: () => void) {
   };
 }
 
-// ---------- IN-MEMORY CACHE (Supabase entities) ----------
+// ---------- IN-MEMORY CACHE (all entities) ----------
 const EMPTY_GASTOS: Gasto[] = [];
 const EMPTY_CATEGORIAS: Categoria[] = [];
 const EMPTY_LIMITES: Limite[] = [];
@@ -105,19 +103,15 @@ let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
 let memLimites: Limite[] = EMPTY_LIMITES;
 let memAprendizado: AprendizadoCategoria[] = EMPTY_APRENDIZADO;
 let memReceitas: Receita[] = EMPTY_RECEITAS;
+let memBancos: Banco[] = EMPTY_BANCOS;
+let memGuardado: Guardado[] = EMPTY_GUARDADO;
+let memMetas: Meta[] = EMPTY_METAS;
+let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 
-// localStorage-backed caches (Phase 2)
-let cacheBancos: Banco[] | null = null;
-let cacheGuardado: Guardado[] | null = null;
-let cacheMetas: Meta[] | null = null;
-let cacheMov: MovimentacaoMeta[] | null = null;
-
-function invalidateLocal() {
-  cacheBancos = null;
-  cacheGuardado = null;
-  cacheMetas = null;
-  cacheMov = null;
-}
+// Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
+const categoriaKeyToUuid = new Map<string, string>();
+const bancoKeyToUuid = new Map<string, string>();
+const metaKeyToUuid = new Map<string, string>();
 
 // ============================================================
 // USER SESSION
@@ -125,14 +119,20 @@ function invalidateLocal() {
 export function setActiveUserId(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
-  // Clear in-memory cloud caches on user change
+  // Clear in-memory caches on user change
   memGastos = EMPTY_GASTOS;
   memCategorias = EMPTY_CATEGORIAS;
   memLimites = EMPTY_LIMITES;
   memAprendizado = EMPTY_APRENDIZADO;
   memReceitas = EMPTY_RECEITAS;
-  hydrationStatus = uid ? "idle" : "idle";
-  invalidateLocal();
+  memBancos = EMPTY_BANCOS;
+  memGuardado = EMPTY_GUARDADO;
+  memMetas = EMPTY_METAS;
+  memMov = EMPTY_MOV;
+  categoriaKeyToUuid.clear();
+  bancoKeyToUuid.clear();
+  metaKeyToUuid.clear();
+  hydrationStatus = "idle";
   emit();
 }
 
@@ -172,8 +172,7 @@ function rowToCategoria(r: CategoriaRow): Categoria {
   };
 }
 
-// Lookup uuid by category-key (legacy_id or uuid) for FK writes.
-const categoriaKeyToUuid = new Map<string, string>();
+// (categoriaKeyToUuid declared earlier)
 
 type GastoRow = {
   id: string;
@@ -285,6 +284,129 @@ function rowToAprendizado(r: AprendizadoRow, catUuidToKey: Map<string, string>):
   };
 }
 
+// ---------- Phase 2 row mappers ----------
+type BancoRow = {
+  id: string;
+  nome: string;
+  color_hex: string;
+  criado_pelo_usuario: boolean;
+  legacy_id: string | null;
+  created_at: string;
+};
+function rowToBanco(r: BancoRow): Banco {
+  return {
+    id: r.legacy_id || r.id,
+    nome: r.nome,
+    colorHex: r.color_hex,
+    criadoPeloUsuario: r.criado_pelo_usuario,
+    criadoEm: r.created_at,
+  };
+}
+
+type GuardadoRow = {
+  id: string;
+  banco_id: string | null;
+  valor: string | number;
+  tipo_reserva: string;
+  observacao: string | null;
+  data_atualizacao: string;
+  legacy_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Guardado {
+  return {
+    id: r.legacy_id || r.id,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : "",
+    valor: Number(r.valor),
+    tipoReserva: r.tipo_reserva as TipoReserva,
+    observacao: r.observacao ?? undefined,
+    dataAtualizacao: r.data_atualizacao,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
+type MetaRow = {
+  id: string;
+  nome: string;
+  valor_objetivo: string | number;
+  valor_atual: string | number;
+  prazo: string | null;
+  descricao: string | null;
+  color_hex: string;
+  banco_id: string | null;
+  legacy_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
+  return {
+    id: r.legacy_id || r.id,
+    nome: r.nome,
+    valorObjetivo: Number(r.valor_objetivo),
+    valorAtual: Number(r.valor_atual),
+    prazo: r.prazo ?? undefined,
+    descricao: r.descricao ?? undefined,
+    colorHex: r.color_hex,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
+type MovMetaRow = {
+  id: string;
+  meta_id: string;
+  valor: string | number;
+  data: string;
+  banco_id: string | null;
+  observacao: string | null;
+  legacy_id: string | null;
+  created_at: string;
+};
+function rowToMovMeta(
+  r: MovMetaRow,
+  metaUuidToKey: Map<string, string>,
+  bancoUuidToKey: Map<string, string>,
+): MovimentacaoMeta {
+  return {
+    id: r.legacy_id || r.id,
+    metaId: metaUuidToKey.get(r.meta_id) ?? r.meta_id,
+    valor: Number(r.valor),
+    data: r.data,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    observacao: r.observacao ?? undefined,
+    criadoEm: r.created_at,
+  };
+}
+
+// ---------- Default seed data ----------
+const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
+  { nome: "Nubank", colorHex: "#820ad1" },
+  { nome: "Mercado Pago", colorHex: "#00b1ea" },
+  { nome: "Itaú", colorHex: "#ec7000" },
+  { nome: "Bradesco", colorHex: "#cc092f" },
+  { nome: "Santander", colorHex: "#ec0000" },
+  { nome: "Banco do Brasil", colorHex: "#fae128" },
+  { nome: "Caixa", colorHex: "#1c5aa8" },
+  { nome: "Inter", colorHex: "#ff7a00" },
+  { nome: "C6 Bank", colorHex: "#3a3a3a" },
+  { nome: "PicPay", colorHex: "#21c25e" },
+  { nome: "PagBank", colorHex: "#048b3a" },
+  { nome: "BTG Pactual", colorHex: "#0f2a4a" },
+  { nome: "XP", colorHex: "#000000" },
+  { nome: "Neon", colorHex: "#00d8c0" },
+  { nome: "Will Bank", colorHex: "#0f9b5e" },
+  { nome: "Original", colorHex: "#1d8b4e" },
+  { nome: "Sicredi", colorHex: "#3aaa35" },
+  { nome: "Sicoob", colorHex: "#003d2b" },
+];
+
+function bancoLegacyKey(nome: string): string {
+  return nome.toLowerCase().replace(/\s+/g, "-");
+}
+
 // ---------- Ensure default categories exist for the user ----------
 async function ensureDefaultCategorias(userId: string): Promise<void> {
   const { data: existing } = await supabase
@@ -307,46 +429,101 @@ async function ensureDefaultCategorias(userId: string): Promise<void> {
   }
 }
 
+// ---------- Ensure default bancos exist for the user ----------
+async function ensureDefaultBancos(userId: string): Promise<void> {
+  const { data: existing } = await supabase
+    .from("bancos")
+    .select("id")
+    .eq("user_id", userId)
+    .limit(1);
+  if ((existing ?? []).length > 0) return;
+  const toInsert: BancoInsert[] = BANCOS_PADRAO.map((b) => ({
+    user_id: userId,
+    nome: b.nome,
+    color_hex: b.colorHex,
+    criado_pelo_usuario: false,
+    legacy_id: bancoLegacyKey(b.nome),
+  }));
+  if (toInsert.length > 0) {
+    await supabase.from("bancos").insert(toInsert);
+  }
+}
+
 // ---------- Hydrate everything ----------
 export async function hydrateUser(userId: string): Promise<void> {
   if (hydrationStatus === "loading") return;
   setHydrationStatus("loading");
   try {
-    await ensureDefaultCategorias(userId);
+    await Promise.all([
+      ensureDefaultCategorias(userId),
+      ensureDefaultBancos(userId),
+    ]);
 
-    // Load categorias first (needed for FK mapping)
-    const { data: catRows, error: catErr } = await supabase
-      .from("categorias")
-      .select("*")
-      .eq("user_id", userId);
-    if (catErr) throw catErr;
+    // Load categorias + bancos first (needed for FK mapping)
+    const [catRes, bancoRes] = await Promise.all([
+      supabase.from("categorias").select("*").eq("user_id", userId),
+      supabase.from("bancos").select("*").eq("user_id", userId),
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (bancoRes.error) throw bancoRes.error;
 
     categoriaKeyToUuid.clear();
+    bancoKeyToUuid.clear();
     const catUuidToKey = new Map<string, string>();
-    const cats: Categoria[] = (catRows ?? []).map((r: CategoriaRow) => {
+    const bancoUuidToKey = new Map<string, string>();
+
+    memCategorias = (catRes.data ?? []).map((r: CategoriaRow) => {
       categoriaKeyToUuid.set(r.legacy_id || r.id, r.id);
       catUuidToKey.set(r.id, r.legacy_id || r.id);
       return rowToCategoria(r);
     });
-    memCategorias = cats;
+    memBancos = (bancoRes.data ?? []).map((r: BancoRow) => {
+      const key = r.legacy_id || r.id;
+      bancoKeyToUuid.set(key, r.id);
+      bancoUuidToKey.set(r.id, key);
+      return rowToBanco(r);
+    });
 
-    // Now load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes] = await Promise.all([
+    // Load metas (needed before mov FK mapping)
+    const metasRes = await supabase
+      .from("metas_financeiras")
+      .select("*")
+      .eq("user_id", userId);
+    if (metasRes.error) throw metasRes.error;
+    metaKeyToUuid.clear();
+    const metaUuidToKey = new Map<string, string>();
+    memMetas = (metasRes.data ?? []).map((r: MetaRow) => {
+      const key = r.legacy_id || r.id;
+      metaKeyToUuid.set(key, r.id);
+      metaUuidToKey.set(r.id, key);
+      return rowToMeta(r, bancoUuidToKey);
+    });
+
+    // Load the rest in parallel
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
       supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
+      supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
+      supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
     if (receitasRes.error) throw receitasRes.error;
     if (limitesRes.error) throw limitesRes.error;
     if (aprendRes.error) throw aprendRes.error;
+    if (guardadoRes.error) throw guardadoRes.error;
+    if (movRes.error) throw movRes.error;
 
     memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
-    memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) => rowToAprendizado(r, catUuidToKey));
+    memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
+      rowToAprendizado(r, catUuidToKey),
+    );
+    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
+    memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
 
     setHydrationStatus("ready");
   } catch (e) {
@@ -397,24 +574,38 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
       allApr.push(...a);
     }
 
-    // Also migrate legacy local-only entities (bancos/guardado/metas/movMetas)
-    // into the user's namespace once.
-    const legacyLocal: Array<[string, keyof typeof SUFFIXES]> = [
-      ["gf:bancos", "bancos"],
-      ["gf:guardado", "guardado"],
-      ["gf:metas", "metas"],
-      ["gf:movMetas", "movMetas"],
-      ["gf:u:anon:bancos", "bancos"],
-      ["gf:u:anon:guardado", "guardado"],
-      ["gf:u:anon:metas", "metas"],
-      ["gf:u:anon:movMetas", "movMetas"],
-    ];
-    for (const [src, suffix] of legacyLocal) {
-      const v = localStorage.getItem(src);
-      const target = `gf:u:${userId}:${suffix}`;
-      if (v && !localStorage.getItem(target)) {
-        localStorage.setItem(target, v);
-      }
+    // Pull legacy local-only entities (bancos/guardado/metas/movMetas)
+    const legacyBancos: Banco[] = [];
+    const legacyGuardado: Guardado[] = [];
+    const legacyMetas: Meta[] = [];
+    const legacyMov: MovimentacaoMeta[] = [];
+    for (const src of [
+      "gf:bancos",
+      "gf:u:anon:bancos",
+      `gf:u:${userId}:bancos`,
+    ]) {
+      legacyBancos.push(...readJSON<Banco[]>(src, []));
+    }
+    for (const src of [
+      "gf:guardado",
+      "gf:u:anon:guardado",
+      `gf:u:${userId}:guardado`,
+    ]) {
+      legacyGuardado.push(...readJSON<Guardado[]>(src, []));
+    }
+    for (const src of [
+      "gf:metas",
+      "gf:u:anon:metas",
+      `gf:u:${userId}:metas`,
+    ]) {
+      legacyMetas.push(...readJSON<Meta[]>(src, []));
+    }
+    for (const src of [
+      "gf:movMetas",
+      "gf:u:anon:movMetas",
+      `gf:u:${userId}:movMetas`,
+    ]) {
+      legacyMov.push(...readJSON<MovimentacaoMeta[]>(src, []));
     }
 
     // Need categorias mapping — make sure they exist
@@ -523,6 +714,108 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
       }
     }
 
+    // ----- Phase 2: Bancos / Guardado / Metas / Movimentações -----
+    // Build banco key→uuid map (legacy bancos use slug like "nubank")
+    await ensureDefaultBancos(userId);
+    const { data: bancoRowsForMig } = await supabase
+      .from("bancos")
+      .select("id, legacy_id")
+      .eq("user_id", userId);
+    const bancoKeyToUuidMig = new Map<string, string>();
+    (bancoRowsForMig ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+      if (r.legacy_id) bancoKeyToUuidMig.set(r.legacy_id, r.id);
+      bancoKeyToUuidMig.set(r.id, r.id);
+    });
+
+    // Insert custom legacy bancos that don't exist yet (matched by legacy_id slug)
+    if (legacyBancos.length > 0) {
+      const seen = new Set<string>();
+      const customBancoRows: BancoInsert[] = [];
+      for (const b of legacyBancos) {
+        const key = b.id || bancoLegacyKey(b.nome);
+        if (!key || seen.has(key) || bancoKeyToUuidMig.has(key)) continue;
+        seen.add(key);
+        if (!b.criadoPeloUsuario) continue; // defaults already inserted
+        customBancoRows.push({
+          user_id: userId,
+          nome: b.nome,
+          color_hex: b.colorHex,
+          criado_pelo_usuario: true,
+          legacy_id: key,
+        });
+      }
+      if (customBancoRows.length > 0) {
+        const { data: inserted } = await supabase
+          .from("bancos")
+          .insert(customBancoRows)
+          .select("id, legacy_id");
+        (inserted ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+          if (r.legacy_id) bancoKeyToUuidMig.set(r.legacy_id, r.id);
+        });
+      }
+    }
+
+    // Insert dinheiro_guardado
+    if (legacyGuardado.length > 0) {
+      const rows: GuardadoInsert[] = legacyGuardado.map((g) => ({
+        user_id: userId,
+        banco_id: g.bancoId ? bancoKeyToUuidMig.get(g.bancoId) ?? null : null,
+        valor: g.valor,
+        tipo_reserva: g.tipoReserva,
+        observacao: g.observacao ?? null,
+        data_atualizacao: g.dataAtualizacao || new Date().toISOString().slice(0, 10),
+        legacy_id: g.id,
+      }));
+      for (let i = 0; i < rows.length; i += 200) {
+        await supabase.from("dinheiro_guardado").insert(rows.slice(i, i + 200));
+      }
+    }
+
+    // Insert metas + build meta key→uuid map for movimentações
+    const metaKeyToUuidMig = new Map<string, string>();
+    if (legacyMetas.length > 0) {
+      const rows: MetaInsert[] = legacyMetas.map((m) => ({
+        user_id: userId,
+        nome: m.nome,
+        valor_objetivo: m.valorObjetivo,
+        valor_atual: m.valorAtual ?? 0,
+        prazo: m.prazo ?? null,
+        descricao: m.descricao ?? null,
+        color_hex: m.colorHex || "#10b981",
+        banco_id: m.bancoId ? bancoKeyToUuidMig.get(m.bancoId) ?? null : null,
+        legacy_id: m.id,
+      }));
+      const { data: insertedMetas } = await supabase
+        .from("metas_financeiras")
+        .insert(rows)
+        .select("id, legacy_id");
+      (insertedMetas ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+        if (r.legacy_id) metaKeyToUuidMig.set(r.legacy_id, r.id);
+      });
+    }
+
+    // Insert movimentações de meta (only those whose meta exists)
+    if (legacyMov.length > 0) {
+      const rows: MovMetaInsert[] = legacyMov
+        .map((mv) => {
+          const metaUuid = metaKeyToUuidMig.get(mv.metaId);
+          if (!metaUuid) return null;
+          return {
+            user_id: userId,
+            meta_id: metaUuid,
+            valor: mv.valor,
+            data: mv.data || new Date().toISOString().slice(0, 10),
+            banco_id: mv.bancoId ? bancoKeyToUuidMig.get(mv.bancoId) ?? null : null,
+            observacao: mv.observacao ?? null,
+            legacy_id: mv.id,
+          } as MovMetaInsert;
+        })
+        .filter((r): r is MovMetaInsert => r !== null);
+      for (let i = 0; i < rows.length; i += 200) {
+        await supabase.from("movimentacoes_meta").insert(rows.slice(i, i + 200));
+      }
+    }
+
     localStorage.setItem(flagKey, "1");
   } catch (e) {
     console.error("[store] migrateLegacyDataToUser failed", e);
@@ -551,69 +844,26 @@ export function getCategoriaById(id: string): Categoria | undefined {
   return memCategorias.find((c) => c.id === id);
 }
 
-// Phase 2: Bancos / Guardado / Metas (still localStorage)
-const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
-  { nome: "Nubank", colorHex: "#820ad1" },
-  { nome: "Mercado Pago", colorHex: "#00b1ea" },
-  { nome: "Itaú", colorHex: "#ec7000" },
-  { nome: "Bradesco", colorHex: "#cc092f" },
-  { nome: "Santander", colorHex: "#ec0000" },
-  { nome: "Banco do Brasil", colorHex: "#fae128" },
-  { nome: "Caixa", colorHex: "#1c5aa8" },
-  { nome: "Inter", colorHex: "#ff7a00" },
-  { nome: "C6 Bank", colorHex: "#3a3a3a" },
-  { nome: "PicPay", colorHex: "#21c25e" },
-  { nome: "PagBank", colorHex: "#048b3a" },
-  { nome: "BTG Pactual", colorHex: "#0f2a4a" },
-  { nome: "XP", colorHex: "#000000" },
-  { nome: "Neon", colorHex: "#00d8c0" },
-  { nome: "Will Bank", colorHex: "#0f9b5e" },
-  { nome: "Original", colorHex: "#1d8b4e" },
-  { nome: "Sicredi", colorHex: "#3aaa35" },
-  { nome: "Sicoob", colorHex: "#003d2b" },
-];
-
+// Phase 2 selectors — backed by in-memory cache (Supabase-hydrated)
 function bootstrapLocalDefaults() {
-  if (typeof window === "undefined") return;
-  if (!activeUserId) return;
-  if (localStorage.getItem(K.bootstrappedLocal)) return;
-  const bancos: Banco[] = BANCOS_PADRAO.map((b) => ({
-    id: b.nome.toLowerCase().replace(/\s+/g, "-"),
-    nome: b.nome,
-    colorHex: b.colorHex,
-    criadoPeloUsuario: false,
-    criadoEm: new Date().toISOString(),
-  }));
-  if (!localStorage.getItem(K.bancos)) writeJSON(K.bancos, bancos);
-  if (!localStorage.getItem(K.guardado)) writeJSON(K.guardado, [] as Guardado[]);
-  if (!localStorage.getItem(K.metas)) writeJSON(K.metas, [] as Meta[]);
-  if (!localStorage.getItem(K.movMetas)) writeJSON(K.movMetas, [] as MovimentacaoMeta[]);
-  localStorage.setItem(K.bootstrappedLocal, "1");
-  invalidateLocal();
+  // Kept as a no-op for compatibility; defaults are seeded server-side
+  // via ensureDefaultBancos during hydration.
 }
 
 export function getBancos(): Banco[] {
-  if (typeof window === "undefined") return EMPTY_BANCOS;
-  if (cacheBancos === null) cacheBancos = readJSON<Banco[]>(K.bancos, EMPTY_BANCOS);
-  return cacheBancos;
+  return memBancos;
 }
 export function getGuardado(): Guardado[] {
-  if (typeof window === "undefined") return EMPTY_GUARDADO;
-  if (cacheGuardado === null) cacheGuardado = readJSON<Guardado[]>(K.guardado, EMPTY_GUARDADO);
-  return cacheGuardado;
+  return memGuardado;
 }
 export function getMetas(): Meta[] {
-  if (typeof window === "undefined") return EMPTY_METAS;
-  if (cacheMetas === null) cacheMetas = readJSON<Meta[]>(K.metas, EMPTY_METAS);
-  return cacheMetas;
+  return memMetas;
 }
 export function getMovimentacoesMeta(): MovimentacaoMeta[] {
-  if (typeof window === "undefined") return EMPTY_MOV;
-  if (cacheMov === null) cacheMov = readJSON<MovimentacaoMeta[]>(K.movMetas, EMPTY_MOV);
-  return cacheMov;
+  return memMov;
 }
 export function getBancoById(id: string): Banco | undefined {
-  return getBancos().find((b) => b.id === id);
+  return memBancos.find((b) => b.id === id);
 }
 
 // ============================================================
@@ -1142,41 +1392,84 @@ export function deleteReceita(id: string) {
 // ============================================================
 // PHASE 2: Bancos / Guardado / Metas (still localStorage)
 // ============================================================
+// ---------- Bancos ----------
+function bancoUuidFor(key: string): string | null {
+  return bancoKeyToUuid.get(key) ?? null;
+}
+function metaUuidFor(key: string): string | null {
+  return metaKeyToUuid.get(key) ?? null;
+}
+
 export function addBanco(input: { nome: string; colorHex: string }): Banco {
-  bootstrapLocalDefaults();
+  const now = new Date().toISOString();
   const novo: Banco = {
     id: uid(),
     nome: input.nome.trim(),
     colorHex: input.colorHex,
     criadoPeloUsuario: true,
-    criadoEm: new Date().toISOString(),
+    criadoEm: now,
   };
-  writeJSON(K.bancos, [...getBancos(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memBancos = [...memBancos, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memBancos = [...memBancos, novo];
+  bancoKeyToUuid.set(newUuid, newUuid);
   emit();
+  void supabase
+    .from("bancos")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      nome: novo.nome,
+      color_hex: novo.colorHex,
+      criado_pelo_usuario: true,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addBanco failed", error);
+    });
   return novo;
 }
+
 export function updateBanco(id: string, patch: Partial<Banco>) {
-  writeJSON(
-    K.bancos,
-    getBancos().map((b) => (b.id === id ? { ...b, ...patch } : b)),
-  );
-  invalidateLocal();
+  memBancos = memBancos.map((b) => (b.id === id ? { ...b, ...patch } : b));
   emit();
-}
-export function deleteBanco(id: string) {
-  writeJSON(
-    K.bancos,
-    getBancos().filter((b) => b.id !== id),
-  );
-  writeJSON(
-    K.guardado,
-    getGuardado().filter((g) => g.bancoId !== id),
-  );
-  invalidateLocal();
-  emit();
+  if (!activeUserId) return;
+  const uuid = bancoUuidFor(id);
+  if (!uuid) return;
+  const row: BancoUpdate = {};
+  if (patch.nome !== undefined) row.nome = patch.nome;
+  if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
+  void supabase
+    .from("bancos")
+    .update(row)
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateBanco failed", error);
+    });
 }
 
+export function deleteBanco(id: string) {
+  memBancos = memBancos.filter((b) => b.id !== id);
+  memGuardado = memGuardado.filter((g) => g.bancoId !== id);
+  emit();
+  if (!activeUserId) return;
+  const uuid = bancoUuidFor(id);
+  if (!uuid) return;
+  bancoKeyToUuid.delete(id);
+  void supabase
+    .from("bancos")
+    .delete()
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteBanco failed", error);
+    });
+}
+
+// ---------- Dinheiro guardado ----------
 export type NovoGuardadoInput = {
   bancoId: string;
   valor: number;
@@ -1184,7 +1477,6 @@ export type NovoGuardadoInput = {
   observacao?: string;
 };
 export function addGuardado(input: NovoGuardadoInput): Guardado {
-  bootstrapLocalDefaults();
   const now = new Date().toISOString();
   const novo: Guardado = {
     id: uid(),
@@ -1196,33 +1488,69 @@ export function addGuardado(input: NovoGuardadoInput): Guardado {
     criadoEm: now,
     atualizadoEm: now,
   };
-  writeJSON(K.guardado, [...getGuardado(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memGuardado = [...memGuardado, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memGuardado = [...memGuardado, novo];
   emit();
+  void supabase
+    .from("dinheiro_guardado")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      banco_id: bancoUuidFor(input.bancoId),
+      valor: input.valor,
+      tipo_reserva: input.tipoReserva,
+      observacao: input.observacao ?? null,
+      data_atualizacao: now.slice(0, 10),
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addGuardado failed", error);
+    });
   return novo;
 }
+
 export function updateGuardado(id: string, patch: Partial<Guardado>) {
   const now = new Date().toISOString();
-  writeJSON(
-    K.guardado,
-    getGuardado().map((g) =>
-      g.id === id
-        ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) }
-        : g,
-    ),
+  memGuardado = memGuardado.map((g) =>
+    g.id === id
+      ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) }
+      : g,
   );
-  invalidateLocal();
   emit();
-}
-export function deleteGuardado(id: string) {
-  writeJSON(
-    K.guardado,
-    getGuardado().filter((g) => g.id !== id),
-  );
-  invalidateLocal();
-  emit();
+  if (!activeUserId) return;
+  const row: GuardadoUpdate = { data_atualizacao: now.slice(0, 10) };
+  if (patch.valor !== undefined) row.valor = patch.valor;
+  if (patch.bancoId !== undefined) row.banco_id = bancoUuidFor(patch.bancoId);
+  if (patch.tipoReserva !== undefined) row.tipo_reserva = patch.tipoReserva;
+  if (patch.observacao !== undefined) row.observacao = patch.observacao ?? null;
+  void supabase
+    .from("dinheiro_guardado")
+    .update(row)
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateGuardado failed", error);
+    });
 }
 
+export function deleteGuardado(id: string) {
+  memGuardado = memGuardado.filter((g) => g.id !== id);
+  emit();
+  if (!activeUserId) return;
+  void supabase
+    .from("dinheiro_guardado")
+    .delete()
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteGuardado failed", error);
+    });
+}
+
+// ---------- Metas ----------
 export type NovaMetaInput = {
   nome: string;
   valorObjetivo: number;
@@ -1233,7 +1561,6 @@ export type NovaMetaInput = {
   bancoId?: string;
 };
 export function addMeta(input: NovaMetaInput): Meta {
-  bootstrapLocalDefaults();
   const now = new Date().toISOString();
   const novo: Meta = {
     id: uid(),
@@ -1247,44 +1574,88 @@ export function addMeta(input: NovaMetaInput): Meta {
     criadoEm: now,
     atualizadoEm: now,
   };
-  writeJSON(K.metas, [...getMetas(), novo]);
-  invalidateLocal();
+  if (!activeUserId) {
+    memMetas = [...memMetas, novo];
+    emit();
+    return novo;
+  }
+  const newUuid = crypto.randomUUID();
+  novo.id = newUuid;
+  memMetas = [...memMetas, novo];
+  metaKeyToUuid.set(newUuid, newUuid);
   emit();
+  void supabase
+    .from("metas_financeiras")
+    .insert({
+      id: newUuid,
+      user_id: activeUserId,
+      nome: novo.nome,
+      valor_objetivo: novo.valorObjetivo,
+      valor_atual: novo.valorAtual,
+      prazo: novo.prazo ?? null,
+      descricao: novo.descricao ?? null,
+      color_hex: novo.colorHex,
+      banco_id: input.bancoId ? bancoUuidFor(input.bancoId) : null,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addMeta failed", error);
+    });
   return novo;
 }
+
 export function updateMeta(id: string, patch: Partial<Meta>) {
-  writeJSON(
-    K.metas,
-    getMetas().map((m) =>
-      m.id === id ? { ...m, ...patch, atualizadoEm: new Date().toISOString() } : m,
-    ),
-  );
-  invalidateLocal();
+  const now = new Date().toISOString();
+  memMetas = memMetas.map((m) => (m.id === id ? { ...m, ...patch, atualizadoEm: now } : m));
   emit();
+  if (!activeUserId) return;
+  const uuid = metaUuidFor(id);
+  if (!uuid) return;
+  const row: MetaUpdate = {};
+  if (patch.nome !== undefined) row.nome = patch.nome;
+  if (patch.valorObjetivo !== undefined) row.valor_objetivo = patch.valorObjetivo;
+  if (patch.valorAtual !== undefined) row.valor_atual = patch.valorAtual;
+  if (patch.prazo !== undefined) row.prazo = patch.prazo ?? null;
+  if (patch.descricao !== undefined) row.descricao = patch.descricao ?? null;
+  if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
+  if (patch.bancoId !== undefined) row.banco_id = patch.bancoId ? bancoUuidFor(patch.bancoId) : null;
+  void supabase
+    .from("metas_financeiras")
+    .update(row)
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] updateMeta failed", error);
+    });
 }
+
 export function deleteMeta(id: string) {
-  writeJSON(
-    K.metas,
-    getMetas().filter((m) => m.id !== id),
-  );
-  writeJSON(
-    K.movMetas,
-    getMovimentacoesMeta().filter((mv) => mv.metaId !== id),
-  );
-  invalidateLocal();
+  memMetas = memMetas.filter((m) => m.id !== id);
+  memMov = memMov.filter((mv) => mv.metaId !== id);
   emit();
+  if (!activeUserId) return;
+  const uuid = metaUuidFor(id);
+  if (!uuid) return;
+  metaKeyToUuid.delete(id);
+  void supabase
+    .from("metas_financeiras")
+    .delete()
+    .eq("id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMeta failed", error);
+    });
 }
+
 export function addMovimentacaoMeta(input: {
   metaId: string;
   valor: number;
   bancoId?: string;
   observacao?: string;
 }) {
-  const now = new Date().toISOString();
-  const meta = getMetas().find((m) => m.id === input.metaId);
+  const meta = memMetas.find((m) => m.id === input.metaId);
   if (!meta) return;
+  const now = new Date().toISOString();
+  const movId = activeUserId ? crypto.randomUUID() : uid();
   const mov: MovimentacaoMeta = {
-    id: uid(),
+    id: movId,
     metaId: input.metaId,
     valor: input.valor,
     data: now.slice(0, 10),
@@ -1292,8 +1663,46 @@ export function addMovimentacaoMeta(input: {
     observacao: input.observacao,
     criadoEm: now,
   };
-  writeJSON(K.movMetas, [...getMovimentacoesMeta(), mov]);
+  memMov = [...memMov, mov];
+  emit();
+  // Update meta value (optimistic + server)
   updateMeta(input.metaId, { valorAtual: meta.valorAtual + input.valor });
+
+  if (!activeUserId) return;
+  const metaUuid = metaUuidFor(input.metaId);
+  if (!metaUuid) return;
+  void supabase
+    .from("movimentacoes_meta")
+    .insert({
+      id: movId,
+      user_id: activeUserId,
+      meta_id: metaUuid,
+      valor: input.valor,
+      data: now.slice(0, 10),
+      banco_id: input.bancoId ? bancoUuidFor(input.bancoId) : null,
+      observacao: input.observacao ?? null,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[store] addMovimentacaoMeta failed", error);
+    });
+}
+
+export function deleteMovimentacaoMeta(id: string) {
+  const mov = memMov.find((mv) => mv.id === id);
+  memMov = memMov.filter((mv) => mv.id !== id);
+  if (mov) {
+    const meta = memMetas.find((m) => m.id === mov.metaId);
+    if (meta) updateMeta(meta.id, { valorAtual: Math.max(0, meta.valorAtual - mov.valor) });
+  }
+  emit();
+  if (!activeUserId) return;
+  void supabase
+    .from("movimentacoes_meta")
+    .delete()
+    .eq("id", id)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMovimentacaoMeta failed", error);
+    });
 }
 
 // ---------- Helpers para metas ----------

@@ -49,6 +49,42 @@ export type Database = {
           },
         ]
       }
+      bancos: {
+        Row: {
+          color_hex: string
+          created_at: string
+          criado_pelo_usuario: boolean
+          icone: string | null
+          id: string
+          legacy_id: string | null
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color_hex?: string
+          created_at?: string
+          criado_pelo_usuario?: boolean
+          icone?: string | null
+          id?: string
+          legacy_id?: string | null
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color_hex?: string
+          created_at?: string
+          criado_pelo_usuario?: boolean
+          icone?: string | null
+          id?: string
+          legacy_id?: string | null
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           color_var: string
@@ -84,6 +120,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      dinheiro_guardado: {
+        Row: {
+          banco_id: string | null
+          created_at: string
+          data_atualizacao: string
+          id: string
+          legacy_id: string | null
+          observacao: string | null
+          tipo_reserva: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          banco_id?: string | null
+          created_at?: string
+          data_atualizacao?: string
+          id?: string
+          legacy_id?: string | null
+          observacao?: string | null
+          tipo_reserva?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          banco_id?: string | null
+          created_at?: string
+          data_atualizacao?: string
+          id?: string
+          legacy_id?: string | null
+          observacao?: string | null
+          tipo_reserva?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dinheiro_guardado_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gastos: {
         Row: {
@@ -200,6 +283,113 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      metas_financeiras: {
+        Row: {
+          banco_id: string | null
+          color_hex: string
+          created_at: string
+          descricao: string | null
+          id: string
+          legacy_id: string | null
+          nome: string
+          prazo: string | null
+          updated_at: string
+          user_id: string
+          valor_atual: number
+          valor_objetivo: number
+        }
+        Insert: {
+          banco_id?: string | null
+          color_hex?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          legacy_id?: string | null
+          nome: string
+          prazo?: string | null
+          updated_at?: string
+          user_id: string
+          valor_atual?: number
+          valor_objetivo?: number
+        }
+        Update: {
+          banco_id?: string | null
+          color_hex?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          legacy_id?: string | null
+          nome?: string
+          prazo?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_atual?: number
+          valor_objetivo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_financeiras_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_meta: {
+        Row: {
+          banco_id: string | null
+          created_at: string
+          data: string
+          id: string
+          legacy_id: string | null
+          meta_id: string
+          observacao: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          banco_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          legacy_id?: string | null
+          meta_id: string
+          observacao?: string | null
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          banco_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          legacy_id?: string | null
+          meta_id?: string
+          observacao?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_meta_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_meta_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_financeiras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
