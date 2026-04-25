@@ -714,6 +714,108 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
       }
     }
 
+    // ----- Phase 2: Bancos / Guardado / Metas / Movimentações -----
+    // Build banco key→uuid map (legacy bancos use slug like "nubank")
+    await ensureDefaultBancos(userId);
+    const { data: bancoRowsForMig } = await supabase
+      .from("bancos")
+      .select("id, legacy_id")
+      .eq("user_id", userId);
+    const bancoKeyToUuidMig = new Map<string, string>();
+    (bancoRowsForMig ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+      if (r.legacy_id) bancoKeyToUuidMig.set(r.legacy_id, r.id);
+      bancoKeyToUuidMig.set(r.id, r.id);
+    });
+
+    // Insert custom legacy bancos that don't exist yet (matched by legacy_id slug)
+    if (legacyBancos.length > 0) {
+      const seen = new Set<string>();
+      const customBancoRows: BancoInsert[] = [];
+      for (const b of legacyBancos) {
+        const key = b.id || bancoLegacyKey(b.nome);
+        if (!key || seen.has(key) || bancoKeyToUuidMig.has(key)) continue;
+        seen.add(key);
+        if (!b.criadoPeloUsuario) continue; // defaults already inserted
+        customBancoRows.push({
+          user_id: userId,
+          nome: b.nome,
+          color_hex: b.colorHex,
+          criado_pelo_usuario: true,
+          legacy_id: key,
+        });
+      }
+      if (customBancoRows.length > 0) {
+        const { data: inserted } = await supabase
+          .from("bancos")
+          .insert(customBancoRows)
+          .select("id, legacy_id");
+        (inserted ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+          if (r.legacy_id) bancoKeyToUuidMig.set(r.legacy_id, r.id);
+        });
+      }
+    }
+
+    // Insert dinheiro_guardado
+    if (legacyGuardado.length > 0) {
+      const rows: GuardadoInsert[] = legacyGuardado.map((g) => ({
+        user_id: userId,
+        banco_id: g.bancoId ? bancoKeyToUuidMig.get(g.bancoId) ?? null : null,
+        valor: g.valor,
+        tipo_reserva: g.tipoReserva,
+        observacao: g.observacao ?? null,
+        data_atualizacao: g.dataAtualizacao || new Date().toISOString().slice(0, 10),
+        legacy_id: g.id,
+      }));
+      for (let i = 0; i < rows.length; i += 200) {
+        await supabase.from("dinheiro_guardado").insert(rows.slice(i, i + 200));
+      }
+    }
+
+    // Insert metas + build meta key→uuid map for movimentações
+    const metaKeyToUuidMig = new Map<string, string>();
+    if (legacyMetas.length > 0) {
+      const rows: MetaInsert[] = legacyMetas.map((m) => ({
+        user_id: userId,
+        nome: m.nome,
+        valor_objetivo: m.valorObjetivo,
+        valor_atual: m.valorAtual ?? 0,
+        prazo: m.prazo ?? null,
+        descricao: m.descricao ?? null,
+        color_hex: m.colorHex || "#10b981",
+        banco_id: m.bancoId ? bancoKeyToUuidMig.get(m.bancoId) ?? null : null,
+        legacy_id: m.id,
+      }));
+      const { data: insertedMetas } = await supabase
+        .from("metas_financeiras")
+        .insert(rows)
+        .select("id, legacy_id");
+      (insertedMetas ?? []).forEach((r: { id: string; legacy_id: string | null }) => {
+        if (r.legacy_id) metaKeyToUuidMig.set(r.legacy_id, r.id);
+      });
+    }
+
+    // Insert movimentações de meta (only those whose meta exists)
+    if (legacyMov.length > 0) {
+      const rows: MovMetaInsert[] = legacyMov
+        .map((mv) => {
+          const metaUuid = metaKeyToUuidMig.get(mv.metaId);
+          if (!metaUuid) return null;
+          return {
+            user_id: userId,
+            meta_id: metaUuid,
+            valor: mv.valor,
+            data: mv.data || new Date().toISOString().slice(0, 10),
+            banco_id: mv.bancoId ? bancoKeyToUuidMig.get(mv.bancoId) ?? null : null,
+            observacao: mv.observacao ?? null,
+            legacy_id: mv.id,
+          } as MovMetaInsert;
+        })
+        .filter((r): r is MovMetaInsert => r !== null);
+      for (let i = 0; i < rows.length; i += 200) {
+        await supabase.from("movimentacoes_meta").insert(rows.slice(i, i + 200));
+      }
+    }
+
     localStorage.setItem(flagKey, "1");
   } catch (e) {
     console.error("[store] migrateLegacyDataToUser failed", e);
