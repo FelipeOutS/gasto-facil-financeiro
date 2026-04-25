@@ -844,69 +844,26 @@ export function getCategoriaById(id: string): Categoria | undefined {
   return memCategorias.find((c) => c.id === id);
 }
 
-// Phase 2: Bancos / Guardado / Metas (still localStorage)
-const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
-  { nome: "Nubank", colorHex: "#820ad1" },
-  { nome: "Mercado Pago", colorHex: "#00b1ea" },
-  { nome: "Itaú", colorHex: "#ec7000" },
-  { nome: "Bradesco", colorHex: "#cc092f" },
-  { nome: "Santander", colorHex: "#ec0000" },
-  { nome: "Banco do Brasil", colorHex: "#fae128" },
-  { nome: "Caixa", colorHex: "#1c5aa8" },
-  { nome: "Inter", colorHex: "#ff7a00" },
-  { nome: "C6 Bank", colorHex: "#3a3a3a" },
-  { nome: "PicPay", colorHex: "#21c25e" },
-  { nome: "PagBank", colorHex: "#048b3a" },
-  { nome: "BTG Pactual", colorHex: "#0f2a4a" },
-  { nome: "XP", colorHex: "#000000" },
-  { nome: "Neon", colorHex: "#00d8c0" },
-  { nome: "Will Bank", colorHex: "#0f9b5e" },
-  { nome: "Original", colorHex: "#1d8b4e" },
-  { nome: "Sicredi", colorHex: "#3aaa35" },
-  { nome: "Sicoob", colorHex: "#003d2b" },
-];
-
+// Phase 2 selectors — backed by in-memory cache (Supabase-hydrated)
 function bootstrapLocalDefaults() {
-  if (typeof window === "undefined") return;
-  if (!activeUserId) return;
-  if (localStorage.getItem(K.bootstrappedLocal)) return;
-  const bancos: Banco[] = BANCOS_PADRAO.map((b) => ({
-    id: b.nome.toLowerCase().replace(/\s+/g, "-"),
-    nome: b.nome,
-    colorHex: b.colorHex,
-    criadoPeloUsuario: false,
-    criadoEm: new Date().toISOString(),
-  }));
-  if (!localStorage.getItem(K.bancos)) writeJSON(K.bancos, bancos);
-  if (!localStorage.getItem(K.guardado)) writeJSON(K.guardado, [] as Guardado[]);
-  if (!localStorage.getItem(K.metas)) writeJSON(K.metas, [] as Meta[]);
-  if (!localStorage.getItem(K.movMetas)) writeJSON(K.movMetas, [] as MovimentacaoMeta[]);
-  localStorage.setItem(K.bootstrappedLocal, "1");
-  invalidateLocal();
+  // Kept as a no-op for compatibility; defaults are seeded server-side
+  // via ensureDefaultBancos during hydration.
 }
 
 export function getBancos(): Banco[] {
-  if (typeof window === "undefined") return EMPTY_BANCOS;
-  if (cacheBancos === null) cacheBancos = readJSON<Banco[]>(K.bancos, EMPTY_BANCOS);
-  return cacheBancos;
+  return memBancos;
 }
 export function getGuardado(): Guardado[] {
-  if (typeof window === "undefined") return EMPTY_GUARDADO;
-  if (cacheGuardado === null) cacheGuardado = readJSON<Guardado[]>(K.guardado, EMPTY_GUARDADO);
-  return cacheGuardado;
+  return memGuardado;
 }
 export function getMetas(): Meta[] {
-  if (typeof window === "undefined") return EMPTY_METAS;
-  if (cacheMetas === null) cacheMetas = readJSON<Meta[]>(K.metas, EMPTY_METAS);
-  return cacheMetas;
+  return memMetas;
 }
 export function getMovimentacoesMeta(): MovimentacaoMeta[] {
-  if (typeof window === "undefined") return EMPTY_MOV;
-  if (cacheMov === null) cacheMov = readJSON<MovimentacaoMeta[]>(K.movMetas, EMPTY_MOV);
-  return cacheMov;
+  return memMov;
 }
 export function getBancoById(id: string): Banco | undefined {
-  return getBancos().find((b) => b.id === id);
+  return memBancos.find((b) => b.id === id);
 }
 
 // ============================================================
