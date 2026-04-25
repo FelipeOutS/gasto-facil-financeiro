@@ -23,6 +23,13 @@ type GastoInsert = TablesInsert<"gastos">;
 type GastoUpdate = TablesUpdate<"gastos">;
 type ReceitaInsert = TablesInsert<"receitas">;
 type CategoriaUpdate = TablesUpdate<"categorias">;
+type BancoInsert = TablesInsert<"bancos">;
+type BancoUpdate = TablesUpdate<"bancos">;
+type GuardadoInsert = TablesInsert<"dinheiro_guardado">;
+type GuardadoUpdate = TablesUpdate<"dinheiro_guardado">;
+type MetaInsert = TablesInsert<"metas_financeiras">;
+type MetaUpdate = TablesUpdate<"metas_financeiras">;
+type MovMetaInsert = TablesInsert<"movimentacoes_meta">;
 
 // ============================================================
 // HYBRID STORE
