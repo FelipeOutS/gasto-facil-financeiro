@@ -41,15 +41,10 @@ type MovMetaInsert = TablesInsert<"movimentacoes_meta">;
 let activeUserId: string | null = null;
 
 const SUFFIXES = {
-  // Phase 2 (still local-only)
-  bancos: "bancos",
-  guardado: "guardado",
-  metas: "metas",
-  movMetas: "movMetas",
   // bookkeeping
   bootstrappedLocal: "bootstrappedLocal:v3",
   hydratedFromCloud: "hydratedFromCloud:v1",
-  legacyMigrated: "legacyMigrated:v2",
+  legacyMigrated: "legacyMigrated:v3",
 } as const;
 
 function ns(suffix: string): string {
@@ -76,10 +71,6 @@ function readJSON<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
-function writeJSON<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
-}
 function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
@@ -96,7 +87,7 @@ function subscribe(l: () => void) {
   };
 }
 
-// ---------- IN-MEMORY CACHE (Supabase entities) ----------
+// ---------- IN-MEMORY CACHE (all entities) ----------
 const EMPTY_GASTOS: Gasto[] = [];
 const EMPTY_CATEGORIAS: Categoria[] = [];
 const EMPTY_LIMITES: Limite[] = [];
@@ -112,19 +103,15 @@ let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
 let memLimites: Limite[] = EMPTY_LIMITES;
 let memAprendizado: AprendizadoCategoria[] = EMPTY_APRENDIZADO;
 let memReceitas: Receita[] = EMPTY_RECEITAS;
+let memBancos: Banco[] = EMPTY_BANCOS;
+let memGuardado: Guardado[] = EMPTY_GUARDADO;
+let memMetas: Meta[] = EMPTY_METAS;
+let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 
-// localStorage-backed caches (Phase 2)
-let cacheBancos: Banco[] | null = null;
-let cacheGuardado: Guardado[] | null = null;
-let cacheMetas: Meta[] | null = null;
-let cacheMov: MovimentacaoMeta[] | null = null;
-
-function invalidateLocal() {
-  cacheBancos = null;
-  cacheGuardado = null;
-  cacheMetas = null;
-  cacheMov = null;
-}
+// Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
+const categoriaKeyToUuid = new Map<string, string>();
+const bancoKeyToUuid = new Map<string, string>();
+const metaKeyToUuid = new Map<string, string>();
 
 // ============================================================
 // USER SESSION
@@ -132,14 +119,20 @@ function invalidateLocal() {
 export function setActiveUserId(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
-  // Clear in-memory cloud caches on user change
+  // Clear in-memory caches on user change
   memGastos = EMPTY_GASTOS;
   memCategorias = EMPTY_CATEGORIAS;
   memLimites = EMPTY_LIMITES;
   memAprendizado = EMPTY_APRENDIZADO;
   memReceitas = EMPTY_RECEITAS;
-  hydrationStatus = uid ? "idle" : "idle";
-  invalidateLocal();
+  memBancos = EMPTY_BANCOS;
+  memGuardado = EMPTY_GUARDADO;
+  memMetas = EMPTY_METAS;
+  memMov = EMPTY_MOV;
+  categoriaKeyToUuid.clear();
+  bancoKeyToUuid.clear();
+  metaKeyToUuid.clear();
+  hydrationStatus = "idle";
   emit();
 }
 
