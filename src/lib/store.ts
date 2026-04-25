@@ -284,6 +284,129 @@ function rowToAprendizado(r: AprendizadoRow, catUuidToKey: Map<string, string>):
   };
 }
 
+// ---------- Phase 2 row mappers ----------
+type BancoRow = {
+  id: string;
+  nome: string;
+  color_hex: string;
+  criado_pelo_usuario: boolean;
+  legacy_id: string | null;
+  created_at: string;
+};
+function rowToBanco(r: BancoRow): Banco {
+  return {
+    id: r.legacy_id || r.id,
+    nome: r.nome,
+    colorHex: r.color_hex,
+    criadoPeloUsuario: r.criado_pelo_usuario,
+    criadoEm: r.created_at,
+  };
+}
+
+type GuardadoRow = {
+  id: string;
+  banco_id: string | null;
+  valor: string | number;
+  tipo_reserva: string;
+  observacao: string | null;
+  data_atualizacao: string;
+  legacy_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Guardado {
+  return {
+    id: r.legacy_id || r.id,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : "",
+    valor: Number(r.valor),
+    tipoReserva: r.tipo_reserva as TipoReserva,
+    observacao: r.observacao ?? undefined,
+    dataAtualizacao: r.data_atualizacao,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
+type MetaRow = {
+  id: string;
+  nome: string;
+  valor_objetivo: string | number;
+  valor_atual: string | number;
+  prazo: string | null;
+  descricao: string | null;
+  color_hex: string;
+  banco_id: string | null;
+  legacy_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
+  return {
+    id: r.legacy_id || r.id,
+    nome: r.nome,
+    valorObjetivo: Number(r.valor_objetivo),
+    valorAtual: Number(r.valor_atual),
+    prazo: r.prazo ?? undefined,
+    descricao: r.descricao ?? undefined,
+    colorHex: r.color_hex,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
+type MovMetaRow = {
+  id: string;
+  meta_id: string;
+  valor: string | number;
+  data: string;
+  banco_id: string | null;
+  observacao: string | null;
+  legacy_id: string | null;
+  created_at: string;
+};
+function rowToMovMeta(
+  r: MovMetaRow,
+  metaUuidToKey: Map<string, string>,
+  bancoUuidToKey: Map<string, string>,
+): MovimentacaoMeta {
+  return {
+    id: r.legacy_id || r.id,
+    metaId: metaUuidToKey.get(r.meta_id) ?? r.meta_id,
+    valor: Number(r.valor),
+    data: r.data,
+    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    observacao: r.observacao ?? undefined,
+    criadoEm: r.created_at,
+  };
+}
+
+// ---------- Default seed data ----------
+const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
+  { nome: "Nubank", colorHex: "#820ad1" },
+  { nome: "Mercado Pago", colorHex: "#00b1ea" },
+  { nome: "Itaú", colorHex: "#ec7000" },
+  { nome: "Bradesco", colorHex: "#cc092f" },
+  { nome: "Santander", colorHex: "#ec0000" },
+  { nome: "Banco do Brasil", colorHex: "#fae128" },
+  { nome: "Caixa", colorHex: "#1c5aa8" },
+  { nome: "Inter", colorHex: "#ff7a00" },
+  { nome: "C6 Bank", colorHex: "#3a3a3a" },
+  { nome: "PicPay", colorHex: "#21c25e" },
+  { nome: "PagBank", colorHex: "#048b3a" },
+  { nome: "BTG Pactual", colorHex: "#0f2a4a" },
+  { nome: "XP", colorHex: "#000000" },
+  { nome: "Neon", colorHex: "#00d8c0" },
+  { nome: "Will Bank", colorHex: "#0f9b5e" },
+  { nome: "Original", colorHex: "#1d8b4e" },
+  { nome: "Sicredi", colorHex: "#3aaa35" },
+  { nome: "Sicoob", colorHex: "#003d2b" },
+];
+
+function bancoLegacyKey(nome: string): string {
+  return nome.toLowerCase().replace(/\s+/g, "-");
+}
+
 // ---------- Ensure default categories exist for the user ----------
 async function ensureDefaultCategorias(userId: string): Promise<void> {
   const { data: existing } = await supabase
@@ -303,6 +426,26 @@ async function ensureDefaultCategorias(userId: string): Promise<void> {
   }));
   if (toInsert.length > 0) {
     await supabase.from("categorias").insert(toInsert);
+  }
+}
+
+// ---------- Ensure default bancos exist for the user ----------
+async function ensureDefaultBancos(userId: string): Promise<void> {
+  const { data: existing } = await supabase
+    .from("bancos")
+    .select("id")
+    .eq("user_id", userId)
+    .limit(1);
+  if ((existing ?? []).length > 0) return;
+  const toInsert: BancoInsert[] = BANCOS_PADRAO.map((b) => ({
+    user_id: userId,
+    nome: b.nome,
+    color_hex: b.colorHex,
+    criado_pelo_usuario: false,
+    legacy_id: bancoLegacyKey(b.nome),
+  }));
+  if (toInsert.length > 0) {
+    await supabase.from("bancos").insert(toInsert);
   }
 }
 
