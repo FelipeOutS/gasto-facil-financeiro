@@ -172,8 +172,7 @@ function rowToCategoria(r: CategoriaRow): Categoria {
   };
 }
 
-// Lookup uuid by category-key (legacy_id or uuid) for FK writes.
-const categoriaKeyToUuid = new Map<string, string>();
+// (categoriaKeyToUuid declared earlier)
 
 type GastoRow = {
   id: string;
