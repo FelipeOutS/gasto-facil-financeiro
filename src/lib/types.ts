@@ -45,6 +45,8 @@ export type Gasto = {
   essencial?: boolean;
   /** Indica que o gasto é fixo mensal (Netflix, academia, aluguel…) */
   gastoFixo?: boolean;
+  /** ID do cartão de crédito usado (quando formaPagamento === "credito") */
+  cartaoId?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
