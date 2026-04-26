@@ -744,15 +744,18 @@ function WelcomeCard({
   icon,
   title,
   tint,
+  search,
 }: {
   to: "/renda" | "/adicionar" | "/guardado" | "/metas";
   icon: React.ReactNode;
   title: string;
   tint: "primary" | "success" | "muted";
+  search?: Record<string, unknown>;
 }) {
   return (
     <Link
       to={to}
+      search={search as never}
       className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
     >
       <span
