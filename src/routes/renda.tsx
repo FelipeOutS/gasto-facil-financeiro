@@ -1,6 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, Repeat } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  TrendingUp,
+  Repeat,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
   addReceita,
@@ -13,7 +22,13 @@ import {
   type UpdateReceitaScope,
 } from "@/lib/store";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
-import { formatBRL, formatDateBR, parseBRLInput, todayISO } from "@/lib/format";
+import {
+  formatBRL,
+  formatDateBR,
+  formatMonthYear,
+  parseBRLInput,
+  todayISO,
+} from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,28 +59,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+
+type RendaSearch = { ano?: number; mes?: number };
 
 export const Route = createFileRoute("/renda")({
   head: () => ({ meta: [{ title: "Minha renda — Gasto Fácil" }] }),
+  validateSearch: (search: Record<string, unknown>): RendaSearch => {
+    const ano = Number(search.ano);
+    const mes = Number(search.mes);
+    return {
+      ano: Number.isFinite(ano) && ano > 2000 ? ano : undefined,
+      mes: Number.isFinite(mes) && mes >= 1 && mes <= 12 ? mes : undefined,
+    };
+  },
   component: RendaPage,
 });
 
 function RendaPage() {
   const ready = useBootstrap();
   const receitas = useStore(() => getReceitas());
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/renda" });
 
   const today = new Date();
-  const mesAtual = today.getMonth() + 1;
-  const anoAtual = today.getFullYear();
+  const [ym, setYm] = useState({
+    ano: search.ano ?? today.getFullYear(),
+    mes: search.mes ?? today.getMonth() + 1,
+  });
+
+  // Sincroniza URL quando o mês muda (sem disparar loop)
+  useEffect(() => {
+    void navigate({ search: { ano: ym.ano, mes: ym.mes }, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ym.ano, ym.mes]);
+
+  function changeMonth(delta: number) {
+    const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
+    setYm({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
+  }
 
   const doMes = useMemo(
-    () => receitas.filter((r) => r.mes === mesAtual && r.ano === anoAtual),
-    [receitas, mesAtual, anoAtual],
+    () => receitas.filter((r) => r.mes === ym.mes && r.ano === ym.ano),
+    [receitas, ym.mes, ym.ano],
   );
   const totalMes = useMemo(() => doMes.reduce((s, r) => s + r.valor, 0), [doMes]);
   const salarioMes = useMemo(
@@ -73,6 +111,20 @@ function RendaPage() {
     [doMes],
   );
   const outrasMes = totalMes - salarioMes;
+
+  // ---------- Histórico (todas, agrupadas por mês desc) ----------
+  const historico = useMemo(() => {
+    const groups = new Map<string, { ano: number; mes: number; itens: Receita[] }>();
+    for (const r of receitas) {
+      const key = `${r.ano}-${String(r.mes).padStart(2, "0")}`;
+      const g = groups.get(key);
+      if (g) g.itens.push(r);
+      else groups.set(key, { ano: r.ano, mes: r.mes, itens: [r] });
+    }
+    return Array.from(groups.values()).sort((a, b) =>
+      a.ano !== b.ano ? b.ano - a.ano : b.mes - a.mes,
+    );
+  }, [receitas]);
 
   // ---------- Nova entrada ----------
   const [open, setOpen] = useState(false);
@@ -133,7 +185,28 @@ function RendaPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      {/* Navegação de mês */}
+      <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-card px-2 py-2">
+        <button
+          onClick={() => changeMonth(-1)}
+          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <p className="text-sm font-semibold capitalize">
+          {formatMonthYear(ym.ano, ym.mes)}
+        </p>
+        <button
+          onClick={() => changeMonth(1)}
+          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          aria-label="Próximo mês"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+
+      <section className="mt-3 rounded-3xl border border-border bg-card p-5 shadow-elevated">
         <p className="text-xs font-medium text-muted-foreground">Total de entradas no mês</p>
         <p className="num mt-1 text-4xl font-extrabold tracking-tight">{formatBRL(totalMes)}</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -232,76 +305,129 @@ function RendaPage() {
         </DialogContent>
       </Dialog>
 
-      <section className="mt-5">
-        <h2 className="text-sm font-semibold">Entradas do mês</h2>
-        {doMes.length === 0 ? (
-          <div className="mt-3 rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-            Nenhuma renda cadastrada neste mês.
-            <div className="mt-3">
-              <Button size="sm" onClick={() => setOpen(true)}>
-                <Plus className="mr-1 h-4 w-4" /> Cadastrar renda
-              </Button>
+      {/* Tabs: Este mês / Histórico */}
+      <Tabs defaultValue="mes" className="mt-5">
+        <TabsList className="grid w-full grid-cols-2 bg-card">
+          <TabsTrigger value="mes">Este mês</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="mes" className="mt-3">
+          {doMes.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
+              Nenhuma renda cadastrada neste mês.
+              <div className="mt-3">
+                <Button size="sm" onClick={() => setOpen(true)}>
+                  <Plus className="mr-1 h-4 w-4" /> Cadastrar renda
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {doMes.map((r) => {
-              const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
-              return (
-                <li
+          ) : (
+            <ul className="space-y-2">
+              {doMes.map((r) => (
+                <ReceitaItem
                   key={r.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
-                >
-                  <button
-                    onClick={() => setEditTarget(r)}
-                    className="flex flex-1 items-center gap-3 text-left"
-                    aria-label={`Editar ${r.descricao}`}
-                  >
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
-                      {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{r.descricao}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {tipoLabel} · {formatDateBR(r.data)}
-                        {r.recorrente ? " · recorrente" : ""}
+                  r={r}
+                  onEdit={() => setEditTarget(r)}
+                  onDelete={() => setDeleteTarget(r)}
+                />
+              ))}
+            </ul>
+          )}
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-3">
+          {historico.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
+              Sem rendas cadastradas ainda.
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {historico.map((g) => {
+                const total = g.itens.reduce((s, r) => s + r.valor, 0);
+                return (
+                  <div key={`${g.ano}-${g.mes}`}>
+                    <div className="mb-2 flex items-baseline justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {formatMonthYear(g.ano, g.mes)}
+                      </p>
+                      <p className="num text-xs font-semibold text-success">
+                        {formatBRL(total)}
                       </p>
                     </div>
-                    <p className="num text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
-                  </button>
-                  <div className="flex items-center gap-1 pl-1">
-                    <button
-                      onClick={() => setEditTarget(r)}
-                      className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
-                      aria-label="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(r)}
-                      className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <ul className="space-y-2">
+                      {g.itens.map((r) => (
+                        <ReceitaItem
+                          key={r.id}
+                          r={r}
+                          onEdit={() => setEditTarget(r)}
+                          onDelete={() => setDeleteTarget(r)}
+                        />
+                      ))}
+                    </ul>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
-      <EditReceitaDialog
-        receita={editTarget}
-        onClose={() => setEditTarget(null)}
-      />
-
-      <DeleteReceitaDialog
-        receita={deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-      />
+      <EditReceitaDialog receita={editTarget} onClose={() => setEditTarget(null)} />
+      <DeleteReceitaDialog receita={deleteTarget} onClose={() => setDeleteTarget(null)} />
     </MobileShell>
+  );
+}
+
+// =====================================================================
+// Item de receita
+// =====================================================================
+function ReceitaItem({
+  r,
+  onEdit,
+  onDelete,
+}: {
+  r: Receita;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
+  return (
+    <li className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+      <button
+        onClick={onEdit}
+        className="flex flex-1 items-center gap-3 text-left"
+        aria-label={`Editar ${r.descricao}`}
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
+          {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{r.descricao}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {tipoLabel} · {formatDateBR(r.data)}
+            {r.recorrente ? " · recorrente" : ""}
+          </p>
+        </div>
+        <p className="num text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
+      </button>
+      <div className="flex items-center gap-1 pl-1">
+        <button
+          onClick={onEdit}
+          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          aria-label="Editar"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
+          aria-label="Excluir"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </li>
   );
 }
 
@@ -322,14 +448,15 @@ function EditReceitaDialog({
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
-  // Sincroniza valores quando abre
-  useMemoSync(receita, (r) => {
-    setDescricao(r.descricao);
-    setValorStr(r.valor.toFixed(2).replace(".", ","));
-    setData(r.data);
-    setTipo(r.tipo);
-    setScope("single");
-  });
+  useEffect(() => {
+    if (receita) {
+      setDescricao(receita.descricao);
+      setValorStr(receita.valor.toFixed(2).replace(".", ","));
+      setData(receita.data);
+      setTipo(receita.tipo);
+      setScope("single");
+    }
+  }, [receita]);
 
   function handleSave() {
     if (!receita) return;
@@ -421,7 +548,7 @@ function EditReceitaDialog({
                   <span>
                     <span className="block font-medium">Alterar este mês e os próximos</span>
                     <span className="block text-xs text-muted-foreground">
-                      Preserva o histórico dos meses anteriores.
+                      Preserva o histórico anterior.
                     </span>
                   </span>
                 </label>
@@ -436,7 +563,7 @@ function EditReceitaDialog({
                 </label>
               </RadioGroup>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                A nova data informada acima só é aplicada nesta receita; os demais meses mantêm seu mês/ano originais.
+                A nova data informada acima só é aplicada nesta receita.
               </p>
             </div>
           )}
@@ -463,7 +590,9 @@ function DeleteReceitaDialog({
   const open = !!receita;
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
-  useMemoSync(receita, () => setScope("single"));
+  useEffect(() => {
+    if (receita) setScope("single");
+  }, [receita]);
 
   function handleConfirm() {
     if (!receita) return;
@@ -509,7 +638,7 @@ function DeleteReceitaDialog({
                 <span className="font-medium">Este mês e os próximos</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
-                <RadioGroupItem value="all" id="del-all" className="mt-0.5" />
+                <RadioGroupItem value="del-all" id="del-all" className="mt-0.5" />
                 <span className="font-medium">Toda a recorrência</span>
               </label>
             </RadioGroup>
@@ -528,13 +657,4 @@ function DeleteReceitaDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
-
-// Hook utilitário: roda `fn(value)` quando `value` muda para um objeto não-nulo.
-function useMemoSync<T>(value: T | null, fn: (v: T) => void) {
-  const id = (value as unknown as { id?: string } | null)?.id ?? null;
-  useMemo(() => {
-    if (value) fn(value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
 }
