@@ -945,6 +945,7 @@ export type NovoGastoInput = {
   recorrenteMeses?: number;
   essencial?: boolean;
   gastoFixo?: boolean;
+  cartaoId?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
