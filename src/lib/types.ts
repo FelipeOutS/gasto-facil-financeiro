@@ -176,3 +176,38 @@ export type MovimentacaoMeta = {
   observacao?: string;
   criadoEm: string;
 };
+
+// ---------- Cartões de crédito ----------
+export type Cartao = {
+  id: string;
+  nome: string;
+  banco: string;
+  limiteTotal: number;
+  /** Dia do mês em que a fatura fecha (1–31) */
+  diaFechamento: number;
+  /** Dia do mês em que a fatura vence (1–31) */
+  diaVencimento: number;
+  /** Cor hex para exibição */
+  cor: string;
+  observacao?: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export const BANCOS_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
+  { nome: "Nubank", cor: "#820ad1" },
+  { nome: "Itaú", cor: "#ec7000" },
+  { nome: "Santander", cor: "#ec0000" },
+  { nome: "Mercado Pago", cor: "#00b1ea" },
+  { nome: "Inter", cor: "#ff7a00" },
+  { nome: "C6 Bank", cor: "#3a3a3a" },
+  { nome: "Bradesco", cor: "#cc092f" },
+  { nome: "Banco do Brasil", cor: "#fae128" },
+  { nome: "Caixa", cor: "#1c5aa8" },
+  { nome: "PicPay", cor: "#21c25e" },
+  { nome: "Will Bank", cor: "#0f9b5e" },
+  { nome: "Outro", cor: "#8b5cf6" },
+];
+
+/** Status de uma fatura calculada dinamicamente */
+export type StatusFatura = "aberta" | "fechada" | "paga";
