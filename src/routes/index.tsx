@@ -364,6 +364,7 @@ function Index() {
       {/* Atalhos: Renda */}
       <Link
         to="/renda"
+        search={{ ano: ym.ano, mes: ym.mes }}
         className="mt-2.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
