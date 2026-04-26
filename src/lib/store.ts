@@ -1389,6 +1389,131 @@ export function deleteReceita(id: string) {
     });
 }
 
+/** Exclui todas as receitas de uma recorrência (a partir de um mês opcional). */
+export function deleteReceitaRecorrencia(
+  recorrenciaId: string,
+  fromMes?: number,
+  fromAno?: number,
+) {
+  const shouldRemove = (r: Receita) => {
+    if (r.recorrenciaId !== recorrenciaId) return false;
+    if (fromMes == null || fromAno == null) return true;
+    return r.ano > fromAno || (r.ano === fromAno && r.mes >= fromMes);
+  };
+  const removedIds = memReceitas.filter(shouldRemove).map((r) => r.id);
+  memReceitas = memReceitas.filter((r) => !shouldRemove(r));
+  emit();
+  if (!activeUserId || removedIds.length === 0) return;
+  void supabase
+    .from("receitas")
+    .delete()
+    .in("id", removedIds)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteReceitaRecorrencia failed", error);
+    });
+}
+
+export type ReceitaEditableFields = {
+  descricao?: string;
+  valor?: number;
+  data?: string;
+  tipo?: TipoReceita;
+};
+
+export type UpdateReceitaScope = "single" | "forward" | "all";
+
+/**
+ * Atualiza uma receita.
+ * - "single": apenas a receita selecionada
+ * - "forward": esta e todas as próximas da mesma recorrência
+ * - "all": todas as receitas da mesma recorrência
+ *
+ * Se a receita não for recorrente, apenas o escopo "single" é aplicado.
+ */
+export function updateReceita(
+  id: string,
+  fields: ReceitaEditableFields,
+  scope: UpdateReceitaScope = "single",
+) {
+  const target = memReceitas.find((r) => r.id === id);
+  if (!target) return;
+  const now = new Date().toISOString();
+
+  const buildPatch = (r: Receita): Receita => {
+    const next: Receita = { ...r, atualizadoEm: now };
+    if (fields.descricao !== undefined) next.descricao = fields.descricao;
+    if (fields.valor !== undefined) next.valor = fields.valor;
+    if (fields.tipo !== undefined) next.tipo = fields.tipo;
+    if (fields.data !== undefined) {
+      // Para escopo "single" trocamos data/mes/ano da própria receita.
+      // Para escopos "forward"/"all" só atualizamos a data quando for o item alvo;
+      // os demais mantêm seu mês/ano originais (preservando histórico).
+      if (r.id === target.id) {
+        const d = new Date(fields.data + "T00:00:00");
+        next.data = fields.data;
+        next.mes = d.getMonth() + 1;
+        next.ano = d.getFullYear();
+      }
+    }
+    return next;
+  };
+
+  let affected: Receita[] = [];
+  if (scope === "single" || !target.recorrenciaId) {
+    affected = [buildPatch(target)];
+  } else if (scope === "forward") {
+    affected = memReceitas
+      .filter(
+        (r) =>
+          r.recorrenciaId === target.recorrenciaId &&
+          (r.ano > target.ano || (r.ano === target.ano && r.mes >= target.mes)),
+      )
+      .map(buildPatch);
+  } else {
+    affected = memReceitas
+      .filter((r) => r.recorrenciaId === target.recorrenciaId)
+      .map(buildPatch);
+  }
+
+  const affectedMap = new Map(affected.map((r) => [r.id, r]));
+  memReceitas = memReceitas.map((r) => affectedMap.get(r.id) ?? r);
+  emit();
+
+  if (!activeUserId) return;
+
+  // Constrói payload por linha (apenas campos a alterar)
+  const basePatch: TablesUpdate<"receitas"> = {};
+  if (fields.descricao !== undefined) basePatch.descricao = fields.descricao;
+  if (fields.valor !== undefined) basePatch.valor = fields.valor;
+  if (fields.tipo !== undefined) basePatch.tipo = fields.tipo;
+
+  // Para descrição/valor/tipo aplicamos em lote
+  const ids = affected.map((r) => r.id);
+  if (Object.keys(basePatch).length > 0 && ids.length > 0) {
+    void supabase
+      .from("receitas")
+      .update(basePatch)
+      .in("id", ids)
+      .then(({ error }) => {
+        if (error) console.error("[store] updateReceita batch failed", error);
+      });
+  }
+
+  // Data só se aplica ao próprio item alvo
+  if (fields.data !== undefined) {
+    const updated = affectedMap.get(target.id);
+    if (updated) {
+      void supabase
+        .from("receitas")
+        .update({ data: updated.data, mes: updated.mes, ano: updated.ano })
+        .eq("id", target.id)
+        .then(({ error }) => {
+          if (error) console.error("[store] updateReceita data failed", error);
+        });
+    }
+  }
+}
+
 // ============================================================
 // PHASE 2: Bancos / Guardado / Metas (still localStorage)
 // ============================================================
