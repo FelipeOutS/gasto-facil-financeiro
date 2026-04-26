@@ -1482,7 +1482,7 @@ export function updateReceita(
   if (!activeUserId) return;
 
   // Constrói payload por linha (apenas campos a alterar)
-  const basePatch: Record<string, unknown> = {};
+  const basePatch: TablesUpdate<"receitas"> = {};
   if (fields.descricao !== undefined) basePatch.descricao = fields.descricao;
   if (fields.valor !== undefined) basePatch.valor = fields.valor;
   if (fields.tipo !== undefined) basePatch.tipo = fields.tipo;
