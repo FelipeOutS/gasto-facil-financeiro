@@ -392,6 +392,33 @@ function rowToMovMeta(
   };
 }
 
+type CartaoRow = {
+  id: string;
+  nome: string;
+  banco: string;
+  limite_total: string | number;
+  dia_fechamento: number;
+  dia_vencimento: number;
+  cor: string;
+  observacao: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToCartao(r: CartaoRow): Cartao {
+  return {
+    id: r.id,
+    nome: r.nome,
+    banco: r.banco,
+    limiteTotal: Number(r.limite_total),
+    diaFechamento: r.dia_fechamento,
+    diaVencimento: r.dia_vencimento,
+    cor: r.cor,
+    observacao: r.observacao ?? undefined,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
