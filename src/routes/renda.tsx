@@ -1,15 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, TrendingUp, Repeat } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, Repeat } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
   addReceita,
   deleteReceita,
+  deleteReceitaRecorrencia,
   getReceitas,
+  updateReceita,
   useBootstrap,
   useStore,
+  type UpdateReceitaScope,
 } from "@/lib/store";
-import { TIPOS_RECEITA, type TipoReceita } from "@/lib/types";
+import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput, todayISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +34,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/renda")({
@@ -57,6 +74,7 @@ function RendaPage() {
   );
   const outrasMes = totalMes - salarioMes;
 
+  // ---------- Nova entrada ----------
   const [open, setOpen] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [valorStr, setValorStr] = useState("");
@@ -92,6 +110,10 @@ function RendaPage() {
     setOpen(false);
     reset();
   }
+
+  // ---------- Editar / Excluir ----------
+  const [editTarget, setEditTarget] = useState<Receita | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Receita | null>(null);
 
   if (!ready) return <MobileShell><div /></MobileShell>;
 
@@ -214,29 +236,50 @@ function RendaPage() {
         <h2 className="text-sm font-semibold">Entradas do mês</h2>
         {doMes.length === 0 ? (
           <div className="mt-3 rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-            Nenhuma entrada cadastrada neste mês.
+            Nenhuma renda cadastrada neste mês.
+            <div className="mt-3">
+              <Button size="sm" onClick={() => setOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" /> Cadastrar renda
+              </Button>
+            </div>
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
             {doMes.map((r) => {
               const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
               return (
-                <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
-                    {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{r.descricao}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {tipoLabel} · {formatDateBR(r.data)}
-                      {r.recorrente ? " · recorrente" : ""}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
+                <li
+                  key={r.id}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                >
+                  <button
+                    onClick={() => setEditTarget(r)}
+                    className="flex flex-1 items-center gap-3 text-left"
+                    aria-label={`Editar ${r.descricao}`}
+                  >
+                    <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
+                      {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.descricao}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {tipoLabel} · {formatDateBR(r.data)}
+                        {r.recorrente ? " · recorrente" : ""}
+                      </p>
+                    </div>
                     <p className="num text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
+                  </button>
+                  <div className="flex items-center gap-1 pl-1">
                     <button
-                      onClick={() => { deleteReceita(r.id); toast.success("Entrada removida"); }}
-                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setEditTarget(r)}
+                      className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+                      aria-label="Editar"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(r)}
+                      className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
                       aria-label="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -248,6 +291,250 @@ function RendaPage() {
           </ul>
         )}
       </section>
+
+      <EditReceitaDialog
+        receita={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
+
+      <DeleteReceitaDialog
+        receita={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+      />
     </MobileShell>
   );
+}
+
+// =====================================================================
+// Diálogo de edição
+// =====================================================================
+function EditReceitaDialog({
+  receita,
+  onClose,
+}: {
+  receita: Receita | null;
+  onClose: () => void;
+}) {
+  const open = !!receita;
+  const [descricao, setDescricao] = useState("");
+  const [valorStr, setValorStr] = useState("");
+  const [data, setData] = useState(todayISO());
+  const [tipo, setTipo] = useState<TipoReceita>("salario");
+  const [scope, setScope] = useState<UpdateReceitaScope>("single");
+
+  // Sincroniza valores quando abre
+  useMemoSync(receita, (r) => {
+    setDescricao(r.descricao);
+    setValorStr(r.valor.toFixed(2).replace(".", ","));
+    setData(r.data);
+    setTipo(r.tipo);
+    setScope("single");
+  });
+
+  function handleSave() {
+    if (!receita) return;
+    const valor = parseBRLInput(valorStr);
+    if (!valor || !descricao.trim()) {
+      toast.error("Preencha descrição e valor");
+      return;
+    }
+    updateReceita(
+      receita.id,
+      { descricao: descricao.trim(), valor, data, tipo },
+      receita.recorrente && receita.recorrenciaId ? scope : "single",
+    );
+    toast.success("Renda atualizada");
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar renda</DialogTitle>
+          <DialogDescription>Altere os detalhes desta entrada.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Descrição</Label>
+            <Input
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              className="mt-1 h-11 bg-card-elevated"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Input
+                inputMode="decimal"
+                value={valorStr}
+                onChange={(e) => setValorStr(e.target.value)}
+                className="num mt-1 h-11 bg-card-elevated"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Data</Label>
+              <Input
+                type="date"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                className="mt-1 h-11 bg-card-elevated"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Tipo</Label>
+            <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
+              <SelectTrigger className="mt-1 h-11 bg-card-elevated">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS_RECEITA.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {receita?.recorrente && receita.recorrenciaId && (
+            <div className="rounded-xl border border-border bg-card-elevated p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Esta é uma renda recorrente. Como aplicar a alteração?
+              </p>
+              <RadioGroup
+                value={scope}
+                onValueChange={(v) => setScope(v as UpdateReceitaScope)}
+                className="mt-2 space-y-2"
+              >
+                <label className="flex items-start gap-2 text-sm">
+                  <RadioGroupItem value="single" id="scope-single" className="mt-0.5" />
+                  <span>
+                    <span className="block font-medium">Alterar somente este mês</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Não muda os outros meses.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 text-sm">
+                  <RadioGroupItem value="forward" id="scope-forward" className="mt-0.5" />
+                  <span>
+                    <span className="block font-medium">Alterar este mês e os próximos</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Preserva o histórico dos meses anteriores.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 text-sm">
+                  <RadioGroupItem value="all" id="scope-all" className="mt-0.5" />
+                  <span>
+                    <span className="block font-medium">Alterar toda a recorrência</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Atualiza todos os meses ligados a esta renda.
+                    </span>
+                  </span>
+                </label>
+              </RadioGroup>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                A nova data informada acima só é aplicada nesta receita; os demais meses mantêm seu mês/ano originais.
+              </p>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =====================================================================
+// Diálogo de exclusão
+// =====================================================================
+function DeleteReceitaDialog({
+  receita,
+  onClose,
+}: {
+  receita: Receita | null;
+  onClose: () => void;
+}) {
+  const open = !!receita;
+  const [scope, setScope] = useState<UpdateReceitaScope>("single");
+
+  useMemoSync(receita, () => setScope("single"));
+
+  function handleConfirm() {
+    if (!receita) return;
+    if (receita.recorrente && receita.recorrenciaId && scope !== "single") {
+      if (scope === "forward") {
+        deleteReceitaRecorrencia(receita.recorrenciaId, receita.mes, receita.ano);
+      } else {
+        deleteReceitaRecorrencia(receita.recorrenciaId);
+      }
+    } else {
+      deleteReceita(receita.id);
+    }
+    toast.success("Renda excluída");
+    onClose();
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir renda?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta renda? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        {receita?.recorrente && receita.recorrenciaId && (
+          <div className="rounded-xl border border-border bg-card-elevated p-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              Esta renda é recorrente. O que excluir?
+            </p>
+            <RadioGroup
+              value={scope}
+              onValueChange={(v) => setScope(v as UpdateReceitaScope)}
+              className="mt-2 space-y-2"
+            >
+              <label className="flex items-start gap-2 text-sm">
+                <RadioGroupItem value="single" id="del-single" className="mt-0.5" />
+                <span className="font-medium">Somente este mês</span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <RadioGroupItem value="forward" id="del-forward" className="mt-0.5" />
+                <span className="font-medium">Este mês e os próximos</span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <RadioGroupItem value="all" id="del-all" className="mt-0.5" />
+                <span className="font-medium">Toda a recorrência</span>
+              </label>
+            </RadioGroup>
+          </div>
+        )}
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// Hook utilitário: roda `fn(value)` quando `value` muda para um objeto não-nulo.
+function useMemoSync<T>(value: T | null, fn: (v: T) => void) {
+  const id = (value as unknown as { id?: string } | null)?.id ?? null;
+  useMemo(() => {
+    if (value) fn(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 }
