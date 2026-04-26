@@ -98,6 +98,7 @@ const EMPTY_BANCOS: Banco[] = [];
 const EMPTY_GUARDADO: Guardado[] = [];
 const EMPTY_METAS: Meta[] = [];
 const EMPTY_MOV: MovimentacaoMeta[] = [];
+const EMPTY_CARTOES: Cartao[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -108,11 +109,17 @@ let memBancos: Banco[] = EMPTY_BANCOS;
 let memGuardado: Guardado[] = EMPTY_GUARDADO;
 let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
+let memCartoes: Cartao[] = EMPTY_CARTOES;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
 const bancoKeyToUuid = new Map<string, string>();
 const metaKeyToUuid = new Map<string, string>();
+
+// Supabase client typed loosely for the `cartoes` table — types may not be regenerated yet.
+// RLS still protects all access; user_id is enforced server-side.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sbAny = supabase as unknown as any;
 
 // ============================================================
 // USER SESSION
