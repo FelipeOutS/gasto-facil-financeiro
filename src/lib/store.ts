@@ -1109,23 +1109,14 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
 export function addGasto(input: NovoGastoInput): Gasto[] {
   if (!activeUserId) return [];
   const built = buildGastosFromInput(input, activeUserId);
-  // Attach cartao_id to client objects (kept in memory).
-  if (input.cartaoId) {
-    for (const b of built) b.client.cartaoId = input.cartaoId;
-  }
   const created = built.map((b) => b.client);
   // Optimistic update
   memGastos = [...memGastos, ...created];
   emit();
-  // Background sync — cast to attach cartao_id (column not yet in generated types)
-  const rows = built.map((b) =>
-    input.cartaoId
-      ? ({ ...b.row, cartao_id: input.cartaoId } as GastoInsert & { cartao_id: string })
-      : b.row,
-  );
+  // Background sync
   void supabase
     .from("gastos")
-    .insert(rows)
+    .insert(built.map((b) => b.row))
     .then(({ error }) => {
       if (error) {
         console.error("[store] addGasto failed", error);
