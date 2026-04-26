@@ -638,7 +638,7 @@ function DeleteReceitaDialog({
                 <span className="font-medium">Este mês e os próximos</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
-                <RadioGroupItem value="del-all" id="del-all" className="mt-0.5" />
+                <RadioGroupItem value="all" id="del-all" className="mt-0.5" />
                 <span className="font-medium">Toda a recorrência</span>
               </label>
             </RadioGroup>
