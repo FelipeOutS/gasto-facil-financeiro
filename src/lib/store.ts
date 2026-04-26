@@ -565,6 +565,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
+    memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
+      (r: CartaoRow) => rowToCartao(r),
+    );
 
     setHydrationStatus("ready");
   } catch (e) {
