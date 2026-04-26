@@ -85,6 +85,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cartoes: {
+        Row: {
+          banco: string
+          cor: string
+          created_at: string
+          dia_fechamento: number
+          dia_vencimento: number
+          id: string
+          legacy_id: string | null
+          limite_total: number
+          nome: string
+          observacao: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banco?: string
+          cor?: string
+          created_at?: string
+          dia_fechamento?: number
+          dia_vencimento?: number
+          id?: string
+          legacy_id?: string | null
+          limite_total?: number
+          nome: string
+          observacao?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banco?: string
+          cor?: string
+          created_at?: string
+          dia_fechamento?: number
+          dia_vencimento?: number
+          id?: string
+          legacy_id?: string | null
+          limite_total?: number
+          nome?: string
+          observacao?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           color_var: string
@@ -171,6 +216,7 @@ export type Database = {
       gastos: {
         Row: {
           ano: number
+          cartao_id: string | null
           categoria_id: string | null
           confirmado: boolean
           created_at: string
@@ -195,6 +241,7 @@ export type Database = {
         }
         Insert: {
           ano: number
+          cartao_id?: string | null
           categoria_id?: string | null
           confirmado?: boolean
           created_at?: string
@@ -219,6 +266,7 @@ export type Database = {
         }
         Update: {
           ano?: number
+          cartao_id?: string | null
           categoria_id?: string | null
           confirmado?: boolean
           created_at?: string

@@ -97,6 +97,7 @@ const EMPTY_BANCOS: Banco[] = [];
 const EMPTY_GUARDADO: Guardado[] = [];
 const EMPTY_METAS: Meta[] = [];
 const EMPTY_MOV: MovimentacaoMeta[] = [];
+const EMPTY_CARTOES: Cartao[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -107,11 +108,17 @@ let memBancos: Banco[] = EMPTY_BANCOS;
 let memGuardado: Guardado[] = EMPTY_GUARDADO;
 let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
+let memCartoes: Cartao[] = EMPTY_CARTOES;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
 const bancoKeyToUuid = new Map<string, string>();
 const metaKeyToUuid = new Map<string, string>();
+
+// Supabase client typed loosely for the `cartoes` table — types may not be regenerated yet.
+// RLS still protects all access; user_id is enforced server-side.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sbAny = supabase as unknown as any;
 
 // ============================================================
 // USER SESSION
@@ -129,6 +136,7 @@ export function setActiveUserId(uid: string | null) {
   memGuardado = EMPTY_GUARDADO;
   memMetas = EMPTY_METAS;
   memMov = EMPTY_MOV;
+  memCartoes = EMPTY_CARTOES;
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -194,6 +202,7 @@ type GastoRow = {
   recorrencia_id: string | null;
   essencial: boolean | null;
   gasto_fixo: boolean | null;
+  cartao_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -218,6 +227,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     recorrenciaId: r.recorrencia_id ?? undefined,
     essencial: r.essencial ?? undefined,
     gastoFixo: r.gasto_fixo ?? undefined,
+    cartaoId: r.cartao_id ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -381,6 +391,33 @@ function rowToMovMeta(
   };
 }
 
+type CartaoRow = {
+  id: string;
+  nome: string;
+  banco: string;
+  limite_total: string | number;
+  dia_fechamento: number;
+  dia_vencimento: number;
+  cor: string;
+  observacao: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToCartao(r: CartaoRow): Cartao {
+  return {
+    id: r.id,
+    nome: r.nome,
+    banco: r.banco,
+    limiteTotal: Number(r.limite_total),
+    diaFechamento: r.dia_fechamento,
+    diaVencimento: r.dia_vencimento,
+    cor: r.cor,
+    observacao: r.observacao ?? undefined,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
@@ -500,13 +537,14 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
       supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
       supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
       supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
+      sbAny.from("cartoes").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -515,6 +553,8 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (aprendRes.error) throw aprendRes.error;
     if (guardadoRes.error) throw guardadoRes.error;
     if (movRes.error) throw movRes.error;
+    // Cartões table is optional in case migration hasn't run yet — log but don't break.
+    if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
 
     memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
@@ -524,6 +564,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
+    memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
+      (r: CartaoRow) => rowToCartao(r),
+    );
 
     setHydrationStatus("ready");
   } catch (e) {
@@ -901,6 +944,7 @@ export type NovoGastoInput = {
   recorrenteMeses?: number;
   essencial?: boolean;
   gastoFixo?: boolean;
+  cartaoId?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
