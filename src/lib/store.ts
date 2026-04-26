@@ -137,6 +137,7 @@ export function setActiveUserId(uid: string | null) {
   memGuardado = EMPTY_GUARDADO;
   memMetas = EMPTY_METAS;
   memMov = EMPTY_MOV;
+  memCartoes = EMPTY_CARTOES;
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
