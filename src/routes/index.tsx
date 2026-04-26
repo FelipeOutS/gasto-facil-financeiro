@@ -170,6 +170,7 @@ function Index() {
         <section className="mt-6 grid grid-cols-2 gap-3">
           <WelcomeCard
             to="/renda"
+            search={{ ano: ym.ano, mes: ym.mes }}
             icon={<ArrowUp className="h-5 w-5" />}
             title="Cadastrar salário"
             tint="success"
@@ -363,6 +364,7 @@ function Index() {
       {/* Atalhos: Renda */}
       <Link
         to="/renda"
+        search={{ ano: ym.ano, mes: ym.mes }}
         className="mt-2.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
@@ -742,15 +744,18 @@ function WelcomeCard({
   icon,
   title,
   tint,
+  search,
 }: {
   to: "/renda" | "/adicionar" | "/guardado" | "/metas";
   icon: React.ReactNode;
   title: string;
   tint: "primary" | "success" | "muted";
+  search?: Record<string, unknown>;
 }) {
   return (
     <Link
       to={to}
+      search={search as never}
       className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
     >
       <span
