@@ -203,6 +203,7 @@ type GastoRow = {
   recorrencia_id: string | null;
   essencial: boolean | null;
   gasto_fixo: boolean | null;
+  cartao_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -227,6 +228,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     recorrenciaId: r.recorrencia_id ?? undefined,
     essencial: r.essencial ?? undefined,
     gastoFixo: r.gasto_fixo ?? undefined,
+    cartaoId: r.cartao_id ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
