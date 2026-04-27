@@ -60,6 +60,7 @@ function Index() {
   const receitas = useStore(() => getReceitas());
   const guardado = useStore(() => getGuardado());
   const metas = useStore(() => getMetas());
+  const contas = useStore(() => getContasAPagar());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
 
   const doMes = useMemo(
