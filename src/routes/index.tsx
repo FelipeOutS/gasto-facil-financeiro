@@ -15,6 +15,7 @@ import {
   Lock,
   PieChart as PieChartIcon,
   ListChecks,
+  CalendarClock,
 } from "lucide-react";
 import {
   PieChart,
@@ -27,11 +28,13 @@ import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategoriaById,
+  getContasAPagar,
   getGastos,
   getGuardado,
   getLimite,
   getMetas,
   getReceitas,
+  statusContaEfetivo,
   statusMeta,
   useBootstrap,
   useStore,
@@ -57,6 +60,7 @@ function Index() {
   const receitas = useStore(() => getReceitas());
   const guardado = useStore(() => getGuardado());
   const metas = useStore(() => getMetas());
+  const contas = useStore(() => getContasAPagar());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
 
   const doMes = useMemo(
@@ -122,6 +126,38 @@ function Index() {
     limiteTotal && limiteTotal > 0 ? Math.min(150, (total / limiteTotal) * 100) : 0;
   const proximoLimite = limiteTotal && total >= limiteTotal * 0.8;
   const passouLimite = limiteTotal && total > limiteTotal;
+
+  // Contas a pagar do mês
+  const contasResumo = useMemo(() => {
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    const doMes = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
+    let pendente = 0;
+    let atrasadasCount = 0;
+    let pendentesCount = 0;
+    let proxima: (typeof doMes)[number] | null = null;
+    for (const c of doMes) {
+      const s = statusContaEfetivo(c, hojeISO);
+      if (s === "pago") continue;
+      pendente += c.valor;
+      if (s === "atrasado") atrasadasCount++;
+      else pendentesCount++;
+      if (!proxima || c.dataVencimento < proxima.dataVencimento) proxima = c;
+    }
+    let diasParaProxima: number | null = null;
+    if (proxima) {
+      const v = new Date(proxima.dataVencimento + "T00:00:00").getTime();
+      const h = new Date(hojeISO + "T00:00:00").getTime();
+      diasParaProxima = Math.round((v - h) / (1000 * 60 * 60 * 24));
+    }
+    return {
+      pendente,
+      atrasadasCount,
+      pendentesCount,
+      total: doMes.length,
+      proxima,
+      diasParaProxima,
+    };
+  }, [contas, ym]);
 
   // Metas
   const metasAndamento = useMemo(
@@ -379,7 +415,54 @@ function Index() {
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
 
-      {/* ===== 3. CATEGORIAS ===== */}
+      {/* Atalho: Contas a pagar */}
+      <Link
+        to="/contas-a-pagar"
+        className={cn(
+          "mt-2.5 flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors hover:bg-card-elevated",
+          contasResumo.atrasadasCount > 0 ? "border-destructive/40" : "border-border",
+        )}
+      >
+        <span
+          className={cn(
+            "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+            contasResumo.atrasadasCount > 0
+              ? "bg-destructive/15 text-destructive"
+              : "bg-warning/15 text-warning",
+          )}
+        >
+          <CalendarClock className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-medium">Próximas contas</p>
+            {contasResumo.total > 0 && (
+              <p className="num shrink-0 text-xs font-semibold">
+                {formatBRL(contasResumo.pendente)}
+              </p>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            {contasResumo.total === 0
+              ? "Cadastre suas contas para acompanhar"
+              : contasResumo.atrasadasCount > 0
+                ? `${contasResumo.atrasadasCount} atrasada${contasResumo.atrasadasCount > 1 ? "s" : ""} • ${contasResumo.pendentesCount} pendente${contasResumo.pendentesCount === 1 ? "" : "s"}`
+                : contasResumo.proxima
+                  ? `${contasResumo.proxima.nome} — ${
+                      contasResumo.diasParaProxima === 0
+                        ? "vence hoje"
+                        : contasResumo.diasParaProxima === 1
+                          ? "vence amanhã"
+                          : (contasResumo.diasParaProxima ?? 0) > 0
+                            ? `vence em ${contasResumo.diasParaProxima}d`
+                            : "vencida"
+                    }`
+                  : "Tudo pago neste mês 🎉"}
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Link>
+
       {porCategoria.length > 0 && (
         <>
           <SectionLabel>Categorias</SectionLabel>

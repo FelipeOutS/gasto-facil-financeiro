@@ -15,6 +15,8 @@ import {
   type MovimentacaoMeta,
   type StatusMeta,
   type Cartao,
+  type ContaAPagar,
+  type StatusConta,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,6 +101,7 @@ const EMPTY_GUARDADO: Guardado[] = [];
 const EMPTY_METAS: Meta[] = [];
 const EMPTY_MOV: MovimentacaoMeta[] = [];
 const EMPTY_CARTOES: Cartao[] = [];
+const EMPTY_CONTAS: ContaAPagar[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -110,6 +113,7 @@ let memGuardado: Guardado[] = EMPTY_GUARDADO;
 let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
+let memContas: ContaAPagar[] = EMPTY_CONTAS;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -138,6 +142,7 @@ export function setActiveUserId(uid: string | null) {
   memMetas = EMPTY_METAS;
   memMov = EMPTY_MOV;
   memCartoes = EMPTY_CARTOES;
+  memContas = EMPTY_CONTAS;
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -419,6 +424,47 @@ function rowToCartao(r: CartaoRow): Cartao {
   };
 }
 
+type ContaAPagarRow = {
+  id: string;
+  nome: string;
+  valor: string | number;
+  data_vencimento: string;
+  categoria_id: string | null;
+  observacao: string | null;
+  recorrente: boolean;
+  recorrencia_id: string | null;
+  data_inicio: string | null;
+  data_fim: string | null;
+  status: string;
+  data_pagamento: string | null;
+  gasto_id: string | null;
+  mes: number;
+  ano: number;
+  created_at: string;
+  updated_at: string;
+};
+function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>): ContaAPagar {
+  return {
+    id: r.id,
+    nome: r.nome,
+    valor: Number(r.valor),
+    dataVencimento: r.data_vencimento,
+    categoriaId: r.categoria_id ? catUuidToKey.get(r.categoria_id) ?? r.categoria_id : undefined,
+    observacao: r.observacao ?? undefined,
+    recorrente: r.recorrente,
+    recorrenciaId: r.recorrencia_id ?? undefined,
+    dataInicio: r.data_inicio ?? undefined,
+    dataFim: r.data_fim ?? undefined,
+    status: (r.status as StatusConta) ?? "pendente",
+    dataPagamento: r.data_pagamento ?? undefined,
+    gastoId: r.gasto_id ?? undefined,
+    mes: r.mes,
+    ano: r.ano,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
@@ -538,7 +584,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -546,6 +592,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
       supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
       sbAny.from("cartoes").select("*").eq("user_id", userId),
+      sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -554,8 +601,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (aprendRes.error) throw aprendRes.error;
     if (guardadoRes.error) throw guardadoRes.error;
     if (movRes.error) throw movRes.error;
-    // Cartões table is optional in case migration hasn't run yet — log but don't break.
+    // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
+    if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
 
     memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
@@ -567,6 +615,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
     memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
       (r: CartaoRow) => rowToCartao(r),
+    );
+    memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map(
+      (r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey),
     );
 
     setHydrationStatus("ready");
@@ -1885,8 +1936,301 @@ export function statusMeta(meta: Meta): StatusMeta {
 }
 
 // ============================================================
-// React hooks
+// CONTAS A PAGAR
 // ============================================================
+export function getContasAPagar(): ContaAPagar[] {
+  return memContas;
+}
+
+/**
+ * Status efetivo: se a conta está pendente e a data de vencimento já passou,
+ * retorna "atrasado" sem alterar o registro persistido.
+ */
+export function statusContaEfetivo(c: ContaAPagar, hojeISO?: string): StatusConta {
+  if (c.status === "pago") return "pago";
+  const hoje = hojeISO ?? new Date().toISOString().slice(0, 10);
+  if (c.dataVencimento < hoje) return "atrasado";
+  return "pendente";
+}
+
+export type NovaContaInput = {
+  nome: string;
+  valor: number;
+  /** YYYY-MM-DD */
+  dataVencimento: string;
+  categoriaId?: string;
+  observacao?: string;
+  recorrente?: boolean;
+  /** Quantos meses repetir (default 12) */
+  recorrenteMeses?: number;
+  dataFim?: string;
+};
+
+export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
+  if (!activeUserId) return [];
+  const now = new Date().toISOString();
+  const baseDate = new Date(input.dataVencimento + "T00:00:00");
+  const created: ContaAPagar[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: any[] = [];
+  const catUuid = input.categoriaId ? categoriaUuidFor(input.categoriaId) : null;
+
+  if (input.recorrente) {
+    const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const recId = crypto.randomUUID();
+    for (let i = 0; i < meses; i++) {
+      const d = new Date(baseDate);
+      d.setMonth(d.getMonth() + i);
+      if (input.dataFim && d.toISOString().slice(0, 10) > input.dataFim) break;
+      const iso = d.toISOString().slice(0, 10);
+      const id = crypto.randomUUID();
+      const conta: ContaAPagar = {
+        id,
+        nome: input.nome,
+        valor: input.valor,
+        dataVencimento: iso,
+        categoriaId: input.categoriaId,
+        observacao: input.observacao,
+        recorrente: true,
+        recorrenciaId: recId,
+        dataInicio: input.dataVencimento,
+        dataFim: input.dataFim,
+        status: "pendente",
+        mes: d.getMonth() + 1,
+        ano: d.getFullYear(),
+        criadoEm: now,
+        atualizadoEm: now,
+      };
+      created.push(conta);
+      rows.push({
+        id,
+        user_id: activeUserId,
+        nome: input.nome,
+        valor: input.valor,
+        data_vencimento: iso,
+        categoria_id: catUuid,
+        observacao: input.observacao ?? null,
+        recorrente: true,
+        recorrencia_id: recId,
+        data_inicio: input.dataVencimento,
+        data_fim: input.dataFim ?? null,
+        status: "pendente",
+        mes: d.getMonth() + 1,
+        ano: d.getFullYear(),
+      });
+    }
+  } else {
+    const id = crypto.randomUUID();
+    created.push({
+      id,
+      nome: input.nome,
+      valor: input.valor,
+      dataVencimento: input.dataVencimento,
+      categoriaId: input.categoriaId,
+      observacao: input.observacao,
+      recorrente: false,
+      status: "pendente",
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      nome: input.nome,
+      valor: input.valor,
+      data_vencimento: input.dataVencimento,
+      categoria_id: catUuid,
+      observacao: input.observacao ?? null,
+      recorrente: false,
+      status: "pendente",
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+    });
+  }
+  memContas = [...memContas, ...created];
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .insert(rows)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] addContaAPagar failed", error);
+    });
+  return created;
+}
+
+export type ContaEditableFields = {
+  nome?: string;
+  valor?: number;
+  dataVencimento?: string;
+  categoriaId?: string | null;
+  observacao?: string;
+};
+
+export function updateContaAPagar(id: string, fields: ContaEditableFields) {
+  if (!activeUserId) return;
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return;
+  const current = memContas[idx];
+  const updated: ContaAPagar = {
+    ...current,
+    nome: fields.nome ?? current.nome,
+    valor: fields.valor ?? current.valor,
+    dataVencimento: fields.dataVencimento ?? current.dataVencimento,
+    categoriaId:
+      fields.categoriaId === null
+        ? undefined
+        : fields.categoriaId ?? current.categoriaId,
+    observacao: fields.observacao ?? current.observacao,
+    atualizadoEm: new Date().toISOString(),
+  };
+  if (fields.dataVencimento) {
+    const d = new Date(fields.dataVencimento + "T00:00:00");
+    updated.mes = d.getMonth() + 1;
+    updated.ano = d.getFullYear();
+  }
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const row: any = {};
+  if (fields.nome !== undefined) row.nome = fields.nome;
+  if (fields.valor !== undefined) row.valor = fields.valor;
+  if (fields.dataVencimento !== undefined) {
+    row.data_vencimento = fields.dataVencimento;
+    row.mes = updated.mes;
+    row.ano = updated.ano;
+  }
+  if (fields.categoriaId !== undefined) {
+    row.categoria_id = fields.categoriaId
+      ? categoriaUuidFor(fields.categoriaId)
+      : null;
+  }
+  if (fields.observacao !== undefined) row.observacao = fields.observacao ?? null;
+
+  void sbAny
+    .from("contas_a_pagar")
+    .update(row)
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] updateContaAPagar failed", error);
+    });
+}
+
+export function deleteContaAPagar(id: string) {
+  if (!activeUserId) return;
+  memContas = memContas.filter((c) => c.id !== id);
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] deleteContaAPagar failed", error);
+    });
+}
+
+/** Exclui todas as ocorrências futuras de uma conta recorrente. */
+export function deleteContaRecorrencia(
+  recorrenciaId: string,
+  fromMes?: number,
+  fromAno?: number,
+) {
+  const shouldRemove = (c: ContaAPagar) => {
+    if (c.recorrenciaId !== recorrenciaId) return false;
+    if (fromMes == null || fromAno == null) return true;
+    return c.ano > fromAno || (c.ano === fromAno && c.mes >= fromMes);
+  };
+  const removedIds = memContas.filter(shouldRemove).map((c) => c.id);
+  memContas = memContas.filter((c) => !shouldRemove(c));
+  emit();
+  if (!activeUserId || removedIds.length === 0) return;
+  void sbAny
+    .from("contas_a_pagar")
+    .delete()
+    .in("id", removedIds)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] deleteContaRecorrencia failed", error);
+    });
+}
+
+/**
+ * Marca conta como paga. Opcionalmente cria um gasto correspondente no mês
+ * do pagamento (categoria + valor da conta).
+ */
+export function marcarContaComoPago(
+  id: string,
+  options?: { criarGasto?: boolean; formaPagamento?: FormaPagamento },
+): { gastoId?: string } {
+  if (!activeUserId) return {};
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return {};
+  const conta = memContas[idx];
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  let gastoId: string | undefined;
+  if (options?.criarGasto && conta.categoriaId) {
+    const novos = addGasto({
+      descricao: conta.nome,
+      valor: conta.valor,
+      data: hoje,
+      estabelecimento: conta.nome,
+      categoriaId: conta.categoriaId,
+      formaPagamento: options.formaPagamento ?? "pix",
+      tipoGasto: "unico",
+    });
+    gastoId = novos[0]?.id;
+  }
+
+  const updated: ContaAPagar = {
+    ...conta,
+    status: "pago",
+    dataPagamento: hoje,
+    gastoId: gastoId ?? conta.gastoId,
+    atualizadoEm: new Date().toISOString(),
+  };
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+
+  void sbAny
+    .from("contas_a_pagar")
+    .update({
+      status: "pago",
+      data_pagamento: hoje,
+      gasto_id: gastoId ?? conta.gastoId ?? null,
+    })
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] marcarContaComoPago failed", error);
+    });
+
+  return { gastoId };
+}
+
+/** Reverte conta paga para pendente (não remove o gasto vinculado). */
+export function desmarcarContaComoPago(id: string) {
+  if (!activeUserId) return;
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return;
+  const updated: ContaAPagar = {
+    ...memContas[idx],
+    status: "pendente",
+    dataPagamento: undefined,
+    atualizadoEm: new Date().toISOString(),
+  };
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .update({ status: "pendente", data_pagamento: null })
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] desmarcarContaComoPago failed", error);
+    });
+}
+
+
 export function useStore<T>(selector: () => T): T {
   return useSyncExternalStore(subscribe, selector, selector);
 }

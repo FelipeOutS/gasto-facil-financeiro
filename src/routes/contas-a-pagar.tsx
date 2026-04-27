@@ -1,0 +1,781 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Trash2,
+  Check,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Receipt,
+  Repeat,
+  RotateCcw,
+} from "lucide-react";
+import { MobileShell } from "@/components/MobileShell";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import {
+  addContaAPagar,
+  deleteContaAPagar,
+  desmarcarContaComoPago,
+  getCategoriaById,
+  getCategorias,
+  getContasAPagar,
+  marcarContaComoPago,
+  statusContaEfetivo,
+  updateContaAPagar,
+  useBootstrap,
+  useStore,
+} from "@/lib/store";
+import type { ContaAPagar, StatusConta } from "@/lib/types";
+import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/contas-a-pagar")({
+  head: () => ({ meta: [{ title: "Contas a pagar — Gasto Fácil" }] }),
+  component: ContasAPagarPage,
+});
+
+function ContasAPagarPage() {
+  const ready = useBootstrap();
+  const today = new Date();
+  const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
+  const [editing, setEditing] = useState<ContaAPagar | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
+  const [pagar, setPagar] = useState<ContaAPagar | null>(null);
+
+  const contas = useStore(() => getContasAPagar());
+  const categorias = useStore(() => getCategorias());
+
+  const hojeISO = todayISO();
+
+  const doMes = useMemo(
+    () =>
+      contas
+        .filter((c) => c.mes === ym.mes && c.ano === ym.ano)
+        .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)),
+    [contas, ym],
+  );
+
+  const totais = useMemo(() => {
+    let pendente = 0;
+    let pago = 0;
+    let atrasado = 0;
+    let qtdAtrasado = 0;
+    let qtdPendente = 0;
+    let qtdPago = 0;
+    for (const c of doMes) {
+      const s = statusContaEfetivo(c, hojeISO);
+      if (s === "pago") {
+        pago += c.valor;
+        qtdPago++;
+      } else if (s === "atrasado") {
+        atrasado += c.valor;
+        qtdAtrasado++;
+      } else {
+        pendente += c.valor;
+        qtdPendente++;
+      }
+    }
+    return { pendente, pago, atrasado, qtdPendente, qtdPago, qtdAtrasado };
+  }, [doMes, hojeISO]);
+
+  const proximaConta = useMemo(() => {
+    return doMes
+      .filter((c) => statusContaEfetivo(c, hojeISO) !== "pago")
+      .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento))[0];
+  }, [doMes, hojeISO]);
+
+  function changeMonth(delta: number) {
+    const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
+    setYm({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
+  }
+
+  if (!ready) {
+    return (
+      <MobileShell>
+        <div />
+      </MobileShell>
+    );
+  }
+
+  return (
+    <MobileShell>
+      <header className="flex items-center gap-3 pt-2">
+        <Link
+          to="/"
+          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Contas a pagar
+          </p>
+          <h1 className="truncate text-xl font-bold tracking-tight capitalize">
+            {formatMonthYear(ym.ano, ym.mes)}
+          </h1>
+        </div>
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+          <button
+            onClick={() => changeMonth(-1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => changeMonth(1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Próximo mês"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Resumo */}
+      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Total pendente no mês
+        </p>
+        <p className="num mt-1 text-[30px] font-extrabold leading-none tracking-tight">
+          {formatBRL(totais.pendente + totais.atrasado)}
+        </p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <StatusPill
+            label="Pendentes"
+            count={totais.qtdPendente}
+            tone="warning"
+            icon={<Clock className="h-3 w-3" />}
+          />
+          <StatusPill
+            label="Atrasadas"
+            count={totais.qtdAtrasado}
+            tone="destructive"
+            icon={<AlertTriangle className="h-3 w-3" />}
+          />
+          <StatusPill
+            label="Pagas"
+            count={totais.qtdPago}
+            tone="success"
+            icon={<CheckCircle2 className="h-3 w-3" />}
+          />
+        </div>
+
+        {proximaConta && (
+          <div className="mt-3 rounded-xl border border-border bg-background/60 p-3">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Próxima a vencer
+            </p>
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <p className="truncate text-sm font-semibold">{proximaConta.nome}</p>
+              <p className="num shrink-0 text-sm font-semibold">
+                {formatBRL(proximaConta.valor)}
+              </p>
+            </div>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Vence em {formatDateBR(proximaConta.dataVencimento)}
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* CTA Adicionar */}
+      <Button
+        size="lg"
+        className="mt-3 h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
+        onClick={() => setCreating(true)}
+      >
+        <Plus className="mr-1 h-5 w-5" />
+        Adicionar conta
+      </Button>
+
+      {/* Lista */}
+      <section className="mt-5 space-y-2.5">
+        {doMes.length === 0 ? (
+          <EmptyState onAdd={() => setCreating(true)} />
+        ) : (
+          doMes.map((conta) => (
+            <ContaCard
+              key={conta.id}
+              conta={conta}
+              hojeISO={hojeISO}
+              onEdit={() => setEditing(conta)}
+              onDelete={() => setConfirmDelete(conta)}
+              onPagar={() => setPagar(conta)}
+              onDesmarcar={() => {
+                desmarcarContaComoPago(conta.id);
+                toast.success("Conta marcada como pendente.");
+              }}
+            />
+          ))
+        )}
+      </section>
+
+      {/* Dialogs */}
+      {creating && (
+        <ContaFormDialog
+          open
+          onOpenChange={(o) => !o && setCreating(false)}
+          onSaved={() => setCreating(false)}
+          defaultDate={`${ym.ano}-${String(ym.mes).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`}
+        />
+      )}
+
+      {editing && (
+        <ContaFormDialog
+          open
+          conta={editing}
+          onOpenChange={(o) => !o && setEditing(null)}
+          onSaved={() => setEditing(null)}
+        />
+      )}
+
+      <AlertDialog
+        open={!!confirmDelete}
+        onOpenChange={(o) => !o && setConfirmDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete
+                ? `Tem certeza que deseja excluir "${confirmDelete.nome}"? Esta ação não pode ser desfeita.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteContaAPagar(confirmDelete.id);
+                  toast.success("Conta excluída.");
+                }
+                setConfirmDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {pagar && (
+        <PagarDialog
+          conta={pagar}
+          onClose={() => setPagar(null)}
+          categoriasCount={categorias.length}
+        />
+      )}
+    </MobileShell>
+  );
+}
+
+// ---------- Subcomponents ----------
+
+function StatusPill({
+  label,
+  count,
+  tone,
+  icon,
+}: {
+  label: string;
+  count: number;
+  tone: "warning" | "destructive" | "success";
+  icon: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "bg-warning/15 text-warning"
+      : tone === "destructive"
+        ? "bg-destructive/15 text-destructive"
+        : "bg-success/15 text-success";
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-2.5 text-center">
+      <span
+        className={cn(
+          "mx-auto mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full",
+          toneClass,
+        )}
+      >
+        {icon}
+      </span>
+      <p className="num text-base font-bold leading-none">{count}</p>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function EmptyState({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
+      <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-card text-muted-foreground">
+        <Receipt className="h-5 w-5" />
+      </span>
+      <p className="text-sm font-medium">Nenhuma conta neste mês</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Cadastre suas contas fixas para acompanhar vencimentos.
+      </p>
+      <Button variant="outline" size="sm" className="mt-3" onClick={onAdd}>
+        <Plus className="mr-1 h-4 w-4" />
+        Adicionar conta
+      </Button>
+    </div>
+  );
+}
+
+function ContaCard({
+  conta,
+  hojeISO,
+  onEdit,
+  onDelete,
+  onPagar,
+  onDesmarcar,
+}: {
+  conta: ContaAPagar;
+  hojeISO: string;
+  onEdit: () => void;
+  onDelete: () => void;
+  onPagar: () => void;
+  onDesmarcar: () => void;
+}) {
+  const status = statusContaEfetivo(conta, hojeISO);
+  const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
+
+  const diasParaVencer = useMemo(() => {
+    const v = new Date(conta.dataVencimento + "T00:00:00").getTime();
+    const h = new Date(hojeISO + "T00:00:00").getTime();
+    return Math.round((v - h) / (1000 * 60 * 60 * 24));
+  }, [conta.dataVencimento, hojeISO]);
+
+  return (
+    <article
+      className={cn(
+        "overflow-hidden rounded-2xl border bg-card p-4 transition-colors",
+        status === "atrasado"
+          ? "border-destructive/40"
+          : status === "pago"
+            ? "border-success/30 opacity-80"
+            : "border-border",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        {cat ? (
+          <CategoryIcon categoria={cat} size="sm" />
+        ) : (
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated text-muted-foreground">
+            <Receipt className="h-4 w-4" />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{conta.nome}</p>
+            <p
+              className={cn(
+                "num shrink-0 text-sm font-bold",
+                status === "atrasado" && "text-destructive",
+                status === "pago" && "text-success",
+              )}
+            >
+              {formatBRL(conta.valor)}
+            </p>
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="num">Vence {formatDateBR(conta.dataVencimento)}</span>
+            {conta.recorrente && (
+              <span className="inline-flex items-center gap-1">
+                <Repeat className="h-3 w-3" />
+                Mensal
+              </span>
+            )}
+            <StatusBadge status={status} dias={diasParaVencer} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        {status === "pago" ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={onDesmarcar}
+          >
+            <RotateCcw className="mr-1 h-3.5 w-3.5" />
+            Desmarcar
+          </Button>
+        ) : (
+          <Button size="sm" className="flex-1" onClick={onPagar}>
+            <Check className="mr-1 h-3.5 w-3.5" />
+            Marcar como pago
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="icon"
+          className="shrink-0"
+          onClick={onEdit}
+          aria-label="Editar"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="shrink-0 text-destructive hover:text-destructive"
+          onClick={onDelete}
+          aria-label="Excluir"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
+  if (status === "pago") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+        <CheckCircle2 className="h-2.5 w-2.5" />
+        Pago
+      </span>
+    );
+  }
+  if (status === "atrasado") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+        <AlertTriangle className="h-2.5 w-2.5" />
+        Atrasado {Math.abs(dias)}d
+      </span>
+    );
+  }
+  if (dias <= 3) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <Clock className="h-2.5 w-2.5" />
+        {dias === 0 ? "Vence hoje" : `Em ${dias}d`}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      Em {dias}d
+    </span>
+  );
+}
+
+// ---------- Form dialog ----------
+
+function ContaFormDialog({
+  open,
+  onOpenChange,
+  conta,
+  onSaved,
+  defaultDate,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  conta?: ContaAPagar;
+  onSaved: () => void;
+  defaultDate?: string;
+}) {
+  const isEdit = !!conta;
+  const categorias = useStore(() => getCategorias());
+
+  const [nome, setNome] = useState(conta?.nome ?? "");
+  const [valorStr, setValorStr] = useState(
+    conta ? String(conta.valor).replace(".", ",") : "",
+  );
+  const [dataVenc, setDataVenc] = useState(
+    conta?.dataVencimento ?? defaultDate ?? todayISO(),
+  );
+  const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
+  const [observacao, setObservacao] = useState(conta?.observacao ?? "");
+  const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
+  const [meses, setMeses] = useState("12");
+
+  function handleSave() {
+    const valor = parseBRLInput(valorStr);
+    if (!nome.trim()) {
+      toast.error("Informe o nome da conta.");
+      return;
+    }
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
+    if (!dataVenc) {
+      toast.error("Informe a data de vencimento.");
+      return;
+    }
+
+    if (isEdit && conta) {
+      updateContaAPagar(conta.id, {
+        nome: nome.trim(),
+        valor,
+        dataVencimento: dataVenc,
+        categoriaId: categoriaId || null,
+        observacao: observacao.trim() || undefined,
+      });
+      toast.success("Conta atualizada.");
+    } else {
+      addContaAPagar({
+        nome: nome.trim(),
+        valor,
+        dataVencimento: dataVenc,
+        categoriaId: categoriaId || undefined,
+        observacao: observacao.trim() || undefined,
+        recorrente,
+        recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
+      });
+      toast.success(recorrente ? "Conta recorrente cadastrada." : "Conta cadastrada.");
+    }
+    onSaved();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Editar conta" : "Nova conta a pagar"}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Atualize os dados da conta."
+              : "Cadastre uma conta para acompanhar o vencimento."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="conta-nome">Nome da conta</Label>
+            <Input
+              id="conta-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex.: Aluguel, Internet, Luz…"
+              autoFocus={!isEdit}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="conta-valor">Valor</Label>
+              <Input
+                id="conta-valor"
+                inputMode="decimal"
+                value={valorStr}
+                onChange={(e) => setValorStr(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="conta-data">Vencimento</Label>
+              <Input
+                id="conta-data"
+                type="date"
+                value={dataVenc}
+                onChange={(e) => setDataVenc(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Categoria</Label>
+            <Select value={categoriaId || "_none"} onValueChange={(v) => setCategoriaId(v === "_none" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">Sem categoria</SelectItem>
+                {categorias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="conta-obs">Observação (opcional)</Label>
+            <Textarea
+              id="conta-obs"
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              rows={2}
+              placeholder="Detalhes adicionais"
+            />
+          </div>
+
+          {!isEdit && (
+            <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Conta recorrente</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Repete todo mês na mesma data
+                  </p>
+                </div>
+                <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+              </div>
+              {recorrente && (
+                <div className="mt-3 space-y-1.5">
+                  <Label htmlFor="conta-meses">Repetir por quantos meses?</Label>
+                  <Input
+                    id="conta-meses"
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={meses}
+                    onChange={(e) => setMeses(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>{isEdit ? "Salvar" : "Cadastrar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------- Pagar dialog ----------
+
+function PagarDialog({
+  conta,
+  onClose,
+  categoriasCount,
+}: {
+  conta: ContaAPagar;
+  onClose: () => void;
+  categoriasCount: number;
+}) {
+  const [criarGasto, setCriarGasto] = useState(!!conta.categoriaId && categoriasCount > 0);
+  const [forma, setForma] = useState<FormaPagamento>("pix");
+
+  function handlePagar() {
+    marcarContaComoPago(conta.id, {
+      criarGasto: criarGasto && !!conta.categoriaId,
+      formaPagamento: forma,
+    });
+    if (criarGasto && !conta.categoriaId) {
+      toast.warning("Conta marcada como paga, mas sem categoria não foi possível criar o gasto.");
+    } else {
+      toast.success(
+        criarGasto && conta.categoriaId
+          ? "Conta paga e gasto registrado."
+          : "Conta marcada como paga.",
+      );
+    }
+    onClose();
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Marcar como pago</DialogTitle>
+          <DialogDescription>
+            {conta.nome} — {formatBRL(conta.valor)}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Registrar como gasto?</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {conta.categoriaId
+                    ? "Cria um gasto de hoje na categoria da conta."
+                    : "Esta conta não tem categoria — não é possível criar gasto."}
+                </p>
+              </div>
+              <Switch
+                checked={criarGasto}
+                onCheckedChange={setCriarGasto}
+                disabled={!conta.categoriaId}
+              />
+            </div>
+          </div>
+
+          {criarGasto && conta.categoriaId && (
+            <div className="space-y-1.5">
+              <Label>Forma de pagamento</Label>
+              <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FORMAS_PAGAMENTO.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handlePagar}>
+            <Check className="mr-1 h-4 w-4" />
+            Confirmar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

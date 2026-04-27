@@ -18,6 +18,7 @@ import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
+import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
@@ -70,6 +71,11 @@ const GastosRoute = GastosRouteImport.update({
   path: '/gastos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContasAPagarRoute = ContasAPagarRouteImport.update({
+  id: '/contas-a-pagar',
+  path: '/contas-a-pagar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContaRoute = ContaRouteImport.update({
   id: '/conta',
   path: '/conta',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/login': typeof LoginRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/login': typeof LoginRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/login': typeof LoginRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/conta'
+    | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
     | '/login'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/conta'
+    | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
     | '/login'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/confirmar'
     | '/conta'
+    | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
     | '/login'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   CategoriasRoute: typeof CategoriasRoute
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
+  ContasAPagarRoute: typeof ContasAPagarRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
   LoginRoute: typeof LoginRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GastosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contas-a-pagar': {
+      id: '/contas-a-pagar'
+      path: '/contas-a-pagar'
+      fullPath: '/contas-a-pagar'
+      preLoaderRoute: typeof ContasAPagarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/conta': {
       id: '/conta'
       path: '/conta'
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriasRoute: CategoriasRoute,
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,
+  ContasAPagarRoute: ContasAPagarRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
   LoginRoute: LoginRoute,
