@@ -66,6 +66,20 @@ import { toast } from "sonner";
 
 type RendaSearch = { ano?: number; mes?: number };
 
+const MONTH_NAMES_PT = [
+  "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+function normalizeDescricao(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const Route = createFileRoute("/renda")({
   head: () => ({ meta: [{ title: "Minha renda — Gasto Fácil" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
