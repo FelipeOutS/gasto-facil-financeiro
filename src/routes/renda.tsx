@@ -135,6 +135,11 @@ function RendaPage() {
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [recorrente, setRecorrente] = useState(true);
   const [meses, setMeses] = useState(12);
+  const [confirmDup, setConfirmDup] = useState<null | {
+    descricao: string;
+    valor: number;
+    parecida: Receita;
+  }>(null);
 
   function reset() {
     setDescricao("");
@@ -145,24 +150,60 @@ function RendaPage() {
     setMeses(12);
   }
 
+  function persistNova(payload: {
+    descricao: string;
+    valor: number;
+    data: string;
+    tipo: TipoReceita;
+    recorrente: boolean;
+    recorrenteMeses?: number;
+  }) {
+    addReceita(payload);
+    toast.success("Entrada cadastrada");
+    setOpen(false);
+    reset();
+  }
+
   function handleSave() {
     const valor = parseBRLInput(valorStr);
-    if (!valor || !descricao.trim()) {
+    const desc = descricao.trim();
+    if (!valor || !desc) {
       toast.error("Preencha descrição e valor");
       return;
     }
-    addReceita({
-      descricao: descricao.trim(),
+    const dt = new Date(data + "T12:00:00");
+    const mesNova = dt.getMonth() + 1;
+    const anoNova = dt.getFullYear();
+    const descNorm = normalizeDescricao(desc);
+
+    const parecida = receitas.find((r) => {
+      if (r.mes !== mesNova || r.ano !== anoNova) return false;
+      if (r.tipo !== tipo) return false;
+      const rDesc = normalizeDescricao(r.descricao);
+      const descMatch =
+        rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
+      const valorMatch = Math.abs(r.valor - valor) <= Math.max(1, valor * 0.05);
+      return descMatch && valorMatch;
+    });
+
+    const payload = {
+      descricao: desc,
       valor,
       data,
       tipo,
       recorrente,
       recorrenteMeses: recorrente ? meses : undefined,
-    });
-    toast.success("Entrada cadastrada");
-    setOpen(false);
-    reset();
+    };
+
+    if (parecida) {
+      setConfirmDup({ descricao: desc, valor, parecida });
+      // guardamos os dados via closure no diálogo
+      (handleSave as unknown as { _payload?: typeof payload })._payload = payload;
+      return;
+    }
+    persistNova(payload);
   }
+
 
   // ---------- Editar / Excluir ----------
   const [editTarget, setEditTarget] = useState<Receita | null>(null);
