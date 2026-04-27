@@ -28,11 +28,13 @@ import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategoriaById,
+  getContasAPagar,
   getGastos,
   getGuardado,
   getLimite,
   getMetas,
   getReceitas,
+  statusContaEfetivo,
   statusMeta,
   useBootstrap,
   useStore,
