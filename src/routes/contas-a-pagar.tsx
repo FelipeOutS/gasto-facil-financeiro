@@ -401,7 +401,7 @@ function ContaCard({
     >
       <div className="flex items-start gap-3">
         {cat ? (
-          <CategoryIcon iconName={cat.iconName} colorVar={cat.colorVar} className="h-9 w-9 shrink-0" />
+          <CategoryIcon categoria={cat} size="sm" />
         ) : (
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated text-muted-foreground">
             <Receipt className="h-4 w-4" />
