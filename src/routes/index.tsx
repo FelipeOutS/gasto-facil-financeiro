@@ -15,6 +15,7 @@ import {
   Lock,
   PieChart as PieChartIcon,
   ListChecks,
+  CalendarClock,
 } from "lucide-react";
 import {
   PieChart,
