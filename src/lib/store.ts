@@ -584,7 +584,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -592,6 +592,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
       supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
       sbAny.from("cartoes").select("*").eq("user_id", userId),
+      sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -600,8 +601,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (aprendRes.error) throw aprendRes.error;
     if (guardadoRes.error) throw guardadoRes.error;
     if (movRes.error) throw movRes.error;
-    // Cartões table is optional in case migration hasn't run yet — log but don't break.
+    // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
+    if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
 
     memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
@@ -613,6 +615,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
     memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
       (r: CartaoRow) => rowToCartao(r),
+    );
+    memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map(
+      (r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey),
     );
 
     setHydrationStatus("ready");
