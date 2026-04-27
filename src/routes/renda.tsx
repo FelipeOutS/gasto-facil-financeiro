@@ -424,45 +424,111 @@ function RendaPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="historico" className="mt-3">
+        <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
               Sem rendas cadastradas ainda.
             </div>
           ) : (
-            <div className="space-y-5">
-              {historico.map((g) => {
-                const total = g.itens.reduce((s, r) => s + r.valor, 0);
-                return (
-                  <div key={`${g.ano}-${g.mes}`}>
-                    <div className="mb-2 flex items-baseline justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {formatMonthYear(g.ano, g.mes)}
-                      </p>
-                      <p className="num text-xs font-semibold text-success">
-                        {formatBRL(total)}
-                      </p>
-                    </div>
-                    <ul className="space-y-2">
-                      {g.itens.map((r) => (
-                        <ReceitaItem
-                          key={r.id}
-                          r={r}
-                          onEdit={() => setEditTarget(r)}
-                          onDelete={() => setDeleteTarget(r)}
-                        />
-                      ))}
-                    </ul>
+            <>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={historicoQuery}
+                  onChange={(e) => {
+                    setHistoricoQuery(e.target.value);
+                    setHistoricoLimit(3);
+                  }}
+                  placeholder="Buscar por descrição, tipo, mês, ano ou valor"
+                  className="h-11 bg-card-elevated pl-9"
+                />
+              </div>
+
+              {historicoFiltrado.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
+                  Nenhum resultado para “{historicoQuery}”.
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-5">
+                    {historicoVisivel.map((g) => {
+                      const total = g.itens.reduce((s, r) => s + r.valor, 0);
+                      return (
+                        <div key={`${g.ano}-${g.mes}`}>
+                          <div className="mb-2 flex items-baseline justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {formatMonthYear(g.ano, g.mes)}
+                            </p>
+                            <p className="num text-xs font-semibold text-success">
+                              {formatBRL(total)}
+                            </p>
+                          </div>
+                          <ul className="space-y-2">
+                            {g.itens.map((r) => (
+                              <ReceitaItem
+                                key={r.id}
+                                r={r}
+                                onEdit={() => setEditTarget(r)}
+                                onDelete={() => setDeleteTarget(r)}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+
+                  {historicoFiltrado.length > historicoVisivel.length && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setHistoricoLimit((n) => n + 3)}
+                    >
+                      Carregar mais
+                    </Button>
+                  )}
+                </>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
 
       <EditReceitaDialog receita={editTarget} onClose={() => setEditTarget(null)} />
       <DeleteReceitaDialog receita={deleteTarget} onClose={() => setDeleteTarget(null)} />
+
+      <AlertDialog
+        open={!!confirmDup}
+        onOpenChange={(o) => { if (!o) setConfirmDup(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Renda parecida encontrada</AlertDialogTitle>
+            <AlertDialogDescription>
+              Já existe uma renda parecida neste mês:{" "}
+              <span className="font-medium text-foreground">
+                {confirmDup?.parecida.descricao}
+              </span>{" "}
+              de{" "}
+              <span className="num font-medium text-foreground">
+                {confirmDup ? formatBRL(confirmDup.parecida.valor) : ""}
+              </span>
+              . Deseja salvar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDup) persistNova(confirmDup.payload);
+                setConfirmDup(null);
+              }}
+            >
+              Salvar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
