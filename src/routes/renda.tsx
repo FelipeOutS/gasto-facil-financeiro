@@ -547,13 +547,14 @@ function ReceitaItem({
 }) {
   const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
   return (
-    <li className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+    <li className="flex items-center gap-2 overflow-hidden rounded-2xl border border-border bg-card px-3 py-3">
       <button
+        type="button"
         onClick={onEdit}
-        className="flex flex-1 items-center gap-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
         aria-label={`Editar ${r.descricao}`}
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
           {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
@@ -562,20 +563,24 @@ function ReceitaItem({
             {tipoLabel} · {formatDateBR(r.data)}
             {r.recorrente ? " · recorrente" : ""}
           </p>
+          <p className="num mt-0.5 text-sm font-semibold text-success">
+            +{formatBRL(r.valor)}
+          </p>
         </div>
-        <p className="num text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
       </button>
-      <div className="flex items-center gap-1 pl-1">
+      <div className="flex shrink-0 items-center gap-1">
         <button
+          type="button"
           onClick={onEdit}
-          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
           aria-label="Editar"
         >
           <Pencil className="h-4 w-4" />
         </button>
         <button
+          type="button"
           onClick={onDelete}
-          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
           aria-label="Excluir"
         >
           <Trash2 className="h-4 w-4" />
