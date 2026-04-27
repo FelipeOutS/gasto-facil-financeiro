@@ -9,6 +9,7 @@ import {
   Repeat,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
@@ -64,6 +65,20 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 type RendaSearch = { ano?: number; mes?: number };
+
+const MONTH_NAMES_PT = [
+  "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+function normalizeDescricao(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export const Route = createFileRoute("/renda")({
   head: () => ({ meta: [{ title: "Minha renda — Gasto Fácil" }] }),
@@ -134,6 +149,18 @@ function RendaPage() {
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [recorrente, setRecorrente] = useState(true);
   const [meses, setMeses] = useState(12);
+  type NovaPayload = {
+    descricao: string;
+    valor: number;
+    data: string;
+    tipo: TipoReceita;
+    recorrente: boolean;
+    recorrenteMeses?: number;
+  };
+  const [confirmDup, setConfirmDup] = useState<null | {
+    parecida: Receita;
+    payload: NovaPayload;
+  }>(null);
 
   function reset() {
     setDescricao("");
@@ -144,28 +171,89 @@ function RendaPage() {
     setMeses(12);
   }
 
-  function handleSave() {
-    const valor = parseBRLInput(valorStr);
-    if (!valor || !descricao.trim()) {
-      toast.error("Preencha descrição e valor");
-      return;
-    }
-    addReceita({
-      descricao: descricao.trim(),
-      valor,
-      data,
-      tipo,
-      recorrente,
-      recorrenteMeses: recorrente ? meses : undefined,
-    });
+  function persistNova(payload: NovaPayload) {
+    addReceita(payload);
     toast.success("Entrada cadastrada");
     setOpen(false);
     reset();
   }
 
+  function handleSave() {
+    const valor = parseBRLInput(valorStr);
+    const desc = descricao.trim();
+    if (!valor || !desc) {
+      toast.error("Preencha descrição e valor");
+      return;
+    }
+    const dt = new Date(data + "T12:00:00");
+    const mesNova = dt.getMonth() + 1;
+    const anoNova = dt.getFullYear();
+    const descNorm = normalizeDescricao(desc);
+
+    const parecida = receitas.find((r) => {
+      if (r.mes !== mesNova || r.ano !== anoNova) return false;
+      if (r.tipo !== tipo) return false;
+      const rDesc = normalizeDescricao(r.descricao);
+      const descMatch =
+        rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
+      const valorMatch = Math.abs(r.valor - valor) <= Math.max(1, valor * 0.05);
+      return descMatch && valorMatch;
+    });
+
+    const payload: NovaPayload = {
+      descricao: desc,
+      valor,
+      data,
+      tipo,
+      recorrente,
+      recorrenteMeses: recorrente ? meses : undefined,
+    };
+
+    if (parecida) {
+      setConfirmDup({ parecida, payload });
+      return;
+    }
+    persistNova(payload);
+  }
+
+
   // ---------- Editar / Excluir ----------
   const [editTarget, setEditTarget] = useState<Receita | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Receita | null>(null);
+
+  // ---------- Histórico: busca + carregar mais ----------
+  const [historicoQuery, setHistoricoQuery] = useState("");
+  const [historicoLimit, setHistoricoLimit] = useState(3);
+
+  const historicoFiltrado = useMemo(() => {
+    const q = normalizeDescricao(historicoQuery);
+    if (!q) return historico;
+    const qNum = Number(q.replace(",", "."));
+    return historico
+      .map((g) => {
+        const monthName = MONTH_NAMES_PT[g.mes] ?? "";
+        const matchMes = monthName.includes(q) || String(g.mes) === q;
+        const matchAno = String(g.ano).includes(q);
+        if (matchMes || matchAno) return g;
+        const itens = g.itens.filter((r) => {
+          const desc = normalizeDescricao(r.descricao);
+          const tipoLabel = normalizeDescricao(
+            TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label ?? "",
+          );
+          if (desc.includes(q)) return true;
+          if (tipoLabel.includes(q)) return true;
+          if (Number.isFinite(qNum) && qNum > 0 && Math.abs(r.valor - qNum) < 0.01) return true;
+          return false;
+        });
+        return itens.length > 0 ? { ...g, itens } : null;
+      })
+      .filter((g): g is { ano: number; mes: number; itens: Receita[] } => g !== null);
+  }, [historico, historicoQuery]);
+
+  const historicoVisivel = useMemo(
+    () => historicoFiltrado.slice(0, historicoLimit),
+    [historicoFiltrado, historicoLimit],
+  );
 
   if (!ready) return <MobileShell><div /></MobileShell>;
 
@@ -336,45 +424,111 @@ function RendaPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="historico" className="mt-3">
+        <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
               Sem rendas cadastradas ainda.
             </div>
           ) : (
-            <div className="space-y-5">
-              {historico.map((g) => {
-                const total = g.itens.reduce((s, r) => s + r.valor, 0);
-                return (
-                  <div key={`${g.ano}-${g.mes}`}>
-                    <div className="mb-2 flex items-baseline justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {formatMonthYear(g.ano, g.mes)}
-                      </p>
-                      <p className="num text-xs font-semibold text-success">
-                        {formatBRL(total)}
-                      </p>
-                    </div>
-                    <ul className="space-y-2">
-                      {g.itens.map((r) => (
-                        <ReceitaItem
-                          key={r.id}
-                          r={r}
-                          onEdit={() => setEditTarget(r)}
-                          onDelete={() => setDeleteTarget(r)}
-                        />
-                      ))}
-                    </ul>
+            <>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={historicoQuery}
+                  onChange={(e) => {
+                    setHistoricoQuery(e.target.value);
+                    setHistoricoLimit(3);
+                  }}
+                  placeholder="Buscar por descrição, tipo, mês, ano ou valor"
+                  className="h-11 bg-card-elevated pl-9"
+                />
+              </div>
+
+              {historicoFiltrado.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
+                  Nenhum resultado para “{historicoQuery}”.
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-5">
+                    {historicoVisivel.map((g) => {
+                      const total = g.itens.reduce((s, r) => s + r.valor, 0);
+                      return (
+                        <div key={`${g.ano}-${g.mes}`}>
+                          <div className="mb-2 flex items-baseline justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {formatMonthYear(g.ano, g.mes)}
+                            </p>
+                            <p className="num text-xs font-semibold text-success">
+                              {formatBRL(total)}
+                            </p>
+                          </div>
+                          <ul className="space-y-2">
+                            {g.itens.map((r) => (
+                              <ReceitaItem
+                                key={r.id}
+                                r={r}
+                                onEdit={() => setEditTarget(r)}
+                                onDelete={() => setDeleteTarget(r)}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+
+                  {historicoFiltrado.length > historicoVisivel.length && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setHistoricoLimit((n) => n + 3)}
+                    >
+                      Carregar mais
+                    </Button>
+                  )}
+                </>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
 
       <EditReceitaDialog receita={editTarget} onClose={() => setEditTarget(null)} />
       <DeleteReceitaDialog receita={deleteTarget} onClose={() => setDeleteTarget(null)} />
+
+      <AlertDialog
+        open={!!confirmDup}
+        onOpenChange={(o) => { if (!o) setConfirmDup(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Renda parecida encontrada</AlertDialogTitle>
+            <AlertDialogDescription>
+              Já existe uma renda parecida neste mês:{" "}
+              <span className="font-medium text-foreground">
+                {confirmDup?.parecida.descricao}
+              </span>{" "}
+              de{" "}
+              <span className="num font-medium text-foreground">
+                {confirmDup ? formatBRL(confirmDup.parecida.valor) : ""}
+              </span>
+              . Deseja salvar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDup) persistNova(confirmDup.payload);
+                setConfirmDup(null);
+              }}
+            >
+              Salvar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
@@ -393,13 +547,14 @@ function ReceitaItem({
 }) {
   const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
   return (
-    <li className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+    <li className="flex items-center gap-2 overflow-hidden rounded-2xl border border-border bg-card px-3 py-3">
       <button
+        type="button"
         onClick={onEdit}
-        className="flex flex-1 items-center gap-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
         aria-label={`Editar ${r.descricao}`}
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-success/15 text-success">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
           {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
@@ -408,20 +563,24 @@ function ReceitaItem({
             {tipoLabel} · {formatDateBR(r.data)}
             {r.recorrente ? " · recorrente" : ""}
           </p>
+          <p className="num mt-0.5 text-sm font-semibold text-success">
+            +{formatBRL(r.valor)}
+          </p>
         </div>
-        <p className="num text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
       </button>
-      <div className="flex items-center gap-1 pl-1">
+      <div className="flex shrink-0 items-center gap-1">
         <button
+          type="button"
           onClick={onEdit}
-          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
           aria-label="Editar"
         >
           <Pencil className="h-4 w-4" />
         </button>
         <button
+          type="button"
           onClick={onDelete}
-          className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
           aria-label="Excluir"
         >
           <Trash2 className="h-4 w-4" />
