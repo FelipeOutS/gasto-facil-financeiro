@@ -415,7 +415,54 @@ function Index() {
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
 
-      {/* ===== 3. CATEGORIAS ===== */}
+      {/* Atalho: Contas a pagar */}
+      <Link
+        to="/contas-a-pagar"
+        className={cn(
+          "mt-2.5 flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors hover:bg-card-elevated",
+          contasResumo.atrasadasCount > 0 ? "border-destructive/40" : "border-border",
+        )}
+      >
+        <span
+          className={cn(
+            "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+            contasResumo.atrasadasCount > 0
+              ? "bg-destructive/15 text-destructive"
+              : "bg-warning/15 text-warning",
+          )}
+        >
+          <CalendarClock className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-medium">Próximas contas</p>
+            {contasResumo.total > 0 && (
+              <p className="num shrink-0 text-xs font-semibold">
+                {formatBRL(contasResumo.pendente)}
+              </p>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            {contasResumo.total === 0
+              ? "Cadastre suas contas para acompanhar"
+              : contasResumo.atrasadasCount > 0
+                ? `${contasResumo.atrasadasCount} atrasada${contasResumo.atrasadasCount > 1 ? "s" : ""} • ${contasResumo.pendentesCount} pendente${contasResumo.pendentesCount === 1 ? "" : "s"}`
+                : contasResumo.proxima
+                  ? `${contasResumo.proxima.nome} — ${
+                      contasResumo.diasParaProxima === 0
+                        ? "vence hoje"
+                        : contasResumo.diasParaProxima === 1
+                          ? "vence amanhã"
+                          : (contasResumo.diasParaProxima ?? 0) > 0
+                            ? `vence em ${contasResumo.diasParaProxima}d`
+                            : "vencida"
+                    }`
+                  : "Tudo pago neste mês 🎉"}
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Link>
+
       {porCategoria.length > 0 && (
         <>
           <SectionLabel>Categorias</SectionLabel>
