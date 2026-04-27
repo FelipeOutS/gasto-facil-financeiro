@@ -166,6 +166,77 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_a_pagar: {
+        Row: {
+          ano: number
+          categoria_id: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          gasto_id: string | null
+          id: string
+          mes: number
+          nome: string
+          observacao: string | null
+          recorrencia_id: string | null
+          recorrente: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ano: number
+          categoria_id?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          gasto_id?: string | null
+          id?: string
+          mes: number
+          nome: string
+          observacao?: string | null
+          recorrencia_id?: string | null
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          ano?: number
+          categoria_id?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          gasto_id?: string | null
+          id?: string
+          mes?: number
+          nome?: string
+          observacao?: string | null
+          recorrencia_id?: string | null
+          recorrente?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_a_pagar_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dinheiro_guardado: {
         Row: {
           banco_id: string | null
