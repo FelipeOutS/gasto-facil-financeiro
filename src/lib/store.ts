@@ -15,6 +15,8 @@ import {
   type MovimentacaoMeta,
   type StatusMeta,
   type Cartao,
+  type ContaAPagar,
+  type StatusConta,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { supabase } from "@/integrations/supabase/client";
