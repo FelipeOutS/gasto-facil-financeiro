@@ -424,6 +424,47 @@ function rowToCartao(r: CartaoRow): Cartao {
   };
 }
 
+type ContaAPagarRow = {
+  id: string;
+  nome: string;
+  valor: string | number;
+  data_vencimento: string;
+  categoria_id: string | null;
+  observacao: string | null;
+  recorrente: boolean;
+  recorrencia_id: string | null;
+  data_inicio: string | null;
+  data_fim: string | null;
+  status: string;
+  data_pagamento: string | null;
+  gasto_id: string | null;
+  mes: number;
+  ano: number;
+  created_at: string;
+  updated_at: string;
+};
+function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>): ContaAPagar {
+  return {
+    id: r.id,
+    nome: r.nome,
+    valor: Number(r.valor),
+    dataVencimento: r.data_vencimento,
+    categoriaId: r.categoria_id ? catUuidToKey.get(r.categoria_id) ?? r.categoria_id : undefined,
+    observacao: r.observacao ?? undefined,
+    recorrente: r.recorrente,
+    recorrenciaId: r.recorrencia_id ?? undefined,
+    dataInicio: r.data_inicio ?? undefined,
+    dataFim: r.data_fim ?? undefined,
+    status: (r.status as StatusConta) ?? "pendente",
+    dataPagamento: r.data_pagamento ?? undefined,
+    gastoId: r.gasto_id ?? undefined,
+    mes: r.mes,
+    ano: r.ano,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
