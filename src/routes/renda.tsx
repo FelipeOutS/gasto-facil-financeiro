@@ -9,6 +9,7 @@ import {
   Repeat,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
