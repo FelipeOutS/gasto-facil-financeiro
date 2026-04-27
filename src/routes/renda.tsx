@@ -149,10 +149,17 @@ function RendaPage() {
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [recorrente, setRecorrente] = useState(true);
   const [meses, setMeses] = useState(12);
-  const [confirmDup, setConfirmDup] = useState<null | {
+  type NovaPayload = {
     descricao: string;
     valor: number;
+    data: string;
+    tipo: TipoReceita;
+    recorrente: boolean;
+    recorrenteMeses?: number;
+  };
+  const [confirmDup, setConfirmDup] = useState<null | {
     parecida: Receita;
+    payload: NovaPayload;
   }>(null);
 
   function reset() {
@@ -164,14 +171,7 @@ function RendaPage() {
     setMeses(12);
   }
 
-  function persistNova(payload: {
-    descricao: string;
-    valor: number;
-    data: string;
-    tipo: TipoReceita;
-    recorrente: boolean;
-    recorrenteMeses?: number;
-  }) {
+  function persistNova(payload: NovaPayload) {
     addReceita(payload);
     toast.success("Entrada cadastrada");
     setOpen(false);
@@ -200,7 +200,7 @@ function RendaPage() {
       return descMatch && valorMatch;
     });
 
-    const payload = {
+    const payload: NovaPayload = {
       descricao: desc,
       valor,
       data,
@@ -210,9 +210,7 @@ function RendaPage() {
     };
 
     if (parecida) {
-      setConfirmDup({ descricao: desc, valor, parecida });
-      // guardamos os dados via closure no diálogo
-      (handleSave as unknown as { _payload?: typeof payload })._payload = payload;
+      setConfirmDup({ parecida, payload });
       return;
     }
     persistNova(payload);
@@ -222,6 +220,40 @@ function RendaPage() {
   // ---------- Editar / Excluir ----------
   const [editTarget, setEditTarget] = useState<Receita | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Receita | null>(null);
+
+  // ---------- Histórico: busca + carregar mais ----------
+  const [historicoQuery, setHistoricoQuery] = useState("");
+  const [historicoLimit, setHistoricoLimit] = useState(3);
+
+  const historicoFiltrado = useMemo(() => {
+    const q = normalizeDescricao(historicoQuery);
+    if (!q) return historico;
+    const qNum = Number(q.replace(",", "."));
+    return historico
+      .map((g) => {
+        const monthName = MONTH_NAMES_PT[g.mes] ?? "";
+        const matchMes = monthName.includes(q) || String(g.mes) === q;
+        const matchAno = String(g.ano).includes(q);
+        if (matchMes || matchAno) return g;
+        const itens = g.itens.filter((r) => {
+          const desc = normalizeDescricao(r.descricao);
+          const tipoLabel = normalizeDescricao(
+            TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label ?? "",
+          );
+          if (desc.includes(q)) return true;
+          if (tipoLabel.includes(q)) return true;
+          if (Number.isFinite(qNum) && qNum > 0 && Math.abs(r.valor - qNum) < 0.01) return true;
+          return false;
+        });
+        return itens.length > 0 ? { ...g, itens } : null;
+      })
+      .filter((g): g is { ano: number; mes: number; itens: Receita[] } => g !== null);
+  }, [historico, historicoQuery]);
+
+  const historicoVisivel = useMemo(
+    () => historicoFiltrado.slice(0, historicoLimit),
+    [historicoFiltrado, historicoLimit],
+  );
 
   if (!ready) return <MobileShell><div /></MobileShell>;
 
