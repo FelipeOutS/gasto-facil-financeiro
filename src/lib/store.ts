@@ -1936,8 +1936,301 @@ export function statusMeta(meta: Meta): StatusMeta {
 }
 
 // ============================================================
-// React hooks
+// CONTAS A PAGAR
 // ============================================================
+export function getContasAPagar(): ContaAPagar[] {
+  return memContas;
+}
+
+/**
+ * Status efetivo: se a conta está pendente e a data de vencimento já passou,
+ * retorna "atrasado" sem alterar o registro persistido.
+ */
+export function statusContaEfetivo(c: ContaAPagar, hojeISO?: string): StatusConta {
+  if (c.status === "pago") return "pago";
+  const hoje = hojeISO ?? new Date().toISOString().slice(0, 10);
+  if (c.dataVencimento < hoje) return "atrasado";
+  return "pendente";
+}
+
+export type NovaContaInput = {
+  nome: string;
+  valor: number;
+  /** YYYY-MM-DD */
+  dataVencimento: string;
+  categoriaId?: string;
+  observacao?: string;
+  recorrente?: boolean;
+  /** Quantos meses repetir (default 12) */
+  recorrenteMeses?: number;
+  dataFim?: string;
+};
+
+export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
+  if (!activeUserId) return [];
+  const now = new Date().toISOString();
+  const baseDate = new Date(input.dataVencimento + "T00:00:00");
+  const created: ContaAPagar[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: any[] = [];
+  const catUuid = input.categoriaId ? categoriaUuidFor(input.categoriaId) : null;
+
+  if (input.recorrente) {
+    const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const recId = crypto.randomUUID();
+    for (let i = 0; i < meses; i++) {
+      const d = new Date(baseDate);
+      d.setMonth(d.getMonth() + i);
+      if (input.dataFim && d.toISOString().slice(0, 10) > input.dataFim) break;
+      const iso = d.toISOString().slice(0, 10);
+      const id = crypto.randomUUID();
+      const conta: ContaAPagar = {
+        id,
+        nome: input.nome,
+        valor: input.valor,
+        dataVencimento: iso,
+        categoriaId: input.categoriaId,
+        observacao: input.observacao,
+        recorrente: true,
+        recorrenciaId: recId,
+        dataInicio: input.dataVencimento,
+        dataFim: input.dataFim,
+        status: "pendente",
+        mes: d.getMonth() + 1,
+        ano: d.getFullYear(),
+        criadoEm: now,
+        atualizadoEm: now,
+      };
+      created.push(conta);
+      rows.push({
+        id,
+        user_id: activeUserId,
+        nome: input.nome,
+        valor: input.valor,
+        data_vencimento: iso,
+        categoria_id: catUuid,
+        observacao: input.observacao ?? null,
+        recorrente: true,
+        recorrencia_id: recId,
+        data_inicio: input.dataVencimento,
+        data_fim: input.dataFim ?? null,
+        status: "pendente",
+        mes: d.getMonth() + 1,
+        ano: d.getFullYear(),
+      });
+    }
+  } else {
+    const id = crypto.randomUUID();
+    created.push({
+      id,
+      nome: input.nome,
+      valor: input.valor,
+      dataVencimento: input.dataVencimento,
+      categoriaId: input.categoriaId,
+      observacao: input.observacao,
+      recorrente: false,
+      status: "pendente",
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      nome: input.nome,
+      valor: input.valor,
+      data_vencimento: input.dataVencimento,
+      categoria_id: catUuid,
+      observacao: input.observacao ?? null,
+      recorrente: false,
+      status: "pendente",
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+    });
+  }
+  memContas = [...memContas, ...created];
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .insert(rows)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] addContaAPagar failed", error);
+    });
+  return created;
+}
+
+export type ContaEditableFields = {
+  nome?: string;
+  valor?: number;
+  dataVencimento?: string;
+  categoriaId?: string | null;
+  observacao?: string;
+};
+
+export function updateContaAPagar(id: string, fields: ContaEditableFields) {
+  if (!activeUserId) return;
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return;
+  const current = memContas[idx];
+  const updated: ContaAPagar = {
+    ...current,
+    nome: fields.nome ?? current.nome,
+    valor: fields.valor ?? current.valor,
+    dataVencimento: fields.dataVencimento ?? current.dataVencimento,
+    categoriaId:
+      fields.categoriaId === null
+        ? undefined
+        : fields.categoriaId ?? current.categoriaId,
+    observacao: fields.observacao ?? current.observacao,
+    atualizadoEm: new Date().toISOString(),
+  };
+  if (fields.dataVencimento) {
+    const d = new Date(fields.dataVencimento + "T00:00:00");
+    updated.mes = d.getMonth() + 1;
+    updated.ano = d.getFullYear();
+  }
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const row: any = {};
+  if (fields.nome !== undefined) row.nome = fields.nome;
+  if (fields.valor !== undefined) row.valor = fields.valor;
+  if (fields.dataVencimento !== undefined) {
+    row.data_vencimento = fields.dataVencimento;
+    row.mes = updated.mes;
+    row.ano = updated.ano;
+  }
+  if (fields.categoriaId !== undefined) {
+    row.categoria_id = fields.categoriaId
+      ? categoriaUuidFor(fields.categoriaId)
+      : null;
+  }
+  if (fields.observacao !== undefined) row.observacao = fields.observacao ?? null;
+
+  void sbAny
+    .from("contas_a_pagar")
+    .update(row)
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] updateContaAPagar failed", error);
+    });
+}
+
+export function deleteContaAPagar(id: string) {
+  if (!activeUserId) return;
+  memContas = memContas.filter((c) => c.id !== id);
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] deleteContaAPagar failed", error);
+    });
+}
+
+/** Exclui todas as ocorrências futuras de uma conta recorrente. */
+export function deleteContaRecorrencia(
+  recorrenciaId: string,
+  fromMes?: number,
+  fromAno?: number,
+) {
+  const shouldRemove = (c: ContaAPagar) => {
+    if (c.recorrenciaId !== recorrenciaId) return false;
+    if (fromMes == null || fromAno == null) return true;
+    return c.ano > fromAno || (c.ano === fromAno && c.mes >= fromMes);
+  };
+  const removedIds = memContas.filter(shouldRemove).map((c) => c.id);
+  memContas = memContas.filter((c) => !shouldRemove(c));
+  emit();
+  if (!activeUserId || removedIds.length === 0) return;
+  void sbAny
+    .from("contas_a_pagar")
+    .delete()
+    .in("id", removedIds)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] deleteContaRecorrencia failed", error);
+    });
+}
+
+/**
+ * Marca conta como paga. Opcionalmente cria um gasto correspondente no mês
+ * do pagamento (categoria + valor da conta).
+ */
+export function marcarContaComoPago(
+  id: string,
+  options?: { criarGasto?: boolean; formaPagamento?: FormaPagamento },
+): { gastoId?: string } {
+  if (!activeUserId) return {};
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return {};
+  const conta = memContas[idx];
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  let gastoId: string | undefined;
+  if (options?.criarGasto && conta.categoriaId) {
+    const novos = addGasto({
+      descricao: conta.nome,
+      valor: conta.valor,
+      data: hoje,
+      estabelecimento: conta.nome,
+      categoriaId: conta.categoriaId,
+      formaPagamento: options.formaPagamento ?? "pix",
+      tipoGasto: "unico",
+    });
+    gastoId = novos[0]?.id;
+  }
+
+  const updated: ContaAPagar = {
+    ...conta,
+    status: "pago",
+    dataPagamento: hoje,
+    gastoId: gastoId ?? conta.gastoId,
+    atualizadoEm: new Date().toISOString(),
+  };
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+
+  void sbAny
+    .from("contas_a_pagar")
+    .update({
+      status: "pago",
+      data_pagamento: hoje,
+      gasto_id: gastoId ?? conta.gastoId ?? null,
+    })
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] marcarContaComoPago failed", error);
+    });
+
+  return { gastoId };
+}
+
+/** Reverte conta paga para pendente (não remove o gasto vinculado). */
+export function desmarcarContaComoPago(id: string) {
+  if (!activeUserId) return;
+  const idx = memContas.findIndex((c) => c.id === id);
+  if (idx < 0) return;
+  const updated: ContaAPagar = {
+    ...memContas[idx],
+    status: "pendente",
+    dataPagamento: undefined,
+    atualizadoEm: new Date().toISOString(),
+  };
+  memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
+  emit();
+  void sbAny
+    .from("contas_a_pagar")
+    .update({ status: "pendente", data_pagamento: null })
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] desmarcarContaComoPago failed", error);
+    });
+}
+
+
 export function useStore<T>(selector: () => T): T {
   return useSyncExternalStore(subscribe, selector, selector);
 }
