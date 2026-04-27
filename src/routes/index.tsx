@@ -127,6 +127,38 @@ function Index() {
   const proximoLimite = limiteTotal && total >= limiteTotal * 0.8;
   const passouLimite = limiteTotal && total > limiteTotal;
 
+  // Contas a pagar do mês
+  const contasResumo = useMemo(() => {
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    const doMes = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
+    let pendente = 0;
+    let atrasadasCount = 0;
+    let pendentesCount = 0;
+    let proxima: (typeof doMes)[number] | null = null;
+    for (const c of doMes) {
+      const s = statusContaEfetivo(c, hojeISO);
+      if (s === "pago") continue;
+      pendente += c.valor;
+      if (s === "atrasado") atrasadasCount++;
+      else pendentesCount++;
+      if (!proxima || c.dataVencimento < proxima.dataVencimento) proxima = c;
+    }
+    let diasParaProxima: number | null = null;
+    if (proxima) {
+      const v = new Date(proxima.dataVencimento + "T00:00:00").getTime();
+      const h = new Date(hojeISO + "T00:00:00").getTime();
+      diasParaProxima = Math.round((v - h) / (1000 * 60 * 60 * 24));
+    }
+    return {
+      pendente,
+      atrasadasCount,
+      pendentesCount,
+      total: doMes.length,
+      proxima,
+      diasParaProxima,
+    };
+  }, [contas, ym]);
+
   // Metas
   const metasAndamento = useMemo(
     () => metas.filter((m) => statusMeta(m) !== "concluida"),
