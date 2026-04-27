@@ -209,3 +209,35 @@ export const BANCOS_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
 ];
 
 export type StatusFatura = "aberta" | "fechada" | "paga";
+
+// ---------- Contas a pagar ----------
+export type StatusConta = "pendente" | "pago" | "atrasado";
+
+export type ContaAPagar = {
+  id: string;
+  nome: string;
+  valor: number;
+  /** YYYY-MM-DD */
+  dataVencimento: string;
+  categoriaId?: string;
+  observacao?: string;
+  recorrente: boolean;
+  /** Agrupador para todas as ocorrências de uma conta recorrente */
+  recorrenciaId?: string;
+  /** Início da recorrência (para o histórico) */
+  dataInicio?: string;
+  /** Fim opcional da recorrência */
+  dataFim?: string;
+  /**
+   * Status armazenado. Para a UI use {@link statusContaEfetivo} que considera
+   * vencimento vs hoje para retornar "atrasado".
+   */
+  status: StatusConta;
+  dataPagamento?: string;
+  /** ID do gasto criado quando o usuário escolhe registrar como gasto */
+  gastoId?: string;
+  mes: number;
+  ano: number;
+  criadoEm: string;
+  atualizadoEm: string;
+};
