@@ -33,6 +33,7 @@ export type GastoFormProps = {
 
 export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: GastoFormProps) {
   const categorias = useStore(() => getCategorias());
+  const cartoes = useStore(() => getCartoes());
 
   const [valorStr, setValorStr] = useState(
     initial?.valor ? initial.valor.toFixed(2).replace(".", ",") : "",
@@ -49,6 +50,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>(
     initial?.formaPagamento ?? "credito",
   );
+  const [cartaoId, setCartaoId] = useState<string | undefined>(initial?.cartaoId);
   const [observacao, setObservacao] = useState(initial?.observacao ?? "");
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
@@ -89,6 +91,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
+          cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
         });
       }}
       className="space-y-5"
