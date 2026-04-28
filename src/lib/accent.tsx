@@ -22,6 +22,9 @@ type AccentDef = {
   /** Foreground (text/icon) color over brand surface. */
   fgDark: string;
   fgLight: string;
+  /** Foreground color used over a tinted/soft brand surface (for readability). */
+  fgOnSoftDark: string;
+  fgOnSoftLight: string;
 };
 
 export const ACCENTS: AccentDef[] = [
@@ -33,6 +36,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.24 0.01 260)",
     fgDark: "oklch(0.18 0.005 260)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.985 0 0)",
+    fgOnSoftLight: "oklch(0.24 0.01 260)",
   },
   {
     id: "blue",
@@ -42,6 +47,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.55 0.18 255)",
     fgDark: "oklch(0.18 0.01 260)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.86 0.08 250)",
+    fgOnSoftLight: "oklch(0.4 0.16 255)",
   },
   {
     id: "violet",
@@ -51,6 +58,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.55 0.22 295)",
     fgDark: "oklch(0.18 0.01 295)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.86 0.1 295)",
+    fgOnSoftLight: "oklch(0.4 0.18 295)",
   },
   {
     id: "pink",
@@ -60,6 +69,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.6 0.22 0)",
     fgDark: "oklch(0.18 0.01 0)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.88 0.12 0)",
+    fgOnSoftLight: "oklch(0.45 0.2 0)",
   },
   {
     id: "amber",
@@ -69,6 +80,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.78 0.17 90)",
     fgDark: "oklch(0.2 0.02 95)",
     fgLight: "oklch(0.2 0.02 95)",
+    fgOnSoftDark: "oklch(0.92 0.12 95)",
+    fgOnSoftLight: "oklch(0.45 0.14 80)",
   },
   {
     id: "cyan",
@@ -78,6 +91,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.62 0.14 220)",
     fgDark: "oklch(0.18 0.01 220)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.88 0.09 215)",
+    fgOnSoftLight: "oklch(0.4 0.13 220)",
   },
   {
     id: "orange",
@@ -87,6 +102,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.66 0.18 50)",
     fgDark: "oklch(0.2 0.02 55)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.9 0.11 55)",
+    fgOnSoftLight: "oklch(0.45 0.16 50)",
   },
   {
     id: "green",
@@ -96,6 +113,8 @@ export const ACCENTS: AccentDef[] = [
     light: "oklch(0.58 0.17 152)",
     fgDark: "oklch(0.18 0.01 152)",
     fgLight: "oklch(0.985 0 0)",
+    fgOnSoftDark: "oklch(0.88 0.11 152)",
+    fgOnSoftLight: "oklch(0.4 0.16 152)",
   },
 ];
 
@@ -127,16 +146,55 @@ function applyAccent(id: AccentId) {
   const isLight = root.classList.contains("light");
   const brand = isLight ? def.light : def.dark;
   const fg = isLight ? def.fgLight : def.fgDark;
-  // Always available token for any custom accent usage
+  const fgOnSoft = isLight ? def.fgOnSoftLight : def.fgOnSoftDark;
+
+  // Always-available brand tokens (work for any accent, including graphite)
   root.style.setProperty("--brand", brand);
   root.style.setProperty("--brand-foreground", fg);
-  // For non-graphite accents, override primary/ring so it propagates
-  // through buttons, focus rings, progress, etc.
+  root.style.setProperty("--brand-fg-on-soft", fgOnSoft);
+
+  // Soft surfaces & tints — derived via color-mix so they adapt to theme.
+  // For graphite we use neutral mixes (so the UI stays elegant/neutral).
   if (id === "graphite") {
+    // Subtle neutral tints — keeps the premium dark/light feel.
+    root.style.setProperty(
+      "--brand-soft",
+      isLight
+        ? "color-mix(in oklab, var(--foreground) 6%, transparent)"
+        : "color-mix(in oklab, var(--foreground) 10%, transparent)",
+    );
+    root.style.setProperty(
+      "--brand-tint",
+      isLight
+        ? "color-mix(in oklab, var(--foreground) 3%, transparent)"
+        : "color-mix(in oklab, var(--foreground) 5%, transparent)",
+    );
+    root.style.setProperty(
+      "--brand-border",
+      "color-mix(in oklab, var(--foreground) 18%, transparent)",
+    );
+    // Reset primary/ring to neutral defaults from styles.css
     root.style.removeProperty("--primary");
     root.style.removeProperty("--primary-foreground");
     root.style.removeProperty("--ring");
   } else {
+    root.style.setProperty(
+      "--brand-soft",
+      isLight
+        ? `color-mix(in oklab, ${brand} 14%, transparent)`
+        : `color-mix(in oklab, ${brand} 22%, transparent)`,
+    );
+    root.style.setProperty(
+      "--brand-tint",
+      isLight
+        ? `color-mix(in oklab, ${brand} 6%, transparent)`
+        : `color-mix(in oklab, ${brand} 10%, transparent)`,
+    );
+    root.style.setProperty(
+      "--brand-border",
+      `color-mix(in oklab, ${brand} 45%, transparent)`,
+    );
+    // Make brand drive the primary system (buttons, focus, progress, etc.)
     root.style.setProperty("--primary", brand);
     root.style.setProperty("--primary-foreground", fg);
     root.style.setProperty("--ring", brand);

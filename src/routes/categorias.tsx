@@ -138,14 +138,14 @@ function CategoriasPage() {
                   type="button"
                   onClick={() => setTheme(id)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all active:scale-[0.98]",
+                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all card-press",
                     active
-                      ? "border-foreground/40 bg-card-elevated text-foreground shadow-card"
+                      ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
                       : "border-border bg-card text-muted-foreground hover:text-foreground",
                   )}
                   aria-pressed={active}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={cn("h-4 w-4", active && "text-brand")} />
                   {label}
                 </button>
               );
@@ -167,9 +167,9 @@ function CategoriasPage() {
                   type="button"
                   onClick={() => setAccent(a.id)}
                   className={cn(
-                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all active:scale-[0.96]",
+                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all card-press",
                     active
-                      ? "border-foreground/40 bg-card-elevated"
+                      ? "border-brand bg-brand-soft"
                       : "border-border bg-card hover:bg-card-elevated",
                   )}
                   aria-pressed={active}
@@ -178,11 +178,16 @@ function CategoriasPage() {
                   <span
                     className={cn(
                       "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
-                      active ? "ring-foreground/60" : "ring-transparent",
+                      active ? "ring-foreground/70 scale-105" : "ring-transparent",
                     )}
                     style={{ background: a.swatch }}
                   />
-                  <span className="text-[10px] font-medium text-muted-foreground">
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium",
+                      active ? "text-brand-on-soft" : "text-muted-foreground",
+                    )}
+                  >
                     {a.label}
                   </span>
                 </button>

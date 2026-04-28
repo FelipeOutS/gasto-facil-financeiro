@@ -217,7 +217,19 @@ body {
       no-repeat fixed;
   }
 
-  /* Numeric values — tabular */
+  /* Soft brand tint overlay — barely visible, gives the chosen accent
+     a subtle presence in the page background without losing legibility. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(60% 40% at 50% 0%, var(--brand-tint, transparent) 0%, transparent 70%),
+      radial-gradient(40% 30% at 100% 100%, var(--brand-tint, transparent) 0%, transparent 70%);
+    transition: background 300ms ease;
+  }
   .num {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
@@ -225,6 +237,16 @@ body {
 }
 
 @layer utilities {
+  /* ===== Brand / Accent tokens (set dynamically by AccentProvider) ===== */
+  .bg-brand { background-color: var(--brand); }
+  .text-brand { color: var(--brand); }
+  .text-brand-on-soft { color: var(--brand-fg-on-soft, var(--foreground)); }
+  .bg-brand-soft { background-color: var(--brand-soft); }
+  .bg-brand-tint { background-color: var(--brand-tint); }
+  .border-brand { border-color: var(--brand-border); }
+  .ring-brand { --tw-ring-color: var(--brand); }
+  .from-brand { --tw-gradient-from: var(--brand) var(--tw-gradient-from-position); }
+
   .shadow-card {
     box-shadow:
       0 1px 0 0 oklch(1 0 0 / 0.04) inset,

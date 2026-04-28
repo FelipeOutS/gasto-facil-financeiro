@@ -104,9 +104,9 @@ export function FluxoCaixaChart({
                 type="button"
                 onClick={() => setTipo(id)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all card-press",
                   active
-                    ? "bg-card text-foreground shadow-card"
+                    ? "bg-brand-soft text-brand-on-soft shadow-card"
                     : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-pressed={active}
