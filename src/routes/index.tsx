@@ -274,56 +274,53 @@ function Index() {
         <div className="lg:hidden">{monthSwitcher}</div>
       </header>
 
-      {/* ===== 1. RESUMO PRINCIPAL — grid no desktop ===== */}
+      {/* ===== KPIs ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <KpiCard
+          label="Saldo"
+          value={formatBRL(saldo)}
+          icon={<Wallet className="h-4 w-4" />}
+          tone={saldo < 0 ? "destructive" : "brand"}
+          hint={saldo < 0 ? `${formatBRL(-saldo)} a mais que recebeu` : "no mês atual"}
+        />
+        <KpiCard
+          label="Receitas"
+          value={formatBRL(totalEntradas)}
+          icon={<ArrowUp className="h-4 w-4" />}
+          tone="success"
+          hint={`${receitasMes.length} ${receitasMes.length === 1 ? "entrada" : "entradas"}`}
+        />
+        <KpiCard
+          label="Despesas"
+          value={formatBRL(total)}
+          icon={<ArrowDown className="h-4 w-4" />}
+          tone="destructive"
+          hint={`${doMes.length} ${doMes.length === 1 ? "lançamento" : "lançamentos"}`}
+        />
+        <KpiCard
+          label="A pagar"
+          value={formatBRL(contasResumo.pendente)}
+          icon={<CalendarClock className="h-4 w-4" />}
+          tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
+          hint={
+            contasResumo.atrasadasCount > 0
+              ? `${contasResumo.atrasadasCount} atrasada(s)`
+              : contasResumo.pendentesCount > 0
+                ? `${contasResumo.pendentesCount} pendente(s)`
+                : "tudo em dia"
+          }
+        />
+      </section>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated lg:col-span-3">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Saldo do mês
-            </p>
-            <div className="hidden lg:block">{monthSwitcher}</div>
-          </div>
-          <p
-            className={cn(
-              "num mt-1 text-[34px] font-extrabold leading-none tracking-tight",
-              saldo < 0 && "text-destructive",
-            )}
-          >
-            {formatBRL(saldo)}
-          </p>
+      {saldo < 0 && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Você gastou {formatBRL(-saldo)} a mais do que recebeu este mês.
+        </p>
+      )}
 
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            <MiniStat
-              label="Entradas"
-              value={formatBRL(totalEntradas)}
-              icon={<ArrowUp className="h-3 w-3" />}
-              tone="success"
-            />
-            <MiniStat
-              label="Gastos"
-              value={formatBRL(total)}
-              icon={<ArrowDown className="h-3 w-3" />}
-              tone="destructive"
-            />
-          </div>
-
-          {saldo < 0 && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Você gastou {formatBRL(-saldo)} a mais do que recebeu.
-            </p>
-          )}
-        </section>
-
-        {/* Coluna direita no desktop: Contas a pagar */}
-        <div className="hidden lg:col-span-2 lg:block">
-          <ContasCard resumo={contasResumo} variant="sideTop" />
-        </div>
-      </div>
-
-      {/* CTA principal — escondido em desktop (já existe na sidebar) */}
+      {/* CTA principal — apenas mobile (sidebar tem o seu) */}
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
           size="lg"
@@ -334,10 +331,115 @@ function Index() {
         </Button>
       </Link>
 
-      {/* ===== 2. CONTROLE FINANCEIRO ===== */}
-      <SectionLabel>Controle financeiro</SectionLabel>
+      {/* ===== Fluxo de caixa + Transações recentes ===== */}
+      <SectionLabel>Visão financeira</SectionLabel>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="lg:col-span-3">
+          <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastos} receitas={receitas} />
+        </div>
+        <div className="lg:col-span-2">
+          <RecentTransactionsCard ultimos={ultimos} />
+        </div>
+      </div>
 
-      <section className="grid grid-cols-2 gap-2.5 lg:max-w-2xl">
+      {/* ===== Próximas contas + Limite/Renda ===== */}
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="lg:col-span-3">
+          <ContasCard resumo={contasResumo} variant="sideTop" />
+        </div>
+        <div className="grid grid-cols-1 gap-3 lg:col-span-2">
+          {limiteTotal ? (
+            <section className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Limite mensal
+                </p>
+                <span className="num text-xs text-foreground">
+                  {formatBRL(total)} / {formatBRL(limiteTotal)}
+                </span>
+              </div>
+              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    passouLimite
+                      ? "bg-destructive"
+                      : proximoLimite
+                        ? "bg-warning"
+                        : "bg-success",
+                  )}
+                  style={{ width: `${Math.min(100, usoLimite)}%` }}
+                />
+              </div>
+              {passouLimite ? (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Limite ultrapassado em {formatBRL(total - limiteTotal)}
+                </p>
+              ) : proximoLimite ? (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
+                </p>
+              ) : (
+                <p className="num mt-2 text-[11px] text-muted-foreground">
+                  {Math.round((total / limiteTotal) * 100)}% usado
+                </p>
+              )}
+            </section>
+          ) : (
+            <Link
+              to="/orcamento"
+              className="flex items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated">
+                <PieChartIcon className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">Defina seu orçamento</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  Acompanhe limites por categoria
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          )}
+
+          <Link
+            to="/renda"
+            search={{ ano: ym.ano, mes: ym.mes }}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+              <ArrowUp className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">Minha renda</p>
+              <p className="num truncate text-[11px] text-muted-foreground">
+                {formatBRL(totalEntradas)} este mês
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+        </div>
+      </div>
+
+      {/* ===== Atalhos secundários ===== */}
+      <SectionLabel>Controle financeiro</SectionLabel>
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <Link
+          to="/orcamento"
+          className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Orçamento
+            </p>
+            <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <p className="mt-1.5 text-sm font-bold">Por categoria</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
+        </Link>
         <Link
           to="/guardado"
           className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
@@ -369,75 +471,20 @@ function Index() {
             <p className="mt-0.5 text-[10px] text-muted-foreground">—</p>
           )}
         </div>
-      </section>
-
-      {/* Limite + Renda — em 2 colunas no desktop */}
-      <div className="mt-2.5 grid grid-cols-1 gap-2.5 lg:grid-cols-2">
-        {/* Limite mensal */}
-        {limiteTotal ? (
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Limite mensal
-              </p>
-              <span className="num text-xs text-foreground">
-                {formatBRL(total)} / {formatBRL(limiteTotal)}
-              </span>
-            </div>
-            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  passouLimite
-                    ? "bg-destructive"
-                    : proximoLimite
-                      ? "bg-warning"
-                      : "bg-success",
-                )}
-                style={{ width: `${Math.min(100, usoLimite)}%` }}
-              />
-            </div>
-            {passouLimite ? (
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Limite ultrapassado em {formatBRL(total - limiteTotal)}
-              </p>
-            ) : proximoLimite ? (
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
-              </p>
-            ) : (
-              <p className="num mt-2 text-[11px] text-muted-foreground">
-                {Math.round((total / limiteTotal) * 100)}% usado
-              </p>
-            )}
-          </section>
-        ) : null}
-
-        {/* Atalhos: Renda */}
         <Link
-          to="/renda"
-          search={{ ano: ym.ano, mes: ym.mes }}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          to="/metas"
+          className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-            <ArrowUp className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">Minha renda</p>
-            <p className="num truncate text-[11px] text-muted-foreground">
-              {formatBRL(totalEntradas)} este mês
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Metas
             </p>
+            <Target className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">em andamento</p>
         </Link>
-      </div>
-
-      {/* Card detalhado: Contas a pagar — escondido no desktop (já está no topo) */}
-      <div className="lg:hidden">
-        <ContasCard resumo={contasResumo} />
-      </div>
+      </section>
 
 
       {porCategoria.length > 0 && (
