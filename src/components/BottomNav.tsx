@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, List, Wallet, Target, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAlertaContas } from "@/lib/contas-alertas";
 
 const TABS = [
   { to: "/", label: "Início", icon: Home },
@@ -12,6 +13,7 @@ const TABS = [
 
 export function BottomNav() {
   const location = useLocation();
+  const alerta = useAlertaContas();
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom lg:hidden"
@@ -21,6 +23,9 @@ export function BottomNav() {
         {TABS.map(({ to, label, icon: Icon }) => {
           const active =
             to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          // O item "Início" mostra a bolinha porque é por lá que o usuário acessa
+          // o card "Próximas contas" no dashboard.
+          const showDot = to === "/" && alerta !== "nenhum";
           return (
             <li key={to} className="flex-1">
               <Link
@@ -30,11 +35,29 @@ export function BottomNav() {
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon
-                  className={cn("h-5 w-5", active && "drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]")}
-                  strokeWidth={active ? 2.4 : 1.8}
-                />
+                <span className="relative">
+                  <Icon
+                    className={cn("h-5 w-5", active && "drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]")}
+                    strokeWidth={active ? 2.4 : 1.8}
+                  />
+                  {showDot && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute -right-1 -top-0.5 h-2 w-2 rounded-full ring-2 ring-background",
+                        alerta === "vermelho" ? "bg-destructive" : "bg-warning",
+                      )}
+                    />
+                  )}
+                </span>
                 <span>{label}</span>
+                {showDot && (
+                  <span className="sr-only">
+                    {alerta === "vermelho"
+                      ? "Há contas atrasadas"
+                      : "Há contas vencendo em breve"}
+                  </span>
+                )}
               </Link>
             </li>
           );
