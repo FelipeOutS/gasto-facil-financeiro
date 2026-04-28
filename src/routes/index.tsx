@@ -192,7 +192,7 @@ function Index() {
 
   if (isEmpty) {
     return (
-      <MobileShell>
+      <MobileShell wide>
         <header className="pt-2">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Gasto Fácil
@@ -239,7 +239,7 @@ function Index() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell wide>
       {/* Header / month switcher */}
       <header className="flex items-center justify-between pt-2">
         <div>
@@ -970,7 +970,7 @@ function ContasCard({ resumo }: { resumo: ContasResumo }) {
 
 function DashboardSkeleton() {
   return (
-    <MobileShell>
+    <MobileShell wide>
       <div className="flex items-center justify-between pt-2">
         <div className="space-y-2">
           <Skeleton className="h-3 w-16" />
