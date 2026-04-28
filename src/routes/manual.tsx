@@ -47,7 +47,7 @@ function Manual() {
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
             const save = () => {
               addGasto(data);
-              toast.success("Gasto salvo!");
+              toast.success("Gasto registrado. ✅");
               navigate({ to: "/" });
             };
             if (dup) {

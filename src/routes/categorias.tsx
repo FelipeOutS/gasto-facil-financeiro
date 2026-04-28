@@ -214,7 +214,7 @@ function CategoriasPage() {
             onClick={() => {
               const v = parseBRLInput(limiteStr);
               setLimite("total", v, mes, ano);
-              toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo` : "Limite removido");
+              toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
             }}
             className="h-11 rounded-xl"
           >
@@ -307,7 +307,7 @@ function CategoriasPage() {
                       iconName,
                       colorHex,
                     });
-                    toast.success("Categoria criada");
+                    toast.success("Categoria criada. 🎨");
                     setNome("");
                     setOpen(false);
                   }}
@@ -331,7 +331,7 @@ function CategoriasPage() {
                 <button
                   onClick={() => {
                     deleteCategoria(c.id);
-                    toast.success("Categoria removida");
+                    toast.success("Categoria removida.");
                   }}
                   className="text-muted-foreground hover:text-destructive"
                   aria-label="Excluir categoria"
