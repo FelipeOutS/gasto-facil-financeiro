@@ -108,11 +108,6 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CartoesRoute = CartoesRouteImport.update({
-  id: '/cartoes',
-  path: '/cartoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdicionarRoute = AdicionarRouteImport.update({
   id: '/adicionar',
   path: '/adicionar',
