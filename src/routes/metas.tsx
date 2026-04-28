@@ -102,7 +102,7 @@ function MetasPage() {
   function handleSave() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
-      toast.error("Informe nome e valor objetivo");
+      toast.error("Coloca um nome e o valor da meta.");
       return;
     }
     addMeta({
@@ -114,7 +114,7 @@ function MetasPage() {
       colorHex,
       bancoId: bancoId === "nenhum" ? undefined : bancoId,
     });
-    toast.success("Meta criada");
+    toast.success("Meta criada. Cada passo conta. 🎯");
     reset();
     setOpen(false);
   }
@@ -122,7 +122,7 @@ function MetasPage() {
   function handleAddValor() {
     const v = parseBRLInput(addValorStr);
     if (!addMetaId || !v) {
-      toast.error("Informe um valor");
+      toast.error("Informe um valor.");
       return;
     }
     addMovimentacaoMeta({
@@ -130,7 +130,7 @@ function MetasPage() {
       valor: v,
       bancoId: addBanco === "nenhum" ? undefined : addBanco,
     });
-    toast.success("Valor adicionado");
+    toast.success("Valor adicionado à meta. 🚀");
     setAddOpen(false);
     setAddValorStr("");
     setAddMetaId(null);
@@ -270,12 +270,17 @@ function MetasPage() {
         {ordenadas.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
             <Target className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Crie sua primeira meta e acompanhe seu progresso aos poucos.
+            <p className="mt-3 text-sm font-medium text-foreground">
+              Sua primeira meta pode começar hoje.
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Defina um objetivo e acompanhe seu progresso passo a passo.
             </p>
           </div>
         ) : (
-          ordenadas.map((m) => <MetaCard key={m.id} meta={m} onAdd={(id) => { setAddMetaId(id); setAddOpen(true); }} />)
+          <div className="space-y-3 stagger">
+            {ordenadas.map((m) => <MetaCard key={m.id} meta={m} onAdd={(id) => { setAddMetaId(id); setAddOpen(true); }} />)}
+          </div>
         )}
       </section>
 
@@ -329,7 +334,7 @@ function MetaCard({ meta, onAdd }: { meta: Meta; onAdd: (id: string) => void }) 
 
   return (
     <div
-      className="rounded-3xl border border-border bg-card p-4"
+      className="rounded-3xl border border-border bg-card p-4 hover-lift"
       style={{ boxShadow: status === "concluida" ? `0 0 0 1px ${meta.colorHex} inset` : undefined }}
     >
       <div className="flex items-start gap-3">
@@ -347,7 +352,7 @@ function MetaCard({ meta, onAdd }: { meta: Meta; onAdd: (id: string) => void }) 
           </p>
         </div>
         <button
-          onClick={() => { deleteMeta(meta.id); toast.success("Meta removida"); }}
+          onClick={() => { deleteMeta(meta.id); toast.success("Meta removida."); }}
           className="text-muted-foreground hover:text-destructive"
           aria-label="Excluir meta"
         >

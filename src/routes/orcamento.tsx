@@ -60,11 +60,11 @@ function statusFor(realizado: number, planejado: number): Status {
 
 function statusLabel(s: Status): string {
   return s === "ok"
-    ? "Dentro do orçamento"
+    ? "Tudo certo"
     : s === "alerta"
-      ? "Próximo do limite"
+      ? "Quase no limite"
       : s === "estouro"
-        ? "Acima do orçamento"
+        ? "Passou do limite"
         : "Sem limite";
 }
 
@@ -142,7 +142,7 @@ function OrcamentoPage() {
     if (!editing) return;
     const v = parseBRLInput(editing.valor);
     setLimite(editing.id, v, ym.mes, ym.ano);
-    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo` : "Limite removido");
+    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
     setEditing(null);
   }
 
@@ -400,7 +400,7 @@ function OrcamentoPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <TrendingUp className="h-3 w-3" />
-        Os limites são salvos por mês — você pode planejar diferente a cada período.
+        Veja para onde seu dinheiro está indo — você pode planejar diferente a cada mês.
       </p>
 
       {/* Dialog editar limite */}

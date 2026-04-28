@@ -74,11 +74,11 @@ function GuardadoPage() {
   function handleSaveGuardado() {
     const valor = parseBRLInput(valorStr);
     if (!valor || !bancoId) {
-      toast.error("Selecione banco e valor");
+      toast.error("Selecione o banco e informe um valor.");
       return;
     }
     addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined });
-    toast.success("Valor guardado");
+    toast.success("Valor guardado. Seu futuro agradece. 💚");
     setValorStr("");
     setObs("");
     setOpenG(false);
@@ -86,11 +86,11 @@ function GuardadoPage() {
 
   function handleSaveBanco() {
     if (!novoBancoNome.trim()) {
-      toast.error("Informe o nome");
+      toast.error("Dá um nome pro banco antes de salvar.");
       return;
     }
     addBanco({ nome: novoBancoNome.trim(), colorHex: novoBancoCor });
-    toast.success("Banco adicionado");
+    toast.success("Banco adicionado.");
     setNovoBancoNome("");
     setOpenB(false);
   }
@@ -244,17 +244,20 @@ function GuardadoPage() {
         {guardado.length === 0 ? (
           <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
             <Wallet className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Registre o que você já guardou para acompanhar sua reserva crescer.
+            <p className="mt-3 text-sm font-medium text-foreground">
+              Nada guardado por aqui ainda.
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Registre o que você já tem reservado e veja sua tranquilidade crescer.
             </p>
           </div>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-2 stagger">
             {guardado.map((g) => {
               const banco = bancos.find((b) => b.id === g.bancoId);
               const tipoLabel = TIPOS_RESERVA.find((t) => t.id === g.tipoReserva)?.label;
               return (
-                <li key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                <li key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift">
                   <span
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white text-xs font-bold"
                     style={{ background: banco?.colorHex ?? "var(--cat-outros)" }}
@@ -270,8 +273,8 @@ function GuardadoPage() {
                   <div className="flex flex-col items-end gap-1">
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
                     <button
-                      onClick={() => { deleteGuardado(g.id); toast.success("Removido"); }}
-                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => { deleteGuardado(g.id); toast.success("Reserva removida."); }}
+                      className="text-muted-foreground transition-colors hover:text-destructive"
                       aria-label="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -298,7 +301,7 @@ function GuardadoPage() {
                 </div>
                 {b.criadoPeloUsuario && (
                   <button
-                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido"); }}
+                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido."); }}
                     className="text-muted-foreground hover:text-destructive"
                     aria-label="Excluir banco"
                   >

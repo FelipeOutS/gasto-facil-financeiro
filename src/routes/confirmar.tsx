@@ -69,7 +69,7 @@ function Confirmar() {
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-muted-foreground">
             <ImageOff className="h-6 w-6" />
-            <p className="text-sm">Nenhuma imagem anexada</p>
+            <p className="text-sm">Sem imagem por aqui.</p>
           </div>
         )}
       </div>
@@ -147,7 +147,7 @@ function Confirmar() {
             const save = () => {
               addGasto(data);
               sessionStorage.removeItem("gf:pendingImage");
-              toast.success("Gasto salvo!");
+              toast.success("Gasto registrado. ✅");
               navigate({ to: "/" });
             };
             if (dup) {

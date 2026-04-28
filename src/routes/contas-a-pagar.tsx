@@ -385,23 +385,25 @@ function ContasAPagarPage() {
           <EmptyState onAdd={() => setCreating(true)} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-            Nenhuma conta neste filtro.
+            Nada nesse filtro por aqui.
           </div>
         ) : (
-          filtradas.map((conta) => (
-            <ContaCard
-              key={conta.id}
-              conta={conta}
-              hojeISO={hojeISO}
-              onEdit={() => setEditing(conta)}
-              onDelete={() => setConfirmDelete(conta)}
-              onPagar={() => setPagar(conta)}
-              onDesmarcar={() => {
-                desmarcarContaComoPago(conta.id);
-                toast.success("Conta marcada como pendente.");
-              }}
-            />
-          ))
+          <div className="space-y-2.5 stagger">
+            {filtradas.map((conta) => (
+              <ContaCard
+                key={conta.id}
+                conta={conta}
+                hojeISO={hojeISO}
+                onEdit={() => setEditing(conta)}
+                onDelete={() => setConfirmDelete(conta)}
+                onPagar={() => setPagar(conta)}
+                onDesmarcar={() => {
+                  desmarcarContaComoPago(conta.id);
+                  toast.success("Conta voltou para pendente.");
+                }}
+              />
+            ))}
+          </div>
         )}
       </section>
 
@@ -430,10 +432,10 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
-                ? `Tem certeza que deseja excluir "${confirmDelete.nome}"? Esta ação não pode ser desfeita.`
+                ? `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -520,21 +522,21 @@ function mensagemAmigavel(t: {
 }): string {
   if (t.qtdAtrasado > 0) {
     return t.qtdAtrasado === 1
-      ? "Atenção: 1 conta está atrasada."
-      : `Atenção: ${t.qtdAtrasado} contas estão atrasadas.`;
+      ? "Heads up: 1 conta está atrasada."
+      : `Heads up: ${t.qtdAtrasado} contas estão atrasadas.`;
   }
   if (t.qtdProximos7 > 0) {
     return t.qtdProximos7 === 1
-      ? "Você tem 1 conta próxima do vencimento."
-      : `Você tem ${t.qtdProximos7} contas próximas do vencimento.`;
+      ? "Você tem 1 conta vencendo em breve."
+      : `Você tem ${t.qtdProximos7} contas vencendo em breve.`;
   }
   if (t.qtdPendente === 0 && t.qtdPago === 0) {
-    return "Nenhuma conta cadastrada para este mês.";
+    return "Sem contas cadastradas no momento.";
   }
   if (t.qtdPendente === 0) {
-    return "Tudo certo por aqui. Nenhuma conta pendente. 🎉";
+    return "Tudo em dia! Nenhuma conta pendente. 🎉";
   }
-  return "Boa! Nenhuma conta vence nos próximos 7 dias.";
+  return "Boa! Nada vencendo nos próximos 7 dias.";
 }
 
 function StatusPill({
@@ -572,17 +574,17 @@ function StatusPill({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center animate-fade-in">
-      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground">
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center animate-rise">
+      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground animate-pop">
         <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold">Cadastre suas contas fixas</p>
+      <p className="text-sm font-semibold">Organize hoje, relaxa depois</p>
       <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-        Organize aluguel, internet, luz, assinaturas e outras contas para nunca mais esquecer um vencimento.
+        Cadastre aluguel, internet, luz, assinaturas — e nunca mais esqueça um vencimento.
       </p>
-      <Button size="sm" className="mt-4 transition-transform active:scale-95" onClick={onAdd}>
+      <Button size="sm" className="card-press mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
-        Adicionar conta
+        Adicionar primeira conta
       </Button>
     </div>
   );
@@ -778,7 +780,7 @@ function ContaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) {
-      toast.error("Informe o nome da conta.");
+      toast.error("Dá um nome pra essa conta.");
       return;
     }
     if (!Number.isFinite(valor) || valor <= 0) {
@@ -786,7 +788,7 @@ function ContaFormDialog({
       return;
     }
     if (!dataVenc) {
-      toast.error("Informe a data de vencimento.");
+      toast.error("Escolha a data de vencimento.");
       return;
     }
 
@@ -798,7 +800,7 @@ function ContaFormDialog({
         categoriaId: categoriaId || null,
         observacao: observacao.trim() || undefined,
       });
-      toast.success("Conta atualizada.");
+      toast.success("Conta atualizada. ✅");
     } else {
       addContaAPagar({
         nome: nome.trim(),
@@ -809,7 +811,7 @@ function ContaFormDialog({
         recorrente,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
       });
-      toast.success(recorrente ? "Conta recorrente cadastrada." : "Conta cadastrada.");
+      toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
     onSaved();
   }
@@ -822,7 +824,7 @@ function ContaFormDialog({
           <DialogDescription>
             {isEdit
               ? "Atualize os dados da conta."
-              : "Cadastre uma conta para acompanhar o vencimento."}
+              : "Cadastre essa conta e a gente te avisa antes do vencimento."}
           </DialogDescription>
         </DialogHeader>
 

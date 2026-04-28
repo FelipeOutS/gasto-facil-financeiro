@@ -38,11 +38,11 @@ function ResetPasswordPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!senhaOk) {
-      toast.error("Sua senha ainda não atende a todos os requisitos.");
+      toast.error("Faltam alguns requisitos para sua senha ficar segura.");
       return;
     }
     if (password !== confirm) {
-      toast.error("As senhas não coincidem.");
+      toast.error("As senhas não coincidem. Confere aí 👀");
       return;
     }
     setSubmitting(true);
@@ -52,16 +52,16 @@ function ResetPasswordPage() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Senha atualizada com sucesso!");
+    toast.success("Senha atualizada! Pronto para continuar. ✅");
     void navigate({ to: "/" });
   }
 
   return (
     <AuthShell
-      title="Redefinir senha"
+      title="Nova senha"
       subtitle={
         ready
-          ? "Escolha uma nova senha para sua conta."
+          ? "Crie uma senha forte e fácil de lembrar pra você."
           : "Abra esta página pelo link enviado no seu e-mail."
       }
     >

@@ -101,8 +101,8 @@ function ResumoPage() {
       {/* Pie chart */}
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
         {porCategoria.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            Sem gastos neste mês.
+          <p className="py-10 text-center text-sm text-muted-foreground animate-fade-in">
+            Nenhum gasto neste mês ainda.
           </p>
         ) : (
           <>

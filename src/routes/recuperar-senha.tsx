@@ -37,28 +37,29 @@ function RecoverForm() {
       return;
     }
     setSent(true);
-    toast.success("Enviamos um e-mail com as instruções.");
+    toast.success("Enviamos as instruções para seu e-mail. ✉️");
   }
 
   return (
     <AuthShell
-      title="Esqueci minha senha"
-      subtitle="Informe seu e-mail e enviaremos as instruções de redefinição."
+      title="Esqueceu a senha?"
+      subtitle="Sem stress. Mande seu e-mail que a gente te ajuda a recuperar."
       footer={
         <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
-          Voltar ao login
+          Voltar para o login
         </Link>
       }
     >
       {sent ? (
-        <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          Verifique sua caixa de entrada em <strong className="text-foreground">{email}</strong>.
-          O link expira em alguns minutos.
+        <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground animate-rise">
+          Pronto! Dá uma olhada na caixa de entrada de{" "}
+          <strong className="text-foreground">{email}</strong>. O link expira em alguns minutos —
+          se não achar, confere o spam.
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">E-mail da conta</Label>
             <Input
               id="email"
               type="email"
@@ -72,10 +73,10 @@ function RecoverForm() {
           <Button
             type="submit"
             size="lg"
-            className="h-12 w-full rounded-2xl text-base font-semibold"
+            className="card-press h-12 w-full rounded-2xl text-base font-semibold"
             disabled={submitting}
           >
-            {submitting ? "Enviando…" : "Enviar recuperação"}
+            {submitting ? "Enviando…" : "Enviar instruções"}
           </Button>
         </form>
       )}

@@ -194,17 +194,17 @@ function Index() {
   if (isEmpty) {
     return (
       <MobileShell wide>
-        <header className="pt-2">
+        <header className="pt-2 animate-rise">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Gasto Fácil
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bem-vindo(a)!</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bora começar? 🚀</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Comece cadastrando sua renda, seus gastos ou seu dinheiro guardado.
+            Seu dinheiro mais claro, sem complicação. Escolha por onde começar:
           </p>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3">
+        <section className="mt-6 grid grid-cols-2 gap-3 stagger">
           <WelcomeCard
             to="/renda"
             search={{ ano: ym.ano, mes: ym.mes }}
@@ -215,7 +215,7 @@ function Index() {
           <WelcomeCard
             to="/adicionar"
             icon={<Plus className="h-5 w-5" />}
-            title="Adicionar gasto"
+            title="Lançar gasto"
             tint="primary"
           />
           <WelcomeCard
@@ -227,13 +227,13 @@ function Index() {
           <WelcomeCard
             to="/metas"
             icon={<Target className="h-5 w-5" />}
-            title="Criar meta"
+            title="Criar primeira meta"
             tint="muted"
           />
         </section>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Seus dados ficam vinculados à sua conta.
+          Tudo fica salvo na sua conta. 🔒
         </p>
       </MobileShell>
     );
@@ -314,9 +314,9 @@ function Index() {
       </section>
 
       {saldo < 0 && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Você gastou {formatBRL(-saldo)} a mais do que recebeu este mês.
+          Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
         </p>
       )}
 
@@ -324,10 +324,10 @@ function Index() {
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
           size="lg"
-          className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated active:scale-[0.99]"
+          className="card-press h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
         >
           <Plus className="mr-1 h-5 w-5" />
-          Adicionar gasto
+          Lançar gasto
         </Button>
       </Link>
 
@@ -867,23 +867,23 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
       </div>
       <div className="mt-3 flex-1">
         {ultimos.length === 0 ? (
-          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center">
+          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
-              Nenhum lançamento ainda neste mês.
+              Tudo vazio por aqui ainda.
             </p>
-            <Link to="/adicionar" className="mt-2 text-xs font-medium underline">
-              Cadastrar o primeiro
+            <Link to="/adicionar" className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors">
+              Lançar o primeiro gasto
             </Link>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2 stagger">
             {ultimos.slice(0, 5).map((g) => {
               const cat = getCategoriaById(g.categoriaId);
               return (
                 <li
                   key={g.id}
-                  className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 transition-colors hover:bg-card-elevated"
+                  className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 hover-lift hover:bg-card-elevated"
                 >
                   <CategoryIcon categoria={cat} />
                   <div className="min-w-0 flex-1">
@@ -1074,7 +1074,7 @@ function ContasCard({
             </p>
             <h2 className="text-sm font-semibold">
               {semContas
-                ? "Cadastre suas contas para não perder vencimentos"
+                ? "Cadastre suas contas e não perca nenhum vencimento"
                 : tudoPago
                   ? "Tudo pago neste mês 🎉"
                   : `${formatBRL(resumo.pendente)} pendentes`}

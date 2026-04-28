@@ -39,11 +39,11 @@ function CadastroForm() {
     e.preventDefault();
     setTouched(true);
     if (!senhaOk) {
-      toast.error("Sua senha ainda não atende a todos os requisitos.");
+      toast.error("Faltam alguns requisitos para sua senha ficar segura.");
       return;
     }
     if (password !== confirm) {
-      toast.error("As senhas não coincidem.");
+      toast.error("As senhas não coincidem. Confere aí 👀");
       return;
     }
     setSubmitting(true);
@@ -53,14 +53,14 @@ function CadastroForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Conta criada! Bem-vindo ao Gasto Fácil.");
+    toast.success("Tudo certo! Sua conta foi criada. 🎉");
     void navigate({ to: "/" });
   }
 
   return (
     <AuthShell
-      title="Criar conta"
-      subtitle="Comece a organizar seu dinheiro em poucos segundos."
+      title="Criar sua conta"
+      subtitle="Leva menos de 1 minuto para começar a organizar seu dinheiro."
       footer={
         <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
           Já tenho uma conta

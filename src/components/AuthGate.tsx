@@ -18,11 +18,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (loading || !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-card">
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-card animate-pop">
             <Wallet className="h-6 w-6 text-foreground" />
           </span>
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <p className="text-sm text-muted-foreground">Preparando tudo…</p>
         </div>
       </div>
     );
@@ -44,7 +44,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground animate-fade-in">Só um instante…</p>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function AuthShell({
 }) {
   return (
     <div className="min-h-screen bg-background px-5 py-10">
-      <div className="mx-auto flex w-full max-w-sm flex-col">
+      <div className="mx-auto flex w-full max-w-sm flex-col animate-fade-in">
         <Link to="/" className="mx-auto flex items-center gap-2">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-card shadow-elevated">
             <Wallet className="h-5 w-5 text-foreground" />
