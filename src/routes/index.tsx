@@ -647,12 +647,13 @@ function Index() {
       <section>
         {ultimos.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
-            <ReceiptIcon className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Você ainda não cadastrou gastos este mês.
+            <ReceiptIcon className="h-8 w-8 text-muted-foreground animate-breathe" />
+            <p className="mt-3 text-sm font-medium">Nada por aqui ainda</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Quando você lançar um gasto, ele aparece aqui pra você acompanhar.
             </p>
-            <Link to="/adicionar" className="mt-3 text-sm font-medium underline">
-              Cadastrar o primeiro
+            <Link to="/adicionar" className="mt-3 text-sm font-medium underline hover:text-foreground transition-colors">
+              Lançar meu primeiro gasto
             </Link>
           </div>
         ) : (
