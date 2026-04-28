@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ITEMS = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+};
+
+const ITEMS: NavItem[] = [
   { to: "/", label: "Início", icon: Home, exact: true },
   { to: "/gastos", label: "Gastos", icon: List },
   { to: "/renda", label: "Minha renda", icon: ArrowUp },
@@ -19,7 +26,7 @@ const ITEMS = [
   { to: "/guardado", label: "Guardado", icon: Wallet },
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/categorias", label: "Ajustes", icon: Settings2 },
-] as const;
+];
 
 export function DesktopSidebar() {
   const location = useLocation();
