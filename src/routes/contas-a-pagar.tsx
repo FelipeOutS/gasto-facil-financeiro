@@ -14,6 +14,7 @@ import {
   Receipt,
   Repeat,
   RotateCcw,
+  CalendarDays,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
