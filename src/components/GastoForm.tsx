@@ -175,6 +175,40 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         </div>
       </div>
 
+      {formaPagamento === "credito" && (
+        <div className="rounded-2xl border border-border bg-card p-3 animate-fade-in">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5" />
+            Escolha o cartão
+          </Label>
+          {cartoes.length > 0 ? (
+            <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v || undefined)}>
+              <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
+                <SelectValue placeholder="Selecionar cartão (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {cartoes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden className="inline-block h-3 w-3 rounded-full" style={{ background: c.cor }} />
+                      {c.nome}
+                      {c.banco ? <span className="text-muted-foreground"> · {c.banco}</span> : null}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
+              <p className="text-xs text-muted-foreground">Você ainda não tem cartões cadastrados.</p>
+              <Link to="/cartoes" className="text-xs font-semibold text-brand hover:underline">
+                Cadastrar cartão
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <Label htmlFor="estab" className="text-xs text-muted-foreground">
           Estabelecimento
