@@ -144,8 +144,8 @@ function GastosPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center text-sm text-muted-foreground">
-          Nenhum gasto encontrado.
+        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center text-sm text-muted-foreground animate-fade-in">
+          Comece adicionando seu primeiro gasto para entender para onde seu dinheiro está indo.
         </div>
       ) : (
         <ul className="mt-3 space-y-2 pb-4">

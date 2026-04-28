@@ -574,10 +574,10 @@ function Index() {
       <SectionLabel>Últimos lançamentos</SectionLabel>
       <section>
         {ultimos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
             <ReceiptIcon className="h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
-              Nenhum gasto este mês ainda.
+              Você ainda não cadastrou gastos este mês.
             </p>
             <Link to="/adicionar" className="mt-3 text-sm font-medium underline">
               Cadastrar o primeiro
@@ -901,9 +901,9 @@ function ContasCard({ resumo }: { resumo: ContasResumo }) {
             </p>
             <h2 className="text-sm font-semibold">
               {semContas
-                ? "Nenhuma conta cadastrada"
+                ? "Cadastre suas contas para não perder vencimentos"
                 : tudoPago
-                  ? "Tudo pago neste mês"
+                  ? "Tudo pago neste mês 🎉"
                   : `${formatBRL(resumo.pendente)} pendentes`}
             </h2>
           </div>
