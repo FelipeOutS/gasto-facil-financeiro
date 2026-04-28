@@ -194,17 +194,17 @@ function Index() {
   if (isEmpty) {
     return (
       <MobileShell wide>
-        <header className="pt-2">
+        <header className="pt-2 animate-rise">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Gasto Fácil
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bem-vindo(a)!</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bora começar? 🚀</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Comece cadastrando sua renda, seus gastos ou seu dinheiro guardado.
+            Seu dinheiro mais claro, sem complicação. Escolha por onde começar:
           </p>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3">
+        <section className="mt-6 grid grid-cols-2 gap-3 stagger">
           <WelcomeCard
             to="/renda"
             search={{ ano: ym.ano, mes: ym.mes }}
@@ -215,7 +215,7 @@ function Index() {
           <WelcomeCard
             to="/adicionar"
             icon={<Plus className="h-5 w-5" />}
-            title="Adicionar gasto"
+            title="Lançar gasto"
             tint="primary"
           />
           <WelcomeCard
@@ -227,13 +227,13 @@ function Index() {
           <WelcomeCard
             to="/metas"
             icon={<Target className="h-5 w-5" />}
-            title="Criar meta"
+            title="Criar primeira meta"
             tint="muted"
           />
         </section>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Seus dados ficam vinculados à sua conta.
+          Tudo fica salvo na sua conta. 🔒
         </p>
       </MobileShell>
     );
