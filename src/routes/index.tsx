@@ -848,7 +848,7 @@ function KpiCard({
   );
 }
 
-function RecentTransactionsCard({ ultimos }: { ultimos: ReturnType<typeof Array<unknown>> extends never ? never : any[] }) {
+function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
   return (
     <section className="flex h-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
@@ -878,7 +878,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: ReturnType<typeof Array<
           </div>
         ) : (
           <ul className="space-y-2">
-            {ultimos.slice(0, 5).map((g: any) => {
+            {ultimos.slice(0, 5).map((g) => {
               const cat = getCategoriaById(g.categoriaId);
               return (
                 <li
