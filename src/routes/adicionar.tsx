@@ -50,7 +50,7 @@ function Adicionar() {
       </header>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Escolha como quer registrar. A leitura por imagem identifica os dados, mas você sempre confirma antes de salvar.
+        Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.
       </p>
 
       <div className="mt-6 space-y-3 stagger">
