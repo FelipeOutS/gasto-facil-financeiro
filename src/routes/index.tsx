@@ -811,6 +811,103 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+function KpiCard({
+  label,
+  value,
+  icon,
+  tone = "brand",
+  hint,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  tone?: "brand" | "success" | "destructive" | "warning";
+  hint?: string;
+}) {
+  const toneRing = {
+    brand: "bg-card-elevated text-foreground",
+    success: "bg-success/15 text-success",
+    destructive: "bg-destructive/15 text-destructive",
+    warning: "bg-warning/15 text-warning",
+  }[tone];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated lg:p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <span className={cn("grid h-7 w-7 place-items-center rounded-full", toneRing)}>
+          {icon}
+        </span>
+      </div>
+      <p className="num mt-2 text-xl font-bold leading-tight lg:text-2xl">{value}</p>
+      {hint && (
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+function RecentTransactionsCard({ ultimos }: { ultimos: ReturnType<typeof Array<unknown>> extends never ? never : any[] }) {
+  return (
+    <section className="flex h-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Atividade
+          </p>
+          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">Transações recentes</h2>
+        </div>
+        <Link
+          to="/gastos"
+          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Ver tudo →
+        </Link>
+      </div>
+      <div className="mt-3 flex-1">
+        {ultimos.length === 0 ? (
+          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center">
+            <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Nenhum lançamento ainda neste mês.
+            </p>
+            <Link to="/adicionar" className="mt-2 text-xs font-medium underline">
+              Cadastrar o primeiro
+            </Link>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {ultimos.slice(0, 5).map((g: any) => {
+              const cat = getCategoriaById(g.categoriaId);
+              return (
+                <li
+                  key={g.id}
+                  className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 transition-colors hover:bg-card-elevated"
+                >
+                  <CategoryIcon categoria={cat} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {g.estabelecimento || g.descricao}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {cat?.nome ?? "Outros"} ·{" "}
+                      {new Date(g.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <p className="num shrink-0 text-sm font-semibold text-destructive">
+                    -{formatBRL(g.valor)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function MiniStat({
   label,
   value,
