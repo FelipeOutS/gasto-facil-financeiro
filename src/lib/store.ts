@@ -1400,6 +1400,10 @@ export function findPossibleDuplicate(
 
 // ---------- Categorias ----------
 export function addCategoria(c: Omit<Categoria, "id" | "criadaPeloUsuario">): Categoria {
+  // Bloqueia duplicata por nome normalizado — devolve a existente
+  const existente = findCategoriaByNomeNormalizado(c.nome);
+  if (existente) return existente;
+
   if (!activeUserId) {
     const local: Categoria = { ...c, id: uid(), criadaPeloUsuario: true };
     memCategorias = [...memCategorias, local];
