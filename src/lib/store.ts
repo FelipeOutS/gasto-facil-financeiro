@@ -933,10 +933,14 @@ function normalizeCategoriaNome(nome: string): string {
     .replace(/\s+/g, " ");
 }
 
+// Cache estável da lista deduplicada — invalida quando a referência de
+// memCategorias muda (toda mutação reatribui o array). Sem cache, o array
+// retornado seria novo a cada render e quebraria useSyncExternalStore com
+// "Maximum update depth exceeded".
+let _categoriasCacheSource: Categoria[] | null = null;
+let _categoriasCacheResult: Categoria[] = [];
 export function getCategorias(): Categoria[] {
-  // Dedupe visual: se houver categorias com o mesmo nome normalizado,
-  // mantém apenas uma (preferindo a padrão sobre a do usuário, e a mais antiga).
-  // Não toca nos dados — gastos vinculados continuam funcionando.
+  if (_categoriasCacheSource === memCategorias) return _categoriasCacheResult;
   const seen = new Map<string, Categoria>();
   for (const c of memCategorias) {
     const key = normalizeCategoriaNome(c.nome);
@@ -945,12 +949,13 @@ export function getCategorias(): Categoria[] {
       seen.set(key, c);
       continue;
     }
-    // Prefere a padrão (não criada pelo usuário) sobre a do usuário
     if (existing.criadaPeloUsuario && !c.criadaPeloUsuario) {
       seen.set(key, c);
     }
   }
-  return Array.from(seen.values());
+  _categoriasCacheSource = memCategorias;
+  _categoriasCacheResult = Array.from(seen.values());
+  return _categoriasCacheResult;
 }
 
 /** Verifica se já existe categoria com nome equivalente (ignorando case/acentos). */
