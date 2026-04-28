@@ -1846,6 +1846,17 @@ export type NovoGuardadoInput = {
   tipoReserva: TipoReserva;
   observacao?: string;
 };
+
+/** Procura uma reserva existente similar (mesmo banco + mesmo tipo). */
+export function findReservaSimilar(
+  bancoId: string,
+  tipoReserva: TipoReserva,
+): Guardado | undefined {
+  return memGuardado.find(
+    (g) => g.bancoId === bancoId && g.tipoReserva === tipoReserva,
+  );
+}
+
 export function addGuardado(input: NovoGuardadoInput): Guardado {
   const now = new Date().toISOString();
   const novo: Guardado = {
