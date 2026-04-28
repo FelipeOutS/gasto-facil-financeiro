@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { useTheme, type ThemeChoice } from "@/lib/theme";
 import {
   addCategoria,
   deleteCategoria,
