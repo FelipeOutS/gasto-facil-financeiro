@@ -43,6 +43,7 @@ import {
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Money, CountNumber } from "@/components/Money";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -261,46 +262,49 @@ function Index() {
   return (
     <MobileShell wide>
       {/* Header */}
-      <header className="flex items-center justify-between pt-2">
+      <header className="flex items-center justify-between pt-2 animate-rise">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Resumo
+            Resumo do seu mês
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Entrou, saiu, sobrou: tudo aqui.
+          </p>
         </div>
         {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
         <div className="lg:hidden">{monthSwitcher}</div>
       </header>
 
       {/* ===== KPIs ===== */}
-      <SectionLabel>Resumo do mês</SectionLabel>
+      <SectionLabel>Tá tudo no radar</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <KpiCard
           label="Saldo"
-          value={formatBRL(saldo)}
+          valueNum={saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={saldo < 0 ? "destructive" : "brand"}
           hint={saldo < 0 ? `${formatBRL(-saldo)} a mais que recebeu` : "no mês atual"}
         />
         <KpiCard
           label="Receitas"
-          value={formatBRL(totalEntradas)}
+          valueNum={totalEntradas}
           icon={<ArrowUp className="h-4 w-4" />}
           tone="success"
           hint={`${receitasMes.length} ${receitasMes.length === 1 ? "entrada" : "entradas"}`}
         />
         <KpiCard
           label="Despesas"
-          value={formatBRL(total)}
+          valueNum={total}
           icon={<ArrowDown className="h-4 w-4" />}
           tone="destructive"
           hint={`${doMes.length} ${doMes.length === 1 ? "lançamento" : "lançamentos"}`}
         />
         <KpiCard
           label="A pagar"
-          value={formatBRL(contasResumo.pendente)}
+          valueNum={contasResumo.pendente}
           icon={<CalendarClock className="h-4 w-4" />}
           tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
           hint={
