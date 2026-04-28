@@ -145,17 +145,20 @@ function GastosPage() {
 
       {filtered.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center text-sm text-muted-foreground animate-fade-in">
-          Comece adicionando seu primeiro gasto para entender para onde seu dinheiro está indo.
+          <p className="font-medium text-foreground">Nada por aqui ainda.</p>
+          <p className="mt-1 text-xs">
+            Quando você lançar seu primeiro gasto, ele aparece nesta lista.
+          </p>
         </div>
       ) : (
-        <ul className="mt-3 space-y-2 pb-4">
+        <ul className="mt-3 space-y-2 pb-4 stagger">
           {filtered.map((g) => {
             const cat = getCategoriaById(g.categoriaId);
             const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
             return (
               <li
                 key={g.id}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
               >
                 <CategoryIcon categoria={cat} />
                 <div className="min-w-0 flex-1">
@@ -176,9 +179,9 @@ function GastosPage() {
                   <button
                     onClick={() => {
                       deleteGasto(g.id);
-                      toast.success("Gasto removido");
+                      toast.success("Gasto removido.");
                     }}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground transition-colors hover:text-destructive"
                     aria-label="Excluir"
                   >
                     <Trash2 className="h-4 w-4" />
