@@ -24,10 +24,10 @@ export function MobileShell({
       <div className={showNav ? "lg:pl-64" : ""}>
         <div
           className={
-            "mx-auto flex min-h-screen w-full flex-col px-4 pb-28 safe-top sm:px-6 lg:pb-10 " +
+            "mx-auto flex min-h-screen w-full flex-col px-4 pb-28 safe-top sm:px-6 lg:px-10 lg:pb-12 " +
             (wide
-              ? "max-w-md md:max-w-3xl lg:max-w-6xl xl:max-w-7xl"
-              : "max-w-md md:max-w-2xl lg:max-w-4xl")
+              ? "max-w-md md:max-w-3xl lg:max-w-[1180px] xl:max-w-[1280px]"
+              : "max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl")
           }
         >
           {children}
