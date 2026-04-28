@@ -288,12 +288,12 @@ function OrcamentoPage() {
             <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all",
+                  "h-full rounded-full transition-all animate-fill",
                   totalRealizado > limiteTotal
                     ? "bg-destructive"
                     : totalRealizado >= limiteTotal * 0.8
                       ? "bg-warning"
-                      : "bg-success",
+                      : "bg-brand",
                 )}
                 style={{
                   width: `${Math.min(100, (totalRealizado / limiteTotal) * 100)}%`,
@@ -319,7 +319,7 @@ function OrcamentoPage() {
           </span>
         </div>
 
-        <ul className="space-y-2">
+        <ul className="space-y-2 stagger">
           {linhas.map((l) => {
             const pct =
               l.planejado > 0 ? Math.min(150, (l.realizado / l.planejado) * 100) : 0;
@@ -329,12 +329,12 @@ function OrcamentoPage() {
                 : l.status === "alerta"
                   ? "bg-warning"
                   : l.status === "ok"
-                    ? "bg-success"
+                    ? "bg-brand"
                     : "bg-muted-foreground/30";
             return (
               <li
                 key={l.cat.id}
-                className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+                className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/40 hover:bg-card-elevated"
               >
                 <div className="flex items-center gap-3">
                   <CategoryIcon categoria={l.cat} />
@@ -353,7 +353,7 @@ function OrcamentoPage() {
                     <div className="mt-1.5 flex items-center gap-2">
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-elevated">
                         <div
-                          className={cn("h-full transition-all", corBarra)}
+                          className={cn("h-full transition-all animate-fill", corBarra)}
                           style={{ width: `${Math.min(100, pct)}%` }}
                         />
                       </div>
@@ -362,7 +362,7 @@ function OrcamentoPage() {
                           "shrink-0 text-[10px] font-medium",
                           l.status === "estouro" && "text-destructive",
                           l.status === "alerta" && "text-warning",
-                          l.status === "ok" && "text-success",
+                          l.status === "ok" && "text-brand",
                           l.status === "sem_limite" && "text-muted-foreground",
                         )}
                       >
@@ -375,7 +375,7 @@ function OrcamentoPage() {
                           "text-[10px]",
                           l.status === "estouro" && "text-destructive",
                           l.status === "alerta" && "text-warning",
-                          l.status === "ok" && "text-success",
+                          l.status === "ok" && "text-brand",
                           l.status === "sem_limite" && "text-muted-foreground",
                         )}
                       >
@@ -384,7 +384,7 @@ function OrcamentoPage() {
                       <button
                         type="button"
                         onClick={() => openEdit(l.cat.id, l.cat.nome)}
-                        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand transition-colors"
                       >
                         <Pencil className="h-3 w-3" />
                         Definir limite

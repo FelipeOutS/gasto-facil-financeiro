@@ -49,7 +49,7 @@ export function DesktopSidebar() {
 
       <Link
         to="/adicionar"
-        className="mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-90 active:scale-[0.98]"
+        className="card-press mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-grad px-4 py-2.5 text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
         Adicionar gasto

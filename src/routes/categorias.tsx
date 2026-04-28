@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart, Check } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
@@ -156,7 +156,7 @@ function CategoriasPage() {
         <div className="mt-5">
           <p className="text-xs font-medium text-foreground">Cor de destaque</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Personaliza botões, focos e gráficos.
+            Aplica em botões, ícones, gráficos, navegação e detalhes do app.
           </p>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
             {ACCENTS.map((a) => {
@@ -167,21 +167,29 @@ function CategoriasPage() {
                   type="button"
                   onClick={() => setAccent(a.id)}
                   className={cn(
-                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all card-press",
+                    "card-press group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all",
                     active
-                      ? "border-brand bg-brand-soft"
-                      : "border-border bg-card hover:bg-card-elevated",
+                      ? "border-brand bg-brand-soft shadow-card"
+                      : "border-border bg-card hover:bg-card-elevated hover:border-brand/40",
                   )}
                   aria-pressed={active}
                   aria-label={a.label}
                 >
                   <span
                     className={cn(
-                      "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
-                      active ? "ring-foreground/70 scale-105" : "ring-transparent",
+                      "relative grid h-8 w-8 place-items-center rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
+                      active ? "ring-foreground/70 scale-105 animate-pop" : "ring-transparent",
                     )}
                     style={{ background: a.swatch }}
-                  />
+                  >
+                    {active && (
+                      <Check
+                        className="h-4 w-4 drop-shadow-sm"
+                        style={{ color: a.fgLight === "oklch(0.985 0 0)" ? "#fff" : "#111" }}
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
                   <span
                     className={cn(
                       "text-[10px] font-medium",

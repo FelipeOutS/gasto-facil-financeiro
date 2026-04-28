@@ -345,7 +345,7 @@ function ContasAPagarPage() {
       {/* CTA Adicionar */}
       <Button
         size="lg"
-        className="mt-3 h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
+        className="card-press mt-3 h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
         onClick={() => setCreating(true)}
       >
         <Plus className="mr-1 h-5 w-5" />
@@ -367,10 +367,10 @@ function ContasAPagarPage() {
               aria-selected={active}
               onClick={() => setFiltro(f.id)}
               className={cn(
-                "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                "card-press shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
                 active
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-brand/40",
               )}
             >
               {f.label}
@@ -710,7 +710,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   }
   if (status === "atrasado") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
         <AlertTriangle className="h-2.5 w-2.5" />
         Atrasada {Math.abs(dias)}d
       </span>
@@ -718,7 +718,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   }
   if (dias === 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
         Vence hoje
       </span>
@@ -726,7 +726,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   }
   if (dias === 1) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
         Vence amanhã
       </span>
