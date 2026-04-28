@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
@@ -97,6 +97,23 @@ function CategoriasPage() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">Minha conta</p>
           <p className="truncate text-xs text-muted-foreground">Perfil, sair da conta</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
+      {/* Atalho para Orçamento (especialmente útil no mobile) */}
+      <Link
+        to="/orcamento"
+        className="mt-2 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-card-elevated lg:hidden"
+      >
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+          <PieChart className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">Orçamento mensal</p>
+          <p className="truncate text-xs text-muted-foreground">
+            Limites por categoria e progresso
+          </p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
