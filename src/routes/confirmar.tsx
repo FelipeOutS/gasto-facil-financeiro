@@ -1,12 +1,26 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Pencil, ImageOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ImageUp,
+  Loader2,
+  RefreshCcw,
+  Sparkles,
+  X,
+  Check,
+  PencilLine,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { GastoForm } from "@/components/GastoForm";
-import { addGasto, findPossibleDuplicate } from "@/lib/store";
-import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
+import {
+  addGasto,
+  findPossibleDuplicate,
+  getCategorias,
+  useStore,
+  type NovoGastoInput,
+} from "@/lib/store";
+import { todayISO } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -19,28 +33,113 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { FormaPagamento } from "@/lib/types";
 
 export const Route = createFileRoute("/confirmar")({
   head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Fácil" }] }),
   component: Confirmar,
 });
 
+type Step = "upload" | "analisando" | "revisao" | "erro" | "sucesso";
+
+type AIResult = {
+  valor: number | null;
+  valoresEncontrados: number[];
+  data: string | null;
+  descricao: string | null;
+  categoriaSugerida: string | null;
+  formaPagamento: FormaPagamento | null;
+  confianca: "alta" | "media" | "baixa";
+  observacao: string | null;
+};
+
 function Confirmar() {
   const navigate = useNavigate();
+  const categorias = useStore(() => getCategorias());
+
   const [imagem, setImagem] = useState<string | undefined>();
-
-  // Identified value (could come from OCR — empty for MVP)
-  const [valorIdentificado, setValorIdentificado] = useState<string>("");
-  const [editing, setEditing] = useState(true);
-  const [confirmed, setConfirmed] = useState(false);
+  const [step, setStep] = useState<Step>("upload");
+  const [erro, setErro] = useState<string>("");
+  const [result, setResult] = useState<AIResult | null>(null);
+  const [overrideValor, setOverrideValor] = useState<number | null>(null);
   const [pending, setPending] = useState<null | (() => void)>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
+  // Recupera imagem vinda da tela /adicionar (se houver) — só uma vez.
   useEffect(() => {
     const img = sessionStorage.getItem("gf:pendingImage") ?? undefined;
-    setImagem(img);
+    if (img) {
+      setImagem(img);
+      sessionStorage.removeItem("gf:pendingImage");
+    }
   }, []);
 
-  const valor = parseBRLInput(valorIdentificado);
+  function onPickFile(file?: File | null) {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+      toast.error("Use uma imagem PNG, JPG ou WEBP.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Tente uma menor que 8 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagem(String(reader.result));
+      setResult(null);
+      setOverrideValor(null);
+      setStep("upload");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function analisar() {
+    if (!imagem) return;
+    setStep("analisando");
+    setErro("");
+    try {
+      const resp = await fetch("/api/ocr-gasto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: imagem }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        setErro(data?.error ?? "Não consegui ler tudo dessa imagem.");
+        setStep("erro");
+        return;
+      }
+      setResult(data as AIResult);
+      setStep("revisao");
+    } catch (err) {
+      console.error(err);
+      setErro("Não consegui conectar agora. Tenta de novo em instantes.");
+      setStep("erro");
+    }
+  }
+
+  // Mapeia categoria sugerida pela IA para o id real existente no store.
+  const categoriaIdSugerida = useMemo(() => {
+    if (!result?.categoriaSugerida) return undefined;
+    const found = categorias.find((c) => c.id === result.categoriaSugerida);
+    return found?.id;
+  }, [result, categorias]);
+
+  const valorEscolhido = overrideValor ?? result?.valor ?? null;
+
+  const initialForm: Partial<NovoGastoInput> | undefined = result
+    ? {
+        valor: valorEscolhido ?? 0,
+        data: result.data ?? todayISO(),
+        descricao: result.descricao ?? "",
+        estabelecimento: result.descricao ?? "",
+        categoriaId: categoriaIdSugerida,
+        formaPagamento: result.formaPagamento ?? "pix",
+        observacao: result.observacao ?? undefined,
+        imagemUrl: imagem,
+      }
+    : undefined;
 
   return (
     <MobileShell>
@@ -52,112 +151,250 @@ function Confirmar() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Revise e confirme</p>
-          <h1 className="text-xl font-bold tracking-tight">Confirmar gasto</h1>
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Leitura por imagem
+          </p>
+          <h1 className="text-xl font-bold tracking-tight">
+            {step === "sucesso" ? "Pronto!" : "Comprovante"}
+          </h1>
         </div>
       </header>
 
-      {/* Image preview */}
-      <div className="mt-4 overflow-hidden rounded-3xl border border-border bg-card">
-        {imagem ? (
-          <img
-            src={imagem}
-            alt="Comprovante enviado"
-            className="max-h-64 w-full object-contain bg-card-elevated"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-2 p-8 text-muted-foreground">
-            <ImageOff className="h-6 w-6" />
-            <p className="text-sm">Sem imagem por aqui.</p>
+      {/* SUCESSO */}
+      {step === "sucesso" && (
+        <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-fade-in">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
+            <Check className="h-7 w-7" />
           </div>
-        )}
-      </div>
-
-      {/* Identified value */}
-      <div className="mt-5 rounded-3xl border border-border bg-card p-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Valor identificado
-        </p>
-
-        <div className="mt-2 flex items-center gap-3">
-          {editing ? (
-            <div className="flex flex-1 items-baseline gap-2">
-              <span className="text-2xl font-bold text-muted-foreground">R$</span>
-              <Input
-                autoFocus
-                inputMode="decimal"
-                placeholder="0,00"
-                value={valorIdentificado}
-                onChange={(e) => {
-                  setValorIdentificado(e.target.value);
-                  setConfirmed(false);
-                }}
-                className="num h-14 border-0 bg-transparent p-0 text-4xl font-extrabold tracking-tight !ring-0 focus-visible:!ring-0"
-              />
-            </div>
-          ) : (
-            <p className="num flex-1 text-4xl font-extrabold tracking-tight">{formatBRL(valor)}</p>
-          )}
-          <button
-            type="button"
-            onClick={() => setEditing((e) => !e)}
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card-elevated text-muted-foreground hover:text-foreground"
-            aria-label="Editar valor"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-        </div>
-
-        {confirmed ? (
-          <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-success">
-            <Check className="h-4 w-4" />
-            Valor confirmado
+          <h2 className="mt-4 text-lg font-semibold">Pronto, gasto salvo!</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Seu gasto entrou no histórico e já aparece nos filtros.
           </p>
-        ) : (
-          <Button
-            type="button"
-            disabled={valor <= 0}
-            onClick={() => {
-              setConfirmed(true);
-              setEditing(false);
-            }}
-            className="mt-4 h-11 w-full rounded-xl"
-          >
-            Confirmar valor
-          </Button>
-        )}
-      </div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl">
+              Ver em Gastos
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImagem(undefined);
+                setResult(null);
+                setOverrideValor(null);
+                setStep("upload");
+              }}
+              className="rounded-xl"
+            >
+              Adicionar outro
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {/* Form (only after value confirmed) */}
-      <div
-        className={cn(
-          "mt-5 transition-opacity",
-          !confirmed && "pointer-events-none opacity-50",
-        )}
-      >
-        <GastoForm
-          initial={{
-            valor,
-            data: todayISO(),
-            imagemUrl: imagem,
-          }}
-          onSubmit={(data) => {
-            const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
-            const save = () => {
-              addGasto(data);
-              sessionStorage.removeItem("gf:pendingImage");
-              toast.success("Gasto registrado. ✅");
-              navigate({ to: "/" });
-            };
-            if (dup) {
-              setPending(() => save);
-            } else {
-              save();
-            }
-          }}
-        />
-      </div>
+      {/* UPLOAD / ANÁLISE */}
+      {(step === "upload" || step === "analisando" || step === "erro") && (
+        <>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.
+          </p>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            className="hidden"
+            onChange={(e) => onPickFile(e.target.files?.[0])}
+          />
+
+          <div className="mt-4 overflow-hidden rounded-3xl border border-border bg-card">
+            {imagem ? (
+              <div className="relative">
+                <img
+                  src={imagem}
+                  alt="Comprovante enviado"
+                  className="max-h-72 w-full object-contain bg-card-elevated"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImagem(undefined);
+                    setResult(null);
+                    setOverrideValor(null);
+                    setStep("upload");
+                  }}
+                  className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  aria-label="Remover imagem"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="flex w-full flex-col items-center justify-center gap-2 p-10 text-muted-foreground hover:bg-card-elevated transition-colors"
+              >
+                <ImageUp className="h-7 w-7" />
+                <p className="text-sm font-medium text-foreground">
+                  Toque para enviar uma imagem
+                </p>
+                <p className="text-xs">PNG, JPG ou WEBP</p>
+              </button>
+            )}
+          </div>
+
+          {step === "analisando" && (
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center animate-fade-in">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
+              <p className="mt-3 font-semibold">Lendo seu comprovante...</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Estou procurando valor, data e descrição. Você confere tudo antes de salvar.
+              </p>
+            </div>
+          )}
+
+          {step === "erro" && (
+            <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 animate-fade-in">
+              <p className="font-semibold">Não consegui ler tudo dessa imagem</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {erro ||
+                  "Pode acontecer com prints cortados, imagem tremida ou comprovante com pouco contraste. Você ainda pode preencher manualmente."}
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-xl"
+                >
+                  <RefreshCcw className="mr-1.5 h-4 w-4" />
+                  Tentar outra imagem
+                </Button>
+                <Button asChild className="rounded-xl">
+                  <Link to="/manual">
+                    <PencilLine className="mr-1.5 h-4 w-4" />
+                    Preencher manualmente
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === "upload" && (
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Button
+                onClick={analisar}
+                disabled={!imagem}
+                className="h-12 flex-1 rounded-2xl text-base font-semibold"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Analisar imagem
+              </Button>
+              {!imagem && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 rounded-2xl text-base font-semibold"
+                >
+                  <Link to="/manual">Preencher manualmente</Link>
+                </Button>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* REVISÃO */}
+      {step === "revisao" && result && (
+        <div className="mt-4 space-y-4 animate-fade-in">
+          <div className="rounded-3xl border border-border bg-card p-5">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand/15 text-brand">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold">Confira antes de salvar</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Encontrei algumas informações na imagem. Ajuste o que quiser antes de registrar.
+                </p>
+              </div>
+              <ConfiancaBadge nivel={result.confianca} />
+            </div>
+
+            {imagem && (
+              <img
+                src={imagem}
+                alt="Comprovante"
+                className="mt-3 max-h-40 w-full rounded-2xl object-contain bg-card-elevated"
+              />
+            )}
+
+            {result.valoresEncontrados.length > 1 && (
+              <div className="mt-4">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Valores encontrados — toque para usar
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2 stagger">
+                  {result.valoresEncontrados.map((v, idx) => {
+                    const ativo =
+                      (overrideValor ?? result.valor ?? -1) === v;
+                    return (
+                      <button
+                        key={`${v}-${idx}`}
+                        type="button"
+                        onClick={() => setOverrideValor(v)}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all animate-fade-in",
+                          ativo
+                            ? "border-brand bg-brand/10 text-brand"
+                            : "border-border bg-card-elevated hover:border-brand/40",
+                        )}
+                      >
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(v)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {result.observacao && (
+              <p className="mt-3 rounded-xl bg-card-elevated px-3 py-2 text-xs text-muted-foreground">
+                💬 {result.observacao}
+              </p>
+            )}
+          </div>
+
+          <GastoForm
+            key={`${valorEscolhido ?? 0}-${result.data ?? ""}`}
+            initial={initialForm}
+            submitLabel="Salvar gasto"
+            onSubmit={(data) => {
+              const dup = findPossibleDuplicate(
+                data.valor,
+                data.data,
+                data.estabelecimento,
+              );
+              const save = () => {
+                addGasto(data);
+                toast.success("Pronto, gasto salvo!");
+                setStep("sucesso");
+              };
+              if (dup) {
+                setPending(() => save);
+              } else {
+                save();
+              }
+            }}
+          />
+
+          <p className="text-center text-xs text-muted-foreground">
+            Quase lá, só revisar antes de salvar.
+          </p>
+        </div>
+      )}
 
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>
@@ -181,5 +418,19 @@ function Confirmar() {
         </AlertDialogContent>
       </AlertDialog>
     </MobileShell>
+  );
+}
+
+function ConfiancaBadge({ nivel }: { nivel: "alta" | "media" | "baixa" }) {
+  const map = {
+    alta: { label: "Confiança alta", cls: "bg-success/15 text-success" },
+    media: { label: "Confiança média", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
+    baixa: { label: "Confiança baixa", cls: "bg-destructive/15 text-destructive" },
+  } as const;
+  const it = map[nivel];
+  return (
+    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", it.cls)}>
+      {it.label}
+    </span>
   );
 }

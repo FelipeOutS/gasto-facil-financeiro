@@ -50,7 +50,7 @@ function Adicionar() {
       </header>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Escolha como quer registrar. A leitura por imagem identifica os dados, mas você sempre confirma antes de salvar.
+        Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.
       </p>
 
       <div className="mt-6 space-y-3 stagger">
@@ -100,7 +100,7 @@ function Adicionar() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground">
-        💡 Dica: a leitura automática por foto/print está sendo ativada. Por enquanto, os campos vêm em branco para você revisar e preencher rapidamente.
+        ✨ A leitura por foto/print usa IA para identificar valor, data e descrição. Você confere e edita tudo antes de salvar.
       </div>
 
       <div className="mt-6">
