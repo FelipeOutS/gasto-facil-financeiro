@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { Money, CountNumber } from "@/components/Money";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   deleteGasto,
   getCategoriaById,
