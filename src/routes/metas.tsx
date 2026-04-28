@@ -334,7 +334,7 @@ function MetaCard({ meta, onAdd }: { meta: Meta; onAdd: (id: string) => void }) 
 
   return (
     <div
-      className="rounded-3xl border border-border bg-card p-4"
+      className="rounded-3xl border border-border bg-card p-4 hover-lift"
       style={{ boxShadow: status === "concluida" ? `0 0 0 1px ${meta.colorHex} inset` : undefined }}
     >
       <div className="flex items-start gap-3">
