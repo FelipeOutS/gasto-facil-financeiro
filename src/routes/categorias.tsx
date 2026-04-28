@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Mon
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
+import { useAccent, ACCENTS } from "@/lib/accent";
 import {
   addCategoria,
   deleteCategoria,
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/categorias")({
 function CategoriasPage() {
   const ready = useBootstrap();
   const { theme, setTheme } = useTheme();
+  const { accent, setAccent } = useAccent();
   const categorias = useStore(() => getCategorias());
   const today = new Date();
   const mes = today.getMonth() + 1;
@@ -132,6 +134,44 @@ function CategoriasPage() {
               );
             },
           )}
+        </div>
+
+        <div className="mt-5">
+          <p className="text-xs font-medium text-foreground">Cor de destaque</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Personaliza botões, focos e gráficos.
+          </p>
+          <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
+            {ACCENTS.map((a) => {
+              const active = accent === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAccent(a.id)}
+                  className={cn(
+                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all active:scale-[0.96]",
+                    active
+                      ? "border-foreground/40 bg-card-elevated"
+                      : "border-border bg-card hover:bg-card-elevated",
+                  )}
+                  aria-pressed={active}
+                  aria-label={a.label}
+                >
+                  <span
+                    className={cn(
+                      "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
+                      active ? "ring-foreground/60" : "ring-transparent",
+                    )}
+                    style={{ background: a.swatch }}
+                  />
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    {a.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
