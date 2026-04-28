@@ -100,7 +100,7 @@ function Adicionar() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground">
-        💡 Dica: a leitura automática por foto/print está sendo ativada. Por enquanto, os campos vêm em branco para você revisar e preencher rapidamente.
+        ✨ A leitura por foto/print usa IA para identificar valor, data e descrição. Você confere e edita tudo antes de salvar.
       </div>
 
       <div className="mt-6">
