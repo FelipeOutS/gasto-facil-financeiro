@@ -276,7 +276,7 @@ function Index() {
 
       {/* ===== KPIs ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <KpiCard
           label="Saldo"
           value={formatBRL(saldo)}
@@ -324,7 +324,7 @@ function Index() {
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
           size="lg"
-          className="card-press h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
+          className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
         >
           <Plus className="mr-1 h-5 w-5" />
           Lançar gasto
@@ -825,18 +825,18 @@ function KpiCard({
   hint?: string;
 }) {
   const toneRing = {
-    brand: "bg-card-elevated text-foreground",
+    brand: "bg-brand-soft text-brand-on-soft",
     success: "bg-success/15 text-success",
     destructive: "bg-destructive/15 text-destructive",
     warning: "bg-warning/15 text-warning",
   }[tone];
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated lg:p-4">
+    <div className="rounded-2xl border border-border bg-card p-3.5 shadow-card transition-all hover-lift hover:border-brand/60 lg:p-4 animate-rise">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <span className={cn("grid h-7 w-7 place-items-center rounded-full", toneRing)}>
+        <span className={cn("grid h-7 w-7 place-items-center rounded-full transition-colors", toneRing)}>
           {icon}
         </span>
       </div>
