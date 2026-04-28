@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Camera, ImageUp, PencilLine, ArrowLeft } from "lucide-react";
+import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 
@@ -53,46 +53,49 @@ function Adicionar() {
         Escolha como quer registrar. A leitura por imagem identifica os dados, mas você sempre confirma antes de salvar.
       </p>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-3 stagger">
         <button
           onClick={() => pickImage(true)}
           disabled={busy}
-          className="group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:bg-card-elevated active:scale-[0.99] disabled:opacity-60"
+          className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-besteiras/15 text-[var(--cat-besteiras)]">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-besteiras/15 text-[var(--cat-besteiras)] transition-transform group-hover:scale-110">
             <Camera className="h-6 w-6" />
           </span>
           <span className="flex-1">
             <span className="block text-base font-semibold">Tirar foto</span>
             <span className="block text-xs text-muted-foreground">Comprovante, nota, recibo</span>
           </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
 
         <button
           onClick={() => pickImage(false)}
           disabled={busy}
-          className="group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:bg-card-elevated active:scale-[0.99] disabled:opacity-60"
+          className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-roupas/15 text-[var(--cat-roupas)]">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-roupas/15 text-[var(--cat-roupas)] transition-transform group-hover:scale-110">
             <ImageUp className="h-6 w-6" />
           </span>
           <span className="flex-1">
             <span className="block text-base font-semibold">Enviar print da galeria</span>
             <span className="block text-xs text-muted-foreground">Pix, boleto, fatura, screenshot</span>
           </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
 
         <Link
           to="/manual"
-          className="group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:bg-card-elevated active:scale-[0.99]"
+          className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated"
         >
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-mercado/15 text-[var(--cat-mercado)]">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-mercado/15 text-[var(--cat-mercado)] transition-transform group-hover:scale-110">
             <PencilLine className="h-6 w-6" />
           </span>
           <span className="flex-1">
             <span className="block text-base font-semibold">Cadastrar manualmente</span>
             <span className="block text-xs text-muted-foreground">Digite os dados do gasto</span>
           </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
 
