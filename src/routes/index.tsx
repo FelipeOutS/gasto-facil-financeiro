@@ -43,7 +43,7 @@ import {
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Money, CountNumber } from "@/components/Money";
+import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -454,7 +454,7 @@ function Index() {
             </p>
             <Wallet className="h-3.5 w-3.5 text-brand" />
           </div>
-          <p className="num mt-1.5 text-lg font-bold">{formatBRL(totalGuardado)}</p>
+          <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
           <p className="mt-0.5 text-[10px] text-muted-foreground">
             {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
           </p>
@@ -466,7 +466,7 @@ function Index() {
             </p>
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <p className="num mt-1.5 text-lg font-bold">{formatBRL(gastosFixos)}</p>
+          <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
           {totalEntradas > 0 ? (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
               {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
