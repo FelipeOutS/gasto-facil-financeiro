@@ -271,7 +271,7 @@ function Index() {
       {/* ===== 1. RESUMO PRINCIPAL ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
 
-      <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated lg:max-w-2xl">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Saldo do mês
         </p>
@@ -321,7 +321,7 @@ function Index() {
       {/* ===== 2. CONTROLE FINANCEIRO ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
 
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 lg:max-w-2xl">
         <Link
           to="/guardado"
           className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
@@ -355,65 +355,68 @@ function Index() {
         </div>
       </section>
 
-      {/* Limite mensal */}
-      {limiteTotal ? (
-        <section className="mt-2.5 rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Limite mensal
-            </p>
-            <span className="num text-xs text-foreground">
-              {formatBRL(total)} / {formatBRL(limiteTotal)}
-            </span>
-          </div>
-          <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all",
-                passouLimite
-                  ? "bg-destructive"
-                  : proximoLimite
-                    ? "bg-warning"
-                    : "bg-success",
-              )}
-              style={{ width: `${Math.min(100, usoLimite)}%` }}
-            />
-          </div>
-          {passouLimite ? (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Limite ultrapassado em {formatBRL(total - limiteTotal)}
-            </p>
-          ) : proximoLimite ? (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
-            </p>
-          ) : (
-            <p className="num mt-2 text-[11px] text-muted-foreground">
-              {Math.round((total / limiteTotal) * 100)}% usado
-            </p>
-          )}
-        </section>
-      ) : null}
+      {/* Limite + Renda — em 2 colunas no desktop */}
+      <div className="mt-2.5 grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+        {/* Limite mensal */}
+        {limiteTotal ? (
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Limite mensal
+              </p>
+              <span className="num text-xs text-foreground">
+                {formatBRL(total)} / {formatBRL(limiteTotal)}
+              </span>
+            </div>
+            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  passouLimite
+                    ? "bg-destructive"
+                    : proximoLimite
+                      ? "bg-warning"
+                      : "bg-success",
+                )}
+                style={{ width: `${Math.min(100, usoLimite)}%` }}
+              />
+            </div>
+            {passouLimite ? (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Limite ultrapassado em {formatBRL(total - limiteTotal)}
+              </p>
+            ) : proximoLimite ? (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
+              </p>
+            ) : (
+              <p className="num mt-2 text-[11px] text-muted-foreground">
+                {Math.round((total / limiteTotal) * 100)}% usado
+              </p>
+            )}
+          </section>
+        ) : null}
 
-      {/* Atalhos: Renda */}
-      <Link
-        to="/renda"
-        search={{ ano: ym.ano, mes: ym.mes }}
-        className="mt-2.5 flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
-      >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-          <ArrowUp className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">Minha renda</p>
-          <p className="num truncate text-[11px] text-muted-foreground">
-            {formatBRL(totalEntradas)} este mês
-          </p>
-        </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-      </Link>
+        {/* Atalhos: Renda */}
+        <Link
+          to="/renda"
+          search={{ ano: ym.ano, mes: ym.mes }}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+            <ArrowUp className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">Minha renda</p>
+            <p className="num truncate text-[11px] text-muted-foreground">
+              {formatBRL(totalEntradas)} este mês
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      </div>
 
       {/* Card detalhado: Contas a pagar */}
       <ContasCard resumo={contasResumo} />
