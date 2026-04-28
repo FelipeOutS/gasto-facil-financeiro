@@ -52,6 +52,7 @@ export const Route = createFileRoute("/categorias")({
 
 function CategoriasPage() {
   const ready = useBootstrap();
+  const { theme, setTheme } = useTheme();
   const categorias = useStore(() => getCategorias());
   const today = new Date();
   const mes = today.getMonth() + 1;
