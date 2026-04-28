@@ -25,7 +25,6 @@ import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 
