@@ -509,163 +509,258 @@ function CartaoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editing ? "Editar cartão" : "Novo cartão"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent
+        className={cn(
+          "flex max-h-[90vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0",
+          "sm:max-w-[560px] md:max-w-[760px] lg:max-w-[880px] xl:max-w-[920px]",
+        )}
+      >
+        <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6 text-left">
+          <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+            {editing ? "Editar cartão" : "Novo cartão"}
+          </DialogTitle>
+          <DialogDescription className="text-sm">
             Cadastre só o necessário para controlar sua fatura. Nada de número,
             CVV ou dados sensíveis.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="nome" className="text-xs text-muted-foreground">
-              Nome do cartão *
-            </Label>
-            <Input
-              id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex.: Nubank Roxinho"
-              maxLength={40}
-              className="mt-1 h-11"
-            />
-          </div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:gap-8">
+              {/* COLUNA ESQUERDA — Dados */}
+              <div className="space-y-5 animate-rise">
+                <section className="space-y-4">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Dados do cartão
+                  </h3>
 
-          <div>
-            <Label className="text-xs text-muted-foreground">Banco / emissor</Label>
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
-              {BANCOS_CARTAO_PADRAO.map((b) => {
-                const active = banco === b.nome;
-                return (
-                  <button
-                    key={b.nome}
-                    type="button"
-                    onClick={() => {
-                      setBanco(b.nome);
-                      setCor(b.cor);
+                  <div>
+                    <Label htmlFor="nome" className="text-xs text-muted-foreground">
+                      Nome do cartão *
+                    </Label>
+                    <Input
+                      id="nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Ex.: Nubank Roxinho"
+                      maxLength={40}
+                      className="mt-1.5 h-11"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Banco / emissor
+                    </Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {BANCOS_CARTAO_PADRAO.map((b) => {
+                        const active = banco === b.nome;
+                        return (
+                          <button
+                            key={b.nome}
+                            type="button"
+                            onClick={() => {
+                              setBanco(b.nome);
+                              setCor(b.cor);
+                            }}
+                            className={cn(
+                              "card-press rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                              active
+                                ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
+                                : "border-border bg-card hover:-translate-y-0.5 hover:bg-card-elevated",
+                            )}
+                          >
+                            {b.nome}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Input
+                      value={banco}
+                      onChange={(e) => setBanco(e.target.value)}
+                      placeholder="Ou digite outro emissor"
+                      maxLength={30}
+                      className="mt-2.5 h-10"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="limite" className="text-xs text-muted-foreground">
+                      Limite total (R$)
+                    </Label>
+                    <Input
+                      id="limite"
+                      inputMode="decimal"
+                      value={limiteStr}
+                      onChange={(e) => setLimiteStr(e.target.value)}
+                      placeholder="0,00"
+                      className="num mt-1.5 h-11"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="fech" className="text-xs text-muted-foreground">
+                        Dia de fechamento
+                      </Label>
+                      <Input
+                        id="fech"
+                        type="number"
+                        min={1}
+                        max={31}
+                        value={diaFech}
+                        onChange={(e) =>
+                          setDiaFech(Math.max(1, Math.min(31, Number(e.target.value) || 1)))
+                        }
+                        className="num mt-1.5 h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="venc" className="text-xs text-muted-foreground">
+                        Dia de vencimento
+                      </Label>
+                      <Input
+                        id="venc"
+                        type="number"
+                        min={1}
+                        max={31}
+                        value={diaVenc}
+                        onChange={(e) =>
+                          setDiaVenc(Math.max(1, Math.min(31, Number(e.target.value) || 1)))
+                        }
+                        className="num mt-1.5 h-11"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="obs" className="text-xs text-muted-foreground">
+                      Observação (opcional)
+                    </Label>
+                    <Textarea
+                      id="obs"
+                      value={obs}
+                      onChange={(e) => setObs(e.target.value)}
+                      placeholder="Ex.: cartão adicional, uso só em viagens…"
+                      maxLength={200}
+                      className="mt-1.5 min-h-[72px]"
+                    />
+                  </div>
+                </section>
+              </div>
+
+              {/* COLUNA DIREITA — Aparência + Prévia */}
+              <div className="space-y-5 animate-rise">
+                <section>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Prévia
+                  </h3>
+                  <div
+                    className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-all duration-300"
+                    style={{
+                      background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 55%, #00000066 100%)`,
                     }}
-                    className={cn(
-                      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                      active
-                        ? "border-brand bg-brand-soft text-brand-on-soft"
-                        : "border-border bg-card hover:bg-card-elevated",
-                    )}
                   >
-                    {b.nome}
-                  </button>
-                );
-              })}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/15 blur-2xl"
+                    />
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-black/20 blur-2xl"
+                    />
+                    <div className="relative flex h-full flex-col justify-between">
+                      <div className="flex items-start justify-between">
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-white/80">
+                          {banco || "Banco"}
+                        </p>
+                        <div className="grid h-8 w-10 place-items-center rounded-md bg-white/20 backdrop-blur">
+                          <CreditCard className="h-4 w-4" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="truncate text-lg font-bold leading-tight">
+                          {nome || "Seu cartão"}
+                        </p>
+                        <div className="mt-2 flex items-end justify-between gap-2">
+                          <div>
+                            <p className="text-[9px] uppercase tracking-widest text-white/70">
+                              Limite
+                            </p>
+                            <p className="num text-sm font-semibold">
+                              {formatBRL(limite || 0)}
+                            </p>
+                          </div>
+                          <span className="text-[10px] uppercase tracking-widest text-white/70">
+                            Crédito
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Aparência
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Escolha uma cor para identificar seu cartão.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2.5">
+                    {CORES_CARTAO.map((c) => {
+                      const active = cor === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCor(c)}
+                          aria-label={`Cor ${c}`}
+                          aria-pressed={active}
+                          className={cn(
+                            "relative h-10 w-10 rounded-full border-2 transition-all duration-200",
+                            active
+                              ? "scale-110 border-foreground shadow-card animate-pop"
+                              : "border-transparent hover:scale-105 hover:shadow-card",
+                          )}
+                          style={{ background: c }}
+                        >
+                          {active && (
+                            <span className="absolute inset-0 grid place-items-center text-white drop-shadow">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              </div>
             </div>
-            <Input
-              value={banco}
-              onChange={(e) => setBanco(e.target.value)}
-              placeholder="Ou digite outro emissor"
-              maxLength={30}
-              className="mt-2 h-10"
-            />
           </div>
 
-          <div>
-            <Label htmlFor="limite" className="text-xs text-muted-foreground">
-              Limite total (R$)
-            </Label>
-            <Input
-              id="limite"
-              inputMode="decimal"
-              value={limiteStr}
-              onChange={(e) => setLimiteStr(e.target.value)}
-              placeholder="0,00"
-              className="num mt-1 h-11"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="fech" className="text-xs text-muted-foreground">
-                Dia de fechamento
-              </Label>
-              <Input
-                id="fech"
-                type="number"
-                min={1}
-                max={31}
-                value={diaFech}
-                onChange={(e) => setDiaFech(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-                className="num mt-1 h-11"
-              />
-            </div>
-            <div>
-              <Label htmlFor="venc" className="text-xs text-muted-foreground">
-                Dia de vencimento
-              </Label>
-              <Input
-                id="venc"
-                type="number"
-                min={1}
-                max={31}
-                value={diaVenc}
-                onChange={(e) => setDiaVenc(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-                className="num mt-1 h-11"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">Cor do cartão</Label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {CORES_CARTAO.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCor(c)}
-                  aria-label={`Cor ${c}`}
-                  className={cn(
-                    "h-8 w-8 rounded-full border-2 transition-transform",
-                    cor === c
-                      ? "scale-110 border-foreground shadow-card"
-                      : "border-transparent hover:scale-105",
-                  )}
-                  style={{ background: c }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="obs" className="text-xs text-muted-foreground">
-              Observação (opcional)
-            </Label>
-            <Textarea
-              id="obs"
-              value={obs}
-              onChange={(e) => setObs(e.target.value)}
-              placeholder="Ex.: cartão adicional, uso só em viagens…"
-              maxLength={200}
-              className="mt-1 min-h-[60px]"
-            />
-          </div>
-
-          {/* Preview */}
-          <div
-            className="overflow-hidden rounded-2xl p-4 text-white shadow-elevated"
-            style={{
-              background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 60%, #00000055 100%)`,
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-widest text-white/70">
-              {banco || "Banco"}
-            </p>
-            <p className="mt-0.5 truncate text-base font-bold">{nome || "Nome do cartão"}</p>
-            <p className="num mt-2 text-sm">{formatBRL(limite)}</p>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-2">
+          {/* Footer sticky */}
+          <DialogFooter className="shrink-0 flex-col-reverse gap-2 border-t border-border bg-card/80 px-6 py-4 backdrop-blur sm:flex-row sm:justify-end sm:gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="card-press"
             >
               Cancelar
             </Button>
