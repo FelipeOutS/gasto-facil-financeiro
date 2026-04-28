@@ -402,10 +402,10 @@ function RendaPage() {
 
         <TabsContent value="mes" className="mt-3">
           {doMes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-              Nenhuma renda cadastrada neste mês.
+            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
+              Cadastre seu salário e outras entradas para acompanhar sua renda do mês.
               <div className="mt-3">
-                <Button size="sm" onClick={() => setOpen(true)}>
+                <Button size="sm" onClick={() => setOpen(true)} className="transition-transform active:scale-95">
                   <Plus className="mr-1 h-4 w-4" /> Cadastrar renda
                 </Button>
               </div>
@@ -426,8 +426,8 @@ function RendaPage() {
 
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-              Sem rendas cadastradas ainda.
+            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
+              Você ainda não cadastrou rendas. Quando cadastrar, seu histórico aparece aqui.
             </div>
           ) : (
             <>

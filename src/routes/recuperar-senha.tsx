@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
+import { traduzirErroAuth } from "@/lib/auth-messages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,11 +33,11 @@ function RecoverForm() {
     const { error } = await resetPassword(email.trim());
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(traduzirErroAuth(error.message));
       return;
     }
     setSent(true);
-    toast.success("Enviamos um e-mail com instruções");
+    toast.success("Enviamos um e-mail com as instruções.");
   }
 
   return (

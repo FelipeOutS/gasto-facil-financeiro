@@ -268,9 +268,11 @@ function MetasPage() {
 
       <section className="mt-5 space-y-3">
         {ordenadas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
             <Target className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">Nenhuma meta criada ainda.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Crie sua primeira meta e acompanhe seu progresso aos poucos.
+            </p>
           </div>
         ) : (
           ordenadas.map((m) => <MetaCard key={m.id} meta={m} onAdd={(id) => { setAddMetaId(id); setAddOpen(true); }} />)

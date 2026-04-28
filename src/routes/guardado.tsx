@@ -242,9 +242,11 @@ function GuardadoPage() {
       <section className="mt-5">
         <h2 className="text-sm font-semibold">Suas reservas</h2>
         {guardado.length === 0 ? (
-          <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
             <Wallet className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">Nenhum valor guardado ainda.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Registre o que você já guardou para acompanhar sua reserva crescer.
+            </p>
           </div>
         ) : (
           <ul className="mt-3 space-y-2">

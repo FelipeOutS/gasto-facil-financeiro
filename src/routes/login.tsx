@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Entrar — Gasto Fácil" }] }),
@@ -33,11 +34,7 @@ function LoginForm() {
     const { error } = await signIn(email.trim(), password);
     setSubmitting(false);
     if (error) {
-      toast.error(
-        error.message.includes("Invalid login credentials")
-          ? "E-mail ou senha incorretos"
-          : error.message,
-      );
+      toast.error(traduzirErroAuth(error.message));
       return;
     }
     toast.success("Bem-vindo de volta!");
@@ -47,7 +44,7 @@ function LoginForm() {
   return (
     <AuthShell
       title="Entrar"
-      subtitle="Controle seus gastos, metas e dinheiro guardado em um só lugar."
+      subtitle="Seus gastos, metas e dinheiro guardado em um só lugar."
       footer={
         <div className="space-y-2">
           <Link to="/cadastro" className="block font-medium hover:underline">
@@ -62,7 +59,7 @@ function LoginForm() {
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="email">E-mail</Label>
           <Input
@@ -91,7 +88,7 @@ function LoginForm() {
         <Button
           type="submit"
           size="lg"
-          className="h-12 w-full rounded-2xl text-base font-semibold"
+          className="h-12 w-full rounded-2xl text-base font-semibold transition-transform active:scale-[0.98]"
           disabled={submitting}
         >
           {submitting ? "Entrando…" : "Entrar"}
