@@ -624,7 +624,7 @@ function EditReceitaDialog({
     if (!receita) return;
     const valor = parseBRLInput(valorStr);
     if (!valor || !descricao.trim()) {
-      toast.error("Preencha descrição e valor");
+      toast.error("Preencha a descrição e o valor.");
       return;
     }
     updateReceita(
@@ -632,7 +632,7 @@ function EditReceitaDialog({
       { descricao: descricao.trim(), valor, data, tipo },
       receita.recorrente && receita.recorrenciaId ? scope : "single",
     );
-    toast.success("Renda atualizada");
+    toast.success("Renda atualizada. ✅");
     onClose();
   }
 
