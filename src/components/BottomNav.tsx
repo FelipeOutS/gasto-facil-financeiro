@@ -31,13 +31,13 @@ export function BottomNav() {
               <Link
                 to={to}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
+                  "flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-medium transition-all duration-200 active:scale-95",
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <span className="relative">
                   <Icon
-                    className={cn("h-5 w-5", active && "drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]")}
+                    className={cn("h-5 w-5 transition-transform", active && "drop-shadow-[0_0_8px_rgba(255,255,255,0.35)] scale-110")}
                     strokeWidth={active ? 2.4 : 1.8}
                   />
                   {showDot && (
