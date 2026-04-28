@@ -817,13 +817,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function KpiCard({
   label,
-  value,
+  valueNum,
   icon,
   tone = "brand",
   hint,
 }: {
   label: string;
-  value: string;
+  valueNum: number;
   icon: React.ReactNode;
   tone?: "brand" | "success" | "destructive" | "warning";
   hint?: string;
@@ -844,7 +844,10 @@ function KpiCard({
           {icon}
         </span>
       </div>
-      <p className="num mt-2 text-xl font-bold leading-tight lg:text-2xl">{value}</p>
+      <Money
+        value={valueNum}
+        className="num mt-2 block text-xl font-bold leading-tight lg:text-2xl"
+      />
       {hint && (
         <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
       )}
