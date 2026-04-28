@@ -139,6 +139,30 @@ function readStored(): AccentId {
   return DEFAULT_ACCENT;
 }
 
+/**
+ * Per-accent tint intensity. Cores quentes (amarelo/laranja/rosa) recebem
+ * presença menor para não cansar a leitura. Frias / neutras podem ir um
+ * pouco mais fortes.
+ *
+ * Returns intensity (0-1) that we use as a multiplier on the base mix %.
+ */
+function tintIntensity(id: AccentId): number {
+  switch (id) {
+    case "amber":
+    case "orange":
+    case "pink":
+      return 0.55; // ~3-5%
+    case "blue":
+    case "violet":
+    case "green":
+    case "cyan":
+      return 1; // ~6-8%
+    case "graphite":
+    default:
+      return 0.6;
+  }
+}
+
 function applyAccent(id: AccentId) {
   if (typeof document === "undefined") return;
   const def = ACCENTS.find((a) => a.id === id) ?? ACCENTS[0];
@@ -147,6 +171,7 @@ function applyAccent(id: AccentId) {
   const brand = isLight ? def.light : def.dark;
   const fg = isLight ? def.fgLight : def.fgDark;
   const fgOnSoft = isLight ? def.fgOnSoftLight : def.fgOnSoftDark;
+  const intensity = tintIntensity(id);
 
   // Always-available brand tokens (work for any accent, including graphite)
   root.style.setProperty("--brand", brand);
@@ -156,7 +181,6 @@ function applyAccent(id: AccentId) {
   // Soft surfaces & tints — derived via color-mix so they adapt to theme.
   // For graphite we use neutral mixes (so the UI stays elegant/neutral).
   if (id === "graphite") {
-    // Subtle neutral tints — keeps the premium dark/light feel.
     root.style.setProperty(
       "--brand-soft",
       isLight
@@ -173,28 +197,26 @@ function applyAccent(id: AccentId) {
       "--brand-border",
       "color-mix(in oklab, var(--foreground) 18%, transparent)",
     );
-    // Reset primary/ring to neutral defaults from styles.css
     root.style.removeProperty("--primary");
     root.style.removeProperty("--primary-foreground");
     root.style.removeProperty("--ring");
   } else {
+    // Base de mistura ajustada por intensidade da cor.
+    const softPct = Math.round((isLight ? 14 : 22) * intensity);
+    const tintPct = Math.round((isLight ? 8 : 12) * intensity);
+
     root.style.setProperty(
       "--brand-soft",
-      isLight
-        ? `color-mix(in oklab, ${brand} 14%, transparent)`
-        : `color-mix(in oklab, ${brand} 22%, transparent)`,
+      `color-mix(in oklab, ${brand} ${softPct}%, transparent)`,
     );
     root.style.setProperty(
       "--brand-tint",
-      isLight
-        ? `color-mix(in oklab, ${brand} 6%, transparent)`
-        : `color-mix(in oklab, ${brand} 10%, transparent)`,
+      `color-mix(in oklab, ${brand} ${tintPct}%, transparent)`,
     );
     root.style.setProperty(
       "--brand-border",
       `color-mix(in oklab, ${brand} 45%, transparent)`,
     );
-    // Make brand drive the primary system (buttons, focus, progress, etc.)
     root.style.setProperty("--primary", brand);
     root.style.setProperty("--primary-foreground", fg);
     root.style.setProperty("--ring", brand);
