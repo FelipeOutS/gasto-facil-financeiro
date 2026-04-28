@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Search, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarIcon,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import {
@@ -13,6 +20,7 @@ import {
 } from "@/lib/store";
 import { formatBRL, formatDateBR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,7 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/gastos")({
@@ -28,19 +48,142 @@ export const Route = createFileRoute("/gastos")({
   component: GastosPage,
 });
 
+type PeriodoId =
+  | "todos"
+  | "hoje"
+  | "ontem"
+  | "7d"
+  | "30d"
+  | "mes"
+  | "mesPassado"
+  | "3m"
+  | "6m"
+  | "ano"
+  | "personalizado";
+
+const PERIODO_LABEL: Record<PeriodoId, string> = {
+  todos: "Todos",
+  hoje: "Hoje",
+  ontem: "Ontem",
+  "7d": "7 dias",
+  "30d": "30 dias",
+  mes: "Este mês",
+  mesPassado: "Mês passado",
+  "3m": "3 meses",
+  "6m": "6 meses",
+  ano: "Este ano",
+  personalizado: "Personalizado",
+};
+
+const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
+
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function endOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+function toISODate(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getRange(
+  periodo: PeriodoId,
+  custom: { from?: Date; to?: Date },
+): { from?: string; to?: string } {
+  const now = new Date();
+  const today = startOfDay(now);
+  switch (periodo) {
+    case "hoje":
+      return { from: toISODate(today), to: toISODate(today) };
+    case "ontem": {
+      const y = new Date(today);
+      y.setDate(y.getDate() - 1);
+      return { from: toISODate(y), to: toISODate(y) };
+    }
+    case "7d": {
+      const f = new Date(today);
+      f.setDate(f.getDate() - 6);
+      return { from: toISODate(f), to: toISODate(today) };
+    }
+    case "30d": {
+      const f = new Date(today);
+      f.setDate(f.getDate() - 29);
+      return { from: toISODate(f), to: toISODate(today) };
+    }
+    case "mes": {
+      const f = new Date(today.getFullYear(), today.getMonth(), 1);
+      const t = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return { from: toISODate(f), to: toISODate(t) };
+    }
+    case "mesPassado": {
+      const f = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const t = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: toISODate(f), to: toISODate(t) };
+    }
+    case "3m": {
+      const f = new Date(today);
+      f.setMonth(f.getMonth() - 3);
+      return { from: toISODate(f), to: toISODate(today) };
+    }
+    case "6m": {
+      const f = new Date(today);
+      f.setMonth(f.getMonth() - 6);
+      return { from: toISODate(f), to: toISODate(today) };
+    }
+    case "ano": {
+      const f = new Date(today.getFullYear(), 0, 1);
+      const t = new Date(today.getFullYear(), 11, 31);
+      return { from: toISODate(f), to: toISODate(t) };
+    }
+    case "personalizado":
+      return {
+        from: custom.from ? toISODate(startOfDay(custom.from)) : undefined,
+        to: custom.to ? toISODate(endOfDay(custom.to)) : undefined,
+      };
+    default:
+      return {};
+  }
+}
+
 function GastosPage() {
   const ready = useBootstrap();
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
+
   const [q, setQ] = useState("");
+  const [periodo, setPeriodo] = useState<PeriodoId>("todos");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
   const [catFilter, setCatFilter] = useState<string>("todas");
   const [pagFilter, setPagFilter] = useState<string>("todas");
   const [order, setOrder] = useState<string>("recente");
+  const [valorMin, setValorMin] = useState<string>("");
+  const [valorMax, setValorMax] = useState<string>("");
+  const [advOpen, setAdvOpen] = useState(false);
+
+  const range = useMemo(
+    () => getRange(periodo, { from: customFrom, to: customTo }),
+    [periodo, customFrom, customTo],
+  );
 
   const filtered = useMemo(() => {
-    let list = [...gastos];
+    let list = gastos;
+    if (range.from) list = list.filter((g) => g.data >= range.from!);
+    if (range.to) list = list.filter((g) => g.data <= range.to!);
     if (catFilter !== "todas") list = list.filter((g) => g.categoriaId === catFilter);
     if (pagFilter !== "todas") list = list.filter((g) => g.formaPagamento === pagFilter);
+    const min = parseFloat(valorMin.replace(",", "."));
+    const max = parseFloat(valorMax.replace(",", "."));
+    if (Number.isFinite(min) && min > 0) list = list.filter((g) => g.valor >= min);
+    if (Number.isFinite(max) && max > 0) list = list.filter((g) => g.valor <= max);
     if (q.trim()) {
       const t = q.trim().toLowerCase();
       list = list.filter(
@@ -49,28 +192,76 @@ function GastosPage() {
           g.estabelecimento.toLowerCase().includes(t),
       );
     }
+    const sorted = [...list];
     switch (order) {
       case "antigo":
-        list.sort((a, b) => (a.data < b.data ? -1 : 1));
+        sorted.sort((a, b) => (a.data < b.data ? -1 : 1));
         break;
       case "maior":
-        list.sort((a, b) => b.valor - a.valor);
+        sorted.sort((a, b) => b.valor - a.valor);
         break;
       case "menor":
-        list.sort((a, b) => a.valor - b.valor);
+        sorted.sort((a, b) => a.valor - b.valor);
         break;
       default:
-        list.sort((a, b) => (a.data > b.data ? -1 : 1));
+        sorted.sort((a, b) => (a.data > b.data ? -1 : 1));
     }
-    return list;
-  }, [gastos, q, catFilter, pagFilter, order]);
+    return sorted;
+  }, [gastos, q, range, catFilter, pagFilter, valorMin, valorMax, order]);
 
-  const total = filtered.reduce((s, g) => s + g.valor, 0);
+  const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
+  const media = filtered.length ? total / filtered.length : 0;
+
+  const categoriaAtiva = catFilter !== "todas"
+    ? categorias.find((c) => c.id === catFilter)
+    : undefined;
+  const pagamentoAtivo = pagFilter !== "todas"
+    ? FORMAS_PAGAMENTO.find((f) => f.id === pagFilter)
+    : undefined;
+
+  const minNum = parseFloat(valorMin.replace(",", "."));
+  const maxNum = parseFloat(valorMax.replace(",", "."));
+  const hasMin = Number.isFinite(minNum) && minNum > 0;
+  const hasMax = Number.isFinite(maxNum) && maxNum > 0;
+
+  const periodoChipLabel = useMemo(() => {
+    if (periodo === "todos") return null;
+    if (periodo === "personalizado") {
+      if (customFrom && customTo) {
+        return `${formatDateBR(toISODate(customFrom))} → ${formatDateBR(toISODate(customTo))}`;
+      }
+      if (customFrom) return `A partir de ${formatDateBR(toISODate(customFrom))}`;
+      if (customTo) return `Até ${formatDateBR(toISODate(customTo))}`;
+      return "Personalizado";
+    }
+    return PERIODO_LABEL[periodo];
+  }, [periodo, customFrom, customTo]);
+
+  const hasAnyFilter =
+    !!periodoChipLabel ||
+    !!categoriaAtiva ||
+    !!pagamentoAtivo ||
+    hasMin ||
+    hasMax ||
+    !!q.trim() ||
+    order !== "recente";
+
+  function clearAll() {
+    setQ("");
+    setPeriodo("todos");
+    setCustomFrom(undefined);
+    setCustomTo(undefined);
+    setCatFilter("todas");
+    setPagFilter("todas");
+    setValorMin("");
+    setValorMax("");
+    setOrder("recente");
+  }
 
   if (!ready) return <MobileShell><div /></MobileShell>;
 
   return (
-    <MobileShell>
+    <MobileShell wide>
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/"
@@ -79,79 +270,284 @@ function GastosPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Histórico</p>
           <h1 className="text-2xl font-bold tracking-tight">Gastos</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Encontre rapidinho para onde seu dinheiro foi.
+          </p>
         </div>
       </header>
 
-      <div className="mt-4 rounded-3xl border border-border bg-card p-3">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou estabelecimento"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="h-11 bg-card-elevated pl-9"
-          />
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          <Select value={catFilter} onValueChange={setCatFilter}>
-            <SelectTrigger className="h-9 bg-card-elevated text-xs">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas categorias</SelectItem>
-              {categorias.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={pagFilter} onValueChange={setPagFilter}>
-            <SelectTrigger className="h-9 bg-card-elevated text-xs">
-              <SelectValue placeholder="Pagamento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todos pagamentos</SelectItem>
-              {FORMAS_PAGAMENTO.map((f) => (
-                <SelectItem key={f.id} value={f.id}>
-                  {f.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={order} onValueChange={setOrder}>
-            <SelectTrigger className="h-9 bg-card-elevated text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recente">Mais recente</SelectItem>
-              <SelectItem value="antigo">Mais antigo</SelectItem>
-              <SelectItem value="maior">Maior valor</SelectItem>
-              <SelectItem value="menor">Menor valor</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Busca grande */}
+      <div className="mt-4 relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por mercado, Uber, aluguel..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="h-12 rounded-2xl border-border bg-card pl-11 text-sm"
+        />
+        {q && (
+          <button
+            onClick={() => setQ("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated"
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          {filtered.length} {filtered.length === 1 ? "gasto" : "gastos"}
-        </span>
-        <span className="num font-medium text-foreground">{formatBRL(total)}</span>
+      {/* Chips rápidos de período */}
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
+        {PERIODOS_RAPIDOS.map((p) => {
+          const active = periodo === p;
+          if (p === "personalizado") {
+            return (
+              <Popover key={p}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
+                      active
+                        ? "border-foreground/40 bg-card-elevated"
+                        : "border-border bg-card hover:bg-card-elevated",
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    Personalizado
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 space-y-3" align="start">
+                  <div>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data inicial</p>
+                    <Calendar
+                      mode="single"
+                      selected={customFrom}
+                      onSelect={(d) => {
+                        setCustomFrom(d);
+                        setPeriodo("personalizado");
+                      }}
+                      className={cn("p-0 pointer-events-auto")}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data final</p>
+                    <Calendar
+                      mode="single"
+                      selected={customTo}
+                      onSelect={(d) => {
+                        setCustomTo(d);
+                        setPeriodo("personalizado");
+                      }}
+                      className={cn("p-0 pointer-events-auto")}
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+            );
+          }
+          return (
+            <button
+              key={p}
+              onClick={() => setPeriodo(active ? "todos" : p)}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
+                active
+                  ? "border-foreground/40 bg-card-elevated"
+                  : "border-border bg-card hover:bg-card-elevated",
+              )}
+            >
+              {PERIODO_LABEL[p]}
+            </button>
+          );
+        })}
+        {/* Outros períodos via select compacto */}
+        <Select
+          value={["mesPassado", "3m", "6m", "ano", "ontem"].includes(periodo) ? periodo : ""}
+          onValueChange={(v) => setPeriodo(v as PeriodoId)}
+        >
+          <SelectTrigger className="h-8 shrink-0 w-auto gap-1 rounded-full border-border bg-card px-3 text-xs">
+            <SelectValue placeholder="Mais períodos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ontem">Ontem</SelectItem>
+            <SelectItem value="mesPassado">Mês passado</SelectItem>
+            <SelectItem value="3m">Últimos 3 meses</SelectItem>
+            <SelectItem value="6m">Últimos 6 meses</SelectItem>
+            <SelectItem value="ano">Este ano</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* Filtros avançados */}
+      <Collapsible open={advOpen} onOpenChange={setAdvOpen} className="mt-3">
+        <CollapsibleTrigger asChild>
+          <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium hover:bg-card-elevated transition-colors">
+            <span className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtros avançados
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {advOpen ? "Recolher" : "Expandir"}
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-fade-in">
+          <div className="mt-2 grid gap-3 rounded-2xl border border-border bg-card p-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Categoria</label>
+              <Select value={catFilter} onValueChange={setCatFilter}>
+                <SelectTrigger className="mt-1 h-10 bg-card-elevated">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas categorias</SelectItem>
+                  {categorias.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Pagamento</label>
+              <Select value={pagFilter} onValueChange={setPagFilter}>
+                <SelectTrigger className="mt-1 h-10 bg-card-elevated">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todos pagamentos</SelectItem>
+                  {FORMAS_PAGAMENTO.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Ordenar</label>
+              <Select value={order} onValueChange={setOrder}>
+                <SelectTrigger className="mt-1 h-10 bg-card-elevated">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recente">Mais recente</SelectItem>
+                  <SelectItem value="antigo">Mais antigo</SelectItem>
+                  <SelectItem value="maior">Maior valor</SelectItem>
+                  <SelectItem value="menor">Menor valor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Valor mínimo (R$)</label>
+              <Input
+                inputMode="decimal"
+                placeholder="0,00"
+                value={valorMin}
+                onChange={(e) => setValorMin(e.target.value)}
+                className="mt-1 h-10 bg-card-elevated"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Valor máximo (R$)</label>
+              <Input
+                inputMode="decimal"
+                placeholder="0,00"
+                value={valorMax}
+                onChange={(e) => setValorMax(e.target.value)}
+                className="mt-1 h-10 bg-card-elevated"
+              />
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Chips de filtros ativos */}
+      {hasAnyFilter && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 animate-fade-in">
+          {periodoChipLabel && (
+            <ActiveChip
+              label={periodoChipLabel}
+              onRemove={() => {
+                setPeriodo("todos");
+                setCustomFrom(undefined);
+                setCustomTo(undefined);
+              }}
+            />
+          )}
+          {categoriaAtiva && (
+            <ActiveChip
+              label={`Categoria: ${categoriaAtiva.nome}`}
+              onRemove={() => setCatFilter("todas")}
+            />
+          )}
+          {pagamentoAtivo && (
+            <ActiveChip
+              label={`Pagamento: ${pagamentoAtivo.label}`}
+              onRemove={() => setPagFilter("todas")}
+            />
+          )}
+          {hasMin && (
+            <ActiveChip
+              label={`Acima de ${formatBRL(minNum)}`}
+              onRemove={() => setValorMin("")}
+            />
+          )}
+          {hasMax && (
+            <ActiveChip
+              label={`Até ${formatBRL(maxNum)}`}
+              onRemove={() => setValorMax("")}
+            />
+          )}
+          {q.trim() && (
+            <ActiveChip label={`Busca: "${q.trim()}"`} onRemove={() => setQ("")} />
+          )}
+          {order !== "recente" && (
+            <ActiveChip
+              label={`Ordem: ${
+                { antigo: "Mais antigo", maior: "Maior valor", menor: "Menor valor" }[order] ??
+                order
+              }`}
+              onRemove={() => setOrder("recente")}
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAll}
+            className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Limpar filtros
+          </Button>
+        </div>
+      )}
+
+      {/* Resumo */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <SummaryStat label="Encontrados" value={`${filtered.length}`} />
+        <SummaryStat label="Total" value={formatBRL(total)} highlight />
+        <SummaryStat label="Média" value={formatBRL(media)} />
+      </div>
+
+      {/* Lista */}
       {filtered.length === 0 ? (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center text-sm text-muted-foreground animate-fade-in">
-          <p className="font-medium text-foreground">Nada por aqui ainda.</p>
-          <p className="mt-1 text-xs">
-            Quando você lançar seu primeiro gasto, ele aparece nesta lista.
+        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
+          <p className="font-medium text-foreground">Nada por aqui nesse filtro</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Tenta mudar o período ou limpar os filtros para ver mais gastos.
           </p>
+          {hasAnyFilter && (
+            <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
+              Limpar filtros
+            </Button>
+          )}
         </div>
       ) : (
-        <ul className="mt-3 space-y-2 pb-4 stagger">
+        <ul key={filtered.length} className="mt-3 space-y-2 pb-4 stagger animate-fade-in">
           {filtered.map((g) => {
             const cat = getCategoriaById(g.categoriaId);
             const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
@@ -193,5 +589,42 @@ function GastosPage() {
         </ul>
       )}
     </MobileShell>
+  );
+}
+
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3 py-1 text-xs font-medium animate-fade-in">
+      {label}
+      <button
+        onClick={onRemove}
+        className="grid h-4 w-4 place-items-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
+        aria-label={`Remover ${label}`}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </span>
+  );
+}
+
+function SummaryStat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-border p-3",
+        highlight ? "bg-card-elevated" : "bg-card",
+      )}
+    >
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="mt-0.5 num text-sm font-semibold truncate">{value}</p>
+    </div>
   );
 }
