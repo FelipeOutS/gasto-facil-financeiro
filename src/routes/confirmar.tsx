@@ -409,7 +409,7 @@ function Confirmar() {
           />
 
           <p className="text-center text-xs text-muted-foreground">
-            Quase lá, só revisar antes de salvar.
+            Dá uma conferida e salva quando quiser.
           </p>
         </div>
       )}
