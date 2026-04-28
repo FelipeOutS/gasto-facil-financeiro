@@ -163,16 +163,16 @@ function Confirmar() {
 
       {/* SUCESSO */}
       {step === "sucesso" && (
-        <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-fade-in">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
-            <Check className="h-7 w-7" />
+        <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-rise">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success animate-pop">
+            <Check className="h-8 w-8" />
           </div>
           <h2 className="mt-4 text-lg font-semibold">Pronto, gasto salvo!</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Seu gasto entrou no histórico e já aparece nos filtros.
+            Já coloquei esse gasto no seu histórico.
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl">
+            <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl card-press">
               Ver em Gastos
             </Button>
             <Button
@@ -183,7 +183,7 @@ function Confirmar() {
                 setOverrideValor(null);
                 setStep("upload");
               }}
-              className="rounded-xl"
+              className="rounded-xl card-press"
             >
               Adicionar outro
             </Button>
