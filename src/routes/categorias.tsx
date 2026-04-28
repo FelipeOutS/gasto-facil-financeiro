@@ -99,6 +99,42 @@ function CategoriasPage() {
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
 
+      {/* Aparência */}
+      <section className="mt-5 rounded-3xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold">Aparência</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Escolha como o app deve aparecer para você.
+        </p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {([
+            { id: "light", label: "Claro", Icon: Sun },
+            { id: "dark", label: "Escuro", Icon: Moon },
+            { id: "system", label: "Sistema", Icon: Monitor },
+          ] as { id: ThemeChoice; label: string; Icon: typeof Sun }[]).map(
+            ({ id, label, Icon }) => {
+              const active = theme === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTheme(id)}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all active:scale-[0.98]",
+                    active
+                      ? "border-foreground/40 bg-card-elevated text-foreground shadow-card"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-pressed={active}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              );
+            },
+          )}
+        </div>
+      </section>
+
       {/* Limite mensal */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">Limite mensal total</h2>
