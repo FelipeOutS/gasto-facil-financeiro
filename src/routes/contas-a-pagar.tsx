@@ -85,7 +85,6 @@ function ContasAPagarPage() {
 
   const hojeISO = todayISO();
 
-  const hojeISOEarly = todayISO();
   const doMes = useMemo(() => {
     const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
     // Ordem: atrasadas → vence hoje → próximas (1-3d) → futuras pendentes → pagas
