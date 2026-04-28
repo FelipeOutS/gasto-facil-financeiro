@@ -9,6 +9,7 @@ import {
   ArrowUp,
   Plus,
   PieChart,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
@@ -23,6 +24,7 @@ type NavItem = {
 const ITEMS: NavItem[] = [
   { to: "/", label: "Início", icon: Home, exact: true },
   { to: "/gastos", label: "Gastos", icon: List },
+  { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/renda", label: "Minha renda", icon: ArrowUp },
   { to: "/contas-a-pagar", label: "Contas a pagar", icon: CalendarClock },
   { to: "/orcamento", label: "Orçamento", icon: PieChart },

@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, List, Wallet, Target, Settings2 } from "lucide-react";
+import { Home, List, CreditCard, Target, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
 
 const TABS = [
   { to: "/", label: "Início", icon: Home },
   { to: "/gastos", label: "Gastos", icon: List },
-  { to: "/guardado", label: "Guardado", icon: Wallet },
+  { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/categorias", label: "Ajustes", icon: Settings2 },
 ] as const;
