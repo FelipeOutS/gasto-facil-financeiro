@@ -43,6 +43,7 @@ import {
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -261,46 +262,49 @@ function Index() {
   return (
     <MobileShell wide>
       {/* Header */}
-      <header className="flex items-center justify-between pt-2">
+      <header className="flex items-center justify-between pt-2 animate-rise">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Resumo
+            Resumo do seu mês
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Entrou, saiu, sobrou: tudo aqui.
+          </p>
         </div>
         {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
         <div className="lg:hidden">{monthSwitcher}</div>
       </header>
 
       {/* ===== KPIs ===== */}
-      <SectionLabel>Resumo do mês</SectionLabel>
+      <SectionLabel>Tá tudo no radar</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <KpiCard
           label="Saldo"
-          value={formatBRL(saldo)}
+          valueNum={saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={saldo < 0 ? "destructive" : "brand"}
           hint={saldo < 0 ? `${formatBRL(-saldo)} a mais que recebeu` : "no mês atual"}
         />
         <KpiCard
           label="Receitas"
-          value={formatBRL(totalEntradas)}
+          valueNum={totalEntradas}
           icon={<ArrowUp className="h-4 w-4" />}
           tone="success"
           hint={`${receitasMes.length} ${receitasMes.length === 1 ? "entrada" : "entradas"}`}
         />
         <KpiCard
           label="Despesas"
-          value={formatBRL(total)}
+          valueNum={total}
           icon={<ArrowDown className="h-4 w-4" />}
           tone="destructive"
           hint={`${doMes.length} ${doMes.length === 1 ? "lançamento" : "lançamentos"}`}
         />
         <KpiCard
           label="A pagar"
-          value={formatBRL(contasResumo.pendente)}
+          valueNum={contasResumo.pendente}
           icon={<CalendarClock className="h-4 w-4" />}
           tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
           hint={
@@ -450,7 +454,7 @@ function Index() {
             </p>
             <Wallet className="h-3.5 w-3.5 text-brand" />
           </div>
-          <p className="num mt-1.5 text-lg font-bold">{formatBRL(totalGuardado)}</p>
+          <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
           <p className="mt-0.5 text-[10px] text-muted-foreground">
             {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
           </p>
@@ -462,7 +466,7 @@ function Index() {
             </p>
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <p className="num mt-1.5 text-lg font-bold">{formatBRL(gastosFixos)}</p>
+          <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
           {totalEntradas > 0 ? (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
               {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
@@ -643,12 +647,13 @@ function Index() {
       <section>
         {ultimos.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
-            <ReceiptIcon className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Você ainda não cadastrou gastos este mês.
+            <ReceiptIcon className="h-8 w-8 text-muted-foreground animate-breathe" />
+            <p className="mt-3 text-sm font-medium">Nada por aqui ainda</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Quando você lançar um gasto, ele aparece aqui pra você acompanhar.
             </p>
-            <Link to="/adicionar" className="mt-3 text-sm font-medium underline">
-              Cadastrar o primeiro
+            <Link to="/adicionar" className="mt-3 text-sm font-medium underline hover:text-foreground transition-colors">
+              Lançar meu primeiro gasto
             </Link>
           </div>
         ) : (
@@ -813,13 +818,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function KpiCard({
   label,
-  value,
+  valueNum,
   icon,
   tone = "brand",
   hint,
 }: {
   label: string;
-  value: string;
+  valueNum: number;
   icon: React.ReactNode;
   tone?: "brand" | "success" | "destructive" | "warning";
   hint?: string;
@@ -840,7 +845,10 @@ function KpiCard({
           {icon}
         </span>
       </div>
-      <p className="num mt-2 text-xl font-bold leading-tight lg:text-2xl">{value}</p>
+      <Money
+        value={valueNum}
+        className="num mt-2 block text-xl font-bold leading-tight lg:text-2xl"
+      />
       {hint && (
         <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
       )}

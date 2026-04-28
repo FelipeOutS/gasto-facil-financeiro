@@ -217,8 +217,10 @@ body {
       no-repeat fixed;
   }
 
-  /* Soft brand tint overlay — barely visible, gives the chosen accent
-     a subtle presence in the page background without losing legibility. */
+  /* Soft brand tint overlay — visível mas elegante. A intensidade real é
+     controlada por --brand-tint (definido em accent.tsx), variando por cor
+     escolhida e por modo claro/escuro. Topo + canto inferior dão profundidade
+     sem prejudicar leitura. */
   body::before {
     content: "";
     position: fixed;
@@ -226,9 +228,10 @@ body {
     pointer-events: none;
     z-index: -1;
     background:
-      radial-gradient(60% 40% at 50% 0%, var(--brand-tint, transparent) 0%, transparent 70%),
-      radial-gradient(40% 30% at 100% 100%, var(--brand-tint, transparent) 0%, transparent 70%);
-    transition: background 300ms ease;
+      radial-gradient(75% 55% at 50% -5%, var(--brand-tint, transparent) 0%, transparent 65%),
+      radial-gradient(50% 35% at 100% 105%, var(--brand-tint, transparent) 0%, transparent 70%),
+      radial-gradient(35% 25% at 0% 60%, var(--brand-tint, transparent) 0%, transparent 70%);
+    transition: background 350ms ease;
   }
   .num {
     font-variant-numeric: tabular-nums;

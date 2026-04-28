@@ -163,16 +163,16 @@ function Confirmar() {
 
       {/* SUCESSO */}
       {step === "sucesso" && (
-        <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-fade-in">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
-            <Check className="h-7 w-7" />
+        <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-rise">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success animate-pop">
+            <Check className="h-8 w-8" />
           </div>
           <h2 className="mt-4 text-lg font-semibold">Pronto, gasto salvo!</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Seu gasto entrou no histórico e já aparece nos filtros.
+            Já coloquei esse gasto no seu histórico.
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl">
+            <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl card-press">
               Ver em Gastos
             </Button>
             <Button
@@ -183,7 +183,7 @@ function Confirmar() {
                 setOverrideValor(null);
                 setStep("upload");
               }}
-              className="rounded-xl"
+              className="rounded-xl card-press"
             >
               Adicionar outro
             </Button>
@@ -244,12 +244,24 @@ function Confirmar() {
           </div>
 
           {step === "analisando" && (
-            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center animate-fade-in">
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center animate-rise">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-breathe">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
               <p className="mt-3 font-semibold">Lendo seu comprovante...</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Estou procurando valor, data e descrição. Você confere tudo antes de salvar.
               </p>
+              <div className="mt-4 mx-auto flex max-w-xs items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" />
+                <span>Detectando valores</span>
+                <span className="mx-1 text-border">·</span>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/60 animate-pulse-soft" style={{ animationDelay: "0.3s" }} />
+                <span>Lendo data</span>
+                <span className="mx-1 text-border">·</span>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/40 animate-pulse-soft" style={{ animationDelay: "0.6s" }} />
+                <span>Categoria</span>
+              </div>
             </div>
           )}
 
@@ -305,16 +317,22 @@ function Confirmar() {
 
       {/* REVISÃO */}
       {step === "revisao" && result && (
-        <div className="mt-4 space-y-4 animate-fade-in">
+        <div className="mt-4 space-y-4 animate-rise">
           <div className="rounded-3xl border border-border bg-card p-5">
             <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand/15 text-brand">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-pop">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="flex-1 min-w-0">
-                <h2 className="text-base font-semibold">Confira antes de salvar</h2>
+                <h2 className="text-base font-semibold">
+                  {result.valoresEncontrados.length > 1
+                    ? "Encontrei alguns valores"
+                    : "Encontrei um valor"}
+                </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Encontrei algumas informações na imagem. Ajuste o que quiser antes de registrar.
+                  {result.valoresEncontrados.length > 1
+                    ? "Escolha qual deles é o valor principal do gasto."
+                    : "Confere se está certo antes de salvar."}
                 </p>
               </div>
               <ConfiancaBadge nivel={result.confianca} />
@@ -391,7 +409,7 @@ function Confirmar() {
           />
 
           <p className="text-center text-xs text-muted-foreground">
-            Quase lá, só revisar antes de salvar.
+            Dá uma conferida e salva quando quiser.
           </p>
         </div>
       )}

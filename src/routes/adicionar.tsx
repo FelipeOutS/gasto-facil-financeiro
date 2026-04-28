@@ -50,7 +50,7 @@ function Adicionar() {
       </header>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.
+        Manda o print, tira foto ou digita. Eu adianto, você confere antes de salvar.
       </p>
 
       <div className="mt-6 space-y-3 stagger">
@@ -99,8 +99,8 @@ function Adicionar() {
         </Link>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground">
-        ✨ A leitura por foto/print usa IA para identificar valor, data e descrição. Você confere e edita tudo antes de salvar.
+      <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground animate-fade-in">
+        ✨ A leitura por foto/print usa IA pra identificar valor, data e descrição. Você confere e edita tudo antes de salvar.
       </div>
 
       <div className="mt-6">

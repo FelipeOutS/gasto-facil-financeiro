@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { Money, CountNumber } from "@/components/Money";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   deleteGasto,
   getCategoriaById,
@@ -527,65 +529,98 @@ function GastosPage() {
       )}
 
       {/* Resumo */}
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <SummaryStat label="Encontrados" value={`${filtered.length}`} />
-        <SummaryStat label="Total" value={formatBRL(total)} highlight />
-        <SummaryStat label="Média" value={formatBRL(media)} />
+      <div className="mt-4 grid grid-cols-3 gap-2 stagger">
+        <SummaryStat
+          label="Encontrados"
+          value={<CountNumber value={filtered.length} />}
+        />
+        <SummaryStat
+          label="Total"
+          value={<Money value={total} />}
+          highlight
+        />
+        <SummaryStat label="Média" value={<Money value={media} />} />
       </div>
 
       {/* Lista */}
       {filtered.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
-          <p className="font-medium text-foreground">Nada por aqui nesse filtro</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Tenta mudar o período ou limpar os filtros para ver mais gastos.
-          </p>
-          {hasAnyFilter && (
-            <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
-              Limpar filtros
-            </Button>
+          {hasAnyFilter ? (
+            <>
+              <p className="font-medium text-foreground">Nada encontrado nesse filtro</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tenta mudar o período, categoria ou forma de pagamento.
+              </p>
+              <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
+                Limpar filtros
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-foreground">Nenhum gasto por aqui ainda</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Quando você lançar um gasto, ele aparece aqui bonitinho pra você acompanhar.
+              </p>
+              <Button asChild size="sm" className="mt-4 rounded-full">
+                <Link to="/adicionar">Adicionar meu primeiro gasto</Link>
+              </Button>
+            </>
           )}
         </div>
       ) : (
-        <ul key={filtered.length} className="mt-3 space-y-2 pb-4 stagger animate-fade-in">
-          {filtered.map((g) => {
-            const cat = getCategoriaById(g.categoriaId);
-            const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
-            return (
-              <li
-                key={g.id}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
-              >
-                <CategoryIcon categoria={cat} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {g.estabelecimento || g.descricao}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {cat?.nome ?? "Outros"} · {formatDateBR(g.data)} · {pag}
-                    {g.tipoGasto === "parcelado" && g.totalParcelas
-                      ? ` · ${g.parcelaAtual}/${g.totalParcelas}`
-                      : g.tipoGasto === "recorrente"
-                        ? " · recorrente"
-                        : ""}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
-                  <button
-                    onClick={() => {
-                      deleteGasto(g.id);
-                      toast.success("Gasto removido.");
-                    }}
-                    className="text-muted-foreground transition-colors hover:text-destructive"
-                    aria-label="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </li>
-            );
-          })}
+        <ul className="mt-3 space-y-2 pb-4">
+          <AnimatePresence initial={false}>
+            {filtered.map((g, idx) => {
+              const cat = getCategoriaById(g.categoriaId);
+              const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
+              return (
+                <motion.li
+                  key={g.id}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    transition: { delay: Math.min(idx, 8) * 0.03, duration: 0.25 },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    x: 80,
+                    transition: { duration: 0.22 },
+                  }}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
+                >
+                  <CategoryIcon categoria={cat} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {g.estabelecimento || g.descricao}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {cat?.nome ?? "Outros"} · {formatDateBR(g.data)} · {pag}
+                      {g.tipoGasto === "parcelado" && g.totalParcelas
+                        ? ` · ${g.parcelaAtual}/${g.totalParcelas}`
+                        : g.tipoGasto === "recorrente"
+                          ? " · recorrente"
+                          : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
+                    <button
+                      onClick={() => {
+                        deleteGasto(g.id);
+                        toast.success("Gasto removido.");
+                      }}
+                      className="text-muted-foreground transition-colors hover:text-destructive"
+                      aria-label="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
         </ul>
       )}
     </MobileShell>
@@ -613,13 +648,13 @@ function SummaryStat({
   highlight,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   highlight?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border p-3",
+        "rounded-2xl border border-border p-3 animate-rise",
         highlight ? "bg-card-elevated" : "bg-card",
       )}
     >
