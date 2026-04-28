@@ -767,7 +767,7 @@ function DeleteReceitaDialog({
     } else {
       deleteReceita(receita.id);
     }
-    toast.success("Renda excluída");
+    toast.success("Renda removida.");
     onClose();
   }
 
