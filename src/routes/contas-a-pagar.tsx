@@ -385,23 +385,25 @@ function ContasAPagarPage() {
           <EmptyState onAdd={() => setCreating(true)} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-            Nenhuma conta neste filtro.
+            Nada nesse filtro por aqui.
           </div>
         ) : (
-          filtradas.map((conta) => (
-            <ContaCard
-              key={conta.id}
-              conta={conta}
-              hojeISO={hojeISO}
-              onEdit={() => setEditing(conta)}
-              onDelete={() => setConfirmDelete(conta)}
-              onPagar={() => setPagar(conta)}
-              onDesmarcar={() => {
-                desmarcarContaComoPago(conta.id);
-                toast.success("Conta marcada como pendente.");
-              }}
-            />
-          ))
+          <div className="space-y-2.5 stagger">
+            {filtradas.map((conta) => (
+              <ContaCard
+                key={conta.id}
+                conta={conta}
+                hojeISO={hojeISO}
+                onEdit={() => setEditing(conta)}
+                onDelete={() => setConfirmDelete(conta)}
+                onPagar={() => setPagar(conta)}
+                onDesmarcar={() => {
+                  desmarcarContaComoPago(conta.id);
+                  toast.success("Conta voltou para pendente.");
+                }}
+              />
+            ))}
+          </div>
         )}
       </section>
 
