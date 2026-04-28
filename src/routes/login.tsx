@@ -37,14 +37,14 @@ function LoginForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Bem-vindo de volta!");
+    toast.success("Que bom te ver de novo! 👋");
     void navigate({ to: "/" });
   }
 
   return (
     <AuthShell
-      title="Entrar"
-      subtitle="Seus gastos, metas e dinheiro guardado em um só lugar."
+      title="Bem-vindo de volta"
+      subtitle="Seus gastos, metas e o que você guardou — tudo num lugar só."
       footer={
         <div className="space-y-2">
           <Link to="/cadastro" className="block font-medium hover:underline">
