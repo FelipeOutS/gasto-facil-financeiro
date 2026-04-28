@@ -780,7 +780,7 @@ function ContaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) {
-      toast.error("Informe o nome da conta.");
+      toast.error("Dá um nome pra essa conta.");
       return;
     }
     if (!Number.isFinite(valor) || valor <= 0) {
@@ -788,7 +788,7 @@ function ContaFormDialog({
       return;
     }
     if (!dataVenc) {
-      toast.error("Informe a data de vencimento.");
+      toast.error("Escolha a data de vencimento.");
       return;
     }
 
@@ -800,7 +800,7 @@ function ContaFormDialog({
         categoriaId: categoriaId || null,
         observacao: observacao.trim() || undefined,
       });
-      toast.success("Conta atualizada.");
+      toast.success("Conta atualizada. ✅");
     } else {
       addContaAPagar({
         nome: nome.trim(),
@@ -811,7 +811,7 @@ function ContaFormDialog({
         recorrente,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
       });
-      toast.success(recorrente ? "Conta recorrente cadastrada." : "Conta cadastrada.");
+      toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
     onSaved();
   }
