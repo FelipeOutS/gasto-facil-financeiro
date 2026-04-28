@@ -400,7 +400,7 @@ function OrcamentoPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <TrendingUp className="h-3 w-3" />
-        Os limites são salvos por mês — você pode planejar diferente a cada período.
+        Veja para onde seu dinheiro está indo — você pode planejar diferente a cada mês.
       </p>
 
       {/* Dialog editar limite */}
