@@ -314,9 +314,9 @@ function Index() {
       </section>
 
       {saldo < 0 && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Você gastou {formatBRL(-saldo)} a mais do que recebeu este mês.
+          Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
         </p>
       )}
 
@@ -324,10 +324,10 @@ function Index() {
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
           size="lg"
-          className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated active:scale-[0.99]"
+          className="card-press h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
         >
           <Plus className="mr-1 h-5 w-5" />
-          Adicionar gasto
+          Lançar gasto
         </Button>
       </Link>
 
