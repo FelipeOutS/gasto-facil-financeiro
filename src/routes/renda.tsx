@@ -311,7 +311,7 @@ function RendaPage() {
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogTrigger asChild>
-          <Button size="lg" className="mt-4 h-14 w-full rounded-2xl text-base font-semibold shadow-elevated">
+          <Button size="lg" className="card-press mt-4 h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95">
             <Plus className="mr-1 h-5 w-5" />
             Nova entrada
           </Button>
