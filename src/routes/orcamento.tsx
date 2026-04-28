@@ -60,11 +60,11 @@ function statusFor(realizado: number, planejado: number): Status {
 
 function statusLabel(s: Status): string {
   return s === "ok"
-    ? "Dentro do orçamento"
+    ? "Tudo certo"
     : s === "alerta"
-      ? "Próximo do limite"
+      ? "Quase no limite"
       : s === "estouro"
-        ? "Acima do orçamento"
+        ? "Passou do limite"
         : "Sem limite";
 }
 
