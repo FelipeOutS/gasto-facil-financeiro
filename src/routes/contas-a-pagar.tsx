@@ -14,6 +14,7 @@ import {
   Receipt,
   Repeat,
   RotateCcw,
+  CalendarDays,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -71,6 +72,16 @@ export const Route = createFileRoute("/contas-a-pagar")({
   component: ContasAPagarPage,
 });
 
+type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas";
+
+const FILTROS: Array<{ id: FilterId; label: string }> = [
+  { id: "todas", label: "Todas" },
+  { id: "pendentes", label: "Pendentes" },
+  { id: "proximas", label: "Próximas" },
+  { id: "atrasadas", label: "Atrasadas" },
+  { id: "pagas", label: "Pagas" },
+];
+
 function ContasAPagarPage() {
   const ready = useBootstrap();
   const today = new Date();
@@ -79,22 +90,26 @@ function ContasAPagarPage() {
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
+  const [filtro, setFiltro] = useState<FilterId>("todas");
 
   const contas = useStore(() => getContasAPagar());
   const categorias = useStore(() => getCategorias());
 
   const hojeISO = todayISO();
 
+  function diasAteVenc(c: ContaAPagar): number {
+    const v = new Date(c.dataVencimento + "T00:00:00").getTime();
+    const h = new Date(hojeISO + "T00:00:00").getTime();
+    return Math.round((v - h) / (1000 * 60 * 60 * 24));
+  }
+
   const doMes = useMemo(() => {
     const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
-    // Ordem: atrasadas → vence hoje → próximas (1-3d) → futuras pendentes → pagas
     function prioridade(c: ContaAPagar) {
       const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") return 4;
       if (s === "atrasado") return 0;
-      const v = new Date(c.dataVencimento + "T00:00:00").getTime();
-      const h = new Date(hojeISO + "T00:00:00").getTime();
-      const dias = Math.round((v - h) / (1000 * 60 * 60 * 24));
+      const dias = diasAteVenc(c);
       if (dias === 0) return 1;
       if (dias > 0 && dias <= 3) return 2;
       return 3;
@@ -105,15 +120,18 @@ function ContasAPagarPage() {
       if (pa !== pb) return pa - pb;
       return a.dataVencimento.localeCompare(b.dataVencimento);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contas, ym, hojeISO]);
 
   const totais = useMemo(() => {
     let pendente = 0;
     let pago = 0;
     let atrasado = 0;
+    let proximos7 = 0;
     let qtdAtrasado = 0;
     let qtdPendente = 0;
     let qtdPago = 0;
+    let qtdProximos7 = 0;
     for (const c of doMes) {
       const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") {
@@ -125,9 +143,24 @@ function ContasAPagarPage() {
       } else {
         pendente += c.valor;
         qtdPendente++;
+        const d = diasAteVenc(c);
+        if (d >= 0 && d <= 7) {
+          proximos7 += c.valor;
+          qtdProximos7++;
+        }
       }
     }
-    return { pendente, pago, atrasado, qtdPendente, qtdPago, qtdAtrasado };
+    return {
+      pendente,
+      pago,
+      atrasado,
+      proximos7,
+      qtdPendente,
+      qtdPago,
+      qtdAtrasado,
+      qtdProximos7,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doMes, hojeISO]);
 
   const proximaConta = useMemo(() => {
@@ -135,6 +168,31 @@ function ContasAPagarPage() {
       .filter((c) => statusContaEfetivo(c, hojeISO) !== "pago")
       .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento))[0];
   }, [doMes, hojeISO]);
+
+  const filtradas = useMemo(() => {
+    return doMes.filter((c) => {
+      const s = statusContaEfetivo(c, hojeISO);
+      switch (filtro) {
+        case "todas":
+          return true;
+        case "pendentes":
+          return s === "pendente" || s === "atrasado";
+        case "proximas": {
+          if (s === "pago") return false;
+          if (s === "atrasado") return false;
+          const d = diasAteVenc(c);
+          return d >= 0 && d <= 7;
+        }
+        case "atrasadas":
+          return s === "atrasado";
+        case "pagas":
+          return s === "pago";
+        default:
+          return true;
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doMes, hojeISO, filtro]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -241,6 +299,49 @@ function ContasAPagarPage() {
         )}
       </section>
 
+      {/* Cards de resumo (mês) */}
+      <section className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <ResumoCard
+          label="Total pendente"
+          valor={formatBRL(totais.pendente)}
+          tone="warning"
+          icon={<Clock className="h-3.5 w-3.5" />}
+        />
+        <ResumoCard
+          label="Total atrasado"
+          valor={formatBRL(totais.atrasado)}
+          tone="destructive"
+          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+        />
+        <ResumoCard
+          label="Próximos 7 dias"
+          valor={formatBRL(totais.proximos7)}
+          tone="warning"
+          icon={<CalendarDays className="h-3.5 w-3.5" />}
+          hint={`${totais.qtdProximos7} ${totais.qtdProximos7 === 1 ? "conta" : "contas"}`}
+        />
+        <ResumoCard
+          label="Total pago"
+          valor={formatBRL(totais.pago)}
+          tone="success"
+          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+        />
+      </section>
+
+      {/* Mensagem amigável */}
+      <p
+        className={cn(
+          "mt-3 px-1 text-xs leading-relaxed",
+          totais.qtdAtrasado > 0
+            ? "text-destructive"
+            : totais.qtdProximos7 > 0
+              ? "text-warning"
+              : "text-muted-foreground",
+        )}
+      >
+        {mensagemAmigavel(totais)}
+      </p>
+
       {/* CTA Adicionar */}
       <Button
         size="lg"
@@ -251,12 +352,43 @@ function ContasAPagarPage() {
         Adicionar conta
       </Button>
 
+      {/* Filtros */}
+      <div
+        className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Filtrar contas"
+      >
+        {FILTROS.map((f) => {
+          const active = filtro === f.id;
+          return (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setFiltro(f.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Lista */}
-      <section className="mt-5 space-y-2.5">
+      <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
           <EmptyState onAdd={() => setCreating(true)} />
+        ) : filtradas.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
+            Nenhuma conta neste filtro.
+          </div>
         ) : (
-          doMes.map((conta) => (
+          filtradas.map((conta) => (
             <ContaCard
               key={conta.id}
               conta={conta}
@@ -335,6 +467,75 @@ function ContasAPagarPage() {
 }
 
 // ---------- Subcomponents ----------
+
+function ResumoCard({
+  label,
+  valor,
+  tone,
+  icon,
+  hint,
+}: {
+  label: string;
+  valor: string;
+  tone: "warning" | "destructive" | "success" | "muted";
+  icon: React.ReactNode;
+  hint?: string;
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "bg-warning/15 text-warning"
+      : tone === "destructive"
+        ? "bg-destructive/15 text-destructive"
+        : tone === "success"
+          ? "bg-success/15 text-success"
+          : "bg-card-elevated text-muted-foreground";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <span
+          className={cn(
+            "grid h-6 w-6 place-items-center rounded-full",
+            toneClass,
+          )}
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="num mt-1.5 text-base font-bold leading-tight">{valor}</p>
+      {hint && (
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+function mensagemAmigavel(t: {
+  qtdAtrasado: number;
+  qtdProximos7: number;
+  qtdPendente: number;
+  qtdPago: number;
+}): string {
+  if (t.qtdAtrasado > 0) {
+    return t.qtdAtrasado === 1
+      ? "Atenção: 1 conta está atrasada."
+      : `Atenção: ${t.qtdAtrasado} contas estão atrasadas.`;
+  }
+  if (t.qtdProximos7 > 0) {
+    return t.qtdProximos7 === 1
+      ? "Você tem 1 conta próxima do vencimento."
+      : `Você tem ${t.qtdProximos7} contas próximas do vencimento.`;
+  }
+  if (t.qtdPendente === 0 && t.qtdPago === 0) {
+    return "Nenhuma conta cadastrada para este mês.";
+  }
+  if (t.qtdPendente === 0) {
+    return "Tudo certo por aqui. Nenhuma conta pendente. 🎉";
+  }
+  return "Boa! Nenhuma conta vence nos próximos 7 dias.";
+}
 
 function StatusPill({
   label,
