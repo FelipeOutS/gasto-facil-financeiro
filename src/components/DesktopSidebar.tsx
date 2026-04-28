@@ -67,15 +67,21 @@ export function DesktopSidebar() {
                 <Link
                   to={to}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
                     active
-                      ? "bg-accent text-foreground shadow-card"
+                      ? "bg-brand-soft text-brand-on-soft shadow-card"
                       : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
                   )}
                 >
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
+                    />
+                  )}
                   <span className="relative">
                     <Icon
-                      className={cn("h-4 w-4 shrink-0", active && "text-foreground")}
+                      className={cn("h-4 w-4 shrink-0", active && "text-brand")}
                       strokeWidth={active ? 2.4 : 1.8}
                     />
                     {showDot && (
