@@ -138,14 +138,14 @@ function CategoriasPage() {
                   type="button"
                   onClick={() => setTheme(id)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all active:scale-[0.98]",
+                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all card-press",
                     active
-                      ? "border-foreground/40 bg-card-elevated text-foreground shadow-card"
+                      ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
                       : "border-border bg-card text-muted-foreground hover:text-foreground",
                   )}
                   aria-pressed={active}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={cn("h-4 w-4", active && "text-brand")} />
                   {label}
                 </button>
               );
