@@ -867,13 +867,13 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
       </div>
       <div className="mt-3 flex-1">
         {ultimos.length === 0 ? (
-          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center">
+          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
-              Nenhum lançamento ainda neste mês.
+              Tudo vazio por aqui ainda.
             </p>
-            <Link to="/adicionar" className="mt-2 text-xs font-medium underline">
-              Cadastrar o primeiro
+            <Link to="/adicionar" className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors">
+              Lançar o primeiro gasto
             </Link>
           </div>
         ) : (
