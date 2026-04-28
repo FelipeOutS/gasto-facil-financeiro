@@ -71,6 +71,16 @@ export const Route = createFileRoute("/contas-a-pagar")({
   component: ContasAPagarPage,
 });
 
+type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas";
+
+const FILTROS: Array<{ id: FilterId; label: string }> = [
+  { id: "todas", label: "Todas" },
+  { id: "pendentes", label: "Pendentes" },
+  { id: "proximas", label: "Próximas" },
+  { id: "atrasadas", label: "Atrasadas" },
+  { id: "pagas", label: "Pagas" },
+];
+
 function ContasAPagarPage() {
   const ready = useBootstrap();
   const today = new Date();
@@ -79,22 +89,26 @@ function ContasAPagarPage() {
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
+  const [filtro, setFiltro] = useState<FilterId>("todas");
 
   const contas = useStore(() => getContasAPagar());
   const categorias = useStore(() => getCategorias());
 
   const hojeISO = todayISO();
 
+  function diasAteVenc(c: ContaAPagar): number {
+    const v = new Date(c.dataVencimento + "T00:00:00").getTime();
+    const h = new Date(hojeISO + "T00:00:00").getTime();
+    return Math.round((v - h) / (1000 * 60 * 60 * 24));
+  }
+
   const doMes = useMemo(() => {
     const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
-    // Ordem: atrasadas → vence hoje → próximas (1-3d) → futuras pendentes → pagas
     function prioridade(c: ContaAPagar) {
       const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") return 4;
       if (s === "atrasado") return 0;
-      const v = new Date(c.dataVencimento + "T00:00:00").getTime();
-      const h = new Date(hojeISO + "T00:00:00").getTime();
-      const dias = Math.round((v - h) / (1000 * 60 * 60 * 24));
+      const dias = diasAteVenc(c);
       if (dias === 0) return 1;
       if (dias > 0 && dias <= 3) return 2;
       return 3;
@@ -105,15 +119,18 @@ function ContasAPagarPage() {
       if (pa !== pb) return pa - pb;
       return a.dataVencimento.localeCompare(b.dataVencimento);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contas, ym, hojeISO]);
 
   const totais = useMemo(() => {
     let pendente = 0;
     let pago = 0;
     let atrasado = 0;
+    let proximos7 = 0;
     let qtdAtrasado = 0;
     let qtdPendente = 0;
     let qtdPago = 0;
+    let qtdProximos7 = 0;
     for (const c of doMes) {
       const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") {
@@ -125,9 +142,24 @@ function ContasAPagarPage() {
       } else {
         pendente += c.valor;
         qtdPendente++;
+        const d = diasAteVenc(c);
+        if (d >= 0 && d <= 7) {
+          proximos7 += c.valor;
+          qtdProximos7++;
+        }
       }
     }
-    return { pendente, pago, atrasado, qtdPendente, qtdPago, qtdAtrasado };
+    return {
+      pendente,
+      pago,
+      atrasado,
+      proximos7,
+      qtdPendente,
+      qtdPago,
+      qtdAtrasado,
+      qtdProximos7,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doMes, hojeISO]);
 
   const proximaConta = useMemo(() => {
@@ -135,6 +167,31 @@ function ContasAPagarPage() {
       .filter((c) => statusContaEfetivo(c, hojeISO) !== "pago")
       .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento))[0];
   }, [doMes, hojeISO]);
+
+  const filtradas = useMemo(() => {
+    return doMes.filter((c) => {
+      const s = statusContaEfetivo(c, hojeISO);
+      switch (filtro) {
+        case "todas":
+          return true;
+        case "pendentes":
+          return s === "pendente" || s === "atrasado";
+        case "proximas": {
+          if (s === "pago") return false;
+          if (s === "atrasado") return false;
+          const d = diasAteVenc(c);
+          return d >= 0 && d <= 7;
+        }
+        case "atrasadas":
+          return s === "atrasado";
+        case "pagas":
+          return s === "pago";
+        default:
+          return true;
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doMes, hojeISO, filtro]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
