@@ -10,6 +10,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAlertaContas } from "@/lib/contas-alertas";
 
 type NavItem = {
   to: string;
