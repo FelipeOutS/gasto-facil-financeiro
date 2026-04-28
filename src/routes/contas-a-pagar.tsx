@@ -85,13 +85,27 @@ function ContasAPagarPage() {
 
   const hojeISO = todayISO();
 
-  const doMes = useMemo(
-    () =>
-      contas
-        .filter((c) => c.mes === ym.mes && c.ano === ym.ano)
-        .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)),
-    [contas, ym],
-  );
+  const doMes = useMemo(() => {
+    const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
+    // Ordem: atrasadas → vence hoje → próximas (1-3d) → futuras pendentes → pagas
+    function prioridade(c: ContaAPagar) {
+      const s = statusContaEfetivo(c, hojeISO);
+      if (s === "pago") return 4;
+      if (s === "atrasado") return 0;
+      const v = new Date(c.dataVencimento + "T00:00:00").getTime();
+      const h = new Date(hojeISO + "T00:00:00").getTime();
+      const dias = Math.round((v - h) / (1000 * 60 * 60 * 24));
+      if (dias === 0) return 1;
+      if (dias > 0 && dias <= 3) return 2;
+      return 3;
+    }
+    return lista.sort((a, b) => {
+      const pa = prioridade(a);
+      const pb = prioridade(b);
+      if (pa !== pb) return pa - pb;
+      return a.dataVencimento.localeCompare(b.dataVencimento);
+    });
+  }, [contas, ym, hojeISO]);
 
   const totais = useMemo(() => {
     let pendente = 0;
@@ -199,6 +213,15 @@ function ContasAPagarPage() {
             icon={<CheckCircle2 className="h-3 w-3" />}
           />
         </div>
+
+        {(totais.pago > 0 || totais.qtdPago > 0) && (
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2">
+            <span className="text-[11px] text-muted-foreground">Total pago no mês</span>
+            <span className="num text-sm font-semibold text-success">
+              {formatBRL(totais.pago)}
+            </span>
+          </div>
+        )}
 
         {proximaConta && (
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-3">
@@ -348,15 +371,15 @@ function StatusPill({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
-      <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-card text-muted-foreground">
-        <Receipt className="h-5 w-5" />
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
+      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground">
+        <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-medium">Nenhuma conta neste mês</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Cadastre suas contas fixas para acompanhar vencimentos.
+      <p className="text-sm font-semibold">Nenhuma conta a pagar cadastrada</p>
+      <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+        Cadastre aluguel, internet, luz, assinaturas e outras contas para acompanhar seus vencimentos.
       </p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={onAdd}>
+      <Button size="sm" className="mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
         Adicionar conta
       </Button>
@@ -478,7 +501,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
         <CheckCircle2 className="h-2.5 w-2.5" />
-        Pago
+        Paga
       </span>
     );
   }
@@ -486,7 +509,23 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
         <AlertTriangle className="h-2.5 w-2.5" />
-        Atrasado {Math.abs(dias)}d
+        Atrasada {Math.abs(dias)}d
+      </span>
+    );
+  }
+  if (dias === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <Clock className="h-2.5 w-2.5" />
+        Vence hoje
+      </span>
+    );
+  }
+  if (dias === 1) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <Clock className="h-2.5 w-2.5" />
+        Vence amanhã
       </span>
     );
   }
@@ -494,13 +533,13 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        {dias === 0 ? "Vence hoje" : `Em ${dias}d`}
+        Em {dias}d
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-      Em {dias}d
+      Pendente · {dias}d
     </span>
   );
 }

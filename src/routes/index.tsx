@@ -415,53 +415,9 @@ function Index() {
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
 
-      {/* Atalho: Contas a pagar */}
-      <Link
-        to="/contas-a-pagar"
-        className={cn(
-          "mt-2.5 flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors hover:bg-card-elevated",
-          contasResumo.atrasadasCount > 0 ? "border-destructive/40" : "border-border",
-        )}
-      >
-        <span
-          className={cn(
-            "grid h-9 w-9 shrink-0 place-items-center rounded-full",
-            contasResumo.atrasadasCount > 0
-              ? "bg-destructive/15 text-destructive"
-              : "bg-warning/15 text-warning",
-          )}
-        >
-          <CalendarClock className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate text-sm font-medium">Próximas contas</p>
-            {contasResumo.total > 0 && (
-              <p className="num shrink-0 text-xs font-semibold">
-                {formatBRL(contasResumo.pendente)}
-              </p>
-            )}
-          </div>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {contasResumo.total === 0
-              ? "Cadastre suas contas para acompanhar"
-              : contasResumo.atrasadasCount > 0
-                ? `${contasResumo.atrasadasCount} atrasada${contasResumo.atrasadasCount > 1 ? "s" : ""} • ${contasResumo.pendentesCount} pendente${contasResumo.pendentesCount === 1 ? "" : "s"}`
-                : contasResumo.proxima
-                  ? `${contasResumo.proxima.nome} — ${
-                      contasResumo.diasParaProxima === 0
-                        ? "vence hoje"
-                        : contasResumo.diasParaProxima === 1
-                          ? "vence amanhã"
-                          : (contasResumo.diasParaProxima ?? 0) > 0
-                            ? `vence em ${contasResumo.diasParaProxima}d`
-                            : "vencida"
-                    }`
-                  : "Tudo pago neste mês 🎉"}
-          </p>
-        </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-      </Link>
+      {/* Card detalhado: Contas a pagar */}
+      <ContasCard resumo={contasResumo} />
+
 
       {porCategoria.length > 0 && (
         <>
@@ -667,7 +623,10 @@ function Index() {
       </section>
 
       {/* ===== 6. INSIGHTS ===== */}
-      {(maior || gastosFixos > 0 || totalGuardado > 0) && (
+      {(maior ||
+        gastosFixos > 0 ||
+        totalGuardado > 0 ||
+        contasResumo.total > 0) && (
         <>
           <SectionLabel>Insights</SectionLabel>
           <section className="rounded-3xl border border-border bg-card p-4">
@@ -708,6 +667,41 @@ function Index() {
                     % concluída.
                   </p>
                 )}
+                {/* Insights de contas a pagar */}
+                {contasResumo.atrasadasCount > 0 && (
+                  <p className="text-sm leading-relaxed text-destructive">
+                    Você possui {contasResumo.atrasadasCount}{" "}
+                    {contasResumo.atrasadasCount === 1 ? "conta atrasada" : "contas atrasadas"}.
+                  </p>
+                )}
+                {contasResumo.proxima && contasResumo.diasParaProxima === 0 && (
+                  <p className="text-sm leading-relaxed text-warning">
+                    {contasResumo.proxima.nome} vence hoje.
+                  </p>
+                )}
+                {contasResumo.proxima && contasResumo.diasParaProxima === 1 && (
+                  <p className="text-sm leading-relaxed text-warning">
+                    {contasResumo.proxima.nome} vence amanhã.
+                  </p>
+                )}
+                {contasResumo.pendentesCount > 0 && contasResumo.diasParaProxima !== 0 && contasResumo.diasParaProxima !== 1 && (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Você tem {contasResumo.pendentesCount}{" "}
+                    {contasResumo.pendentesCount === 1 ? "conta pendente" : "contas pendentes"} este mês.
+                  </p>
+                )}
+                {contasResumo.pendente > 0 && (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Suas contas pendentes somam {formatBRL(contasResumo.pendente)}.
+                  </p>
+                )}
+                {contasResumo.total > 0 &&
+                  contasResumo.pendentesCount === 0 &&
+                  contasResumo.atrasadasCount === 0 && (
+                    <p className="text-sm leading-relaxed text-success">
+                      Todas as contas deste mês foram pagas. 🎉
+                    </p>
+                  )}
               </div>
             </div>
           </section>
@@ -853,6 +847,124 @@ function WelcomeCard({
       </span>
       <p className="text-sm font-semibold leading-tight">{title}</p>
     </Link>
+  );
+}
+
+type ContasResumo = {
+  pendente: number;
+  atrasadasCount: number;
+  pendentesCount: number;
+  total: number;
+  proxima: { nome: string; valor: number; dataVencimento: string } | null;
+  diasParaProxima: number | null;
+};
+
+function ContasCard({ resumo }: { resumo: ContasResumo }) {
+  const hasAtrasada = resumo.atrasadasCount > 0;
+  const hasPendentes = resumo.pendentesCount > 0 || hasAtrasada;
+  const tudoPago = resumo.total > 0 && !hasPendentes;
+  const semContas = resumo.total === 0;
+
+  function vencimentoLabel(): string {
+    const d = resumo.diasParaProxima;
+    if (d === null) return "";
+    if (d < 0) return `vencida há ${Math.abs(d)}d`;
+    if (d === 0) return "vence hoje";
+    if (d === 1) return "vence amanhã";
+    return `vence em ${d}d`;
+  }
+
+  return (
+    <section
+      className={cn(
+        "mt-2.5 rounded-3xl border bg-card p-4 transition-colors",
+        hasAtrasada ? "border-destructive/40" : "border-border",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+              hasAtrasada
+                ? "bg-destructive/15 text-destructive"
+                : tudoPago
+                  ? "bg-success/15 text-success"
+                  : "bg-warning/15 text-warning",
+            )}
+          >
+            <CalendarClock className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Próximas contas
+            </p>
+            <h2 className="text-sm font-semibold">
+              {semContas
+                ? "Nenhuma conta cadastrada"
+                : tudoPago
+                  ? "Tudo pago neste mês"
+                  : `${formatBRL(resumo.pendente)} pendentes`}
+            </h2>
+          </div>
+        </div>
+        <Link
+          to="/contas-a-pagar"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Ver →
+        </Link>
+      </div>
+
+      {!semContas && !tudoPago && resumo.proxima && (
+        <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Próxima a vencer
+          </p>
+          <div className="mt-1 flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{resumo.proxima.nome}</p>
+            <p className="num shrink-0 text-sm font-semibold">
+              {formatBRL(resumo.proxima.valor)}
+            </p>
+          </div>
+          <p
+            className={cn(
+              "mt-0.5 text-[11px]",
+              resumo.diasParaProxima !== null && resumo.diasParaProxima < 0
+                ? "text-destructive"
+                : resumo.diasParaProxima !== null && resumo.diasParaProxima <= 1
+                  ? "text-warning"
+                  : "text-muted-foreground",
+            )}
+          >
+            {vencimentoLabel()}
+          </p>
+        </div>
+      )}
+
+      {!semContas && (
+        <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="num">
+            {resumo.pendentesCount}{" "}
+            {resumo.pendentesCount === 1 ? "pendente" : "pendentes"}
+          </span>
+          <span>·</span>
+          <span className={cn("num", hasAtrasada && "text-destructive font-medium")}>
+            {resumo.atrasadasCount}{" "}
+            {resumo.atrasadasCount === 1 ? "atrasada" : "atrasadas"}
+          </span>
+        </div>
+      )}
+
+      {semContas && (
+        <Link to="/contas-a-pagar" className="mt-3 block">
+          <Button variant="outline" size="sm" className="w-full">
+            <Plus className="mr-1 h-4 w-4" />
+            Adicionar conta
+          </Button>
+        </Link>
+      )}
+    </section>
   );
 }
 
