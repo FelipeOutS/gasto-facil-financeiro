@@ -74,11 +74,11 @@ function GuardadoPage() {
   function handleSaveGuardado() {
     const valor = parseBRLInput(valorStr);
     if (!valor || !bancoId) {
-      toast.error("Selecione banco e valor");
+      toast.error("Selecione o banco e informe um valor.");
       return;
     }
     addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined });
-    toast.success("Valor guardado");
+    toast.success("Valor guardado. Seu futuro agradece. 💚");
     setValorStr("");
     setObs("");
     setOpenG(false);
@@ -86,11 +86,11 @@ function GuardadoPage() {
 
   function handleSaveBanco() {
     if (!novoBancoNome.trim()) {
-      toast.error("Informe o nome");
+      toast.error("Dá um nome pro banco antes de salvar.");
       return;
     }
     addBanco({ nome: novoBancoNome.trim(), colorHex: novoBancoCor });
-    toast.success("Banco adicionado");
+    toast.success("Banco adicionado.");
     setNovoBancoNome("");
     setOpenB(false);
   }
