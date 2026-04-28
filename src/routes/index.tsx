@@ -433,8 +433,10 @@ function Index() {
         </Link>
       </div>
 
-      {/* Card detalhado: Contas a pagar */}
-      <ContasCard resumo={contasResumo} />
+      {/* Card detalhado: Contas a pagar — escondido no desktop (já está no topo) */}
+      <div className="lg:hidden">
+        <ContasCard resumo={contasResumo} />
+      </div>
 
 
       {porCategoria.length > 0 && (
