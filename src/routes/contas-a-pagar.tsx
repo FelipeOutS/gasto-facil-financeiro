@@ -492,7 +492,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
         <CheckCircle2 className="h-2.5 w-2.5" />
-        Pago
+        Paga
       </span>
     );
   }
@@ -500,7 +500,23 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
         <AlertTriangle className="h-2.5 w-2.5" />
-        Atrasado {Math.abs(dias)}d
+        Atrasada {Math.abs(dias)}d
+      </span>
+    );
+  }
+  if (dias === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <Clock className="h-2.5 w-2.5" />
+        Vence hoje
+      </span>
+    );
+  }
+  if (dias === 1) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <Clock className="h-2.5 w-2.5" />
+        Vence amanhã
       </span>
     );
   }
@@ -508,13 +524,13 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        {dias === 0 ? "Vence hoje" : `Em ${dias}d`}
+        Em {dias}d
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-      Em {dias}d
+      Pendente · {dias}d
     </span>
   );
 }
