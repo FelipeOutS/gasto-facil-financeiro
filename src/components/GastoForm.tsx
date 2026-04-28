@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { CategoryIcon } from "./CategoryIcon";
 import {
+  getCartoes,
   getCategorias,
   suggestCategory,
   useStore,
@@ -20,7 +21,8 @@ import {
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoGasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
-import { ChevronDown, ChevronUp, Repeat, Layers } from "lucide-react";
+import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 export type GastoFormProps = {
@@ -31,6 +33,7 @@ export type GastoFormProps = {
 
 export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: GastoFormProps) {
   const categorias = useStore(() => getCategorias());
+  const cartoes = useStore(() => getCartoes());
 
   const [valorStr, setValorStr] = useState(
     initial?.valor ? initial.valor.toFixed(2).replace(".", ",") : "",
@@ -47,6 +50,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>(
     initial?.formaPagamento ?? "credito",
   );
+  const [cartaoId, setCartaoId] = useState<string | undefined>(initial?.cartaoId);
   const [observacao, setObservacao] = useState(initial?.observacao ?? "");
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
@@ -87,6 +91,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
+          cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
         });
       }}
       className="space-y-5"
@@ -169,6 +174,40 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           </Select>
         </div>
       </div>
+
+      {formaPagamento === "credito" && (
+        <div className="rounded-2xl border border-border bg-card p-3 animate-fade-in">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <CreditCard className="h-3.5 w-3.5" />
+            Escolha o cartão
+          </Label>
+          {cartoes.length > 0 ? (
+            <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v || undefined)}>
+              <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
+                <SelectValue placeholder="Selecionar cartão (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {cartoes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden className="inline-block h-3 w-3 rounded-full" style={{ background: c.cor }} />
+                      {c.nome}
+                      {c.banco ? <span className="text-muted-foreground"> · {c.banco}</span> : null}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
+              <p className="text-xs text-muted-foreground">Você ainda não tem cartões cadastrados.</p>
+              <Link to="/cartoes" className="text-xs font-semibold text-brand hover:underline">
+                Cadastrar cartão
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <Label htmlFor="estab" className="text-xs text-muted-foreground">

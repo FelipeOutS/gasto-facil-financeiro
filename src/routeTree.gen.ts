@@ -23,7 +23,9 @@ import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
+import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -97,9 +99,19 @@ const CategoriasRoute = CategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesRoute = CartoesRouteImport.update({
+  id: '/cartoes',
+  path: '/cartoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartoesRoute = CartoesRouteImport.update({
+  id: '/cartoes',
+  path: '/cartoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdicionarRoute = AdicionarRouteImport.update({
@@ -117,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/cadastro': typeof CadastroRoute
+  '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
@@ -136,6 +149,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/cadastro': typeof CadastroRoute
+  '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
@@ -156,6 +170,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/cadastro': typeof CadastroRoute
+  '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
@@ -177,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/cadastro'
+    | '/cartoes'
     | '/categorias'
     | '/confirmar'
     | '/conta'
@@ -196,6 +212,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/cadastro'
+    | '/cartoes'
     | '/categorias'
     | '/confirmar'
     | '/conta'
@@ -215,6 +232,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/cadastro'
+    | '/cartoes'
     | '/categorias'
     | '/confirmar'
     | '/conta'
@@ -235,6 +253,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
   CadastroRoute: typeof CadastroRoute
+  CartoesRoute: typeof CartoesRoute
   CategoriasRoute: typeof CategoriasRoute
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
@@ -351,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes': {
+      id: '/cartoes'
+      path: '/cartoes'
+      fullPath: '/cartoes'
+      preLoaderRoute: typeof CartoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cadastro': {
       id: '/cadastro'
       path: '/cadastro'
@@ -379,6 +405,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
   CadastroRoute: CadastroRoute,
+  CartoesRoute: CartoesRoute,
   CategoriasRoute: CategoriasRoute,
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,

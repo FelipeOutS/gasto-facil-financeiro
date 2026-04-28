@@ -961,6 +961,119 @@ export function getBancoById(id: string): Banco | undefined {
   return memBancos.find((b) => b.id === id);
 }
 
+// ---------- Cartões ----------
+export function getCartoes(): Cartao[] {
+  return memCartoes;
+}
+export function getCartaoById(id: string): Cartao | undefined {
+  return memCartoes.find((c) => c.id === id);
+}
+
+export type NovoCartaoInput = {
+  nome: string;
+  banco: string;
+  limiteTotal: number;
+  diaFechamento: number;
+  diaVencimento: number;
+  cor: string;
+  observacao?: string;
+};
+
+export function addCartao(input: NovoCartaoInput): Cartao {
+  const now = new Date().toISOString();
+  const id = activeUserId ? crypto.randomUUID() : uid();
+  const novo: Cartao = {
+    id,
+    nome: input.nome.trim(),
+    banco: input.banco.trim(),
+    limiteTotal: input.limiteTotal,
+    diaFechamento: input.diaFechamento,
+    diaVencimento: input.diaVencimento,
+    cor: input.cor,
+    observacao: input.observacao?.trim() || undefined,
+    criadoEm: now,
+    atualizadoEm: now,
+  };
+  memCartoes = [...memCartoes, novo];
+  emit();
+  if (!activeUserId) return novo;
+  void sbAny
+    .from("cartoes")
+    .insert({
+      id,
+      user_id: activeUserId,
+      nome: novo.nome,
+      banco: novo.banco,
+      limite_total: novo.limiteTotal,
+      dia_fechamento: novo.diaFechamento,
+      dia_vencimento: novo.diaVencimento,
+      cor: novo.cor,
+      observacao: novo.observacao ?? null,
+    })
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] addCartao failed", error);
+    });
+  return novo;
+}
+
+export function updateCartao(id: string, patch: Partial<NovoCartaoInput>) {
+  const now = new Date().toISOString();
+  memCartoes = memCartoes.map((c) =>
+    c.id === id ? { ...c, ...patch, atualizadoEm: now } : c,
+  );
+  emit();
+  if (!activeUserId) return;
+  const row: Record<string, unknown> = {};
+  if (patch.nome !== undefined) row.nome = patch.nome;
+  if (patch.banco !== undefined) row.banco = patch.banco;
+  if (patch.limiteTotal !== undefined) row.limite_total = patch.limiteTotal;
+  if (patch.diaFechamento !== undefined) row.dia_fechamento = patch.diaFechamento;
+  if (patch.diaVencimento !== undefined) row.dia_vencimento = patch.diaVencimento;
+  if (patch.cor !== undefined) row.cor = patch.cor;
+  if (patch.observacao !== undefined) row.observacao = patch.observacao ?? null;
+  void sbAny
+    .from("cartoes")
+    .update(row)
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] updateCartao failed", error);
+    });
+}
+
+export function deleteCartao(id: string) {
+  memCartoes = memCartoes.filter((c) => c.id !== id);
+  emit();
+  if (!activeUserId) return;
+  void sbAny
+    .from("cartoes")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[store] deleteCartao failed", error);
+    });
+}
+
+/** Calcula resumo de uso do cartão no mês corrente da fatura (com base nos gastos vinculados). */
+export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
+  const cartao = memCartoes.find((c) => c.id === cartaoId);
+  const gastosCartao = memGastos.filter(
+    (g) => g.cartaoId === cartaoId && g.formaPagamento === "credito",
+  );
+  // Usado no mês corrente (mês atual) — simples para esta etapa.
+  const mes = hoje.getMonth() + 1;
+  const ano = hoje.getFullYear();
+  const usadoMes = gastosCartao
+    .filter((g) => g.mes === mes && g.ano === ano)
+    .reduce((s, g) => s + g.valor, 0);
+  const limite = cartao?.limiteTotal ?? 0;
+  return {
+    usadoMes,
+    limite,
+    disponivel: Math.max(0, limite - usadoMes),
+    pct: limite > 0 ? Math.min(100, (usadoMes / limite) * 100) : 0,
+  };
+}
+
 // ============================================================
 // MUTATIONS — Supabase entities
 // Optimistic updates: change in-memory cache + emit + write to Supabase.
