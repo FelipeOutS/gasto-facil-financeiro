@@ -301,7 +301,7 @@ function GuardadoPage() {
                 </div>
                 {b.criadoPeloUsuario && (
                   <button
-                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido"); }}
+                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido."); }}
                     className="text-muted-foreground hover:text-destructive"
                     aria-label="Excluir banco"
                   >
