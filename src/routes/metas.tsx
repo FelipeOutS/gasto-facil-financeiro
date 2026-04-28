@@ -352,7 +352,7 @@ function MetaCard({ meta, onAdd }: { meta: Meta; onAdd: (id: string) => void }) 
           </p>
         </div>
         <button
-          onClick={() => { deleteMeta(meta.id); toast.success("Meta removida"); }}
+          onClick={() => { deleteMeta(meta.id); toast.success("Meta removida."); }}
           className="text-muted-foreground hover:text-destructive"
           aria-label="Excluir meta"
         >
