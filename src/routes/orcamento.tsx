@@ -142,7 +142,7 @@ function OrcamentoPage() {
     if (!editing) return;
     const v = parseBRLInput(editing.valor);
     setLimite(editing.id, v, ym.mes, ym.ano);
-    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo` : "Limite removido");
+    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
     setEditing(null);
   }
 
