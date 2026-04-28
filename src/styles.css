@@ -241,4 +241,89 @@ body {
   .safe-top {
     padding-top: max(0.75rem, env(safe-area-inset-top));
   }
+
+  /* ===== Microanimations ===== */
+  /* Suave entrada de cards/seções */
+  .animate-rise {
+    animation: rise 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  /* Pop leve para feedbacks/badges */
+  .animate-pop {
+    animation: pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  /* Resposta tátil de botões/cards */
+  .card-press {
+    transition: transform 160ms ease, box-shadow 200ms ease, background-color 160ms ease;
+  }
+  .card-press:active {
+    transform: scale(0.985);
+  }
+  /* Hover sutil em listas no desktop */
+  .hover-lift {
+    transition: transform 220ms ease, box-shadow 220ms ease, background-color 200ms ease;
+  }
+  @media (hover: hover) {
+    .hover-lift:hover {
+      transform: translateY(-1px);
+    }
+  }
+  /* Stagger helper — combine com .animate-rise via inline style delay */
+  .stagger > * {
+    opacity: 0;
+    animation: rise 380ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 20ms; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger > *:nth-child(4) { animation-delay: 140ms; }
+  .stagger > *:nth-child(5) { animation-delay: 180ms; }
+  .stagger > *:nth-child(6) { animation-delay: 220ms; }
+  .stagger > *:nth-child(7) { animation-delay: 260ms; }
+  .stagger > *:nth-child(8) { animation-delay: 300ms; }
+  /* Skeleton mais agradável */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-muted) 0%,
+      color-mix(in oklab, var(--color-muted) 60%, var(--color-foreground) 6%) 50%,
+      var(--color-muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 0.75rem;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Respeita preferência do usuário */
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-pop,
+  .stagger > *,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+  .hover-lift:hover { transform: none !important; }
+  * { transition-duration: 0.01ms !important; }
 }
