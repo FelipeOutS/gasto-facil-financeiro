@@ -824,7 +824,7 @@ function ContaFormDialog({
           <DialogDescription>
             {isEdit
               ? "Atualize os dados da conta."
-              : "Cadastre uma conta para acompanhar o vencimento."}
+              : "Cadastre essa conta e a gente te avisa antes do vencimento."}
           </DialogDescription>
         </DialogHeader>
 
