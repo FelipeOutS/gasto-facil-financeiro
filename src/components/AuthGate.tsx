@@ -18,11 +18,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (loading || !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-card">
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-card animate-pop">
             <Wallet className="h-6 w-6 text-foreground" />
           </span>
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <p className="text-sm text-muted-foreground">Preparando tudo…</p>
         </div>
       </div>
     );
@@ -44,7 +44,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground animate-fade-in">Só um instante…</p>
       </div>
     );
   }
