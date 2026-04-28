@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
+import { useAccent, ACCENTS } from "@/lib/accent";
 import {
   addCategoria,
   deleteCategoria,
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/categorias")({
 function CategoriasPage() {
   const ready = useBootstrap();
   const { theme, setTheme } = useTheme();
+  const { accent, setAccent } = useAccent();
   const categorias = useStore(() => getCategorias());
   const today = new Date();
   const mes = today.getMonth() + 1;
@@ -99,6 +101,23 @@ function CategoriasPage() {
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
 
+      {/* Atalho para Orçamento (especialmente útil no mobile) */}
+      <Link
+        to="/orcamento"
+        className="mt-2 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-card-elevated lg:hidden"
+      >
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+          <PieChart className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">Orçamento mensal</p>
+          <p className="truncate text-xs text-muted-foreground">
+            Limites por categoria e progresso
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
       {/* Aparência */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">Aparência</h2>
@@ -132,6 +151,44 @@ function CategoriasPage() {
               );
             },
           )}
+        </div>
+
+        <div className="mt-5">
+          <p className="text-xs font-medium text-foreground">Cor de destaque</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Personaliza botões, focos e gráficos.
+          </p>
+          <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
+            {ACCENTS.map((a) => {
+              const active = accent === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAccent(a.id)}
+                  className={cn(
+                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all active:scale-[0.96]",
+                    active
+                      ? "border-foreground/40 bg-card-elevated"
+                      : "border-border bg-card hover:bg-card-elevated",
+                  )}
+                  aria-pressed={active}
+                  aria-label={a.label}
+                >
+                  <span
+                    className={cn(
+                      "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
+                      active ? "ring-foreground/60" : "ring-transparent",
+                    )}
+                    style={{ background: a.swatch }}
+                  />
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    {a.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
