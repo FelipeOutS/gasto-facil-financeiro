@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
+import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import {
   getCategoriaById,
   getContasAPagar,
