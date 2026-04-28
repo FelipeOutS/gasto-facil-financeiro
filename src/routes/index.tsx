@@ -623,7 +623,10 @@ function Index() {
       </section>
 
       {/* ===== 6. INSIGHTS ===== */}
-      {(maior || gastosFixos > 0 || totalGuardado > 0) && (
+      {(maior ||
+        gastosFixos > 0 ||
+        totalGuardado > 0 ||
+        contasResumo.total > 0) && (
         <>
           <SectionLabel>Insights</SectionLabel>
           <section className="rounded-3xl border border-border bg-card p-4">
@@ -664,6 +667,41 @@ function Index() {
                     % concluída.
                   </p>
                 )}
+                {/* Insights de contas a pagar */}
+                {contasResumo.atrasadasCount > 0 && (
+                  <p className="text-sm leading-relaxed text-destructive">
+                    Você possui {contasResumo.atrasadasCount}{" "}
+                    {contasResumo.atrasadasCount === 1 ? "conta atrasada" : "contas atrasadas"}.
+                  </p>
+                )}
+                {contasResumo.proxima && contasResumo.diasParaProxima === 0 && (
+                  <p className="text-sm leading-relaxed text-warning">
+                    {contasResumo.proxima.nome} vence hoje.
+                  </p>
+                )}
+                {contasResumo.proxima && contasResumo.diasParaProxima === 1 && (
+                  <p className="text-sm leading-relaxed text-warning">
+                    {contasResumo.proxima.nome} vence amanhã.
+                  </p>
+                )}
+                {contasResumo.pendentesCount > 0 && contasResumo.diasParaProxima !== 0 && contasResumo.diasParaProxima !== 1 && (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Você tem {contasResumo.pendentesCount}{" "}
+                    {contasResumo.pendentesCount === 1 ? "conta pendente" : "contas pendentes"} este mês.
+                  </p>
+                )}
+                {contasResumo.pendente > 0 && (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Suas contas pendentes somam {formatBRL(contasResumo.pendente)}.
+                  </p>
+                )}
+                {contasResumo.total > 0 &&
+                  contasResumo.pendentesCount === 0 &&
+                  contasResumo.atrasadasCount === 0 && (
+                    <p className="text-sm leading-relaxed text-success">
+                      Todas as contas deste mês foram pagas. 🎉
+                    </p>
+                  )}
               </div>
             </div>
           </section>
