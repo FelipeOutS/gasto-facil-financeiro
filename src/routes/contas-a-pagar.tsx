@@ -468,6 +468,75 @@ function ContasAPagarPage() {
 
 // ---------- Subcomponents ----------
 
+function ResumoCard({
+  label,
+  valor,
+  tone,
+  icon,
+  hint,
+}: {
+  label: string;
+  valor: string;
+  tone: "warning" | "destructive" | "success" | "muted";
+  icon: React.ReactNode;
+  hint?: string;
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "bg-warning/15 text-warning"
+      : tone === "destructive"
+        ? "bg-destructive/15 text-destructive"
+        : tone === "success"
+          ? "bg-success/15 text-success"
+          : "bg-card-elevated text-muted-foreground";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <span
+          className={cn(
+            "grid h-6 w-6 place-items-center rounded-full",
+            toneClass,
+          )}
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="num mt-1.5 text-base font-bold leading-tight">{valor}</p>
+      {hint && (
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+function mensagemAmigavel(t: {
+  qtdAtrasado: number;
+  qtdProximos7: number;
+  qtdPendente: number;
+  qtdPago: number;
+}): string {
+  if (t.qtdAtrasado > 0) {
+    return t.qtdAtrasado === 1
+      ? "Atenção: 1 conta está atrasada."
+      : `Atenção: ${t.qtdAtrasado} contas estão atrasadas.`;
+  }
+  if (t.qtdProximos7 > 0) {
+    return t.qtdProximos7 === 1
+      ? "Você tem 1 conta próxima do vencimento."
+      : `Você tem ${t.qtdProximos7} contas próximas do vencimento.`;
+  }
+  if (t.qtdPendente === 0 && t.qtdPago === 0) {
+    return "Nenhuma conta cadastrada para este mês.";
+  }
+  if (t.qtdPendente === 0) {
+    return "Tudo certo por aqui. Nenhuma conta pendente. 🎉";
+  }
+  return "Boa! Nenhuma conta vence nos próximos 7 dias.";
+}
+
 function StatusPill({
   label,
   count,
