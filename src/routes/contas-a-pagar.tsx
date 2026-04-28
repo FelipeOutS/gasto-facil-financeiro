@@ -362,15 +362,15 @@ function StatusPill({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
-      <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-card text-muted-foreground">
-        <Receipt className="h-5 w-5" />
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
+      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground">
+        <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-medium">Nenhuma conta neste mês</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Cadastre suas contas fixas para acompanhar vencimentos.
+      <p className="text-sm font-semibold">Nenhuma conta a pagar cadastrada</p>
+      <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+        Cadastre aluguel, internet, luz, assinaturas e outras contas para acompanhar seus vencimentos.
       </p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={onAdd}>
+      <Button size="sm" className="mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
         Adicionar conta
       </Button>
