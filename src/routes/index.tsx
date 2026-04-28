@@ -877,13 +877,13 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
             </Link>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2 stagger">
             {ultimos.slice(0, 5).map((g) => {
               const cat = getCategoriaById(g.categoriaId);
               return (
                 <li
                   key={g.id}
-                  className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 transition-colors hover:bg-card-elevated"
+                  className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 hover-lift hover:bg-card-elevated"
                 >
                   <CategoryIcon categoria={cat} />
                   <div className="min-w-0 flex-1">
