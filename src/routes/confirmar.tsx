@@ -317,16 +317,22 @@ function Confirmar() {
 
       {/* REVISÃO */}
       {step === "revisao" && result && (
-        <div className="mt-4 space-y-4 animate-fade-in">
+        <div className="mt-4 space-y-4 animate-rise">
           <div className="rounded-3xl border border-border bg-card p-5">
             <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand/15 text-brand">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-pop">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="flex-1 min-w-0">
-                <h2 className="text-base font-semibold">Confira antes de salvar</h2>
+                <h2 className="text-base font-semibold">
+                  {result.valoresEncontrados.length > 1
+                    ? "Encontrei alguns valores"
+                    : "Encontrei um valor"}
+                </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Encontrei algumas informações na imagem. Ajuste o que quiser antes de registrar.
+                  {result.valoresEncontrados.length > 1
+                    ? "Escolha qual deles é o valor principal do gasto."
+                    : "Confere se está certo antes de salvar."}
                 </p>
               </div>
               <ConfiancaBadge nivel={result.confianca} />
