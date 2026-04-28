@@ -298,6 +298,49 @@ function ContasAPagarPage() {
         )}
       </section>
 
+      {/* Cards de resumo (mês) */}
+      <section className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <ResumoCard
+          label="Total pendente"
+          valor={formatBRL(totais.pendente)}
+          tone="warning"
+          icon={<Clock className="h-3.5 w-3.5" />}
+        />
+        <ResumoCard
+          label="Total atrasado"
+          valor={formatBRL(totais.atrasado)}
+          tone="destructive"
+          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+        />
+        <ResumoCard
+          label="Próximos 7 dias"
+          valor={formatBRL(totais.proximos7)}
+          tone="warning"
+          icon={<CalendarDays className="h-3.5 w-3.5" />}
+          hint={`${totais.qtdProximos7} ${totais.qtdProximos7 === 1 ? "conta" : "contas"}`}
+        />
+        <ResumoCard
+          label="Total pago"
+          valor={formatBRL(totais.pago)}
+          tone="success"
+          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+        />
+      </section>
+
+      {/* Mensagem amigável */}
+      <p
+        className={cn(
+          "mt-3 px-1 text-xs leading-relaxed",
+          totais.qtdAtrasado > 0
+            ? "text-destructive"
+            : totais.qtdProximos7 > 0
+              ? "text-warning"
+              : "text-muted-foreground",
+        )}
+      >
+        {mensagemAmigavel(totais)}
+      </p>
+
       {/* CTA Adicionar */}
       <Button
         size="lg"
@@ -308,12 +351,43 @@ function ContasAPagarPage() {
         Adicionar conta
       </Button>
 
+      {/* Filtros */}
+      <div
+        className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Filtrar contas"
+      >
+        {FILTROS.map((f) => {
+          const active = filtro === f.id;
+          return (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setFiltro(f.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Lista */}
-      <section className="mt-5 space-y-2.5">
+      <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
           <EmptyState onAdd={() => setCreating(true)} />
+        ) : filtradas.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
+            Nenhuma conta neste filtro.
+          </div>
         ) : (
-          doMes.map((conta) => (
+          filtradas.map((conta) => (
             <ContaCard
               key={conta.id}
               conta={conta}
