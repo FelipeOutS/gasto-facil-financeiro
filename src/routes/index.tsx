@@ -307,11 +307,11 @@ function Index() {
         )}
       </section>
 
-      {/* CTA principal */}
-      <Link to="/adicionar" className="mt-3 block">
+      {/* CTA principal — escondido em desktop (já existe na sidebar) */}
+      <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
           size="lg"
-          className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
+          className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated active:scale-[0.99]"
         >
           <Plus className="mr-1 h-5 w-5" />
           Adicionar gasto
@@ -321,7 +321,7 @@ function Index() {
       {/* ===== 2. CONTROLE FINANCEIRO ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
 
-      <section className="grid grid-cols-2 gap-2.5">
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <Link
           to="/guardado"
           className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
