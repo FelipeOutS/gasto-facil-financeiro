@@ -173,7 +173,7 @@ function RendaPage() {
 
   function persistNova(payload: NovaPayload) {
     addReceita(payload);
-    toast.success("Entrada cadastrada");
+    toast.success("Renda adicionada. Boa! 💸");
     setOpen(false);
     reset();
   }
@@ -182,7 +182,7 @@ function RendaPage() {
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
-      toast.error("Preencha descrição e valor");
+      toast.error("Preencha a descrição e o valor.");
       return;
     }
     const dt = new Date(data + "T12:00:00");
