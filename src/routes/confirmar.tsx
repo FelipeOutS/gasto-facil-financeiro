@@ -244,12 +244,24 @@ function Confirmar() {
           </div>
 
           {step === "analisando" && (
-            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center animate-fade-in">
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center animate-rise">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-breathe">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
               <p className="mt-3 font-semibold">Lendo seu comprovante...</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Estou procurando valor, data e descrição. Você confere tudo antes de salvar.
               </p>
+              <div className="mt-4 mx-auto flex max-w-xs items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" />
+                <span>Detectando valores</span>
+                <span className="mx-1 text-border">·</span>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/60 animate-pulse-soft" style={{ animationDelay: "0.3s" }} />
+                <span>Lendo data</span>
+                <span className="mx-1 text-border">·</span>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/40 animate-pulse-soft" style={{ animationDelay: "0.6s" }} />
+                <span>Categoria</span>
+              </div>
             </div>
           )}
 
