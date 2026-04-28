@@ -214,6 +214,15 @@ function ContasAPagarPage() {
           />
         </div>
 
+        {(totais.pago > 0 || totais.qtdPago > 0) && (
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2">
+            <span className="text-[11px] text-muted-foreground">Total pago no mês</span>
+            <span className="num text-sm font-semibold text-success">
+              {formatBRL(totais.pago)}
+            </span>
+          </div>
+        )}
+
         {proximaConta && (
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-3">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
