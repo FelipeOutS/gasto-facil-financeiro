@@ -879,11 +879,18 @@ type ContasResumo = {
   diasParaProxima: number | null;
 };
 
-function ContasCard({ resumo }: { resumo: ContasResumo }) {
+function ContasCard({
+  resumo,
+  variant = "default",
+}: {
+  resumo: ContasResumo;
+  variant?: "default" | "sideTop";
+}) {
   const hasAtrasada = resumo.atrasadasCount > 0;
   const hasPendentes = resumo.pendentesCount > 0 || hasAtrasada;
   const tudoPago = resumo.total > 0 && !hasPendentes;
   const semContas = resumo.total === 0;
+  const isSide = variant === "sideTop";
 
   function vencimentoLabel(): string {
     const d = resumo.diasParaProxima;
@@ -897,7 +904,8 @@ function ContasCard({ resumo }: { resumo: ContasResumo }) {
   return (
     <section
       className={cn(
-        "mt-2.5 rounded-3xl border bg-card p-4 transition-colors",
+        "rounded-3xl border bg-card p-4 transition-colors",
+        isSide ? "h-full shadow-elevated" : "mt-2.5",
         hasAtrasada ? "border-destructive/40" : "border-border",
       )}
     >
