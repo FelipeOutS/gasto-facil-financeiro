@@ -1,18 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Wallet, Building2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Wallet,
+  Building2,
+  MoreVertical,
+  Pencil,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
   addBanco,
   addGuardado,
   deleteBanco,
   deleteGuardado,
+  findReservaSimilar,
   getBancos,
   getGuardado,
+  updateGuardado,
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import { TIPOS_RESERVA, type TipoReserva } from "@/lib/types";
+import { TIPOS_RESERVA, type TipoReserva, type Guardado } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +42,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +73,11 @@ export const Route = createFileRoute("/guardado")({
   component: GuardadoPage,
 });
 
+type DialogMode =
+  | { kind: "closed" }
+  | { kind: "create" }
+  | { kind: "edit"; reserva: Guardado };
+
 function GuardadoPage() {
   const ready = useBootstrap();
   const bancos = useStore(() => getBancos());
@@ -59,30 +90,19 @@ function GuardadoPage() {
     return map;
   }, [guardado]);
 
-  // Add guardado dialog
-  const [openG, setOpenG] = useState(false);
-  const [bancoId, setBancoId] = useState<string>(bancos[0]?.id ?? "");
-  const [valorStr, setValorStr] = useState("");
-  const [tipoReserva, setTipoReserva] = useState<TipoReserva>("emergencia");
-  const [obs, setObs] = useState("");
+  const [dialog, setDialog] = useState<DialogMode>({ kind: "closed" });
+  const [confirmDelete, setConfirmDelete] = useState<Guardado | null>(null);
 
   // Add banco dialog
   const [openB, setOpenB] = useState(false);
   const [novoBancoNome, setNovoBancoNome] = useState("");
   const [novoBancoCor, setNovoBancoCor] = useState(COLOR_OPTIONS[0]);
 
-  function handleSaveGuardado() {
-    const valor = parseBRLInput(valorStr);
-    if (!valor || !bancoId) {
-      toast.error("Selecione o banco e informe um valor.");
-      return;
-    }
-    addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined });
-    toast.success("Valor guardado. Seu futuro agradece. 💚");
-    setValorStr("");
-    setObs("");
-    setOpenG(false);
-  }
+  // Confirma atualização de reserva similar
+  const [pendingSimilar, setPendingSimilar] = useState<{
+    existente: Guardado;
+    valorNovo: number;
+  } | null>(null);
 
   function handleSaveBanco() {
     if (!novoBancoNome.trim()) {
@@ -122,81 +142,25 @@ function GuardadoPage() {
       </section>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <Dialog open={openG} onOpenChange={setOpenG}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="h-12 rounded-2xl text-sm font-semibold">
-              <Plus className="mr-1 h-4 w-4" />
-              Nova reserva
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cadastrar valor guardado</DialogTitle>
-              <DialogDescription>Em qual banco e quanto está guardado.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">Banco</Label>
-                <Select value={bancoId} onValueChange={setBancoId}>
-                  <SelectTrigger className="mt-1 h-11 bg-card-elevated">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bancos.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Valor</Label>
-                  <Input
-                    inputMode="decimal"
-                    value={valorStr}
-                    onChange={(e) => setValorStr(e.target.value)}
-                    placeholder="0,00"
-                    className="num mt-1 h-11 bg-card-elevated"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Tipo</Label>
-                  <Select value={tipoReserva} onValueChange={(v) => setTipoReserva(v as TipoReserva)}>
-                    <SelectTrigger className="mt-1 h-11 bg-card-elevated">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPOS_RESERVA.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Observação</Label>
-                <Textarea
-                  value={obs}
-                  onChange={(e) => setObs(e.target.value)}
-                  placeholder="Opcional"
-                  className="mt-1 min-h-[60px] bg-card-elevated"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenG(false)}>Cancelar</Button>
-              <Button onClick={handleSaveGuardado}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          size="lg"
+          className="h-12 rounded-2xl text-sm font-semibold"
+          onClick={() => setDialog({ kind: "create" })}
+        >
+          <Plus className="mr-1 h-4 w-4" />
+          Nova reserva
+        </Button>
 
         <Dialog open={openB} onOpenChange={setOpenB}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="lg" className="h-12 rounded-2xl text-sm font-semibold">
-              <Building2 className="mr-1 h-4 w-4" />
-              Novo banco
-            </Button>
-          </DialogTrigger>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-12 rounded-2xl text-sm font-semibold"
+            onClick={() => setOpenB(true)}
+          >
+            <Building2 className="mr-1 h-4 w-4" />
+            Novo banco
+          </Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Adicionar banco</DialogTitle>
@@ -270,16 +234,31 @@ function GuardadoPage() {
                       {tipoLabel} · atualizado {formatDateBR(g.dataAtualizacao)}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
-                    <button
-                      onClick={() => { deleteGuardado(g.id); toast.success("Reserva removida."); }}
-                      className="text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+                        aria-label="Mais ações"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem onSelect={() => setDialog({ kind: "edit", reserva: g })}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar reserva
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => setConfirmDelete(g)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               );
             })}
@@ -313,6 +292,223 @@ function GuardadoPage() {
           })}
         </ul>
       </section>
+
+      <ReservaFormDialog
+        mode={dialog}
+        bancos={bancos}
+        onClose={() => setDialog({ kind: "closed" })}
+        onDuplicateDetected={(existente, valorNovo) =>
+          setPendingSimilar({ existente, valorNovo })
+        }
+      />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir reserva?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa reserva será removida do total guardado. Não dá para desfazer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteGuardado(confirmDelete.id);
+                  toast.success("Reserva removida.");
+                }
+                setConfirmDelete(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!pendingSimilar}
+        onOpenChange={(o) => !o && setPendingSimilar(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Já existe uma reserva parecida</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você já tem uma reserva nesse banco com o mesmo tipo. Quer atualizar
+              o valor da existente em vez de criar outra?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                // Criar mesmo assim
+                if (pendingSimilar) {
+                  const { existente, valorNovo } = pendingSimilar;
+                  addGuardado({
+                    bancoId: existente.bancoId,
+                    valor: valorNovo,
+                    tipoReserva: existente.tipoReserva,
+                  });
+                  toast.success("Reserva criada.");
+                }
+                setPendingSimilar(null);
+                setDialog({ kind: "closed" });
+              }}
+            >
+              Criar outra
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingSimilar) {
+                  const { existente, valorNovo } = pendingSimilar;
+                  updateGuardado(existente.id, { valor: valorNovo });
+                  toast.success("Boa, sua reserva foi ajustada.");
+                }
+                setPendingSimilar(null);
+                setDialog({ kind: "closed" });
+              }}
+            >
+              Atualizar a existente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
+  );
+}
+
+function ReservaFormDialog({
+  mode,
+  bancos,
+  onClose,
+  onDuplicateDetected,
+}: {
+  mode: DialogMode;
+  bancos: ReturnType<typeof getBancos>;
+  onClose: () => void;
+  onDuplicateDetected: (existente: Guardado, valorNovo: number) => void;
+}) {
+  const isCreate = mode.kind === "create";
+  const isEdit = mode.kind === "edit";
+  const open = isCreate || isEdit;
+  const baseReserva = isEdit ? mode.reserva : null;
+
+  const [bancoId, setBancoId] = useState<string>("");
+  const [valorStr, setValorStr] = useState("");
+  const [tipoReserva, setTipoReserva] = useState<TipoReserva>("emergencia");
+  const [obs, setObs] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (isCreate) {
+      setBancoId(bancos[0]?.id ?? "");
+      setValorStr("");
+      setTipoReserva("emergencia");
+      setObs("");
+    } else if (baseReserva) {
+      setBancoId(baseReserva.bancoId);
+      setValorStr(formatBRL(baseReserva.valor).replace("R$", "").trim());
+      setTipoReserva(baseReserva.tipoReserva);
+      setObs(baseReserva.observacao ?? "");
+    }
+  }, [open, isCreate, baseReserva, bancos]);
+
+  function handleSave() {
+    const valor = parseBRLInput(valorStr);
+    if (!valor || !bancoId) {
+      toast.error("Selecione o banco e informe um valor.");
+      return;
+    }
+    if (isCreate) {
+      // Detecta reserva similar (mesmo banco + mesmo tipo)
+      const similar = findReservaSimilar(bancoId, tipoReserva);
+      if (similar) {
+        onDuplicateDetected(similar, valor);
+        return;
+      }
+      addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined });
+      toast.success("Valor guardado. Seu futuro agradece. 💚");
+      onClose();
+      return;
+    }
+    if (isEdit && baseReserva) {
+      updateGuardado(baseReserva.id, {
+        bancoId,
+        valor,
+        tipoReserva,
+        observacao: obs.trim() || undefined,
+      });
+      toast.success("Boa, sua reserva foi ajustada.");
+      onClose();
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{isCreate ? "Cadastrar reserva" : "Editar reserva"}</DialogTitle>
+          <DialogDescription>
+            {isCreate
+              ? "Em qual banco e quanto está guardado."
+              : "Atualize os dados da sua reserva."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Banco</Label>
+            <Select value={bancoId} onValueChange={setBancoId}>
+              <SelectTrigger className="mt-1 h-11 bg-card-elevated">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {bancos.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Input
+                inputMode="decimal"
+                value={valorStr}
+                onChange={(e) => setValorStr(e.target.value)}
+                placeholder="0,00"
+                className="num mt-1 h-11 bg-card-elevated"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Tipo</Label>
+              <Select value={tipoReserva} onValueChange={(v) => setTipoReserva(v as TipoReserva)}>
+                <SelectTrigger className="mt-1 h-11 bg-card-elevated">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_RESERVA.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Observação</Label>
+            <Textarea
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              placeholder="Opcional"
+              className="mt-1 min-h-[60px] bg-card-elevated"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave}>{isCreate ? "Salvar" : "Salvar alterações"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
