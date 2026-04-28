@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme";
+import { AccentProvider } from "@/lib/accent";
 
 import appCss from "../styles.css?url";
 
@@ -80,7 +81,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AccentProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </AccentProvider>
         </ThemeProvider>
         <Scripts />
       </body>
