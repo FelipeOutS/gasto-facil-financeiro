@@ -648,13 +648,13 @@ function SummaryStat({
   highlight,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   highlight?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border p-3",
+        "rounded-2xl border border-border p-3 animate-rise",
         highlight ? "bg-card-elevated" : "bg-card",
       )}
     >
