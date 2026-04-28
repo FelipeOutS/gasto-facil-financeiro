@@ -89,11 +89,11 @@ function ContasAPagarPage() {
     const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
     // Ordem: atrasadas → vence hoje → próximas (1-3d) → futuras pendentes → pagas
     function prioridade(c: ContaAPagar) {
-      const s = statusContaEfetivo(c, hojeISOEarly);
+      const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") return 4;
       if (s === "atrasado") return 0;
       const v = new Date(c.dataVencimento + "T00:00:00").getTime();
-      const h = new Date(hojeISOEarly + "T00:00:00").getTime();
+      const h = new Date(hojeISO + "T00:00:00").getTime();
       const dias = Math.round((v - h) / (1000 * 60 * 60 * 24));
       if (dias === 0) return 1;
       if (dias > 0 && dias <= 3) return 2;
@@ -105,7 +105,7 @@ function ContasAPagarPage() {
       if (pa !== pb) return pa - pb;
       return a.dataVencimento.localeCompare(b.dataVencimento);
     });
-  }, [contas, ym, hojeISOEarly]);
+  }, [contas, ym, hojeISO]);
 
   const totais = useMemo(() => {
     let pendente = 0;
