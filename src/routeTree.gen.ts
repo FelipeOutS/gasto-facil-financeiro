@@ -27,6 +27,7 @@ import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
@@ -118,6 +119,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
+  id: '/api/ocr-gasto',
+  path: '/api/ocr-gasto',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/ocr-gasto'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/ocr-gasto'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/ocr-gasto'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  ApiOcrGastoRoute: typeof ApiOcrGastoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ocr-gasto': {
+      id: '/api/ocr-gasto'
+      path: '/api/ocr-gasto'
+      fullPath: '/api/ocr-gasto'
+      preLoaderRoute: typeof ApiOcrGastoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  ApiOcrGastoRoute: ApiOcrGastoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
