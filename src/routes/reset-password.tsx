@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordChecklist } from "@/components/PasswordChecklist";
+import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Redefinir senha — Gasto Fácil" }] }),
@@ -21,13 +23,11 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const senhaOk = useMemo(() => senhaForte(password), [password]);
+
   useEffect(() => {
-    // Supabase recovery flow: the URL hash contains the recovery token.
-    // The client lib processes it automatically; we just wait for the session.
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        setReady(true);
-      }
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
@@ -37,22 +37,22 @@ function ResetPasswordPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (password !== confirm) {
-      toast.error("As senhas não coincidem");
+    if (!senhaOk) {
+      toast.error("Sua senha ainda não atende a todos os requisitos.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
+    if (password !== confirm) {
+      toast.error("As senhas não coincidem.");
       return;
     }
     setSubmitting(true);
     const { error } = await updatePassword(password);
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Senha atualizada!");
+    toast.success("Senha atualizada com sucesso!");
     void navigate({ to: "/" });
   }
 
@@ -65,7 +65,7 @@ function ResetPasswordPage() {
           : "Abra esta página pelo link enviado no seu e-mail."
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="password">Nova senha</Label>
           <Input
@@ -73,11 +73,11 @@ function ResetPasswordPage() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Crie uma senha forte"
           />
+          {password.length > 0 && <PasswordChecklist senha={password} />}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="confirm">Confirmar senha</Label>
@@ -86,7 +86,6 @@ function ResetPasswordPage() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={6}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Repita a senha"
@@ -95,7 +94,7 @@ function ResetPasswordPage() {
         <Button
           type="submit"
           size="lg"
-          className="h-12 w-full rounded-2xl text-base font-semibold"
+          className="h-12 w-full rounded-2xl text-base font-semibold transition-transform active:scale-[0.98]"
           disabled={submitting || !ready}
         >
           {submitting ? "Salvando…" : "Salvar nova senha"}

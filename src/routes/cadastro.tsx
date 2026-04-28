@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordChecklist } from "@/components/PasswordChecklist";
+import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({ meta: [{ title: "Criar conta — Gasto Fácil" }] }),
@@ -28,26 +30,27 @@ function CadastroForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched] = useState(false);
+
+  const senhaOk = useMemo(() => senhaForte(password), [password]);
+  const confereSenha = confirm.length > 0 && password === confirm;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (password !== confirm) {
-      toast.error("As senhas não coincidem");
+    setTouched(true);
+    if (!senhaOk) {
+      toast.error("Sua senha ainda não atende a todos os requisitos.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
+    if (password !== confirm) {
+      toast.error("As senhas não coincidem.");
       return;
     }
     setSubmitting(true);
     const { error } = await signUp(nome.trim(), email.trim(), password);
     setSubmitting(false);
     if (error) {
-      toast.error(
-        error.message.includes("already registered")
-          ? "Este e-mail já está cadastrado"
-          : error.message,
-      );
+      toast.error(traduzirErroAuth(error.message));
       return;
     }
     toast.success("Conta criada! Bem-vindo ao Gasto Fácil.");
@@ -57,14 +60,14 @@ function CadastroForm() {
   return (
     <AuthShell
       title="Criar conta"
-      subtitle="Comece a organizar seus gastos em segundos."
+      subtitle="Comece a organizar seu dinheiro em poucos segundos."
       footer={
         <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
           Já tenho uma conta
         </Link>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="nome">Nome</Label>
           <Input
@@ -72,7 +75,7 @@ function CadastroForm() {
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Seu nome"
+            placeholder="Como podemos te chamar?"
           />
         </div>
         <div className="space-y-1.5">
@@ -94,11 +97,11 @@ function CadastroForm() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Crie uma senha forte"
           />
+          {(password.length > 0 || touched) && <PasswordChecklist senha={password} />}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="confirm">Confirmar senha</Label>
@@ -107,16 +110,19 @@ function CadastroForm() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={6}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Repita a senha"
+            aria-invalid={confirm.length > 0 && !confereSenha}
           />
+          {confirm.length > 0 && !confereSenha && (
+            <p className="text-xs text-destructive animate-fade-in">As senhas não coincidem.</p>
+          )}
         </div>
         <Button
           type="submit"
           size="lg"
-          className="h-12 w-full rounded-2xl text-base font-semibold"
+          className="h-12 w-full rounded-2xl text-base font-semibold transition-transform active:scale-[0.98]"
           disabled={submitting}
         >
           {submitting ? "Criando…" : "Criar conta"}
