@@ -271,7 +271,7 @@ function Index() {
       {/* ===== 1. RESUMO PRINCIPAL ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
 
-      <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated lg:max-w-2xl">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Saldo do mês
         </p>
@@ -321,7 +321,7 @@ function Index() {
       {/* ===== 2. CONTROLE FINANCEIRO ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
 
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 lg:max-w-2xl">
         <Link
           to="/guardado"
           className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
