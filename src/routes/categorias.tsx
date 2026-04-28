@@ -167,9 +167,9 @@ function CategoriasPage() {
                   type="button"
                   onClick={() => setAccent(a.id)}
                   className={cn(
-                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all active:scale-[0.96]",
+                    "group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all card-press",
                     active
-                      ? "border-foreground/40 bg-card-elevated"
+                      ? "border-brand bg-brand-soft"
                       : "border-border bg-card hover:bg-card-elevated",
                   )}
                   aria-pressed={active}
@@ -178,11 +178,16 @@ function CategoriasPage() {
                   <span
                     className={cn(
                       "h-8 w-8 rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
-                      active ? "ring-foreground/60" : "ring-transparent",
+                      active ? "ring-foreground/70 scale-105" : "ring-transparent",
                     )}
                     style={{ background: a.swatch }}
                   />
-                  <span className="text-[10px] font-medium text-muted-foreground">
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium",
+                      active ? "text-brand-on-soft" : "text-muted-foreground",
+                    )}
+                  >
                     {a.label}
                   </span>
                 </button>
