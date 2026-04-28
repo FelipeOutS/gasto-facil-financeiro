@@ -522,21 +522,21 @@ function mensagemAmigavel(t: {
 }): string {
   if (t.qtdAtrasado > 0) {
     return t.qtdAtrasado === 1
-      ? "Atenção: 1 conta está atrasada."
-      : `Atenção: ${t.qtdAtrasado} contas estão atrasadas.`;
+      ? "Heads up: 1 conta está atrasada."
+      : `Heads up: ${t.qtdAtrasado} contas estão atrasadas.`;
   }
   if (t.qtdProximos7 > 0) {
     return t.qtdProximos7 === 1
-      ? "Você tem 1 conta próxima do vencimento."
-      : `Você tem ${t.qtdProximos7} contas próximas do vencimento.`;
+      ? "Você tem 1 conta vencendo em breve."
+      : `Você tem ${t.qtdProximos7} contas vencendo em breve.`;
   }
   if (t.qtdPendente === 0 && t.qtdPago === 0) {
-    return "Nenhuma conta cadastrada para este mês.";
+    return "Sem contas cadastradas no momento.";
   }
   if (t.qtdPendente === 0) {
-    return "Tudo certo por aqui. Nenhuma conta pendente. 🎉";
+    return "Tudo em dia! Nenhuma conta pendente. 🎉";
   }
-  return "Boa! Nenhuma conta vence nos próximos 7 dias.";
+  return "Boa! Nada vencendo nos próximos 7 dias.";
 }
 
 function StatusPill({
