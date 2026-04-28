@@ -14,7 +14,7 @@ export function BottomNav() {
   const location = useLocation();
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom lg:hidden"
       aria-label="Navegação principal"
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
