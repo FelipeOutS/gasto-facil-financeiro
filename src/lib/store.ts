@@ -923,8 +923,40 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
 export function getGastos(): Gasto[] {
   return memGastos;
 }
+/** Normaliza nome de categoria: lowercase, sem acentos, sem espaços extras. */
+function normalizeCategoriaNome(nome: string): string {
+  return nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 export function getCategorias(): Categoria[] {
-  return memCategorias;
+  // Dedupe visual: se houver categorias com o mesmo nome normalizado,
+  // mantém apenas uma (preferindo a padrão sobre a do usuário, e a mais antiga).
+  // Não toca nos dados — gastos vinculados continuam funcionando.
+  const seen = new Map<string, Categoria>();
+  for (const c of memCategorias) {
+    const key = normalizeCategoriaNome(c.nome);
+    const existing = seen.get(key);
+    if (!existing) {
+      seen.set(key, c);
+      continue;
+    }
+    // Prefere a padrão (não criada pelo usuário) sobre a do usuário
+    if (existing.criadaPeloUsuario && !c.criadaPeloUsuario) {
+      seen.set(key, c);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+/** Verifica se já existe categoria com nome equivalente (ignorando case/acentos). */
+export function findCategoriaByNomeNormalizado(nome: string): Categoria | undefined {
+  const key = normalizeCategoriaNome(nome);
+  return memCategorias.find((c) => normalizeCategoriaNome(c.nome) === key);
 }
 export function getLimites(): Limite[] {
   return memLimites;
@@ -1368,6 +1400,10 @@ export function findPossibleDuplicate(
 
 // ---------- Categorias ----------
 export function addCategoria(c: Omit<Categoria, "id" | "criadaPeloUsuario">): Categoria {
+  // Bloqueia duplicata por nome normalizado — devolve a existente
+  const existente = findCategoriaByNomeNormalizado(c.nome);
+  if (existente) return existente;
+
   if (!activeUserId) {
     const local: Categoria = { ...c, id: uid(), criadaPeloUsuario: true };
     memCategorias = [...memCategorias, local];
@@ -1810,6 +1846,17 @@ export type NovoGuardadoInput = {
   tipoReserva: TipoReserva;
   observacao?: string;
 };
+
+/** Procura uma reserva existente similar (mesmo banco + mesmo tipo). */
+export function findReservaSimilar(
+  bancoId: string,
+  tipoReserva: TipoReserva,
+): Guardado | undefined {
+  return memGuardado.find(
+    (g) => g.bancoId === bancoId && g.tipoReserva === tipoReserva,
+  );
+}
+
 export function addGuardado(input: NovoGuardadoInput): Guardado {
   const now = new Date().toISOString();
   const novo: Guardado = {
