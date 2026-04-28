@@ -361,12 +361,12 @@ function Index() {
               <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
                 <div
                   className={cn(
-                    "h-full rounded-full transition-all",
+                    "h-full rounded-full transition-all animate-fill",
                     passouLimite
                       ? "bg-destructive"
                       : proximoLimite
                         ? "bg-warning"
-                        : "bg-success",
+                        : "bg-brand",
                   )}
                   style={{ width: `${Math.min(100, usoLimite)}%` }}
                 />
@@ -426,36 +426,36 @@ function Index() {
 
       {/* ===== Atalhos secundários ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <Link
           to="/orcamento"
-          className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Orçamento
             </p>
-            <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            <PieChartIcon className="h-3.5 w-3.5 text-brand" />
           </div>
           <p className="mt-1.5 text-sm font-bold">Por categoria</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
         </Link>
         <Link
           to="/guardado"
-          className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Total guardado
             </p>
-            <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+            <Wallet className="h-3.5 w-3.5 text-brand" />
           </div>
           <p className="num mt-1.5 text-lg font-bold">{formatBRL(totalGuardado)}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">
             {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
           </p>
         </Link>
-        <div className="rounded-2xl border border-border bg-card p-3.5">
+        <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Gastos fixos
@@ -473,13 +473,13 @@ function Index() {
         </div>
         <Link
           to="/metas"
-          className="rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Metas
             </p>
-            <Target className="h-3.5 w-3.5 text-muted-foreground" />
+            <Target className="h-3.5 w-3.5 text-brand" />
           </div>
           <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">em andamento</p>
