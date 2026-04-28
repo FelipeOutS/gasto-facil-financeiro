@@ -1074,7 +1074,7 @@ function ContasCard({
             </p>
             <h2 className="text-sm font-semibold">
               {semContas
-                ? "Cadastre suas contas para não perder vencimentos"
+                ? "Cadastre suas contas e não perca nenhum vencimento"
                 : tudoPago
                   ? "Tudo pago neste mês 🎉"
                   : `${formatBRL(resumo.pendente)} pendentes`}
