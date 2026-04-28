@@ -238,9 +238,28 @@ function Index() {
     );
   }
 
+  const monthSwitcher = (
+    <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+      <button
+        onClick={() => changeMonth(-1)}
+        className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Mês anterior"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        onClick={() => changeMonth(1)}
+        className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Próximo mês"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <MobileShell wide>
-      {/* Header / month switcher */}
+      {/* Header */}
       <header className="flex items-center justify-between pt-2">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -250,62 +269,58 @@ function Index() {
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
-          <button
-            onClick={() => changeMonth(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => changeMonth(1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
+        <div className="lg:hidden">{monthSwitcher}</div>
       </header>
 
-      {/* ===== 1. RESUMO PRINCIPAL ===== */}
+      {/* ===== 1. RESUMO PRINCIPAL — grid no desktop ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
 
-      <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated lg:max-w-2xl">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Saldo do mês
-        </p>
-        <p
-          className={cn(
-            "num mt-1 text-[34px] font-extrabold leading-none tracking-tight",
-            saldo < 0 && "text-destructive",
-          )}
-        >
-          {formatBRL(saldo)}
-        </p>
-
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <MiniStat
-            label="Entradas"
-            value={formatBRL(totalEntradas)}
-            icon={<ArrowUp className="h-3 w-3" />}
-            tone="success"
-          />
-          <MiniStat
-            label="Gastos"
-            value={formatBRL(total)}
-            icon={<ArrowDown className="h-3 w-3" />}
-            tone="destructive"
-          />
-        </div>
-
-        {saldo < 0 && (
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            Você gastou {formatBRL(-saldo)} a mais do que recebeu.
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <section className="rounded-3xl border border-border bg-card p-5 shadow-elevated lg:col-span-3">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Saldo do mês
+            </p>
+            <div className="hidden lg:block">{monthSwitcher}</div>
+          </div>
+          <p
+            className={cn(
+              "num mt-1 text-[34px] font-extrabold leading-none tracking-tight",
+              saldo < 0 && "text-destructive",
+            )}
+          >
+            {formatBRL(saldo)}
           </p>
-        )}
-      </section>
+
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <MiniStat
+              label="Entradas"
+              value={formatBRL(totalEntradas)}
+              icon={<ArrowUp className="h-3 w-3" />}
+              tone="success"
+            />
+            <MiniStat
+              label="Gastos"
+              value={formatBRL(total)}
+              icon={<ArrowDown className="h-3 w-3" />}
+              tone="destructive"
+            />
+          </div>
+
+          {saldo < 0 && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Você gastou {formatBRL(-saldo)} a mais do que recebeu.
+            </p>
+          )}
+        </section>
+
+        {/* Coluna direita no desktop: Contas a pagar */}
+        <div className="hidden lg:col-span-2 lg:block">
+          <ContasCard resumo={contasResumo} variant="sideTop" />
+        </div>
+      </div>
 
       {/* CTA principal — escondido em desktop (já existe na sidebar) */}
       <Link to="/adicionar" className="mt-3 block lg:hidden">
@@ -418,8 +433,10 @@ function Index() {
         </Link>
       </div>
 
-      {/* Card detalhado: Contas a pagar */}
-      <ContasCard resumo={contasResumo} />
+      {/* Card detalhado: Contas a pagar — escondido no desktop (já está no topo) */}
+      <div className="lg:hidden">
+        <ContasCard resumo={contasResumo} />
+      </div>
 
 
       {porCategoria.length > 0 && (
@@ -862,11 +879,18 @@ type ContasResumo = {
   diasParaProxima: number | null;
 };
 
-function ContasCard({ resumo }: { resumo: ContasResumo }) {
+function ContasCard({
+  resumo,
+  variant = "default",
+}: {
+  resumo: ContasResumo;
+  variant?: "default" | "sideTop";
+}) {
   const hasAtrasada = resumo.atrasadasCount > 0;
   const hasPendentes = resumo.pendentesCount > 0 || hasAtrasada;
   const tudoPago = resumo.total > 0 && !hasPendentes;
   const semContas = resumo.total === 0;
+  const isSide = variant === "sideTop";
 
   function vencimentoLabel(): string {
     const d = resumo.diasParaProxima;
@@ -880,7 +904,8 @@ function ContasCard({ resumo }: { resumo: ContasResumo }) {
   return (
     <section
       className={cn(
-        "mt-2.5 rounded-3xl border bg-card p-4 transition-colors",
+        "rounded-3xl border bg-card p-4 transition-colors",
+        isSide ? "h-full shadow-elevated" : "mt-2.5",
         hasAtrasada ? "border-destructive/40" : "border-border",
       )}
     >
