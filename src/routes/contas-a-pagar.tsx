@@ -432,10 +432,10 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
-                ? `Tem certeza que deseja excluir "${confirmDelete.nome}"? Esta ação não pode ser desfeita.`
+                ? `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
