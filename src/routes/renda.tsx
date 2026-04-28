@@ -403,15 +403,18 @@ function RendaPage() {
         <TabsContent value="mes" className="mt-3">
           {doMes.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Cadastre seu salário e outras entradas para acompanhar sua renda do mês.
+              <p className="font-medium text-foreground">Sem rendas neste mês ainda.</p>
+              <p className="mt-1 text-xs">
+                Adicione seu salário e outras entradas para o seu resumo ficar completo.
+              </p>
               <div className="mt-3">
-                <Button size="sm" onClick={() => setOpen(true)} className="transition-transform active:scale-95">
-                  <Plus className="mr-1 h-4 w-4" /> Cadastrar renda
+                <Button size="sm" onClick={() => setOpen(true)} className="card-press">
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar renda
                 </Button>
               </div>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2 stagger">
               {doMes.map((r) => (
                 <ReceitaItem
                   key={r.id}
@@ -427,7 +430,7 @@ function RendaPage() {
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Você ainda não cadastrou rendas. Quando cadastrar, seu histórico aparece aqui.
+              Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui por mês.
             </div>
           ) : (
             <>
