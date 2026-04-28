@@ -31,6 +31,7 @@ const ITEMS: NavItem[] = [
 
 export function DesktopSidebar() {
   const location = useLocation();
+  const alerta = useAlertaContas();
 
   return (
     <aside
@@ -58,6 +59,7 @@ export function DesktopSidebar() {
             const active = exact
               ? location.pathname === to
               : location.pathname === to || location.pathname.startsWith(to + "/");
+            const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
             return (
               <li key={to}>
                 <Link
@@ -69,11 +71,29 @@ export function DesktopSidebar() {
                       : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
                   )}
                 >
-                  <Icon
-                    className={cn("h-4 w-4 shrink-0", active && "text-foreground")}
-                    strokeWidth={active ? 2.4 : 1.8}
-                  />
+                  <span className="relative">
+                    <Icon
+                      className={cn("h-4 w-4 shrink-0", active && "text-foreground")}
+                      strokeWidth={active ? 2.4 : 1.8}
+                    />
+                    {showDot && (
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "absolute -right-1 -top-1 h-2 w-2 rounded-full ring-2 ring-card",
+                          alerta === "vermelho" ? "bg-destructive" : "bg-warning",
+                        )}
+                      />
+                    )}
+                  </span>
                   <span className="truncate">{label}</span>
+                  {showDot && (
+                    <span className="sr-only">
+                      {alerta === "vermelho"
+                        ? "Há contas atrasadas"
+                        : "Há contas vencendo em breve"}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
