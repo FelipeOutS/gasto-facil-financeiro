@@ -102,7 +102,7 @@ function MetasPage() {
   function handleSave() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
-      toast.error("Informe nome e valor objetivo");
+      toast.error("Coloca um nome e o valor da meta.");
       return;
     }
     addMeta({
@@ -114,7 +114,7 @@ function MetasPage() {
       colorHex,
       bancoId: bancoId === "nenhum" ? undefined : bancoId,
     });
-    toast.success("Meta criada");
+    toast.success("Meta criada. Cada passo conta. 🎯");
     reset();
     setOpen(false);
   }
@@ -122,7 +122,7 @@ function MetasPage() {
   function handleAddValor() {
     const v = parseBRLInput(addValorStr);
     if (!addMetaId || !v) {
-      toast.error("Informe um valor");
+      toast.error("Informe um valor.");
       return;
     }
     addMovimentacaoMeta({
@@ -130,7 +130,7 @@ function MetasPage() {
       valor: v,
       bancoId: addBanco === "nenhum" ? undefined : addBanco,
     });
-    toast.success("Valor adicionado");
+    toast.success("Valor adicionado à meta. 🚀");
     setAddOpen(false);
     setAddValorStr("");
     setAddMetaId(null);
