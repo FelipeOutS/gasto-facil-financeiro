@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
             .filter(
               (s) => typeof s === "string" && s.startsWith("data:image/"),
             )
-            .slice(0, 4);
+            .slice(0, 10);
           if (valid.length === 0) {
             return Response.json(
               { error: "Envie ao menos uma imagem em base64." },
