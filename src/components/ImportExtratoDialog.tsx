@@ -262,24 +262,52 @@ export function ImportExtratoDialog({
   // ---------- IMPORT: PDF ----------
   const handlePdf = useCallback(
     async (file: File) => {
+      if (!file) return;
+      if (file.size === 0) {
+        toast.error("Arquivo PDF vazio.");
+        return;
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error("PDF muito grande. Tente um arquivo menor que 15 MB.");
+        return;
+      }
       setLoading(true);
       setObservacaoIA(null);
       try {
-        const dataUrl = await fileToDataUrl(file);
+        // Envia como multipart/form-data — sem header manual (browser gera o boundary).
+        const fd = new FormData();
+        fd.append("pdf", file, file.name || "extrato.pdf");
         const resp = await fetch("/api/import-extrato", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdf: dataUrl }),
+          body: fd,
         });
-        const json = await resp.json();
+
+        // Parse defensivo: a resposta pode vir como texto puro em erros de proxy/edge.
+        const raw = await resp.text();
+        let json: { itens?: ItemBruto[]; observacao?: string | null; error?: string } = {};
+        try {
+          json = raw ? JSON.parse(raw) : {};
+        } catch {
+          console.error("[import-extrato] resposta não-JSON:", resp.status, raw.slice(0, 200));
+          if (resp.status === 413) {
+            toast.error("PDF muito grande. Tente um arquivo menor.");
+          } else if (resp.status >= 500 || resp.status === 0) {
+            toast.error("Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
+          } else {
+            toast.error("Erro ao processar o extrato. Tente novamente.");
+          }
+          setLoading(false);
+          return;
+        }
+
         if (!resp.ok) {
-          toast.error(json?.error || "Não consegui ler o PDF.");
+          toast.error(json?.error || "Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
           setLoading(false);
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
         if (brutos.length === 0) {
-          toast.warning("Nenhuma movimentação encontrada no PDF.");
+          toast.warning("Não encontramos movimentações nesse PDF.");
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
           return;
@@ -288,8 +316,8 @@ export function ImportExtratoDialog({
         setObservacaoIA(json.observacao ?? null);
         setStep("review");
       } catch (e) {
-        console.error(e);
-        toast.error("Erro ao enviar PDF.");
+        console.error("[import-extrato] erro envio PDF", e);
+        toast.error("Erro ao processar o extrato. Tente novamente.");
       } finally {
         setLoading(false);
       }

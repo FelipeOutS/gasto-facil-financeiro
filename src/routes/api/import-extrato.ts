@@ -269,15 +269,57 @@ export const Route = createFileRoute("/api/import-extrato")({
             );
           }
 
-          const body = (await request.json()) as {
-            pdf?: string;
-            imagens?: string[];
-          };
+          const contentType = request.headers.get("content-type") || "";
 
-          // ---------- PDF ----------
+          // ---------- PDF via multipart/form-data (caminho preferido p/ PDFs) ----------
+          if (contentType.includes("multipart/form-data")) {
+            let form: FormData;
+            try {
+              form = await request.formData();
+            } catch (err) {
+              console.error("[import-extrato] formData parse error", err);
+              return Response.json(
+                { error: "Não consegui ler o arquivo enviado. Tente novamente." },
+                { status: 400 },
+              );
+            }
+            const file = form.get("pdf");
+            if (!(file instanceof File)) {
+              return Response.json(
+                { error: "Envie um arquivo PDF no campo 'pdf'." },
+                { status: 400 },
+              );
+            }
+            if (file.size === 0) {
+              return Response.json(
+                { error: "Arquivo PDF vazio." },
+                { status: 400 },
+              );
+            }
+            if (file.size > 15 * 1024 * 1024) {
+              return Response.json(
+                { error: "PDF muito grande. Tente um arquivo menor que 15 MB." },
+                { status: 413 },
+              );
+            }
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            return await processPdfBytes(bytes, apiKey);
+          }
+
+          // ---------- JSON (compat: imagens, ou pdf em base64 quando bem pequeno) ----------
+          let body: { pdf?: string; imagens?: string[] };
+          try {
+            body = (await request.json()) as { pdf?: string; imagens?: string[] };
+          } catch {
+            return Response.json(
+              { error: "Requisição inválida." },
+              { status: 400 },
+            );
+          }
+
+          // ---------- PDF (compat JSON base64) ----------
           if (typeof body?.pdf === "string" && body.pdf.length > 0) {
-            const pdf = body.pdf;
-            const bytes = decodeBase64Pdf(pdf);
+            const bytes = decodeBase64Pdf(body.pdf);
             if (!bytes || bytes.length === 0) {
               return Response.json(
                 { error: "Envie um arquivo PDF válido." },
@@ -290,65 +332,7 @@ export const Route = createFileRoute("/api/import-extrato")({
                 { status: 413 },
               );
             }
-
-            let extractedText = "";
-            let totalPages = 0;
-            try {
-              const docProxy = await getDocumentProxy(bytes);
-              totalPages = docProxy.numPages;
-              const result = await extractText(docProxy, { mergePages: true });
-              extractedText =
-                typeof result.text === "string"
-                  ? result.text
-                  : (result.text as string[]).join("\n");
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              if (/password/i.test(msg)) {
-                return Response.json(
-                  {
-                    error:
-                      "Este PDF parece estar protegido por senha. Exporte uma versão sem senha ou envie prints do extrato.",
-                  },
-                  { status: 400 },
-                );
-              }
-              console.error("[import-extrato] extractText error", msg);
-            }
-
-            const cleanText = sanitizeText(extractedText.trim());
-            const hasUsefulText = cleanText.length > 200;
-
-            const messages = hasUsefulText
-              ? [
-                  { role: "system", content: SYSTEM_PROMPT },
-                  {
-                    role: "user",
-                    content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
-                  },
-                ]
-              : [
-                  { role: "system", content: SYSTEM_PROMPT },
-                  {
-                    role: "user",
-                    content: [
-                      {
-                        type: "text",
-                        text: "Este é um extrato bancário em PDF (provavelmente escaneado). Extraia a lista de movimentações.",
-                      },
-                      {
-                        type: "image_url",
-                        image_url: {
-                          url: pdf.startsWith("data:")
-                            ? pdf
-                            : `data:application/pdf;base64,${pdf}`,
-                        },
-                      },
-                    ],
-                  },
-                ];
-
-            const aiResp = await callGemini(apiKey, messages);
-            return await handleAIResponse(aiResp, totalPages, hasUsefulText ? "texto" : "ocr");
+            return await processPdfBytes(bytes, apiKey);
           }
 
           // ---------- Imagens ----------
@@ -405,6 +389,78 @@ export const Route = createFileRoute("/api/import-extrato")({
     },
   },
 });
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunk)),
+    );
+  }
+  return btoa(bin);
+}
+
+async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
+  let extractedText = "";
+  let totalPages = 0;
+  try {
+    const docProxy = await getDocumentProxy(bytes);
+    totalPages = docProxy.numPages;
+    const result = await extractText(docProxy, { mergePages: true });
+    extractedText =
+      typeof result.text === "string"
+        ? result.text
+        : (result.text as string[]).join("\n");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/password/i.test(msg)) {
+      return Response.json(
+        {
+          error:
+            "Este PDF parece estar protegido por senha. Exporte uma versão sem senha ou envie prints do extrato.",
+        },
+        { status: 400 },
+      );
+    }
+    console.error("[import-extrato] extractText error", msg);
+  }
+
+  const cleanText = sanitizeText(extractedText.trim());
+  const hasUsefulText = cleanText.length > 200;
+
+  const messages = hasUsefulText
+    ? [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
+        },
+      ]
+    : [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Este é um extrato bancário em PDF (provavelmente escaneado). Extraia a lista de movimentações.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${bytesToBase64(bytes)}`,
+              },
+            },
+          ],
+        },
+      ];
+
+  const aiResp = await callGemini(apiKey, messages);
+  return await handleAIResponse(aiResp, totalPages, hasUsefulText ? "texto" : "ocr");
+}
+
 
 async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
   if (!aiResp.ok) {
