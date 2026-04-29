@@ -28,6 +28,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
+import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
 import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
 
 const ResumoRoute = ResumoRouteImport.update({
@@ -125,6 +126,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   path: '/api/ocr-gasto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiImportFaturaPdfRoute = ApiImportFaturaPdfRouteImport.update({
+  id: '/api/import-fatura-pdf',
+  path: '/api/import-fatura-pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiImportFaturaImagemRoute = ApiImportFaturaImagemRouteImport.update({
   id: '/api/import-fatura-imagem',
   path: '/api/import-fatura-imagem',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
+  '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesByTo {
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
+  '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesById {
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
+  '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRouteTypes {
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-fatura-imagem'
+    | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-fatura-imagem'
+    | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
   id:
     | '__root__'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-fatura-imagem'
+    | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
   fileRoutesById: FileRoutesById
 }
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
+  ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
 }
 
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOcrGastoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/import-fatura-pdf': {
+      id: '/api/import-fatura-pdf'
+      path: '/api/import-fatura-pdf'
+      fullPath: '/api/import-fatura-pdf'
+      preLoaderRoute: typeof ApiImportFaturaPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/import-fatura-imagem': {
       id: '/api/import-fatura-imagem'
       path: '/api/import-fatura-imagem'
@@ -455,17 +475,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
+  ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
