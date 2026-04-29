@@ -21,6 +21,7 @@ import {
   useStore,
 } from "@/lib/store";
 import { formatBRL, formatMonthYear, parseBRLInput } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,11 +61,11 @@ function statusFor(realizado: number, planejado: number): Status {
 
 function statusLabel(s: Status): string {
   return s === "ok"
-    ? "Tudo certo"
+    ? "Tudo certo por aqui"
     : s === "alerta"
-      ? "Quase no limite"
+      ? "Tá chegando no limite"
       : s === "estouro"
-        ? "Passou do limite"
+        ? "Passou um pouco do plano"
         : "Sem limite";
 }
 
@@ -185,50 +186,45 @@ function OrcamentoPage() {
       </header>
 
       {/* Resumo superior */}
-      <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-card p-3.5">
+      <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
+        <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Planejado
           </p>
-          <p className="num mt-1.5 text-lg font-bold lg:text-xl">
-            {formatBRL(totalPlanejado)}
-          </p>
+          <Money value={totalPlanejado} className="num mt-1.5 block text-lg font-bold lg:text-xl" />
           <p className="mt-0.5 text-[10px] text-muted-foreground">
             {comLimite.length} categoria(s)
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-3.5">
+        <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Realizado
           </p>
-          <p className="num mt-1.5 text-lg font-bold lg:text-xl">
-            {formatBRL(totalRealizado)}
-          </p>
+          <Money value={totalRealizado} className="num mt-1.5 block text-lg font-bold lg:text-xl" />
           {totalPlanejado > 0 && (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
               {Math.round((totalRealizado / totalPlanejado) * 100)}% do plano
             </p>
           )}
         </div>
-        <div className="rounded-2xl border border-border bg-card p-3.5">
+        <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             {diff >= 0 ? "Economia" : "Excesso"}
           </p>
-          <p
+          <Money
+            value={Math.abs(diff)}
             className={cn(
-              "num mt-1.5 text-lg font-bold lg:text-xl",
+              "num mt-1.5 block text-lg font-bold lg:text-xl",
               diff < 0 && "text-destructive",
             )}
-          >
-            {formatBRL(Math.abs(diff))}
-          </p>
+          />
           <p className="mt-0.5 text-[10px] text-muted-foreground">
             {diff >= 0 ? "abaixo do plano" : "acima do plano"}
           </p>
         </div>
         <div
           className={cn(
-            "rounded-2xl border p-3.5",
+            "rounded-2xl border p-3.5 hover-lift animate-rise",
             estourados > 0
               ? "border-destructive/40 bg-destructive/10"
               : alertas > 0
@@ -241,7 +237,7 @@ function OrcamentoPage() {
           </p>
           <div className="mt-1.5 flex items-center gap-1.5">
             {estourados > 0 ? (
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertTriangle className="h-4 w-4 text-destructive animate-pulse-soft" />
             ) : alertas > 0 ? (
               <AlertTriangle className="h-4 w-4 text-warning" />
             ) : (
@@ -303,7 +299,7 @@ function OrcamentoPage() {
           </>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">
-            Defina um limite total para este mês para acompanhar seu progresso geral.
+            Defina seus limites e acompanhe pra onde seu dinheiro está indo.
           </p>
         )}
       </section>
@@ -400,7 +396,7 @@ function OrcamentoPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <TrendingUp className="h-3 w-3" />
-        Veja para onde seu dinheiro está indo — você pode planejar diferente a cada mês.
+        Defina um limite e acompanhe sem dor de cabeça — você pode planejar diferente a cada mês.
       </p>
 
       {/* Dialog editar limite */}
