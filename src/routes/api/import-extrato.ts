@@ -269,7 +269,7 @@ function suggestCategory(desc: string): string {
 
 function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto, "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"> {
   const t = stripAccents(desc).toLowerCase();
-  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|fatura/.test(t)) {
+  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|pagamento.*fatura|fatura.*cart[aã]o/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "boleto",
@@ -278,22 +278,33 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
       observacao: "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
     };
   }
-  if (/reserva por gastos|dinheiro reservado|reservado/.test(t)) {
+  // Cofrinho / Guardado — termos do Mercado Pago e nomes de objetivo (ex: "COMPRAR PLAY 5")
+  if (/reserva por gastos|dinheiro reservado|reservado|cofrinho|guardar|guardei|caixinha|meta de poupanca/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
       categoriaSugerida: "outros",
       statusRevisao: "reserva",
-      observacao: "Reserva interna. Não afeta o Dashboard.",
+      observacao: "Movimento para Guardado/Cofrinho. Não conta como gasto comum.",
     };
   }
-  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva/.test(t)) {
+  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva|retirei.*cofrinho|resgate.*cofrinho/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
       categoriaSugerida: "outros",
       statusRevisao: "resgate_reserva",
-      observacao: "Resgate de reserva. Não entra como receita.",
+      observacao: "Retirada do Guardado/Cofrinho. Não entra como receita comum.",
+    };
+  }
+  // Transferência entre contas próprias
+  if (/transferencia.*entre.*contas|entre contas proprias|minha conta|conta nubank|conta itau|conta inter|para minha conta/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "revisar",
+      observacao: "Possível transferência entre contas próprias. Revise antes de confirmar.",
     };
   }
   if (/rendimento|venda de meli dolar/.test(t)) {
