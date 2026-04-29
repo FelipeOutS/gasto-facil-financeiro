@@ -3083,10 +3083,14 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
     });
 }
 
-export function deleteContaAPagar(id: string) {
+export function deleteContaAPagar(id: string, options?: { excluirGastoVinculado?: boolean }) {
   if (!activeUserId) return;
+  const conta = memContas.find((c) => c.id === id);
   memContas = memContas.filter((c) => c.id !== id);
   emit();
+  if (options?.excluirGastoVinculado && conta?.gastoId) {
+    deleteGasto(conta.gastoId);
+  }
   void sbAny
     .from("contas_a_pagar")
     .delete()
