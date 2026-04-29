@@ -3052,6 +3052,14 @@ export type ContaEditableFields = {
   dataVencimento?: string;
   categoriaId?: string | null;
   observacao?: string;
+  beneficiario?: string | null;
+  formaPagamento?: FormaPagamento | null;
+  codigoBoleto?: string | null;
+  codigoPix?: string | null;
+  chavePix?: string | null;
+  bancoEmissor?: string | null;
+  /** Quando atualizando uma conta paga, sincroniza o gasto vinculado */
+  atualizarGastoVinculado?: boolean;
 };
 
 export function updateContaAPagar(id: string, fields: ContaEditableFields) {
@@ -3069,6 +3077,26 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
         ? undefined
         : fields.categoriaId ?? current.categoriaId,
     observacao: fields.observacao ?? current.observacao,
+    beneficiario:
+      fields.beneficiario === null
+        ? undefined
+        : fields.beneficiario ?? current.beneficiario,
+    formaPagamento:
+      fields.formaPagamento === null
+        ? undefined
+        : fields.formaPagamento ?? current.formaPagamento,
+    codigoBoleto:
+      fields.codigoBoleto === null
+        ? undefined
+        : fields.codigoBoleto ?? current.codigoBoleto,
+    codigoPix:
+      fields.codigoPix === null ? undefined : fields.codigoPix ?? current.codigoPix,
+    chavePix:
+      fields.chavePix === null ? undefined : fields.chavePix ?? current.chavePix,
+    bancoEmissor:
+      fields.bancoEmissor === null
+        ? undefined
+        : fields.bancoEmissor ?? current.bancoEmissor,
     atualizadoEm: new Date().toISOString(),
   };
   if (fields.dataVencimento) {
@@ -3078,6 +3106,17 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
   }
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
+
+  // Se a conta está paga e o usuário pediu para sincronizar o gasto vinculado
+  if (fields.atualizarGastoVinculado && current.gastoId && current.status === "pago") {
+    updateGasto(current.gastoId, {
+      descricao: updated.nome,
+      estabelecimento: updated.nome,
+      valor: updated.valor,
+      categoriaId: updated.categoriaId || "outros",
+      observacao: updated.observacao,
+    });
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const row: any = {};
@@ -3094,6 +3133,12 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       : null;
   }
   if (fields.observacao !== undefined) row.observacao = fields.observacao ?? null;
+  if (fields.beneficiario !== undefined) row.beneficiario = fields.beneficiario ?? null;
+  if (fields.formaPagamento !== undefined) row.forma_pagamento = fields.formaPagamento ?? null;
+  if (fields.codigoBoleto !== undefined) row.codigo_boleto = fields.codigoBoleto ?? null;
+  if (fields.codigoPix !== undefined) row.codigo_pix = fields.codigoPix ?? null;
+  if (fields.chavePix !== undefined) row.chave_pix = fields.chavePix ?? null;
+  if (fields.bancoEmissor !== undefined) row.banco_emissor = fields.bancoEmissor ?? null;
 
   void sbAny
     .from("contas_a_pagar")
@@ -3102,6 +3147,35 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
     .then(({ error }: { error: { message: string } | null }) => {
       if (error) console.error("[store] updateContaAPagar failed", error);
     });
+}
+
+/** Verifica se já existe conta com o mesmo código de boleto ou Pix. */
+export function findContaByCodigo(
+  codigo: string,
+  tipo: "boleto" | "pix",
+): ContaAPagar | undefined {
+  const norm = codigo.replace(/\s+/g, "");
+  return memContas.find((c) => {
+    const v = tipo === "boleto" ? c.codigoBoleto : c.codigoPix;
+    return v && v.replace(/\s+/g, "") === norm;
+  });
+}
+
+/** Detecta possíveis duplicados por valor + vencimento + nome/beneficiário. */
+export function findContaDuplicado(input: {
+  valor: number;
+  dataVencimento: string;
+  nome?: string;
+  beneficiario?: string;
+}): ContaAPagar | undefined {
+  const norm = (s?: string) => (s ?? "").trim().toLowerCase();
+  return memContas.find(
+    (c) =>
+      Math.abs(c.valor - input.valor) < 0.01 &&
+      c.dataVencimento === input.dataVencimento &&
+      (norm(c.nome) === norm(input.nome) ||
+        (input.beneficiario && norm(c.beneficiario) === norm(input.beneficiario))),
+  );
 }
 
 export function deleteContaAPagar(id: string, options?: { excluirGastoVinculado?: boolean }) {
