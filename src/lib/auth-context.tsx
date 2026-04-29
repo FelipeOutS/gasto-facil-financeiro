@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nome")
+      .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
       .eq("id", uid)
       .maybeSingle();
     if (data) setProfile(data as Profile);
