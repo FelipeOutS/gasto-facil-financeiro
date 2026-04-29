@@ -24,6 +24,7 @@ import {
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
+import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -342,17 +343,20 @@ function CartaoCard({
   const r = resumoFaturaCartao(cartao.id);
   const status = statusFatura(cartao);
   const cor = cartao.cor || "#8b5cf6";
+  const theme = getCardTheme(cor, cartao.banco);
 
   return (
     <article
-      className="hover-lift card-press group relative overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all"
-      style={{
-        background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 60%, #00000055 100%)`,
-      }}
+      className="hover-lift card-press group relative overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all duration-300"
+      style={{ background: theme.background }}
     >
       <div
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
       />
       <div className="relative flex items-start justify-between">
         <div className="min-w-0">
@@ -667,10 +671,8 @@ function CartaoFormDialog({
                     Prévia
                   </h3>
                   <div
-                    className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-all duration-300"
-                    style={{
-                      background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 55%, #00000066 100%)`,
-                    }}
+                    className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-[background] duration-500 ease-out"
+                    style={{ background: getCardTheme(cor, banco).background }}
                   >
                     <div
                       aria-hidden
@@ -678,7 +680,7 @@ function CartaoFormDialog({
                     />
                     <div
                       aria-hidden
-                      className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-black/20 blur-2xl"
+                      className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
                     />
                     <div className="relative flex h-full flex-col justify-between">
                       <div className="flex items-start justify-between">
