@@ -697,6 +697,7 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
       paginas: totalPages,
       modo: "texto_mercado_pago",
       banco: mercadoPago.banco,
+      resumo: mercadoPago.resumo,
       observacao: mercadoPago.observacao,
     });
   }
