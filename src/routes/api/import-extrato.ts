@@ -118,6 +118,16 @@ type ItemBruto = {
   observacao?: unknown;
 };
 
+type ExtratoResumo = {
+  banco: string | null;
+  periodoInicio: string | null;
+  periodoFim: string | null;
+  saldoInicial: number | null;
+  totalEntradas: number | null;
+  totalSaidas: number | null;
+  saldoFinal: number | null;
+};
+
 const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
@@ -313,7 +323,7 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
   };
 }
 
-function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null } | null {
+function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null; resumo: ExtratoResumo } | null {
   const normalized = stripAccents(text).toLowerCase();
   const hasMercadoPago = /mercado\s*pago/.test(normalized);
   const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,120}id da opera[cç][aã]o[\s\S]{0,80}valor[\s\S]{0,80}saldo/i.test(text);
@@ -346,10 +356,35 @@ function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; obs
     });
   }
 
+  const resumo = extractMercadoPagoResumo(text, hasMercadoPago ? "Mercado Pago" : null, fallbackYear);
   if (itens.length === 0 && hasColumns) {
-    return { itens: [], banco: hasMercadoPago ? "Mercado Pago" : null, observacao: "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação." };
+    return { itens: [], banco: resumo.banco, resumo, observacao: "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação." };
   }
-  return itens.length > 0 ? { itens, banco: hasMercadoPago ? "Mercado Pago" : null, observacao: null } : null;
+  return itens.length > 0 ? { itens, banco: resumo.banco, resumo, observacao: null } : null;
+}
+
+function extractMercadoPagoResumo(text: string, banco: string | null, fallbackYear: number): ExtratoResumo {
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const money = /[+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2}/g;
+  const amountFromLine = (line: string) => {
+    const matches = line.match(money);
+    return matches?.length ? parseValorBR(matches[matches.length - 1]) : null;
+  };
+  const findByLabel = (labels: RegExp[]) => {
+    const line = lines.find((l) => labels.some((label) => label.test(stripAccents(l).toLowerCase())));
+    return line ? amountFromLine(line) : null;
+  };
+  const periodText = lines.find((l) => /periodo|período/i.test(l)) ?? "";
+  const periodDates = [...periodText.matchAll(/\b\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?\b/g)].map((m) => parseDataBR(m[0], fallbackYear));
+  return {
+    banco,
+    periodoInicio: periodDates[0] ?? null,
+    periodoFim: periodDates[1] ?? null,
+    saldoInicial: findByLabel([/saldo inicial/]),
+    totalEntradas: findByLabel([/total de entradas/, /entradas/]),
+    totalSaidas: findByLabel([/total de saidas/, /saidas/]),
+    saldoFinal: findByLabel([/saldo final/]),
+  };
 }
 
 async function extractTextPreservingRows(docProxy: Awaited<ReturnType<typeof getDocumentProxy>>) {
