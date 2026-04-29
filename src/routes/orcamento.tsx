@@ -11,6 +11,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
@@ -147,7 +148,7 @@ function OrcamentoPage() {
     setEditing(null);
   }
 
-  if (!ready) return <MobileShell wide><div /></MobileShell>;
+  if (!ready) return <PageSkeleton wide />;
 
   return (
     <MobileShell wide>
