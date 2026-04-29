@@ -207,7 +207,7 @@ function sanitizeText(text: string): string {
     .replace(/\bConta[:\s]*\d{5,}[-\s]?\d{0,2}\b/gi, "[Conta]")
     // CVV
     .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
-    .slice(0, 80_000);
+    .slice(0, 200_000);
 }
 
 function stripAccents(text: string) {
