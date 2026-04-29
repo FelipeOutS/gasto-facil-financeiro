@@ -578,15 +578,23 @@ export const Route = createFileRoute("/api/import-extrato")({
 
 async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   let extractedText = "";
+  let layoutText = "";
   let totalPages = 0;
   try {
     const docProxy = await getDocumentProxy(bytes);
     totalPages = docProxy.numPages;
-    const result = await extractText(docProxy, { mergePages: true });
+    const [result, positionedText] = await Promise.all([
+      extractText(docProxy, { mergePages: true }),
+      extractTextPreservingRows(docProxy).catch((err) => {
+        console.error("[import-extrato] extractTextItems error", err);
+        return "";
+      }),
+    ]);
     extractedText =
       typeof result.text === "string"
         ? result.text
         : (result.text as string[]).join("\n");
+    layoutText = positionedText;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/password/i.test(msg)) {
@@ -601,7 +609,8 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
     console.error("[import-extrato] extractText error", msg);
   }
 
-  const cleanText = sanitizeText(extractedText.trim());
+  const combinedText = `${layoutText}\n\n${extractedText}`.trim();
+  const cleanText = sanitizeText(combinedText);
   // Limiar baixo: qualquer extrato real tem facilmente >50 chars.
   const hasUsefulText = cleanText.length > 50;
 
@@ -616,6 +625,27 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
       },
       { status: 422 },
     );
+  }
+
+  const mercadoPago = parseMercadoPagoStructuredText(cleanText);
+  if (mercadoPago) {
+    const itens = normalizeItens(mercadoPago.itens);
+    if (itens.length === 0) {
+      return Response.json(
+        {
+          error:
+            mercadoPago.observacao || "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação.",
+        },
+        { status: 422 },
+      );
+    }
+    return Response.json({
+      itens,
+      paginas: totalPages,
+      modo: "texto_mercado_pago",
+      banco: mercadoPago.banco,
+      observacao: mercadoPago.observacao,
+    });
   }
 
   const messages = [
