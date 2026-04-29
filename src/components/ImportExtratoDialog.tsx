@@ -333,6 +333,10 @@ export function ImportExtratoDialog({
         }
         setItems(itensFromBruto(brutos, "extrato_imagem"));
         setObservacaoIA(json.observacao ?? null);
+        setImportMeta({
+          nomeArquivo: files[0]?.name ?? `imagens-${files.length}`,
+          tipoOrigem: "imagem",
+        });
         setStep("review");
       } catch (e) {
         console.error(e);
