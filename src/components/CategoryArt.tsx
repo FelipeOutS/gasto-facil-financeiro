@@ -254,10 +254,119 @@ const Trabalho: Art = ({ className }) => (
 
 const Outros: Art = ({ className }) => (
   <Svg className={className}>
-    {/* três pontos com gradiente */}
-    <circle cx="14" cy="24" r="4" fill="#94a3b8" />
-    <circle cx="24" cy="24" r="4" fill="#cbd5e1" />
-    <circle cx="34" cy="24" r="4" fill="#94a3b8" />
+    {/* sparkle/diamond neutro */}
+    <path d="M24 8 L28 20 L40 24 L28 28 L24 40 L20 28 L8 24 L20 20 Z" fill="#cbd5e1" stroke="#64748b" strokeWidth="1.2" strokeLinejoin="round" />
+    <circle cx="24" cy="24" r="3" fill="#f8fafc" />
+  </Svg>
+);
+
+const Combustivel: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* bomba de gasolina */}
+    <rect x="10" y="10" width="20" height="30" rx="2" fill="#ef4444" />
+    <rect x="13" y="14" width="14" height="10" rx="1" fill="#fef2f2" />
+    <path d="M30 16 L36 22 V36 Q36 40 32 40" fill="none" stroke="#7f1d1d" strokeWidth="2.5" strokeLinecap="round" />
+    <circle cx="36" cy="20" r="2.5" fill="#fbbf24" />
+    <rect x="14" y="28" width="12" height="3" fill="#7f1d1d" rx="0.5" />
+  </Svg>
+);
+
+const Internet: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* wifi */}
+    <path d="M8 22 Q24 8 40 22" fill="none" stroke="#06b6d4" strokeWidth="3.5" strokeLinecap="round" />
+    <path d="M14 28 Q24 18 34 28" fill="none" stroke="#22d3ee" strokeWidth="3.5" strokeLinecap="round" />
+    <path d="M18 34 Q24 28 30 34" fill="none" stroke="#67e8f9" strokeWidth="3.5" strokeLinecap="round" />
+    <circle cx="24" cy="38" r="2.5" fill="#0e7490" />
+  </Svg>
+);
+
+const Energia: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* raio */}
+    <path d="M26 6 L12 28 H22 L18 42 L36 20 H26 Z" fill="#facc15" stroke="#a16207" strokeWidth="1.5" strokeLinejoin="round" />
+  </Svg>
+);
+
+const Agua: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* gota */}
+    <path d="M24 6 Q12 22 12 30 Q12 40 24 40 Q36 40 36 30 Q36 22 24 6 Z" fill="#38bdf8" stroke="#075985" strokeWidth="1.5" />
+    <path d="M18 28 Q18 34 24 34" fill="none" stroke="#bae6fd" strokeWidth="2.5" strokeLinecap="round" />
+  </Svg>
+);
+
+const Pix: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* losango Pix */}
+    <path d="M24 6 L42 24 L24 42 L6 24 Z" fill="#0ea5e9" />
+    <path d="M16 16 L24 16 L32 24 L24 32 L16 32 L24 24 Z" fill="#ecfeff" />
+    <circle cx="24" cy="24" r="3" fill="#0ea5e9" />
+  </Svg>
+);
+
+const Cartao: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* cartão de crédito */}
+    <rect x="6" y="12" width="36" height="24" rx="3" fill="#1e293b" />
+    <rect x="6" y="18" width="36" height="5" fill="#0f172a" />
+    <rect x="10" y="28" width="10" height="3" rx="0.5" fill="#fbbf24" />
+    <circle cx="34" cy="30" r="2.5" fill="#ef4444" opacity="0.85" />
+    <circle cx="38" cy="30" r="2.5" fill="#facc15" opacity="0.85" />
+  </Svg>
+);
+
+const Transferencia: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* setas circulares */}
+    <path d="M10 18 H32 L28 14 M32 18 L28 22" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M38 30 H16 L20 26 M16 30 L20 34" fill="none" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const Salario: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* nota de dinheiro com seta pra cima */}
+    <rect x="6" y="16" width="30" height="20" rx="2" fill="#22c55e" />
+    <circle cx="21" cy="26" r="5" fill="none" stroke="#064e3b" strokeWidth="1.8" />
+    <path d="M21 23 V29 M19 25 H23 M19 27 H23" stroke="#064e3b" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M38 32 V18 L34 22 M38 18 L42 22" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const Cofrinho: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* porquinho */}
+    <ellipse cx="24" cy="26" rx="16" ry="12" fill="#f9a8d4" />
+    <circle cx="34" cy="22" r="2" fill="#831843" />
+    <path d="M14 18 L10 12 L18 16 Z" fill="#f9a8d4" />
+    <rect x="20" y="20" width="6" height="2" rx="1" fill="#831843" />
+    <rect x="14" y="36" width="3" height="6" fill="#ec4899" />
+    <rect x="30" y="36" width="3" height="6" fill="#ec4899" />
+    <circle cx="14" cy="24" r="1.2" fill="#831843" />
+  </Svg>
+);
+
+const Meta: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* alvo */}
+    <circle cx="24" cy="24" r="16" fill="#fde68a" />
+    <circle cx="24" cy="24" r="11" fill="#fb923c" />
+    <circle cx="24" cy="24" r="6" fill="#ef4444" />
+    <circle cx="24" cy="24" r="2" fill="#fef2f2" />
+    <path d="M30 18 L40 8 M40 8 H34 M40 8 V14" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const Uber: Art = ({ className }) => (
+  <Svg className={className}>
+    {/* carro com pin de rota */}
+    <path d="M6 32 V26 L10 20 H32 L36 26 V32 Q36 34 34 34 H8 Q6 34 6 32 Z" fill="#0f172a" />
+    <path d="M12 26 L14 22 H28 L30 26 Z" fill="#94a3b8" />
+    <circle cx="12" cy="34" r="3" fill="#0f172a" stroke="#cbd5e1" strokeWidth="1.2" />
+    <circle cx="30" cy="34" r="3" fill="#0f172a" stroke="#cbd5e1" strokeWidth="1.2" />
+    <path d="M40 8 Q44 12 40 18 Q36 12 40 8 Z" fill="#22c55e" />
+    <circle cx="40" cy="12" r="1.5" fill="#fff" />
   </Svg>
 );
 
