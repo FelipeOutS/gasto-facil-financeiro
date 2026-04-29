@@ -1161,7 +1161,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
   return (
     <section
       className={cn(
-        "rounded-3xl border bg-card p-4 transition-colors animate-rise",
+        "flex w-full flex-col rounded-3xl border bg-card p-4 transition-colors animate-rise",
         tone === "destructive"
           ? "border-destructive/40"
           : tone === "warning"
