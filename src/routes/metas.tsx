@@ -15,7 +15,6 @@ import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addMeta,
-  addMovimentacaoMeta,
   deleteMeta,
   getBancos,
   getMetas,
@@ -270,7 +269,7 @@ function MetaCard({
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onAdd}>
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar valor
+              Atualizar valor
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
               <Minus className="mr-2 h-4 w-4" />
@@ -318,7 +317,7 @@ function MetaCard({
           onClick={onAdd}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Adicionar valor
+          Atualizar valor
         </Button>
       )}
     </div>
@@ -349,7 +348,6 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [movBanco, setMovBanco] = useState<string>("nenhum");
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -371,9 +369,14 @@ function MetaFormDialog({
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
     }
-    setValorStr("");
-    setMovBanco("nenhum");
-  }, [open, isCreate, baseMeta]);
+    // Pré-preenche com o valor acumulado atual no modo "atualizar valor"
+    if (isAdd && baseMeta) {
+      setValorStr(formatBRL(baseMeta.valorAtual).replace("R$", "").trim());
+    } else {
+      setValorStr("");
+    }
+    
+  }, [open, isCreate, isAdd, baseMeta]);
 
   function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
@@ -416,17 +419,23 @@ function MetaFormDialog({
 
   function handleAddValor() {
     if (!baseMeta) return;
-    const v = parseBRLInput(valorStr);
-    if (!v) {
-      toast.error("Informe um valor.");
+    const trimmed = valorStr.trim();
+    if (trimmed === "") {
+      toast.error("Informe o valor acumulado atual.");
       return;
     }
-    addMovimentacaoMeta({
-      metaId: baseMeta.id,
-      valor: v,
-      bancoId: movBanco === "nenhum" ? undefined : movBanco,
-    });
-    toast.success("Boa, valor adicionado. 🚀");
+    const v = parseBRLInput(valorStr);
+    // permite 0,00 para resetar; bloqueia negativo
+    if (v < 0 || Number.isNaN(v)) {
+      toast.error("O valor não pode ser negativo.");
+      return;
+    }
+    updateMeta(baseMeta.id, { valorAtual: v });
+    if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
+      toast.success("Você passou da meta. Melhor ainda. 🏆");
+    } else {
+      toast.success("Meta atualizada. Agora tá certinho.");
+    }
     onClose();
   }
 
@@ -450,13 +459,13 @@ function MetaFormDialog({
           <DialogTitle>
             {isCreate && "Criar meta financeira"}
             {isEdit && "Editar meta"}
-            {isAdd && "Adicionar à meta"}
+            {isAdd && "Atualizar valor da meta"}
             {isRemove && "Ajustar valor"}
           </DialogTitle>
           <DialogDescription>
             {isCreate && "Defina um objetivo e acompanhe o progresso."}
             {isEdit && "Atualize qualquer informação da sua meta."}
-            {isAdd && baseMeta?.nome}
+            {isAdd && "Informe quanto você já juntou até agora para esta meta."}
             {isRemove && `Remover valor de ${baseMeta?.nome}`}
           </DialogDescription>
         </DialogHeader>
@@ -556,9 +565,14 @@ function MetaFormDialog({
             <div className="rounded-2xl bg-card-elevated p-3">
               <p className="text-xs text-muted-foreground">Acumulado atual</p>
               <p className="num text-xl font-bold">{formatBRL(baseMeta.valorAtual)}</p>
+              <p className="num mt-1 text-xs text-muted-foreground">
+                Objetivo: {formatBRL(baseMeta.valorObjetivo)}
+              </p>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Label className="text-xs text-muted-foreground">
+                {isAdd ? "Valor acumulado atual" : "Valor a remover"}
+              </Label>
               <Input
                 inputMode="decimal"
                 value={valorStr}
@@ -567,23 +581,12 @@ function MetaFormDialog({
                 className="num mt-1 h-11 bg-card-elevated"
                 autoFocus
               />
+              {isAdd && (
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  Quanto você já juntou até agora? Esse valor substitui o acumulado atual.
+                </p>
+              )}
             </div>
-            {isAdd && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Banco de origem</Label>
-                <Select value={movBanco} onValueChange={setMovBanco}>
-                  <SelectTrigger className="mt-1 h-11 bg-card-elevated">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nenhum">Não vincular</SelectItem>
-                    {bancos.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
         )}
 
@@ -594,7 +597,7 @@ function MetaFormDialog({
               {isCreate ? "Criar meta" : "Salvar alterações"}
             </Button>
           )}
-          {isAdd && <Button onClick={handleAddValor}>Adicionar</Button>}
+          {isAdd && <Button onClick={handleAddValor}>Salvar valor</Button>}
           {isRemove && <Button onClick={handleRemoverValor}>Remover valor</Button>}
         </DialogFooter>
       </DialogContent>
