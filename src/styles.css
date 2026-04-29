@@ -61,6 +61,17 @@
   --color-cat-pet: var(--cat-pet);
   --color-cat-trabalho: var(--cat-trabalho);
   --color-cat-outros: var(--cat-outros);
+  --color-cat-combustivel: var(--cat-combustivel);
+  --color-cat-internet: var(--cat-internet);
+  --color-cat-energia: var(--cat-energia);
+  --color-cat-agua: var(--cat-agua);
+  --color-cat-pix: var(--cat-pix);
+  --color-cat-cartao: var(--cat-cartao);
+  --color-cat-transferencia: var(--cat-transferencia);
+  --color-cat-salario: var(--cat-salario);
+  --color-cat-cofrinho: var(--cat-cofrinho);
+  --color-cat-meta: var(--cat-meta);
+  --color-cat-uber: var(--cat-uber);
 
   --color-chart-1: var(--cat-mercado);
   --color-chart-2: var(--cat-roupas);
@@ -122,6 +133,17 @@
   --cat-pet: oklch(0.6 0.12 60); /* marrom amarelado */
   --cat-trabalho: oklch(0.55 0.1 215); /* azul petróleo */
   --cat-outros: oklch(0.6 0.005 260); /* cinza */
+  --cat-combustivel: oklch(0.66 0.18 28); /* vermelho/laranja */
+  --cat-internet: oklch(0.74 0.14 210); /* ciano */
+  --cat-energia: oklch(0.85 0.16 95); /* amarelo elétrico */
+  --cat-agua: oklch(0.72 0.13 230); /* azul água */
+  --cat-pix: oklch(0.7 0.13 195); /* turquesa */
+  --cat-cartao: oklch(0.45 0.04 260); /* grafite */
+  --cat-transferencia: oklch(0.7 0.16 280); /* violeta */
+  --cat-salario: oklch(0.72 0.18 152); /* verde dinheiro */
+  --cat-cofrinho: oklch(0.78 0.14 350); /* rosa porquinho */
+  --cat-meta: oklch(0.74 0.18 55); /* laranja alvo */
+  --cat-uber: oklch(0.4 0.01 260); /* preto */
 
   /* Sidebar (kept for shadcn compat) */
   --sidebar: var(--card);
