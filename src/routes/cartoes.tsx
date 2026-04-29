@@ -354,6 +354,10 @@ function CartaoCard({
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
+      />
       <div className="relative flex items-start justify-between">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
