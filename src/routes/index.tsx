@@ -401,72 +401,77 @@ function Index() {
         </div>
       </section>
 
-      {(temAlertasDashboard || !!limiteTotal) && (
-        <>
-          {/* ===== Linha 3: Alertas financeiros + Limite mensal ===== */}
-          <SectionLabel>Alertas e limites</SectionLabel>
-          <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-            {temAlertasDashboard && (
-              <div className={cn("min-w-0 self-start", limiteTotal ? "xl:col-span-8" : "xl:col-span-12")}>
-                <AlertasContasCard contas={contas} />
-              </div>
-            )}
-            {!!limiteTotal && (
-              <div className={cn("min-w-0 self-start", temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12")}>
-                <LimiteMensalCard
-                  total={total}
-                  limiteTotal={limiteTotal}
-                  usoLimite={usoLimite}
-                  passouLimite={!!passouLimite}
-                  proximoLimite={!!proximoLimite}
-                />
-              </div>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
-      <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        <div className={cn("min-w-0 self-start", temOrcamentoMes ? "xl:col-span-6" : "xl:col-span-12")}>
-          <ResumoMesCard
-            mes={ym.mes}
-            ano={ym.ano}
-            saldo={saldo}
-            totalEntradas={totalEntradas}
-            totalGastos={total}
-            maiorCategoria={maior ?? null}
-            categorias={categorias}
-            gastosConfirmados={gastosConfirmados}
-            contasAtrasadas={contasResumo.atrasadasCount}
-            limiteTotal={limiteTotal}
-          />
-        </div>
-        {temOrcamentoMes && (
-          <div className="min-w-0 self-start xl:col-span-6">
-            <OrcamentoCard
-              categorias={categorias}
-              gastos={gastosConfirmados}
-              mes={ym.mes}
-              ano={ym.ano}
+      {/* ===== Linha 3: Alertas financeiros + (Limite mensal / Minha renda) ===== */}
+      <SectionLabel>Alertas e limites</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-stretch">
+        {temAlertasDashboard && (
+          <div className="flex min-w-0 xl:col-span-8">
+            <div className="flex w-full">
+              <AlertasContasCard contas={contas} />
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12",
+          )}
+        >
+          {!!limiteTotal && (
+            <LimiteMensalCard
+              total={total}
+              limiteTotal={limiteTotal}
+              usoLimite={usoLimite}
+              passouLimite={!!passouLimite}
+              proximoLimite={!!proximoLimite}
             />
-          </div>
-        )}
-      </section>
-
-      {/* ===== Linha 5: Próximas contas + Minha renda ===== */}
-      <SectionLabel>Próximos passos</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        {contasResumo.total > 0 && (
-          <div className="min-w-0 self-start xl:col-span-8">
-            <ContasCard resumo={contasResumo} variant="sideTop" />
-          </div>
-        )}
-        <div className={cn("min-w-0 self-start", contasResumo.total > 0 ? "xl:col-span-4" : "xl:col-span-12")}>
+          )}
           <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
         </div>
       </section>
+
+      {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
+      <SectionLabel>Resumo e orçamento</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+        <div className={cn("flex min-w-0", !temOrcamentoMes && "xl:col-span-2")}>
+          <div className="flex w-full">
+            <ResumoMesCard
+              mes={ym.mes}
+              ano={ym.ano}
+              saldo={saldo}
+              totalEntradas={totalEntradas}
+              totalGastos={total}
+              maiorCategoria={maior ?? null}
+              categorias={categorias}
+              gastosConfirmados={gastosConfirmados}
+              contasAtrasadas={contasResumo.atrasadasCount}
+              limiteTotal={limiteTotal}
+            />
+          </div>
+        </div>
+        {temOrcamentoMes && (
+          <div className="flex min-w-0">
+            <div className="flex w-full">
+              <OrcamentoCard
+                categorias={categorias}
+                gastos={gastosConfirmados}
+                mes={ym.mes}
+                ano={ym.ano}
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ===== Linha 5: Próximas contas ===== */}
+      {contasResumo.total > 0 && (
+        <>
+          <SectionLabel>Próximos passos</SectionLabel>
+          <section className="min-w-0">
+            <ContasCard resumo={contasResumo} variant="sideTop" />
+          </section>
+        </>
+      )}
 
       {/* ===== Atalhos secundários ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
@@ -803,7 +808,7 @@ function LimiteMensalCard({
   proximoLimite: boolean;
 }) {
   return (
-    <section className="h-auto self-start rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -856,7 +861,7 @@ function MinhaRendaCard({
     <Link
       to="/renda"
       search={{ ano, mes }}
-      className="flex h-auto self-start items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
+      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
     >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
         <ArrowUp className="h-4 w-4" />
@@ -1156,7 +1161,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
   return (
     <section
       className={cn(
-        "rounded-3xl border bg-card p-4 transition-colors animate-rise",
+        "flex w-full flex-col rounded-3xl border bg-card p-4 transition-colors animate-rise",
         tone === "destructive"
           ? "border-destructive/40"
           : tone === "warning"
@@ -1324,7 +1329,7 @@ function OrcamentoCard({
   return (
     <section
       className={cn(
-        "rounded-3xl border bg-card p-4 transition-colors animate-rise",
+        "flex w-full flex-col rounded-3xl border bg-card p-4 transition-colors animate-rise",
         tone === "destructive"
           ? "border-destructive/40"
           : tone === "warning"
@@ -1569,7 +1574,7 @@ function ResumoMesCard({
   }
 
   return (
-    <section className={cn("rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
+    <section className={cn("flex w-full flex-col rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-2xl">
           {emoji}
