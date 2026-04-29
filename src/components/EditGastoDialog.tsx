@@ -106,6 +106,7 @@ export function EditGastoDialog({
         formaPagamento,
         observacao: observacao.trim() || undefined,
         cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
+        horario: horario.trim() || undefined,
       });
       toast.success("Gasto atualizado com sucesso.");
       onOpenChange(false);
