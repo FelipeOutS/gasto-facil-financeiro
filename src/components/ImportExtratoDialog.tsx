@@ -140,6 +140,13 @@ function operationIdExists(id: string) {
   );
 }
 
+function importOrigin(item: ReviewItem, fallback: string) {
+  const parts = [fallback];
+  if (item.bancoOrigem) parts.push(item.bancoOrigem);
+  if (item.idOperacao) parts.push(`op:${item.idOperacao}`);
+  return parts.join("|");
+}
+
 export function ImportExtratoDialog({
   open,
   onOpenChange,
