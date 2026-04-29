@@ -390,14 +390,15 @@ function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; obs
 
     // Heurística: o último valor é o saldo (quando há 2+); o penúltimo é o valor da movimentação.
     // Se houver apenas 1, esse é o valor da movimentação.
-    let valorStr: string;
-    let saldoStr: string | null = null;
+    let valorStr: string | undefined;
+    let saldoStr: string | undefined;
     if (moneyMatches.length >= 2) {
       valorStr = moneyMatches[moneyMatches.length - 2];
       saldoStr = moneyMatches[moneyMatches.length - 1];
     } else {
       valorStr = moneyMatches[0];
     }
+    if (!valorStr) continue;
     const signedValue = parseValorBR(valorStr);
     if (signedValue === null) continue;
 
