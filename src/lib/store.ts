@@ -2943,6 +2943,13 @@ export type NovaContaInput = {
   /** Quantos meses repetir (default 12) */
   recorrenteMeses?: number;
   dataFim?: string;
+  beneficiario?: string;
+  formaPagamento?: FormaPagamento;
+  codigoBoleto?: string;
+  codigoPix?: string;
+  chavePix?: string;
+  bancoEmissor?: string;
+  importBatchId?: string;
 };
 
 export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
