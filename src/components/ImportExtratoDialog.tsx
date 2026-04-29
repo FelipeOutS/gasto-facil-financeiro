@@ -404,6 +404,7 @@ export function ImportExtratoDialog({
         setResumoExtrato(json.resumo ?? null);
         setItems(itensFromBruto(brutos, "extrato_pdf"));
         setObservacaoIA(json.observacao ?? null);
+        setImportMeta({ nomeArquivo: file.name, tipoOrigem: "pdf" });
         setStep("review");
       } catch (e) {
         console.error("[import-extrato] erro envio PDF", e);
