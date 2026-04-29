@@ -24,6 +24,7 @@ import {
 } from "@/lib/store";
 import { TIPOS_RESERVA, type TipoReserva, type Guardado } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,9 +134,9 @@ function GuardadoPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-xs font-medium text-muted-foreground">Total guardado</p>
-        <p className="num mt-1 text-4xl font-extrabold tracking-tight">{formatBRL(total)}</p>
+        <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
         <p className="mt-1 text-xs text-muted-foreground">
           {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"} em {porBanco.size} {porBanco.size === 1 ? "banco" : "bancos"}
         </p>
@@ -206,14 +207,24 @@ function GuardadoPage() {
       <section className="mt-5">
         <h2 className="text-sm font-semibold">Suas reservas</h2>
         {guardado.length === 0 ? (
-          <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
-            <Wallet className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm font-medium text-foreground">
-              Nada guardado por aqui ainda.
+          <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-rise">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
+              <Wallet className="h-6 w-6" />
+            </span>
+            <p className="mt-3 text-sm font-semibold text-foreground">
+              Comece sua reserva e veja seu dinheiro separado por objetivo.
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Registre o que você já tem reservado e veja sua tranquilidade crescer.
+              Cadastre onde você guarda dinheiro e acompanhe tudo em um lugar só.
             </p>
+            <Button
+              size="sm"
+              className="card-press rounded-full mt-4"
+              onClick={() => setDialog({ kind: "create" })}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Cadastrar primeira reserva
+            </Button>
           </div>
         ) : (
           <ul className="mt-3 space-y-2 stagger">
