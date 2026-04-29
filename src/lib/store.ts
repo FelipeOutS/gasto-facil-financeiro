@@ -2329,7 +2329,7 @@ export function findDuplicateTransferenciaAdvanced(
   });
 }
 
-/** Exclui todas as receitas de uma recorrência (a partir de um mês opcional). */
+// Exclui todas as receitas de uma recorrencia (a partir de um mes opcional).
 export function deleteReceitaRecorrencia(
   recorrenciaId: string,
   fromMes?: number,
