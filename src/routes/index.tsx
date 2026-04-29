@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  TrendingUp,
   AlertTriangle,
   Receipt as ReceiptIcon,
   Wallet,
@@ -14,7 +13,6 @@ import {
   Sparkles,
   Lock,
   PieChart as PieChartIcon,
-  ListChecks,
   CalendarClock,
   Clock,
   Bell,
@@ -403,9 +401,13 @@ function Index() {
             mes={ym.mes}
             ano={ym.ano}
             saldo={saldo}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
             maiorCategoria={maior ?? null}
             categorias={categorias}
             gastosConfirmados={gastosConfirmados}
+            contasAtrasadas={contasResumo.atrasadasCount}
+            limiteTotal={limiteTotal}
           />
           <OrcamentoCard
             categorias={categorias}
@@ -413,7 +415,7 @@ function Index() {
             mes={ym.mes}
             ano={ym.ano}
           />
-          <ContasCard resumo={contasResumo} variant="sideTop" />
+          {contasResumo.total > 0 && <ContasCard resumo={contasResumo} variant="sideTop" />}
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
           {limiteTotal ? (
@@ -759,113 +761,6 @@ function Index() {
         )}
       </section>
 
-      {/* ===== 6. INSIGHTS ===== */}
-      {(maior ||
-        gastosFixos > 0 ||
-        totalGuardado > 0 ||
-        contasResumo.total > 0) && (
-        <>
-          <SectionLabel>Insights</SectionLabel>
-          <section className="rounded-3xl border border-border bg-card p-4">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated">
-                <TrendingUp className="h-4 w-4" />
-              </span>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Análise do mês
-                </p>
-                {maior && (
-                  <p className="text-sm leading-relaxed">
-                    Sua maior categoria é{" "}
-                    <span className="font-semibold" style={{ color: maior.color }}>
-                      {maior.nome}
-                    </span>{" "}
-                    — {formatBRL(maior.valor)} ({maior.pct.toFixed(0)}% do total).
-                  </p>
-                )}
-                {totalEntradas > 0 && gastosFixos > 0 && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Seus gastos fixos representam{" "}
-                    {Math.round((gastosFixos / totalEntradas) * 100)}% da sua renda.
-                  </p>
-                )}
-                {totalGuardado > 0 && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Você tem {formatBRL(totalGuardado)} guardados no total.
-                  </p>
-                )}
-                {metaProxima && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Sua meta “{metaProxima.nome}” está{" "}
-                    {Math.round(
-                      (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100,
-                    )}
-                    % concluída.
-                  </p>
-                )}
-                {/* Insights de contas a pagar */}
-                {contasResumo.atrasadasCount > 0 && (
-                  <p className="text-sm leading-relaxed text-destructive">
-                    Você possui {contasResumo.atrasadasCount}{" "}
-                    {contasResumo.atrasadasCount === 1 ? "conta atrasada" : "contas atrasadas"}.
-                  </p>
-                )}
-                {contasResumo.proxima && contasResumo.diasParaProxima === 0 && (
-                  <p className="text-sm leading-relaxed text-warning">
-                    {contasResumo.proxima.nome} vence hoje.
-                  </p>
-                )}
-                {contasResumo.proxima && contasResumo.diasParaProxima === 1 && (
-                  <p className="text-sm leading-relaxed text-warning">
-                    {contasResumo.proxima.nome} vence amanhã.
-                  </p>
-                )}
-                {contasResumo.pendentesCount > 0 && contasResumo.diasParaProxima !== 0 && contasResumo.diasParaProxima !== 1 && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Você tem {contasResumo.pendentesCount}{" "}
-                    {contasResumo.pendentesCount === 1 ? "conta pendente" : "contas pendentes"} este mês.
-                  </p>
-                )}
-                {contasResumo.pendente > 0 && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Suas contas pendentes somam {formatBRL(contasResumo.pendente)}.
-                  </p>
-                )}
-                {contasResumo.total > 0 &&
-                  contasResumo.pendentesCount === 0 &&
-                  contasResumo.atrasadasCount === 0 && (
-                    <p className="text-sm leading-relaxed text-success">
-                      Todas as contas deste mês foram pagas. 🎉
-                    </p>
-                  )}
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* Resumo financeiro compacto (rodapé) */}
-      <SectionLabel>Resumo financeiro</SectionLabel>
-      <section className="rounded-3xl border border-border bg-card p-4">
-        <div className="flex items-center gap-2">
-          <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Visão geral</h2>
-        </div>
-        <ul className="mt-3 space-y-2 text-sm">
-          <ResumoLinha label="Entradas" valor={formatBRL(totalEntradas)} positive />
-          <ResumoLinha label="Gastos" valor={formatBRL(total)} />
-          <ResumoLinha
-            label="Saldo restante"
-            valor={formatBRL(saldo)}
-            negative={saldo < 0}
-            strong
-          />
-          <ResumoLinha label="Total guardado" valor={formatBRL(totalGuardado)} />
-          <ResumoLinha label="Gastos fixos" valor={formatBRL(gastosFixos)} />
-          <ResumoLinha label="Maior categoria" valor={maior?.nome ?? "—"} mute />
-        </ul>
-      </section>
     </MobileShell>
   );
 }
@@ -980,78 +875,8 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
   );
 }
 
-function MiniStat({
-  label,
-  value,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  tone: "success" | "destructive";
-}) {
-  return (
-    <div className="rounded-2xl bg-card-elevated p-3">
-      <p
-        className={cn(
-          "flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground",
-        )}
-      >
-        <span
-          className={cn(
-            tone === "success" && "text-success",
-            tone === "destructive" && "text-destructive",
-          )}
-        >
-          {icon}
-        </span>
-        {label}
-      </p>
-      <p
-        className={cn(
-          "num mt-1 text-base font-semibold",
-          tone === "success" && "text-success",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
 
-function ResumoLinha({
-  label,
-  valor,
-  positive,
-  negative,
-  strong,
-  mute,
-}: {
-  label: string;
-  valor: string;
-  positive?: boolean;
-  negative?: boolean;
-  strong?: boolean;
-  mute?: boolean;
-}) {
-  return (
-    <li className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "num",
-          strong && "font-semibold",
-          positive && "text-success",
-          negative && "text-destructive",
-          mute && "text-muted-foreground",
-        )}
-      >
-        {valor}
-      </span>
-    </li>
-  );
-}
+
 
 function WelcomeCard({
   to,
@@ -1574,16 +1399,24 @@ function ResumoMesCard({
   mes,
   ano,
   saldo,
+  totalEntradas,
+  totalGastos,
   maiorCategoria,
   categorias,
   gastosConfirmados,
+  contasAtrasadas,
+  limiteTotal,
 }: {
   mes: number;
   ano: number;
   saldo: number;
-  maiorCategoria: { nome: string; valor: number } | null;
+  totalEntradas: number;
+  totalGastos: number;
+  maiorCategoria: { nome: string; valor: number; pct: number } | null;
   categorias: Categoria[];
   gastosConfirmados: Gasto[];
+  contasAtrasadas: number;
+  limiteTotal: number | null | undefined;
 }) {
   const linhas = useMemo(
     () =>
@@ -1595,28 +1428,91 @@ function ResumoMesCard({
   const estouro = linhas.filter((l) => l.status === "estouro");
   const critica = estouro.sort((a, b) => b.pct - a.pct)[0]?.cat.nome ?? null;
 
-  // Estado simplificado: positivo, atenção, crítico
-  let estado: "bom" | "atencao" | "critico" = "bom";
-  let emoji = "😄";
-  let label = "Indo bem";
-  let toneCls = "border-success/30 bg-success/5";
-  let textCls = "text-success";
-  if (saldo < 0 || estouro.length >= 2) {
+  // Sem dados ainda
+  const semDados = totalEntradas === 0 && totalGastos === 0;
+
+  // Razão saldo/receita para classificar "folga"
+  const folgaPct = totalEntradas > 0 ? saldo / totalEntradas : 0;
+  const passouLimite = !!(limiteTotal && limiteTotal > 0 && totalGastos > limiteTotal);
+
+  type Estado = "ótimo" | "bom" | "apertado" | "atencao" | "critico" | "neutro";
+  let estado: Estado = "neutro";
+  let emoji = "🙂";
+  let titulo = "Resumo do mês";
+  let mensagem = "Continue lançando seus dados para a gente entender melhor seu mês.";
+  let toneCls = "border-border bg-card";
+  let textCls = "text-foreground";
+
+  if (semDados) {
+    estado = "neutro";
+    emoji = "✨";
+    titulo = "Vamos começar?";
+    mensagem = "Adicione receitas e gastos para ver um resumo personalizado do seu mês aqui.";
+  } else if (contasAtrasadas > 0) {
     estado = "critico";
-    emoji = "🚨";
-    label = "Atenção total";
+    emoji = "😬";
+    titulo = "Tem conta atrasada por aí";
+    mensagem = `Você tem ${contasAtrasadas} ${contasAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}. Resolver isso primeiro evita juros e dor de cabeça.`;
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
-  } else if (estouro.length >= 1) {
+  } else if (saldo < 0) {
+    estado = "critico";
+    emoji = "🚨";
+    titulo = "Saldo negativo";
+    mensagem = `Os gastos passaram da receita em ${formatBRL(Math.abs(saldo))}. Vale revisar a categoria ${maiorCategoria?.nome ?? "principal"} para frear.`;
+    toneCls = "border-destructive/30 bg-destructive/5";
+    textCls = "text-destructive";
+  } else if (passouLimite) {
     estado = "atencao";
     emoji = "⚠️";
-    label = "Pediu cuidado";
+    titulo = "Eita, o limite foi ultrapassado";
+    mensagem = `Você passou ${formatBRL(totalGastos - (limiteTotal ?? 0))} do limite mensal. Bora desacelerar nos próximos dias?`;
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
+  } else if (estouro.length >= 2) {
+    estado = "atencao";
+    emoji = "⚠️";
+    titulo = "Algumas categorias estouraram";
+    mensagem = `${estouro.length} categorias passaram do orçamento — começando por ${critica ?? ""}.`;
+    toneCls = "border-warning/30 bg-warning/5";
+    textCls = "text-warning";
+  } else if (estouro.length === 1) {
+    estado = "atencao";
+    emoji = "🧐";
+    titulo = "Atenção: esse mês pesou um pouco";
+    mensagem = `A categoria ${critica} passou do orçamento. As outras estão sob controle 👍`;
+    toneCls = "border-warning/30 bg-warning/5";
+    textCls = "text-warning";
+  } else if (folgaPct >= 0.3 && totalEntradas > 0) {
+    estado = "ótimo";
+    emoji = "🚀";
+    titulo = "Mandou muito bem!";
+    mensagem = `Sobrou ${formatBRL(saldo)} no mês — uma folga de ${Math.round(folgaPct * 100)}% da sua renda. Que tal direcionar pra uma meta?`;
+    toneCls = "border-success/30 bg-success/5";
+    textCls = "text-success";
+  } else if (folgaPct >= 0.1 && totalEntradas > 0) {
+    estado = "bom";
+    emoji = "😁";
+    titulo = "Boa! Você terminou no azul";
+    mensagem = `Sobrou ${formatBRL(saldo)} este mês. Continue assim e ainda dá pra guardar uma parte 💰`;
+    toneCls = "border-success/30 bg-success/5";
+    textCls = "text-success";
+  } else if (saldo > 0) {
+    estado = "apertado";
+    emoji = "🙂";
+    titulo = "Fechou positivo, mas com pouca folga";
+    mensagem = `Sobrou ${formatBRL(saldo)} no fim do mês. Tá apertado — qualquer imprevisto pode virar o jogo.`;
+    toneCls = "border-warning/20 bg-warning/5";
+    textCls = "text-foreground";
+  } else {
+    estado = "neutro";
+    emoji = "🙂";
+    titulo = "Mês equilibrado";
+    mensagem = "Entradas e gastos no mesmo patamar. Vale tentar abrir uma folguinha pro próximo mês.";
   }
 
   return (
-    <section className={cn("rounded-3xl border bg-card p-4 transition-colors animate-rise", toneCls)}>
+    <section className={cn("rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-2xl">
           {emoji}
@@ -1625,27 +1521,27 @@ function ResumoMesCard({
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Resumo do mês
           </p>
-          <h3 className={cn("text-base font-bold leading-tight", textCls)}>{label}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Saldo {saldo < 0 ? "negativo" : "positivo"}: <span className="font-medium text-foreground">{formatBRL(saldo)}</span>
-          </p>
+          <h3 className={cn("text-base font-bold leading-tight", textCls)}>{titulo}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{mensagem}</p>
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Maior categoria</p>
-          <p className="mt-0.5 truncate text-sm font-semibold">
-            {maiorCategoria ? maiorCategoria.nome : "—"}
-          </p>
+      {!semDados && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Maior categoria</p>
+            <p className="mt-0.5 truncate text-sm font-semibold">
+              {maiorCategoria ? `${maiorCategoria.nome} · ${Math.round(maiorCategoria.pct)}%` : "—"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Orçamento</p>
+            <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
+              {critica ? `Estourou: ${critica}` : estouro.length === 0 && linhas.length > 0 ? "Tudo no controle" : "Sem limite"}
+            </p>
+          </div>
         </div>
-        <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Orçamento crítico</p>
-          <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
-            {critica ?? "Tudo no controle"}
-          </p>
-        </div>
-      </div>
+      )}
 
       <Link
         to="/relatorios"
@@ -1657,4 +1553,5 @@ function ResumoMesCard({
     </section>
   );
 }
+
 
