@@ -104,6 +104,7 @@ const EMPTY_METAS: Meta[] = [];
 const EMPTY_MOV: MovimentacaoMeta[] = [];
 const EMPTY_CARTOES: Cartao[] = [];
 const EMPTY_CONTAS: ContaAPagar[] = [];
+const EMPTY_TRANSFERENCIAS: TransferenciaInterna[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -116,6 +117,7 @@ let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
+let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
