@@ -671,10 +671,8 @@ function CartaoFormDialog({
                     Prévia
                   </h3>
                   <div
-                    className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-all duration-300"
-                    style={{
-                      background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 55%, #00000066 100%)`,
-                    }}
+                    className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-[background] duration-500 ease-out"
+                    style={{ background: getCardTheme(cor, banco).background }}
                   >
                     <div
                       aria-hidden
@@ -682,7 +680,7 @@ function CartaoFormDialog({
                     />
                     <div
                       aria-hidden
-                      className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-black/20 blur-2xl"
+                      className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
                     />
                     <div className="relative flex h-full flex-col justify-between">
                       <div className="flex items-start justify-between">
