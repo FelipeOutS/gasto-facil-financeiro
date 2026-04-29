@@ -462,7 +462,9 @@ function ContasAPagarPage() {
           <EmptyState onAdd={() => setCreating(true)} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-            Nada nesse filtro por aqui.
+            {busca
+              ? `Nada encontrado para "${busca}".`
+              : "Nada nesse filtro por aqui."}
           </div>
         ) : (
           <div className="space-y-2.5 stagger">
@@ -472,7 +474,13 @@ function ContasAPagarPage() {
                 conta={conta}
                 hojeISO={hojeISO}
                 onEdit={() => setEditing(conta)}
-                onDelete={() => setConfirmDelete(conta)}
+                onDelete={() => {
+                  if (conta.recorrente && conta.recorrenciaId) {
+                    setConfirmDeleteRec(conta);
+                  } else {
+                    setConfirmDelete(conta);
+                  }
+                }}
                 onPagar={() => setPagar(conta)}
                 onDesmarcar={() => setConfirmDesmarcar(conta)}
               />
