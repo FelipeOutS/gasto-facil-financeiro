@@ -223,23 +223,28 @@ function CartoesPage() {
           icon={<Sparkles className="h-4 w-4" />}
           tone="success"
         />
-        <ResumoCard
-          label="Próxima fatura"
-          valueText={
-            resumo.proxima
-              ? `${resumo.proxima.nome} • ${resumo.proximaDias === 0 ? "hoje" : `${resumo.proximaDias}d`}`
-              : "—"
-          }
-          icon={<CalendarDays className="h-4 w-4" />}
-          tone="muted"
+        <ProximaFaturaCard
+          cartao={resumo.proxima}
+          dias={resumo.proximaDias}
+          data={resumo.proximaData}
+          valor={resumo.proximaValor}
         />
       </section>
 
       {/* CTA + lista */}
-      <div className="mt-5 flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-tight">
-          {cartoes.length === 0 ? "Comece por aqui" : `${cartoes.length} ${cartoes.length === 1 ? "cartão" : "cartões"}`}
-        </h2>
+      <div className="mt-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold tracking-tight">
+            {cartoes.length === 0
+              ? "Comece por aqui"
+              : `${cartoes.length} ${cartoes.length === 1 ? "cartão" : "cartões"}`}
+          </h2>
+          {cartoes.length > 0 && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Toque em um cartão para ver detalhes da fatura.
+            </p>
+          )}
+        </div>
         {cartoes.length > 0 && (
           <Button
             size="sm"
@@ -255,16 +260,22 @@ function CartoesPage() {
       {cartoes.length === 0 ? (
         <EmptyState onAdd={handleOpenNew} />
       ) : (
-        <section className="mt-3 grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-3">
-          {cartoes.map((c) => (
-            <CartaoCard
-              key={c.id}
-              cartao={c}
-              onEdit={() => handleEdit(c)}
-              onDelete={() => setConfirmDelete(c)}
-            />
-          ))}
-        </section>
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px] xl:gap-6">
+          <section className="grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-2">
+            {cartoes.map((c) => (
+              <CartaoCard
+                key={c.id}
+                cartao={c}
+                onEdit={() => handleEdit(c)}
+                onDelete={() => setConfirmDelete(c)}
+              />
+            ))}
+          </section>
+          <aside className="space-y-4 stagger">
+            <ProximosVencimentos items={proximosVencimentos} />
+            <UltimasCompras gastos={ultimasCompras} cartoes={cartoes} />
+          </aside>
+        </div>
       )}
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
