@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -84,7 +84,7 @@ function Index() {
   );
 
   const total = useMemo(() => doMes.reduce((s, g) => s + g.valor, 0), [doMes]);
-  useMemo(() => {
+  useEffect(() => {
     if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1") return;
     const importados = gastosConfirmados.filter((g) => String(g.origem ?? "").includes("fatura"));
     console.info("[financeiro:dashboard] resumo", {
