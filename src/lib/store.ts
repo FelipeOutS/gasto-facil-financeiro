@@ -2124,8 +2124,210 @@ export function deleteReceita(id: string) {
     });
 }
 
-/** Exclui todas as receitas de uma recorrência (a partir de um mês opcional). */
-export function deleteReceitaRecorrencia(
+/* ============================================================
+ * BULK / DEDUP — RECEITAS
+ * Usado pela importação de extrato bancário.
+ * ============================================================ */
+
+export type NovaReceitaBulkInput = {
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  tipo: TipoReceita;
+  horario?: string;
+  origem?: string;
+};
+
+/** Insere várias receitas de uma vez (sem recorrência). */
+export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const now = new Date().toISOString();
+  const created: Receita[] = [];
+  const rows: ReceitaInsert[] = [];
+
+  for (const inp of inputs) {
+    const dataIso =
+      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+        ? inp.data
+        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const baseDate = parseDateLocal(dataIso) ?? new Date();
+    const id = crypto.randomUUID();
+    created.push({
+      id,
+      descricao: inp.descricao || "Lançamento",
+      valor: Math.abs(inp.valor),
+      data: dataIso,
+      tipo: inp.tipo,
+      recorrente: false,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      horario: inp.horario,
+      origem: inp.origem,
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      descricao: inp.descricao || "Lançamento",
+      valor: Math.abs(inp.valor),
+      data: dataIso,
+      tipo: inp.tipo,
+      recorrente: false,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      // colunas opcionais
+      ...(inp.horario ? { horario: inp.horario } : {}),
+      ...(inp.origem ? { origem: inp.origem } : {}),
+    } as ReceitaInsert);
+  }
+
+  memReceitas = [...memReceitas, ...created];
+  emit();
+
+  void supabase
+    .from("receitas")
+    .insert(rows)
+    .then(({ error }) => {
+      if (error) console.error("[store] addReceitasBulk failed", error);
+    });
+
+  return created;
+}
+
+export type DedupReceitaCandidato = {
+  valor: number;
+  data: string;
+  descricao?: string;
+  horario?: string;
+};
+
+/** Procura na base local de receitas uma entrada com forte indício de duplicidade. */
+export function findDuplicateReceitaAdvanced(c: DedupReceitaCandidato): Receita | undefined {
+  const desc = c.descricao || "";
+  return memReceitas.find((r) => {
+    if (Math.abs(r.valor - Math.abs(c.valor)) > 0.01) return false;
+    const dDays = diffDays(r.data, c.data);
+    if (dDays > 1) return false;
+    if (!desc) return dDays === 0;
+    const sim = descSimilarity(desc, r.descricao);
+    if (sim >= 0.7) return true;
+    if (dDays === 0 && diffMinutes(r.horario, c.horario) <= 5 && sim >= 0.4) return true;
+    return false;
+  });
+}
+
+/* ============================================================
+ * TRANSFERÊNCIAS INTERNAS
+ * Não contam como despesa nem receita; histórico separado.
+ * ============================================================ */
+
+export type NovaTransferenciaInternaInput = {
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  horario?: string;
+  origem?: string;
+  destino?: string;
+  observacao?: string;
+  origemImportacao?: string;
+};
+
+export function addTransferenciasInternasBulk(
+  inputs: NovaTransferenciaInternaInput[],
+): TransferenciaInterna[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const now = new Date().toISOString();
+  const created: TransferenciaInterna[] = [];
+  const rows: Array<Record<string, unknown>> = [];
+
+  for (const inp of inputs) {
+    const dataIso =
+      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+        ? inp.data
+        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const baseDate = parseDateLocal(dataIso) ?? new Date();
+    const id = crypto.randomUUID();
+    const valor = Math.abs(inp.valor);
+    created.push({
+      id,
+      descricao: inp.descricao || "Transferência interna",
+      valor,
+      data: dataIso,
+      horario: inp.horario,
+      origem: inp.origem,
+      destino: inp.destino,
+      observacao: inp.observacao,
+      origemImportacao: inp.origemImportacao,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      descricao: inp.descricao || "Transferência interna",
+      valor,
+      data: dataIso,
+      horario: inp.horario ?? null,
+      origem: inp.origem ?? null,
+      destino: inp.destino ?? null,
+      observacao: inp.observacao ?? null,
+      origem_importacao: inp.origemImportacao ?? null,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+    });
+  }
+
+  memTransferencias = [...memTransferencias, ...created];
+  emit();
+
+  void sbAny
+    .from("transferencias_internas")
+    .insert(rows)
+    .then(({ error }: { error: unknown }) => {
+      if (error) console.error("[store] addTransferenciasInternasBulk failed", error);
+    });
+
+  return created;
+}
+
+export function deleteTransferenciaInterna(id: string) {
+  memTransferencias = memTransferencias.filter((t) => t.id !== id);
+  emit();
+  if (!activeUserId) return;
+  void sbAny
+    .from("transferencias_internas")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: unknown }) => {
+      if (error) console.error("[store] deleteTransferenciaInterna failed", error);
+    });
+}
+
+export type DedupTransferenciaCandidato = {
+  valor: number;
+  data: string;
+  descricao?: string;
+  horario?: string;
+};
+
+export function findDuplicateTransferenciaAdvanced(
+  c: DedupTransferenciaCandidato,
+): TransferenciaInterna | undefined {
+  const desc = c.descricao || "";
+  return memTransferencias.find((t) => {
+    if (Math.abs(t.valor - Math.abs(c.valor)) > 0.01) return false;
+    const dDays = diffDays(t.data, c.data);
+    if (dDays > 1) return false;
+    if (!desc) return dDays === 0;
+    const sim = descSimilarity(desc, t.descricao);
+    if (sim >= 0.7) return true;
+    if (dDays === 0 && diffMinutes(t.horario, c.horario) <= 5 && sim >= 0.4) return true;
+    return false;
+  });
+}
   recorrenciaId: string,
   fromMes?: number,
   fromAno?: number,
