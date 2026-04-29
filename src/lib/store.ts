@@ -1188,6 +1188,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           grupo_parcelamento_id: grupo,
           essencial: input.essencial ?? null,
           gasto_fixo: input.gastoFixo ?? null,
+          cartao_id: input.cartaoId ?? null,
         },
         client: {
           id,
@@ -1208,6 +1209,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           grupoParcelamentoId: grupo,
           essencial: input.essencial,
           gastoFixo: input.gastoFixo,
+          cartaoId: input.cartaoId,
           criadoEm: now,
           atualizadoEm: now,
         },
@@ -1240,6 +1242,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           recorrencia_id: recId,
           essencial: input.essencial ?? null,
           gasto_fixo: fixoFlag,
+          cartao_id: input.cartaoId ?? null,
         },
         client: {
           id,
@@ -1258,6 +1261,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           recorrenciaId: recId,
           essencial: input.essencial,
           gastoFixo: fixoFlag,
+          cartaoId: input.cartaoId,
           criadoEm: now,
           atualizadoEm: now,
         },
@@ -1283,6 +1287,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         tipo_gasto: "unico",
         essencial: input.essencial ?? null,
         gasto_fixo: input.gastoFixo ?? null,
+        cartao_id: input.cartaoId ?? null,
       },
       client: {
         id,
@@ -1300,6 +1305,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         tipoGasto: "unico",
         essencial: input.essencial,
         gastoFixo: input.gastoFixo,
+        cartaoId: input.cartaoId,
         criadoEm: now,
         atualizadoEm: now,
       },
