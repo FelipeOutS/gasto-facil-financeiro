@@ -1080,8 +1080,8 @@ function ContaFormDialog({
         chavePix: chavePix.trim() || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
       };
-      // Se conta recorrente e ainda não paga, pergunta escopo da edição
-      if (conta.recorrente && conta.recorrenciaId && conta.status !== "pago") {
+      // Se conta recorrente, sempre pergunta escopo da edição
+      if (conta.recorrente && conta.recorrenciaId) {
         setEditScopeFields(fields);
         return;
       }
@@ -1120,20 +1120,22 @@ function ContaFormDialog({
 
   function applyEditScope(scope: "single" | "future" | "all") {
     if (!conta || !editScopeFields) return;
-    if (scope === "single" || !conta.recorrenciaId) {
-      updateContaAPagar(conta.id, editScopeFields);
-    } else {
-      // Atualiza esta primeiro (inclui dataVencimento se mudou)
-      updateContaAPagar(conta.id, editScopeFields);
-      // E propaga as demais ocorrências (sem dataVencimento)
+    // Atualiza a ocorrência atual (com sync de gasto vinculado se for o caso)
+    updateContaAPagar(conta.id, editScopeFields);
+
+    // Para os demais escopos, propaga sem dataVencimento e sem mexer em gastos vinculados de outras ocorrências
+    if (scope !== "single" && conta.recorrenciaId) {
+      const propagatedFields = { ...editScopeFields };
+      delete propagatedFields.atualizarGastoVinculado;
       updateContaRecorrencia(
         conta.recorrenciaId,
-        editScopeFields,
+        propagatedFields,
         scope,
         conta.mes,
         conta.ano,
       );
     }
+
     toast.success(
       scope === "all"
         ? "Toda a recorrência foi atualizada. ✅"
@@ -1410,20 +1412,52 @@ function ContaFormDialog({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Editar conta recorrente</AlertDialogTitle>
+            <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">
+              <Repeat className="h-3.5 w-3.5" />
+              Conta recorrente
+            </div>
+            <AlertDialogTitle>Como deseja aplicar esta alteração?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta é uma conta recorrente. Onde você quer aplicar as mudanças?
+              Você está editando uma conta recorrente. Deseja aplicar esta alteração
+              somente nesta conta ou também nas demais recorrências?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => applyEditScope("single")}
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+            >
+              <p className="text-sm font-semibold">Somente esta conta</p>
+              <p className="text-xs text-muted-foreground">
+                Altera apenas a ocorrência de {formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0)}.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => applyEditScope("future")}
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+            >
+              <p className="text-sm font-semibold">Esta e as próximas</p>
+              <p className="text-xs text-muted-foreground">
+                Altera esta ocorrência e todas as futuras (mantém o histórico passado).
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => applyEditScope("all")}
+              className="w-full rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10"
+            >
+              <p className="text-sm font-semibold">Todas as recorrências</p>
+              <p className="text-xs text-muted-foreground">
+                Altera toda a série, incluindo passadas (ocorrências já pagas são preservadas).
+              </p>
+            </button>
+          </div>
+
+          <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button variant="outline" onClick={() => applyEditScope("single")}>
-              Apenas esta
-            </Button>
-            <Button variant="outline" onClick={() => applyEditScope("future")}>
-              Esta e as próximas
-            </Button>
-            <Button onClick={() => applyEditScope("all")}>Toda a recorrência</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
