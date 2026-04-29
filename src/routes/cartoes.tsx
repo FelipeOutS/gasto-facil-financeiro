@@ -455,12 +455,17 @@ function CartaoCard({
           <DropdownMenuTrigger asChild>
             <button
               aria-label="Mais ações"
+              onClick={(e) => e.stopPropagation()}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[160px]">
+          <DropdownMenuContent
+            align="end"
+            className="min-w-[160px]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               Editar cartão
