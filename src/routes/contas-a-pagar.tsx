@@ -1120,20 +1120,22 @@ function ContaFormDialog({
 
   function applyEditScope(scope: "single" | "future" | "all") {
     if (!conta || !editScopeFields) return;
-    if (scope === "single" || !conta.recorrenciaId) {
-      updateContaAPagar(conta.id, editScopeFields);
-    } else {
-      // Atualiza esta primeiro (inclui dataVencimento se mudou)
-      updateContaAPagar(conta.id, editScopeFields);
-      // E propaga as demais ocorrências (sem dataVencimento)
+    // Atualiza a ocorrência atual (com sync de gasto vinculado se for o caso)
+    updateContaAPagar(conta.id, editScopeFields);
+
+    // Para os demais escopos, propaga sem dataVencimento e sem mexer em gastos vinculados de outras ocorrências
+    if (scope !== "single" && conta.recorrenciaId) {
+      const propagatedFields = { ...editScopeFields };
+      delete propagatedFields.atualizarGastoVinculado;
       updateContaRecorrencia(
         conta.recorrenciaId,
-        editScopeFields,
+        propagatedFields,
         scope,
         conta.mes,
         conta.ano,
       );
     }
+
     toast.success(
       scope === "all"
         ? "Toda a recorrência foi atualizada. ✅"
