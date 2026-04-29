@@ -533,10 +533,10 @@ function normalizeItens(rawItens: ItemBruto[]) {
         CATEGORIAS_VALIDAS.includes(it.categoriaSugerida)
           ? it.categoriaSugerida
           : null;
-      const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 120) : null;
+      const desc = typeof it.descricao === "string" ? it.descricao.trim() : null;
       const contraparte =
-        typeof it.contraparte === "string" ? it.contraparte.slice(0, 80) : null;
-      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.slice(0, 80) : null;
+        typeof it.contraparte === "string" ? it.contraparte.trim() : null;
+      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.trim() : null;
       const saldo = typeof it.saldo === "number" && Number.isFinite(it.saldo) ? it.saldo : null;
       const origemImportacao = typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
       const bancoOrigem = typeof it.bancoOrigem === "string" ? it.bancoOrigem.slice(0, 60) : null;
