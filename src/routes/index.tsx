@@ -392,17 +392,20 @@ function Index() {
 
       {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        <div className="min-w-0 self-start xl:col-span-8">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
+        <div className="min-w-0 self-start lg:col-span-7 xl:col-span-8">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
-        <div className="min-w-0 self-start xl:col-span-4">
+        <div className="min-w-0 self-start lg:col-span-5 xl:col-span-4">
           <RecentTransactionsCard ultimos={ultimos} />
         </div>
       </section>
 
       {/* ===== Linha 3: Alertas financeiros + (Limite mensal / Minha renda) ===== */}
       <SectionLabel>Alertas e limites</SectionLabel>
+      {/* xl (>=1280): Alertas 8col à esquerda, direita 4col empilhada (Limite em cima, Renda embaixo) */}
+      {/* lg (1024-1279): Alertas full-width, abaixo Limite + Renda lado a lado */}
+      {/* < lg: tudo empilhado */}
       <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-stretch">
         {temAlertasDashboard && (
           <div className="flex min-w-0 xl:col-span-8">
@@ -413,8 +416,10 @@ function Index() {
         )}
         <div
           className={cn(
-            "flex min-w-0 flex-col gap-4",
-            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12",
+            "grid min-w-0 grid-cols-1 gap-4",
+            // No notebook (lg) sem xl: Limite + Renda lado a lado
+            "md:grid-cols-2 xl:grid-cols-1",
+            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12 xl:grid-cols-2",
           )}
         >
           {!!limiteTotal && (
@@ -432,8 +437,8 @@ function Index() {
 
       {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
       <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
-        <div className={cn("flex min-w-0", !temOrcamentoMes && "xl:col-span-2")}>
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
           <div className="flex w-full">
             <ResumoMesCard
               mes={ym.mes}
