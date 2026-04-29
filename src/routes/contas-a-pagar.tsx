@@ -79,7 +79,7 @@ export const Route = createFileRoute("/contas-a-pagar")({
   component: ContasAPagarPage,
 });
 
-type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas";
+type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
 
 const FILTROS: Array<{ id: FilterId; label: string }> = [
   { id: "todas", label: "Todas" },
@@ -87,7 +87,16 @@ const FILTROS: Array<{ id: FilterId; label: string }> = [
   { id: "proximas", label: "Próximas" },
   { id: "atrasadas", label: "Atrasadas" },
   { id: "pagas", label: "Pagas" },
+  { id: "recorrentes", label: "Recorrentes" },
 ];
+
+function normalizar(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 function ContasAPagarPage() {
   const ready = useBootstrap();
