@@ -1165,6 +1165,8 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const tipo = input.tipoGasto ?? "unico";
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   const catUuid = categoriaUuidFor(input.categoriaId);
+  const horarioVal = input.horario && input.horario.trim() ? input.horario.trim() : null;
+  const origemVal = input.origem && input.origem.trim() ? input.origem.trim() : null;
   const out: { row: GastoInsert; client: Gasto }[] = [];
 
   if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1 && (input.parcelaAtual ?? 0) > 0) {
