@@ -1,5 +1,14 @@
 import { useRef, useState } from "react";
-import { Upload, Loader2, AlertTriangle, FileText, ImageIcon } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  AlertTriangle,
+  FileText,
+  ImageIcon,
+  FileType2,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   addContaAPagar,
@@ -28,7 +39,7 @@ import {
   useStore,
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
-import { parseBRLInput, todayISO } from "@/lib/format";
+import { parseBRLInput, todayISO, formatBRL } from "@/lib/format";
 
 type ContaExtraida = {
   nome: string | null;
@@ -45,6 +56,25 @@ type ContaExtraida = {
   confianca: "alta" | "media" | "baixa";
 };
 
+type ItemRevisao = {
+  uid: string;
+  selecionado: boolean;
+  duplicado: boolean;
+  motivoDuplicado?: string;
+  nome: string;
+  beneficiario: string;
+  valorStr: string;
+  vencimento: string;
+  forma: FormaPagamento | "";
+  codigoBoleto: string;
+  codigoPix: string;
+  chavePix: string;
+  bancoEmissor: string;
+  categoriaId: string;
+  observacao: string;
+  confianca: "alta" | "media" | "baixa";
+};
+
 async function fileToDataUrl(file: File): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -52,6 +82,34 @@ async function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+function checarDuplicado(input: {
+  valor: number | null;
+  dataVencimento: string;
+  nome: string;
+  beneficiario?: string;
+  codigoBoleto?: string;
+  codigoPix?: string;
+}): { dup: boolean; motivo?: string } {
+  if (input.codigoBoleto && input.codigoBoleto.trim()) {
+    const d = findContaByCodigo(input.codigoBoleto, "boleto");
+    if (d) return { dup: true, motivo: "Mesmo código de boleto" };
+  }
+  if (input.codigoPix && input.codigoPix.trim()) {
+    const d = findContaByCodigo(input.codigoPix, "pix");
+    if (d) return { dup: true, motivo: "Mesmo Pix copia e cola" };
+  }
+  if (input.valor && input.valor > 0 && input.dataVencimento && input.nome) {
+    const d = findContaDuplicado({
+      valor: input.valor,
+      dataVencimento: input.dataVencimento,
+      nome: input.nome,
+      beneficiario: input.beneficiario,
+    });
+    if (d) return { dup: true, motivo: "Valor + vencimento parecidos" };
+  }
+  return { dup: false };
 }
 
 export function ImportContaDialog({
@@ -62,13 +120,15 @@ export function ImportContaDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const categorias = useStore(() => getCategorias());
-  const [aba, setAba] = useState<"imagem" | "texto">("imagem");
+  const [aba, setAba] = useState<"imagem" | "texto" | "pdf">("imagem");
   const [texto, setTexto] = useState("");
   const [loading, setLoading] = useState(false);
   const [conta, setConta] = useState<ContaExtraida | null>(null);
+  const [itensPdf, setItensPdf] = useState<ItemRevisao[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const pdfRef = useRef<HTMLInputElement>(null);
 
-  // Campos editáveis na revisão
+  // Campos editáveis na revisão (item único - imagem/texto)
   const [nome, setNome] = useState("");
   const [beneficiario, setBeneficiario] = useState("");
   const [valorStr, setValorStr] = useState("");
@@ -83,6 +143,7 @@ export function ImportContaDialog({
 
   function reset() {
     setConta(null);
+    setItensPdf(null);
     setTexto("");
     setNome("");
     setBeneficiario("");
@@ -144,6 +205,69 @@ export function ImportContaDialog({
     }
   }
 
+  async function processarPdf(pdfDataUrl: string) {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/import-conta-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdf: pdfDataUrl }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json?.error ?? "Não foi possível ler este PDF.");
+        return;
+      }
+      const itens: ContaExtraida[] = Array.isArray(json.itens) ? json.itens : [];
+      if (itens.length === 0) {
+        toast.warning(
+          json.observacao ?? "Nenhuma conta foi encontrada neste arquivo.",
+        );
+        return;
+      }
+      const revisao: ItemRevisao[] = itens.map((c) => {
+        const valor = c.valor;
+        const venc = c.dataVencimento ?? "";
+        const nm = c.nome ?? "";
+        const dupCheck = checarDuplicado({
+          valor,
+          dataVencimento: venc,
+          nome: nm,
+          beneficiario: c.beneficiario ?? undefined,
+          codigoBoleto: c.codigoBoleto ?? undefined,
+          codigoPix: c.codigoPix ?? undefined,
+        });
+        return {
+          uid: crypto.randomUUID(),
+          selecionado: !dupCheck.dup,
+          duplicado: dupCheck.dup,
+          motivoDuplicado: dupCheck.motivo,
+          nome: nm,
+          beneficiario: c.beneficiario ?? "",
+          valorStr: valor != null ? String(valor).replace(".", ",") : "",
+          vencimento: venc,
+          forma: (c.formaPagamento as FormaPagamento) ?? "",
+          codigoBoleto: c.codigoBoleto ?? "",
+          codigoPix: c.codigoPix ?? "",
+          chavePix: c.chavePix ?? "",
+          bancoEmissor: c.bancoEmissor ?? "",
+          categoriaId: c.categoriaSugerida ?? "",
+          observacao: c.observacao ?? "",
+          confianca: c.confianca,
+        };
+      });
+      setItensPdf(revisao);
+      toast.success(
+        `${itens.length} conta(s) encontrada(s). Revise antes de salvar.`,
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro de rede ao processar o PDF.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -158,6 +282,25 @@ export function ImportContaDialog({
     const dataUrl = await fileToDataUrl(file);
     await processar({ images: [dataUrl] });
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function handlePdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      toast.error("Selecione um arquivo PDF.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF muito grande (máx 10MB).");
+      return;
+    }
+    const dataUrl = await fileToDataUrl(file);
+    await processarPdf(dataUrl);
+    if (pdfRef.current) pdfRef.current.value = "";
   }
 
   async function handleTexto() {
@@ -175,7 +318,6 @@ export function ImportContaDialog({
       return toast.error("Valor inválido.");
     if (!vencimento) return toast.error("Informe o vencimento.");
 
-    // Bloqueio por código de boleto/Pix idêntico
     if (codigoBoleto.trim()) {
       const dup = findContaByCodigo(codigoBoleto, "boleto");
       if (dup) {
@@ -191,7 +333,6 @@ export function ImportContaDialog({
       }
     }
 
-    // Aviso de possível duplicado por valor + vencimento + nome
     const possivel = findContaDuplicado({
       valor,
       dataVencimento: vencimento,
@@ -223,19 +364,82 @@ export function ImportContaDialog({
     handleClose();
   }
 
+  function patchItem(uid: string, patch: Partial<ItemRevisao>) {
+    setItensPdf((prev) =>
+      prev ? prev.map((it) => (it.uid === uid ? { ...it, ...patch } : it)) : prev,
+    );
+  }
+
+  function removerItem(uid: string) {
+    setItensPdf((prev) => (prev ? prev.filter((it) => it.uid !== uid) : prev));
+  }
+
+  function handleSalvarLote() {
+    if (!itensPdf) return;
+    const selecionados = itensPdf.filter((it) => it.selecionado);
+    if (selecionados.length === 0) {
+      toast.error("Selecione ao menos uma conta para importar.");
+      return;
+    }
+    // Validações
+    for (const it of selecionados) {
+      const v = parseBRLInput(it.valorStr);
+      if (!it.nome.trim())
+        return toast.error(`Informe o nome de uma das contas selecionadas.`);
+      if (!Number.isFinite(v) || v <= 0)
+        return toast.error(`Valor inválido em "${it.nome}".`);
+      if (!it.vencimento) return toast.error(`Informe o vencimento de "${it.nome}".`);
+    }
+
+    const batchId = crypto.randomUUID();
+    let salvas = 0;
+    let ignoradas = 0;
+    for (const it of itensPdf) {
+      if (!it.selecionado) {
+        if (it.duplicado) ignoradas++;
+        continue;
+      }
+      const v = parseBRLInput(it.valorStr);
+      addContaAPagar({
+        nome: it.nome.trim(),
+        valor: v,
+        dataVencimento: it.vencimento,
+        categoriaId: it.categoriaId || undefined,
+        observacao: it.observacao.trim() || undefined,
+        beneficiario: it.beneficiario.trim() || undefined,
+        formaPagamento: (it.forma || undefined) as FormaPagamento | undefined,
+        codigoBoleto: it.codigoBoleto.trim() || undefined,
+        codigoPix: it.codigoPix.trim() || undefined,
+        chavePix: it.chavePix.trim() || undefined,
+        bancoEmissor: it.bancoEmissor.trim() || undefined,
+        importBatchId: batchId,
+      });
+      salvas++;
+    }
+    toast.success(
+      `Importação concluída: ${salvas} conta(s) adicionada(s)${
+        ignoradas > 0 ? `, ${ignoradas} duplicada(s) ignorada(s)` : ""
+      }.`,
+    );
+    handleClose();
+  }
+
+  const modoLote = itensPdf !== null;
+  const modoItem = conta !== null;
+
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : handleClose())}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Importar conta</DialogTitle>
           <DialogDescription>
-            Tire foto do boleto/Pix ou cole o texto. Você revisa antes de salvar.
+            Tire foto, cole o texto ou envie o PDF do boleto/Pix. Você revisa antes de salvar.
           </DialogDescription>
         </DialogHeader>
 
-        {!conta && (
+        {!modoItem && !modoLote && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 variant={aba === "imagem" ? "default" : "outline"}
                 onClick={() => setAba("imagem")}
@@ -252,9 +456,17 @@ export function ImportContaDialog({
                 <FileText className="mr-1 h-4 w-4" />
                 Texto
               </Button>
+              <Button
+                variant={aba === "pdf" ? "default" : "outline"}
+                onClick={() => setAba("pdf")}
+                disabled={loading}
+              >
+                <FileType2 className="mr-1 h-4 w-4" />
+                PDF
+              </Button>
             </div>
 
-            {aba === "imagem" ? (
+            {aba === "imagem" && (
               <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
                 <input
                   ref={fileRef}
@@ -283,7 +495,9 @@ export function ImportContaDialog({
                   )}
                 </Button>
               </div>
-            ) : (
+            )}
+
+            {aba === "texto" && (
               <div className="space-y-2">
                 <Label htmlFor="conta-texto">Cole o texto</Label>
                 <Textarea
@@ -305,10 +519,43 @@ export function ImportContaDialog({
                 </Button>
               </div>
             )}
+
+            {aba === "pdf" && (
+              <div className="rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
+                <input
+                  ref={pdfRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="hidden"
+                  onChange={handlePdf}
+                />
+                <FileType2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  Envie um PDF do boleto, Pix ou conta
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Você poderá revisar antes de salvar. PDF até 10MB.
+                </p>
+                <Button
+                  className="mt-3"
+                  onClick={() => pdfRef.current?.click()}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      Lendo PDF…
+                    </>
+                  ) : (
+                    "Selecionar PDF"
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
-        {conta && (
+        {modoItem && conta && (
           <div className="space-y-3">
             {conta.confianca === "baixa" && (
               <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
@@ -360,7 +607,9 @@ export function ImportContaDialog({
                 <Label>Forma</Label>
                 <Select
                   value={forma || "_none"}
-                  onValueChange={(v) => setForma((v === "_none" ? "" : v) as FormaPagamento | "")}
+                  onValueChange={(v) =>
+                    setForma((v === "_none" ? "" : v) as FormaPagamento | "")
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
@@ -447,13 +696,251 @@ export function ImportContaDialog({
           </div>
         )}
 
+        {modoLote && itensPdf && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {itensPdf.filter((it) => it.selecionado).length} de {itensPdf.length}{" "}
+                selecionada(s)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="underline hover:text-foreground"
+                  onClick={() =>
+                    setItensPdf((prev) =>
+                      prev ? prev.map((it) => ({ ...it, selecionado: true })) : prev,
+                    )
+                  }
+                >
+                  Marcar todas
+                </button>
+                <button
+                  type="button"
+                  className="underline hover:text-foreground"
+                  onClick={() =>
+                    setItensPdf((prev) =>
+                      prev ? prev.map((it) => ({ ...it, selecionado: false })) : prev,
+                    )
+                  }
+                >
+                  Desmarcar
+                </button>
+              </div>
+            </div>
+
+            {itensPdf.length === 0 && (
+              <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                Nenhum item para revisar.
+              </p>
+            )}
+
+            {itensPdf.map((it) => {
+              const v = parseBRLInput(it.valorStr);
+              return (
+                <div
+                  key={it.uid}
+                  className={`space-y-3 rounded-2xl border p-3 ${
+                    it.selecionado ? "border-border bg-card" : "border-border/40 bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      checked={it.selecionado}
+                      onCheckedChange={(c) =>
+                        patchItem(it.uid, { selecionado: c === true })
+                      }
+                      className="mt-1"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold">
+                          {it.nome || "(sem nome)"}
+                        </span>
+                        {it.duplicado && (
+                          <Badge
+                            variant="outline"
+                            className="border-warning/50 text-warning"
+                          >
+                            Já existe no app
+                          </Badge>
+                        )}
+                        {it.confianca === "baixa" && (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Confiança baixa
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {Number.isFinite(v) && v > 0 ? formatBRL(v) : "—"}
+                        {it.vencimento ? ` · vence ${it.vencimento}` : ""}
+                        {it.beneficiario ? ` · ${it.beneficiario}` : ""}
+                        {it.motivoDuplicado ? ` · ${it.motivoDuplicado}` : ""}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removerItem(it.uid)}
+                      title="Remover da lista"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nome</Label>
+                      <Input
+                        value={it.nome}
+                        onChange={(e) => patchItem(it.uid, { nome: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Beneficiário</Label>
+                      <Input
+                        value={it.beneficiario}
+                        onChange={(e) =>
+                          patchItem(it.uid, { beneficiario: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={it.valorStr}
+                        onChange={(e) => patchItem(it.uid, { valorStr: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Vencimento</Label>
+                      <Input
+                        type="date"
+                        value={it.vencimento}
+                        onChange={(e) => patchItem(it.uid, { vencimento: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Forma</Label>
+                      <Select
+                        value={it.forma || "_none"}
+                        onValueChange={(v) =>
+                          patchItem(it.uid, {
+                            forma: (v === "_none" ? "" : v) as FormaPagamento | "",
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">—</SelectItem>
+                          {FORMAS_PAGAMENTO.map((f) => (
+                            <SelectItem key={f.id} value={f.id}>
+                              {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Categoria</Label>
+                      <Select
+                        value={it.categoriaId || "_none"}
+                        onValueChange={(v) =>
+                          patchItem(it.uid, { categoriaId: v === "_none" ? "" : v })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Sem categoria</SelectItem>
+                          {categorias.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {(it.codigoBoleto || it.codigoPix || it.chavePix) && (
+                    <div className="space-y-2">
+                      {it.codigoBoleto && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Código do boleto</Label>
+                          <Input
+                            value={it.codigoBoleto}
+                            onChange={(e) =>
+                              patchItem(it.uid, { codigoBoleto: e.target.value })
+                            }
+                          />
+                        </div>
+                      )}
+                      {it.codigoPix && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Pix copia e cola</Label>
+                          <Textarea
+                            rows={2}
+                            value={it.codigoPix}
+                            onChange={(e) =>
+                              patchItem(it.uid, { codigoPix: e.target.value })
+                            }
+                          />
+                        </div>
+                      )}
+                      {it.chavePix && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Chave Pix</Label>
+                          <Input
+                            value={it.chavePix}
+                            onChange={(e) =>
+                              patchItem(it.uid, { chavePix: e.target.value })
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {it.observacao && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Observação</Label>
+                      <Textarea
+                        rows={2}
+                        value={it.observacao}
+                        onChange={(e) =>
+                          patchItem(it.uid, { observacao: e.target.value })
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <DialogFooter>
-          {conta ? (
+          {modoItem ? (
             <>
               <Button variant="outline" onClick={() => setConta(null)}>
                 Voltar
               </Button>
               <Button onClick={handleSalvar}>Salvar conta</Button>
+            </>
+          ) : modoLote ? (
+            <>
+              <Button variant="outline" onClick={() => setItensPdf(null)}>
+                Voltar
+              </Button>
+              <Button onClick={handleSalvarLote}>
+                <CheckCircle2 className="mr-1 h-4 w-4" />
+                Importar selecionadas
+              </Button>
             </>
           ) : (
             <Button variant="outline" onClick={handleClose}>
