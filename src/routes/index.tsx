@@ -817,7 +817,7 @@ function KpiCard({
 
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
   return (
-    <section className="flex h-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
