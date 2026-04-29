@@ -399,6 +399,14 @@ function Index() {
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
         <div className="min-w-0 space-y-3 lg:col-span-3">
           <AlertasContasCard contas={contas} />
+          <ResumoMesCard
+            mes={ym.mes}
+            ano={ym.ano}
+            saldo={saldo}
+            maiorCategoria={maior}
+            estouroOrc={resOrc?.qtdEstouro ?? 0}
+            criticaOrc={resOrc?.linhas.find((l) => l.status === "estouro")?.cat.nome ?? null}
+          />
           <OrcamentoCard
             categorias={categorias}
             gastos={gastosConfirmados}
