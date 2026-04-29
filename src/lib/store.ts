@@ -618,6 +618,39 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
   };
 }
 
+type TransferenciaInternaRow = {
+  id: string;
+  descricao: string;
+  valor: string | number;
+  data: string;
+  horario: string | null;
+  origem: string | null;
+  destino: string | null;
+  observacao: string | null;
+  origem_importacao: string | null;
+  mes: number;
+  ano: number;
+  created_at: string;
+  updated_at: string;
+};
+function rowToTransferenciaInterna(r: TransferenciaInternaRow): TransferenciaInterna {
+  return {
+    id: r.id,
+    descricao: r.descricao ?? "",
+    valor: Number(r.valor),
+    data: r.data,
+    horario: r.horario ?? undefined,
+    origem: r.origem ?? undefined,
+    destino: r.destino ?? undefined,
+    observacao: r.observacao ?? undefined,
+    origemImportacao: r.origem_importacao ?? undefined,
+    mes: r.mes,
+    ano: r.ano,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
