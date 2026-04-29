@@ -118,6 +118,28 @@ function newId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function normalizeReviewStatus(value: string | null | undefined): ReviewStatus {
+  return value === "pagamento_fatura_cartao" ||
+    value === "reserva" ||
+    value === "resgate_reserva" ||
+    value === "investimentos" ||
+    value === "revisar"
+    ? value
+    : "novo";
+}
+
+function textHasOperationId(text: string | undefined, id: string) {
+  return !!text && normalizeDescricao(text).includes(normalizeDescricao(id));
+}
+
+function operationIdExists(id: string) {
+  return (
+    getGastos().some((g) => textHasOperationId(g.observacao, id) || textHasOperationId(g.origem, id)) ||
+    getReceitas().some((r) => textHasOperationId(r.origem, id)) ||
+    getTransferenciasInternas().some((t) => textHasOperationId(t.observacao, id) || textHasOperationId(t.origemImportacao, id))
+  );
+}
+
 export function ImportExtratoDialog({
   open,
   onOpenChange,
