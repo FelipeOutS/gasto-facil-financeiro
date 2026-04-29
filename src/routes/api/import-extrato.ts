@@ -390,17 +390,8 @@ export const Route = createFileRoute("/api/import-extrato")({
   },
 });
 
-function bytesToBase64(bytes: Uint8Array): string {
-  let bin = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    bin += String.fromCharCode.apply(
-      null,
-      Array.from(bytes.subarray(i, i + chunk)),
-    );
-  }
-  return btoa(bin);
-}
+// (helper removido — não mandamos mais o PDF como image_url ao gateway)
+
 
 async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   let extractedText = "";
@@ -428,37 +419,32 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   }
 
   const cleanText = sanitizeText(extractedText.trim());
-  const hasUsefulText = cleanText.length > 200;
+  // Limiar baixo: qualquer extrato real tem facilmente >50 chars.
+  const hasUsefulText = cleanText.length > 50;
 
-  const messages = hasUsefulText
-    ? [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
-        },
-      ]
-    : [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Este é um extrato bancário em PDF (provavelmente escaneado). Extraia a lista de movimentações.",
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${bytesToBase64(bytes)}`,
-              },
-            },
-          ],
-        },
-      ];
+  if (!hasUsefulText) {
+    // Sem texto extraível. Não tentamos mandar o PDF inteiro como image_url
+    // ao Gemini porque o gateway costuma responder 502 nesse caminho.
+    // O usuário deve enviar prints (caminho de imagens já funciona bem).
+    return Response.json(
+      {
+        error:
+          "Esse PDF parece ser escaneado (sem texto selecionável). Tente exportar uma versão com texto, ou envie prints do extrato — o app lê imagens normalmente.",
+      },
+      { status: 422 },
+    );
+  }
+
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    {
+      role: "user",
+      content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
+    },
+  ];
 
   const aiResp = await callGemini(apiKey, messages);
-  return await handleAIResponse(aiResp, totalPages, hasUsefulText ? "texto" : "ocr");
+  return await handleAIResponse(aiResp, totalPages, "texto");
 }
 
 
@@ -478,7 +464,13 @@ async function handleAIResponse(aiResp: Response, paginas: number, modo: string)
         { status: 402 },
       );
     }
-    return Response.json({ error: "Não consegui ler esse extrato agora." }, { status: 502 });
+    return Response.json(
+      {
+        error:
+          "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar).",
+      },
+      { status: 502 },
+    );
   }
 
   const json = await aiResp.json();
