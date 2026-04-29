@@ -481,6 +481,7 @@ export function ImportExtratoDialog({
           return;
         }
         setItems(itensFromBruto(brutos, "extrato_csv"));
+        setImportMeta({ nomeArquivo: file.name, tipoOrigem: "csv" });
         setStep("review");
       } catch (e) {
         console.error(e);
