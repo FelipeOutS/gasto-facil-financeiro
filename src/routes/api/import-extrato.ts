@@ -428,37 +428,32 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   }
 
   const cleanText = sanitizeText(extractedText.trim());
-  const hasUsefulText = cleanText.length > 200;
+  // Limiar baixo: qualquer extrato real tem facilmente >50 chars.
+  const hasUsefulText = cleanText.length > 50;
 
-  const messages = hasUsefulText
-    ? [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
-        },
-      ]
-    : [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Este é um extrato bancário em PDF (provavelmente escaneado). Extraia a lista de movimentações.",
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${bytesToBase64(bytes)}`,
-              },
-            },
-          ],
-        },
-      ];
+  if (!hasUsefulText) {
+    // Sem texto extraível. Não tentamos mandar o PDF inteiro como image_url
+    // ao Gemini porque o gateway costuma responder 502 nesse caminho.
+    // O usuário deve enviar prints (caminho de imagens já funciona bem).
+    return Response.json(
+      {
+        error:
+          "Esse PDF parece ser escaneado (sem texto selecionável). Tente exportar uma versão com texto, ou envie prints do extrato — o app lê imagens normalmente.",
+      },
+      { status: 422 },
+    );
+  }
+
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    {
+      role: "user",
+      content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
+    },
+  ];
 
   const aiResp = await callGemini(apiKey, messages);
-  return await handleAIResponse(aiResp, totalPages, hasUsefulText ? "texto" : "ocr");
+  return await handleAIResponse(aiResp, totalPages, "texto");
 }
 
 
