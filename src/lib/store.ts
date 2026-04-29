@@ -2328,6 +2328,9 @@ export function findDuplicateTransferenciaAdvanced(
     return false;
   });
 }
+
+/** Exclui todas as receitas de uma recorrência (a partir de um mês opcional). */
+export function deleteReceitaRecorrencia(
   recorrenciaId: string,
   fromMes?: number,
   fromAno?: number,
