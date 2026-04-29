@@ -861,7 +861,7 @@ function MinhaRendaCard({
     <Link
       to="/renda"
       search={{ ano, mes }}
-      className="flex h-auto self-start items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
+      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
     >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
         <ArrowUp className="h-4 w-4" />
