@@ -296,7 +296,29 @@ function GastosPage() {
             Encontre rapidinho para onde seu dinheiro foi.
           </p>
         </div>
+        <Button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="hidden sm:inline-flex h-10 rounded-full"
+          variant="secondary"
+        >
+          <Upload className="h-4 w-4" />
+          Importar extrato
+        </Button>
       </header>
+
+      {/* Botão de import no mobile */}
+      <Button
+        type="button"
+        onClick={() => setImportOpen(true)}
+        className="mt-3 sm:hidden h-11 w-full rounded-2xl"
+        variant="secondary"
+      >
+        <Upload className="h-4 w-4" />
+        Importar extrato
+      </Button>
+
+      <ImportExtratoDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* Busca grande */}
       <div className="mt-4 relative">
