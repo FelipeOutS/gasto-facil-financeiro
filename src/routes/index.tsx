@@ -401,72 +401,77 @@ function Index() {
         </div>
       </section>
 
-      {(temAlertasDashboard || !!limiteTotal) && (
-        <>
-          {/* ===== Linha 3: Alertas financeiros + Limite mensal ===== */}
-          <SectionLabel>Alertas e limites</SectionLabel>
-          <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-            {temAlertasDashboard && (
-              <div className={cn("min-w-0 self-start", limiteTotal ? "xl:col-span-8" : "xl:col-span-12")}>
-                <AlertasContasCard contas={contas} />
-              </div>
-            )}
-            {!!limiteTotal && (
-              <div className={cn("min-w-0 self-start", temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12")}>
-                <LimiteMensalCard
-                  total={total}
-                  limiteTotal={limiteTotal}
-                  usoLimite={usoLimite}
-                  passouLimite={!!passouLimite}
-                  proximoLimite={!!proximoLimite}
-                />
-              </div>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
-      <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        <div className={cn("min-w-0 self-start", temOrcamentoMes ? "xl:col-span-6" : "xl:col-span-12")}>
-          <ResumoMesCard
-            mes={ym.mes}
-            ano={ym.ano}
-            saldo={saldo}
-            totalEntradas={totalEntradas}
-            totalGastos={total}
-            maiorCategoria={maior ?? null}
-            categorias={categorias}
-            gastosConfirmados={gastosConfirmados}
-            contasAtrasadas={contasResumo.atrasadasCount}
-            limiteTotal={limiteTotal}
-          />
-        </div>
-        {temOrcamentoMes && (
-          <div className="min-w-0 self-start xl:col-span-6">
-            <OrcamentoCard
-              categorias={categorias}
-              gastos={gastosConfirmados}
-              mes={ym.mes}
-              ano={ym.ano}
+      {/* ===== Linha 3: Alertas financeiros + (Limite mensal / Minha renda) ===== */}
+      <SectionLabel>Alertas e limites</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-stretch">
+        {temAlertasDashboard && (
+          <div className="flex min-w-0 xl:col-span-8">
+            <div className="flex w-full">
+              <AlertasContasCard contas={contas} />
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12",
+          )}
+        >
+          {!!limiteTotal && (
+            <LimiteMensalCard
+              total={total}
+              limiteTotal={limiteTotal}
+              usoLimite={usoLimite}
+              passouLimite={!!passouLimite}
+              proximoLimite={!!proximoLimite}
             />
-          </div>
-        )}
-      </section>
-
-      {/* ===== Linha 5: Próximas contas + Minha renda ===== */}
-      <SectionLabel>Próximos passos</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        {contasResumo.total > 0 && (
-          <div className="min-w-0 self-start xl:col-span-8">
-            <ContasCard resumo={contasResumo} variant="sideTop" />
-          </div>
-        )}
-        <div className={cn("min-w-0 self-start", contasResumo.total > 0 ? "xl:col-span-4" : "xl:col-span-12")}>
+          )}
           <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
         </div>
       </section>
+
+      {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
+      <SectionLabel>Resumo e orçamento</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+        <div className={cn("flex min-w-0", !temOrcamentoMes && "xl:col-span-2")}>
+          <div className="flex w-full">
+            <ResumoMesCard
+              mes={ym.mes}
+              ano={ym.ano}
+              saldo={saldo}
+              totalEntradas={totalEntradas}
+              totalGastos={total}
+              maiorCategoria={maior ?? null}
+              categorias={categorias}
+              gastosConfirmados={gastosConfirmados}
+              contasAtrasadas={contasResumo.atrasadasCount}
+              limiteTotal={limiteTotal}
+            />
+          </div>
+        </div>
+        {temOrcamentoMes && (
+          <div className="flex min-w-0">
+            <div className="flex w-full">
+              <OrcamentoCard
+                categorias={categorias}
+                gastos={gastosConfirmados}
+                mes={ym.mes}
+                ano={ym.ano}
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ===== Linha 5: Próximas contas ===== */}
+      {contasResumo.total > 0 && (
+        <>
+          <SectionLabel>Próximos passos</SectionLabel>
+          <section className="min-w-0">
+            <ContasCard resumo={contasResumo} variant="sideTop" />
+          </section>
+        </>
+      )}
 
       {/* ===== Atalhos secundários ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
