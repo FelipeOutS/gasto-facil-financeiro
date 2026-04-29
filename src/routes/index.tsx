@@ -384,7 +384,7 @@ function Index() {
 
       {/* ===== Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-start">
         <div className="min-w-0 lg:col-span-3">
             <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
