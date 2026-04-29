@@ -253,6 +253,13 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 typeof it.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.data)
                   ? it.data
                   : null;
+              const horarioMatch =
+                typeof it.horario === "string"
+                  ? it.horario.match(/\b(\d{1,2})[:hH](\d{2})\b/)
+                  : null;
+              const horario = horarioMatch
+                ? `${String(Math.min(23, parseInt(horarioMatch[1], 10))).padStart(2, "0")}:${String(Math.min(59, parseInt(horarioMatch[2], 10))).padStart(2, "0")}`
+                : null;
               const cat =
                 typeof it.categoriaSugerida === "string" &&
                 CATEGORIAS_VALIDAS.includes(it.categoriaSugerida)
