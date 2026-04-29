@@ -280,6 +280,15 @@ export type StatusFatura = "aberta" | "fechada" | "paga";
 // ---------- Contas a pagar ----------
 export type StatusConta = "pendente" | "pago" | "atrasado";
 
+export type FrequenciaRecorrencia = "semanal" | "quinzenal" | "mensal" | "anual";
+
+export const FREQUENCIAS_RECORRENCIA: Array<{ id: FrequenciaRecorrencia; label: string }> = [
+  { id: "semanal", label: "Semanal" },
+  { id: "quinzenal", label: "Quinzenal" },
+  { id: "mensal", label: "Mensal" },
+  { id: "anual", label: "Anual" },
+];
+
 export type ContaAPagar = {
   id: string;
   nome: string;
