@@ -12,8 +12,10 @@ import {
   MoreHorizontal,
   Receipt,
   Clock,
+  FileUp,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
 import {
   addCartao,
   deleteCartao,
