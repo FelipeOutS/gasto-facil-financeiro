@@ -490,6 +490,7 @@ export function ImportExtratoDialog({
         tipoMovimentacao: "despesa",
         formaPagamento: "outro",
         categoriaId: "outros",
+        statusRevisao: "novo",
         selecionado: true,
         dupStatus: "novo",
       },
