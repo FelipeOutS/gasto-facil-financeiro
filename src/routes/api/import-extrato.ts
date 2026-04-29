@@ -390,6 +390,78 @@ export const Route = createFileRoute("/api/import-extrato")({
   },
 });
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunk)),
+    );
+  }
+  return btoa(bin);
+}
+
+async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
+  let extractedText = "";
+  let totalPages = 0;
+  try {
+    const docProxy = await getDocumentProxy(bytes);
+    totalPages = docProxy.numPages;
+    const result = await extractText(docProxy, { mergePages: true });
+    extractedText =
+      typeof result.text === "string"
+        ? result.text
+        : (result.text as string[]).join("\n");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/password/i.test(msg)) {
+      return Response.json(
+        {
+          error:
+            "Este PDF parece estar protegido por senha. Exporte uma versão sem senha ou envie prints do extrato.",
+        },
+        { status: 400 },
+      );
+    }
+    console.error("[import-extrato] extractText error", msg);
+  }
+
+  const cleanText = sanitizeText(extractedText.trim());
+  const hasUsefulText = cleanText.length > 200;
+
+  const messages = hasUsefulText
+    ? [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
+        },
+      ]
+    : [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Este é um extrato bancário em PDF (provavelmente escaneado). Extraia a lista de movimentações.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${bytesToBase64(bytes)}`,
+              },
+            },
+          ],
+        },
+      ];
+
+  const aiResp = await callGemini(apiKey, messages);
+  return await handleAIResponse(aiResp, totalPages, hasUsefulText ? "texto" : "ocr");
+}
+
+
 async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
   if (!aiResp.ok) {
     const text = await aiResp.text();
