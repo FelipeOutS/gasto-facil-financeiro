@@ -1183,9 +1183,3 @@ function Field({
     </div>
   );
 }
-
-// Tabs imports unused — preserve tree-shake friendliness
-void Tabs;
-void TabsList;
-void TabsTrigger;
-void TabsContent;
