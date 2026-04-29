@@ -2987,6 +2987,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     import_batch_id: input.importBatchId ?? null,
   };
 
+  const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
+
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
     const id = crypto.randomUUID();
@@ -2999,6 +3001,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       observacao: input.observacao,
       recorrente: !!recurringId,
       recorrenciaId: recurringId ?? undefined,
+      frequenciaRecorrencia: recurringId ? freq : undefined,
       dataInicio: recurringId ? input.dataVencimento : undefined,
       dataFim: recurringId ? input.dataFim : undefined,
       status: "pendente",
@@ -3018,6 +3021,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       observacao: input.observacao ?? null,
       recorrente: !!recurringId,
       recorrencia_id: recurringId,
+      frequencia_recorrencia: recurringId ? freq : null,
       data_inicio: recurringId ? input.dataVencimento : null,
       data_fim: recurringId && input.dataFim ? input.dataFim : null,
       status: "pendente",
@@ -3027,13 +3031,21 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     });
   }
 
+  function addOccurrence(base: Date, i: number): Date {
+    const d = new Date(base);
+    if (freq === "semanal") d.setDate(d.getDate() + 7 * i);
+    else if (freq === "quinzenal") d.setDate(d.getDate() + 14 * i);
+    else if (freq === "anual") d.setFullYear(d.getFullYear() + i);
+    else d.setMonth(d.getMonth() + i); // mensal
+    return d;
+  }
+
   if (input.recorrente) {
-    const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const total = Math.max(1, input.recorrenteMeses ?? 12);
     const recId = crypto.randomUUID();
-    for (let i = 0; i < meses; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
-      const iso = d.toISOString().slice(0, 10);
+    for (let i = 0; i < total; i++) {
+      const d = addOccurrence(baseDate, i);
+      const iso = toLocalISODate(d);
       if (input.dataFim && iso > input.dataFim) break;
       pushOne(iso, recId);
     }
