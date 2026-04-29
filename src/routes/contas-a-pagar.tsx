@@ -1023,6 +1023,9 @@ function ContaFormDialog({
   const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
+  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
+    conta?.frequenciaRecorrencia ?? "mensal",
+  );
   const [meses, setMeses] = useState("12");
 
   // Campos extras
