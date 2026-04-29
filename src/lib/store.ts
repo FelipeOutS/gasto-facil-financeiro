@@ -1366,6 +1366,7 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.essencial !== undefined) row.essencial = patch.essencial ?? null;
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
+  if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
 
   void supabase
     .from("gastos")
