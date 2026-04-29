@@ -737,7 +737,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -746,6 +746,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
       sbAny.from("cartoes").select("*").eq("user_id", userId),
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
+      sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -757,6 +758,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
     if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
+    if (transferenciasRes.error) console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
 
     memGastos = normalizeGastosForCalculations(
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
@@ -774,6 +776,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map(
       (r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey),
+    );
+    memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
+      (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
     );
 
     setHydrationStatus("ready");
