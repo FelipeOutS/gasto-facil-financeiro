@@ -269,10 +269,53 @@ export const Route = createFileRoute("/api/import-extrato")({
             );
           }
 
-          const body = (await request.json()) as {
-            pdf?: string;
-            imagens?: string[];
-          };
+          const contentType = request.headers.get("content-type") || "";
+
+          // ---------- PDF via multipart/form-data (caminho preferido p/ PDFs) ----------
+          if (contentType.includes("multipart/form-data")) {
+            let form: FormData;
+            try {
+              form = await request.formData();
+            } catch (err) {
+              console.error("[import-extrato] formData parse error", err);
+              return Response.json(
+                { error: "Não consegui ler o arquivo enviado. Tente novamente." },
+                { status: 400 },
+              );
+            }
+            const file = form.get("pdf");
+            if (!(file instanceof File)) {
+              return Response.json(
+                { error: "Envie um arquivo PDF no campo 'pdf'." },
+                { status: 400 },
+              );
+            }
+            if (file.size === 0) {
+              return Response.json(
+                { error: "Arquivo PDF vazio." },
+                { status: 400 },
+              );
+            }
+            if (file.size > 15 * 1024 * 1024) {
+              return Response.json(
+                { error: "PDF muito grande. Tente um arquivo menor que 15 MB." },
+                { status: 413 },
+              );
+            }
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            return await processPdfBytes(bytes, apiKey);
+          }
+
+          // ---------- JSON (compat: imagens, ou pdf em base64 quando bem pequeno) ----------
+          let body: { pdf?: string; imagens?: string[] };
+          try {
+            body = (await request.json()) as { pdf?: string; imagens?: string[] };
+          } catch {
+            return Response.json(
+              { error: "Requisição inválida." },
+              { status: 400 },
+            );
+          }
 
           // ---------- PDF ----------
           if (typeof body?.pdf === "string" && body.pdf.length > 0) {
