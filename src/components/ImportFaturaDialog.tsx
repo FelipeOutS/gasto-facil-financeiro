@@ -130,6 +130,7 @@ export function ImportFaturaDialog({
     setCsvRows([]);
     setCsvMap([]);
     setItems([]);
+    setOrigem(null);
     setSaving(false);
     setErrorMessage(null);
     setCartaoId(cartaoIdInicial ?? cartoes[0]?.id);
