@@ -133,7 +133,7 @@ function MetasPage() {
         <p className="text-xs font-medium text-muted-foreground">Total acumulado em metas</p>
         <Money value={totalAcumulado} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
         <p className="mt-1 text-xs text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta" : "metas"} criadas
+          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}
         </p>
       </section>
 
