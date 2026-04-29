@@ -402,7 +402,7 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [imagemKey, setImagemKey] = useState<MetaArtKey>("objetivo");
+  const [imagemKey, setImagemKey] = useState<MetaCoverKey>("objetivo");
   /** Indica se o usuário escolheu manualmente — caso contrário, mantemos auto-match. */
   const [imagemManual, setImagemManual] = useState(false);
 
@@ -427,8 +427,8 @@ function MetaFormDialog({
       setDescricao(baseMeta.descricao ?? "");
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
-      const persistida = baseMeta.imagemKey as MetaArtKey | undefined;
-      setImagemKey(persistida ?? getMetaArtKey(baseMeta.nome, baseMeta.descricao));
+      const persistida = baseMeta.imagemKey as MetaCoverKey | undefined;
+      setImagemKey(persistida ?? getMetaCoverKey(baseMeta.nome, baseMeta.descricao));
       setImagemManual(!!persistida);
     }
     // Pré-preenche com o valor acumulado atual no modo "atualizar valor"
@@ -445,7 +445,7 @@ function MetaFormDialog({
   useEffect(() => {
     if (!open || imagemManual) return;
     if (!isCreate && !isEdit) return;
-    setImagemKey(getMetaArtKey(nome, descricao));
+    setImagemKey(getMetaCoverKey(nome, descricao));
   }, [nome, descricao, imagemManual, open, isCreate, isEdit]);
 
   function handleCreateOrEdit() {
@@ -619,7 +619,7 @@ function MetaFormDialog({
                     type="button"
                     onClick={() => {
                       setImagemManual(false);
-                      setImagemKey(getMetaArtKey(nome, descricao));
+                      setImagemKey(getMetaCoverKey(nome, descricao));
                     }}
                     className="text-[11px] font-semibold text-primary hover:underline"
                   >
@@ -628,10 +628,10 @@ function MetaFormDialog({
                 )}
               </div>
               <div className="mt-2 overflow-hidden rounded-2xl border border-border">
-                <MetaArt artKey={imagemKey} className="h-28 w-full" />
+                <MetaCover coverKey={imagemKey} className="h-28 w-full" />
               </div>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
-                {META_ART_OPTIONS.map((opt) => {
+                {META_COVER_OPTIONS.map((opt) => {
                   const active = imagemKey === opt.key;
                   return (
                     <button
@@ -650,7 +650,7 @@ function MetaFormDialog({
                       title={opt.label}
                       aria-label={opt.label}
                     >
-                      <MetaArt artKey={opt.key} className="h-full w-full" />
+                      <MetaCover coverKey={opt.key} className="h-full w-full" />
                       {active && (
                         <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background shadow">
                           <Check className="h-3 w-3" />
