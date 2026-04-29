@@ -1,5 +1,4 @@
 import { type ReactNode } from "react";
-import { useLocation } from "@tanstack/react-router";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { AuthGate } from "./AuthGate";
