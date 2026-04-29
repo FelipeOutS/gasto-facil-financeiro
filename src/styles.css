@@ -308,10 +308,12 @@ body {
       transform: translateY(-1px);
     }
   }
-  /* Stagger helper — combine com .animate-rise via inline style delay */
+  /* Stagger helper — entrada progressiva sem depender de opacity inicial.
+     Em alguns navegadores mobile a animação pode ser pulada/interrompida,
+     então o conteúdo precisa permanecer visível por padrão. */
   .stagger > * {
-    opacity: 0;
-    animation: rise 380ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    opacity: 1;
+    animation: rise 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
   .stagger > *:nth-child(1) { animation-delay: 20ms; }
   .stagger > *:nth-child(2) { animation-delay: 60ms; }
