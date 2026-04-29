@@ -420,7 +420,16 @@ function CartaoCard({
 
   return (
     <article
-      className="hover-lift card-press group relative overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all duration-300"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-6 text-white shadow-elevated transition-all duration-300 sm:p-7"
       style={{ background: theme.background }}
     >
       <div
