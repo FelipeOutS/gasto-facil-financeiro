@@ -355,7 +355,7 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
     }
   }
 
-  if (normalized.confirmado === undefined || normalized.confirmado === null) {
+  if ((normalized as Partial<Gasto>).confirmado == null) {
     normalized.confirmado = true;
     row.confirmado = true;
   }
@@ -1446,7 +1446,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     for (let i = 0; i < total; i++) {
       const d = new Date(baseDate);
       d.setMonth(d.getMonth() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
       out.push({
         row: {
@@ -1502,7 +1502,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     for (let i = 0; i < meses; i++) {
       const d = new Date(baseDate);
       d.setMonth(d.getMonth() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
       out.push({
         row: {
