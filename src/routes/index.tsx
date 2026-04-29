@@ -229,7 +229,7 @@ function Index() {
           </p>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 stagger">
+        <section className="mt-6 grid grid-cols-2 gap-3">
           <WelcomeCard
             to="/renda"
             search={{ ano: ym.ano, mes: ym.mes }}
@@ -364,21 +364,21 @@ function Index() {
 
       {/* ===== Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <div className="lg:col-span-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="min-w-0 lg:col-span-3">
             <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <RecentTransactionsCard ultimos={ultimos} />
         </div>
       </div>
 
       {/* ===== Próximas contas + Limite/Renda ===== */}
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <div className="lg:col-span-3">
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="min-w-0 lg:col-span-3">
           <ContasCard resumo={contasResumo} variant="sideTop" />
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:col-span-2">
+        <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
           {limiteTotal ? (
             <section className="rounded-2xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
@@ -457,7 +457,7 @@ function Index() {
 
       {/* ===== Atalhos secundários ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <Link
           to="/orcamento"
           className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
@@ -534,7 +534,7 @@ function Index() {
                 Ver tudo →
               </Link>
             </div>
-            <div className="mt-4 grid grid-cols-[140px_1fr] items-center gap-3">
+            <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-[140px_1fr]">
               <div className="relative h-[140px] w-[140px]">
                 <ResponsiveContainer>
                   <PieChart>
@@ -574,7 +574,7 @@ function Index() {
                   </div>
                 </div>
               </div>
-              <ul className="space-y-2">
+              <ul className="min-w-0 space-y-2">
                 {porCategoria.slice(0, 5).map((c) => (
                   <li key={c.id} className="flex items-center gap-2">
                     <span
@@ -912,7 +912,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
             </Link>
           </div>
         ) : (
-          <ul className="space-y-2 stagger">
+          <ul className="space-y-2">
             {ultimos.slice(0, 5).map((g) => {
               const cat = getCategoriaById(g.categoriaId);
               return (
