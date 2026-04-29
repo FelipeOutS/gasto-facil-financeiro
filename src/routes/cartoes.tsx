@@ -403,10 +403,12 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function CartaoCard({
   cartao,
+  onOpen,
   onEdit,
   onDelete,
 }: {
   cartao: Cartao;
+  onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
