@@ -314,7 +314,16 @@ function Index() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
           <div className="lg:hidden">{monthSwitcher}</div>
-          <NotificationBell contas={contas} />
+          <NotificationBell
+            contas={contas}
+            orcamento={{
+              categorias,
+              gastos: gastosConfirmados,
+              mes: ym.mes,
+              ano: ym.ano,
+              getLimite: (catId) => getLimite(catId, ym.mes, ym.ano),
+            }}
+          />
         </div>
       </header>
 
