@@ -421,17 +421,23 @@ function MetaFormDialog({
 
   function handleAddValor() {
     if (!baseMeta) return;
-    const v = parseBRLInput(valorStr);
-    if (!v) {
-      toast.error("Informe um valor.");
+    const trimmed = valorStr.trim();
+    if (trimmed === "") {
+      toast.error("Informe o valor acumulado atual.");
       return;
     }
-    addMovimentacaoMeta({
-      metaId: baseMeta.id,
-      valor: v,
-      bancoId: movBanco === "nenhum" ? undefined : movBanco,
-    });
-    toast.success("Boa, valor adicionado. 🚀");
+    const v = parseBRLInput(valorStr);
+    // permite 0,00 para resetar; bloqueia negativo
+    if (v < 0 || Number.isNaN(v)) {
+      toast.error("O valor não pode ser negativo.");
+      return;
+    }
+    updateMeta(baseMeta.id, { valorAtual: v });
+    if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
+      toast.success("Você passou da meta. Melhor ainda. 🏆");
+    } else {
+      toast.success("Meta atualizada. Agora tá certinho.");
+    }
     onClose();
   }
 
