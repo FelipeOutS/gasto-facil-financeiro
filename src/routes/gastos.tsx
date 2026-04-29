@@ -3,11 +3,22 @@ import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
+  MoreVertical,
+  Pencil,
   Search,
   SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EditGastoDialog } from "@/components/EditGastoDialog";
+import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -164,6 +175,7 @@ function GastosPage() {
   const [valorMin, setValorMin] = useState<string>("");
   const [valorMax, setValorMax] = useState<string>("");
   const [advOpen, setAdvOpen] = useState(false);
+  const [editing, setEditing] = useState<Gasto | null>(null);
 
   const range = useMemo(
     () => getRange(periodo, { from: customFrom, to: customTo }),
@@ -608,16 +620,42 @@ function GastosPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
-                    <button
-                      onClick={() => {
-                        deleteGasto(g.id);
-                        toast.success("Gasto removido.");
-                      }}
-                      className="text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditing(g)}
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label="Editar gasto"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="text-muted-foreground transition-colors hover:text-foreground"
+                            aria-label="Mais ações"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditing(g)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar gasto
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              deleteGasto(g.id);
+                              toast.success("Gasto removido.");
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir gasto
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </motion.li>
               );
@@ -625,6 +663,14 @@ function GastosPage() {
           </AnimatePresence>
         </ul>
       )}
+
+      <EditGastoDialog
+        gasto={editing}
+        open={!!editing}
+        onOpenChange={(v) => {
+          if (!v) setEditing(null);
+        }}
+      />
     </MobileShell>
   );
 }
