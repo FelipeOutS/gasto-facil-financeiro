@@ -1716,7 +1716,10 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
       const otherKey = `${other.cartaoId ?? ""}|${other.data}|${otherDesc.trim().toLowerCase()}|${other.valor.toFixed(2)}`;
       return otherKey === key;
     });
-    return firstIndex === index && !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
+    if (firstIndex !== index) return false;
+    // Dedup contra a base local só se NÃO vier de extrato (que já fez dedup avançado por idOperacao no Dialog).
+    if (inp.importBatchId || inp.idOperacaoBanco) return true;
+    return !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
   });
   if (uniqueInputs.length === 0) return [];
   const allBuilt = uniqueInputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
