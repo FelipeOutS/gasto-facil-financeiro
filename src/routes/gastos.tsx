@@ -620,16 +620,42 @@ function GastosPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
-                    <button
-                      onClick={() => {
-                        deleteGasto(g.id);
-                        toast.success("Gasto removido.");
-                      }}
-                      className="text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditing(g)}
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label="Editar gasto"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="text-muted-foreground transition-colors hover:text-foreground"
+                            aria-label="Mais ações"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditing(g)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar gasto
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              deleteGasto(g.id);
+                              toast.success("Gasto removido.");
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir gasto
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </motion.li>
               );
@@ -637,6 +663,14 @@ function GastosPage() {
           </AnimatePresence>
         </ul>
       )}
+
+      <EditGastoDialog
+        gasto={editing}
+        open={!!editing}
+        onOpenChange={(v) => {
+          if (!v) setEditing(null);
+        }}
+      />
     </MobileShell>
   );
 }
