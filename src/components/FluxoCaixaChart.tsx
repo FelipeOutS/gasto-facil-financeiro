@@ -214,6 +214,7 @@ export function FluxoCaixaChart({
             </PieChart>
           )}
         </ResponsiveContainer>
+        )}
       </div>
     </section>
   );
