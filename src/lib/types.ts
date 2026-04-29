@@ -51,6 +51,10 @@ export type Gasto = {
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
   origem?: string;
+  /** Lote de importação ao qual esse gasto pertence (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco (quando importado de extrato). */
+  idOperacaoBanco?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
