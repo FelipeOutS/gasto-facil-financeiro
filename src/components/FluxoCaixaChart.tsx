@@ -123,24 +123,24 @@ export function FluxoCaixaChart({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
-        <div className="rounded-xl bg-card-elevated px-3 py-2">
+      <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-[11px]">
+        <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
           <p className="text-muted-foreground">Entradas</p>
-          <p className="num mt-0.5 font-semibold text-success">
+          <p className="num mt-0.5 truncate font-semibold text-success">
             {formatBRLCompact(totalEntradas)}
           </p>
         </div>
-        <div className="rounded-xl bg-card-elevated px-3 py-2">
+        <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
           <p className="text-muted-foreground">Gastos</p>
-          <p className="num mt-0.5 font-semibold text-destructive">
+          <p className="num mt-0.5 truncate font-semibold text-destructive">
             {formatBRLCompact(totalGastos)}
           </p>
         </div>
-        <div className="rounded-xl bg-card-elevated px-3 py-2">
+        <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
           <p className="text-muted-foreground">Saldo</p>
           <p
             className={cn(
-              "num mt-0.5 font-semibold",
+              "num mt-0.5 truncate font-semibold",
               totalEntradas - totalGastos < 0 && "text-destructive",
             )}
           >
