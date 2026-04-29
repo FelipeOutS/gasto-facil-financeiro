@@ -632,6 +632,8 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     observacao: r.observacao ?? undefined,
     recorrente: r.recorrente,
     recorrenciaId: r.recorrencia_id ?? undefined,
+    frequenciaRecorrencia:
+      (r.frequencia_recorrencia as ContaAPagar["frequenciaRecorrencia"]) ?? undefined,
     dataInicio: r.data_inicio ?? undefined,
     dataFim: r.data_fim ?? undefined,
     status: (r.status as StatusConta) ?? "pendente",
