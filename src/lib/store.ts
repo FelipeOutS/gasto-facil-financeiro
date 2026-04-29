@@ -108,6 +108,7 @@ const EMPTY_MOV: MovimentacaoMeta[] = [];
 const EMPTY_CARTOES: Cartao[] = [];
 const EMPTY_CONTAS: ContaAPagar[] = [];
 const EMPTY_TRANSFERENCIAS: TransferenciaInterna[] = [];
+const EMPTY_EXTRATOS: ExtratoImportado[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -121,6 +122,7 @@ let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
+let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
