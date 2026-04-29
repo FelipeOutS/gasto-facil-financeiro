@@ -249,7 +249,7 @@ function MetaCard({
   const isAlmostDone = pct >= 80 && !isDone;
 
   // imagemKey persistida tem prioridade; caso contrário, derivamos pelo nome.
-  const artKey = (meta.imagemKey as MetaArtKey | undefined) ?? getMetaArtKey(meta.nome, meta.descricao);
+  const coverKey = (meta.imagemKey as MetaCoverKey | undefined) ?? getMetaCoverKey(meta.nome, meta.descricao);
 
   return (
     <div
@@ -262,10 +262,10 @@ function MetaCard({
         boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
       }}
     >
-      {/* Cover ilustrado */}
-      <div className="relative h-32 w-full overflow-hidden">
+      {/* Cover com imagem real */}
+      <div className="relative h-36 w-full overflow-hidden">
         <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
-          <MetaArt artKey={artKey} className="h-full w-full" />
+          <MetaCover coverKey={coverKey} alt={meta.nome} className="h-full w-full" />
         </div>
         {/* Overlay para legibilidade do título */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
