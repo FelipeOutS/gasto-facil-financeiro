@@ -1289,7 +1289,7 @@ function ContaFormDialog({
                 <div>
                   <p className="text-sm font-medium">Conta recorrente</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Repete todo mês na mesma data
+                    Gera as próximas ocorrências automaticamente
                   </p>
                 </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
