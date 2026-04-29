@@ -407,7 +407,7 @@ function Index() {
           <SectionLabel>Alertas e limites</SectionLabel>
           <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
             {temAlertasDashboard && (
-              <div className="min-w-0 self-start xl:col-span-8">
+              <div className={cn("min-w-0 self-start", limiteTotal ? "xl:col-span-8" : "xl:col-span-12")}>
                 <AlertasContasCard contas={contas} />
               </div>
             )}
