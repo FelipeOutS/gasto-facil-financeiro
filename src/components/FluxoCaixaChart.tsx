@@ -152,6 +152,15 @@ export function FluxoCaixaChart({
       </div>
 
       <div className="mt-4 h-[220px] w-full sm:h-[260px]">
+        {semHistoricoSuficiente ? (
+          <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 text-center">
+            <TrendingUp className="h-7 w-7 text-muted-foreground" />
+            <p className="mt-2 text-sm font-medium">Ainda não há histórico suficiente</p>
+            <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+              Continue lançando seus gastos e receitas para o gráfico ficar mais completo nos próximos meses.
+            </p>
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           {tipo === "area" ? (
             <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
