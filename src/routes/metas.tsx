@@ -267,9 +267,9 @@ function MetaCard({
         <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
           <MetaCover coverKey={coverKey} alt={meta.nome} className="h-full w-full" />
         </div>
-        {/* Overlay para legibilidade do título */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/30 to-transparent" />
+        {/* Overlay para legibilidade do título sobre foto real */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
 
         {/* Badges no topo */}
         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
