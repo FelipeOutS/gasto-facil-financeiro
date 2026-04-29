@@ -192,6 +192,63 @@ function sanitizeText(text: string): string {
     .slice(0, 80_000);
 }
 
+function stripAccents(text: string) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseValorBR(raw: string): number | null {
+  const cleaned = raw.replace(/R\$/gi, "").replace(/\s/g, "").trim();
+  if (!cleaned) return null;
+  const negative = /^-/.test(cleaned) || /-$/.test(cleaned) || /^\(/.test(cleaned);
+  let n = cleaned.replace(/[()\-+]/g, "");
+  if (n.includes(",") && n.includes(".")) n = n.replace(/\./g, "").replace(",", ".");
+  else if (n.includes(",")) n = n.replace(",", ".");
+  const parsed = Number(n);
+  if (!Number.isFinite(parsed) || parsed === 0) return null;
+  return negative ? -parsed : parsed;
+}
+
+function parseDataBR(raw: string, fallbackYear?: number): string | null {
+  let m = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
+  if (m) {
+    const y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+    const mo = Number(m[2]);
+    const d = Number(m[1]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  m = raw.match(/\b(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})\b/);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  m = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})\b/);
+  if (m && fallbackYear) {
+    const mo = Number(m[2]);
+    const d = Number(m[1]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${fallbackYear}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  return null;
+}
+
+function guessYearFromText(text: string): number {
+  const years = [...text.matchAll(/\b(20\d{2})\b/g)].map((m) => Number(m[1]));
+  const valid = years.find((y) => y >= 2020 && y <= 2100);
+  return valid ?? new Date().getFullYear();
+}
+
+function suggestCategory(desc: string): string {
+  const t = stripAccents(desc).toLowerCase();
+  if (/uber|\b99\b|transporte|posto|combustivel|metro|onibus/.test(t)) return "transporte";
+  if (/mercado|mercearia|comercial|supermerc|atacad|carrefour|assai|extra/.test(t)) return "mercado";
+  if (/sabesp|eletropaulo|enel|claro|vivo|tim\b|internet|energia|agua|conta/.test(t)) return "contas";
+  if (/food|burger|lanches|grill|restaurante|ifood|rappi|padaria|pizzaria/.test(t)) return "alimentacao";
+  if (/rendimento|juros/.test(t)) return "outros";
+  if (/meli dolar|invest|resgate|aplicacao/.test(t)) return "outros";
+  return "outros";
+}
+
 async function callGemini(apiKey: string, messages: unknown[]) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
