@@ -1248,8 +1248,9 @@ export function deleteCartao(id: string) {
  */
 export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
-  const gastosCartao = memGastos.filter(
-    (g) => g.cartaoId === cartaoId && g.formaPagamento === "credito",
+  const analisados = normalizeGastosForCalculations(memGastos);
+  const gastosCartao = analisados.filter(
+    (g) => gastoCartaoId(g) === cartaoId && g.formaPagamento === "credito" && g.confirmado !== false,
   );
 
   let inicio: Date;
@@ -1275,17 +1276,48 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
   }
 
-  const usadoMes = gastosCartao
-    .filter((g) => {
-      // Parse local (YYYY-MM-DD) para evitar problemas de fuso.
-      const [ay, am, ad] = g.data.split("-").map((n) => parseInt(n, 10));
-      if (!ay || !am || !ad) return false;
-      const d = new Date(ay, am - 1, ad);
-      return d >= inicio && d <= fim;
-    })
-    .reduce((s, g) => s + g.valor, 0);
+  const considerados = gastosCartao.filter((g) => {
+    const d = parseDateLocal(g.data);
+    return !!d && d >= inicio && d <= fim;
+  });
+  const usadoMes = considerados.reduce((s, g) => s + g.valor, 0);
 
   const limite = cartao?.limiteTotal ?? 0;
+  if (typeof window !== "undefined" && window.localStorage.getItem("gf:debug-finance") === "1") {
+    const ignorados = analisados
+      .filter((g) => gastoCartaoId(g) === cartaoId || isImportadoOuFatura(g))
+      .filter((g) => !considerados.some((c) => c.id === g.id))
+      .map((g) => ({
+        id: g.id,
+        descricao: g.descricao,
+        valor: g.valor,
+        data: g.data,
+        formaPagamento: g.formaPagamento,
+        cartaoId: gastoCartaoId(g),
+        origem: g.origem,
+        confirmado: g.confirmado,
+        motivo:
+          gastoCartaoId(g) !== cartaoId
+            ? "outro cartão/sem cartão"
+            : g.formaPagamento !== "credito"
+              ? "forma diferente de credito"
+              : g.confirmado === false
+                ? "não confirmado"
+                : "fora do ciclo atual",
+      }));
+    console.info("[financeiro:cartao] resumo", {
+      cartaoId,
+      nome: cartao?.nome,
+      totalAnalisados: analisados.length,
+      inicio: toLocalISODate(inicio),
+      fim: toLocalISODate(fim),
+      considerados,
+      ignorados,
+      usadoMes,
+      disponivel: Math.max(0, limite - usadoMes),
+    });
+  }
+
   return {
     usadoMes,
     limite,
