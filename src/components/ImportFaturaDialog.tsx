@@ -1058,7 +1058,10 @@ function ReviewRow({
             </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="num">{item.data || "sem data"}</span>
+            <span className="num">
+              {item.data || "sem data"}
+              {item.horario ? ` às ${item.horario}` : ""}
+            </span>
             {item.totalParcelas && item.totalParcelas > 1 && (
               <span className="num">
                 · {item.parcelaAtual ?? 1}/{item.totalParcelas}
