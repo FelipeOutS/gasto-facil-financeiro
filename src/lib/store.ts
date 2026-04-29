@@ -3185,6 +3185,195 @@ export function desmarcarContaComoPago(id: string) {
     });
 }
 
+// ============================================================
+// EXTRATOS IMPORTADOS — histórico e reversão
+// ============================================================
+export function getExtratosImportados(): ExtratoImportado[] {
+  return memExtratos;
+}
+
+export type CriarExtratoImportadoInput = {
+  id: string; // batchId — gerado antes pelo dialog para vincular aos itens
+  nomeArquivo?: string;
+  banco?: string;
+  tipoOrigem: TipoOrigemExtrato;
+  periodoInicio?: string;
+  periodoFim?: string;
+  qtdMovimentacoes: number;
+  qtdDuplicadasIgnoradas: number;
+  totalReceitas: number;
+  totalDespesas: number;
+  totalGuardado: number;
+  totalTransferencias: number;
+  observacao?: string;
+};
+
+export async function createExtratoImportado(
+  input: CriarExtratoImportadoInput,
+): Promise<ExtratoImportado | null> {
+  if (!activeUserId) return null;
+  const now = new Date().toISOString();
+  const novo: ExtratoImportado = {
+    id: input.id,
+    nomeArquivo: input.nomeArquivo,
+    banco: input.banco,
+    tipoOrigem: input.tipoOrigem,
+    dataImportacao: now,
+    periodoInicio: input.periodoInicio,
+    periodoFim: input.periodoFim,
+    qtdMovimentacoes: input.qtdMovimentacoes,
+    qtdDuplicadasIgnoradas: input.qtdDuplicadasIgnoradas,
+    totalReceitas: input.totalReceitas,
+    totalDespesas: input.totalDespesas,
+    totalGuardado: input.totalGuardado,
+    totalTransferencias: input.totalTransferencias,
+    status: "importado",
+    observacao: input.observacao,
+    criadoEm: now,
+    atualizadoEm: now,
+  };
+  memExtratos = [novo, ...memExtratos];
+  emit();
+  const { error } = await sbAny.from("extratos_importados").insert({
+    id: input.id,
+    user_id: activeUserId,
+    nome_arquivo: input.nomeArquivo ?? null,
+    banco: input.banco ?? null,
+    tipo_origem: input.tipoOrigem,
+    data_importacao: now,
+    periodo_inicio: input.periodoInicio ?? null,
+    periodo_fim: input.periodoFim ?? null,
+    qtd_movimentacoes: input.qtdMovimentacoes,
+    qtd_duplicadas_ignoradas: input.qtdDuplicadasIgnoradas,
+    total_receitas: input.totalReceitas,
+    total_despesas: input.totalDespesas,
+    total_guardado: input.totalGuardado,
+    total_transferencias: input.totalTransferencias,
+    status: "importado",
+    observacao: input.observacao ?? null,
+  });
+  if (error) {
+    console.error("[store] createExtratoImportado failed", error);
+    // rollback in-memory
+    memExtratos = memExtratos.filter((e) => e.id !== input.id);
+    emit();
+    return null;
+  }
+  return novo;
+}
+
+export type ItensDoBatch = {
+  gastos: Gasto[];
+  receitas: Receita[];
+  transferencias: TransferenciaInterna[];
+  guardado: Guardado[];
+  movimentacoesMeta: MovimentacaoMeta[];
+};
+
+export function getItensDoBatch(batchId: string): ItensDoBatch {
+  return {
+    gastos: memGastos.filter((g) => g.importBatchId === batchId),
+    receitas: memReceitas.filter((r) => r.importBatchId === batchId),
+    transferencias: memTransferencias.filter((t) => t.importBatchId === batchId),
+    guardado: memGuardado.filter((g) => g.importBatchId === batchId),
+    movimentacoesMeta: memMov.filter((m) => m.importBatchId === batchId),
+  };
+}
+
+/**
+ * Detecta itens do lote que foram editados depois da importação.
+ * Compara updated_at vs created_at; tolerância de 5s pra evitar falsos positivos.
+ */
+export function getItensEditadosDoBatch(batchId: string): {
+  total: number;
+  gastos: number;
+  receitas: number;
+  transferencias: number;
+} {
+  const TOLERANCIA_MS = 5000;
+  const isEdited = (criadoEm?: string, atualizadoEm?: string) => {
+    if (!criadoEm || !atualizadoEm) return false;
+    const a = new Date(criadoEm).getTime();
+    const b = new Date(atualizadoEm).getTime();
+    return b - a > TOLERANCIA_MS;
+  };
+  const itens = getItensDoBatch(batchId);
+  const g = itens.gastos.filter((x) => isEdited(x.criadoEm, x.atualizadoEm)).length;
+  const r = itens.receitas.filter((x) => isEdited(x.criadoEm, x.atualizadoEm)).length;
+  const t = itens.transferencias.filter((x) => isEdited(x.criadoEm, x.atualizadoEm)).length;
+  return { total: g + r + t, gastos: g, receitas: r, transferencias: t };
+}
+
+export async function revertExtratoImportado(batchId: string): Promise<boolean> {
+  if (!activeUserId) return false;
+  const extrato = memExtratos.find((e) => e.id === batchId);
+  if (!extrato) return false;
+  if (extrato.status === "revertido") return true;
+
+  // Hard delete em todas as tabelas com import_batch_id = batchId
+  const tables = [
+    "gastos",
+    "receitas",
+    "transferencias_internas",
+    "dinheiro_guardado",
+    "movimentacoes_meta",
+  ];
+  for (const tbl of tables) {
+    const { error } = await sbAny
+      .from(tbl)
+      .delete()
+      .eq("user_id", activeUserId)
+      .eq("import_batch_id", batchId);
+    if (error) {
+      console.error(`[store] revertExtratoImportado: falha ao apagar de ${tbl}`, error);
+      return false;
+    }
+  }
+
+  // Marca o lote como revertido
+  const now = new Date().toISOString();
+  const { error: upErr } = await sbAny
+    .from("extratos_importados")
+    .update({ status: "revertido", reverted_at: now, updated_at: now })
+    .eq("id", batchId)
+    .eq("user_id", activeUserId);
+  if (upErr) {
+    console.error("[store] revertExtratoImportado: falha ao atualizar status", upErr);
+    return false;
+  }
+
+  // Atualiza memória local
+  memGastos = memGastos.filter((g) => g.importBatchId !== batchId);
+  memReceitas = memReceitas.filter((r) => r.importBatchId !== batchId);
+  memTransferencias = memTransferencias.filter((t) => t.importBatchId !== batchId);
+  memGuardado = memGuardado.filter((g) => g.importBatchId !== batchId);
+  memMov = memMov.filter((m) => m.importBatchId !== batchId);
+  memExtratos = memExtratos.map((e) =>
+    e.id === batchId
+      ? { ...e, status: "revertido" as StatusExtratoImportado, revertedAt: now, atualizadoEm: now }
+      : e,
+  );
+  emit();
+  return true;
+}
+
+export async function deleteExtratoImportado(batchId: string): Promise<boolean> {
+  if (!activeUserId) return false;
+  // Só permite remover o registro do histórico se já estiver revertido (ou nunca tiver tido itens)
+  const { error } = await sbAny
+    .from("extratos_importados")
+    .delete()
+    .eq("id", batchId)
+    .eq("user_id", activeUserId);
+  if (error) {
+    console.error("[store] deleteExtratoImportado failed", error);
+    return false;
+  }
+  memExtratos = memExtratos.filter((e) => e.id !== batchId);
+  emit();
+  return true;
+}
+
 
 export function useStore<T>(selector: () => T): T {
   return useSyncExternalStore(subscribe, selector, selector);
