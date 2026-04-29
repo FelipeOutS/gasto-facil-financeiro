@@ -872,6 +872,7 @@ function ContaFormDialog({
   defaultDate?: string;
 }) {
   const isEdit = !!conta;
+  const isPaga = conta?.status === "pago";
   const categorias = useStore(() => getCategorias());
 
   const [nome, setNome] = useState(conta?.nome ?? "");
@@ -885,6 +886,27 @@ function ContaFormDialog({
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
   const [meses, setMeses] = useState("12");
+
+  // Campos extras
+  const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
+    conta?.formaPagamento ?? "",
+  );
+  const [bancoEmissor, setBancoEmissor] = useState(conta?.bancoEmissor ?? "");
+  const [codigoBoleto, setCodigoBoleto] = useState(conta?.codigoBoleto ?? "");
+  const [codigoPix, setCodigoPix] = useState(conta?.codigoPix ?? "");
+  const [chavePix, setChavePix] = useState(conta?.chavePix ?? "");
+  const [mostrarExtras, setMostrarExtras] = useState(
+    !!(conta?.beneficiario ||
+      conta?.formaPagamento ||
+      conta?.bancoEmissor ||
+      conta?.codigoBoleto ||
+      conta?.codigoPix ||
+      conta?.chavePix),
+  );
+
+  // Sincronizar gasto vinculado (apenas conta já paga)
+  const [sincronizarGasto, setSincronizarGasto] = useState(true);
 
   function handleSave() {
     const valor = parseBRLInput(valorStr);
@@ -908,8 +930,19 @@ function ContaFormDialog({
         dataVencimento: dataVenc,
         categoriaId: categoriaId || null,
         observacao: observacao.trim() || undefined,
+        beneficiario: beneficiario.trim() || null,
+        formaPagamento: (formaPagamento || null) as FormaPagamento | null,
+        bancoEmissor: bancoEmissor.trim() || null,
+        codigoBoleto: codigoBoleto.trim() || null,
+        codigoPix: codigoPix.trim() || null,
+        chavePix: chavePix.trim() || null,
+        atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
       });
-      toast.success("Conta atualizada. ✅");
+      toast.success(
+        isPaga && sincronizarGasto
+          ? "Conta e gasto atualizados. ✅"
+          : "Conta atualizada. ✅",
+      );
     } else {
       addContaAPagar({
         nome: nome.trim(),
@@ -919,6 +952,12 @@ function ContaFormDialog({
         observacao: observacao.trim() || undefined,
         recorrente,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
+        beneficiario: beneficiario.trim() || undefined,
+        formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
+        bancoEmissor: bancoEmissor.trim() || undefined,
+        codigoBoleto: codigoBoleto.trim() || undefined,
+        codigoPix: codigoPix.trim() || undefined,
+        chavePix: chavePix.trim() || undefined,
       });
       toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
@@ -999,6 +1038,109 @@ function ContaFormDialog({
             />
           </div>
 
+          {/* Campos extras (boleto/Pix/beneficiário) */}
+          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
+            <button
+              type="button"
+              onClick={() => setMostrarExtras((v) => !v)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <div>
+                <p className="text-sm font-medium">Mais detalhes (opcional)</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Beneficiário, forma de pagamento, código de boleto/Pix
+                </p>
+              </div>
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 text-muted-foreground transition-transform",
+                  mostrarExtras && "rotate-90",
+                )}
+              />
+            </button>
+
+            {mostrarExtras && (
+              <div className="mt-3 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-benef">Beneficiário</Label>
+                  <Input
+                    id="conta-benef"
+                    value={beneficiario}
+                    onChange={(e) => setBeneficiario(e.target.value)}
+                    placeholder="Quem recebe o pagamento"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Forma de pagamento</Label>
+                    <Select
+                      value={formaPagamento || "_none"}
+                      onValueChange={(v) =>
+                        setFormaPagamento(v === "_none" ? "" : (v as FormaPagamento))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">—</SelectItem>
+                        {FORMAS_PAGAMENTO.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="conta-banco">Banco emissor</Label>
+                    <Input
+                      id="conta-banco"
+                      value={bancoEmissor}
+                      onChange={(e) => setBancoEmissor(e.target.value)}
+                      placeholder="Ex.: Itaú, Nubank…"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-boleto">Código de boleto</Label>
+                  <Textarea
+                    id="conta-boleto"
+                    value={codigoBoleto}
+                    onChange={(e) => setCodigoBoleto(e.target.value)}
+                    rows={2}
+                    placeholder="Linha digitável do boleto"
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-pix-cc">Pix copia e cola</Label>
+                  <Textarea
+                    id="conta-pix-cc"
+                    value={codigoPix}
+                    onChange={(e) => setCodigoPix(e.target.value)}
+                    rows={2}
+                    placeholder="Código BR Code do Pix"
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-chave">Chave Pix</Label>
+                  <Input
+                    id="conta-chave"
+                    value={chavePix}
+                    onChange={(e) => setChavePix(e.target.value)}
+                    placeholder="CPF, e-mail, telefone ou aleatória"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {!isEdit && (
             <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
               <div className="flex items-center justify-between gap-3">
@@ -1023,6 +1165,23 @@ function ContaFormDialog({
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {isEdit && isPaga && (
+            <div className="rounded-xl border border-warning/40 bg-warning/10 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Atualizar gasto vinculado</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Esta conta já foi paga. Quer aplicar as mudanças no gasto criado em "Gastos"?
+                  </p>
+                </div>
+                <Switch
+                  checked={sincronizarGasto}
+                  onCheckedChange={setSincronizarGasto}
+                />
+              </div>
             </div>
           )}
         </div>
