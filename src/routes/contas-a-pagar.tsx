@@ -591,7 +591,74 @@ function ContasAPagarPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {pagar && (
+      {/* Excluir conta recorrente — escopo */}
+      <AlertDialog
+        open={!!confirmDeleteRec}
+        onOpenChange={(o) => !o && setConfirmDeleteRec(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta recorrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteRec
+                ? `"${confirmDeleteRec.nome}" se repete em vários meses. O que você quer excluir?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec) {
+                  deleteContaAPagar(confirmDeleteRec.id, {
+                    excluirGastoVinculado: !!confirmDeleteRec.gastoId,
+                  });
+                  toast.success("Apenas esta ocorrência foi excluída.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Apenas esta ocorrência
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec?.recorrenciaId) {
+                  deleteContaRecorrencia(
+                    confirmDeleteRec.recorrenciaId,
+                    confirmDeleteRec.mes,
+                    confirmDeleteRec.ano,
+                  );
+                  toast.success("Esta e as próximas ocorrências foram excluídas.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Esta e as próximas
+            </Button>
+            <Button
+              variant="destructive"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec?.recorrenciaId) {
+                  deleteContaRecorrencia(confirmDeleteRec.recorrenciaId);
+                  toast.success("Toda a recorrência foi excluída.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Excluir toda a recorrência
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
         <PagarDialog
           conta={pagar}
           onClose={() => setPagar(null)}
