@@ -95,6 +95,7 @@ function ContasAPagarPage() {
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
+  const [importing, setImporting] = useState(false);
   const [filtro, setFiltro] = useState<FilterId>("todas");
 
   const contas = useStore(() => getContasAPagar());
