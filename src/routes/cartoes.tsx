@@ -158,7 +158,7 @@ function CartoesPage() {
       proximaData,
       proximaValor,
     };
-  }, [cartoes]);
+  }, [cartoes, gastos]);
 
   // Próximos vencimentos (todos cartões com dia definido)
   const proximosVencimentos = useMemo(() => {
