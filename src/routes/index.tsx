@@ -401,24 +401,30 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== Linha 3: Alertas financeiros + Limite mensal ===== */}
-      <SectionLabel>Alertas e limites</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-        {temAlertasDashboard && (
-          <div className="min-w-0 self-start xl:col-span-8">
-            <AlertasContasCard contas={contas} />
-          </div>
-        )}
-        <div className={cn("min-w-0 self-start", temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12")}>
-          <LimiteMensalCard
-            total={total}
-            limiteTotal={limiteTotal}
-            usoLimite={usoLimite}
-            passouLimite={!!passouLimite}
-            proximoLimite={!!proximoLimite}
-          />
-        </div>
-      </section>
+      {(temAlertasDashboard || !!limiteTotal) && (
+        <>
+          {/* ===== Linha 3: Alertas financeiros + Limite mensal ===== */}
+          <SectionLabel>Alertas e limites</SectionLabel>
+          <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
+            {temAlertasDashboard && (
+              <div className="min-w-0 self-start xl:col-span-8">
+                <AlertasContasCard contas={contas} />
+              </div>
+            )}
+            {!!limiteTotal && (
+              <div className={cn("min-w-0 self-start", temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12")}>
+                <LimiteMensalCard
+                  total={total}
+                  limiteTotal={limiteTotal}
+                  usoLimite={usoLimite}
+                  passouLimite={!!passouLimite}
+                  proximoLimite={!!proximoLimite}
+                />
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
       <SectionLabel>Resumo e orçamento</SectionLabel>
