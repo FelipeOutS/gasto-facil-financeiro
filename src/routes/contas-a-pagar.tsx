@@ -24,6 +24,7 @@ import { Copy, Upload } from "lucide-react";
 import {
   addContaAPagar,
   deleteContaAPagar,
+  deleteContaRecorrencia,
   desmarcarContaComoPago,
   getCategoriaById,
   getCategorias,
