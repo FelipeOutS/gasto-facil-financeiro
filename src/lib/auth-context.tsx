@@ -2,8 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
+import type { TipoCadastro } from "./profile-utils";
 
-type Profile = { id: string; nome: string | null };
+export type Profile = {
+  id: string;
+  nome: string | null;
+  tipo_cadastro: TipoCadastro;
+  cpf: string | null;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  responsavel_nome: string | null;
+  telefone: string | null;
+};
+
+export type ProfileUpdate = Partial<Omit<Profile, "id">>;
 
 type AuthContextValue = {
   session: Session | null;
@@ -19,6 +32,8 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  updateProfile: (data: ProfileUpdate) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
