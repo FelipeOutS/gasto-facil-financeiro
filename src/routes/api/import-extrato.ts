@@ -869,7 +869,9 @@ async function parseAIResponse(
 
 async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
   const parsed = await parseAIResponse(aiResp);
-  if ("error" in parsed) return parsed.error;
+  if ("error" in parsed) {
+    return parsed.error;
+  }
   return Response.json({
     itens: normalizeItens(parsed.itens),
     paginas,
