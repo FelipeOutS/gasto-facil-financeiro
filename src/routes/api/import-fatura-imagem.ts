@@ -46,6 +46,10 @@ DATAS:
 - Formato ISO YYYY-MM-DD. Aceite formatos brasileiros como "12/03", "12/03/2025", "12 MAR".
 - Se só tiver dia/mês, use o ano atual da fatura quando souber, senão deixe null.
 
+HORÁRIO (opcional):
+- Quando o print/fatura mostrar horário da compra (ex: "14:30", "14h30", "às 19:45", "08:15"), preencha "horario" no formato HH:mm (24h).
+- Se não houver horário, deixe null.
+
 PARCELAS:
 - Reconheça "1/10", "01/10", "PARC 02/06", "parcela 3 de 12", "3 de 12 vezes".
 - Quando achar, preencha parcelaAtual e totalParcelas. Caso contrário, deixe null.
