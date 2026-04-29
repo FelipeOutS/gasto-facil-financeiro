@@ -334,6 +334,16 @@ function CartoesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FaturaSheet
+        cartao={openDetail}
+        gastos={gastos}
+        onOpenChange={(o) => !o && setOpenDetail(null)}
+        onEdit={(c) => {
+          setOpenDetail(null);
+          handleEdit(c);
+        }}
+      />
     </MobileShell>
   );
 }
