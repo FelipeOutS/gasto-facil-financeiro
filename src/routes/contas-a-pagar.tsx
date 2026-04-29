@@ -91,6 +91,7 @@ function ContasAPagarPage() {
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
+  const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
   const [filtro, setFiltro] = useState<FilterId>("todas");
 
