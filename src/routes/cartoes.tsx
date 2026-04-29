@@ -158,7 +158,7 @@ function CartoesPage() {
       proximaData,
       proximaValor,
     };
-  }, [cartoes]);
+  }, [cartoes, gastos]);
 
   // Próximos vencimentos (todos cartões com dia definido)
   const proximosVencimentos = useMemo(() => {
@@ -184,6 +184,11 @@ function CartoesPage() {
   function handleEdit(c: Cartao) {
     setEditing(c);
     setOpenForm(true);
+  }
+
+  function handleOpenImport(cartaoId?: string) {
+    setImportCartaoId(cartaoId);
+    setOpenImport(true);
   }
 
   if (!ready) {
@@ -259,14 +264,25 @@ function CartoesPage() {
           )}
         </div>
         {cartoes.length > 0 && (
-          <Button
-            size="sm"
-            onClick={handleOpenNew}
-            className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-          >
-            <Plus className="mr-1 h-4 w-4" />
-            Novo cartão
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleOpenImport()}
+              className="card-press rounded-full text-sm font-semibold"
+            >
+              <FileUp className="mr-1 h-4 w-4" />
+              Importar fatura
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleOpenNew}
+              className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Novo cartão
+            </Button>
+          </div>
         )}
       </div>
 
@@ -286,6 +302,7 @@ function CartoesPage() {
                 cartao={c}
                 onOpen={() => setOpenDetail(c)}
                 onEdit={() => handleEdit(c)}
+                onImport={() => handleOpenImport(c.id)}
                 onDelete={() => setConfirmDelete(c)}
               />
             ))}
@@ -347,6 +364,16 @@ function CartoesPage() {
           setOpenDetail(null);
           handleEdit(c);
         }}
+        onImport={(c) => {
+          setOpenDetail(null);
+          handleOpenImport(c.id);
+        }}
+      />
+
+      <ImportFaturaDialog
+        open={openImport}
+        onOpenChange={setOpenImport}
+        cartaoIdInicial={importCartaoId}
       />
     </MobileShell>
   );
@@ -419,11 +446,13 @@ function CartaoCard({
   cartao,
   onOpen,
   onEdit,
+  onImport,
   onDelete,
 }: {
   cartao: Cartao;
   onOpen: () => void;
   onEdit: () => void;
+  onImport: () => void;
   onDelete: () => void;
 }) {
   const r = resumoFaturaCartao(cartao.id);
@@ -483,6 +512,10 @@ function CartaoCard({
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               Editar cartão
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImport}>
+              <FileUp className="mr-2 h-4 w-4" />
+              Importar fatura
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -765,11 +798,13 @@ function FaturaSheet({
   gastos,
   onOpenChange,
   onEdit,
+  onImport,
 }: {
   cartao: Cartao | null;
   gastos: Gasto[];
   onOpenChange: (open: boolean) => void;
   onEdit: (c: Cartao) => void;
+  onImport: (c: Cartao) => void;
 }) {
   // Compras vinculadas (memoizadas, ordenadas por data desc)
   const compras = useMemo(() => {
@@ -947,6 +982,14 @@ function FaturaSheet({
 
           {/* Ações */}
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="card-press flex-1"
+              onClick={() => onImport(cartao)}
+            >
+              <FileUp className="mr-2 h-4 w-4" />
+              Importar fatura
+            </Button>
             <Button
               variant="outline"
               className="card-press flex-1"

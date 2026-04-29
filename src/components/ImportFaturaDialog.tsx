@@ -39,6 +39,7 @@ import {
   findPossibleDuplicate,
   getCartoes,
   getCategorias,
+  useStore,
 } from "@/lib/store";
 import type { Cartao } from "@/lib/types";
 import {
@@ -91,8 +92,8 @@ export function ImportFaturaDialog({
   onOpenChange: (o: boolean) => void;
   cartaoIdInicial?: string;
 }) {
-  const cartoes = getCartoes();
-  const categorias = getCategorias();
+  const cartoes = useStore(() => getCartoes());
+  const categorias = useStore(() => getCategorias());
 
   const [step, setStep] = useState<Step>("source");
   const [cartaoId, setCartaoId] = useState<string | undefined>(
@@ -114,6 +115,7 @@ export function ImportFaturaDialog({
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Reset ao reabrir
   useEffect(() => {
@@ -128,6 +130,7 @@ export function ImportFaturaDialog({
     setCsvMap([]);
     setItems([]);
     setSaving(false);
+    setErrorMessage(null);
     setCartaoId(cartaoIdInicial ?? cartoes[0]?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, cartaoIdInicial]);
@@ -164,7 +167,7 @@ export function ImportFaturaDialog({
           (desc ? suggestCategoryFromDescription(desc) : "outros");
         const duplicado =
           !!cId && it.valor !== null && it.data
-            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc)
+            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc, cId)
             : false;
         return {
           ...it,
@@ -201,6 +204,7 @@ export function ImportFaturaDialog({
 
   async function processarImagem() {
     if (images.length === 0) return;
+    setErrorMessage(null);
     setImgLoading(true);
     setImgStage(0);
     try {
@@ -211,10 +215,11 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
-        toast.error(
+        const msg =
           data?.error ||
-            "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.",
-        );
+          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+        setErrorMessage(msg);
+        toast.error(msg);
         setImgLoading(false);
         return;
       }
@@ -222,9 +227,10 @@ export function ImportFaturaDialog({
         ? (data.itens as FaturaItemBruto[])
         : [];
       if (itens.length === 0) {
-        toast.error(
-          "Não encontrei compras nessa imagem. Tente um print mais nítido.",
-        );
+        const msg =
+          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+        setErrorMessage(msg);
+        toast.error(msg);
         setImgLoading(false);
         return;
       }
@@ -233,7 +239,10 @@ export function ImportFaturaDialog({
       setStep("review");
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao processar a imagem.");
+      const msg =
+        "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       setImgLoading(false);
     }
   }
@@ -243,13 +252,15 @@ export function ImportFaturaDialog({
   async function handleCsvFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
+    setErrorMessage(null);
     const text = await file.text();
     setCsvText(text);
     const parsed = parseCsvFile(text);
     if (parsed.headers.length === 0 || parsed.rows.length === 0) {
-      toast.error(
-        "Não consegui identificar as colunas do arquivo. Confira o formato ou mapeie manualmente.",
-      );
+      const msg =
+        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     setCsvHeaders(parsed.headers);
@@ -269,7 +280,10 @@ export function ImportFaturaDialog({
 
   function aplicarMapping() {
     if (!csvMap.includes("valor") || !csvMap.includes("data")) {
-      toast.error("Indique pelo menos as colunas de Data e Valor.");
+      const msg =
+        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     const itens = rowsToItens(csvRows, csvMap);
@@ -365,19 +379,16 @@ export function ImportFaturaDialog({
       const inputs = validos.map((it) => {
         const isParcelado =
           !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
-        const valorTotal =
-          isParcelado && it.totalParcelas
-            ? Math.round((it.valor ?? 0) * it.totalParcelas * 100) / 100
-            : (it.valor ?? 0);
         return {
           descricao: it.descricao ?? "",
-          valor: valorTotal,
+          valor: it.valor ?? 0,
           data: it.data!,
           estabelecimento: it.estabelecimento ?? "",
           categoriaId: it.categoriaSugerida || "outros",
           formaPagamento: "credito" as const,
           observacao: it.observacao ?? undefined,
           tipoGasto: isParcelado ? ("parcelado" as const) : ("unico" as const),
+          parcelaAtual: isParcelado ? (it.parcelaAtual ?? undefined) : undefined,
           totalParcelas: isParcelado ? (it.totalParcelas ?? undefined) : undefined,
           cartaoId: it.cartaoId || cartaoId,
         };
@@ -426,6 +437,12 @@ export function ImportFaturaDialog({
               onPick={(s) => setStep(s)}
               onClose={() => onOpenChange(false)}
             />
+          )}
+
+          {errorMessage && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </div>
           )}
 
           {step === "image-upload" && (

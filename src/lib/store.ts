@@ -1143,6 +1143,7 @@ export type NovoGastoInput = {
   observacao?: string;
   imagemUrl?: string;
   tipoGasto?: TipoGasto;
+  parcelaAtual?: number;
   totalParcelas?: number;
   recorrenteMeses?: number;
   essencial?: boolean;
@@ -1158,7 +1159,57 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const catUuid = categoriaUuidFor(input.categoriaId);
   const out: { row: GastoInsert; client: Gasto }[] = [];
 
-  if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
+  if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1 && (input.parcelaAtual ?? 0) > 0) {
+    const total = input.totalParcelas!;
+    const parcelaAtual = Math.min(total, Math.max(1, Math.floor(input.parcelaAtual!)));
+    const id = crypto.randomUUID();
+    out.push({
+      row: {
+        id,
+        user_id: userId,
+        categoria_id: catUuid,
+        descricao: input.descricao || input.estabelecimento || "Gasto",
+        valor: input.valor,
+        data: input.data,
+        estabelecimento: input.estabelecimento || "",
+        forma_pagamento: input.formaPagamento,
+        observacao: input.observacao ?? null,
+        imagem_url: input.imagemUrl ?? null,
+        mes: baseDate.getMonth() + 1,
+        ano: baseDate.getFullYear(),
+        confirmado: true,
+        tipo_gasto: "parcelado",
+        parcela_atual: parcelaAtual,
+        total_parcelas: total,
+        grupo_parcelamento_id: null,
+        essencial: input.essencial ?? null,
+        gasto_fixo: input.gastoFixo ?? null,
+        cartao_id: input.cartaoId ?? null,
+      },
+      client: {
+        id,
+        descricao: input.descricao || input.estabelecimento || "Gasto",
+        valor: input.valor,
+        data: input.data,
+        estabelecimento: input.estabelecimento || "",
+        categoriaId: input.categoriaId,
+        formaPagamento: input.formaPagamento,
+        observacao: input.observacao,
+        imagemUrl: input.imagemUrl,
+        mes: baseDate.getMonth() + 1,
+        ano: baseDate.getFullYear(),
+        confirmado: true,
+        tipoGasto: "parcelado",
+        parcelaAtual,
+        totalParcelas: total,
+        essencial: input.essencial,
+        gastoFixo: input.gastoFixo,
+        cartaoId: input.cartaoId,
+        criadoEm: now,
+        atualizadoEm: now,
+      },
+    });
+  } else if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
     const total = input.totalParcelas!;
     const valorParcela = Math.round((input.valor / total) * 100) / 100;
     const grupo = crypto.randomUUID();
@@ -1343,7 +1394,18 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
  */
 export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   if (!activeUserId || inputs.length === 0) return [];
-  const allBuilt = inputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
+  const uniqueInputs = inputs.filter((inp, index, arr) => {
+    const desc = inp.descricao || inp.estabelecimento || "";
+    const key = `${inp.cartaoId ?? ""}|${inp.data}|${desc.trim().toLowerCase()}|${inp.valor.toFixed(2)}`;
+    const firstIndex = arr.findIndex((other) => {
+      const otherDesc = other.descricao || other.estabelecimento || "";
+      const otherKey = `${other.cartaoId ?? ""}|${other.data}|${otherDesc.trim().toLowerCase()}|${other.valor.toFixed(2)}`;
+      return otherKey === key;
+    });
+    return firstIndex === index && !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
+  });
+  if (uniqueInputs.length === 0) return [];
+  const allBuilt = uniqueInputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
   const created = allBuilt.map((b) => b.client);
   memGastos = [...memGastos, ...created];
   emit();
@@ -1427,13 +1489,17 @@ export function findPossibleDuplicate(
   valor: number,
   data: string,
   estabelecimento?: string,
+  cartaoId?: string,
 ): Gasto | undefined {
   return memGastos.find(
     (g) =>
       Math.abs(g.valor - valor) < 0.01 &&
       g.data === data &&
+      (cartaoId ? g.cartaoId === cartaoId : true) &&
       (estabelecimento
-        ? g.estabelecimento.trim().toLowerCase() === estabelecimento.trim().toLowerCase()
+        ? [g.estabelecimento, g.descricao]
+            .filter(Boolean)
+            .some((text) => text.trim().toLowerCase() === estabelecimento.trim().toLowerCase())
         : true),
   );
 }
