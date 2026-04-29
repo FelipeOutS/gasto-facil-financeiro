@@ -187,7 +187,7 @@ export function ImportFaturaDialog({
 
   async function handleImageFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const arr = Array.from(files).slice(0, 4);
+    const arr = Array.from(files).slice(0, 10);
     const dataUrls = await Promise.all(
       arr.map(
         (f) =>
@@ -393,12 +393,21 @@ export function ImportFaturaDialog({
           cartaoId: it.cartaoId || cartaoId,
         };
       });
-      addGastosBulk(inputs);
-      toast.success(
-        validos.length === items.length
-          ? "Fatura importada com sucesso."
-          : "Algumas compras foram importadas. Outras precisam de revisão.",
-      );
+      const salvos = addGastosBulk(inputs);
+      const ignorados = items.length - validos.length;
+      if (salvos.length === 0) {
+        toast.warning(
+          "Nada foi importado. Esses itens já existiam ou estavam incompletos.",
+        );
+      } else if (ignorados > 0) {
+        toast.success(
+          `Fatura importada com sucesso. ${salvos.length} compra(s) já foram atualizadas no app.`,
+        );
+      } else {
+        toast.success(
+          "Fatura importada com sucesso. Seus gastos já foram atualizados no app.",
+        );
+      }
       onOpenChange(false);
     } catch (err) {
       console.error(err);
@@ -682,7 +691,7 @@ function ImageStep({
           Clique para enviar print(s) da fatura
         </p>
         <p className="text-xs text-muted-foreground">
-          Aceita até 4 imagens. JPG, PNG ou WEBP.
+          Aceita até 10 imagens. JPG, PNG ou WEBP.
         </p>
         <input
           id="fatura-img"
@@ -895,10 +904,14 @@ function ReviewStep({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold tracking-tight">
-              Revise as compras encontradas
+              Confirmar gastos
             </h3>
             <p className="text-xs text-muted-foreground">
-              Confira os dados antes de adicionar à sua fatura.
+              Os gastos confirmados serão adicionados à sua lista de gastos, ao
+              Dashboard e à fatura do cartão selecionado.
+            </p>
+            <p className="mt-1 text-[11px] font-medium text-muted-foreground/80">
+              Nada será salvo até você confirmar.
             </p>
           </div>
           <div className="text-right">
