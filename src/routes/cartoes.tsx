@@ -737,6 +737,9 @@ function UltimasCompras({
                   </p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {c?.nome || "Cartão"} · {dtStr}
+                    {g.tipoGasto === "parcelado" && g.totalParcelas
+                      ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
+                      : ""}
                   </p>
                 </div>
                 <span className="num shrink-0 text-xs font-semibold">
