@@ -291,6 +291,8 @@ export type ContaAPagar = {
   recorrente: boolean;
   /** Agrupador para todas as ocorrências de uma conta recorrente */
   recorrenciaId?: string;
+  /** Frequência da recorrência (default: mensal) */
+  frequenciaRecorrencia?: FrequenciaRecorrencia;
   /** Início da recorrência (para o histórico) */
   dataInicio?: string;
   /** Fim opcional da recorrência */
