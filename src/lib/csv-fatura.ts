@@ -10,12 +10,24 @@ export type FaturaItemBruto = {
   estabelecimento: string | null;
   valor: number | null;
   data: string | null; // ISO YYYY-MM-DD
+  /** Horário opcional HH:mm. */
+  horario: string | null;
   parcelaAtual: number | null;
   totalParcelas: number | null;
   categoriaSugerida: string | null; // pode ou não ser CategoryId
   confianca: "alta" | "media" | "baixa";
   observacao: string | null;
 };
+
+/** Procura padrões de horário (14:30, 14h30, "às 19:45") em um texto. */
+export function extractHorario(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const m = text.match(/\b(\d{1,2})[:hH](\d{2})\b/);
+  if (!m) return null;
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  const mi = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
+}
 
 /* --------------------------------------------------------------------------
  * CSV PARSER (tolerante a vírgula/ponto-e-vírgula, aspas, BOM)
@@ -364,11 +376,17 @@ export function rowsToItens(
     let confianca: "alta" | "media" | "baixa" = "alta";
     if (valor === null || data === null || !descricao) confianca = "baixa";
 
+    const horario =
+      extractHorario(get("data")) ||
+      extractHorario(get("descricao")) ||
+      extractHorario(obs);
+
     return {
       descricao: descricao || null,
       estabelecimento,
       valor,
       data,
+      horario,
       parcelaAtual: parcAtual,
       totalParcelas: parcTotal,
       categoriaSugerida: sugerida,

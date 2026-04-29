@@ -114,6 +114,7 @@ export function ImportFaturaDialog({
 
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
+  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -129,6 +130,7 @@ export function ImportFaturaDialog({
     setCsvRows([]);
     setCsvMap([]);
     setItems([]);
+    setOrigem(null);
     setSaving(false);
     setErrorMessage(null);
     setCartaoId(cartaoIdInicial ?? cartoes[0]?.id);
@@ -235,6 +237,7 @@ export function ImportFaturaDialog({
         return;
       }
       setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_imagem");
       setImgLoading(false);
       setStep("review");
     } catch (err) {
@@ -272,6 +275,7 @@ export function ImportFaturaDialog({
     if (hasValor && hasData) {
       const itens = rowsToItens(parsed.rows, parsed.autoMap);
       setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_csv");
       setStep("review");
     } else {
       setStep("csv-mapping");
@@ -288,6 +292,7 @@ export function ImportFaturaDialog({
     }
     const itens = rowsToItens(csvRows, csvMap);
     setItems(buildReviewFromItens(itens, cartaoId));
+    setOrigem("fatura_csv");
     setStep("review");
   }
 
@@ -336,6 +341,7 @@ export function ImportFaturaDialog({
       estabelecimento: null,
       valor: null,
       data: new Date().toISOString().slice(0, 10),
+      horario: null,
       parcelaAtual: null,
       totalParcelas: null,
       categoriaSugerida: "outros",
@@ -391,6 +397,8 @@ export function ImportFaturaDialog({
           parcelaAtual: isParcelado ? (it.parcelaAtual ?? undefined) : undefined,
           totalParcelas: isParcelado ? (it.totalParcelas ?? undefined) : undefined,
           cartaoId: it.cartaoId || cartaoId,
+          horario: it.horario ?? undefined,
+          origem: origem ?? "fatura_imagem",
         };
       });
       const salvos = addGastosBulk(inputs);
@@ -1050,7 +1058,10 @@ function ReviewRow({
             </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="num">{item.data || "sem data"}</span>
+            <span className="num">
+              {item.data || "sem data"}
+              {item.horario ? ` às ${item.horario}` : ""}
+            </span>
             {item.totalParcelas && item.totalParcelas > 1 && (
               <span className="num">
                 · {item.parcelaAtual ?? 1}/{item.totalParcelas}
@@ -1125,6 +1136,13 @@ function ReviewRow({
               type="date"
               value={item.data ?? ""}
               onChange={(e) => onUpdate({ data: e.target.value || null })}
+            />
+          </Field>
+          <Field label="Horário (opcional)">
+            <Input
+              type="time"
+              value={item.horario ?? ""}
+              onChange={(e) => onUpdate({ horario: e.target.value || null })}
             />
           </Field>
           <Field label="Categoria">

@@ -210,6 +210,8 @@ type GastoRow = {
   essencial: boolean | null;
   gasto_fixo: boolean | null;
   cartao_id?: string | null;
+  horario?: string | null;
+  origem?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -235,6 +237,8 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     essencial: r.essencial ?? undefined,
     gastoFixo: r.gasto_fixo ?? undefined,
     cartaoId: r.cartao_id ?? undefined,
+    horario: r.horario ?? undefined,
+    origem: r.origem ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -1149,6 +1153,10 @@ export type NovoGastoInput = {
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
+  /** Horário opcional (HH:mm). */
+  horario?: string;
+  /** Origem do registro: manual, fatura_imagem, fatura_csv. */
+  origem?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
@@ -1157,6 +1165,8 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const tipo = input.tipoGasto ?? "unico";
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   const catUuid = categoriaUuidFor(input.categoriaId);
+  const horarioVal = input.horario && input.horario.trim() ? input.horario.trim() : null;
+  const origemVal = input.origem && input.origem.trim() ? input.origem.trim() : null;
   const out: { row: GastoInsert; client: Gasto }[] = [];
 
   if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1 && (input.parcelaAtual ?? 0) > 0) {
@@ -1362,6 +1372,13 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       },
     });
   }
+  // Stamp horario/origem on every produced row + client (fields are optional).
+  for (const o of out) {
+    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).horario = horarioVal;
+    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).origem = origemVal;
+    if (horarioVal) o.client.horario = horarioVal;
+    if (origemVal) o.client.origem = origemVal;
+  }
   return out;
 }
 
@@ -1456,6 +1473,10 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
   if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
+  if (patch.horario !== undefined)
+    (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
+  if (patch.origem !== undefined)
+    (row as GastoUpdate & { origem?: string | null }).origem = patch.origem ?? null;
 
   void supabase
     .from("gastos")

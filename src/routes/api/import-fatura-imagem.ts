@@ -46,6 +46,10 @@ DATAS:
 - Formato ISO YYYY-MM-DD. Aceite formatos brasileiros como "12/03", "12/03/2025", "12 MAR".
 - Se só tiver dia/mês, use o ano atual da fatura quando souber, senão deixe null.
 
+HORÁRIO (opcional):
+- Quando o print/fatura mostrar horário da compra (ex: "14:30", "14h30", "às 19:45", "08:15"), preencha "horario" no formato HH:mm (24h).
+- Se não houver horário, deixe null.
+
 PARCELAS:
 - Reconheça "1/10", "01/10", "PARC 02/06", "parcela 3 de 12", "3 de 12 vezes".
 - Quando achar, preencha parcelaAtual e totalParcelas. Caso contrário, deixe null.
@@ -73,6 +77,7 @@ type ItemBruto = {
   descricao: unknown;
   valor: unknown;
   data: unknown;
+  horario?: unknown;
   estabelecimento?: unknown;
   parcelaAtual?: unknown;
   totalParcelas?: unknown;
@@ -155,6 +160,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                                 estabelecimento: { type: ["string", "null"] },
                                 valor: { type: ["number", "null"] },
                                 data: { type: ["string", "null"] },
+                                horario: { type: ["string", "null"] },
                                 parcelaAtual: { type: ["number", "null"] },
                                 totalParcelas: { type: ["number", "null"] },
                                 categoriaSugerida: {
@@ -247,6 +253,13 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 typeof it.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.data)
                   ? it.data
                   : null;
+              const horarioMatch =
+                typeof it.horario === "string"
+                  ? it.horario.match(/\b(\d{1,2})[:hH](\d{2})\b/)
+                  : null;
+              const horario = horarioMatch
+                ? `${String(Math.min(23, parseInt(horarioMatch[1], 10))).padStart(2, "0")}:${String(Math.min(59, parseInt(horarioMatch[2], 10))).padStart(2, "0")}`
+                : null;
               const cat =
                 typeof it.categoriaSugerida === "string" &&
                 CATEGORIAS_VALIDAS.includes(it.categoriaSugerida)
@@ -279,6 +292,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 estabelecimento: estab,
                 valor,
                 data,
+                horario,
                 parcelaAtual: pa,
                 totalParcelas: tp,
                 categoriaSugerida: cat,

@@ -56,6 +56,7 @@ export function EditGastoDialog({
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("credito");
   const [cartaoId, setCartaoId] = useState<string | undefined>(undefined);
   const [observacao, setObservacao] = useState("");
+  const [horario, setHorario] = useState("");
 
   // Initialize fields from snapshot whenever the dialog opens with a new gasto
   useEffect(() => {
@@ -68,6 +69,7 @@ export function EditGastoDialog({
     setFormaPagamento((snapshot.formaPagamento as FormaPagamento) ?? "credito");
     setCartaoId(snapshot.cartaoId);
     setObservacao(snapshot.observacao ?? "");
+    setHorario(snapshot.horario ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.id, open]);
 
@@ -104,6 +106,7 @@ export function EditGastoDialog({
         formaPagamento,
         observacao: observacao.trim() || undefined,
         cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
+        horario: horario.trim() || undefined,
       });
       toast.success("Gasto atualizado com sucesso.");
       onOpenChange(false);
@@ -209,6 +212,20 @@ export function EditGastoDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Horário (opcional) */}
+          <div>
+            <Label htmlFor="edit-horario" className="text-xs text-muted-foreground">
+              Horário (opcional)
+            </Label>
+            <Input
+              id="edit-horario"
+              type="time"
+              value={horario}
+              onChange={(e) => setHorario(e.target.value)}
+              className="mt-1 h-11 bg-card sm:max-w-[220px]"
+            />
           </div>
 
           {/* Cartão */}

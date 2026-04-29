@@ -298,10 +298,12 @@ export type Database = {
           forma_pagamento: string
           gasto_fixo: boolean | null
           grupo_parcelamento_id: string | null
+          horario: string | null
           id: string
           imagem_url: string | null
           mes: number
           observacao: string | null
+          origem: string | null
           parcela_atual: number | null
           recorrencia_id: string | null
           tipo_gasto: string
@@ -323,10 +325,12 @@ export type Database = {
           forma_pagamento: string
           gasto_fixo?: boolean | null
           grupo_parcelamento_id?: string | null
+          horario?: string | null
           id?: string
           imagem_url?: string | null
           mes: number
           observacao?: string | null
+          origem?: string | null
           parcela_atual?: number | null
           recorrencia_id?: string | null
           tipo_gasto?: string
@@ -348,10 +352,12 @@ export type Database = {
           forma_pagamento?: string
           gasto_fixo?: boolean | null
           grupo_parcelamento_id?: string | null
+          horario?: string | null
           id?: string
           imagem_url?: string | null
           mes?: number
           observacao?: string | null
+          origem?: string | null
           parcela_atual?: number | null
           recorrencia_id?: string | null
           tipo_gasto?: string
