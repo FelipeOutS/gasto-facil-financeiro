@@ -30,6 +30,7 @@ import {
   parseBRLInput,
   todayISO,
 } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,17 +295,17 @@ function RendaPage() {
         </button>
       </div>
 
-      <section className="mt-3 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="mt-3 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-xs font-medium text-muted-foreground">Total de entradas no mês</p>
-        <p className="num mt-1 text-4xl font-extrabold tracking-tight">{formatBRL(totalMes)}</p>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-card-elevated p-3">
+        <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
+        <div className="mt-4 grid grid-cols-2 gap-3 stagger">
+          <div className="rounded-2xl bg-card-elevated p-3 hover-lift">
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Salário</p>
-            <p className="num mt-1 text-lg font-semibold">{formatBRL(salarioMes)}</p>
+            <Money value={salarioMes} className="num mt-1 block text-lg font-semibold" />
           </div>
-          <div className="rounded-2xl bg-card-elevated p-3">
+          <div className="rounded-2xl bg-card-elevated p-3 hover-lift">
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Outras entradas</p>
-            <p className="num mt-1 text-lg font-semibold">{formatBRL(outrasMes)}</p>
+            <Money value={outrasMes} className="num mt-1 block text-lg font-semibold" />
           </div>
         </div>
       </section>
@@ -402,13 +403,16 @@ function RendaPage() {
 
         <TabsContent value="mes" className="mt-3">
           {doMes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              <p className="font-medium text-foreground">Sem rendas neste mês ainda.</p>
+            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
+              <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
+                <TrendingUp className="h-5 w-5" />
+              </span>
+              <p className="font-semibold text-foreground">Sem rendas neste mês ainda</p>
               <p className="mt-1 text-xs">
-                Adicione seu salário e outras entradas para o seu resumo ficar completo.
+                Cadastre sua primeira entrada e veja seu mês ficar mais claro.
               </p>
               <div className="mt-3">
-                <Button size="sm" onClick={() => setOpen(true)} className="card-press">
+                <Button size="sm" onClick={() => setOpen(true)} className="card-press rounded-full">
                   <Plus className="mr-1 h-4 w-4" /> Adicionar renda
                 </Button>
               </div>
@@ -430,7 +434,7 @@ function RendaPage() {
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui por mês.
+              Seu histórico ainda tá em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.
             </div>
           ) : (
             <>
