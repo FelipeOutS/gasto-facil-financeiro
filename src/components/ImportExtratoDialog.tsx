@@ -41,6 +41,7 @@ import {
   addGastosBulk,
   addReceitasBulk,
   addTransferenciasInternasBulk,
+  createExtratoImportado,
   findDuplicateGastoAdvanced,
   findDuplicateReceitaAdvanced,
   findDuplicateTransferenciaAdvanced,
