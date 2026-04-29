@@ -1390,3 +1390,162 @@ function AlertaPill({
     </div>
   );
 }
+
+/**
+ * Bloco compacto de Orçamento por categoria no Dashboard.
+ * Mostra % geral usado, status (ok/atenção/estouro) e top 3 categorias.
+ * Esconde-se silenciosamente se ainda não há nenhum limite configurado.
+ */
+function OrcamentoCard({
+  categorias,
+  gastos,
+  mes,
+  ano,
+}: {
+  categorias: Categoria[];
+  gastos: Gasto[];
+  mes: number;
+  ano: number;
+}) {
+  const linhas = useMemo(
+    () =>
+      buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
+        getLimite(catId, mes, ano),
+      ),
+    [categorias, gastos, mes, ano],
+  );
+  const resumo = useMemo(() => resumirOrcamento(linhas), [linhas]);
+
+  if (!resumo.temOrcamento) return null;
+
+  const { totalPlanejado, totalRealizado, pctGeral, qtdOk, qtdAtencao, qtdEstouro, top3 } = resumo;
+  const tone =
+    qtdEstouro > 0 ? "destructive" : qtdAtencao > 0 ? "warning" : "brand";
+
+  return (
+    <section
+      className={cn(
+        "rounded-3xl border bg-card p-4 transition-colors animate-rise",
+        tone === "destructive"
+          ? "border-destructive/40"
+          : tone === "warning"
+            ? "border-warning/40"
+            : "border-border",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+              tone === "destructive"
+                ? "bg-destructive/15 text-destructive"
+                : tone === "warning"
+                  ? "bg-warning/15 text-warning"
+                  : "bg-brand-soft text-brand",
+            )}
+          >
+            <PieChartIcon className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Orçamento do mês
+            </p>
+            <h2 className="text-sm font-semibold num">
+              {formatBRL(totalRealizado)}
+              <span className="ml-1 font-normal text-muted-foreground">
+                / {formatBRL(totalPlanejado)}
+              </span>
+            </h2>
+          </div>
+        </div>
+        <Link to="/orcamento" className="text-xs text-muted-foreground hover:text-foreground">
+          Ver →
+        </Link>
+      </div>
+
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all animate-fill",
+            tone === "destructive"
+              ? "bg-destructive"
+              : tone === "warning"
+                ? "bg-warning"
+                : "bg-brand",
+          )}
+          style={{ width: `${Math.min(100, pctGeral)}%` }}
+        />
+      </div>
+      <p className="num mt-1 text-[10px] text-muted-foreground">
+        {Math.round(pctGeral)}% usado
+      </p>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <AlertaPill
+          label="Dentro"
+          count={qtdOk}
+          tone="brand"
+          icon={<PieChartIcon className="h-3 w-3" />}
+        />
+        <AlertaPill
+          label="Atenção"
+          count={qtdAtencao}
+          tone="warning"
+          icon={<AlertTriangle className="h-3 w-3" />}
+        />
+        <AlertaPill
+          label="Estourou"
+          count={qtdEstouro}
+          tone="destructive"
+          icon={<AlertTriangle className="h-3 w-3" />}
+        />
+      </div>
+
+      {top3.length > 0 && (
+        <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Maior uso no mês
+          </p>
+          <ul className="mt-1.5 space-y-1.5">
+            {top3.map((l) => {
+              const pct = Math.min(150, l.pct);
+              const corBarra =
+                l.status === "estouro"
+                  ? "bg-destructive"
+                  : l.status === "atencao"
+                    ? "bg-warning"
+                    : "bg-brand";
+              return (
+                <li key={l.cat.id} className="flex items-center gap-2">
+                  <CategoryIcon categoria={l.cat} size="xs" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-xs font-medium">{l.cat.nome}</p>
+                      <span
+                        className={cn(
+                          "shrink-0 num text-[11px] font-semibold",
+                          l.status === "estouro" && "text-destructive",
+                          l.status === "atencao" && "text-warning",
+                          l.status === "ok" && "text-brand",
+                        )}
+                      >
+                        {Math.round(pct)}%
+                      </span>
+                    </div>
+                    <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-card-elevated">
+                      <div
+                        className={cn("h-full transition-all", corBarra)}
+                        style={{ width: `${Math.min(100, pct)}%` }}
+                      />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
