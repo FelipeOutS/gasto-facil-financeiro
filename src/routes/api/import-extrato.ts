@@ -826,8 +826,48 @@ function chunkTextByLines(text: string, maxChars: number): string[] {
   return chunks.length > 0 ? chunks : [text];
 }
 
+/**
+ * Parse de resposta da IA que devolve tool-call estruturado.
+ * Retorna {itens, observacao} em sucesso, ou {error: Response} pré-formatado em falha.
+ */
+async function parseAIResponse(
+  aiResp: Response,
+): Promise<{ itens: ItemBruto[]; observacao: string | null } | { error: Response }> {
+  if (!aiResp.ok) {
+    const text = await aiResp.text().catch(() => "");
+    console.error("[import-extrato] AI gateway error", aiResp.status, text.slice(0, 300));
+    if (aiResp.status === 429) {
+      return { error: Response.json({ error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." }, { status: 429 }) };
+    }
+    if (aiResp.status === 402) {
+      return { error: Response.json({ error: "Sem créditos da IA. Adicione créditos no workspace para continuar." }, { status: 402 }) };
+    }
+    return {
+      error: Response.json(
+        { error: "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar)." },
+        { status: 502 },
+      ),
+    };
+  }
+  const json = await aiResp.json().catch(() => null);
+  const toolCall = (json as { choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }> } }> } | null)
+    ?.choices?.[0]?.message?.tool_calls?.[0];
+  const argsStr = toolCall?.function?.arguments;
+  if (!argsStr) {
+    return { error: Response.json({ error: "A IA não conseguiu estruturar o extrato." }, { status: 502 }) };
+  }
+  let parsed: { itens?: ItemBruto[]; observacao?: unknown };
+  try {
+    parsed = JSON.parse(argsStr);
+  } catch {
+    return { error: Response.json({ error: "Resposta inválida da IA." }, { status: 502 }) };
+  }
+  const itens = Array.isArray(parsed.itens) ? parsed.itens : [];
+  const observacao = typeof parsed.observacao === "string" ? parsed.observacao : null;
+  return { itens, observacao };
+}
 
-async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
+
   if (!aiResp.ok) {
     const text = await aiResp.text();
     console.error("[import-extrato] AI gateway error", aiResp.status, text);
