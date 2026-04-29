@@ -71,8 +71,8 @@ export function FluxoCaixaChart({
 
   const totalEntradas = data.reduce((s, d) => s + d.entradas, 0);
   const totalGastos = data.reduce((s, d) => s + d.gastos, 0);
-  const mesesComDados = data.filter((d) => d.entradas > 0 || d.gastos > 0).length;
-  const semHistoricoSuficiente = mesesComDados < 2;
+  // Mostra o gráfico se houver qualquer movimentação em qualquer mês dos últimos 6.
+  const semHistoricoSuficiente = totalEntradas === 0 && totalGastos === 0;
 
   // Donut data
   const donutData = [
