@@ -434,6 +434,28 @@ function ContasAPagarPage() {
         })}
       </div>
 
+      {/* Busca */}
+      <div className="relative mt-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, categoria, valor ou vencimento"
+          className="h-10 rounded-full pl-9 pr-9"
+          aria-label="Buscar contas"
+        />
+        {busca && (
+          <button
+            type="button"
+            onClick={() => setBusca("")}
+            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
