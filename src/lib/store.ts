@@ -669,6 +669,52 @@ function rowToTransferenciaInterna(r: TransferenciaInternaRow): TransferenciaInt
   };
 }
 
+type ExtratoImportadoRow = {
+  id: string;
+  nome_arquivo: string | null;
+  banco: string | null;
+  tipo_origem: string;
+  data_importacao: string;
+  periodo_inicio: string | null;
+  periodo_fim: string | null;
+  qtd_movimentacoes: number;
+  qtd_duplicadas_ignoradas: number;
+  total_receitas: string | number;
+  total_despesas: string | number;
+  total_guardado: string | number;
+  total_transferencias: string | number;
+  status: string;
+  observacao: string | null;
+  reverted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
+  const tipo: TipoOrigemExtrato = r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+  const status: StatusExtratoImportado =
+    r.status === "parcial" || r.status === "revertido" || r.status === "erro" ? r.status : "importado";
+  return {
+    id: r.id,
+    nomeArquivo: r.nome_arquivo ?? undefined,
+    banco: r.banco ?? undefined,
+    tipoOrigem: tipo,
+    dataImportacao: r.data_importacao,
+    periodoInicio: r.periodo_inicio ?? undefined,
+    periodoFim: r.periodo_fim ?? undefined,
+    qtdMovimentacoes: r.qtd_movimentacoes ?? 0,
+    qtdDuplicadasIgnoradas: r.qtd_duplicadas_ignoradas ?? 0,
+    totalReceitas: Number(r.total_receitas ?? 0),
+    totalDespesas: Number(r.total_despesas ?? 0),
+    totalGuardado: Number(r.total_guardado ?? 0),
+    totalTransferencias: Number(r.total_transferencias ?? 0),
+    status,
+    observacao: r.observacao ?? undefined,
+    revertedAt: r.reverted_at ?? undefined,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
