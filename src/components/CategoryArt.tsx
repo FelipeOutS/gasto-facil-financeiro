@@ -395,6 +395,17 @@ export const CATEGORY_ART: Record<string, Art> = {
   pet: Pet,
   trabalho: Trabalho,
   outros: Outros,
+  combustivel: Combustivel,
+  internet: Internet,
+  energia: Energia,
+  agua: Agua,
+  pix: Pix,
+  cartao: Cartao,
+  transferencia: Transferencia,
+  salario: Salario,
+  cofrinho: Cofrinho,
+  meta: Meta,
+  uber: Uber,
 };
 
 /** Retorna o componente de arte para uma categoria, se existir. */
