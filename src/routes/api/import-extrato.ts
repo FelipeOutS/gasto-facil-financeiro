@@ -867,53 +867,14 @@ async function parseAIResponse(
   return { itens, observacao };
 }
 
-
-  if (!aiResp.ok) {
-    const text = await aiResp.text();
-    console.error("[import-extrato] AI gateway error", aiResp.status, text);
-    if (aiResp.status === 429) {
-      return Response.json(
-        { error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." },
-        { status: 429 },
-      );
-    }
-    if (aiResp.status === 402) {
-      return Response.json(
-        { error: "Sem créditos da IA. Adicione créditos no workspace para continuar." },
-        { status: 402 },
-      );
-    }
-    return Response.json(
-      {
-        error:
-          "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar).",
-      },
-      { status: 502 },
-    );
-  }
-
-  const json = await aiResp.json();
-  const toolCall = json?.choices?.[0]?.message?.tool_calls?.[0];
-  const argsStr = toolCall?.function?.arguments;
-  if (!argsStr) {
-    return Response.json(
-      { error: "A IA não conseguiu estruturar o extrato." },
-      { status: 502 },
-    );
-  }
-  let parsed: { itens?: ItemBruto[]; observacao?: unknown };
-  try {
-    parsed = JSON.parse(argsStr);
-  } catch {
-    return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
-  }
-  const itensRaw = Array.isArray(parsed.itens) ? parsed.itens : [];
-  const itens = normalizeItens(itensRaw);
-
+async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
+  const parsed = await parseAIResponse(aiResp);
+  if ("error" in parsed) return parsed.error;
   return Response.json({
-    itens,
+    itens: normalizeItens(parsed.itens),
     paginas,
     modo,
-    observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
+    observacao: parsed.observacao,
   });
 }
+
