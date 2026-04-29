@@ -266,6 +266,7 @@ export function ImportExtratoDialog({
           tipoMovimentacao: b.tipoMovimentacao,
           formaPagamento: formaPg,
           categoriaId: cat,
+          origem,
           observacao,
           selecionado: !deveComecarDesmarcado,
           dupStatus: dup,
@@ -539,7 +540,7 @@ export function ImportExtratoDialog({
           tipoGasto: "unico" as const,
           confirmado: true,
           horario: d.horario ?? undefined,
-          origem: importOrigin(d, "extrato_pdf"),
+          origem: importOrigin(d, d.origem || "extrato_pdf"),
         })),
       );
       novosCount += created.length;
@@ -561,7 +562,7 @@ export function ImportExtratoDialog({
             data: r.data!,
             tipo: tipoReceita,
             horario: r.horario ?? undefined,
-            origem: importOrigin(r, "extrato_pdf"),
+            origem: importOrigin(r, r.origem || "extrato_pdf"),
           };
         }),
       );
@@ -575,7 +576,7 @@ export function ImportExtratoDialog({
           data: t.data!,
           horario: t.horario ?? undefined,
           observacao: t.observacao,
-          origemImportacao: importOrigin(t, "extrato_pdf"),
+          origemImportacao: importOrigin(t, t.origem || "extrato_pdf"),
         })),
       );
       novosCount += created.length;
