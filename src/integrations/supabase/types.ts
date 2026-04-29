@@ -543,8 +543,10 @@ export type Database = {
           created_at: string
           data: string
           descricao: string
+          horario: string | null
           id: string
           mes: number
+          origem: string | null
           recorrencia_id: string | null
           recorrente: boolean
           tipo: string
@@ -557,8 +559,10 @@ export type Database = {
           created_at?: string
           data: string
           descricao: string
+          horario?: string | null
           id?: string
           mes: number
+          origem?: string | null
           recorrencia_id?: string | null
           recorrente?: boolean
           tipo: string
@@ -571,11 +575,64 @@ export type Database = {
           created_at?: string
           data?: string
           descricao?: string
+          horario?: string | null
           id?: string
           mes?: number
+          origem?: string | null
           recorrencia_id?: string | null
           recorrente?: boolean
           tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      transferencias_internas: {
+        Row: {
+          ano: number
+          created_at: string
+          data: string
+          descricao: string
+          destino: string | null
+          horario: string | null
+          id: string
+          mes: number
+          observacao: string | null
+          origem: string | null
+          origem_importacao: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          data: string
+          descricao?: string
+          destino?: string | null
+          horario?: string | null
+          id?: string
+          mes: number
+          observacao?: string | null
+          origem?: string | null
+          origem_importacao?: string | null
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          data?: string
+          descricao?: string
+          destino?: string | null
+          horario?: string | null
+          id?: string
+          mes?: number
+          observacao?: string | null
+          origem?: string | null
+          origem_importacao?: string | null
           updated_at?: string
           user_id?: string
           valor?: number
