@@ -179,12 +179,16 @@ export function ImportExtratoDialog({
         if (r.valor === null || !r.data) {
           return { ...r, dupStatus: "novo" as DupStatus };
         }
-        const key = `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
+        const operationKey = r.idOperacao ? `op|${normalizeDescricao(r.idOperacao)}` : null;
+        const key = operationKey || `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
         const prev = seen.get(key);
         if (prev !== undefined && prev !== idx) {
           return { ...r, dupStatus: "duplicado_lote" as DupStatus };
         }
         seen.set(key, idx);
+        if (r.idOperacao && operationIdExists(r.idOperacao)) {
+          return { ...r, dupStatus: "duplicado_existente" as DupStatus };
+        }
 
         let existe;
         if (r.tipoMovimentacao === "despesa") {
@@ -225,18 +229,38 @@ export function ImportExtratoDialog({
         const cat = (b.categoriaSugerida && categorias.find((c) => c.id === b.categoriaSugerida)?.id) ||
           suggestCategoryFromDescription(desc);
         const formaPg = (b.formaPagamento as FormaPagamento) || "outro";
+        const statusRevisao = normalizeReviewStatus(b.statusRevisao ?? null);
+        const idOperacao = b.idOperacao?.trim() || undefined;
+        const bancoOrigem = b.bancoOrigem?.trim() || undefined;
+        const origem = b.origemImportacao || origemImport;
+        const observacao = [
+          b.observacao,
+          bancoOrigem ? `Banco: ${bancoOrigem}` : null,
+          idOperacao ? `ID operação: ${idOperacao}` : null,
+          `Origem: ${origem}`,
+        ].filter(Boolean).join(" • ");
+        const deveComecarDesmarcado =
+          b.tipoMovimentacao === "transferencia_interna" ||
+          statusRevisao === "pagamento_fatura_cartao" ||
+          statusRevisao === "reserva" ||
+          statusRevisao === "resgate_reserva" ||
+          statusRevisao === "revisar";
         const dup: DupStatus = "novo";
         return {
           id: newId(),
           descricao: desc,
           valor: b.valor,
           data: b.data,
+          idOperacao,
+          saldo: b.saldo ?? null,
+          bancoOrigem,
+          statusRevisao,
           horario: b.horario,
           tipoMovimentacao: b.tipoMovimentacao,
           formaPagamento: formaPg,
           categoriaId: cat,
-          observacao: b.observacao || origemImport,
-          selecionado: true,
+          observacao,
+          selecionado: !deveComecarDesmarcado,
           dupStatus: dup,
         };
       });
