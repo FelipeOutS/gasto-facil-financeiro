@@ -418,6 +418,11 @@ function normalizeItens(rawItens: ItemBruto[]) {
       const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 120) : null;
       const contraparte =
         typeof it.contraparte === "string" ? it.contraparte.slice(0, 80) : null;
+      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.slice(0, 80) : null;
+      const saldo = typeof it.saldo === "number" && Number.isFinite(it.saldo) ? it.saldo : null;
+      const origemImportacao = typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
+      const bancoOrigem = typeof it.bancoOrigem === "string" ? it.bancoOrigem.slice(0, 60) : null;
+      const statusRevisao = typeof it.statusRevisao === "string" ? it.statusRevisao.slice(0, 60) : null;
       const conf =
         it.confianca === "alta" || it.confianca === "media" || it.confianca === "baixa"
           ? it.confianca
@@ -426,6 +431,11 @@ function normalizeItens(rawItens: ItemBruto[]) {
         descricao: desc,
         valor,
         data,
+        idOperacao,
+        saldo,
+        origemImportacao,
+        bancoOrigem,
+        statusRevisao,
         horario,
         tipoMovimentacao,
         formaPagamento,
