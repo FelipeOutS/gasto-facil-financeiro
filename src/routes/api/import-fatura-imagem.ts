@@ -77,6 +77,7 @@ type ItemBruto = {
   descricao: unknown;
   valor: unknown;
   data: unknown;
+  horario?: unknown;
   estabelecimento?: unknown;
   parcelaAtual?: unknown;
   totalParcelas?: unknown;
