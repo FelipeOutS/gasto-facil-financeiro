@@ -592,6 +592,17 @@ export function ImportFaturaDialog({
             />
           )}
 
+          {step === "pdf-upload" && (
+            <PdfStep
+              file={pdfFile}
+              onPick={(fl) => void handlePdfFile(fl)}
+              onClear={() => setPdfFile(null)}
+              loading={pdfLoading}
+              onProcess={() => void processarPdf()}
+              onBack={() => setStep("source")}
+            />
+          )}
+
           {step === "csv-upload" && (
             <CsvStep
               onPick={(fl) => void handleCsvFile(fl)}
