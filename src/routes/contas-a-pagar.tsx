@@ -1066,11 +1066,11 @@ function ContaFormDialog({
     }
 
     if (isEdit && conta) {
-      updateContaAPagar(conta.id, {
+      const fields = {
         nome: nome.trim(),
         valor,
         dataVencimento: dataVenc,
-        categoriaId: categoriaId || null,
+        categoriaId: (categoriaId || null) as string | null,
         observacao: observacao.trim() || undefined,
         beneficiario: beneficiario.trim() || null,
         formaPagamento: (formaPagamento || null) as FormaPagamento | null,
@@ -1079,7 +1079,13 @@ function ContaFormDialog({
         codigoPix: codigoPix.trim() || null,
         chavePix: chavePix.trim() || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
-      });
+      };
+      // Se conta recorrente e ainda não paga, pergunta escopo da edição
+      if (conta.recorrente && conta.recorrenciaId && conta.status !== "pago") {
+        setEditScopeFields(fields);
+        return;
+      }
+      updateContaAPagar(conta.id, fields);
       toast.success(
         isPaga && sincronizarGasto
           ? "Conta e gasto atualizados. ✅"
@@ -1104,6 +1110,38 @@ function ContaFormDialog({
       });
       toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
+    onSaved();
+  }
+
+  // Dialog de escopo para edição de conta recorrente
+  const [editScopeFields, setEditScopeFields] = useState<null | Parameters<
+    typeof updateContaAPagar
+  >[1]>(null);
+
+  function applyEditScope(scope: "single" | "future" | "all") {
+    if (!conta || !editScopeFields) return;
+    if (scope === "single" || !conta.recorrenciaId) {
+      updateContaAPagar(conta.id, editScopeFields);
+    } else {
+      // Atualiza esta primeiro (inclui dataVencimento se mudou)
+      updateContaAPagar(conta.id, editScopeFields);
+      // E propaga as demais ocorrências (sem dataVencimento)
+      updateContaRecorrencia(
+        conta.recorrenciaId,
+        editScopeFields,
+        scope,
+        conta.mes,
+        conta.ano,
+      );
+    }
+    toast.success(
+      scope === "all"
+        ? "Toda a recorrência foi atualizada. ✅"
+        : scope === "future"
+        ? "Esta e as próximas foram atualizadas. ✅"
+        : "Conta atualizada. ✅",
+    );
+    setEditScopeFields(null);
     onSaved();
   }
 
