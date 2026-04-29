@@ -89,7 +89,7 @@ export function FluxoCaixaChart({
   };
 
   return (
-    <section className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
