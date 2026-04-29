@@ -123,8 +123,9 @@ export function buildResumoMensal(params: {
   contas: ContaAPagar[];
   movMetas: MovimentacaoMeta[];
   categorias: Categoria[];
+  guardado?: Guardado[];
 }): ResumoMensal {
-  const { mes, ano, gastos, receitas, contas, movMetas, categorias } = params;
+  const { mes, ano, gastos, receitas, contas, categorias, guardado } = params;
   const gastosMes = gastos.filter((g) => isGastoNoMes(g, mes, ano));
 
   const totalReceitas = receitas
@@ -134,12 +135,10 @@ export function buildResumoMensal(params: {
   const totalCartao = gastosMes.filter(isGastoCartao).reduce((s, g) => s + g.valor, 0);
   const totalPagoContas = gastosMes.filter(isPagamentoConta).reduce((s, g) => s + g.valor, 0);
 
-  const totalGuardado = movMetas
-    .filter((m) => {
-      const d = parseDateLocal(m.data);
-      return !!d && d.getMonth() + 1 === mes && d.getFullYear() === ano && m.valor > 0;
-    })
-    .reduce((s, m) => s + m.valor, 0);
+  // Total guardado = saldo total das reservas (mesma lógica da aba Guardado).
+  // Não somamos movimentações de meta separadamente para evitar duplicidade,
+  // pois movimentações já compõem o saldo da própria reserva/banco.
+  const totalGuardado = (guardado ?? []).reduce((s, g) => s + g.valor, 0);
 
   // Contas do mês (status)
   const hojeISO = new Date().toISOString().slice(0, 10);
