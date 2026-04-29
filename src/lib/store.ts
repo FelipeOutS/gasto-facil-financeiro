@@ -888,6 +888,12 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
 
     setHydrationStatus("ready");
+
+    // Backfill em background: recupera lotes antigos que foram importados
+    // antes do sistema de batch existir. Não bloqueia hidratação.
+    void backfillExtratosImportados().catch((err) => {
+      console.warn("[store] backfillExtratosImportados failed", err);
+    });
   } catch (e) {
     console.error("[store] hydrateUser failed", e);
     setHydrationStatus("error");
