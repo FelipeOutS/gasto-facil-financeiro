@@ -609,6 +609,13 @@ type ContaAPagarRow = {
   status: string;
   data_pagamento: string | null;
   gasto_id: string | null;
+  beneficiario?: string | null;
+  forma_pagamento?: string | null;
+  codigo_boleto?: string | null;
+  codigo_pix?: string | null;
+  chave_pix?: string | null;
+  banco_emissor?: string | null;
+  import_batch_id?: string | null;
   mes: number;
   ano: number;
   created_at: string;
@@ -629,6 +636,13 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     status: (r.status as StatusConta) ?? "pendente",
     dataPagamento: r.data_pagamento ?? undefined,
     gastoId: r.gasto_id ?? undefined,
+    beneficiario: r.beneficiario ?? undefined,
+    formaPagamento: (r.forma_pagamento as FormaPagamento | null) ?? undefined,
+    codigoBoleto: r.codigo_boleto ?? undefined,
+    codigoPix: r.codigo_pix ?? undefined,
+    chavePix: r.chave_pix ?? undefined,
+    bancoEmissor: r.banco_emissor ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
     criadoEm: r.created_at,
