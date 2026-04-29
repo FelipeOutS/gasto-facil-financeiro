@@ -1337,7 +1337,32 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
   return created;
 }
 
-export function updateGasto(id: string, patch: Partial<Gasto>) {
+/**
+ * Insere múltiplos gastos em uma única chamada (importação de fatura).
+ * Faz update otimista e sincroniza com o Supabase em background.
+ */
+export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const allBuilt = inputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
+  const created = allBuilt.map((b) => b.client);
+  memGastos = [...memGastos, ...created];
+  emit();
+  void supabase
+    .from("gastos")
+    .insert(allBuilt.map((b) => b.row))
+    .then(({ error }) => {
+      if (error) {
+        console.error("[store] addGastosBulk failed", error);
+        void refreshGastos();
+      }
+    });
+  for (const inp of inputs) {
+    if (inp.estabelecimento) {
+      rememberCategoryFor(inp.estabelecimento, inp.categoriaId);
+    }
+  }
+  return created;
+}
   if (!activeUserId) return;
   const idx = memGastos.findIndex((g) => g.id === id);
   if (idx < 0) return;
