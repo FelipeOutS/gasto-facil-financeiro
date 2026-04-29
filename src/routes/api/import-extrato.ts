@@ -344,6 +344,27 @@ function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; obs
   return itens.length > 0 ? { itens, banco: hasMercadoPago ? "Mercado Pago" : null, observacao: null } : null;
 }
 
+async function extractTextPreservingRows(docProxy: Awaited<ReturnType<typeof getDocumentProxy>>) {
+  const result = await extractTextItems(docProxy);
+  return result.items
+    .map((pageItems) => {
+      const rows: Array<{ y: number; items: Array<{ str: string; x: number; y: number; height: number }> }> = [];
+      for (const item of pageItems) {
+        const str = item.str.trim();
+        if (!str) continue;
+        const row = rows.find((r) => Math.abs(r.y - item.y) <= Math.max(2, item.height * 0.75));
+        if (row) row.items.push({ str, x: item.x, y: item.y, height: item.height });
+        else rows.push({ y: item.y, items: [{ str, x: item.x, y: item.y, height: item.height }] });
+      }
+      return rows
+        .sort((a, b) => b.y - a.y)
+        .map((row) => row.items.sort((a, b) => a.x - b.x).map((item) => item.str).join(" ").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
+}
+
 async function callGemini(apiKey: string, messages: unknown[]) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
