@@ -1878,6 +1878,36 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
 export function deleteGasto(id: string) {
   if (!activeUserId) return;
   memGastos = memGastos.filter((g) => g.id !== id);
+
+  // Se este gasto estava vinculado a uma conta paga, limpa o vínculo e
+  // devolve a conta para "pendente". Sem isso, a conta ficaria como paga
+  // apontando para um gasto que não existe mais — divergência entre
+  // Contas a pagar e Gastos / Dashboard / Relatórios.
+  const contasVinculadas = memContas.filter((c) => c.gastoId === id);
+  if (contasVinculadas.length > 0) {
+    memContas = memContas.map((c) =>
+      c.gastoId === id
+        ? {
+            ...c,
+            status: "pendente",
+            dataPagamento: undefined,
+            gastoId: undefined,
+            atualizadoEm: new Date().toISOString(),
+          }
+        : c,
+    );
+    void sbAny
+      .from("contas_a_pagar")
+      .update({ status: "pendente", data_pagamento: null, gasto_id: null })
+      .in(
+        "id",
+        contasVinculadas.map((c) => c.id),
+      )
+      .then(({ error }: { error: { message: string } | null }) => {
+        if (error) console.error("[store] deleteGasto: cleanup conta vinculada failed", error);
+      });
+  }
+
   emit();
   void supabase
     .from("gastos")
