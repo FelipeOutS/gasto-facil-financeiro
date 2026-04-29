@@ -3151,7 +3151,7 @@ export function marcarContaComoPago(
       valor: conta.valor,
       data: dataPag,
       estabelecimento: conta.nome,
-      categoriaId: conta.categoriaId,
+      categoriaId: conta.categoriaId || "outros",
       formaPagamento: options.formaPagamento ?? "pix",
       tipoGasto: "unico",
       observacao: options.observacao || conta.observacao,
