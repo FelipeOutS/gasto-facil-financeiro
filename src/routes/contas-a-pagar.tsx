@@ -34,6 +34,7 @@ import {
 import type { ContaAPagar, StatusConta } from "@/lib/types";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -244,13 +245,14 @@ function ContasAPagarPage() {
       </header>
 
       {/* Resumo */}
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Total pendente no mês
         </p>
-        <p className="num mt-1 text-[30px] font-extrabold leading-none tracking-tight">
-          {formatBRL(totais.pendente + totais.atrasado)}
-        </p>
+        <Money
+          value={totais.pendente + totais.atrasado}
+          className="num mt-1 block text-[30px] font-extrabold leading-none tracking-tight"
+        />
         <div className="mt-4 grid grid-cols-3 gap-2">
           <StatusPill
             label="Pendentes"
