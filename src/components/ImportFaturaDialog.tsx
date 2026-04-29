@@ -299,7 +299,73 @@ export function ImportFaturaDialog({
     }
   }
 
-  /* ---------- CSV ---------- */
+  /* ---------- PDF ---------- */
+
+  async function handlePdfFile(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setErrorMessage(null);
+    if (!/\.pdf$|application\/pdf/i.test(file.type || file.name)) {
+      const msg = "Envie um arquivo PDF.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      const msg = "PDF muito grande. Tente um arquivo menor que 12 MB.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      return;
+    }
+    const dataUri = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    setPdfFile({ name: file.name, dataUri, size: file.size });
+  }
+
+  async function processarPdf() {
+    if (!pdfFile) return;
+    setErrorMessage(null);
+    setPdfLoading(true);
+    try {
+      const resp = await fetch("/api/import-fatura-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdf: pdfFile.dataUri }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        const msg = data?.error || "Não consegui ler esse PDF com segurança.";
+        setErrorMessage(msg);
+        toast.error(msg);
+        setPdfLoading(false);
+        return;
+      }
+      const itens = Array.isArray(data?.itens) ? (data.itens as FaturaItemBruto[]) : [];
+      if (itens.length === 0) {
+        const msg =
+          "Nenhuma movimentação encontrada. Tente enviar um arquivo mais nítido ou revise se o documento contém lançamentos.";
+        setErrorMessage(msg);
+        toast.error(msg);
+        setPdfLoading(false);
+        return;
+      }
+      setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_pdf");
+      setPdfLoading(false);
+      setStep("review");
+    } catch (err) {
+      console.error(err);
+      const msg = "Não consegui ler esse PDF agora. Tente novamente.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      setPdfLoading(false);
+    }
+  }
+
 
   async function handleCsvFile(files: FileList | null) {
     const file = files?.[0];
