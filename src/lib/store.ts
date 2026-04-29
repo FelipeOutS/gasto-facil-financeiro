@@ -1343,7 +1343,18 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
  */
 export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   if (!activeUserId || inputs.length === 0) return [];
-  const allBuilt = inputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
+  const uniqueInputs = inputs.filter((inp, index, arr) => {
+    const desc = inp.descricao || inp.estabelecimento || "";
+    const key = `${inp.cartaoId ?? ""}|${inp.data}|${desc.trim().toLowerCase()}|${inp.valor.toFixed(2)}`;
+    const firstIndex = arr.findIndex((other) => {
+      const otherDesc = other.descricao || other.estabelecimento || "";
+      const otherKey = `${other.cartaoId ?? ""}|${other.data}|${otherDesc.trim().toLowerCase()}|${other.valor.toFixed(2)}`;
+      return otherKey === key;
+    });
+    return firstIndex === index && !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
+  });
+  if (uniqueInputs.length === 0) return [];
+  const allBuilt = uniqueInputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
   const created = allBuilt.map((b) => b.client);
   memGastos = [...memGastos, ...created];
   emit();
@@ -1427,13 +1438,17 @@ export function findPossibleDuplicate(
   valor: number,
   data: string,
   estabelecimento?: string,
+  cartaoId?: string,
 ): Gasto | undefined {
   return memGastos.find(
     (g) =>
       Math.abs(g.valor - valor) < 0.01 &&
       g.data === data &&
+      (cartaoId ? g.cartaoId === cartaoId : true) &&
       (estabelecimento
-        ? g.estabelecimento.trim().toLowerCase() === estabelecimento.trim().toLowerCase()
+        ? [g.estabelecimento, g.descricao]
+            .filter(Boolean)
+            .some((text) => text.trim().toLowerCase() === estabelecimento.trim().toLowerCase())
         : true),
   );
 }
