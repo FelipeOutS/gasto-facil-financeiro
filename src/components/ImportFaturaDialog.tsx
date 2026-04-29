@@ -174,25 +174,54 @@ export function ImportFaturaDialog({
   const buildReviewFromItens = useCallback(
     (brutos: FaturaItemBruto[], cartao: string | undefined) => {
       const cId = cartao ?? "";
-      return brutos.map<ReviewItem>((it, i) => {
+      const seenKeys = new Map<string, number>(); // key -> primeiro índice
+      const out: ReviewItem[] = [];
+      brutos.forEach((it, i) => {
         const desc = it.descricao || it.estabelecimento || "";
         const sugerida =
           it.categoriaSugerida ||
           (desc ? suggestCategoryFromDescription(desc) : "outros");
-        const duplicado =
-          !!cId && it.valor !== null && it.data
-            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc, cId)
-            : false;
-        return {
+
+        // Chave de deduplicação intra-lote (normalizada)
+        const key = [
+          cId,
+          it.data ?? "",
+          (it.valor ?? 0).toFixed(2),
+          normalizeDescricao(desc),
+          it.horario ?? "",
+        ].join("|");
+
+        let dupStatus: DupStatus = "novo";
+        if (it.valor !== null && it.data) {
+          if (seenKeys.has(key)) {
+            dupStatus = "duplicado_lote";
+          } else {
+            seenKeys.set(key, i);
+            const existente = findDuplicateGastoAdvanced({
+              valor: it.valor,
+              data: it.data,
+              descricao: desc,
+              estabelecimento: it.estabelecimento ?? undefined,
+              cartaoId: cId || undefined,
+              horario: it.horario ?? undefined,
+            });
+            if (existente) dupStatus = "duplicado_existente";
+          }
+        }
+
+        out.push({
           ...it,
           descricao: desc,
           categoriaSugerida: sugerida,
           id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
           cartaoId: cId,
-          selecionado: true,
-          duplicado,
-        };
+          // Itens duplicados começam DESMARCADOS para o usuário decidir
+          selecionado: dupStatus === "novo",
+          duplicado: dupStatus !== "novo",
+          dupStatus,
+        });
       });
+      return out;
     },
     [],
   );
