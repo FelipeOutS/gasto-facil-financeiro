@@ -144,6 +144,19 @@ function textHasOperationId(text: string | undefined, id: string) {
 }
 
 function operationIdExists(id: string) {
+  const norm = normalizeDescricao(id);
+  // 1) Match direto pela coluna dedicada `id_operacao_banco` (caminho preferido,
+  //    populado em todos os imports recentes). É o sinal mais forte de duplicata.
+  const matchDireto =
+    getGastos().some((g) => g.idOperacaoBanco && normalizeDescricao(g.idOperacaoBanco) === norm) ||
+    getReceitas().some((r) => r.idOperacaoBanco && normalizeDescricao(r.idOperacaoBanco) === norm) ||
+    getTransferenciasInternas().some(
+      (t) => t.idOperacaoBanco && normalizeDescricao(t.idOperacaoBanco) === norm,
+    );
+  if (matchDireto) return true;
+  // 2) Fallback retroativo: imports antigos podem ter o id apenas embutido em
+  //    `origem`/`observacao` (formato `extrato_*|banco|op:XXX`). Mantém a
+  //    detecção para não regredir em bases legadas.
   return (
     getGastos().some((g) => textHasOperationId(g.observacao, id) || textHasOperationId(g.origem, id)) ||
     getReceitas().some((r) => textHasOperationId(r.origem, id)) ||

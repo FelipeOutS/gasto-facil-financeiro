@@ -188,7 +188,10 @@ function GastosPage() {
   );
 
   const filtered = useMemo(() => {
-    let list = gastos;
+    // Filtra fora gastos não confirmados (rascunhos pré-importação) para
+    // manter o total da tela alinhado com Dashboard e Relatórios, que já
+    // ignoram `confirmado === false`.
+    let list = gastos.filter((g) => g.confirmado !== false);
     if (range.fromTs != null || range.toTs != null) {
       list = list.filter((g) => {
         const d = parseDateLocal(g.data);
