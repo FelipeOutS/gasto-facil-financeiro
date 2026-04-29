@@ -17,6 +17,7 @@ import {
   type Cartao,
   type ContaAPagar,
   type StatusConta,
+  type TransferenciaInterna,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
