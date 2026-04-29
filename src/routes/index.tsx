@@ -31,10 +31,12 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import {
   getCategoriaById,
+  getCategorias,
   getContasAPagar,
   getGastos,
   getGuardado,
   getLimite,
+  getLimites,
   getMetas,
   getReceitas,
   statusContaEfetivo,
@@ -72,7 +74,10 @@ function Index() {
   const guardado = useStore(() => getGuardado());
   const metas = useStore(() => getMetas());
   const contas = useStore(() => getContasAPagar());
+  const categorias = useStore(() => getCategorias());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
+  // Re-render quando limites mudam
+  useStore(() => getLimites().length);
 
   const gastosConfirmados = useMemo(
     () => gastos.filter((g) => g.confirmado !== false),
