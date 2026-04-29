@@ -46,6 +46,9 @@ import {
   findDuplicateTransferenciaAdvanced,
   normalizeDescricao,
   getCategorias,
+  getGastos,
+  getReceitas,
+  getTransferenciasInternas,
   useStore,
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoReceita } from "@/lib/types";
@@ -60,11 +63,17 @@ type Step = "source" | "image-upload" | "pdf-upload" | "csv-upload" | "review";
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
+type ReviewStatus = "novo" | "pagamento_fatura_cartao" | "reserva" | "resgate_reserva" | "investimentos" | "revisar";
 
 type ItemBruto = {
   descricao: string | null;
   valor: number | null;
   data: string | null;
+  idOperacao?: string | null;
+  saldo?: number | null;
+  origemImportacao?: string | null;
+  bancoOrigem?: string | null;
+  statusRevisao?: ReviewStatus | string | null;
   horario: string | null;
   tipoMovimentacao: TipoMov;
   formaPagamento: string | null;
@@ -83,6 +92,10 @@ type ReviewItem = {
   tipoMovimentacao: TipoMov;
   formaPagamento: FormaPagamento;
   categoriaId: string;
+  idOperacao?: string;
+  saldo?: number | null;
+  bancoOrigem?: string;
+  statusRevisao: ReviewStatus;
   origem?: string;
   destino?: string;
   observacao?: string;
