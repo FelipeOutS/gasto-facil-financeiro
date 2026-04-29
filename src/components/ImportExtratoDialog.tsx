@@ -887,7 +887,15 @@ function ReviewCard({
         ? { label: "Repetido no envio", color: "bg-orange-500/15 text-orange-600 border-orange-500/30" }
         : item.valor === null || !item.data || !item.descricao
           ? { label: "Incompleto", color: "bg-red-500/15 text-red-600 border-red-500/30" }
-          : { label: "Novo", color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
+          : item.statusRevisao === "reserva"
+            ? { label: "Guardado/Cofrinho", color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+            : item.statusRevisao === "resgate_reserva"
+              ? { label: "Retirada do cofrinho", color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+              : item.statusRevisao === "pagamento_fatura_cartao"
+                ? { label: "Pagamento de fatura", color: "bg-sky-500/15 text-sky-600 border-sky-500/30" }
+                : item.statusRevisao === "revisar"
+                  ? { label: "Revisar", color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" }
+                  : { label: "Novo", color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
 
   const tipoIcon =
     item.tipoMovimentacao === "despesa" ? (
