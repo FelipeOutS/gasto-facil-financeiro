@@ -1518,7 +1518,7 @@ function OrcamentoCard({
                     : "bg-brand";
               return (
                 <li key={l.cat.id} className="flex items-center gap-2">
-                  <CategoryIcon categoria={l.cat} size="xs" />
+                  <CategoryIcon categoria={l.cat} size="sm" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="truncate text-xs font-medium">{l.cat.nome}</p>
