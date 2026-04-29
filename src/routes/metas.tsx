@@ -177,7 +177,7 @@ function MetasPage() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3 stagger">
+          <div className="grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-3">
             {ordenadas.map((m) => (
               <MetaCard
                 key={m.id}
@@ -185,6 +185,7 @@ function MetasPage() {
                 onAdd={() => setDialog({ kind: "add", meta: m })}
                 onRemove={() => setDialog({ kind: "remove", meta: m })}
                 onEdit={() => setDialog({ kind: "edit", meta: m })}
+                onChangeImage={() => setDialog({ kind: "edit", meta: m })}
                 onDelete={() => setConfirmDelete(m)}
               />
             ))}
