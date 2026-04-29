@@ -1434,6 +1434,10 @@ export type NovoGastoInput = {
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
   origem?: string;
+  /** Lote de importação ao qual esse gasto pertence (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco. */
+  idOperacaoBanco?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
