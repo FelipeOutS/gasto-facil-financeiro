@@ -39,6 +39,7 @@ import {
   getCategoriaById,
   getContasAPagar,
   getGastos,
+  getGuardado,
   getLimite,
   getLimites,
   getMovimentacoesMeta,
@@ -98,6 +99,7 @@ function RelatoriosPage() {
   const contas = useStore(() => getContasAPagar());
   const movMetas = useStore(() => getMovimentacoesMeta());
   const categorias = useStore(() => getCategorias());
+  const guardado = useStore(() => getGuardado());
   useStore(() => getLimites().length);
 
   // Aplicar período → ajusta ym efetivo (mes/anterior afetam o ym)
@@ -114,13 +116,13 @@ function RelatoriosPage() {
   }, [periodo]);
 
   const resumo = useMemo(
-    () => buildResumoMensal({ mes: ym.mes, ano: ym.ano, gastos, receitas, contas, movMetas, categorias }),
-    [ym, gastos, receitas, contas, movMetas, categorias],
+    () => buildResumoMensal({ mes: ym.mes, ano: ym.ano, gastos, receitas, contas, movMetas, categorias, guardado }),
+    [ym, gastos, receitas, contas, movMetas, categorias, guardado],
   );
   const prev = mesAnterior(ym.mes, ym.ano);
   const resumoAnterior = useMemo(
-    () => buildResumoMensal({ mes: prev.mes, ano: prev.ano, gastos, receitas, contas, movMetas, categorias }),
-    [prev, gastos, receitas, contas, movMetas, categorias],
+    () => buildResumoMensal({ mes: prev.mes, ano: prev.ano, gastos, receitas, contas, movMetas, categorias, guardado }),
+    [prev, gastos, receitas, contas, movMetas, categorias, guardado],
   );
   const comparativo = useMemo(() => buildComparativo(resumo, resumoAnterior), [resumo, resumoAnterior]);
 
@@ -167,7 +169,7 @@ function RelatoriosPage() {
       a = p.ano;
     }
     for (const s of stack) {
-      const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias });
+      const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
       arr.push({
         label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
         mes: s.mes,
@@ -178,7 +180,7 @@ function RelatoriosPage() {
       });
     }
     return arr;
-  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias]);
+  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias, guardado]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
