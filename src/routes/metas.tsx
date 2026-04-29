@@ -348,7 +348,6 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [movBanco, setMovBanco] = useState<string>("nenhum");
 
   // Reset state when dialog opens
   useEffect(() => {
