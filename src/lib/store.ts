@@ -2961,63 +2961,44 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   const rows: any[] = [];
   const catUuid = input.categoriaId ? categoriaUuidFor(input.categoriaId) : null;
 
-  if (input.recorrente) {
-    const meses = Math.max(1, input.recorrenteMeses ?? 12);
-    const recId = crypto.randomUUID();
-    for (let i = 0; i < meses; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
-      if (input.dataFim && d.toISOString().slice(0, 10) > input.dataFim) break;
-      const iso = d.toISOString().slice(0, 10);
-      const id = crypto.randomUUID();
-      const conta: ContaAPagar = {
-        id,
-        nome: input.nome,
-        valor: input.valor,
-        dataVencimento: iso,
-        categoriaId: input.categoriaId,
-        observacao: input.observacao,
-        recorrente: true,
-        recorrenciaId: recId,
-        dataInicio: input.dataVencimento,
-        dataFim: input.dataFim,
-        status: "pendente",
-        mes: d.getMonth() + 1,
-        ano: d.getFullYear(),
-        criadoEm: now,
-        atualizadoEm: now,
-      };
-      created.push(conta);
-      rows.push({
-        id,
-        user_id: activeUserId,
-        nome: input.nome,
-        valor: input.valor,
-        data_vencimento: iso,
-        categoria_id: catUuid,
-        observacao: input.observacao ?? null,
-        recorrente: true,
-        recorrencia_id: recId,
-        data_inicio: input.dataVencimento,
-        data_fim: input.dataFim ?? null,
-        status: "pendente",
-        mes: d.getMonth() + 1,
-        ano: d.getFullYear(),
-      });
-    }
-  } else {
+  // Campos comuns que se repetem em cada ocorrência
+  const extras = {
+    beneficiario: input.beneficiario,
+    formaPagamento: input.formaPagamento,
+    codigoBoleto: input.codigoBoleto,
+    codigoPix: input.codigoPix,
+    chavePix: input.chavePix,
+    bancoEmissor: input.bancoEmissor,
+    importBatchId: input.importBatchId,
+  };
+  const extrasRow = {
+    beneficiario: input.beneficiario ?? null,
+    forma_pagamento: input.formaPagamento ?? null,
+    codigo_boleto: input.codigoBoleto ?? null,
+    codigo_pix: input.codigoPix ?? null,
+    chave_pix: input.chavePix ?? null,
+    banco_emissor: input.bancoEmissor ?? null,
+    import_batch_id: input.importBatchId ?? null,
+  };
+
+  function pushOne(iso: string, recurringId: string | null) {
+    const d = new Date(iso + "T00:00:00");
     const id = crypto.randomUUID();
     created.push({
       id,
       nome: input.nome,
       valor: input.valor,
-      dataVencimento: input.dataVencimento,
+      dataVencimento: iso,
       categoriaId: input.categoriaId,
       observacao: input.observacao,
-      recorrente: false,
+      recorrente: !!recurringId,
+      recorrenciaId: recurringId ?? undefined,
+      dataInicio: recurringId ? input.dataVencimento : undefined,
+      dataFim: recurringId ? input.dataFim : undefined,
       status: "pendente",
-      mes: baseDate.getMonth() + 1,
-      ano: baseDate.getFullYear(),
+      ...extras,
+      mes: d.getMonth() + 1,
+      ano: d.getFullYear(),
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -3026,15 +3007,34 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       user_id: activeUserId,
       nome: input.nome,
       valor: input.valor,
-      data_vencimento: input.dataVencimento,
+      data_vencimento: iso,
       categoria_id: catUuid,
       observacao: input.observacao ?? null,
-      recorrente: false,
+      recorrente: !!recurringId,
+      recorrencia_id: recurringId,
+      data_inicio: recurringId ? input.dataVencimento : null,
+      data_fim: recurringId && input.dataFim ? input.dataFim : null,
       status: "pendente",
-      mes: baseDate.getMonth() + 1,
-      ano: baseDate.getFullYear(),
+      mes: d.getMonth() + 1,
+      ano: d.getFullYear(),
+      ...extrasRow,
     });
   }
+
+  if (input.recorrente) {
+    const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const recId = crypto.randomUUID();
+    for (let i = 0; i < meses; i++) {
+      const d = new Date(baseDate);
+      d.setMonth(d.getMonth() + i);
+      const iso = d.toISOString().slice(0, 10);
+      if (input.dataFim && iso > input.dataFim) break;
+      pushOne(iso, recId);
+    }
+  } else {
+    pushOne(input.dataVencimento, null);
+  }
+
   memContas = [...memContas, ...created];
   emit();
   void sbAny
