@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { extractText, getDocumentProxy } from "unpdf";
+import { extractText, extractTextItems, getDocumentProxy } from "unpdf";
 
 /**
  * Importação de extrato bancário (Pix, transferências, débito, tarifas, entradas, saídas).
@@ -96,6 +96,11 @@ type ItemBruto = {
   descricao: unknown;
   valor: unknown;
   data: unknown;
+  idOperacao?: unknown;
+  saldo?: unknown;
+  origemImportacao?: unknown;
+  bancoOrigem?: unknown;
+  statusRevisao?: unknown;
   horario?: unknown;
   tipoMovimentacao?: unknown;
   formaPagamento?: unknown;
@@ -121,6 +126,11 @@ const TOOL_SCHEMA = {
               descricao: { type: ["string", "null"] },
               valor: { type: ["number", "null"] },
               data: { type: ["string", "null"] },
+              idOperacao: { type: ["string", "null"] },
+              saldo: { type: ["number", "null"] },
+              origemImportacao: { type: ["string", "null"] },
+              bancoOrigem: { type: ["string", "null"] },
+              statusRevisao: { type: ["string", "null"] },
               horario: { type: ["string", "null"] },
               tipoMovimentacao: {
                 type: "string",
