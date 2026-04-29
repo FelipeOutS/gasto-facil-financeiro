@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Home, List, CreditCard, Target, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
@@ -14,6 +15,18 @@ const TABS = [
 export function BottomNav() {
   const location = useLocation();
   const alerta = useAlertaContas();
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+  const currentPath = optimisticPath ?? location.pathname;
+
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [location.pathname]);
+
+  function handleNavClick(to: string, event: MouseEvent<HTMLAnchorElement>) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    setOptimisticPath(to);
+  }
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom lg:hidden"
@@ -22,7 +35,7 @@ export function BottomNav() {
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
         {TABS.map(({ to, label, icon: Icon }) => {
           const active =
-            to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+            to === "/" ? currentPath === "/" : currentPath.startsWith(to);
           // O item "Início" mostra a bolinha porque é por lá que o usuário acessa
           // o card "Próximas contas" no dashboard.
           const showDot = to === "/" && alerta !== "nenhum";
@@ -30,6 +43,9 @@ export function BottomNav() {
             <li key={to} className="flex-1">
               <Link
                 to={to}
+                preload="intent"
+                preloadDelay={0}
+                onClick={(event) => handleNavClick(to, event)}
                 className={cn(
                   "relative flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-medium transition-all duration-200 active:scale-95",
                   active ? "text-brand" : "text-muted-foreground hover:text-foreground",
