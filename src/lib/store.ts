@@ -210,6 +210,8 @@ type GastoRow = {
   essencial: boolean | null;
   gasto_fixo: boolean | null;
   cartao_id?: string | null;
+  horario?: string | null;
+  origem?: string | null;
   created_at: string;
   updated_at: string;
 };
