@@ -237,6 +237,7 @@ export function ImportFaturaDialog({
         return;
       }
       setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_imagem");
       setImgLoading(false);
       setStep("review");
     } catch (err) {
