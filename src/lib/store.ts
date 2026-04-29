@@ -496,6 +496,7 @@ type GuardadoRow = {
   legacy_id: string | null;
   created_at: string;
   updated_at: string;
+  import_batch_id?: string | null;
 };
 function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Guardado {
   return {
@@ -507,6 +508,7 @@ function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Gua
     dataAtualizacao: r.data_atualizacao,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
+    importBatchId: r.import_batch_id ?? undefined,
   };
 }
 
