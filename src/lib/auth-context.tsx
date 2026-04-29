@@ -128,6 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.updateUser({ password });
       return { error: error ?? null };
     },
+    async updateProfile(data) {
+      const uid = session?.user.id;
+      if (!uid) return { error: new Error("Usuário não autenticado") };
+      // upsert garante que usuários antigos sem linha em profiles também consigam salvar
+      const payload = { id: uid, ...data };
+      const { data: saved, error } = await supabase
+        .from("profiles")
+        .upsert(payload, { onConflict: "id" })
+        .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
+        .maybeSingle();
+      if (error) return { error };
+      if (saved) setProfile(saved as Profile);
+      return { error: null };
+    },
+    async refreshProfile() {
+      const uid = session?.user.id;
+      if (uid) await loadProfile(uid);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
