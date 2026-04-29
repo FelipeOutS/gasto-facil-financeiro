@@ -20,7 +20,7 @@
 //    complexidade, somamos apenas movimentações de meta no mês
 //    (positivas) — é o sinal mais confiável de "guardar".
 
-import type { Categoria, ContaAPagar, Gasto, Receita, MovimentacaoMeta } from "./types";
+import type { Categoria, ContaAPagar, Gasto, Receita, MovimentacaoMeta, Guardado } from "./types";
 import { parseDateLocal } from "./format";
 
 export type EstadoMes = "excelente" | "bom" | "mediano" | "atencao" | "critico";
