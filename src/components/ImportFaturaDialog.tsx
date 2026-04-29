@@ -204,6 +204,7 @@ export function ImportFaturaDialog({
 
   async function processarImagem() {
     if (images.length === 0) return;
+    setErrorMessage(null);
     setImgLoading(true);
     setImgStage(0);
     try {
@@ -214,10 +215,11 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
-        toast.error(
+        const msg =
           data?.error ||
-            "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.",
-        );
+          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+        setErrorMessage(msg);
+        toast.error(msg);
         setImgLoading(false);
         return;
       }
@@ -225,9 +227,10 @@ export function ImportFaturaDialog({
         ? (data.itens as FaturaItemBruto[])
         : [];
       if (itens.length === 0) {
-        toast.error(
-          "Não encontrei compras nessa imagem. Tente um print mais nítido.",
-        );
+        const msg =
+          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+        setErrorMessage(msg);
+        toast.error(msg);
         setImgLoading(false);
         return;
       }
@@ -236,7 +239,10 @@ export function ImportFaturaDialog({
       setStep("review");
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao processar a imagem.");
+      const msg =
+        "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       setImgLoading(false);
     }
   }
@@ -246,13 +252,15 @@ export function ImportFaturaDialog({
   async function handleCsvFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
+    setErrorMessage(null);
     const text = await file.text();
     setCsvText(text);
     const parsed = parseCsvFile(text);
     if (parsed.headers.length === 0 || parsed.rows.length === 0) {
-      toast.error(
-        "Não consegui identificar as colunas do arquivo. Confira o formato ou mapeie manualmente.",
-      );
+      const msg =
+        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     setCsvHeaders(parsed.headers);
