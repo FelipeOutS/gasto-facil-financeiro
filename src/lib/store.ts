@@ -3278,6 +3278,10 @@ export function marcarContaComoPago(
     formaPagamento?: FormaPagamento;
     dataPagamento?: string;
     observacao?: string;
+    /** Overrides aplicados à conta e ao gasto gerado */
+    nome?: string;
+    valor?: number;
+    categoriaId?: string;
   },
 ): { gastoId?: string } {
   if (!activeUserId) return {};
@@ -3286,15 +3290,20 @@ export function marcarContaComoPago(
   const conta = memContas[idx];
   const dataPag = options?.dataPagamento ?? new Date().toISOString().slice(0, 10);
 
+  // Valores efetivos (override do modal de pagamento, ou fallback para a conta)
+  const nomeEf = (options?.nome ?? conta.nome).trim() || conta.nome;
+  const valorEf = typeof options?.valor === "number" && options.valor > 0 ? options.valor : conta.valor;
+  const categoriaEf = options?.categoriaId ?? conta.categoriaId;
+
   let gastoId: string | undefined = conta.gastoId;
   // Só cria gasto se ainda não existir um vinculado (evita duplicar)
   if (options?.criarGasto && !conta.gastoId) {
     const novos = addGasto({
-      descricao: conta.nome,
-      valor: conta.valor,
+      descricao: nomeEf,
+      valor: valorEf,
       data: dataPag,
-      estabelecimento: conta.nome,
-      categoriaId: conta.categoriaId || "outros",
+      estabelecimento: nomeEf,
+      categoriaId: categoriaEf || "outros",
       formaPagamento: options.formaPagamento ?? "pix",
       tipoGasto: "unico",
       observacao: options.observacao || conta.observacao,
@@ -3305,8 +3314,12 @@ export function marcarContaComoPago(
 
   const updated: ContaAPagar = {
     ...conta,
+    nome: nomeEf,
+    valor: valorEf,
+    categoriaId: categoriaEf,
     status: "pago",
     dataPagamento: dataPag,
+    formaPagamento: options?.formaPagamento ?? conta.formaPagamento,
     gastoId: gastoId,
     atualizadoEm: new Date().toISOString(),
   };
@@ -3316,6 +3329,10 @@ export function marcarContaComoPago(
   void sbAny
     .from("contas_a_pagar")
     .update({
+      nome: nomeEf,
+      valor: valorEf,
+      categoria_id: categoriaEf ?? null,
+      forma_pagamento: options?.formaPagamento ?? conta.formaPagamento ?? null,
       status: "pago",
       data_pagamento: dataPag,
       gasto_id: gastoId ?? null,
