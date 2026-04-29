@@ -788,7 +788,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -798,6 +798,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       sbAny.from("cartoes").select("*").eq("user_id", userId),
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
       sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
+      sbAny.from("extratos_importados").select("*").eq("user_id", userId).order("data_importacao", { ascending: false }),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -810,6 +811,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
     if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
     if (transferenciasRes.error) console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
+    if (extratosRes.error) console.warn("[store] extratos_importados load warning", extratosRes.error);
 
     memGastos = normalizeGastosForCalculations(
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
@@ -830,6 +832,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
       (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
+    );
+    memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
+      (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
     );
 
     setHydrationStatus("ready");
