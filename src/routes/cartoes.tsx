@@ -24,6 +24,7 @@ import {
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
+import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
