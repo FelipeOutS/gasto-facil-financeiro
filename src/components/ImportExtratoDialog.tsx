@@ -330,33 +330,32 @@ export function ImportExtratoDialog({
           setLoading(false);
           return;
         }
-        const brutos: ItemBruto[] = rows
-          .map((r) => {
-            const valor = parseValorBR(r[idxValor] ?? "");
-            const data = parseDataBR(r[idxData] ?? "");
-            const desc = (r[idxDesc] ?? "").trim();
-            if (valor === null || !data || !desc) return null;
-            const tipoMov: TipoMov = valor < 0 ? "despesa" : "receita";
-            const lower = desc.toLowerCase();
-            let forma: string = "outro";
-            if (/pix/.test(lower)) forma = "pix";
-            else if (/ted|doc|transf/.test(lower)) forma = "transferencia";
-            else if (/d[eé]bito|deb /.test(lower)) forma = "debito";
-            else if (/boleto/.test(lower)) forma = "boleto";
-            return {
-              descricao: desc,
-              valor: Math.abs(valor),
-              data,
-              horario: null,
-              tipoMovimentacao: tipoMov,
-              formaPagamento: forma,
-              categoriaSugerida: suggestCategoryFromDescription(desc),
-              contraparte: null,
-              confianca: "media" as const,
-              observacao: null,
-            };
-          })
-          .filter((x): x is ItemBruto => x !== null);
+        const brutos: ItemBruto[] = [];
+        for (const r of rows) {
+          const valor = parseValorBR(r[idxValor] ?? "");
+          const data = parseDataBR(r[idxData] ?? "");
+          const desc = (r[idxDesc] ?? "").trim();
+          if (valor === null || !data || !desc) continue;
+          const tipoMov: TipoMov = valor < 0 ? "despesa" : "receita";
+          const lower = desc.toLowerCase();
+          let forma: string = "outro";
+          if (/pix/.test(lower)) forma = "pix";
+          else if (/ted|doc|transf/.test(lower)) forma = "transferencia";
+          else if (/d[eé]bito|deb /.test(lower)) forma = "debito";
+          else if (/boleto/.test(lower)) forma = "boleto";
+          brutos.push({
+            descricao: desc,
+            valor: Math.abs(valor),
+            data,
+            horario: null,
+            tipoMovimentacao: tipoMov,
+            formaPagamento: forma,
+            categoriaSugerida: suggestCategoryFromDescription(desc),
+            contraparte: null,
+            confianca: "media",
+            observacao: null,
+          });
+        }
         if (brutos.length === 0) {
           toast.warning("Nenhuma linha válida no CSV.");
           setLoading(false);
