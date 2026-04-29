@@ -1143,6 +1143,7 @@ export type NovoGastoInput = {
   observacao?: string;
   imagemUrl?: string;
   tipoGasto?: TipoGasto;
+  parcelaAtual?: number;
   totalParcelas?: number;
   recorrenteMeses?: number;
   essencial?: boolean;
@@ -1158,7 +1159,57 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const catUuid = categoriaUuidFor(input.categoriaId);
   const out: { row: GastoInsert; client: Gasto }[] = [];
 
-  if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
+  if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1 && (input.parcelaAtual ?? 0) > 0) {
+    const total = input.totalParcelas!;
+    const parcelaAtual = Math.min(total, Math.max(1, Math.floor(input.parcelaAtual!)));
+    const id = crypto.randomUUID();
+    out.push({
+      row: {
+        id,
+        user_id: userId,
+        categoria_id: catUuid,
+        descricao: input.descricao || input.estabelecimento || "Gasto",
+        valor: input.valor,
+        data: input.data,
+        estabelecimento: input.estabelecimento || "",
+        forma_pagamento: input.formaPagamento,
+        observacao: input.observacao ?? null,
+        imagem_url: input.imagemUrl ?? null,
+        mes: baseDate.getMonth() + 1,
+        ano: baseDate.getFullYear(),
+        confirmado: true,
+        tipo_gasto: "parcelado",
+        parcela_atual: parcelaAtual,
+        total_parcelas: total,
+        grupo_parcelamento_id: null,
+        essencial: input.essencial ?? null,
+        gasto_fixo: input.gastoFixo ?? null,
+        cartao_id: input.cartaoId ?? null,
+      },
+      client: {
+        id,
+        descricao: input.descricao || input.estabelecimento || "Gasto",
+        valor: input.valor,
+        data: input.data,
+        estabelecimento: input.estabelecimento || "",
+        categoriaId: input.categoriaId,
+        formaPagamento: input.formaPagamento,
+        observacao: input.observacao,
+        imagemUrl: input.imagemUrl,
+        mes: baseDate.getMonth() + 1,
+        ano: baseDate.getFullYear(),
+        confirmado: true,
+        tipoGasto: "parcelado",
+        parcelaAtual,
+        totalParcelas: total,
+        essencial: input.essencial,
+        gastoFixo: input.gastoFixo,
+        cartaoId: input.cartaoId,
+        criadoEm: now,
+        atualizadoEm: now,
+      },
+    });
+  } else if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
     const total = input.totalParcelas!;
     const valorParcela = Math.round((input.valor / total) * 100) / 100;
     const grupo = crypto.randomUUID();
