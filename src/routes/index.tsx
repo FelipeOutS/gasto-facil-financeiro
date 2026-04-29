@@ -44,6 +44,7 @@ import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
