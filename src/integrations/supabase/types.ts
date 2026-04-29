@@ -623,21 +623,42 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cnpj: string | null
+          cpf: string | null
           created_at: string
           id: string
           nome: string | null
+          nome_fantasia: string | null
+          razao_social: string | null
+          responsavel_nome: string | null
+          telefone: string | null
+          tipo_cadastro: string | null
           updated_at: string
         }
         Insert: {
+          cnpj?: string | null
+          cpf?: string | null
           created_at?: string
           id: string
           nome?: string | null
+          nome_fantasia?: string | null
+          razao_social?: string | null
+          responsavel_nome?: string | null
+          telefone?: string | null
+          tipo_cadastro?: string | null
           updated_at?: string
         }
         Update: {
+          cnpj?: string | null
+          cpf?: string | null
           created_at?: string
           id?: string
           nome?: string | null
+          nome_fantasia?: string | null
+          razao_social?: string | null
+          responsavel_nome?: string | null
+          telefone?: string | null
+          tipo_cadastro?: string | null
           updated_at?: string
         }
         Relationships: []

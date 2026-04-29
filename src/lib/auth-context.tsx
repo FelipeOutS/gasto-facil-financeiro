@@ -2,8 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
+import type { TipoCadastro } from "./profile-utils";
 
-type Profile = { id: string; nome: string | null };
+export type Profile = {
+  id: string;
+  nome: string | null;
+  tipo_cadastro: TipoCadastro;
+  cpf: string | null;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  responsavel_nome: string | null;
+  telefone: string | null;
+};
+
+export type ProfileUpdate = Partial<Omit<Profile, "id">>;
 
 type AuthContextValue = {
   session: Session | null;
@@ -19,6 +32,8 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  updateProfile: (data: ProfileUpdate) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -71,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nome")
+      .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
       .eq("id", uid)
       .maybeSingle();
     if (data) setProfile(data as Profile);
@@ -113,6 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.updateUser({ password });
       return { error: error ?? null };
     },
+    async updateProfile(data) {
+      const uid = session?.user.id;
+      if (!uid) return { error: new Error("Usuário não autenticado") };
+      // upsert garante que usuários antigos sem linha em profiles também consigam salvar
+      const payload = { id: uid, ...data };
+      const { data: saved, error } = await supabase
+        .from("profiles")
+        .upsert(payload, { onConflict: "id" })
+        .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
+        .maybeSingle();
+      if (error) return { error };
+      if (saved) setProfile(saved as Profile);
+      return { error: null };
+    },
+    async refreshProfile() {
+      const uid = session?.user.id;
+      if (uid) await loadProfile(uid);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -136,6 +169,10 @@ const SSR_FALLBACK: AuthContextValue = {
   async updatePassword() {
     return { error: new Error("Auth not ready") };
   },
+  async updateProfile() {
+    return { error: new Error("Auth not ready") };
+  },
+  async refreshProfile() {},
 };
 
 export function useAuth() {
