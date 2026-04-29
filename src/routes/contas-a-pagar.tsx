@@ -19,6 +19,8 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { ImportContaDialog } from "@/components/ImportContaDialog";
+import { Copy, Upload } from "lucide-react";
 import {
   addContaAPagar,
   deleteContaAPagar,
@@ -93,6 +95,7 @@ function ContasAPagarPage() {
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
+  const [importing, setImporting] = useState(false);
   const [filtro, setFiltro] = useState<FilterId>("todas");
 
   const contas = useStore(() => getContasAPagar());
@@ -342,15 +345,26 @@ function ContasAPagarPage() {
         {mensagemAmigavel(totais)}
       </p>
 
-      {/* CTA Adicionar */}
-      <Button
-        size="lg"
-        className="card-press mt-3 h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
-        onClick={() => setCreating(true)}
-      >
-        <Plus className="mr-1 h-5 w-5" />
-        Adicionar conta
-      </Button>
+      {/* CTAs */}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Button
+          size="lg"
+          className="card-press h-14 rounded-2xl bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
+          onClick={() => setCreating(true)}
+        >
+          <Plus className="mr-1 h-5 w-5" />
+          Nova conta
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="card-press h-14 rounded-2xl text-sm font-semibold"
+          onClick={() => setImporting(true)}
+        >
+          <Upload className="mr-1 h-5 w-5" />
+          Importar conta
+        </Button>
+      </div>
 
       {/* Filtros */}
       <div
@@ -513,6 +527,8 @@ function ContasAPagarPage() {
           categoriasCount={categorias.length}
         />
       )}
+
+      <ImportContaDialog open={importing} onOpenChange={setImporting} />
     </MobileShell>
   );
 }

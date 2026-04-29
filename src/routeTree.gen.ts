@@ -31,6 +31,7 @@ import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
 import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
+import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
@@ -142,6 +143,11 @@ const ApiImportExtratoRoute = ApiImportExtratoRouteImport.update({
   path: '/api/import-extrato',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiImportContaRoute = ApiImportContaRouteImport.update({
+  id: '/api/import-conta',
+  path: '/api/import-conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-conta'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-conta'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-conta'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
@@ -472,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportExtratoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/import-conta': {
+      id: '/api/import-conta'
+      path: '/api/import-conta'
+      fullPath: '/api/import-conta'
+      preLoaderRoute: typeof ApiImportContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  ApiImportContaRoute: ApiImportContaRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,

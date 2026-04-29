@@ -303,6 +303,20 @@ export type ContaAPagar = {
   dataPagamento?: string;
   /** ID do gasto criado quando o usuário escolhe registrar como gasto */
   gastoId?: string;
+  /** Beneficiário da conta (quem recebe) */
+  beneficiario?: string;
+  /** Forma de pagamento prevista para essa conta */
+  formaPagamento?: FormaPagamento;
+  /** Linha digitável / código de barras do boleto */
+  codigoBoleto?: string;
+  /** Pix copia e cola (BR Code) */
+  codigoPix?: string;
+  /** Chave Pix (CPF, e-mail, telefone, aleatória) */
+  chavePix?: string;
+  /** Banco emissor / cedente */
+  bancoEmissor?: string;
+  /** Lote de importação que originou a conta (quando vinda de boleto/Pix importado) */
+  importBatchId?: string;
   mes: number;
   ano: number;
   criadoEm: string;

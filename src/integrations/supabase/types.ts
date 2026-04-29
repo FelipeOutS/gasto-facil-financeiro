@@ -169,14 +169,21 @@ export type Database = {
       contas_a_pagar: {
         Row: {
           ano: number
+          banco_emissor: string | null
+          beneficiario: string | null
           categoria_id: string | null
+          chave_pix: string | null
+          codigo_boleto: string | null
+          codigo_pix: string | null
           created_at: string
           data_fim: string | null
           data_inicio: string | null
           data_pagamento: string | null
           data_vencimento: string
+          forma_pagamento: string | null
           gasto_id: string | null
           id: string
+          import_batch_id: string | null
           mes: number
           nome: string
           observacao: string | null
@@ -189,14 +196,21 @@ export type Database = {
         }
         Insert: {
           ano: number
+          banco_emissor?: string | null
+          beneficiario?: string | null
           categoria_id?: string | null
+          chave_pix?: string | null
+          codigo_boleto?: string | null
+          codigo_pix?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           data_pagamento?: string | null
           data_vencimento: string
+          forma_pagamento?: string | null
           gasto_id?: string | null
           id?: string
+          import_batch_id?: string | null
           mes: number
           nome: string
           observacao?: string | null
@@ -209,14 +223,21 @@ export type Database = {
         }
         Update: {
           ano?: number
+          banco_emissor?: string | null
+          beneficiario?: string | null
           categoria_id?: string | null
+          chave_pix?: string | null
+          codigo_boleto?: string | null
+          codigo_pix?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
+          forma_pagamento?: string | null
           gasto_id?: string | null
           id?: string
+          import_batch_id?: string | null
           mes?: number
           nome?: string
           observacao?: string | null
