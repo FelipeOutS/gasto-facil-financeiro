@@ -399,6 +399,14 @@ function Index() {
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
         <div className="min-w-0 space-y-3 lg:col-span-3">
           <AlertasContasCard contas={contas} />
+          <ResumoMesCard
+            mes={ym.mes}
+            ano={ym.ano}
+            saldo={saldo}
+            maiorCategoria={maior ?? null}
+            categorias={categorias}
+            gastosConfirmados={gastosConfirmados}
+          />
           <OrcamentoCard
             categorias={categorias}
             gastos={gastosConfirmados}
@@ -1558,3 +1566,95 @@ function OrcamentoCard({
     </section>
   );
 }
+
+// ============================================================
+// Resumo do mês — card compacto que linka para /relatorios
+// ============================================================
+function ResumoMesCard({
+  mes,
+  ano,
+  saldo,
+  maiorCategoria,
+  categorias,
+  gastosConfirmados,
+}: {
+  mes: number;
+  ano: number;
+  saldo: number;
+  maiorCategoria: { nome: string; valor: number } | null;
+  categorias: Categoria[];
+  gastosConfirmados: Gasto[];
+}) {
+  const linhas = useMemo(
+    () =>
+      buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
+        getLimite(catId, mes, ano),
+      ),
+    [categorias, gastosConfirmados, mes, ano],
+  );
+  const estouro = linhas.filter((l) => l.status === "estouro");
+  const critica = estouro.sort((a, b) => b.pct - a.pct)[0]?.cat.nome ?? null;
+
+  // Estado simplificado: positivo, atenção, crítico
+  let estado: "bom" | "atencao" | "critico" = "bom";
+  let emoji = "😄";
+  let label = "Indo bem";
+  let toneCls = "border-success/30 bg-success/5";
+  let textCls = "text-success";
+  if (saldo < 0 || estouro.length >= 2) {
+    estado = "critico";
+    emoji = "🚨";
+    label = "Atenção total";
+    toneCls = "border-destructive/30 bg-destructive/5";
+    textCls = "text-destructive";
+  } else if (estouro.length >= 1) {
+    estado = "atencao";
+    emoji = "⚠️";
+    label = "Pediu cuidado";
+    toneCls = "border-warning/30 bg-warning/5";
+    textCls = "text-warning";
+  }
+
+  return (
+    <section className={cn("rounded-3xl border bg-card p-4 transition-colors animate-rise", toneCls)}>
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-2xl">
+          {emoji}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Resumo do mês
+          </p>
+          <h3 className={cn("text-base font-bold leading-tight", textCls)}>{label}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Saldo {saldo < 0 ? "negativo" : "positivo"}: <span className="font-medium text-foreground">{formatBRL(saldo)}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Maior categoria</p>
+          <p className="mt-0.5 truncate text-sm font-semibold">
+            {maiorCategoria ? maiorCategoria.nome : "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Orçamento crítico</p>
+          <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
+            {critica ?? "Tudo no controle"}
+          </p>
+        </div>
+      </div>
+
+      <Link
+        to="/relatorios"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm font-medium transition-all hover:bg-accent active:scale-[0.98]"
+      >
+        <Sparkles className="h-3.5 w-3.5 text-brand" />
+        Ver relatório completo
+      </Link>
+    </section>
+  );
+}
+
