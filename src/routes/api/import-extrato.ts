@@ -249,6 +249,101 @@ function suggestCategory(desc: string): string {
   return "outros";
 }
 
+function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto, "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"> {
+  const t = stripAccents(desc).toLowerCase();
+  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|fatura/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "boleto",
+      categoriaSugerida: "contas",
+      statusRevisao: "pagamento_fatura_cartao",
+      observacao: "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
+    };
+  }
+  if (/reserva por gastos|dinheiro reservado|reservado/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "reserva",
+      observacao: "Reserva interna. Não afeta o Dashboard.",
+    };
+  }
+  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "resgate_reserva",
+      observacao: "Resgate de reserva. Não entra como receita.",
+    };
+  }
+  if (/rendimento|venda de meli dolar/.test(t)) {
+    return {
+      tipoMovimentacao: "receita",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: /venda de meli dolar/.test(t) ? "investimentos" : "novo",
+      observacao: /venda de meli dolar/.test(t) ? "Investimento/resgate identificado; revise antes de confirmar." : null,
+    };
+  }
+  if (/pix recebido|transferencia recebida|recebido/.test(t) && signedValue > 0) {
+    return { tipoMovimentacao: "receita", formaPagamento: "pix", categoriaSugerida: "outros", statusRevisao: "novo", observacao: null };
+  }
+  if (/pagamento com qr pix|qr pix|pix enviado|pix/.test(t)) {
+    return { tipoMovimentacao: signedValue > 0 ? "receita" : "despesa", formaPagamento: "pix", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+  }
+  if (/pagamento de conta|boleto|conta/.test(t)) {
+    return { tipoMovimentacao: "despesa", formaPagamento: "boleto", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+  }
+  return {
+    tipoMovimentacao: signedValue > 0 ? "receita" : "despesa",
+    formaPagamento: /ted|doc|transf/.test(t) ? "transferencia" : "outro",
+    categoriaSugerida: suggestCategory(desc),
+    statusRevisao: "novo",
+    observacao: null,
+  };
+}
+
+function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null } | null {
+  const normalized = stripAccents(text).toLowerCase();
+  const hasMercadoPago = /mercado\s*pago/.test(normalized);
+  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,120}id da opera[cç][aã]o[\s\S]{0,80}valor[\s\S]{0,80}saldo/i.test(text);
+  if (!hasMercadoPago && !hasColumns) return null;
+
+  const fallbackYear = guessYearFromText(text);
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const itens: ItemBruto[] = [];
+  const rowPattern = /^(\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?)\s+(.+?)\s+([A-Z0-9][A-Z0-9._\-]{5,})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})$/i;
+
+  for (const line of lines) {
+    const match = line.match(rowPattern);
+    if (!match) continue;
+    const data = parseDataBR(match[1], fallbackYear);
+    const signedValue = parseValorBR(match[4]);
+    if (!data || signedValue === null) continue;
+    const desc = match[2].trim();
+    const classification = classifyMercadoPago(desc, signedValue);
+    itens.push({
+      descricao: desc,
+      valor: Math.abs(signedValue),
+      data,
+      horario: null,
+      idOperacao: match[3].trim(),
+      saldo: parseValorBR(match[5]),
+      origemImportacao: "extrato_pdf",
+      bancoOrigem: hasMercadoPago ? "Mercado Pago" : null,
+      confianca: "alta",
+      ...classification,
+    });
+  }
+
+  if (itens.length === 0 && hasColumns) {
+    return { itens: [], banco: hasMercadoPago ? "Mercado Pago" : null, observacao: "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação." };
+  }
+  return itens.length > 0 ? { itens, banco: hasMercadoPago ? "Mercado Pago" : null, observacao: null } : null;
+}
+
 async function callGemini(apiKey: string, messages: unknown[]) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
