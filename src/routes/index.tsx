@@ -384,7 +384,7 @@ function Index() {
 
       {/* ===== Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-start">
         <div className="min-w-0 lg:col-span-3">
             <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
@@ -817,7 +817,7 @@ function KpiCard({
 
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
   return (
-    <section className="flex h-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -832,9 +832,9 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
           Ver tudo →
         </Link>
       </div>
-      <div className="mt-3 flex-1">
+      <div className="mt-3">
         {ultimos.length === 0 ? (
-          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center animate-fade-in">
+          <div className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
               Tudo vazio por aqui ainda.
