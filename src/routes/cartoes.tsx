@@ -260,12 +260,18 @@ function CartoesPage() {
       {cartoes.length === 0 ? (
         <EmptyState onAdd={handleOpenNew} />
       ) : (
-        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px] xl:gap-6">
-          <section className="grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] xl:gap-6">
+          <section
+            className={cn(
+              "grid grid-cols-1 gap-5 stagger",
+              cartoes.length > 1 && "xl:grid-cols-2",
+            )}
+          >
             {cartoes.map((c) => (
               <CartaoCard
                 key={c.id}
                 cartao={c}
+                onOpen={() => setOpenDetail(c)}
                 onEdit={() => handleEdit(c)}
                 onDelete={() => setConfirmDelete(c)}
               />
