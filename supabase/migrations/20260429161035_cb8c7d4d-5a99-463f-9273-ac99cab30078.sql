@@ -1,0 +1,1 @@
+ALTER TABLE public.contas_a_pagar ADD COLUMN IF NOT EXISTS frequencia_recorrencia text;
