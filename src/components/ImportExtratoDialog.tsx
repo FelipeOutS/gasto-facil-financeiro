@@ -808,6 +808,7 @@ function ReviewStep({
   onAdd,
   categorias,
   observacaoIA,
+  resumoExtrato,
 }: {
   items: ReviewItem[];
   onUpdate: (id: string, patch: Partial<ReviewItem>) => void;
@@ -815,9 +816,20 @@ function ReviewStep({
   onAdd: () => void;
   categorias: ReturnType<typeof getCategorias>;
   observacaoIA: string | null;
+  resumoExtrato: ExtratoResumo | null;
 }) {
   return (
     <div className="space-y-3">
+      {resumoExtrato && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border bg-card p-3 text-xs">
+          <ResumoItem label="Banco" value={resumoExtrato.banco ?? "—"} />
+          <ResumoItem label="Período" value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
+          <ResumoItem label="Saldo final" value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
+          <ResumoItem label="Saldo inicial" value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
+          <ResumoItem label="Entradas" value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
+          <ResumoItem label="Saídas" value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
+        </div>
+      )}
       {observacaoIA && (
         <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
@@ -844,6 +856,15 @@ function ReviewStep({
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ResumoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="font-medium truncate">{value}</p>
     </div>
   );
 }
