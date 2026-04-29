@@ -610,7 +610,8 @@ function GastosPage() {
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {formatDateBR(g.data)} · {pag}
+                      {cat?.nome ?? "Outros"} · {formatDateBR(g.data)}
+                      {g.horario ? ` às ${g.horario}` : ""} · {pag}
                       {g.tipoGasto === "parcelado" && g.totalParcelas
                         ? ` · ${g.parcelaAtual}/${g.totalParcelas}`
                         : g.tipoGasto === "recorrente"
