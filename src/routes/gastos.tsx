@@ -180,6 +180,7 @@ function GastosPage() {
   const [advOpen, setAdvOpen] = useState(false);
   const [editing, setEditing] = useState<Gasto | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const range = useMemo(
     () => getRange(periodo, { from: customFrom, to: customTo }),
