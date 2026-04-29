@@ -98,6 +98,8 @@ CATEGORIA SUGERIDA heurística:
 
 PRIVACIDADE — NUNCA inclua na descrição: número completo do cartão, CVV, senha, CPF, número completo de conta/agência. Se aparecer, omita ou mascare.
 
+COMPLETUDE OBRIGATÓRIA — Liste TODAS as movimentações do trecho, sem cortar, sem resumir, sem limitar a 20/24/30 itens. Se houver 80, devolva 80. Mantenha a descrição completa do lançamento (não trunque). Não invente movimentações que não estejam no texto.
+
 Se o conteúdo não parece um extrato legível, retorne itens=[] com observacao explicando.`;
 
 type ItemBruto = {
