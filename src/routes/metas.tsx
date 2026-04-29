@@ -461,13 +461,13 @@ function MetaFormDialog({
           <DialogTitle>
             {isCreate && "Criar meta financeira"}
             {isEdit && "Editar meta"}
-            {isAdd && "Adicionar à meta"}
+            {isAdd && "Atualizar valor da meta"}
             {isRemove && "Ajustar valor"}
           </DialogTitle>
           <DialogDescription>
             {isCreate && "Defina um objetivo e acompanhe o progresso."}
             {isEdit && "Atualize qualquer informação da sua meta."}
-            {isAdd && baseMeta?.nome}
+            {isAdd && "Informe quanto você já juntou até agora para esta meta."}
             {isRemove && `Remover valor de ${baseMeta?.nome}`}
           </DialogDescription>
         </DialogHeader>
