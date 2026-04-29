@@ -402,6 +402,9 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
+  const [imagemKey, setImagemKey] = useState<MetaArtKey>("objetivo");
+  /** Indica se o usuário escolheu manualmente — caso contrário, mantemos auto-match. */
+  const [imagemManual, setImagemManual] = useState(false);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -414,6 +417,8 @@ function MetaFormDialog({
       setDescricao("");
       setColorHex(META_COLORS[0]);
       setBancoId("nenhum");
+      setImagemKey("objetivo");
+      setImagemManual(false);
     } else if (baseMeta) {
       setNome(baseMeta.nome);
       setObjetivoStr(formatBRL(baseMeta.valorObjetivo).replace("R$", "").trim());
@@ -422,6 +427,9 @@ function MetaFormDialog({
       setDescricao(baseMeta.descricao ?? "");
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
+      const persistida = baseMeta.imagemKey as MetaArtKey | undefined;
+      setImagemKey(persistida ?? getMetaArtKey(baseMeta.nome, baseMeta.descricao));
+      setImagemManual(!!persistida);
     }
     // Pré-preenche com o valor acumulado atual no modo "atualizar valor"
     if (isAdd && baseMeta) {
@@ -431,6 +439,14 @@ function MetaFormDialog({
     }
     
   }, [open, isCreate, isAdd, baseMeta]);
+
+  // Auto-match: enquanto o usuário não tiver escolhido manualmente,
+  // recalculamos a sugestão a partir do nome/descrição.
+  useEffect(() => {
+    if (!open || imagemManual) return;
+    if (!isCreate && !isEdit) return;
+    setImagemKey(getMetaArtKey(nome, descricao));
+  }, [nome, descricao, imagemManual, open, isCreate, isEdit]);
 
   function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
@@ -447,6 +463,7 @@ function MetaFormDialog({
         descricao: descricao.trim() || undefined,
         colorHex,
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
+        imagemKey,
       });
       toast.success("Meta criada. Cada passo conta. 🎯");
       onClose();
@@ -465,6 +482,7 @@ function MetaFormDialog({
         descricao: descricao.trim() || undefined,
         colorHex,
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
+        imagemKey,
       });
       toast.success("Pronto, sua meta foi atualizada.");
       onClose();
