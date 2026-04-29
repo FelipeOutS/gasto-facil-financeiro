@@ -91,6 +91,7 @@ function ContasAPagarPage() {
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
+  const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
   const [filtro, setFiltro] = useState<FilterId>("todas");
 
@@ -396,10 +397,7 @@ function ContasAPagarPage() {
                 onEdit={() => setEditing(conta)}
                 onDelete={() => setConfirmDelete(conta)}
                 onPagar={() => setPagar(conta)}
-                onDesmarcar={() => {
-                  desmarcarContaComoPago(conta.id);
-                  toast.success("Conta voltou para pendente.");
-                }}
+                onDesmarcar={() => setConfirmDesmarcar(conta)}
               />
             ))}
           </div>
@@ -434,23 +432,75 @@ function ContasAPagarPage() {
             <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
-                ? `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
+                ? confirmDelete.gastoId
+                  ? `"${confirmDelete.nome}" foi paga e gerou um gasto vinculado. Como deseja excluir?`
+                  : `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
                 : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            {confirmDelete?.gastoId && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (confirmDelete) {
+                    deleteContaAPagar(confirmDelete.id, { excluirGastoVinculado: false });
+                    toast.success("Conta excluída. Gasto mantido.");
+                  }
+                  setConfirmDelete(null);
+                }}
+              >
+                Excluir só a conta
+              </Button>
+            )}
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteContaAPagar(confirmDelete.id, {
+                    excluirGastoVinculado: !!confirmDelete.gastoId,
+                  });
+                  toast.success(
+                    confirmDelete.gastoId ? "Conta e gasto excluídos." : "Conta excluída.",
+                  );
+                }
+                setConfirmDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {confirmDelete?.gastoId ? "Excluir conta e gasto" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmDesmarcar}
+        onOpenChange={(o) => !o && setConfirmDesmarcar(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desfazer pagamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDesmarcar?.gastoId
+                ? `"${confirmDesmarcar.nome}" voltará para pendente. O gasto vinculado em Gastos também será removido.`
+                : `"${confirmDesmarcar?.nome ?? ""}" voltará para pendente.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (confirmDelete) {
-                  deleteContaAPagar(confirmDelete.id);
-                  toast.success("Conta excluída.");
+                if (confirmDesmarcar) {
+                  desmarcarContaComoPago(confirmDesmarcar.id, {
+                    removerGastoVinculado: true,
+                  });
+                  toast.success("Conta voltou para pendente.");
                 }
-                setConfirmDelete(null);
+                setConfirmDesmarcar(null);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              Desfazer pagamento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -939,56 +989,47 @@ function PagarDialog({
   onClose: () => void;
   categoriasCount: number;
 }) {
-  const [criarGasto, setCriarGasto] = useState(!!conta.categoriaId && categoriasCount > 0);
+  const [criarGasto, setCriarGasto] = useState(categoriasCount > 0);
   const [forma, setForma] = useState<FormaPagamento>("pix");
+  const [dataPag, setDataPag] = useState(todayISO());
+  const [obs, setObs] = useState("");
 
   function handlePagar() {
     marcarContaComoPago(conta.id, {
-      criarGasto: criarGasto && !!conta.categoriaId,
+      criarGasto,
       formaPagamento: forma,
+      dataPagamento: dataPag,
+      observacao: obs.trim() || undefined,
     });
-    if (criarGasto && !conta.categoriaId) {
-      toast.warning("Conta marcada como paga, mas sem categoria não foi possível criar o gasto.");
-    } else {
-      toast.success(
-        criarGasto && conta.categoriaId
-          ? "Conta paga e gasto registrado."
-          : "Conta marcada como paga.",
-      );
-    }
+    toast.success(
+      criarGasto
+        ? "Conta paga e gasto registrado."
+        : "Conta marcada como paga.",
+    );
     onClose();
   }
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Marcar como pago</DialogTitle>
+          <DialogTitle>Marcar como paga</DialogTitle>
           <DialogDescription>
             {conta.nome} — {formatBRL(conta.valor)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Registrar como gasto?</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {conta.categoriaId
-                    ? "Cria um gasto de hoje na categoria da conta."
-                    : "Esta conta não tem categoria — não é possível criar gasto."}
-                </p>
-              </div>
-              <Switch
-                checked={criarGasto}
-                onCheckedChange={setCriarGasto}
-                disabled={!conta.categoriaId}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pag-data">Data do pagamento</Label>
+              <Input
+                id="pag-data"
+                type="date"
+                value={dataPag}
+                onChange={(e) => setDataPag(e.target.value)}
               />
             </div>
-          </div>
-
-          {criarGasto && conta.categoriaId && (
             <div className="space-y-1.5">
               <Label>Forma de pagamento</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
@@ -1004,7 +1045,32 @@ function PagarDialog({
                 </SelectContent>
               </Select>
             </div>
-          )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pag-obs">Observação (opcional)</Label>
+            <Textarea
+              id="pag-obs"
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              rows={2}
+              placeholder="Conta usada, comprovante, etc."
+            />
+          </div>
+
+          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Registrar como gasto</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {conta.categoriaId
+                    ? "Cria um lançamento em Gastos com a categoria desta conta."
+                    : "Sem categoria — vai para “Outros” em Gastos."}
+                </p>
+              </div>
+              <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
@@ -1013,7 +1079,7 @@ function PagarDialog({
           </Button>
           <Button onClick={handlePagar}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar
+            Confirmar pagamento
           </Button>
         </DialogFooter>
       </DialogContent>
