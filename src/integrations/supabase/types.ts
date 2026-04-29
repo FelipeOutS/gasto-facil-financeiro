@@ -243,6 +243,7 @@ export type Database = {
           created_at: string
           data_atualizacao: string
           id: string
+          import_batch_id: string | null
           legacy_id: string | null
           observacao: string | null
           tipo_reserva: string
@@ -255,6 +256,7 @@ export type Database = {
           created_at?: string
           data_atualizacao?: string
           id?: string
+          import_batch_id?: string | null
           legacy_id?: string | null
           observacao?: string | null
           tipo_reserva?: string
@@ -267,6 +269,7 @@ export type Database = {
           created_at?: string
           data_atualizacao?: string
           id?: string
+          import_batch_id?: string | null
           legacy_id?: string | null
           observacao?: string | null
           tipo_reserva?: string
@@ -284,6 +287,72 @@ export type Database = {
           },
         ]
       }
+      extratos_importados: {
+        Row: {
+          banco: string | null
+          created_at: string
+          data_importacao: string
+          id: string
+          nome_arquivo: string | null
+          observacao: string | null
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          qtd_duplicadas_ignoradas: number
+          qtd_movimentacoes: number
+          reverted_at: string | null
+          status: string
+          tipo_origem: string
+          total_despesas: number
+          total_guardado: number
+          total_receitas: number
+          total_transferencias: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banco?: string | null
+          created_at?: string
+          data_importacao?: string
+          id?: string
+          nome_arquivo?: string | null
+          observacao?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          qtd_duplicadas_ignoradas?: number
+          qtd_movimentacoes?: number
+          reverted_at?: string | null
+          status?: string
+          tipo_origem?: string
+          total_despesas?: number
+          total_guardado?: number
+          total_receitas?: number
+          total_transferencias?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banco?: string | null
+          created_at?: string
+          data_importacao?: string
+          id?: string
+          nome_arquivo?: string | null
+          observacao?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          qtd_duplicadas_ignoradas?: number
+          qtd_movimentacoes?: number
+          reverted_at?: string | null
+          status?: string
+          tipo_origem?: string
+          total_despesas?: number
+          total_guardado?: number
+          total_receitas?: number
+          total_transferencias?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gastos: {
         Row: {
           ano: number
@@ -300,7 +369,9 @@ export type Database = {
           grupo_parcelamento_id: string | null
           horario: string | null
           id: string
+          id_operacao_banco: string | null
           imagem_url: string | null
+          import_batch_id: string | null
           mes: number
           observacao: string | null
           origem: string | null
@@ -327,7 +398,9 @@ export type Database = {
           grupo_parcelamento_id?: string | null
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
           imagem_url?: string | null
+          import_batch_id?: string | null
           mes: number
           observacao?: string | null
           origem?: string | null
@@ -354,7 +427,9 @@ export type Database = {
           grupo_parcelamento_id?: string | null
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
           imagem_url?: string | null
+          import_batch_id?: string | null
           mes?: number
           observacao?: string | null
           origem?: string | null
@@ -468,6 +543,7 @@ export type Database = {
           created_at: string
           data: string
           id: string
+          import_batch_id: string | null
           legacy_id: string | null
           meta_id: string
           observacao: string | null
@@ -480,6 +556,7 @@ export type Database = {
           created_at?: string
           data?: string
           id?: string
+          import_batch_id?: string | null
           legacy_id?: string | null
           meta_id: string
           observacao?: string | null
@@ -492,6 +569,7 @@ export type Database = {
           created_at?: string
           data?: string
           id?: string
+          import_batch_id?: string | null
           legacy_id?: string | null
           meta_id?: string
           observacao?: string | null
@@ -545,6 +623,8 @@ export type Database = {
           descricao: string
           horario: string | null
           id: string
+          id_operacao_banco: string | null
+          import_batch_id: string | null
           mes: number
           origem: string | null
           recorrencia_id: string | null
@@ -561,6 +641,8 @@ export type Database = {
           descricao: string
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
+          import_batch_id?: string | null
           mes: number
           origem?: string | null
           recorrencia_id?: string | null
@@ -577,6 +659,8 @@ export type Database = {
           descricao?: string
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
+          import_batch_id?: string | null
           mes?: number
           origem?: string | null
           recorrencia_id?: string | null
@@ -597,6 +681,8 @@ export type Database = {
           destino: string | null
           horario: string | null
           id: string
+          id_operacao_banco: string | null
+          import_batch_id: string | null
           mes: number
           observacao: string | null
           origem: string | null
@@ -613,6 +699,8 @@ export type Database = {
           destino?: string | null
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
+          import_batch_id?: string | null
           mes: number
           observacao?: string | null
           origem?: string | null
@@ -629,6 +717,8 @@ export type Database = {
           destino?: string | null
           horario?: string | null
           id?: string
+          id_operacao_banco?: string | null
+          import_batch_id?: string | null
           mes?: number
           observacao?: string | null
           origem?: string | null

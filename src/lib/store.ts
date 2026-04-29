@@ -18,6 +18,9 @@ import {
   type ContaAPagar,
   type StatusConta,
   type TransferenciaInterna,
+  type ExtratoImportado,
+  type StatusExtratoImportado,
+  type TipoOrigemExtrato,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
@@ -105,6 +108,7 @@ const EMPTY_MOV: MovimentacaoMeta[] = [];
 const EMPTY_CARTOES: Cartao[] = [];
 const EMPTY_CONTAS: ContaAPagar[] = [];
 const EMPTY_TRANSFERENCIAS: TransferenciaInterna[] = [];
+const EMPTY_EXTRATOS: ExtratoImportado[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -118,6 +122,7 @@ let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
+let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -148,6 +153,7 @@ export function setActiveUserId(uid: string | null) {
   memCartoes = EMPTY_CARTOES;
   memContas = EMPTY_CONTAS;
   memTransferencias = EMPTY_TRANSFERENCIAS;
+  memExtratos = EMPTY_EXTRATOS;
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -217,6 +223,8 @@ type GastoRow = {
   cartao_id?: string | null;
   horario?: string | null;
   origem?: string | null;
+  import_batch_id?: string | null;
+  id_operacao_banco?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -244,6 +252,8 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     cartaoId: r.cartao_id ?? undefined,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
+    idOperacaoBanco: r.id_operacao_banco ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -400,6 +410,8 @@ type ReceitaRow = {
   ano: number;
   horario?: string | null;
   origem?: string | null;
+  import_batch_id?: string | null;
+  id_operacao_banco?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -416,6 +428,8 @@ function rowToReceita(r: ReceitaRow): Receita {
     ano: r.ano,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
+    idOperacaoBanco: r.id_operacao_banco ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -628,6 +642,8 @@ type TransferenciaInternaRow = {
   destino: string | null;
   observacao: string | null;
   origem_importacao: string | null;
+  import_batch_id?: string | null;
+  id_operacao_banco?: string | null;
   mes: number;
   ano: number;
   created_at: string;
@@ -644,8 +660,56 @@ function rowToTransferenciaInterna(r: TransferenciaInternaRow): TransferenciaInt
     destino: r.destino ?? undefined,
     observacao: r.observacao ?? undefined,
     origemImportacao: r.origem_importacao ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
+    idOperacaoBanco: r.id_operacao_banco ?? undefined,
     mes: r.mes,
     ano: r.ano,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
+type ExtratoImportadoRow = {
+  id: string;
+  nome_arquivo: string | null;
+  banco: string | null;
+  tipo_origem: string;
+  data_importacao: string;
+  periodo_inicio: string | null;
+  periodo_fim: string | null;
+  qtd_movimentacoes: number;
+  qtd_duplicadas_ignoradas: number;
+  total_receitas: string | number;
+  total_despesas: string | number;
+  total_guardado: string | number;
+  total_transferencias: string | number;
+  status: string;
+  observacao: string | null;
+  reverted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
+  const tipo: TipoOrigemExtrato = r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+  const status: StatusExtratoImportado =
+    r.status === "parcial" || r.status === "revertido" || r.status === "erro" ? r.status : "importado";
+  return {
+    id: r.id,
+    nomeArquivo: r.nome_arquivo ?? undefined,
+    banco: r.banco ?? undefined,
+    tipoOrigem: tipo,
+    dataImportacao: r.data_importacao,
+    periodoInicio: r.periodo_inicio ?? undefined,
+    periodoFim: r.periodo_fim ?? undefined,
+    qtdMovimentacoes: r.qtd_movimentacoes ?? 0,
+    qtdDuplicadasIgnoradas: r.qtd_duplicadas_ignoradas ?? 0,
+    totalReceitas: Number(r.total_receitas ?? 0),
+    totalDespesas: Number(r.total_despesas ?? 0),
+    totalGuardado: Number(r.total_guardado ?? 0),
+    totalTransferencias: Number(r.total_transferencias ?? 0),
+    status,
+    observacao: r.observacao ?? undefined,
+    revertedAt: r.reverted_at ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -770,7 +834,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -780,6 +844,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       sbAny.from("cartoes").select("*").eq("user_id", userId),
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
       sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
+      sbAny.from("extratos_importados").select("*").eq("user_id", userId).order("data_importacao", { ascending: false }),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -792,6 +857,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
     if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
     if (transferenciasRes.error) console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
+    if (extratosRes.error) console.warn("[store] extratos_importados load warning", extratosRes.error);
 
     memGastos = normalizeGastosForCalculations(
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
@@ -812,6 +878,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
       (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
+    );
+    memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
+      (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
     );
 
     setHydrationStatus("ready");
@@ -1422,6 +1491,10 @@ export type NovoGastoInput = {
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
   origem?: string;
+  /** Lote de importação ao qual esse gasto pertence (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco. */
+  idOperacaoBanco?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
@@ -1641,12 +1714,24 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       },
     });
   }
-  // Stamp horario/origem on every produced row + client (fields are optional).
+  // Stamp horario/origem/importBatch on every produced row + client (fields are optional).
+  const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
+  const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
   for (const o of out) {
-    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).horario = horarioVal;
-    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).origem = origemVal;
+    type ExtraCols = GastoInsert & {
+      horario?: string | null;
+      origem?: string | null;
+      import_batch_id?: string | null;
+      id_operacao_banco?: string | null;
+    };
+    (o.row as ExtraCols).horario = horarioVal;
+    (o.row as ExtraCols).origem = origemVal;
+    (o.row as ExtraCols).import_batch_id = batchId;
+    (o.row as ExtraCols).id_operacao_banco = opId;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
+    if (batchId) o.client.importBatchId = batchId;
+    if (opId) o.client.idOperacaoBanco = opId;
   }
   return out;
 }
@@ -1688,7 +1773,10 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
       const otherKey = `${other.cartaoId ?? ""}|${other.data}|${otherDesc.trim().toLowerCase()}|${other.valor.toFixed(2)}`;
       return otherKey === key;
     });
-    return firstIndex === index && !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
+    if (firstIndex !== index) return false;
+    // Dedup contra a base local só se NÃO vier de extrato (que já fez dedup avançado por idOperacao no Dialog).
+    if (inp.importBatchId || inp.idOperacaoBanco) return true;
+    return !findPossibleDuplicate(inp.valor, inp.data, desc, inp.cartaoId);
   });
   if (uniqueInputs.length === 0) return [];
   const allBuilt = uniqueInputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
@@ -2136,6 +2224,8 @@ export type NovaReceitaBulkInput = {
   tipo: TipoReceita;
   horario?: string;
   origem?: string;
+  importBatchId?: string;
+  idOperacaoBanco?: string;
 };
 
 /** Insere várias receitas de uma vez (sem recorrência). */
@@ -2163,6 +2253,8 @@ export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
       ano: baseDate.getFullYear(),
       horario: inp.horario,
       origem: inp.origem,
+      importBatchId: inp.importBatchId,
+      idOperacaoBanco: inp.idOperacaoBanco,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -2179,6 +2271,8 @@ export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
       // colunas opcionais
       ...(inp.horario ? { horario: inp.horario } : {}),
       ...(inp.origem ? { origem: inp.origem } : {}),
+      ...(inp.importBatchId ? { import_batch_id: inp.importBatchId } : {}),
+      ...(inp.idOperacaoBanco ? { id_operacao_banco: inp.idOperacaoBanco } : {}),
     } as ReceitaInsert);
   }
 
@@ -2231,6 +2325,8 @@ export type NovaTransferenciaInternaInput = {
   destino?: string;
   observacao?: string;
   origemImportacao?: string;
+  importBatchId?: string;
+  idOperacaoBanco?: string;
 };
 
 export function addTransferenciasInternasBulk(
@@ -2259,6 +2355,8 @@ export function addTransferenciasInternasBulk(
       destino: inp.destino,
       observacao: inp.observacao,
       origemImportacao: inp.origemImportacao,
+      importBatchId: inp.importBatchId,
+      idOperacaoBanco: inp.idOperacaoBanco,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
       criadoEm: now,
@@ -2275,6 +2373,8 @@ export function addTransferenciasInternasBulk(
       destino: inp.destino ?? null,
       observacao: inp.observacao ?? null,
       origem_importacao: inp.origemImportacao ?? null,
+      import_batch_id: inp.importBatchId ?? null,
+      id_operacao_banco: inp.idOperacaoBanco ?? null,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
     });

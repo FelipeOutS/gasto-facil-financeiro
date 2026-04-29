@@ -51,6 +51,10 @@ export type Gasto = {
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
   origem?: string;
+  /** Lote de importação ao qual esse gasto pertence (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco (quando importado de extrato). */
+  idOperacaoBanco?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -118,6 +122,10 @@ export type Receita = {
   horario?: string;
   /** Origem do registro: manual, extrato_pdf, extrato_imagem, extrato_csv. */
   origem?: string;
+  /** Lote de importação (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco. */
+  idOperacaoBanco?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -134,8 +142,37 @@ export type TransferenciaInterna = {
   observacao?: string;
   /** Origem do registro de importação (extrato_pdf, etc.) */
   origemImportacao?: string;
+  /** Lote de importação (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco. */
+  idOperacaoBanco?: string;
   mes: number;
   ano: number;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+// ---------- Extratos importados (lotes) ----------
+export type StatusExtratoImportado = "importado" | "parcial" | "revertido" | "erro";
+export type TipoOrigemExtrato = "pdf" | "csv" | "imagem";
+
+export type ExtratoImportado = {
+  id: string;
+  nomeArquivo?: string;
+  banco?: string;
+  tipoOrigem: TipoOrigemExtrato;
+  dataImportacao: string;
+  periodoInicio?: string;
+  periodoFim?: string;
+  qtdMovimentacoes: number;
+  qtdDuplicadasIgnoradas: number;
+  totalReceitas: number;
+  totalDespesas: number;
+  totalGuardado: number;
+  totalTransferencias: number;
+  status: StatusExtratoImportado;
+  observacao?: string;
+  revertedAt?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
