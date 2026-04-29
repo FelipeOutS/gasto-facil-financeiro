@@ -172,8 +172,16 @@ function GastosPage() {
 
   const filtered = useMemo(() => {
     let list = gastos;
-    if (range.from) list = list.filter((g) => g.data >= range.from!);
-    if (range.to) list = list.filter((g) => g.data <= range.to!);
+    if (range.fromTs != null || range.toTs != null) {
+      list = list.filter((g) => {
+        const d = parseDateLocal(g.data);
+        if (!d) return false;
+        const ts = d.getTime();
+        if (range.fromTs != null && ts < range.fromTs) return false;
+        if (range.toTs != null && ts > range.toTs) return false;
+        return true;
+      });
+    }
     if (catFilter !== "todas") list = list.filter((g) => g.categoriaId === catFilter);
     if (pagFilter !== "todas") list = list.filter((g) => g.formaPagamento === pagFilter);
     const min = parseFloat(valorMin.replace(",", "."));
