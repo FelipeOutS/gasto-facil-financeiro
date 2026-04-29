@@ -432,23 +432,75 @@ function ContasAPagarPage() {
             <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
-                ? `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
+                ? confirmDelete.gastoId
+                  ? `"${confirmDelete.nome}" foi paga e gerou um gasto vinculado. Como deseja excluir?`
+                  : `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
                 : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            {confirmDelete?.gastoId && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (confirmDelete) {
+                    deleteContaAPagar(confirmDelete.id, { excluirGastoVinculado: false });
+                    toast.success("Conta excluída. Gasto mantido.");
+                  }
+                  setConfirmDelete(null);
+                }}
+              >
+                Excluir só a conta
+              </Button>
+            )}
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) {
+                  deleteContaAPagar(confirmDelete.id, {
+                    excluirGastoVinculado: !!confirmDelete.gastoId,
+                  });
+                  toast.success(
+                    confirmDelete.gastoId ? "Conta e gasto excluídos." : "Conta excluída.",
+                  );
+                }
+                setConfirmDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {confirmDelete?.gastoId ? "Excluir conta e gasto" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmDesmarcar}
+        onOpenChange={(o) => !o && setConfirmDesmarcar(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desfazer pagamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDesmarcar?.gastoId
+                ? `"${confirmDesmarcar.nome}" voltará para pendente. O gasto vinculado em Gastos também será removido.`
+                : `"${confirmDesmarcar?.nome ?? ""}" voltará para pendente.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (confirmDelete) {
-                  deleteContaAPagar(confirmDelete.id);
-                  toast.success("Conta excluída.");
+                if (confirmDesmarcar) {
+                  desmarcarContaComoPago(confirmDesmarcar.id, {
+                    removerGastoVinculado: true,
+                  });
+                  toast.success("Conta voltou para pendente.");
                 }
-                setConfirmDelete(null);
+                setConfirmDesmarcar(null);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              Desfazer pagamento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
