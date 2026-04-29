@@ -216,8 +216,8 @@ export function FluxoCaixaChart({
             </PieChart>
           )}
         </ResponsiveContainer>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
