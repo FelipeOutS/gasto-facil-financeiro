@@ -100,29 +100,31 @@ export function FluxoCaixaChart({
             Últimos 6 meses · entradas vs. gastos
           </p>
         </div>
-        <div className="flex items-center gap-1 self-start rounded-full border border-border bg-card-elevated p-1">
-          {TYPES.map(({ id, label, Icon }) => {
-            const active = tipo === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTipo(id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all card-press",
-                  active
-                    ? "bg-brand-soft text-brand-on-soft shadow-card"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-pressed={active}
-                title={label}
-              >
-                <Icon className="h-3 w-3" />
-                <span className="hidden sm:inline">{label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {!semHistoricoSuficiente && (
+          <div className="flex items-center gap-1 self-start rounded-full border border-border bg-card-elevated p-1">
+            {TYPES.map(({ id, label, Icon }) => {
+              const active = tipo === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTipo(id)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all card-press",
+                    active
+                      ? "bg-brand-soft text-brand-on-soft shadow-card"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-pressed={active}
+                  title={label}
+                >
+                  <Icon className="h-3 w-3" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-[11px]">
@@ -151,16 +153,16 @@ export function FluxoCaixaChart({
         </div>
       </div>
 
-      <div className="mt-4 h-[220px] w-full sm:h-[260px]">
-        {semHistoricoSuficiente ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 text-center">
-            <TrendingUp className="h-7 w-7 text-muted-foreground" />
-            <p className="mt-2 text-sm font-medium">Ainda não há histórico suficiente</p>
-            <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-              Continue lançando seus gastos e receitas para o gráfico ficar mais completo nos próximos meses.
-            </p>
-          </div>
-        ) : (
+      {semHistoricoSuficiente ? (
+        <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 py-6 text-center">
+          <TrendingUp className="h-6 w-6 text-muted-foreground" />
+          <p className="mt-2 text-sm font-medium">Ainda não há histórico suficiente</p>
+          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+            Continue lançando seus gastos e receitas — o gráfico aparece quando você tiver pelo menos dois meses com dados.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 h-[220px] w-full sm:h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           {tipo === "area" ? (
             <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
