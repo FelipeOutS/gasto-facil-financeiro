@@ -34,11 +34,12 @@ import {
   marcarContaComoPago,
   statusContaEfetivo,
   updateContaAPagar,
+  updateContaRecorrencia,
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import type { ContaAPagar, StatusConta } from "@/lib/types";
-import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/types";
+import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -1023,6 +1024,9 @@ function ContaFormDialog({
   const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
+  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
+    conta?.frequenciaRecorrencia ?? "mensal",
+  );
   const [meses, setMeses] = useState("12");
 
   // Campos extras
@@ -1062,11 +1066,11 @@ function ContaFormDialog({
     }
 
     if (isEdit && conta) {
-      updateContaAPagar(conta.id, {
+      const fields = {
         nome: nome.trim(),
         valor,
         dataVencimento: dataVenc,
-        categoriaId: categoriaId || null,
+        categoriaId: (categoriaId || null) as string | null,
         observacao: observacao.trim() || undefined,
         beneficiario: beneficiario.trim() || null,
         formaPagamento: (formaPagamento || null) as FormaPagamento | null,
@@ -1075,7 +1079,13 @@ function ContaFormDialog({
         codigoPix: codigoPix.trim() || null,
         chavePix: chavePix.trim() || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
-      });
+      };
+      // Se conta recorrente e ainda não paga, pergunta escopo da edição
+      if (conta.recorrente && conta.recorrenciaId && conta.status !== "pago") {
+        setEditScopeFields(fields);
+        return;
+      }
+      updateContaAPagar(conta.id, fields);
       toast.success(
         isPaga && sincronizarGasto
           ? "Conta e gasto atualizados. ✅"
@@ -1089,6 +1099,7 @@ function ContaFormDialog({
         categoriaId: categoriaId || undefined,
         observacao: observacao.trim() || undefined,
         recorrente,
+        frequenciaRecorrencia: recorrente ? frequencia : undefined,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
         beneficiario: beneficiario.trim() || undefined,
         formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
@@ -1099,6 +1110,38 @@ function ContaFormDialog({
       });
       toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
+    onSaved();
+  }
+
+  // Dialog de escopo para edição de conta recorrente
+  const [editScopeFields, setEditScopeFields] = useState<null | Parameters<
+    typeof updateContaAPagar
+  >[1]>(null);
+
+  function applyEditScope(scope: "single" | "future" | "all") {
+    if (!conta || !editScopeFields) return;
+    if (scope === "single" || !conta.recorrenciaId) {
+      updateContaAPagar(conta.id, editScopeFields);
+    } else {
+      // Atualiza esta primeiro (inclui dataVencimento se mudou)
+      updateContaAPagar(conta.id, editScopeFields);
+      // E propaga as demais ocorrências (sem dataVencimento)
+      updateContaRecorrencia(
+        conta.recorrenciaId,
+        editScopeFields,
+        scope,
+        conta.mes,
+        conta.ano,
+      );
+    }
+    toast.success(
+      scope === "all"
+        ? "Toda a recorrência foi atualizada. ✅"
+        : scope === "future"
+        ? "Esta e as próximas foram atualizadas. ✅"
+        : "Conta atualizada. ✅",
+    );
+    setEditScopeFields(null);
     onSaved();
   }
 
@@ -1285,24 +1328,52 @@ function ContaFormDialog({
                 <div>
                   <p className="text-sm font-medium">Conta recorrente</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Repete todo mês na mesma data
+                    Gera as próximas ocorrências automaticamente
                   </p>
                 </div>
-                <Switch checked={recorrente} onCheckedChange={setRecorrente} />
-              </div>
-              {recorrente && (
-                <div className="mt-3 space-y-1.5">
-                  <Label htmlFor="conta-meses">Repetir por quantos meses?</Label>
+              <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+            </div>
+            {recorrente && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-freq">Frequência</Label>
+                  <Select
+                    value={frequencia}
+                    onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
+                  >
+                    <SelectTrigger id="conta-freq">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCIAS_RECORRENCIA.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-meses">
+                    {frequencia === "anual"
+                      ? "Quantos anos?"
+                      : frequencia === "semanal"
+                      ? "Quantas semanas?"
+                      : frequencia === "quinzenal"
+                      ? "Quantas quinzenas?"
+                      : "Quantos meses?"}
+                  </Label>
                   <Input
                     id="conta-meses"
                     type="number"
                     min={1}
-                    max={60}
+                    max={120}
                     value={meses}
                     onChange={(e) => setMeses(e.target.value)}
                   />
                 </div>
-              )}
+              </div>
+            )}
             </div>
           )}
 
@@ -1331,6 +1402,31 @@ function ContaFormDialog({
           <Button onClick={handleSave}>{isEdit ? "Salvar" : "Cadastrar"}</Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Escopo da edição em conta recorrente */}
+      <AlertDialog
+        open={!!editScopeFields}
+        onOpenChange={(o) => !o && setEditScopeFields(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar conta recorrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta é uma conta recorrente. Onde você quer aplicar as mudanças?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button variant="outline" onClick={() => applyEditScope("single")}>
+              Apenas esta
+            </Button>
+            <Button variant="outline" onClick={() => applyEditScope("future")}>
+              Esta e as próximas
+            </Button>
+            <Button onClick={() => applyEditScope("all")}>Toda a recorrência</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

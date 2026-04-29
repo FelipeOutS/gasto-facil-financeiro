@@ -16,6 +16,7 @@ import {
   type StatusMeta,
   type Cartao,
   type ContaAPagar,
+  type FrequenciaRecorrencia,
   type StatusConta,
   type TransferenciaInterna,
   type ExtratoImportado,
@@ -615,6 +616,7 @@ type ContaAPagarRow = {
   codigo_pix?: string | null;
   chave_pix?: string | null;
   banco_emissor?: string | null;
+  frequencia_recorrencia?: string | null;
   import_batch_id?: string | null;
   mes: number;
   ano: number;
@@ -631,6 +633,8 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     observacao: r.observacao ?? undefined,
     recorrente: r.recorrente,
     recorrenciaId: r.recorrencia_id ?? undefined,
+    frequenciaRecorrencia:
+      (r.frequencia_recorrencia as ContaAPagar["frequenciaRecorrencia"]) ?? undefined,
     dataInicio: r.data_inicio ?? undefined,
     dataFim: r.data_fim ?? undefined,
     status: (r.status as StatusConta) ?? "pendente",
@@ -2940,7 +2944,9 @@ export type NovaContaInput = {
   categoriaId?: string;
   observacao?: string;
   recorrente?: boolean;
-  /** Quantos meses repetir (default 12) */
+  /** Frequência da recorrência (default: mensal) */
+  frequenciaRecorrencia?: FrequenciaRecorrencia;
+  /** Quantas ocorrências gerar (default 12 — interpretado conforme frequência) */
   recorrenteMeses?: number;
   dataFim?: string;
   beneficiario?: string;
@@ -2981,6 +2987,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     import_batch_id: input.importBatchId ?? null,
   };
 
+  const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
+
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
     const id = crypto.randomUUID();
@@ -2993,6 +3001,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       observacao: input.observacao,
       recorrente: !!recurringId,
       recorrenciaId: recurringId ?? undefined,
+      frequenciaRecorrencia: recurringId ? freq : undefined,
       dataInicio: recurringId ? input.dataVencimento : undefined,
       dataFim: recurringId ? input.dataFim : undefined,
       status: "pendente",
@@ -3012,6 +3021,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       observacao: input.observacao ?? null,
       recorrente: !!recurringId,
       recorrencia_id: recurringId,
+      frequencia_recorrencia: recurringId ? freq : null,
       data_inicio: recurringId ? input.dataVencimento : null,
       data_fim: recurringId && input.dataFim ? input.dataFim : null,
       status: "pendente",
@@ -3021,13 +3031,21 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     });
   }
 
+  function addOccurrence(base: Date, i: number): Date {
+    const d = new Date(base);
+    if (freq === "semanal") d.setDate(d.getDate() + 7 * i);
+    else if (freq === "quinzenal") d.setDate(d.getDate() + 14 * i);
+    else if (freq === "anual") d.setFullYear(d.getFullYear() + i);
+    else d.setMonth(d.getMonth() + i); // mensal
+    return d;
+  }
+
   if (input.recorrente) {
-    const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const total = Math.max(1, input.recorrenteMeses ?? 12);
     const recId = crypto.randomUUID();
-    for (let i = 0; i < meses; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
-      const iso = d.toISOString().slice(0, 10);
+    for (let i = 0; i < total; i++) {
+      const d = addOccurrence(baseDate, i);
+      const iso = toLocalISODate(d);
       if (input.dataFim && iso > input.dataFim) break;
       pushOne(iso, recId);
     }
@@ -3217,6 +3235,36 @@ export function deleteContaRecorrencia(
     .then(({ error }: { error: { message: string } | null }) => {
       if (error) console.error("[store] deleteContaRecorrencia failed", error);
     });
+}
+
+/**
+ * Atualiza ocorrências de uma recorrência em escopo:
+ *  - "single" → só esta (caller deve usar updateContaAPagar diretamente)
+ *  - "future" → esta e as próximas (a partir de fromMes/fromAno)
+ *  - "all"    → todas, incluindo passadas
+ *
+ * Não toca em ocorrências já pagas (preserva histórico do gasto vinculado).
+ */
+export function updateContaRecorrencia(
+  recorrenciaId: string,
+  fields: ContaEditableFields,
+  scope: "future" | "all",
+  fromMes: number,
+  fromAno: number,
+) {
+  if (!activeUserId) return;
+  const targets = memContas.filter((c) => {
+    if (c.recorrenciaId !== recorrenciaId) return false;
+    if (c.status === "pago") return false;
+    if (scope === "all") return true;
+    return c.ano > fromAno || (c.ano === fromAno && c.mes >= fromMes);
+  });
+  for (const t of targets) {
+    // Não propaga dataVencimento (cada ocorrência tem a sua)
+    const f: ContaEditableFields = { ...fields };
+    delete f.dataVencimento;
+    updateContaAPagar(t.id, f);
+  }
 }
 
 /**

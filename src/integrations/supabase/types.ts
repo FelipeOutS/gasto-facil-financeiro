@@ -181,6 +181,7 @@ export type Database = {
           data_pagamento: string | null
           data_vencimento: string
           forma_pagamento: string | null
+          frequencia_recorrencia: string | null
           gasto_id: string | null
           id: string
           import_batch_id: string | null
@@ -208,6 +209,7 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento: string
           forma_pagamento?: string | null
+          frequencia_recorrencia?: string | null
           gasto_id?: string | null
           id?: string
           import_batch_id?: string | null
@@ -235,6 +237,7 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento?: string
           forma_pagamento?: string | null
+          frequencia_recorrencia?: string | null
           gasto_id?: string | null
           id?: string
           import_batch_id?: string | null
