@@ -375,7 +375,7 @@ function MetaFormDialog({
     } else {
       setValorStr("");
     }
-    setMovBanco("nenhum");
+    
   }, [open, isCreate, isAdd, baseMeta]);
 
   function handleCreateOrEdit() {
