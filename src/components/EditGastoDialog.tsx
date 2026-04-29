@@ -69,6 +69,7 @@ export function EditGastoDialog({
     setFormaPagamento((snapshot.formaPagamento as FormaPagamento) ?? "credito");
     setCartaoId(snapshot.cartaoId);
     setObservacao(snapshot.observacao ?? "");
+    setHorario(snapshot.horario ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.id, open]);
 
