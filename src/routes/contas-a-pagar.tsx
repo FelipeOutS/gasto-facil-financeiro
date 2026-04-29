@@ -724,6 +724,20 @@ function ContaCard({
         </div>
       </div>
 
+      {(conta.codigoBoleto || conta.codigoPix || conta.chavePix) && (
+        <div className="mt-3 space-y-1.5">
+          {conta.codigoBoleto && (
+            <CodigoCopiavel label="Código de boleto" valor={conta.codigoBoleto} />
+          )}
+          {conta.codigoPix && (
+            <CodigoCopiavel label="Pix copia e cola" valor={conta.codigoPix} />
+          )}
+          {conta.chavePix && (
+            <CodigoCopiavel label="Chave Pix" valor={conta.chavePix} />
+          )}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center gap-2">
         {status === "pago" ? (
           <Button
