@@ -515,6 +515,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          imagem_key: string | null
           legacy_id: string | null
           nome: string
           prazo: string | null
@@ -529,6 +530,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          imagem_key?: string | null
           legacy_id?: string | null
           nome: string
           prazo?: string | null
@@ -543,6 +545,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          imagem_key?: string | null
           legacy_id?: string | null
           nome?: string
           prazo?: string | null
