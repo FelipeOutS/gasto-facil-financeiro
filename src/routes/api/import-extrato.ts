@@ -337,32 +337,95 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
 function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null; resumo: ExtratoResumo } | null {
   const normalized = stripAccents(text).toLowerCase();
   const hasMercadoPago = /mercado\s*pago/.test(normalized);
-  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,120}id da opera[cç][aã]o[\s\S]{0,80}valor[\s\S]{0,80}saldo/i.test(text);
+  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,160}id da opera[cç][aã]o[\s\S]{0,160}valor/i.test(text);
   if (!hasMercadoPago && !hasColumns) return null;
 
   const fallbackYear = guessYearFromText(text);
-  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
-  const itens: ItemBruto[] = [];
-  const rowPattern = /^(\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?)\s+(.+?)\s+([A-Z0-9][A-Z0-9._\-]{5,})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})$/i;
+  const rawLines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
 
-  for (const line of lines) {
-    const match = line.match(rowPattern);
-    if (!match) continue;
-    const data = parseDataBR(match[1], fallbackYear);
-    const signedValue = parseValorBR(match[4]);
-    if (!data || signedValue === null) continue;
-    const desc = match[2].trim();
+  // Linhas a ignorar (cabeçalhos, totais)
+  const skipLine = (l: string) => {
+    const lo = stripAccents(l).toLowerCase();
+    return (
+      /^(data|descricao|id da operacao|valor|saldo)$/i.test(l) ||
+      /saldo (inicial|final|do dia|anterior)/i.test(lo) ||
+      /total de (entradas|saidas)/i.test(lo) ||
+      /^periodo\b|^per[ií]odo\b/i.test(lo) ||
+      /^p[áa]gina\b|^pagina \d+/i.test(lo) ||
+      /^extrato\b/i.test(lo) ||
+      /^cnpj\b|^cpf\b/i.test(lo)
+    );
+  };
+
+  const dateAtStart = /^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?\b/;
+  const moneyRegex = /[+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2}/g;
+  const opIdRegex = /\b([A-Z0-9][A-Z0-9._\-]{6,})\b/;
+
+  // Segmenta em blocos: cada bloco começa numa linha que começa com data.
+  type Block = { dateStr: string; lines: string[] };
+  const blocks: Block[] = [];
+  let current: Block | null = null;
+  for (const line of rawLines) {
+    if (skipLine(line)) continue;
+    const m = line.match(dateAtStart);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { dateStr: m[0], lines: [line.slice(m[0].length).trim()].filter(Boolean) };
+    } else if (current) {
+      current.lines.push(line);
+    }
+  }
+  if (current) blocks.push(current);
+
+  const itens: ItemBruto[] = [];
+  for (const block of blocks) {
+    const data = parseDataBR(block.dateStr, fallbackYear);
+    if (!data) continue;
+    const joined = block.lines.join(" ").replace(/\s+/g, " ").trim();
+    if (!joined) continue;
+
+    // Encontra todos os valores monetários do bloco
+    const moneyMatches = joined.match(moneyRegex) || [];
+    if (moneyMatches.length === 0) continue;
+
+    // Heurística: o último valor é o saldo (quando há 2+); o penúltimo é o valor da movimentação.
+    // Se houver apenas 1, esse é o valor da movimentação.
+    let valorStr: string;
+    let saldoStr: string | null = null;
+    if (moneyMatches.length >= 2) {
+      valorStr = moneyMatches[moneyMatches.length - 2];
+      saldoStr = moneyMatches[moneyMatches.length - 1];
+    } else {
+      valorStr = moneyMatches[0];
+    }
+    const signedValue = parseValorBR(valorStr);
+    if (signedValue === null) continue;
+
+    // ID da operação: token alfanumérico longo (>=7) que não seja um valor.
+    const opMatch = joined.match(opIdRegex);
+    let idOperacao: string | null = null;
+    if (opMatch && !/^\d+[.,]?\d*$/.test(opMatch[1])) {
+      idOperacao = opMatch[1];
+    }
+
+    // Descrição: remove os matches de valor e o ID encontrado.
+    let desc = joined;
+    for (const mv of moneyMatches) desc = desc.replace(mv, " ");
+    if (idOperacao) desc = desc.replace(idOperacao, " ");
+    desc = desc.replace(/\s+/g, " ").trim();
+    if (!desc) desc = "Movimentação bancária";
+
     const classification = classifyMercadoPago(desc, signedValue);
     itens.push({
       descricao: desc,
       valor: Math.abs(signedValue),
       data,
       horario: null,
-      idOperacao: match[3].trim(),
-      saldo: parseValorBR(match[5]),
+      idOperacao,
+      saldo: saldoStr ? parseValorBR(saldoStr) : null,
       origemImportacao: "extrato_pdf",
       bancoOrigem: hasMercadoPago ? "Mercado Pago" : null,
-      confianca: "alta",
+      confianca: idOperacao ? "alta" : "media",
       ...classification,
     });
   }
