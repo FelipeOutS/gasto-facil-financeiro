@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { extractText, getDocumentProxy } from "unpdf";
+import { extractText, extractTextItems, getDocumentProxy } from "unpdf";
 
 /**
  * Importação de extrato bancário (Pix, transferências, débito, tarifas, entradas, saídas).
@@ -53,12 +53,17 @@ const SYSTEM_PROMPT = `Você analisa EXTRATOS BANCÁRIOS brasileiros (Pix, trans
 
 OBJETIVO: extrair UMA LISTA de movimentações da conta. Para CADA item, preencha:
 - descricao: descrição curta e clara do lançamento (ex: "Pix recebido de João", "Compra no débito - Padaria")
+- idOperacao: ID/código da operação quando existir no extrato (Mercado Pago usa "ID da operação")
 - valor: SEMPRE positivo, em reais. Vírgula é decimal, ponto é milhar.
+- saldo: saldo após o lançamento quando existir
 - data: ISO YYYY-MM-DD
 - horario: HH:mm 24h se aparecer, senão null
 - tipoMovimentacao: "despesa" | "receita" | "transferencia_interna"
 - formaPagamento: um destes ids → ${FORMAS_VALIDAS.join(", ")}
 - categoriaSugerida: um destes ids (use "outros" se não souber) → ${CATEGORIAS_VALIDAS.join(", ")}
+- origemImportacao: "extrato_pdf" quando vier de PDF
+- bancoOrigem: "Mercado Pago" quando identificado
+- statusRevisao: "novo" | "pagamento_fatura_cartao" | "reserva" | "resgate_reserva" | "investimentos" | "revisar"
 - contraparte: nome do remetente/destinatário se aparecer (ex: "MARIA DA SILVA"), curto, sem CPF/CNPJ
 - confianca: "alta" | "media" | "baixa"
 
@@ -66,8 +71,11 @@ REGRAS DE CLASSIFICAÇÃO:
 - Pix enviado, compra no débito, pagamento de boleto, tarifa, IOF, anuidade → tipoMovimentacao="despesa"
 - Pix recebido, salário, transferência recebida, reembolso, estorno, rendimento → tipoMovimentacao="receita"
 - "Transferência entre contas próprias", "Aplicação", "Resgate de investimento", "Movimentação interna" → tipoMovimentacao="transferencia_interna"
+- Mercado Pago: "Pagamento Cartão de crédito" → transferencia_interna, statusRevisao="pagamento_fatura_cartao", não despesa comum.
+- Mercado Pago: "Reserva por gastos", "Dinheiro reservado" → transferencia_interna, statusRevisao="reserva".
+- Mercado Pago: "Dinheiro retirado" → transferencia_interna, statusRevisao="resgate_reserva".
 - IGNORE linhas que claramente NÃO são lançamentos: saldo anterior, saldo do dia, total, subtotal, cabeçalhos.
-- IGNORE faturas de cartão de crédito (esse fluxo é separado). Compras com cartão de CRÉDITO no extrato bancário só aparecem como "PAGAMENTO DE FATURA" → trate como despesa do tipo "boleto" ou "transferencia".
+- NÃO transforme pagamento de fatura em despesa comum; isso duplicaria gastos do cartão.
 
 FORMA DE PAGAMENTO heurística:
 - "PIX" → pix
@@ -96,6 +104,11 @@ type ItemBruto = {
   descricao: unknown;
   valor: unknown;
   data: unknown;
+  idOperacao?: unknown;
+  saldo?: unknown;
+  origemImportacao?: unknown;
+  bancoOrigem?: unknown;
+  statusRevisao?: unknown;
   horario?: unknown;
   tipoMovimentacao?: unknown;
   formaPagamento?: unknown;
@@ -103,6 +116,16 @@ type ItemBruto = {
   contraparte?: unknown;
   confianca?: unknown;
   observacao?: unknown;
+};
+
+type ExtratoResumo = {
+  banco: string | null;
+  periodoInicio: string | null;
+  periodoFim: string | null;
+  saldoInicial: number | null;
+  totalEntradas: number | null;
+  totalSaidas: number | null;
+  saldoFinal: number | null;
 };
 
 const TOOL_SCHEMA = {
@@ -121,6 +144,11 @@ const TOOL_SCHEMA = {
               descricao: { type: ["string", "null"] },
               valor: { type: ["number", "null"] },
               data: { type: ["string", "null"] },
+              idOperacao: { type: ["string", "null"] },
+              saldo: { type: ["number", "null"] },
+              origemImportacao: { type: ["string", "null"] },
+              bancoOrigem: { type: ["string", "null"] },
+              statusRevisao: { type: ["string", "null"] },
               horario: { type: ["string", "null"] },
               tipoMovimentacao: {
                 type: "string",
@@ -182,6 +210,204 @@ function sanitizeText(text: string): string {
     .slice(0, 80_000);
 }
 
+function stripAccents(text: string) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseValorBR(raw: string): number | null {
+  const cleaned = raw.replace(/R\$/gi, "").replace(/\s/g, "").trim();
+  if (!cleaned) return null;
+  const negative = /^-/.test(cleaned) || /-$/.test(cleaned) || /^\(/.test(cleaned);
+  let n = cleaned.replace(/[()\-+]/g, "");
+  if (n.includes(",") && n.includes(".")) n = n.replace(/\./g, "").replace(",", ".");
+  else if (n.includes(",")) n = n.replace(",", ".");
+  const parsed = Number(n);
+  if (!Number.isFinite(parsed) || parsed === 0) return null;
+  return negative ? -parsed : parsed;
+}
+
+function parseDataBR(raw: string, fallbackYear?: number): string | null {
+  let m = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
+  if (m) {
+    const y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+    const mo = Number(m[2]);
+    const d = Number(m[1]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  m = raw.match(/\b(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})\b/);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  m = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})\b/);
+  if (m && fallbackYear) {
+    const mo = Number(m[2]);
+    const d = Number(m[1]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${fallbackYear}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  return null;
+}
+
+function guessYearFromText(text: string): number {
+  const years = [...text.matchAll(/\b(20\d{2})\b/g)].map((m) => Number(m[1]));
+  const valid = years.find((y) => y >= 2020 && y <= 2100);
+  return valid ?? new Date().getFullYear();
+}
+
+function suggestCategory(desc: string): string {
+  const t = stripAccents(desc).toLowerCase();
+  if (/uber|\b99\b|transporte|posto|combustivel|metro|onibus/.test(t)) return "transporte";
+  if (/mercado|mercearia|comercial|supermerc|atacad|carrefour|assai|extra/.test(t)) return "mercado";
+  if (/sabesp|eletropaulo|enel|claro|vivo|tim\b|internet|energia|agua|conta/.test(t)) return "contas";
+  if (/food|burger|lanches|grill|restaurante|ifood|rappi|padaria|pizzaria/.test(t)) return "alimentacao";
+  if (/rendimento|juros/.test(t)) return "outros";
+  if (/meli dolar|invest|resgate|aplicacao/.test(t)) return "outros";
+  return "outros";
+}
+
+function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto, "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"> {
+  const t = stripAccents(desc).toLowerCase();
+  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|fatura/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "boleto",
+      categoriaSugerida: "contas",
+      statusRevisao: "pagamento_fatura_cartao",
+      observacao: "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
+    };
+  }
+  if (/reserva por gastos|dinheiro reservado|reservado/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "reserva",
+      observacao: "Reserva interna. Não afeta o Dashboard.",
+    };
+  }
+  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "resgate_reserva",
+      observacao: "Resgate de reserva. Não entra como receita.",
+    };
+  }
+  if (/rendimento|venda de meli dolar/.test(t)) {
+    return {
+      tipoMovimentacao: "receita",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: /venda de meli dolar/.test(t) ? "investimentos" : "novo",
+      observacao: /venda de meli dolar/.test(t) ? "Investimento/resgate identificado; revise antes de confirmar." : null,
+    };
+  }
+  if (/pix recebido|transferencia recebida|recebido/.test(t) && signedValue > 0) {
+    return { tipoMovimentacao: "receita", formaPagamento: "pix", categoriaSugerida: "outros", statusRevisao: "novo", observacao: null };
+  }
+  if (/pagamento com qr pix|qr pix|pix enviado|pix/.test(t)) {
+    return { tipoMovimentacao: signedValue > 0 ? "receita" : "despesa", formaPagamento: "pix", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+  }
+  if (/pagamento de conta|boleto|conta/.test(t)) {
+    return { tipoMovimentacao: "despesa", formaPagamento: "boleto", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+  }
+  return {
+    tipoMovimentacao: signedValue > 0 ? "receita" : "despesa",
+    formaPagamento: /ted|doc|transf/.test(t) ? "transferencia" : "outro",
+    categoriaSugerida: suggestCategory(desc),
+    statusRevisao: "novo",
+    observacao: null,
+  };
+}
+
+function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null; resumo: ExtratoResumo } | null {
+  const normalized = stripAccents(text).toLowerCase();
+  const hasMercadoPago = /mercado\s*pago/.test(normalized);
+  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,120}id da opera[cç][aã]o[\s\S]{0,80}valor[\s\S]{0,80}saldo/i.test(text);
+  if (!hasMercadoPago && !hasColumns) return null;
+
+  const fallbackYear = guessYearFromText(text);
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const itens: ItemBruto[] = [];
+  const rowPattern = /^(\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?)\s+(.+?)\s+([A-Z0-9][A-Z0-9._\-]{5,})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})$/i;
+
+  for (const line of lines) {
+    const match = line.match(rowPattern);
+    if (!match) continue;
+    const data = parseDataBR(match[1], fallbackYear);
+    const signedValue = parseValorBR(match[4]);
+    if (!data || signedValue === null) continue;
+    const desc = match[2].trim();
+    const classification = classifyMercadoPago(desc, signedValue);
+    itens.push({
+      descricao: desc,
+      valor: Math.abs(signedValue),
+      data,
+      horario: null,
+      idOperacao: match[3].trim(),
+      saldo: parseValorBR(match[5]),
+      origemImportacao: "extrato_pdf",
+      bancoOrigem: hasMercadoPago ? "Mercado Pago" : null,
+      confianca: "alta",
+      ...classification,
+    });
+  }
+
+  const resumo = extractMercadoPagoResumo(text, hasMercadoPago ? "Mercado Pago" : null, fallbackYear);
+  if (itens.length === 0 && hasColumns) {
+    return { itens: [], banco: resumo.banco, resumo, observacao: "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação." };
+  }
+  return itens.length > 0 ? { itens, banco: resumo.banco, resumo, observacao: null } : null;
+}
+
+function extractMercadoPagoResumo(text: string, banco: string | null, fallbackYear: number): ExtratoResumo {
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const money = /[+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2}/g;
+  const amountFromLine = (line: string) => {
+    const matches = line.match(money);
+    return matches?.length ? parseValorBR(matches[matches.length - 1]) : null;
+  };
+  const findByLabel = (labels: RegExp[]) => {
+    const line = lines.find((l) => labels.some((label) => label.test(stripAccents(l).toLowerCase())));
+    return line ? amountFromLine(line) : null;
+  };
+  const periodText = lines.find((l) => /periodo|período/i.test(l)) ?? "";
+  const periodDates = [...periodText.matchAll(/\b\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?\b/g)].map((m) => parseDataBR(m[0], fallbackYear));
+  return {
+    banco,
+    periodoInicio: periodDates[0] ?? null,
+    periodoFim: periodDates[1] ?? null,
+    saldoInicial: findByLabel([/saldo inicial/]),
+    totalEntradas: findByLabel([/total de entradas/, /entradas/]),
+    totalSaidas: findByLabel([/total de saidas/, /saidas/]),
+    saldoFinal: findByLabel([/saldo final/]),
+  };
+}
+
+async function extractTextPreservingRows(docProxy: Awaited<ReturnType<typeof getDocumentProxy>>) {
+  const result = await extractTextItems(docProxy);
+  return result.items
+    .map((pageItems) => {
+      const rows: Array<{ y: number; items: Array<{ str: string; x: number; y: number; height: number }> }> = [];
+      for (const item of pageItems) {
+        const str = item.str.trim();
+        if (!str) continue;
+        const row = rows.find((r) => Math.abs(r.y - item.y) <= Math.max(2, item.height * 0.75));
+        if (row) row.items.push({ str, x: item.x, y: item.y, height: item.height });
+        else rows.push({ y: item.y, items: [{ str, x: item.x, y: item.y, height: item.height }] });
+      }
+      return rows
+        .sort((a, b) => b.y - a.y)
+        .map((row) => row.items.sort((a, b) => a.x - b.x).map((item) => item.str).join(" ").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
+}
+
 async function callGemini(apiKey: string, messages: unknown[]) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -235,6 +461,11 @@ function normalizeItens(rawItens: ItemBruto[]) {
       const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 120) : null;
       const contraparte =
         typeof it.contraparte === "string" ? it.contraparte.slice(0, 80) : null;
+      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.slice(0, 80) : null;
+      const saldo = typeof it.saldo === "number" && Number.isFinite(it.saldo) ? it.saldo : null;
+      const origemImportacao = typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
+      const bancoOrigem = typeof it.bancoOrigem === "string" ? it.bancoOrigem.slice(0, 60) : null;
+      const statusRevisao = typeof it.statusRevisao === "string" ? it.statusRevisao.slice(0, 60) : null;
       const conf =
         it.confianca === "alta" || it.confianca === "media" || it.confianca === "baixa"
           ? it.confianca
@@ -243,6 +474,11 @@ function normalizeItens(rawItens: ItemBruto[]) {
         descricao: desc,
         valor,
         data,
+        idOperacao,
+        saldo,
+        origemImportacao,
+        bancoOrigem,
+        statusRevisao,
         horario,
         tipoMovimentacao,
         formaPagamento,
@@ -395,15 +631,23 @@ export const Route = createFileRoute("/api/import-extrato")({
 
 async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   let extractedText = "";
+  let layoutText = "";
   let totalPages = 0;
   try {
     const docProxy = await getDocumentProxy(bytes);
     totalPages = docProxy.numPages;
-    const result = await extractText(docProxy, { mergePages: true });
+    const [result, positionedText] = await Promise.all([
+      extractText(docProxy, { mergePages: true }),
+      extractTextPreservingRows(docProxy).catch((err) => {
+        console.error("[import-extrato] extractTextItems error", err);
+        return "";
+      }),
+    ]);
     extractedText =
       typeof result.text === "string"
         ? result.text
         : (result.text as string[]).join("\n");
+    layoutText = positionedText;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/password/i.test(msg)) {
@@ -418,7 +662,8 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
     console.error("[import-extrato] extractText error", msg);
   }
 
-  const cleanText = sanitizeText(extractedText.trim());
+  const combinedText = `${layoutText}\n\n${extractedText}`.trim();
+  const cleanText = sanitizeText(combinedText);
   // Limiar baixo: qualquer extrato real tem facilmente >50 chars.
   const hasUsefulText = cleanText.length > 50;
 
@@ -433,6 +678,28 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
       },
       { status: 422 },
     );
+  }
+
+  const mercadoPago = parseMercadoPagoStructuredText(cleanText);
+  if (mercadoPago) {
+    const itens = normalizeItens(mercadoPago.itens);
+    if (itens.length === 0) {
+      return Response.json(
+        {
+          error:
+            mercadoPago.observacao || "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação.",
+        },
+        { status: 422 },
+      );
+    }
+    return Response.json({
+      itens,
+      paginas: totalPages,
+      modo: "texto_mercado_pago",
+      banco: mercadoPago.banco,
+      resumo: mercadoPago.resumo,
+      observacao: mercadoPago.observacao,
+    });
   }
 
   const messages = [

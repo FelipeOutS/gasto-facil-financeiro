@@ -46,6 +46,9 @@ import {
   findDuplicateTransferenciaAdvanced,
   normalizeDescricao,
   getCategorias,
+  getGastos,
+  getReceitas,
+  getTransferenciasInternas,
   useStore,
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoReceita } from "@/lib/types";
@@ -60,11 +63,17 @@ type Step = "source" | "image-upload" | "pdf-upload" | "csv-upload" | "review";
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
+type ReviewStatus = "novo" | "pagamento_fatura_cartao" | "reserva" | "resgate_reserva" | "investimentos" | "revisar";
 
 type ItemBruto = {
   descricao: string | null;
   valor: number | null;
   data: string | null;
+  idOperacao?: string | null;
+  saldo?: number | null;
+  origemImportacao?: string | null;
+  bancoOrigem?: string | null;
+  statusRevisao?: ReviewStatus | string | null;
   horario: string | null;
   tipoMovimentacao: TipoMov;
   formaPagamento: string | null;
@@ -83,11 +92,25 @@ type ReviewItem = {
   tipoMovimentacao: TipoMov;
   formaPagamento: FormaPagamento;
   categoriaId: string;
+  idOperacao?: string;
+  saldo?: number | null;
+  bancoOrigem?: string;
+  statusRevisao: ReviewStatus;
   origem?: string;
   destino?: string;
   observacao?: string;
   selecionado: boolean;
   dupStatus: DupStatus;
+};
+
+type ExtratoResumo = {
+  banco: string | null;
+  periodoInicio: string | null;
+  periodoFim: string | null;
+  saldoInicial: number | null;
+  totalEntradas: number | null;
+  totalSaidas: number | null;
+  saldoFinal: number | null;
 };
 
 const FORMA_OPCOES = FORMAS_PAGAMENTO;
@@ -105,6 +128,35 @@ function newId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function normalizeReviewStatus(value: string | null | undefined): ReviewStatus {
+  return value === "pagamento_fatura_cartao" ||
+    value === "reserva" ||
+    value === "resgate_reserva" ||
+    value === "investimentos" ||
+    value === "revisar"
+    ? value
+    : "novo";
+}
+
+function textHasOperationId(text: string | undefined, id: string) {
+  return !!text && normalizeDescricao(text).includes(normalizeDescricao(id));
+}
+
+function operationIdExists(id: string) {
+  return (
+    getGastos().some((g) => textHasOperationId(g.observacao, id) || textHasOperationId(g.origem, id)) ||
+    getReceitas().some((r) => textHasOperationId(r.origem, id)) ||
+    getTransferenciasInternas().some((t) => textHasOperationId(t.observacao, id) || textHasOperationId(t.origemImportacao, id))
+  );
+}
+
+function importOrigin(item: ReviewItem, fallback: string) {
+  const parts = [fallback];
+  if (item.bancoOrigem) parts.push(item.bancoOrigem);
+  if (item.idOperacao) parts.push(`op:${item.idOperacao}`);
+  return parts.join("|");
+}
+
 export function ImportExtratoDialog({
   open,
   onOpenChange,
@@ -119,6 +171,7 @@ export function ImportExtratoDialog({
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
+  const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -126,6 +179,7 @@ export function ImportExtratoDialog({
     setLoading(false);
     setItems([]);
     setObservacaoIA(null);
+    setResumoExtrato(null);
   }, []);
 
   const handleClose = useCallback(
@@ -144,12 +198,16 @@ export function ImportExtratoDialog({
         if (r.valor === null || !r.data) {
           return { ...r, dupStatus: "novo" as DupStatus };
         }
-        const key = `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
+        const operationKey = r.idOperacao ? `op|${normalizeDescricao(r.idOperacao)}` : null;
+        const key = operationKey || `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
         const prev = seen.get(key);
         if (prev !== undefined && prev !== idx) {
           return { ...r, dupStatus: "duplicado_lote" as DupStatus };
         }
         seen.set(key, idx);
+        if (r.idOperacao && operationIdExists(r.idOperacao)) {
+          return { ...r, dupStatus: "duplicado_existente" as DupStatus };
+        }
 
         let existe;
         if (r.tipoMovimentacao === "despesa") {
@@ -190,18 +248,39 @@ export function ImportExtratoDialog({
         const cat = (b.categoriaSugerida && categorias.find((c) => c.id === b.categoriaSugerida)?.id) ||
           suggestCategoryFromDescription(desc);
         const formaPg = (b.formaPagamento as FormaPagamento) || "outro";
+        const statusRevisao = normalizeReviewStatus(b.statusRevisao ?? null);
+        const idOperacao = b.idOperacao?.trim() || undefined;
+        const bancoOrigem = b.bancoOrigem?.trim() || undefined;
+        const origem = b.origemImportacao || origemImport;
+        const observacao = [
+          b.observacao,
+          bancoOrigem ? `Banco: ${bancoOrigem}` : null,
+          idOperacao ? `ID operação: ${idOperacao}` : null,
+          `Origem: ${origem}`,
+        ].filter(Boolean).join(" • ");
+        const deveComecarDesmarcado =
+          b.tipoMovimentacao === "transferencia_interna" ||
+          statusRevisao === "pagamento_fatura_cartao" ||
+          statusRevisao === "reserva" ||
+          statusRevisao === "resgate_reserva" ||
+          statusRevisao === "revisar";
         const dup: DupStatus = "novo";
         return {
           id: newId(),
           descricao: desc,
           valor: b.valor,
           data: b.data,
+          idOperacao,
+          saldo: b.saldo ?? null,
+          bancoOrigem,
+          statusRevisao,
           horario: b.horario,
           tipoMovimentacao: b.tipoMovimentacao,
           formaPagamento: formaPg,
           categoriaId: cat,
-          observacao: b.observacao || origemImport,
-          selecionado: true,
+          origem,
+          observacao,
+          selecionado: !deveComecarDesmarcado,
           dupStatus: dup,
         };
       });
@@ -284,7 +363,7 @@ export function ImportExtratoDialog({
 
         // Parse defensivo: a resposta pode vir como texto puro em erros de proxy/edge.
         const raw = await resp.text();
-        let json: { itens?: ItemBruto[]; observacao?: string | null; error?: string } = {};
+        let json: { itens?: ItemBruto[]; resumo?: ExtratoResumo | null; observacao?: string | null; error?: string } = {};
         try {
           json = raw ? JSON.parse(raw) : {};
         } catch {
@@ -312,6 +391,7 @@ export function ImportExtratoDialog({
           setLoading(false);
           return;
         }
+        setResumoExtrato(json.resumo ?? null);
         setItems(itensFromBruto(brutos, "extrato_pdf"));
         setObservacaoIA(json.observacao ?? null);
         setStep("review");
@@ -431,6 +511,7 @@ export function ImportExtratoDialog({
         tipoMovimentacao: "despesa",
         formaPagamento: "outro",
         categoriaId: "outros",
+        statusRevisao: "novo",
         selecionado: true,
         dupStatus: "novo",
       },
@@ -472,7 +553,7 @@ export function ImportExtratoDialog({
           tipoGasto: "unico" as const,
           confirmado: true,
           horario: d.horario ?? undefined,
-          origem: "extrato",
+          origem: importOrigin(d, d.origem || "extrato_pdf"),
         })),
       );
       novosCount += created.length;
@@ -494,7 +575,7 @@ export function ImportExtratoDialog({
             data: r.data!,
             tipo: tipoReceita,
             horario: r.horario ?? undefined,
-            origem: "extrato",
+            origem: importOrigin(r, r.origem || "extrato_pdf"),
           };
         }),
       );
@@ -508,7 +589,7 @@ export function ImportExtratoDialog({
           data: t.data!,
           horario: t.horario ?? undefined,
           observacao: t.observacao,
-          origemImportacao: "extrato",
+          origemImportacao: importOrigin(t, t.origem || "extrato_pdf"),
         })),
       );
       novosCount += created.length;
@@ -604,6 +685,7 @@ export function ImportExtratoDialog({
               onAdd={addEmptyItem}
               categorias={categorias}
               observacaoIA={observacaoIA}
+              resumoExtrato={resumoExtrato}
             />
           )}
         </div>
@@ -726,6 +808,7 @@ function ReviewStep({
   onAdd,
   categorias,
   observacaoIA,
+  resumoExtrato,
 }: {
   items: ReviewItem[];
   onUpdate: (id: string, patch: Partial<ReviewItem>) => void;
@@ -733,9 +816,20 @@ function ReviewStep({
   onAdd: () => void;
   categorias: ReturnType<typeof getCategorias>;
   observacaoIA: string | null;
+  resumoExtrato: ExtratoResumo | null;
 }) {
   return (
     <div className="space-y-3">
+      {resumoExtrato && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border bg-card p-3 text-xs">
+          <ResumoItem label="Banco" value={resumoExtrato.banco ?? "—"} />
+          <ResumoItem label="Período" value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
+          <ResumoItem label="Saldo final" value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
+          <ResumoItem label="Saldo inicial" value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
+          <ResumoItem label="Entradas" value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
+          <ResumoItem label="Saídas" value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
+        </div>
+      )}
       {observacaoIA && (
         <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
@@ -762,6 +856,15 @@ function ReviewStep({
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ResumoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="font-medium truncate">{value}</p>
     </div>
   );
 }
