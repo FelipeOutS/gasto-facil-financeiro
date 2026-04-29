@@ -3130,24 +3130,32 @@ export function deleteContaRecorrencia(
  */
 export function marcarContaComoPago(
   id: string,
-  options?: { criarGasto?: boolean; formaPagamento?: FormaPagamento },
+  options?: {
+    criarGasto?: boolean;
+    formaPagamento?: FormaPagamento;
+    dataPagamento?: string;
+    observacao?: string;
+  },
 ): { gastoId?: string } {
   if (!activeUserId) return {};
   const idx = memContas.findIndex((c) => c.id === id);
   if (idx < 0) return {};
   const conta = memContas[idx];
-  const hoje = new Date().toISOString().slice(0, 10);
+  const dataPag = options?.dataPagamento ?? new Date().toISOString().slice(0, 10);
 
-  let gastoId: string | undefined;
-  if (options?.criarGasto && conta.categoriaId) {
+  let gastoId: string | undefined = conta.gastoId;
+  // Só cria gasto se ainda não existir um vinculado (evita duplicar)
+  if (options?.criarGasto && !conta.gastoId) {
     const novos = addGasto({
       descricao: conta.nome,
       valor: conta.valor,
-      data: hoje,
+      data: dataPag,
       estabelecimento: conta.nome,
       categoriaId: conta.categoriaId,
       formaPagamento: options.formaPagamento ?? "pix",
       tipoGasto: "unico",
+      observacao: options.observacao || conta.observacao,
+      origem: "contas_a_pagar",
     });
     gastoId = novos[0]?.id;
   }
@@ -3155,8 +3163,8 @@ export function marcarContaComoPago(
   const updated: ContaAPagar = {
     ...conta,
     status: "pago",
-    dataPagamento: hoje,
-    gastoId: gastoId ?? conta.gastoId,
+    dataPagamento: dataPag,
+    gastoId: gastoId,
     atualizadoEm: new Date().toISOString(),
   };
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
@@ -3166,8 +3174,8 @@ export function marcarContaComoPago(
     .from("contas_a_pagar")
     .update({
       status: "pago",
-      data_pagamento: hoje,
-      gasto_id: gastoId ?? conta.gastoId ?? null,
+      data_pagamento: dataPag,
+      gasto_id: gastoId ?? null,
     })
     .eq("id", id)
     .then(({ error }: { error: { message: string } | null }) => {
@@ -3177,22 +3185,36 @@ export function marcarContaComoPago(
   return { gastoId };
 }
 
-/** Reverte conta paga para pendente (não remove o gasto vinculado). */
-export function desmarcarContaComoPago(id: string) {
+/**
+ * Reverte conta paga para pendente. Por padrão remove o gasto vinculado
+ * que foi criado automaticamente, atualizando Dashboard/Gastos.
+ */
+export function desmarcarContaComoPago(
+  id: string,
+  options?: { removerGastoVinculado?: boolean },
+) {
   if (!activeUserId) return;
   const idx = memContas.findIndex((c) => c.id === id);
   if (idx < 0) return;
+  const conta = memContas[idx];
+  const removerGasto = options?.removerGastoVinculado ?? true;
+
+  if (removerGasto && conta.gastoId) {
+    deleteGasto(conta.gastoId);
+  }
+
   const updated: ContaAPagar = {
-    ...memContas[idx],
+    ...conta,
     status: "pendente",
     dataPagamento: undefined,
+    gastoId: undefined,
     atualizadoEm: new Date().toISOString(),
   };
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
   void sbAny
     .from("contas_a_pagar")
-    .update({ status: "pendente", data_pagamento: null })
+    .update({ status: "pendente", data_pagamento: null, gasto_id: null })
     .eq("id", id)
     .then(({ error }: { error: { message: string } | null }) => {
       if (error) console.error("[store] desmarcarContaComoPago failed", error);
