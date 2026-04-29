@@ -15,11 +15,11 @@ import {
   Flame,
 } from "lucide-react";
 import {
-  MetaArt,
-  getMetaArtKey,
-  META_ART_OPTIONS,
-  type MetaArtKey,
-} from "@/components/MetaArt";
+  MetaCover,
+  getMetaCoverKey,
+  META_COVER_OPTIONS,
+  type MetaCoverKey,
+} from "@/components/MetaCover";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
@@ -249,7 +249,7 @@ function MetaCard({
   const isAlmostDone = pct >= 80 && !isDone;
 
   // imagemKey persistida tem prioridade; caso contrário, derivamos pelo nome.
-  const artKey = (meta.imagemKey as MetaArtKey | undefined) ?? getMetaArtKey(meta.nome, meta.descricao);
+  const coverKey = (meta.imagemKey as MetaCoverKey | undefined) ?? getMetaCoverKey(meta.nome, meta.descricao);
 
   return (
     <div
@@ -262,14 +262,14 @@ function MetaCard({
         boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
       }}
     >
-      {/* Cover ilustrado */}
-      <div className="relative h-32 w-full overflow-hidden">
+      {/* Cover com imagem real */}
+      <div className="relative h-36 w-full overflow-hidden">
         <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
-          <MetaArt artKey={artKey} className="h-full w-full" />
+          <MetaCover coverKey={coverKey} alt={meta.nome} className="h-full w-full" />
         </div>
-        {/* Overlay para legibilidade do título */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/30 to-transparent" />
+        {/* Overlay para legibilidade do título sobre foto real */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
 
         {/* Badges no topo */}
         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
@@ -402,7 +402,7 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [imagemKey, setImagemKey] = useState<MetaArtKey>("objetivo");
+  const [imagemKey, setImagemKey] = useState<MetaCoverKey>("objetivo");
   /** Indica se o usuário escolheu manualmente — caso contrário, mantemos auto-match. */
   const [imagemManual, setImagemManual] = useState(false);
 
@@ -427,8 +427,8 @@ function MetaFormDialog({
       setDescricao(baseMeta.descricao ?? "");
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
-      const persistida = baseMeta.imagemKey as MetaArtKey | undefined;
-      setImagemKey(persistida ?? getMetaArtKey(baseMeta.nome, baseMeta.descricao));
+      const persistida = baseMeta.imagemKey as MetaCoverKey | undefined;
+      setImagemKey(persistida ?? getMetaCoverKey(baseMeta.nome, baseMeta.descricao));
       setImagemManual(!!persistida);
     }
     // Pré-preenche com o valor acumulado atual no modo "atualizar valor"
@@ -445,7 +445,7 @@ function MetaFormDialog({
   useEffect(() => {
     if (!open || imagemManual) return;
     if (!isCreate && !isEdit) return;
-    setImagemKey(getMetaArtKey(nome, descricao));
+    setImagemKey(getMetaCoverKey(nome, descricao));
   }, [nome, descricao, imagemManual, open, isCreate, isEdit]);
 
   function handleCreateOrEdit() {
@@ -619,7 +619,7 @@ function MetaFormDialog({
                     type="button"
                     onClick={() => {
                       setImagemManual(false);
-                      setImagemKey(getMetaArtKey(nome, descricao));
+                      setImagemKey(getMetaCoverKey(nome, descricao));
                     }}
                     className="text-[11px] font-semibold text-primary hover:underline"
                   >
@@ -628,10 +628,10 @@ function MetaFormDialog({
                 )}
               </div>
               <div className="mt-2 overflow-hidden rounded-2xl border border-border">
-                <MetaArt artKey={imagemKey} className="h-28 w-full" />
+                <MetaCover coverKey={imagemKey} className="h-28 w-full" />
               </div>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
-                {META_ART_OPTIONS.map((opt) => {
+                {META_COVER_OPTIONS.map((opt) => {
                   const active = imagemKey === opt.key;
                   return (
                     <button
@@ -650,7 +650,7 @@ function MetaFormDialog({
                       title={opt.label}
                       aria-label={opt.label}
                     >
-                      <MetaArt artKey={opt.key} className="h-full w-full" />
+                      <MetaCover coverKey={opt.key} className="h-full w-full" />
                       {active && (
                         <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background shadow">
                           <Check className="h-3 w-3" />
