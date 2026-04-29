@@ -1372,6 +1372,13 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       },
     });
   }
+  // Stamp horario/origem on every produced row + client (fields are optional).
+  for (const o of out) {
+    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).horario = horarioVal;
+    (o.row as GastoInsert & { horario?: string | null; origem?: string | null }).origem = origemVal;
+    if (horarioVal) o.client.horario = horarioVal;
+    if (origemVal) o.client.origem = origemVal;
+  }
   return out;
 }
 
