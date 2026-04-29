@@ -527,6 +527,9 @@ type MetaRow = {
   updated_at: string;
 };
 function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
+  // imagem_key é uma coluna opcional adicionada via migration; pode ainda
+  // não estar refletida no tipo gerado, então acessamos com cast seguro.
+  const imagemKey = (r as unknown as { imagem_key?: string | null }).imagem_key ?? undefined;
   return {
     id: r.legacy_id || r.id,
     nome: r.nome,
@@ -536,6 +539,7 @@ function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
     descricao: r.descricao ?? undefined,
     colorHex: r.color_hex,
     bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    imagemKey: imagemKey ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
