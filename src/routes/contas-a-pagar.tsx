@@ -939,56 +939,47 @@ function PagarDialog({
   onClose: () => void;
   categoriasCount: number;
 }) {
-  const [criarGasto, setCriarGasto] = useState(!!conta.categoriaId && categoriasCount > 0);
+  const [criarGasto, setCriarGasto] = useState(categoriasCount > 0);
   const [forma, setForma] = useState<FormaPagamento>("pix");
+  const [dataPag, setDataPag] = useState(todayISO());
+  const [obs, setObs] = useState("");
 
   function handlePagar() {
     marcarContaComoPago(conta.id, {
-      criarGasto: criarGasto && !!conta.categoriaId,
+      criarGasto,
       formaPagamento: forma,
+      dataPagamento: dataPag,
+      observacao: obs.trim() || undefined,
     });
-    if (criarGasto && !conta.categoriaId) {
-      toast.warning("Conta marcada como paga, mas sem categoria não foi possível criar o gasto.");
-    } else {
-      toast.success(
-        criarGasto && conta.categoriaId
-          ? "Conta paga e gasto registrado."
-          : "Conta marcada como paga.",
-      );
-    }
+    toast.success(
+      criarGasto
+        ? "Conta paga e gasto registrado."
+        : "Conta marcada como paga.",
+    );
     onClose();
   }
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Marcar como pago</DialogTitle>
+          <DialogTitle>Marcar como paga</DialogTitle>
           <DialogDescription>
             {conta.nome} — {formatBRL(conta.valor)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Registrar como gasto?</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {conta.categoriaId
-                    ? "Cria um gasto de hoje na categoria da conta."
-                    : "Esta conta não tem categoria — não é possível criar gasto."}
-                </p>
-              </div>
-              <Switch
-                checked={criarGasto}
-                onCheckedChange={setCriarGasto}
-                disabled={!conta.categoriaId}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pag-data">Data do pagamento</Label>
+              <Input
+                id="pag-data"
+                type="date"
+                value={dataPag}
+                onChange={(e) => setDataPag(e.target.value)}
               />
             </div>
-          </div>
-
-          {criarGasto && conta.categoriaId && (
             <div className="space-y-1.5">
               <Label>Forma de pagamento</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
@@ -1004,7 +995,32 @@ function PagarDialog({
                 </SelectContent>
               </Select>
             </div>
-          )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pag-obs">Observação (opcional)</Label>
+            <Textarea
+              id="pag-obs"
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              rows={2}
+              placeholder="Conta usada, comprovante, etc."
+            />
+          </div>
+
+          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Registrar como gasto</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {conta.categoriaId
+                    ? "Cria um lançamento em Gastos com a categoria desta conta."
+                    : "Sem categoria — vai para “Outros” em Gastos."}
+                </p>
+              </div>
+              <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
@@ -1013,7 +1029,7 @@ function PagarDialog({
           </Button>
           <Button onClick={handlePagar}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar
+            Confirmar pagamento
           </Button>
         </DialogFooter>
       </DialogContent>
