@@ -9,12 +9,16 @@ import {
   CalendarDays,
   Wallet,
   Sparkles,
+  MoreHorizontal,
+  Receipt,
+  Clock,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import {
   addCartao,
   deleteCartao,
   getCartoes,
+  getGastos,
   resumoFaturaCartao,
   updateCartao,
   useBootstrap,
