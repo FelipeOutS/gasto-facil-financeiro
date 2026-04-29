@@ -658,7 +658,7 @@ function ContasAPagarPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-
+      {pagar && (
         <PagarDialog
           conta={pagar}
           onClose={() => setPagar(null)}
