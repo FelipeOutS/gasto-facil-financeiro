@@ -21,7 +21,8 @@ import { EditGastoDialog } from "@/components/EditGastoDialog";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
-import { Upload } from "lucide-react";
+import { ExtratosImportadosDialog } from "@/components/ExtratosImportadosDialog";
+import { Upload, History } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Money, CountNumber } from "@/components/Money";
@@ -179,6 +180,7 @@ function GastosPage() {
   const [advOpen, setAdvOpen] = useState(false);
   const [editing, setEditing] = useState<Gasto | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const range = useMemo(
     () => getRange(periodo, { from: customFrom, to: customTo }),
@@ -296,29 +298,53 @@ function GastosPage() {
             Encontre rapidinho para onde seu dinheiro foi.
           </p>
         </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="h-10 rounded-full"
+            variant="outline"
+            title="Ver extratos importados"
+          >
+            <History className="h-4 w-4" />
+            Extratos importados
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="h-10 rounded-full"
+            variant="secondary"
+          >
+            <Upload className="h-4 w-4" />
+            Importar extrato
+          </Button>
+        </div>
+      </header>
+
+      {/* Botões mobile */}
+      <div className="mt-3 sm:hidden grid grid-cols-2 gap-2">
         <Button
           type="button"
           onClick={() => setImportOpen(true)}
-          className="hidden sm:inline-flex h-10 rounded-full"
+          className="h-11 rounded-2xl"
           variant="secondary"
         >
           <Upload className="h-4 w-4" />
-          Importar extrato
+          Importar
         </Button>
-      </header>
-
-      {/* Botão de import no mobile */}
-      <Button
-        type="button"
-        onClick={() => setImportOpen(true)}
-        className="mt-3 sm:hidden h-11 w-full rounded-2xl"
-        variant="secondary"
-      >
-        <Upload className="h-4 w-4" />
-        Importar extrato
-      </Button>
+        <Button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="h-11 rounded-2xl"
+          variant="outline"
+        >
+          <History className="h-4 w-4" />
+          Extratos
+        </Button>
+      </div>
 
       <ImportExtratoDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ExtratosImportadosDialog open={historyOpen} onOpenChange={setHistoryOpen} />
 
       {/* Busca grande */}
       <div className="mt-4 relative">

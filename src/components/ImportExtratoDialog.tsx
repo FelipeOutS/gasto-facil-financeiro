@@ -41,6 +41,7 @@ import {
   addGastosBulk,
   addReceitasBulk,
   addTransferenciasInternasBulk,
+  createExtratoImportado,
   findDuplicateGastoAdvanced,
   findDuplicateReceitaAdvanced,
   findDuplicateTransferenciaAdvanced,
@@ -172,6 +173,10 @@ export function ImportExtratoDialog({
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
   const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
+  const [importMeta, setImportMeta] = useState<{
+    nomeArquivo?: string;
+    tipoOrigem: "pdf" | "csv" | "imagem";
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -180,6 +185,7 @@ export function ImportExtratoDialog({
     setItems([]);
     setObservacaoIA(null);
     setResumoExtrato(null);
+    setImportMeta(null);
   }, []);
 
   const handleClose = useCallback(
@@ -327,6 +333,10 @@ export function ImportExtratoDialog({
         }
         setItems(itensFromBruto(brutos, "extrato_imagem"));
         setObservacaoIA(json.observacao ?? null);
+        setImportMeta({
+          nomeArquivo: files[0]?.name ?? `imagens-${files.length}`,
+          tipoOrigem: "imagem",
+        });
         setStep("review");
       } catch (e) {
         console.error(e);
@@ -394,6 +404,7 @@ export function ImportExtratoDialog({
         setResumoExtrato(json.resumo ?? null);
         setItems(itensFromBruto(brutos, "extrato_pdf"));
         setObservacaoIA(json.observacao ?? null);
+        setImportMeta({ nomeArquivo: file.name, tipoOrigem: "pdf" });
         setStep("review");
       } catch (e) {
         console.error("[import-extrato] erro envio PDF", e);
@@ -470,6 +481,7 @@ export function ImportExtratoDialog({
           return;
         }
         setItems(itensFromBruto(brutos, "extrato_csv"));
+        setImportMeta({ nomeArquivo: file.name, tipoOrigem: "csv" });
         setStep("review");
       } catch (e) {
         console.error(e);
@@ -519,7 +531,7 @@ export function ImportExtratoDialog({
   };
 
   // ---------- CONFIRM ----------
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const validos = items.filter(
       (i) => i.selecionado && i.valor !== null && i.valor > 0 && i.data && i.descricao.trim(),
     );
@@ -533,12 +545,21 @@ export function ImportExtratoDialog({
     const transferencias = validos.filter((i) => i.tipoMovimentacao === "transferencia_interna");
 
     let novosCount = 0;
-    let duplicadosIgnorados = items.filter(
+    const duplicadosIgnorados = items.filter(
       (i) => !i.selecionado && (i.dupStatus === "duplicado_existente" || i.dupStatus === "duplicado_lote"),
     ).length;
     const naoConfirmados = items.filter(
       (i) => !i.selecionado && i.dupStatus === "novo",
     ).length;
+
+    // Gera o batchId que será compartilhado por todos os itens dessa importação.
+    const batchId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+      ? crypto.randomUUID()
+      : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    let totalDespesas = 0;
+    let totalReceitas = 0;
+    let totalTransferencias = 0;
 
     if (despesas.length > 0) {
       const created = addGastosBulk(
@@ -554,9 +575,12 @@ export function ImportExtratoDialog({
           confirmado: true,
           horario: d.horario ?? undefined,
           origem: importOrigin(d, d.origem || "extrato_pdf"),
+          importBatchId: batchId,
+          idOperacaoBanco: d.idOperacao,
         })),
       );
       novosCount += created.length;
+      totalDespesas = created.reduce((s, x) => s + x.valor, 0);
     }
     if (receitas.length > 0) {
       const created = addReceitasBulk(
@@ -576,10 +600,13 @@ export function ImportExtratoDialog({
             tipo: tipoReceita,
             horario: r.horario ?? undefined,
             origem: importOrigin(r, r.origem || "extrato_pdf"),
+            importBatchId: batchId,
+            idOperacaoBanco: r.idOperacao,
           };
         }),
       );
       novosCount += created.length;
+      totalReceitas = created.reduce((s, x) => s + x.valor, 0);
     }
     if (transferencias.length > 0) {
       const created = addTransferenciasInternasBulk(
@@ -590,9 +617,38 @@ export function ImportExtratoDialog({
           horario: t.horario ?? undefined,
           observacao: t.observacao,
           origemImportacao: importOrigin(t, t.origem || "extrato_pdf"),
+          importBatchId: batchId,
+          idOperacaoBanco: t.idOperacao,
         })),
       );
       novosCount += created.length;
+      totalTransferencias = created.reduce((s, x) => s + x.valor, 0);
+    }
+
+    // Cria registro no histórico de extratos importados (apenas se gerou itens novos)
+    if (novosCount > 0) {
+      // Determina período pelas datas dos itens
+      const datas = validos.map((v) => v.data!).sort();
+      const periodoInicio = datas[0];
+      const periodoFim = datas[datas.length - 1];
+      try {
+        await createExtratoImportado({
+          id: batchId,
+          nomeArquivo: importMeta?.nomeArquivo,
+          tipoOrigem: importMeta?.tipoOrigem ?? "pdf",
+          periodoInicio,
+          periodoFim,
+          qtdMovimentacoes: novosCount,
+          qtdDuplicadasIgnoradas: duplicadosIgnorados,
+          totalReceitas,
+          totalDespesas,
+          totalGuardado: 0,
+          totalTransferencias,
+          observacao: observacaoIA ?? undefined,
+        });
+      } catch (e) {
+        console.error("[ImportExtratoDialog] createExtratoImportado falhou", e);
+      }
     }
 
     if (novosCount === 0 && duplicadosIgnorados > 0) {
