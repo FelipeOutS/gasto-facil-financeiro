@@ -798,11 +798,13 @@ function FaturaSheet({
   gastos,
   onOpenChange,
   onEdit,
+  onImport,
 }: {
   cartao: Cartao | null;
   gastos: Gasto[];
   onOpenChange: (open: boolean) => void;
   onEdit: (c: Cartao) => void;
+  onImport: (c: Cartao) => void;
 }) {
   // Compras vinculadas (memoizadas, ordenadas por data desc)
   const compras = useMemo(() => {
@@ -980,6 +982,14 @@ function FaturaSheet({
 
           {/* Ações */}
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="card-press flex-1"
+              onClick={() => onImport(cartao)}
+            >
+              <FileUp className="mr-2 h-4 w-4" />
+              Importar fatura
+            </Button>
             <Button
               variant="outline"
               className="card-press flex-1"
