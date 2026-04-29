@@ -1138,6 +1138,13 @@ function ReviewRow({
               onChange={(e) => onUpdate({ data: e.target.value || null })}
             />
           </Field>
+          <Field label="Horário (opcional)">
+            <Input
+              type="time"
+              value={item.horario ?? ""}
+              onChange={(e) => onUpdate({ horario: e.target.value || null })}
+            />
+          </Field>
           <Field label="Categoria">
             <Select
               value={item.categoriaSugerida ?? "outros"}
