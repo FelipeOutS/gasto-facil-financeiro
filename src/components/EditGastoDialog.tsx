@@ -56,6 +56,7 @@ export function EditGastoDialog({
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("credito");
   const [cartaoId, setCartaoId] = useState<string | undefined>(undefined);
   const [observacao, setObservacao] = useState("");
+  const [horario, setHorario] = useState("");
 
   // Initialize fields from snapshot whenever the dialog opens with a new gasto
   useEffect(() => {
