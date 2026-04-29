@@ -3378,6 +3378,234 @@ export async function deleteExtratoImportado(batchId: string): Promise<boolean> 
   return true;
 }
 
+/**
+ * Backfill: encontra lançamentos antigos importados de extrato (origem
+ * começa com "extrato_pdf|", "extrato_csv|" ou "extrato_imagem|") que
+ * NÃO possuem import_batch_id e os agrupa em lotes recuperados.
+ *
+ * Critério de agrupamento: mesmo banco + janela de 30 min do created_at.
+ *
+ * Para cada grupo, gera um batchId, atualiza os itens com import_batch_id
+ * e cria um registro em extratos_importados marcado como recuperado.
+ *
+ * Idempotente: se nada para processar, retorna 0.
+ */
+export async function backfillExtratosImportados(): Promise<number> {
+  if (!activeUserId) return 0;
+
+  type ItemBackfill = {
+    table: "gastos" | "receitas" | "transferencias_internas";
+    id: string;
+    valor: number;
+    data: string;
+    origem: string;
+    createdAt: string;
+    tipo: "gasto" | "receita" | "transferencia";
+  };
+
+  const isExtratoOrigem = (o?: string | null): o is string =>
+    !!o && /^extrato_(pdf|csv|imagem)\|/i.test(o);
+
+  const parseBancoFromOrigem = (origem: string): { tipoOrigem: TipoOrigemExtrato; banco: string } => {
+    // Formato: "extrato_pdf|Mercado Pago" ou "extrato_pdf|Mercado Pago|op:..."
+    const parts = origem.split("|");
+    const head = (parts[0] || "").toLowerCase();
+    const banco = (parts[1] || "Banco").trim() || "Banco";
+    const tipoOrigem: TipoOrigemExtrato = head.includes("csv")
+      ? "csv"
+      : head.includes("imagem")
+      ? "imagem"
+      : "pdf";
+    return { tipoOrigem, banco };
+  };
+
+  // Coleta candidatos sem import_batch_id
+  const candidatos: ItemBackfill[] = [];
+  for (const g of memGastos) {
+    if (!g.importBatchId && isExtratoOrigem(g.origem)) {
+      candidatos.push({
+        table: "gastos",
+        id: g.id,
+        valor: g.valor,
+        data: g.data,
+        origem: g.origem!,
+        createdAt: g.criadoEm,
+        tipo: "gasto",
+      });
+    }
+  }
+  for (const r of memReceitas) {
+    if (!r.importBatchId && isExtratoOrigem(r.origem)) {
+      candidatos.push({
+        table: "receitas",
+        id: r.id,
+        valor: r.valor,
+        data: r.data,
+        origem: r.origem!,
+        createdAt: r.criadoEm,
+        tipo: "receita",
+      });
+    }
+  }
+  for (const t of memTransferencias) {
+    if (!t.importBatchId && isExtratoOrigem(t.origemImportacao)) {
+      candidatos.push({
+        table: "transferencias_internas",
+        id: t.id,
+        valor: t.valor,
+        data: t.data,
+        origem: t.origemImportacao!,
+        createdAt: t.criadoEm,
+        tipo: "transferencia",
+      });
+    }
+  }
+
+  if (candidatos.length === 0) return 0;
+
+  // Agrupa por banco + janela de 30 min de created_at
+  const WINDOW_MS = 30 * 60 * 1000;
+  candidatos.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  type Grupo = {
+    banco: string;
+    tipoOrigem: TipoOrigemExtrato;
+    itens: ItemBackfill[];
+    minTs: number;
+    maxTs: number;
+  };
+  const grupos: Grupo[] = [];
+
+  for (const c of candidatos) {
+    const { banco, tipoOrigem } = parseBancoFromOrigem(c.origem);
+    const ts = new Date(c.createdAt).getTime();
+    const grupo = grupos.find(
+      (g) =>
+        g.banco === banco &&
+        g.tipoOrigem === tipoOrigem &&
+        ts - g.maxTs <= WINDOW_MS,
+    );
+    if (grupo) {
+      grupo.itens.push(c);
+      grupo.maxTs = Math.max(grupo.maxTs, ts);
+      grupo.minTs = Math.min(grupo.minTs, ts);
+    } else {
+      grupos.push({ banco, tipoOrigem, itens: [c], minTs: ts, maxTs: ts });
+    }
+  }
+
+  let totalLotesCriados = 0;
+
+  for (const g of grupos) {
+    const batchId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    // Calcula totais e período
+    let totalReceitas = 0;
+    let totalDespesas = 0;
+    let totalTransferencias = 0;
+    let dMin: string | null = null;
+    let dMax: string | null = null;
+
+    for (const it of g.itens) {
+      if (it.tipo === "receita") totalReceitas += Math.abs(it.valor);
+      else if (it.tipo === "gasto") totalDespesas += Math.abs(it.valor);
+      else totalTransferencias += Math.abs(it.valor);
+      if (!dMin || it.data < dMin) dMin = it.data;
+      if (!dMax || it.data > dMax) dMax = it.data;
+    }
+
+    // Atualiza import_batch_id por tabela em batches
+    const idsPorTabela: Record<string, string[]> = {
+      gastos: [],
+      receitas: [],
+      transferencias_internas: [],
+    };
+    for (const it of g.itens) idsPorTabela[it.table].push(it.id);
+
+    let updateOk = true;
+    for (const tbl of ["gastos", "receitas", "transferencias_internas"] as const) {
+      const ids = idsPorTabela[tbl];
+      if (ids.length === 0) continue;
+      const { error } = await sbAny
+        .from(tbl)
+        .update({ import_batch_id: batchId })
+        .eq("user_id", activeUserId)
+        .in("id", ids);
+      if (error) {
+        console.error(`[store] backfill: falha ao atualizar ${tbl}`, error);
+        updateOk = false;
+        break;
+      }
+    }
+    if (!updateOk) continue;
+
+    const dataImportacao = new Date(g.maxTs).toISOString();
+    const { error: insErr } = await sbAny.from("extratos_importados").insert({
+      id: batchId,
+      user_id: activeUserId,
+      nome_arquivo: null,
+      banco: g.banco,
+      tipo_origem: g.tipoOrigem,
+      data_importacao: dataImportacao,
+      periodo_inicio: dMin,
+      periodo_fim: dMax,
+      qtd_movimentacoes: g.itens.length,
+      qtd_duplicadas_ignoradas: 0,
+      total_receitas: totalReceitas,
+      total_despesas: totalDespesas,
+      total_guardado: 0,
+      total_transferencias: totalTransferencias,
+      status: "importado",
+      observacao: "Lote recuperado automaticamente",
+    });
+    if (insErr) {
+      console.error("[store] backfill: falha ao criar registro de extrato", insErr);
+      continue;
+    }
+
+    // Atualiza memória
+    for (const it of g.itens) {
+      if (it.table === "gastos") {
+        memGastos = memGastos.map((x) => (x.id === it.id ? { ...x, importBatchId: batchId } : x));
+      } else if (it.table === "receitas") {
+        memReceitas = memReceitas.map((x) => (x.id === it.id ? { ...x, importBatchId: batchId } : x));
+      } else {
+        memTransferencias = memTransferencias.map((x) =>
+          x.id === it.id ? { ...x, importBatchId: batchId } : x,
+        );
+      }
+    }
+
+    const novo: ExtratoImportado = {
+      id: batchId,
+      nomeArquivo: undefined,
+      banco: g.banco,
+      tipoOrigem: g.tipoOrigem,
+      dataImportacao,
+      periodoInicio: dMin ?? undefined,
+      periodoFim: dMax ?? undefined,
+      qtdMovimentacoes: g.itens.length,
+      qtdDuplicadasIgnoradas: 0,
+      totalReceitas,
+      totalDespesas,
+      totalGuardado: 0,
+      totalTransferencias,
+      status: "importado",
+      observacao: "Lote recuperado automaticamente",
+      criadoEm: dataImportacao,
+      atualizadoEm: dataImportacao,
+    };
+    memExtratos = [novo, ...memExtratos];
+    totalLotesCriados += 1;
+  }
+
+  if (totalLotesCriados > 0) emit();
+  return totalLotesCriados;
+}
+
 
 export function useStore<T>(selector: () => T): T {
   return useSyncExternalStore(subscribe, selector, selector);
