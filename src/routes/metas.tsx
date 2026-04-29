@@ -269,7 +269,7 @@ function MetaCard({
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onAdd}>
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar valor
+              Atualizar valor
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
               <Minus className="mr-2 h-4 w-4" />
@@ -317,7 +317,7 @@ function MetaCard({
           onClick={onAdd}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Adicionar valor
+          Atualizar valor
         </Button>
       )}
     </div>
