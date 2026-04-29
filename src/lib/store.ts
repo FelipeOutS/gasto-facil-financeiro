@@ -3329,6 +3329,10 @@ export function marcarContaComoPago(
   void sbAny
     .from("contas_a_pagar")
     .update({
+      nome: nomeEf,
+      valor: valorEf,
+      categoria_id: categoriaEf ?? null,
+      forma_pagamento: options?.formaPagamento ?? conta.formaPagamento ?? null,
       status: "pago",
       data_pagamento: dataPag,
       gasto_id: gastoId ?? null,
