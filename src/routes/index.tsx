@@ -808,7 +808,7 @@ function LimiteMensalCard({
   proximoLimite: boolean;
 }) {
   return (
-    <section className="h-auto self-start rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
