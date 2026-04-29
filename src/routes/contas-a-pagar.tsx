@@ -1402,6 +1402,31 @@ function ContaFormDialog({
           <Button onClick={handleSave}>{isEdit ? "Salvar" : "Cadastrar"}</Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Escopo da edição em conta recorrente */}
+      <AlertDialog
+        open={!!editScopeFields}
+        onOpenChange={(o) => !o && setEditScopeFields(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar conta recorrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta é uma conta recorrente. Onde você quer aplicar as mudanças?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button variant="outline" onClick={() => applyEditScope("single")}>
+              Apenas esta
+            </Button>
+            <Button variant="outline" onClick={() => applyEditScope("future")}>
+              Esta e as próximas
+            </Button>
+            <Button onClick={() => applyEditScope("all")}>Toda a recorrência</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
