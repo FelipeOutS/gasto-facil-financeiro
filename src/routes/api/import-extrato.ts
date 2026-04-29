@@ -779,16 +779,51 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
     });
   }
 
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    {
-      role: "user",
-      content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
-    },
-  ];
+  const chunks = chunkTextByLines(cleanText, 12_000);
+  const allItens: ItemBruto[] = [];
+  let aggObs: string | null = null;
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `Texto extraído do extrato bancário em PDF (parte ${i + 1} de ${chunks.length}). Extraia TODAS as movimentações deste trecho, sem cortar.\n\n----INÍCIO----\n${chunk}\n----FIM----`,
+      },
+    ];
+    const aiResp = await callGemini(apiKey, messages);
+    const parsed = await parseAIResponse(aiResp);
+    if ("error" in parsed) {
+      // Se é o primeiro chunk e falhou, devolve erro. Senão, segue com o que já temos.
+      if (i === 0 && allItens.length === 0) return parsed.error;
+      console.error("[import-extrato] chunk falhou, seguindo com itens parciais", i, parsed);
+      continue;
+    }
+    allItens.push(...parsed.itens);
+    if (parsed.observacao && !aggObs) aggObs = parsed.observacao;
+  }
+  return Response.json({
+    itens: normalizeItens(allItens),
+    paginas: totalPages,
+    modo: "texto",
+    observacao: aggObs,
+  });
+}
 
-  const aiResp = await callGemini(apiKey, messages);
-  return await handleAIResponse(aiResp, totalPages, "texto");
+/** Divide o texto em chunks por linha, sem ultrapassar maxChars por chunk. */
+function chunkTextByLines(text: string, maxChars: number): string[] {
+  const lines = text.split(/\r?\n/);
+  const chunks: string[] = [];
+  let buf = "";
+  for (const line of lines) {
+    if (buf.length + line.length + 1 > maxChars && buf.length > 0) {
+      chunks.push(buf);
+      buf = "";
+    }
+    buf += (buf ? "\n" : "") + line;
+  }
+  if (buf) chunks.push(buf);
+  return chunks.length > 0 ? chunks : [text];
 }
 
 
