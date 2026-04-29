@@ -21,7 +21,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import { formatBRL, formatDateBR } from "@/lib/format";
+import { formatBRL, formatDateBR, parseDateLocal, toLocalISODate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,75 +81,68 @@ const PERIODO_LABEL: Record<PeriodoId, string> = {
 const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
 
 function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 }
 function endOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 }
 function toISODate(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return toLocalISODate(d);
 }
 
 function getRange(
   periodo: PeriodoId,
   custom: { from?: Date; to?: Date },
-): { from?: string; to?: string } {
+): { fromTs?: number; toTs?: number } {
   const now = new Date();
   const today = startOfDay(now);
   switch (periodo) {
     case "hoje":
-      return { from: toISODate(today), to: toISODate(today) };
+      return { fromTs: today.getTime(), toTs: endOfDay(now).getTime() };
     case "ontem": {
       const y = new Date(today);
       y.setDate(y.getDate() - 1);
-      return { from: toISODate(y), to: toISODate(y) };
+      return { fromTs: startOfDay(y).getTime(), toTs: endOfDay(y).getTime() };
     }
     case "7d": {
       const f = new Date(today);
       f.setDate(f.getDate() - 6);
-      return { from: toISODate(f), to: toISODate(today) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(now).getTime() };
     }
     case "30d": {
       const f = new Date(today);
       f.setDate(f.getDate() - 29);
-      return { from: toISODate(f), to: toISODate(today) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(now).getTime() };
     }
     case "mes": {
       const f = new Date(today.getFullYear(), today.getMonth(), 1);
       const t = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      return { from: toISODate(f), to: toISODate(t) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(t).getTime() };
     }
     case "mesPassado": {
       const f = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const t = new Date(today.getFullYear(), today.getMonth(), 0);
-      return { from: toISODate(f), to: toISODate(t) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(t).getTime() };
     }
     case "3m": {
       const f = new Date(today);
       f.setMonth(f.getMonth() - 3);
-      return { from: toISODate(f), to: toISODate(today) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(now).getTime() };
     }
     case "6m": {
       const f = new Date(today);
       f.setMonth(f.getMonth() - 6);
-      return { from: toISODate(f), to: toISODate(today) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(now).getTime() };
     }
     case "ano": {
       const f = new Date(today.getFullYear(), 0, 1);
       const t = new Date(today.getFullYear(), 11, 31);
-      return { from: toISODate(f), to: toISODate(t) };
+      return { fromTs: startOfDay(f).getTime(), toTs: endOfDay(t).getTime() };
     }
     case "personalizado":
       return {
-        from: custom.from ? toISODate(startOfDay(custom.from)) : undefined,
-        to: custom.to ? toISODate(endOfDay(custom.to)) : undefined,
+        fromTs: custom.from ? startOfDay(custom.from).getTime() : undefined,
+        toTs: custom.to ? endOfDay(custom.to).getTime() : undefined,
       };
     default:
       return {};
@@ -179,8 +172,16 @@ function GastosPage() {
 
   const filtered = useMemo(() => {
     let list = gastos;
-    if (range.from) list = list.filter((g) => g.data >= range.from!);
-    if (range.to) list = list.filter((g) => g.data <= range.to!);
+    if (range.fromTs != null || range.toTs != null) {
+      list = list.filter((g) => {
+        const d = parseDateLocal(g.data);
+        if (!d) return false;
+        const ts = d.getTime();
+        if (range.fromTs != null && ts < range.fromTs) return false;
+        if (range.toTs != null && ts > range.toTs) return false;
+        return true;
+      });
+    }
     if (catFilter !== "todas") list = list.filter((g) => g.categoriaId === catFilter);
     if (pagFilter !== "todas") list = list.filter((g) => g.formaPagamento === pagFilter);
     const min = parseFloat(valorMin.replace(",", "."));
