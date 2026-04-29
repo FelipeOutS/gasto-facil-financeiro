@@ -1,0 +1,1 @@
+ALTER TABLE public.metas_financeiras ADD COLUMN IF NOT EXISTS imagem_key text;

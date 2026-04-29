@@ -230,6 +230,8 @@ export type Meta = {
   descricao?: string;
   colorHex: string;
   bancoId?: string;
+  /** Chave da ilustração (auto-sugerida ou escolhida pelo usuário). */
+  imagemKey?: string;
   criadoEm: string;
   atualizadoEm: string;
 };

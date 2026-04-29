@@ -527,6 +527,9 @@ type MetaRow = {
   updated_at: string;
 };
 function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
+  // imagem_key é uma coluna opcional adicionada via migration; pode ainda
+  // não estar refletida no tipo gerado, então acessamos com cast seguro.
+  const imagemKey = (r as unknown as { imagem_key?: string | null }).imagem_key ?? undefined;
   return {
     id: r.legacy_id || r.id,
     nome: r.nome,
@@ -536,6 +539,7 @@ function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
     descricao: r.descricao ?? undefined,
     colorHex: r.color_hex,
     bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    imagemKey: imagemKey ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -2793,6 +2797,7 @@ export type NovaMetaInput = {
   descricao?: string;
   colorHex: string;
   bancoId?: string;
+  imagemKey?: string;
 };
 export function addMeta(input: NovaMetaInput): Meta {
   const now = new Date().toISOString();
@@ -2805,6 +2810,7 @@ export function addMeta(input: NovaMetaInput): Meta {
     descricao: input.descricao,
     colorHex: input.colorHex,
     bancoId: input.bancoId,
+    imagemKey: input.imagemKey,
     criadoEm: now,
     atualizadoEm: now,
   };
@@ -2830,7 +2836,8 @@ export function addMeta(input: NovaMetaInput): Meta {
       descricao: novo.descricao ?? null,
       color_hex: novo.colorHex,
       banco_id: input.bancoId ? bancoUuidFor(input.bancoId) : null,
-    })
+      ...(novo.imagemKey ? { imagem_key: novo.imagemKey } : {}),
+    } as MetaInsert)
     .then(({ error }) => {
       if (error) console.error("[store] addMeta failed", error);
     });
@@ -2844,7 +2851,7 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
   if (!activeUserId) return;
   const uuid = metaUuidFor(id);
   if (!uuid) return;
-  const row: MetaUpdate = {};
+  const row: MetaUpdate & { imagem_key?: string | null } = {};
   if (patch.nome !== undefined) row.nome = patch.nome;
   if (patch.valorObjetivo !== undefined) row.valor_objetivo = patch.valorObjetivo;
   if (patch.valorAtual !== undefined) row.valor_atual = patch.valorAtual;
@@ -2852,9 +2859,10 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
   if (patch.descricao !== undefined) row.descricao = patch.descricao ?? null;
   if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
   if (patch.bancoId !== undefined) row.banco_id = patch.bancoId ? bancoUuidFor(patch.bancoId) : null;
+  if (patch.imagemKey !== undefined) row.imagem_key = patch.imagemKey ?? null;
   void supabase
     .from("metas_financeiras")
-    .update(row)
+    .update(row as MetaUpdate)
     .eq("id", uuid)
     .then(({ error }) => {
       if (error) console.error("[store] updateMeta failed", error);
