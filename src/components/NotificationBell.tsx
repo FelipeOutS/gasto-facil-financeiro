@@ -6,115 +6,70 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import type { ContaAPagar } from "@/lib/types";
-
-type Severity = "atrasada" | "hoje" | "em3" | "em7";
-
-type Alerta = {
-  id: string;
-  conta: ContaAPagar;
-  severity: Severity;
-  diasRestantes: number; // negativo se atrasada
-};
-
-const SEVERITY_ORDER: Record<Severity, number> = {
-  atrasada: 0,
-  hoje: 1,
-  em3: 2,
-  em7: 3,
-};
-
-function diffDays(fromISO: string, toISO: string): number {
-  const a = new Date(fromISO + "T00:00:00").getTime();
-  const b = new Date(toISO + "T00:00:00").getTime();
-  return Math.round((b - a) / (1000 * 60 * 60 * 24));
-}
+import {
+  buildResumoAlertas,
+  textoSeveridade,
+  type AlertaConta,
+  type SeveridadeAlerta,
+} from "@/lib/alertas-contas";
 
 function formatDataCurta(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
-function buildAlertas(contas: ContaAPagar[]): Alerta[] {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const list: Alerta[] = [];
-  for (const c of contas) {
-    if (c.status === "pago") continue;
-    const dias = diffDays(hoje, c.dataVencimento);
-    let sev: Severity | null = null;
-    if (dias < 0) sev = "atrasada";
-    else if (dias === 0) sev = "hoje";
-    else if (dias <= 3) sev = "em3";
-    else if (dias <= 7) sev = "em7";
-    if (!sev) continue;
-    list.push({ id: c.id, conta: c, severity: sev, diasRestantes: dias });
-  }
-  list.sort((a, b) => {
-    const s = SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity];
-    if (s !== 0) return s;
-    return a.conta.dataVencimento.localeCompare(b.conta.dataVencimento);
-  });
-  return list;
-}
-
-function severityMeta(sev: Severity, dias: number) {
+function severityMeta(sev: SeveridadeAlerta) {
   switch (sev) {
     case "atrasada":
       return {
-        label: "Atrasada",
         icon: AlertTriangle,
         toneText: "text-destructive",
         toneBg: "bg-destructive/10",
-        toneBorder: "border-destructive/30",
         badgeClass: "bg-destructive/15 text-destructive",
       };
     case "hoje":
       return {
-        label: "Vence hoje",
         icon: Clock,
         toneText: "text-amber-600 dark:text-amber-400",
         toneBg: "bg-amber-500/10",
-        toneBorder: "border-amber-500/30",
         badgeClass: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
       };
-    case "em3":
+    case "amanha":
       return {
-        label: `Em ${dias} ${dias === 1 ? "dia" : "dias"}`,
-        icon: CalendarClock,
+        icon: Clock,
         toneText: "text-amber-600 dark:text-amber-400",
         toneBg: "bg-amber-500/10",
-        toneBorder: "border-amber-500/30",
         badgeClass: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
       };
     case "em7":
       return {
-        label: `Em ${dias} dias`,
         icon: CalendarClock,
         toneText: "text-[hsl(var(--brand))]",
         toneBg: "bg-[hsl(var(--brand))]/10",
-        toneBorder: "border-[hsl(var(--brand))]/30",
         badgeClass: "bg-[hsl(var(--brand))]/15 text-[hsl(var(--brand))]",
       };
   }
 }
 
-function alertaTexto(a: Alerta): string {
-  switch (a.severity) {
+function alertaTexto(a: AlertaConta): string {
+  switch (a.severidade) {
     case "atrasada":
       return `Venceu em ${formatDataCurta(a.conta.dataVencimento)}.`;
     case "hoje":
       return "Vence hoje. Melhor resolver agora.";
-    case "em3":
-      return `Vence em ${a.diasRestantes} ${a.diasRestantes === 1 ? "dia" : "dias"}.`;
+    case "amanha":
+      return "Vence amanhã.";
     case "em7":
-      return `Está chegando: vence em ${a.diasRestantes} dias.`;
+      return `Está chegando: vence em ${a.dias} dias.`;
   }
 }
 
 export function NotificationBell({ contas }: { contas: ContaAPagar[] }) {
   const [open, setOpen] = useState(false);
-  const alertas = useMemo(() => buildAlertas(contas), [contas]);
-  const count = alertas.length;
-  const hasAtrasada = alertas.some((a) => a.severity === "atrasada");
+  const resumo = useMemo(() => buildResumoAlertas(contas), [contas]);
+  const alertas = resumo.todos;
+  const count = resumo.totalRelevantes;
+  const hasAtrasada = resumo.atrasadas.length > 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -167,7 +122,7 @@ export function NotificationBell({ contas }: { contas: ContaAPagar[] }) {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
               <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p className="mt-3 text-sm font-semibold">Tudo em dia por aqui</p>
+            <p className="mt-3 text-sm font-semibold">Nenhum alerta no momento.</p>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
               Pode respirar tranquilo. Nenhum vencimento importante no radar.
             </p>
@@ -175,7 +130,7 @@ export function NotificationBell({ contas }: { contas: ContaAPagar[] }) {
         ) : (
           <ul className="max-h-[380px] overflow-y-auto stagger">
             {alertas.map((a, i) => {
-              const meta = severityMeta(a.severity, a.diasRestantes);
+              const meta = severityMeta(a.severidade);
               const Icon = meta.icon;
               return (
                 <li
@@ -205,7 +160,7 @@ export function NotificationBell({ contas }: { contas: ContaAPagar[] }) {
                           meta.badgeClass,
                         )}
                       >
-                        {meta.label}
+                        {textoSeveridade(a.severidade, a.dias)}
                       </span>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
