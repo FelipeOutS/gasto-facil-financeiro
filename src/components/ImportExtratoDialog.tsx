@@ -363,7 +363,7 @@ export function ImportExtratoDialog({
 
         // Parse defensivo: a resposta pode vir como texto puro em erros de proxy/edge.
         const raw = await resp.text();
-        let json: { itens?: ItemBruto[]; observacao?: string | null; error?: string } = {};
+        let json: { itens?: ItemBruto[]; resumo?: ExtratoResumo | null; observacao?: string | null; error?: string } = {};
         try {
           json = raw ? JSON.parse(raw) : {};
         } catch {
@@ -391,6 +391,7 @@ export function ImportExtratoDialog({
           setLoading(false);
           return;
         }
+        setResumoExtrato(json.resumo ?? null);
         setItems(itensFromBruto(brutos, "extrato_pdf"));
         setObservacaoIA(json.observacao ?? null);
         setStep("review");
@@ -684,6 +685,7 @@ export function ImportExtratoDialog({
               onAdd={addEmptyItem}
               categorias={categorias}
               observacaoIA={observacaoIA}
+              resumoExtrato={resumoExtrato}
             />
           )}
         </div>
