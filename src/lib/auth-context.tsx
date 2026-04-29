@@ -169,6 +169,10 @@ const SSR_FALLBACK: AuthContextValue = {
   async updatePassword() {
     return { error: new Error("Auth not ready") };
   },
+  async updateProfile() {
+    return { error: new Error("Auth not ready") };
+  },
+  async refreshProfile() {},
 };
 
 export function useAuth() {
