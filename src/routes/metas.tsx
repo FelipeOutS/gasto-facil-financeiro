@@ -15,7 +15,6 @@ import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addMeta,
-  addMovimentacaoMeta,
   deleteMeta,
   getBancos,
   getMetas,
