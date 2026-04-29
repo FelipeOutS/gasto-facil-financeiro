@@ -1092,6 +1092,7 @@ function ContaFormDialog({
         categoriaId: categoriaId || undefined,
         observacao: observacao.trim() || undefined,
         recorrente,
+        frequenciaRecorrencia: recorrente ? frequencia : undefined,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
         beneficiario: beneficiario.trim() || undefined,
         formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
