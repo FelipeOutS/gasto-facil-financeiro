@@ -217,6 +217,8 @@ type GastoRow = {
   cartao_id?: string | null;
   horario?: string | null;
   origem?: string | null;
+  import_batch_id?: string | null;
+  id_operacao_banco?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -244,6 +246,8 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     cartaoId: r.cartao_id ?? undefined,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
+    idOperacaoBanco: r.id_operacao_banco ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
