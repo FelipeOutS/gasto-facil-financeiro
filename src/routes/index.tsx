@@ -48,7 +48,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
-import type { ContaAPagar } from "@/lib/types";
+import {
+  buildLinhasOrcamento,
+  resumirOrcamento,
+} from "@/lib/orcamento";
+import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -381,6 +385,12 @@ function Index() {
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
         <div className="min-w-0 space-y-3 lg:col-span-3">
           <AlertasContasCard contas={contas} />
+          <OrcamentoCard
+            categorias={categorias}
+            gastos={gastosConfirmados}
+            mes={ym.mes}
+            ano={ym.ano}
+          />
           <ContasCard resumo={contasResumo} variant="sideTop" />
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
