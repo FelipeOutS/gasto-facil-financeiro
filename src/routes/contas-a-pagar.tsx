@@ -778,6 +778,36 @@ function ContaCard({
   );
 }
 
+function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(valor);
+      toast.success(`${label} copiado.`);
+    } catch {
+      toast.error("Não consegui copiar. Copie manualmente.");
+    }
+  }
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-border bg-card-elevated/40 px-2 py-1.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <p className="truncate text-[11px] font-mono">{valor}</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        onClick={copiar}
+        aria-label={`Copiar ${label}`}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   if (status === "pago") {
     return (
