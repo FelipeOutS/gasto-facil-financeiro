@@ -417,7 +417,7 @@ function Index() {
             mes={ym.mes}
             ano={ym.ano}
           />
-          <ContasCard resumo={contasResumo} variant="sideTop" />
+          {contasResumo.total > 0 && <ContasCard resumo={contasResumo} variant="sideTop" />}
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
           {limiteTotal ? (
