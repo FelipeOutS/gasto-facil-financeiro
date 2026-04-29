@@ -1095,18 +1095,56 @@ export function deleteCartao(id: string) {
     });
 }
 
-/** Calcula resumo de uso do cartão no mês corrente da fatura (com base nos gastos vinculados). */
+/**
+ * Calcula resumo de uso do cartão na fatura ABERTA (ciclo atual de faturamento).
+ *
+ * Considera todos os gastos no crédito vinculados ao cartão cuja data está
+ * dentro do ciclo aberto: do dia seguinte ao último fechamento até o próximo
+ * fechamento. Quando o cartão não tem `diaFechamento` definido, faz fallback
+ * para o mês civil corrente.
+ *
+ * Isso garante que gastos importados de faturas (com datas no mês anterior
+ * ao mês corrente, ainda dentro do ciclo aberto) entrem no "usado".
+ */
 export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   const gastosCartao = memGastos.filter(
     (g) => g.cartaoId === cartaoId && g.formaPagamento === "credito",
   );
-  // Usado no mês corrente (mês atual) — simples para esta etapa.
-  const mes = hoje.getMonth() + 1;
-  const ano = hoje.getFullYear();
+
+  let inicio: Date;
+  let fim: Date;
+  const diaFech = cartao?.diaFechamento;
+  if (diaFech && diaFech > 0) {
+    // Ciclo aberto: (último fechamento, próximo fechamento]
+    const hojeDia = hoje.getDate();
+    const y = hoje.getFullYear();
+    const m = hoje.getMonth();
+    if (hojeDia > diaFech) {
+      // Já fechou este mês → ciclo aberto vai até o fechamento do próximo mês.
+      inicio = new Date(y, m, diaFech + 1);
+      fim = new Date(y, m + 1, diaFech, 23, 59, 59, 999);
+    } else {
+      // Ainda não fechou este mês → ciclo aberto começou no mês passado.
+      inicio = new Date(y, m - 1, diaFech + 1);
+      fim = new Date(y, m, diaFech, 23, 59, 59, 999);
+    }
+  } else {
+    // Fallback: mês civil corrente.
+    inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
+  }
+
   const usadoMes = gastosCartao
-    .filter((g) => g.mes === mes && g.ano === ano)
+    .filter((g) => {
+      // Parse local (YYYY-MM-DD) para evitar problemas de fuso.
+      const [ay, am, ad] = g.data.split("-").map((n) => parseInt(n, 10));
+      if (!ay || !am || !ad) return false;
+      const d = new Date(ay, am - 1, ad);
+      return d >= inicio && d <= fim;
+    })
     .reduce((s, g) => s + g.valor, 0);
+
   const limite = cartao?.limiteTotal ?? 0;
   return {
     usadoMes,
