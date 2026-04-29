@@ -403,9 +403,9 @@ function Index() {
             mes={ym.mes}
             ano={ym.ano}
             saldo={saldo}
-            maiorCategoria={maior}
-            estouroOrc={resOrc?.qtdEstouro ?? 0}
-            criticaOrc={resOrc?.linhas.find((l) => l.status === "estouro")?.cat.nome ?? null}
+            maiorCategoria={maior ?? null}
+            categorias={categorias}
+            gastosConfirmados={gastosConfirmados}
           />
           <OrcamentoCard
             categorias={categorias}
