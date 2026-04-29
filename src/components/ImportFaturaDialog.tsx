@@ -604,18 +604,25 @@ function SourceStep({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <SourceCard
           icon={<ImageIcon className="h-5 w-5" />}
-          title="Importar por imagem"
-          desc="Use print da fatura ou comprovante."
+          title="Imagens / prints"
+          desc="Envie 1 a 10 prints da fatura."
           onClick={() => onPick("image-upload")}
           disabled={cartoes.length === 0}
         />
         <SourceCard
+          icon={<FileText className="h-5 w-5" />}
+          title="PDF da fatura"
+          desc="Aceita PDF com texto ou escaneado."
+          onClick={() => onPick("pdf-upload")}
+          disabled={cartoes.length === 0}
+        />
+        <SourceCard
           icon={<FileSpreadsheet className="h-5 w-5" />}
-          title="Importar por CSV"
-          desc="Use uma planilha ou exportação do banco."
+          title="CSV / planilha"
+          desc="Exportação do app do banco."
           onClick={() => onPick("csv-upload")}
           disabled={cartoes.length === 0}
         />
