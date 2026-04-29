@@ -437,7 +437,7 @@ function Index() {
 
       {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
       <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
           <div className="flex w-full">
             <ResumoMesCard
