@@ -39,6 +39,7 @@ import {
   findPossibleDuplicate,
   getCartoes,
   getCategorias,
+  useStore,
 } from "@/lib/store";
 import type { Cartao } from "@/lib/types";
 import {
@@ -91,8 +92,8 @@ export function ImportFaturaDialog({
   onOpenChange: (o: boolean) => void;
   cartaoIdInicial?: string;
 }) {
-  const cartoes = getCartoes();
-  const categorias = getCategorias();
+  const cartoes = useStore(() => getCartoes());
+  const categorias = useStore(() => getCategorias());
 
   const [step, setStep] = useState<Step>("source");
   const [cartaoId, setCartaoId] = useState<string | undefined>(
@@ -114,6 +115,7 @@ export function ImportFaturaDialog({
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Reset ao reabrir
   useEffect(() => {
@@ -128,6 +130,7 @@ export function ImportFaturaDialog({
     setCsvMap([]);
     setItems([]);
     setSaving(false);
+    setErrorMessage(null);
     setCartaoId(cartaoIdInicial ?? cartoes[0]?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, cartaoIdInicial]);
@@ -164,7 +167,7 @@ export function ImportFaturaDialog({
           (desc ? suggestCategoryFromDescription(desc) : "outros");
         const duplicado =
           !!cId && it.valor !== null && it.data
-            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc)
+            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc, cId)
             : false;
         return {
           ...it,
