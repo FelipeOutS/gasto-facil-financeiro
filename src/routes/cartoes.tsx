@@ -222,7 +222,7 @@ function CartoesPage() {
       </header>
 
       {/* Resumo */}
-      <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
+      <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <ResumoCard
           label="Limite total"
           valueNum={resumo.limiteTotal}
@@ -289,10 +289,10 @@ function CartoesPage() {
       {cartoes.length === 0 ? (
         <EmptyState onAdd={handleOpenNew} />
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] xl:gap-6">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] xl:gap-6">
           <section
             className={cn(
-              "grid grid-cols-1 gap-5 stagger",
+                "grid min-w-0 grid-cols-1 gap-5",
               cartoes.length > 1 && "xl:grid-cols-2",
             )}
           >
@@ -307,7 +307,7 @@ function CartoesPage() {
               />
             ))}
           </section>
-          <aside className="space-y-4 stagger">
+          <aside className="min-w-0 space-y-4">
             <ProximosVencimentos items={proximosVencimentos} />
             <UltimasCompras gastos={ultimasCompras} cartoes={cartoes} />
           </aside>
