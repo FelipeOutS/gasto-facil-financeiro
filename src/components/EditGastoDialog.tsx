@@ -214,6 +214,20 @@ export function EditGastoDialog({
             </div>
           </div>
 
+          {/* Horário (opcional) */}
+          <div>
+            <Label htmlFor="edit-horario" className="text-xs text-muted-foreground">
+              Horário (opcional)
+            </Label>
+            <Input
+              id="edit-horario"
+              type="time"
+              value={horario}
+              onChange={(e) => setHorario(e.target.value)}
+              className="mt-1 h-11 bg-card sm:max-w-[220px]"
+            />
+          </div>
+
           {/* Cartão */}
           {formaPagamento === "credito" && (
             <div className="rounded-2xl border border-border bg-card p-3">
