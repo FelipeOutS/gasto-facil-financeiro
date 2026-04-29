@@ -370,6 +370,9 @@ function normalizeGastosForCalculations(gastos: Gasto[], persist = false): Gasto
     if (result.row) updates.push({ id: g.id, row: result.row });
     return result.gasto;
   });
+  if (updates.length > 0 && typeof window !== "undefined" && window.localStorage.getItem("gf:debug-finance") === "1") {
+    console.info("[financeiro:normalizacao] gastos ajustados", updates.map(({ id, row }) => ({ id, ...row })));
+  }
   if (persist && activeUserId && updates.length > 0) {
     void Promise.all(
       updates.map(({ id, row }) => supabase.from("gastos").update(row).eq("id", id)),
