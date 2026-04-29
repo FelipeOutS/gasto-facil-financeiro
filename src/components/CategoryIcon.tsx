@@ -3,49 +3,27 @@ import { ICON_MAP } from "@/lib/categories";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCategoryArt } from "@/components/CategoryArt";
+import { getCategoryVisual, resolveCategoryKey } from "@/lib/category-visual";
 
-export function categoryColor(cat?: Pick<Categoria, "colorVar" | "colorHex">): string {
+export function categoryColor(cat?: Pick<Categoria, "colorVar" | "colorHex" | "nome" | "id">): string {
   if (!cat) return "var(--cat-outros)";
   if (cat.colorHex) return cat.colorHex;
   if (cat.colorVar) return `var(${cat.colorVar})`;
-  return "var(--cat-outros)";
+  // Fallback: tenta inferir pela identidade central
+  const visual = getCategoryVisual((cat as Categoria).id || (cat as Categoria).nome);
+  return visual.color;
 }
 
 /**
- * Tenta inferir uma "arte" para a categoria. Para categorias padrão, o `id`
- * já é o slug (ex: "mercado"). Para categorias customizadas, fazemos um
- * fallback heurístico pelo nome em minúsculas.
+ * Resolve a chave da arte combinando id direto + heurística pelo nome.
+ * Mantido para compatibilidade — delega para o resolver central.
  */
 function resolveArtKey(c?: Categoria): string | null {
   if (!c) return null;
   const direct = getCategoryArt(c.id);
   if (direct) return c.id;
-  const nome = (c.nome || "").toLowerCase();
-  const guesses: Array<[string, string[]]> = [
-    ["aluguel", ["aluguel", "aluguer"]],
-    ["moradia", ["moradia", "condom"]],
-    ["mercado", ["mercado", "supermerc"]],
-    ["besteiras", ["besteira", "doce", "lanche"]],
-    ["cabeleireiro", ["cabel", "salão", "salao", "barb"]],
-    ["roupas", ["roup", "vestu"]],
-    ["alimentacao", ["alimenta", "comida", "restaur"]],
-    ["transporte", ["transp", "uber", "carro", "combust"]],
-    ["casa", ["casa", "lar"]],
-    ["saude", ["saúd", "saud", "médic", "medic"]],
-    ["lazer", ["lazer", "diver"]],
-    ["educacao", ["educa", "escola", "curso", "facul"]],
-    ["contas", ["conta", "boleto"]],
-    ["assinaturas", ["assina", "stream"]],
-    ["farmacia", ["farm", "remed"]],
-    ["online", ["online", "compra"]],
-    ["presentes", ["presente", "gift"]],
-    ["pet", ["pet", "anim"]],
-    ["trabalho", ["trabalho", "freela", "escrit"]],
-  ];
-  for (const [key, terms] of guesses) {
-    if (terms.some((t) => nome.includes(t))) return key;
-  }
-  return "outros";
+  const key = resolveCategoryKey(c.nome || c.id);
+  return key;
 }
 
 export function CategoryIcon({
@@ -73,13 +51,19 @@ export function CategoryIcon({
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center rounded-full transition-transform duration-200 ease-out group-hover:scale-105",
+        // Badge premium: borda + sombra colorida + hover sutil
+        "relative inline-flex shrink-0 items-center justify-center rounded-full",
+        "transition-[transform,box-shadow] duration-200 ease-out",
+        "ring-1 ring-inset",
+        "group-hover:scale-105 group-hover:shadow-lg",
         dim,
         className,
       )}
       style={{
-        background: `radial-gradient(circle at 30% 30%, color-mix(in oklab, ${color} 32%, transparent), color-mix(in oklab, ${color} 12%, transparent) 70%)`,
-        boxShadow: `0 1px 0 0 color-mix(in oklab, ${color} 24%, transparent) inset, 0 6px 14px -8px color-mix(in oklab, ${color} 60%, transparent)`,
+        background: `radial-gradient(circle at 30% 28%, color-mix(in oklab, ${color} 38%, transparent), color-mix(in oklab, ${color} 14%, transparent) 72%)`,
+        boxShadow: `0 1px 0 0 color-mix(in oklab, ${color} 30%, transparent) inset, 0 6px 16px -10px color-mix(in oklab, ${color} 70%, transparent)`,
+        // borda interna sutil acompanhando a cor da categoria
+        ["--tw-ring-color" as string]: `color-mix(in oklab, ${color} 35%, transparent)`,
         color,
       }}
       aria-hidden
