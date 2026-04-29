@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as MetasRouteImport } from './routes/metas'
@@ -47,6 +48,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const RendaRoute = RendaRouteImport.update({
   id: '/renda',
   path: '/renda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/metas': typeof MetasRoute
   '/orcamento': typeof OrcamentoRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/metas': typeof MetasRoute
   '/orcamento': typeof OrcamentoRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/metas': typeof MetasRoute
   '/orcamento': typeof OrcamentoRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/orcamento'
     | '/recuperar-senha'
+    | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/orcamento'
     | '/recuperar-senha'
+    | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/orcamento'
     | '/recuperar-senha'
+    | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
@@ -331,6 +343,7 @@ export interface RootRouteChildren {
   MetasRoute: typeof MetasRoute
   OrcamentoRoute: typeof OrcamentoRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
+  RelatoriosRoute: typeof RelatoriosRoute
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/renda'
       fullPath: '/renda'
       preLoaderRoute: typeof RendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recuperar-senha': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   MetasRoute: MetasRoute,
   OrcamentoRoute: OrcamentoRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
+  RelatoriosRoute: RelatoriosRoute,
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
