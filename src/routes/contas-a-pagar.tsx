@@ -190,29 +190,56 @@ function ContasAPagarPage() {
   }, [doMes, hojeISO]);
 
   const filtradas = useMemo(() => {
+    const q = normalizar(busca);
     return doMes.filter((c) => {
       const s = statusContaEfetivo(c, hojeISO);
+      let okFiltro = true;
       switch (filtro) {
         case "todas":
-          return true;
+          okFiltro = true;
+          break;
         case "pendentes":
-          return s === "pendente" || s === "atrasado";
+          okFiltro = s === "pendente" || s === "atrasado";
+          break;
         case "proximas": {
-          if (s === "pago") return false;
-          if (s === "atrasado") return false;
-          const d = diasAteVenc(c);
-          return d >= 0 && d <= 7;
+          if (s === "pago" || s === "atrasado") {
+            okFiltro = false;
+          } else {
+            const d = diasAteVenc(c);
+            okFiltro = d >= 0 && d <= 7;
+          }
+          break;
         }
         case "atrasadas":
-          return s === "atrasado";
+          okFiltro = s === "atrasado";
+          break;
         case "pagas":
-          return s === "pago";
+          okFiltro = s === "pago";
+          break;
+        case "recorrentes":
+          okFiltro = !!c.recorrente;
+          break;
         default:
-          return true;
+          okFiltro = true;
       }
+      if (!okFiltro) return false;
+      if (!q) return true;
+      const cat = c.categoriaId ? getCategoriaById(c.categoriaId) : undefined;
+      const haystack = [
+        c.nome,
+        c.beneficiario ?? "",
+        cat?.nome ?? "",
+        formatBRL(c.valor),
+        String(c.valor).replace(".", ","),
+        formatDateBR(c.dataVencimento),
+        c.dataVencimento,
+      ]
+        .map(normalizar)
+        .join(" ");
+      return haystack.includes(q);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doMes, hojeISO, filtro]);
+  }, [doMes, hojeISO, filtro, busca]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
