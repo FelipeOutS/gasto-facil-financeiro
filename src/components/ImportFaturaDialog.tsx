@@ -379,19 +379,16 @@ export function ImportFaturaDialog({
       const inputs = validos.map((it) => {
         const isParcelado =
           !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
-        const valorTotal =
-          isParcelado && it.totalParcelas
-            ? Math.round((it.valor ?? 0) * it.totalParcelas * 100) / 100
-            : (it.valor ?? 0);
         return {
           descricao: it.descricao ?? "",
-          valor: valorTotal,
+          valor: it.valor ?? 0,
           data: it.data!,
           estabelecimento: it.estabelecimento ?? "",
           categoriaId: it.categoriaSugerida || "outros",
           formaPagamento: "credito" as const,
           observacao: it.observacao ?? undefined,
           tipoGasto: isParcelado ? ("parcelado" as const) : ("unico" as const),
+          parcelaAtual: isParcelado ? (it.parcelaAtual ?? undefined) : undefined,
           totalParcelas: isParcelado ? (it.totalParcelas ?? undefined) : undefined,
           cartaoId: it.cartaoId || cartaoId,
         };
