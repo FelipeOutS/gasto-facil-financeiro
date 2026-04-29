@@ -1292,21 +1292,49 @@ function ContaFormDialog({
                     Repete todo mês na mesma data
                   </p>
                 </div>
-                <Switch checked={recorrente} onCheckedChange={setRecorrente} />
-              </div>
-              {recorrente && (
-                <div className="mt-3 space-y-1.5">
-                  <Label htmlFor="conta-meses">Repetir por quantos meses?</Label>
+              <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+            </div>
+            {recorrente && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-freq">Frequência</Label>
+                  <Select
+                    value={frequencia}
+                    onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
+                  >
+                    <SelectTrigger id="conta-freq">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCIAS_RECORRENCIA.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="conta-meses">
+                    {frequencia === "anual"
+                      ? "Quantos anos?"
+                      : frequencia === "semanal"
+                      ? "Quantas semanas?"
+                      : frequencia === "quinzenal"
+                      ? "Quantas quinzenas?"
+                      : "Quantos meses?"}
+                  </Label>
                   <Input
                     id="conta-meses"
                     type="number"
                     min={1}
-                    max={60}
+                    max={120}
                     value={meses}
                     onChange={(e) => setMeses(e.target.value)}
                   />
                 </div>
-              )}
+              </div>
+            )}
             </div>
           )}
 
