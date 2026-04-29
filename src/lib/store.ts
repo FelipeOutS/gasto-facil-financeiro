@@ -1166,6 +1166,9 @@ export function getAprendizado(): AprendizadoCategoria[] {
 export function getReceitas(): Receita[] {
   return memReceitas;
 }
+export function getTransferenciasInternas(): TransferenciaInterna[] {
+  return memTransferencias;
+}
 export function getCategoriaById(id: string): Categoria | undefined {
   return memCategorias.find((c) => c.id === id);
 }
