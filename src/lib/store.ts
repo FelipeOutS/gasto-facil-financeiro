@@ -549,6 +549,7 @@ type MovMetaRow = {
   observacao: string | null;
   legacy_id: string | null;
   created_at: string;
+  import_batch_id?: string | null;
 };
 function rowToMovMeta(
   r: MovMetaRow,
@@ -563,6 +564,7 @@ function rowToMovMeta(
     bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
     observacao: r.observacao ?? undefined,
     criadoEm: r.created_at,
+    importBatchId: r.import_batch_id ?? undefined,
   };
 }
 
