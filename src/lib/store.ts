@@ -636,6 +636,8 @@ type TransferenciaInternaRow = {
   destino: string | null;
   observacao: string | null;
   origem_importacao: string | null;
+  import_batch_id?: string | null;
+  id_operacao_banco?: string | null;
   mes: number;
   ano: number;
   created_at: string;
@@ -652,6 +654,8 @@ function rowToTransferenciaInterna(r: TransferenciaInternaRow): TransferenciaInt
     destino: r.destino ?? undefined,
     observacao: r.observacao ?? undefined,
     origemImportacao: r.origem_importacao ?? undefined,
+    importBatchId: r.import_batch_id ?? undefined,
+    idOperacaoBanco: r.id_operacao_banco ?? undefined,
     mes: r.mes,
     ano: r.ano,
     criadoEm: r.created_at,
