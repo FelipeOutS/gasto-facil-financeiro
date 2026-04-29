@@ -397,10 +397,7 @@ function ContasAPagarPage() {
                 onEdit={() => setEditing(conta)}
                 onDelete={() => setConfirmDelete(conta)}
                 onPagar={() => setPagar(conta)}
-                onDesmarcar={() => {
-                  desmarcarContaComoPago(conta.id);
-                  toast.success("Conta voltou para pendente.");
-                }}
+                onDesmarcar={() => setConfirmDesmarcar(conta)}
               />
             ))}
           </div>
