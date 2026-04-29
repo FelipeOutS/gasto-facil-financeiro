@@ -39,6 +39,7 @@ import {
   getCategoriaById,
   getContasAPagar,
   getGastos,
+  getGuardado,
   getLimite,
   getLimites,
   getMovimentacoesMeta,
