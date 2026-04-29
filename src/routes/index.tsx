@@ -335,7 +335,7 @@ function Index() {
 
       {/* ===== KPIs ===== */}
       <SectionLabel>Tá tudo no radar</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
           label="Saldo"
           valueNum={saldo}
@@ -392,7 +392,7 @@ function Index() {
 
       {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start lg:gap-5 xl:gap-6">
         <div className="min-w-0 self-start lg:col-span-7 xl:col-span-8">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
@@ -406,7 +406,7 @@ function Index() {
       {/* xl (>=1280): Alertas 8col à esquerda, direita 4col empilhada (Limite em cima, Renda embaixo) */}
       {/* lg (1024-1279): Alertas full-width, abaixo Limite + Renda lado a lado */}
       {/* < lg: tudo empilhado */}
-      <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-12 xl:items-stretch">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
         {temAlertasDashboard && (
           <div className="flex min-w-0 xl:col-span-8">
             <div className="flex w-full">
@@ -416,8 +416,8 @@ function Index() {
         )}
         <div
           className={cn(
-            "grid min-w-0 grid-cols-1 gap-4",
-            // No notebook (lg) sem xl: Limite + Renda lado a lado
+            "grid min-w-0 grid-cols-1 gap-4 lg:gap-5",
+            // Em md/lg sem xl: Limite + Renda lado a lado; no xl com alertas: empilhados na coluna direita
             "md:grid-cols-2 xl:grid-cols-1",
             temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12 xl:grid-cols-2",
           )}
@@ -437,7 +437,7 @@ function Index() {
 
       {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
       <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
           <div className="flex w-full">
             <ResumoMesCard
@@ -753,7 +753,7 @@ function Index() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-2 mt-6 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <h2 className="mb-2.5 mt-6 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground sm:mt-7 lg:mb-3 lg:mt-8">
       {children}
     </h2>
   );
