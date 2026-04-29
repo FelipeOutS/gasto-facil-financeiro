@@ -446,11 +446,13 @@ function CartaoCard({
   cartao,
   onOpen,
   onEdit,
+  onImport,
   onDelete,
 }: {
   cartao: Cartao;
   onOpen: () => void;
   onEdit: () => void;
+  onImport: () => void;
   onDelete: () => void;
 }) {
   const r = resumoFaturaCartao(cartao.id);
@@ -510,6 +512,10 @@ function CartaoCard({
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               Editar cartão
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImport}>
+              <FileUp className="mr-2 h-4 w-4" />
+              Importar fatura
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
