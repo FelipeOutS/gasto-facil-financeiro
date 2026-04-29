@@ -160,6 +160,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                                 estabelecimento: { type: ["string", "null"] },
                                 valor: { type: ["number", "null"] },
                                 data: { type: ["string", "null"] },
+                                horario: { type: ["string", "null"] },
                                 parcelaAtual: { type: ["number", "null"] },
                                 totalParcelas: { type: ["number", "null"] },
                                 categoriaSugerida: {
