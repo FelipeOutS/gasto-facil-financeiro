@@ -12,6 +12,7 @@ import {
   Search,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addReceita,
   deleteReceita,
@@ -256,7 +257,7 @@ function RendaPage() {
     [historicoFiltrado, historicoLimit],
   );
 
-  if (!ready) return <MobileShell><div /></MobileShell>;
+  if (!ready) return <PageSkeleton />;
 
   return (
     <MobileShell>
