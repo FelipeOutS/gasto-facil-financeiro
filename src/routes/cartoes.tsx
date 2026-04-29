@@ -18,6 +18,7 @@ import {
   addCartao,
   deleteCartao,
   getCartoes,
+  getCategoriaById,
   getGastos,
   resumoFaturaCartao,
   updateCartao,
