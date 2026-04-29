@@ -343,13 +343,12 @@ function CartaoCard({
   const r = resumoFaturaCartao(cartao.id);
   const status = statusFatura(cartao);
   const cor = cartao.cor || "#8b5cf6";
+  const theme = getCardTheme(cor, cartao.banco);
 
   return (
     <article
-      className="hover-lift card-press group relative overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all"
-      style={{
-        background: `linear-gradient(135deg, ${cor} 0%, ${cor}cc 60%, #00000055 100%)`,
-      }}
+      className="hover-lift card-press group relative overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all duration-300"
+      style={{ background: theme.background }}
     >
       <div
         aria-hidden
