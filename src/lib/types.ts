@@ -214,6 +214,8 @@ export type Guardado = {
   dataAtualizacao: string;
   criadoEm: string;
   atualizadoEm: string;
+  /** Lote de importação ao qual esse registro pertence (extrato bancário). */
+  importBatchId?: string;
 };
 
 // ---------- Metas ----------
