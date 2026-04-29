@@ -114,6 +114,28 @@ export type Receita = {
   recorrenciaId?: string;
   mes: number;
   ano: number;
+  /** Horário opcional HH:mm (extrato bancário). */
+  horario?: string;
+  /** Origem do registro: manual, extrato_pdf, extrato_imagem, extrato_csv. */
+  origem?: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+// ---------- Transferências internas (entre contas) ----------
+export type TransferenciaInterna = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  horario?: string;
+  origem?: string; // conta de origem (texto livre)
+  destino?: string; // conta de destino (texto livre)
+  observacao?: string;
+  /** Origem do registro de importação (extrato_pdf, etc.) */
+  origemImportacao?: string;
+  mes: number;
+  ano: number;
   criadoEm: string;
   atualizadoEm: string;
 };

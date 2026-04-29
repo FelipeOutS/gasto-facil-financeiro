@@ -17,6 +17,7 @@ import {
   type Cartao,
   type ContaAPagar,
   type StatusConta,
+  type TransferenciaInterna,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
@@ -103,6 +104,7 @@ const EMPTY_METAS: Meta[] = [];
 const EMPTY_MOV: MovimentacaoMeta[] = [];
 const EMPTY_CARTOES: Cartao[] = [];
 const EMPTY_CONTAS: ContaAPagar[] = [];
+const EMPTY_TRANSFERENCIAS: TransferenciaInterna[] = [];
 
 let memGastos: Gasto[] = EMPTY_GASTOS;
 let memCategorias: Categoria[] = EMPTY_CATEGORIAS;
@@ -115,6 +117,7 @@ let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
+let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -144,6 +147,7 @@ export function setActiveUserId(uid: string | null) {
   memMov = EMPTY_MOV;
   memCartoes = EMPTY_CARTOES;
   memContas = EMPTY_CONTAS;
+  memTransferencias = EMPTY_TRANSFERENCIAS;
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -394,6 +398,8 @@ type ReceitaRow = {
   recorrencia_id: string | null;
   mes: number;
   ano: number;
+  horario?: string | null;
+  origem?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -408,6 +414,8 @@ function rowToReceita(r: ReceitaRow): Receita {
     recorrenciaId: r.recorrencia_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
+    horario: r.horario ?? undefined,
+    origem: r.origem ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -610,6 +618,39 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
   };
 }
 
+type TransferenciaInternaRow = {
+  id: string;
+  descricao: string;
+  valor: string | number;
+  data: string;
+  horario: string | null;
+  origem: string | null;
+  destino: string | null;
+  observacao: string | null;
+  origem_importacao: string | null;
+  mes: number;
+  ano: number;
+  created_at: string;
+  updated_at: string;
+};
+function rowToTransferenciaInterna(r: TransferenciaInternaRow): TransferenciaInterna {
+  return {
+    id: r.id,
+    descricao: r.descricao ?? "",
+    valor: Number(r.valor),
+    data: r.data,
+    horario: r.horario ?? undefined,
+    origem: r.origem ?? undefined,
+    destino: r.destino ?? undefined,
+    observacao: r.observacao ?? undefined,
+    origemImportacao: r.origem_importacao ?? undefined,
+    mes: r.mes,
+    ano: r.ano,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  };
+}
+
 // ---------- Default seed data ----------
 const BANCOS_PADRAO: Array<{ nome: string; colorHex: string }> = [
   { nome: "Nubank", colorHex: "#820ad1" },
@@ -729,7 +770,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -738,6 +779,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
       sbAny.from("cartoes").select("*").eq("user_id", userId),
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
+      sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -749,6 +791,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
     if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
+    if (transferenciasRes.error) console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
 
     memGastos = normalizeGastosForCalculations(
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
@@ -766,6 +809,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     );
     memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map(
       (r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey),
+    );
+    memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
+      (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
     );
 
     setHydrationStatus("ready");
@@ -1119,6 +1165,9 @@ export function getAprendizado(): AprendizadoCategoria[] {
 }
 export function getReceitas(): Receita[] {
   return memReceitas;
+}
+export function getTransferenciasInternas(): TransferenciaInterna[] {
+  return memTransferencias;
 }
 export function getCategoriaById(id: string): Categoria | undefined {
   return memCategorias.find((c) => c.id === id);
@@ -2073,6 +2122,211 @@ export function deleteReceita(id: string) {
     .then(({ error }) => {
       if (error) console.error("[store] deleteReceita failed", error);
     });
+}
+
+/* ============================================================
+ * BULK / DEDUP — RECEITAS
+ * Usado pela importação de extrato bancário.
+ * ============================================================ */
+
+export type NovaReceitaBulkInput = {
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  tipo: TipoReceita;
+  horario?: string;
+  origem?: string;
+};
+
+/** Insere várias receitas de uma vez (sem recorrência). */
+export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const now = new Date().toISOString();
+  const created: Receita[] = [];
+  const rows: ReceitaInsert[] = [];
+
+  for (const inp of inputs) {
+    const dataIso =
+      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+        ? inp.data
+        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const baseDate = parseDateLocal(dataIso) ?? new Date();
+    const id = crypto.randomUUID();
+    created.push({
+      id,
+      descricao: inp.descricao || "Lançamento",
+      valor: Math.abs(inp.valor),
+      data: dataIso,
+      tipo: inp.tipo,
+      recorrente: false,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      horario: inp.horario,
+      origem: inp.origem,
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      descricao: inp.descricao || "Lançamento",
+      valor: Math.abs(inp.valor),
+      data: dataIso,
+      tipo: inp.tipo,
+      recorrente: false,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      // colunas opcionais
+      ...(inp.horario ? { horario: inp.horario } : {}),
+      ...(inp.origem ? { origem: inp.origem } : {}),
+    } as ReceitaInsert);
+  }
+
+  memReceitas = [...memReceitas, ...created];
+  emit();
+
+  void supabase
+    .from("receitas")
+    .insert(rows)
+    .then(({ error }) => {
+      if (error) console.error("[store] addReceitasBulk failed", error);
+    });
+
+  return created;
+}
+
+export type DedupReceitaCandidato = {
+  valor: number;
+  data: string;
+  descricao?: string;
+  horario?: string;
+};
+
+/** Procura na base local de receitas uma entrada com forte indício de duplicidade. */
+export function findDuplicateReceitaAdvanced(c: DedupReceitaCandidato): Receita | undefined {
+  const desc = c.descricao || "";
+  return memReceitas.find((r) => {
+    if (Math.abs(r.valor - Math.abs(c.valor)) > 0.01) return false;
+    const dDays = diffDays(r.data, c.data);
+    if (dDays > 1) return false;
+    if (!desc) return dDays === 0;
+    const sim = descSimilarity(desc, r.descricao);
+    if (sim >= 0.7) return true;
+    if (dDays === 0 && diffMinutes(r.horario, c.horario) <= 5 && sim >= 0.4) return true;
+    return false;
+  });
+}
+
+/* ============================================================
+ * TRANSFERÊNCIAS INTERNAS
+ * Não contam como despesa nem receita; histórico separado.
+ * ============================================================ */
+
+export type NovaTransferenciaInternaInput = {
+  descricao: string;
+  valor: number;
+  data: string; // YYYY-MM-DD
+  horario?: string;
+  origem?: string;
+  destino?: string;
+  observacao?: string;
+  origemImportacao?: string;
+};
+
+export function addTransferenciasInternasBulk(
+  inputs: NovaTransferenciaInternaInput[],
+): TransferenciaInterna[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const now = new Date().toISOString();
+  const created: TransferenciaInterna[] = [];
+  const rows: Array<Record<string, unknown>> = [];
+
+  for (const inp of inputs) {
+    const dataIso =
+      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+        ? inp.data
+        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const baseDate = parseDateLocal(dataIso) ?? new Date();
+    const id = crypto.randomUUID();
+    const valor = Math.abs(inp.valor);
+    created.push({
+      id,
+      descricao: inp.descricao || "Transferência interna",
+      valor,
+      data: dataIso,
+      horario: inp.horario,
+      origem: inp.origem,
+      destino: inp.destino,
+      observacao: inp.observacao,
+      origemImportacao: inp.origemImportacao,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+    rows.push({
+      id,
+      user_id: activeUserId,
+      descricao: inp.descricao || "Transferência interna",
+      valor,
+      data: dataIso,
+      horario: inp.horario ?? null,
+      origem: inp.origem ?? null,
+      destino: inp.destino ?? null,
+      observacao: inp.observacao ?? null,
+      origem_importacao: inp.origemImportacao ?? null,
+      mes: baseDate.getMonth() + 1,
+      ano: baseDate.getFullYear(),
+    });
+  }
+
+  memTransferencias = [...memTransferencias, ...created];
+  emit();
+
+  void sbAny
+    .from("transferencias_internas")
+    .insert(rows)
+    .then(({ error }: { error: unknown }) => {
+      if (error) console.error("[store] addTransferenciasInternasBulk failed", error);
+    });
+
+  return created;
+}
+
+export function deleteTransferenciaInterna(id: string) {
+  memTransferencias = memTransferencias.filter((t) => t.id !== id);
+  emit();
+  if (!activeUserId) return;
+  void sbAny
+    .from("transferencias_internas")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: unknown }) => {
+      if (error) console.error("[store] deleteTransferenciaInterna failed", error);
+    });
+}
+
+export type DedupTransferenciaCandidato = {
+  valor: number;
+  data: string;
+  descricao?: string;
+  horario?: string;
+};
+
+export function findDuplicateTransferenciaAdvanced(
+  c: DedupTransferenciaCandidato,
+): TransferenciaInterna | undefined {
+  const desc = c.descricao || "";
+  return memTransferencias.find((t) => {
+    if (Math.abs(t.valor - Math.abs(c.valor)) > 0.01) return false;
+    const dDays = diffDays(t.data, c.data);
+    if (dDays > 1) return false;
+    if (!desc) return dDays === 0;
+    const sim = descSimilarity(desc, t.descricao);
+    if (sim >= 0.7) return true;
+    if (dDays === 0 && diffMinutes(t.horario, c.horario) <= 5 && sim >= 0.4) return true;
+    return false;
+  });
 }
 
 /** Exclui todas as receitas de uma recorrência (a partir de um mês opcional). */
