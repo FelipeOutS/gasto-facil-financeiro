@@ -34,6 +34,7 @@ import {
   marcarContaComoPago,
   statusContaEfetivo,
   updateContaAPagar,
+  updateContaRecorrencia,
   useBootstrap,
   useStore,
 } from "@/lib/store";
