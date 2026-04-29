@@ -106,6 +106,7 @@ function CartoesPage() {
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Cartao | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Cartao | null>(null);
+  const [openDetail, setOpenDetail] = useState<Cartao | null>(null);
 
   const gastos = useStore(() => getGastos());
 
