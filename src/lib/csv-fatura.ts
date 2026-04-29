@@ -376,11 +376,17 @@ export function rowsToItens(
     let confianca: "alta" | "media" | "baixa" = "alta";
     if (valor === null || data === null || !descricao) confianca = "baixa";
 
+    const horario =
+      extractHorario(get("data")) ||
+      extractHorario(get("descricao")) ||
+      extractHorario(obs);
+
     return {
       descricao: descricao || null,
       estabelecimento,
       valor,
       data,
+      horario,
       parcelaAtual: parcAtual,
       totalParcelas: parcTotal,
       categoriaSugerida: sugerida,
