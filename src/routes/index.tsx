@@ -335,6 +335,24 @@ function Index() {
         </div>
       </header>
 
+      {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
+      {profile && !profile.tipo_cadastro && (
+        <Link
+          to="/perfil"
+          className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Complete seu perfil</p>
+            <p className="truncate text-xs text-muted-foreground">
+              Personalize sua experiência: Pessoa física, MEI ou Empresa.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
+            Completar
+          </span>
+        </Link>
+      )}
+
       {/* ===== KPIs ===== */}
       <SectionLabel>Tá tudo no radar</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
