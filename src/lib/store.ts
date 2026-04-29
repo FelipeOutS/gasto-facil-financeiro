@@ -18,6 +18,9 @@ import {
   type ContaAPagar,
   type StatusConta,
   type TransferenciaInterna,
+  type ExtratoImportado,
+  type StatusExtratoImportado,
+  type TipoOrigemExtrato,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
