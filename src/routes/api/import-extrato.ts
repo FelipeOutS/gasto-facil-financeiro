@@ -53,12 +53,17 @@ const SYSTEM_PROMPT = `Você analisa EXTRATOS BANCÁRIOS brasileiros (Pix, trans
 
 OBJETIVO: extrair UMA LISTA de movimentações da conta. Para CADA item, preencha:
 - descricao: descrição curta e clara do lançamento (ex: "Pix recebido de João", "Compra no débito - Padaria")
+- idOperacao: ID/código da operação quando existir no extrato (Mercado Pago usa "ID da operação")
 - valor: SEMPRE positivo, em reais. Vírgula é decimal, ponto é milhar.
+- saldo: saldo após o lançamento quando existir
 - data: ISO YYYY-MM-DD
 - horario: HH:mm 24h se aparecer, senão null
 - tipoMovimentacao: "despesa" | "receita" | "transferencia_interna"
 - formaPagamento: um destes ids → ${FORMAS_VALIDAS.join(", ")}
 - categoriaSugerida: um destes ids (use "outros" se não souber) → ${CATEGORIAS_VALIDAS.join(", ")}
+- origemImportacao: "extrato_pdf" quando vier de PDF
+- bancoOrigem: "Mercado Pago" quando identificado
+- statusRevisao: "novo" | "pagamento_fatura_cartao" | "reserva" | "resgate_reserva" | "investimentos" | "revisar"
 - contraparte: nome do remetente/destinatário se aparecer (ex: "MARIA DA SILVA"), curto, sem CPF/CNPJ
 - confianca: "alta" | "media" | "baixa"
 
@@ -66,8 +71,11 @@ REGRAS DE CLASSIFICAÇÃO:
 - Pix enviado, compra no débito, pagamento de boleto, tarifa, IOF, anuidade → tipoMovimentacao="despesa"
 - Pix recebido, salário, transferência recebida, reembolso, estorno, rendimento → tipoMovimentacao="receita"
 - "Transferência entre contas próprias", "Aplicação", "Resgate de investimento", "Movimentação interna" → tipoMovimentacao="transferencia_interna"
+- Mercado Pago: "Pagamento Cartão de crédito" → transferencia_interna, statusRevisao="pagamento_fatura_cartao", não despesa comum.
+- Mercado Pago: "Reserva por gastos", "Dinheiro reservado" → transferencia_interna, statusRevisao="reserva".
+- Mercado Pago: "Dinheiro retirado" → transferencia_interna, statusRevisao="resgate_reserva".
 - IGNORE linhas que claramente NÃO são lançamentos: saldo anterior, saldo do dia, total, subtotal, cabeçalhos.
-- IGNORE faturas de cartão de crédito (esse fluxo é separado). Compras com cartão de CRÉDITO no extrato bancário só aparecem como "PAGAMENTO DE FATURA" → trate como despesa do tipo "boleto" ou "transferencia".
+- NÃO transforme pagamento de fatura em despesa comum; isso duplicaria gastos do cartão.
 
 FORMA DE PAGAMENTO heurística:
 - "PIX" → pix
