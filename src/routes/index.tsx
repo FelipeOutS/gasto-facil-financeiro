@@ -1574,7 +1574,7 @@ function ResumoMesCard({
   }
 
   return (
-    <section className={cn("rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
+    <section className={cn("flex w-full flex-col rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-2xl">
           {emoji}
