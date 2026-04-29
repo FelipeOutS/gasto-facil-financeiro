@@ -1363,6 +1363,8 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   }
   return created;
 }
+
+export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (!activeUserId) return;
   const idx = memGastos.findIndex((g) => g.id === id);
   if (idx < 0) return;
