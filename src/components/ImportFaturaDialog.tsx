@@ -518,20 +518,30 @@ export function ImportFaturaDialog({
         };
       });
       const salvos = addGastosBulk(inputs);
-      const ignorados = items.length - validos.length;
-      if (salvos.length === 0) {
+      // Resumo da importação
+      const totalItens = items.length;
+      const naoConfirmados = items.filter((i) => !i.selecionado).length;
+      const duplicadosIgnorados = items.filter(
+        (i) => !i.selecionado && i.dupStatus !== "novo",
+      ).length;
+      const novos = salvos.length;
+      if (novos === 0) {
         toast.warning(
-          "Nada foi importado. Esses itens já existiam ou estavam incompletos.",
+          "Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.",
         );
-      } else if (ignorados > 0) {
+      } else if (duplicadosIgnorados > 0 || naoConfirmados > 0) {
         toast.success(
-          `Fatura importada com sucesso. ${salvos.length} compra(s) já foram atualizadas no app.`,
+          `Importação concluída: ${novos} novo(s), ${duplicadosIgnorados} duplicado(s) ignorado(s) e ${
+            naoConfirmados - duplicadosIgnorados
+          } item(ns) não confirmado(s).`,
         );
       } else {
         toast.success(
-          "Fatura importada com sucesso. Seus gastos já foram atualizados no app.",
+          `Importação concluída. ${novos} compra(s) adicionada(s) ao app.`,
         );
       }
+      // Suprimir warning de var não usada
+      void totalItens;
       onOpenChange(false);
     } catch (err) {
       console.error(err);
