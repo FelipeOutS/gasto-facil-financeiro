@@ -65,6 +65,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
 
