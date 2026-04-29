@@ -16,6 +16,7 @@ import {
   type StatusMeta,
   type Cartao,
   type ContaAPagar,
+  type FrequenciaRecorrencia,
   type StatusConta,
   type TransferenciaInterna,
   type ExtratoImportado,
