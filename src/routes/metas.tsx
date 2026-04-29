@@ -10,7 +10,16 @@ import {
   Pencil,
   MoreVertical,
   Minus,
+  Image as ImageIcon,
+  Check,
+  Flame,
 } from "lucide-react";
+import {
+  MetaArt,
+  getMetaArtKey,
+  META_ART_OPTIONS,
+  type MetaArtKey,
+} from "@/components/MetaArt";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
