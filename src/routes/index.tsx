@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -40,7 +40,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
+import { formatBRL, formatBRLCompact, formatMonthYear, parseDateLocal } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
@@ -66,9 +66,17 @@ function Index() {
   const contas = useStore(() => getContasAPagar());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
 
+  const gastosConfirmados = useMemo(
+    () => gastos.filter((g) => g.confirmado !== false),
+    [gastos],
+  );
   const doMes = useMemo(
-    () => gastos.filter((g) => g.mes === ym.mes && g.ano === ym.ano),
-    [gastos, ym],
+    () =>
+      gastosConfirmados.filter((g) => {
+        const d = parseDateLocal(g.data);
+        return !!d && d.getMonth() + 1 === ym.mes && d.getFullYear() === ym.ano;
+      }),
+    [gastosConfirmados, ym],
   );
   const receitasMes = useMemo(
     () => receitas.filter((r) => r.mes === ym.mes && r.ano === ym.ano),
@@ -76,6 +84,21 @@ function Index() {
   );
 
   const total = useMemo(() => doMes.reduce((s, g) => s + g.valor, 0), [doMes]);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1") return;
+    const importados = gastosConfirmados.filter((g) => String(g.origem ?? "").includes("fatura"));
+    console.info("[financeiro:dashboard] resumo", {
+      totalAnalisados: gastos.length,
+      confirmados: gastosConfirmados.length,
+      mes: ym.mes,
+      ano: ym.ano,
+      importadosEncontrados: importados,
+      importadosConsiderados: doMes.filter((g) => String(g.origem ?? "").includes("fatura")),
+      importadosIgnorados: importados
+        .filter((g) => !doMes.some((m) => m.id === g.id))
+        .map((g) => ({ id: g.id, descricao: g.descricao, valor: g.valor, data: g.data, mes: g.mes, ano: g.ano })),
+    });
+  }, [gastos, gastosConfirmados, doMes, ym]);
   const totalEntradas = useMemo(
     () => receitasMes.reduce((s, r) => s + r.valor, 0),
     [receitasMes],
@@ -343,7 +366,7 @@ function Index() {
       <SectionLabel>Visão financeira</SectionLabel>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
         <div className="lg:col-span-3">
-          <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastos} receitas={receitas} />
+            <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
         <div className="lg:col-span-2">
           <RecentTransactionsCard ultimos={ultimos} />

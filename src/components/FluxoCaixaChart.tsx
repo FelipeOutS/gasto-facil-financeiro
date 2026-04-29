@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { TrendingUp, Activity, BarChart3, PieChart as PieIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatBRL, formatBRLCompact } from "@/lib/format";
+import { formatBRL, formatBRLCompact, parseDateLocal } from "@/lib/format";
 import type { Gasto, Receita } from "@/lib/types";
 
 type ChartKind = "area" | "line" | "bar" | "donut";
@@ -59,7 +59,10 @@ export function FluxoCaixaChart({
         .filter((r) => r.mes === m && r.ano === y)
         .reduce((s, r) => s + r.valor, 0);
       const g = gastos
-        .filter((g) => g.mes === m && g.ano === y)
+        .filter((g) => {
+          const data = parseDateLocal(g.data);
+          return !!data && data.getMonth() + 1 === m && data.getFullYear() === y;
+        })
         .reduce((s, g) => s + g.valor, 0);
       out.push({ mes: monthLabel(y, m), entradas: e, gastos: g, saldo: e - g });
     }
