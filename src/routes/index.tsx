@@ -875,78 +875,8 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
   );
 }
 
-function MiniStat({
-  label,
-  value,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  tone: "success" | "destructive";
-}) {
-  return (
-    <div className="rounded-2xl bg-card-elevated p-3">
-      <p
-        className={cn(
-          "flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground",
-        )}
-      >
-        <span
-          className={cn(
-            tone === "success" && "text-success",
-            tone === "destructive" && "text-destructive",
-          )}
-        >
-          {icon}
-        </span>
-        {label}
-      </p>
-      <p
-        className={cn(
-          "num mt-1 text-base font-semibold",
-          tone === "success" && "text-success",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
 
-function ResumoLinha({
-  label,
-  valor,
-  positive,
-  negative,
-  strong,
-  mute,
-}: {
-  label: string;
-  valor: string;
-  positive?: boolean;
-  negative?: boolean;
-  strong?: boolean;
-  mute?: boolean;
-}) {
-  return (
-    <li className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "num",
-          strong && "font-semibold",
-          positive && "text-success",
-          negative && "text-destructive",
-          mute && "text-muted-foreground",
-        )}
-      >
-        {valor}
-      </span>
-    </li>
-  );
-}
+
 
 function WelcomeCard({
   to,
