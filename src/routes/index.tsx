@@ -753,7 +753,7 @@ function Index() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-2 mt-6 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <h2 className="mb-2.5 mt-6 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground sm:mt-7 lg:mb-3 lg:mt-8">
       {children}
     </h2>
   );
