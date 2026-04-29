@@ -397,6 +397,8 @@ export function ImportFaturaDialog({
           parcelaAtual: isParcelado ? (it.parcelaAtual ?? undefined) : undefined,
           totalParcelas: isParcelado ? (it.totalParcelas ?? undefined) : undefined,
           cartaoId: it.cartaoId || cartaoId,
+          horario: it.horario ?? undefined,
+          origem: origem ?? "fatura_imagem",
         };
       });
       const salvos = addGastosBulk(inputs);
