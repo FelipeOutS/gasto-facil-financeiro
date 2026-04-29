@@ -747,7 +747,10 @@ export async function hydrateUser(userId: string): Promise<void> {
     if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
     if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
 
-    memGastos = (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey));
+    memGastos = normalizeGastosForCalculations(
+      (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
+      true,
+    );
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
@@ -1307,7 +1310,10 @@ async function refreshGastos() {
   if (!data) return;
   const catUuidToKey = new Map<string, string>();
   for (const [key, uuid] of categoriaKeyToUuid.entries()) catUuidToKey.set(uuid, key);
-  memGastos = data.map((r: GastoRow) => rowToGasto(r, catUuidToKey));
+  memGastos = normalizeGastosForCalculations(
+    data.map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
+    true,
+  );
   emit();
 }
 
@@ -1336,7 +1342,11 @@ export type NovoGastoInput = {
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
   const now = new Date().toISOString();
-  const baseDate = new Date(input.data + "T00:00:00");
+  const isFaturaImport = !!input.origem?.toLowerCase().includes("fatura");
+  const inputData = isFaturaImport
+    ? normalizeInvoiceDateIfNeeded(input.data, new Date(), true)
+    : toLocalISODate(parseDateLocal(input.data) ?? new Date(input.data + "T00:00:00"));
+  const baseDate = parseDateLocal(inputData) ?? new Date();
   const tipo = input.tipoGasto ?? "unico";
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   const catUuid = categoriaUuidFor(input.categoriaId);
@@ -1355,7 +1365,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         categoria_id: catUuid,
         descricao: input.descricao || input.estabelecimento || "Gasto",
         valor: input.valor,
-        data: input.data,
+        data: inputData,
         estabelecimento: input.estabelecimento || "",
         forma_pagamento: input.formaPagamento,
         observacao: input.observacao ?? null,
@@ -1375,7 +1385,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         id,
         descricao: input.descricao || input.estabelecimento || "Gasto",
         valor: input.valor,
-        data: input.data,
+        data: inputData,
         estabelecimento: input.estabelecimento || "",
         categoriaId: input.categoriaId,
         formaPagamento: input.formaPagamento,
@@ -1512,7 +1522,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         categoria_id: catUuid,
         descricao: input.descricao || input.estabelecimento || "Gasto",
         valor: input.valor,
-        data: input.data,
+        data: inputData,
         estabelecimento: input.estabelecimento || "",
         forma_pagamento: input.formaPagamento,
         observacao: input.observacao ?? null,
@@ -1529,7 +1539,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         id,
         descricao: input.descricao || input.estabelecimento || "Gasto",
         valor: input.valor,
-        data: input.data,
+        data: inputData,
         estabelecimento: input.estabelecimento || "",
         categoriaId: input.categoriaId,
         formaPagamento: input.formaPagamento,
