@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ImageIcon,
   FileSpreadsheet,
+  FileText,
   Upload,
   X,
   Sparkles,
@@ -36,7 +37,8 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import {
   addGastosBulk,
-  findPossibleDuplicate,
+  findDuplicateGastoAdvanced,
+  normalizeDescricao,
   getCartoes,
   getCategorias,
   useStore,
@@ -50,13 +52,23 @@ import {
   type CsvColumnRole,
 } from "@/lib/csv-fatura";
 
-type Step = "source" | "image-upload" | "csv-upload" | "csv-mapping" | "review";
+type Step =
+  | "source"
+  | "image-upload"
+  | "pdf-upload"
+  | "csv-upload"
+  | "csv-mapping"
+  | "review";
+
+type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
 
 type ReviewItem = FaturaItemBruto & {
   id: string;
   cartaoId: string;
   selecionado: boolean;
+  /** Mantido por compatibilidade — true quando há qualquer suspeita. */
   duplicado: boolean;
+  dupStatus: DupStatus;
 };
 
 const COL_LABELS: Record<CsvColumnRole, string> = {
