@@ -3238,6 +3238,34 @@ export function deleteContaRecorrencia(
 }
 
 /**
+ * Atualiza ocorrências de uma recorrência em escopo:
+ *  - "single" → só esta (caller deve usar updateContaAPagar diretamente)
+ *  - "future" → esta e as próximas (a partir de fromMes/fromAno)
+ *  - "all"    → todas, incluindo passadas
+ *
+ * Não toca em ocorrências já pagas (preserva histórico do gasto vinculado).
+ */
+export function updateContaRecorrencia(
+  recorrenciaId: string,
+  fields: ContaEditableFields,
+  scope: "future" | "all",
+  fromMes: number,
+  fromAno: number,
+) {
+  if (!activeUserId) return;
+  const targets = memContas.filter((c) => {
+    if (c.recorrenciaId !== recorrenciaId) return false;
+    if (c.status === "pago") return false;
+    if (scope === "all") return true;
+    return c.ano > fromAno || (c.ano === fromAno && c.mes >= fromMes);
+  });
+  for (const t of targets) {
+    // Não propaga dataVencimento (cada ocorrência tem a sua)
+    const f: ContaEditableFields = { ...fields };
+    delete f.dataVencimento;
+    updateContaAPagar(t.id, f);
+  }
+}
  * Marca conta como paga. Opcionalmente cria um gasto correspondente no mês
  * do pagamento (categoria + valor da conta).
  */
