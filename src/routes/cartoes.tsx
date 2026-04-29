@@ -186,6 +186,11 @@ function CartoesPage() {
     setOpenForm(true);
   }
 
+  function handleOpenImport(cartaoId?: string) {
+    setImportCartaoId(cartaoId);
+    setOpenImport(true);
+  }
+
   if (!ready) {
     return (
       <MobileShell wide>
@@ -259,14 +264,25 @@ function CartoesPage() {
           )}
         </div>
         {cartoes.length > 0 && (
-          <Button
-            size="sm"
-            onClick={handleOpenNew}
-            className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-          >
-            <Plus className="mr-1 h-4 w-4" />
-            Novo cartão
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleOpenImport()}
+              className="card-press rounded-full text-sm font-semibold"
+            >
+              <FileUp className="mr-1 h-4 w-4" />
+              Importar fatura
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleOpenNew}
+              className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Novo cartão
+            </Button>
+          </div>
         )}
       </div>
 
@@ -286,6 +302,7 @@ function CartoesPage() {
                 cartao={c}
                 onOpen={() => setOpenDetail(c)}
                 onEdit={() => handleEdit(c)}
+                onImport={() => handleOpenImport(c.id)}
                 onDelete={() => setConfirmDelete(c)}
               />
             ))}
@@ -347,6 +364,16 @@ function CartoesPage() {
           setOpenDetail(null);
           handleEdit(c);
         }}
+        onImport={(c) => {
+          setOpenDetail(null);
+          handleOpenImport(c.id);
+        }}
+      />
+
+      <ImportFaturaDialog
+        open={openImport}
+        onOpenChange={setOpenImport}
+        cartaoIdInicial={importCartaoId}
       />
     </MobileShell>
   );
