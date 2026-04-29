@@ -302,29 +302,29 @@ function ContasAPagarPage() {
       </section>
 
       {/* Cards de resumo (mês) */}
-      <section className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="mt-3 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <ResumoCard
           label="Total pendente"
-          valor={formatBRL(totais.pendente)}
+          valorNum={totais.pendente}
           tone="warning"
           icon={<Clock className="h-3.5 w-3.5" />}
         />
         <ResumoCard
           label="Total atrasado"
-          valor={formatBRL(totais.atrasado)}
+          valorNum={totais.atrasado}
           tone="destructive"
           icon={<AlertTriangle className="h-3.5 w-3.5" />}
         />
         <ResumoCard
           label="Próximos 7 dias"
-          valor={formatBRL(totais.proximos7)}
+          valorNum={totais.proximos7}
           tone="warning"
           icon={<CalendarDays className="h-3.5 w-3.5" />}
           hint={`${totais.qtdProximos7} ${totais.qtdProximos7 === 1 ? "conta" : "contas"}`}
         />
         <ResumoCard
           label="Total pago"
-          valor={formatBRL(totais.pago)}
+          valorNum={totais.pago}
           tone="success"
           icon={<CheckCircle2 className="h-3.5 w-3.5" />}
         />
@@ -474,13 +474,13 @@ function ContasAPagarPage() {
 
 function ResumoCard({
   label,
-  valor,
+  valorNum,
   tone,
   icon,
   hint,
 }: {
   label: string;
-  valor: string;
+  valorNum: number;
   tone: "warning" | "destructive" | "success" | "muted";
   icon: React.ReactNode;
   hint?: string;
@@ -494,7 +494,7 @@ function ResumoCard({
           ? "bg-success/15 text-success"
           : "bg-card-elevated text-muted-foreground";
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5">
+    <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -508,7 +508,7 @@ function ResumoCard({
           {icon}
         </span>
       </div>
-      <p className="num mt-1.5 text-base font-bold leading-tight">{valor}</p>
+      <Money value={valorNum} className="num mt-1.5 block text-base font-bold leading-tight" />
       {hint && (
         <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
       )}
@@ -524,19 +524,19 @@ function mensagemAmigavel(t: {
 }): string {
   if (t.qtdAtrasado > 0) {
     return t.qtdAtrasado === 1
-      ? "Heads up: 1 conta está atrasada."
-      : `Heads up: ${t.qtdAtrasado} contas estão atrasadas.`;
+      ? "1 conta atrasada precisa de atenção."
+      : `${t.qtdAtrasado} contas atrasadas pedem atenção.`;
   }
   if (t.qtdProximos7 > 0) {
     return t.qtdProximos7 === 1
-      ? "Você tem 1 conta vencendo em breve."
-      : `Você tem ${t.qtdProximos7} contas vencendo em breve.`;
+      ? "1 conta vence nos próximos dias."
+      : `${t.qtdProximos7} contas vencem nos próximos dias.`;
   }
   if (t.qtdPendente === 0 && t.qtdPago === 0) {
-    return "Sem contas cadastradas no momento.";
+    return "Sem boletos te perseguindo por enquanto.";
   }
   if (t.qtdPendente === 0) {
-    return "Tudo em dia! Nenhuma conta pendente. 🎉";
+    return "Tudo em dia por aqui. 🎉";
   }
   return "Boa! Nada vencendo nos próximos 7 dias.";
 }
@@ -580,11 +580,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground animate-pop">
         <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold">Organize hoje, relaxa depois</p>
+      <p className="text-sm font-semibold">Sem boletos te perseguindo por enquanto</p>
       <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-        Cadastre aluguel, internet, luz, assinaturas — e nunca mais esqueça um vencimento.
+        Cadastre uma conta e deixe o app lembrar por você antes de vencer.
       </p>
-      <Button size="sm" className="card-press mt-4" onClick={onAdd}>
+      <Button size="sm" className="card-press rounded-full mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
         Adicionar primeira conta
       </Button>
