@@ -612,6 +612,59 @@ function MetaFormDialog({
               />
             </div>
             <div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Imagem da meta</Label>
+                {imagemManual && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagemManual(false);
+                      setImagemKey(getMetaArtKey(nome, descricao));
+                    }}
+                    className="text-[11px] font-semibold text-primary hover:underline"
+                  >
+                    Usar sugestão automática
+                  </button>
+                )}
+              </div>
+              <div className="mt-2 overflow-hidden rounded-2xl border border-border">
+                <MetaArt artKey={imagemKey} className="h-28 w-full" />
+              </div>
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                {META_ART_OPTIONS.map((opt) => {
+                  const active = imagemKey === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => {
+                        setImagemKey(opt.key);
+                        setImagemManual(true);
+                      }}
+                      className={cn(
+                        "group relative aspect-square overflow-hidden rounded-xl border-2 transition-all",
+                        active
+                          ? "border-foreground scale-[1.03] shadow-md"
+                          : "border-transparent hover:border-border",
+                      )}
+                      title={opt.label}
+                      aria-label={opt.label}
+                    >
+                      <MetaArt artKey={opt.key} className="h-full w-full" />
+                      {active && (
+                        <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background shadow">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {imagemManual ? "Imagem escolhida manualmente." : "Sugerida automaticamente pelo nome da meta."}
+              </p>
+            </div>
+            <div>
               <Label className="text-xs text-muted-foreground">Cor</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {META_COLORS.map((c) => (
