@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useEffect, useState, type MouseEvent } from "react";
 import {
   Home,
   List,
@@ -36,6 +37,17 @@ const ITEMS: NavItem[] = [
 export function DesktopSidebar() {
   const location = useLocation();
   const alerta = useAlertaContas();
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+  const currentPath = optimisticPath ?? location.pathname;
+
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [location.pathname]);
+
+  function handleNavClick(to: string, event: MouseEvent<HTMLAnchorElement>) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    setOptimisticPath(to);
+  }
 
   return (
     <aside
@@ -61,13 +73,16 @@ export function DesktopSidebar() {
         <ul className="space-y-1">
           {ITEMS.map(({ to, label, icon: Icon, exact }) => {
             const active = exact
-              ? location.pathname === to
-              : location.pathname === to || location.pathname.startsWith(to + "/");
+              ? currentPath === to
+              : currentPath === to || currentPath.startsWith(to + "/");
             const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
             return (
               <li key={to}>
                 <Link
                   to={to}
+                  preload="intent"
+                  preloadDelay={0}
+                  onClick={(event) => handleNavClick(to, event)}
                   className={cn(
                     "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
                     active

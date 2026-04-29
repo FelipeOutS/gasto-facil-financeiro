@@ -12,6 +12,7 @@ import {
   Minus,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addMeta,
   addMovimentacaoMeta,
@@ -111,7 +112,7 @@ function MetasPage() {
   const [dialog, setDialog] = useState<DialogMode>({ kind: "closed" });
   const [confirmDelete, setConfirmDelete] = useState<Meta | null>(null);
 
-  if (!ready) return <MobileShell><div /></MobileShell>;
+  if (!ready) return <PageSkeleton />;
 
   return (
     <MobileShell>

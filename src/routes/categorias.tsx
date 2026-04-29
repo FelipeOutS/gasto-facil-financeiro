@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart, Check } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 import { useAccent, ACCENTS } from "@/lib/accent";
@@ -68,7 +69,7 @@ function CategoriasPage() {
   const [iconName, setIconName] = useState<string>("ShoppingBag");
   const [colorHex, setColorHex] = useState<string>(COLOR_OPTIONS[0].hex);
 
-  if (!ready) return <MobileShell><div /></MobileShell>;
+  if (!ready) return <PageSkeleton />;
 
   return (
     <MobileShell>

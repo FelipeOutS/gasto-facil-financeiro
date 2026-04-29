@@ -155,6 +155,7 @@ export function setActiveUserId(uid: string | null) {
 // ============================================================
 type HydrationStatus = "idle" | "loading" | "ready" | "error";
 let hydrationStatus: HydrationStatus = "idle";
+let localBootstrapReady = false;
 
 export function getHydrationStatus(): HydrationStatus {
   return hydrationStatus;
@@ -2412,9 +2413,12 @@ export function useHydrationStatus(): HydrationStatus {
  */
 export function useBootstrap() {
   const status = useHydrationStatus();
-  const [localReady, setLocalReady] = useState(false);
+  const [localReady, setLocalReady] = useState(localBootstrapReady);
   useEffect(() => {
-    bootstrapLocalDefaults();
+    if (!localBootstrapReady) {
+      bootstrapLocalDefaults();
+      localBootstrapReady = true;
+    }
     setLocalReady(true);
   }, []);
   // If no user is active, don't block on cloud hydration.

@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Money, CountNumber } from "@/components/Money";
 import { AnimatePresence, motion } from "framer-motion";
@@ -260,7 +261,7 @@ function GastosPage() {
     setOrder("recente");
   }
 
-  if (!ready) return <MobileShell><div /></MobileShell>;
+  if (!ready) return <PageSkeleton wide />;
 
   return (
     <MobileShell wide>
