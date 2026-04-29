@@ -16,6 +16,8 @@ import {
   PieChart as PieChartIcon,
   ListChecks,
   CalendarClock,
+  Clock,
+  Bell,
 } from "lucide-react";
 import {
   PieChart,
@@ -45,6 +47,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
+import { buildResumoAlertas } from "@/lib/alertas-contas";
+import type { ContaAPagar } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
