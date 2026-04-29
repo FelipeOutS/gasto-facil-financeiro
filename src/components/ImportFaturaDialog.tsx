@@ -118,6 +118,12 @@ export function ImportFaturaDialog({
   const [imgStage, setImgStage] = useState(0);
   const imgStageRef = useRef<number | null>(null);
 
+  // PDF
+  const [pdfFile, setPdfFile] = useState<{ name: string; dataUri: string; size: number } | null>(
+    null,
+  );
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   // CSV
   const [csvText, setCsvText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -126,7 +132,7 @@ export function ImportFaturaDialog({
 
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
-  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_csv" | null>(null);
+  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_pdf" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
