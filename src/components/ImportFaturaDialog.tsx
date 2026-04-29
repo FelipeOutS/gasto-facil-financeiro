@@ -391,6 +391,7 @@ export function ImportFaturaDialog({
       cartaoId: cartaoId ?? "",
       selecionado: true,
       duplicado: false,
+      dupStatus: "novo",
     };
     setItems((prev) => [novo, ...prev]);
   }
