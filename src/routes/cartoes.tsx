@@ -774,6 +774,7 @@ function UltimasCompras({
                   </p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {c?.nome || "Cartão"} · {dtStr}
+                    {g.horario ? ` às ${g.horario}` : ""}
                     {g.tipoGasto === "parcelado" && g.totalParcelas
                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                       : ""}
