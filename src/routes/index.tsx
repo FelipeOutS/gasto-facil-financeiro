@@ -1216,3 +1216,162 @@ function DashboardSkeleton() {
     </MobileShell>
   );
 }
+
+/**
+ * Bloco compacto de alertas financeiros no Dashboard.
+ * Mostra contagem de atrasadas, hoje e próximos 7 dias + a próxima conta a vencer.
+ * Esconde-se silenciosamente se não houver nenhum alerta nem próxima conta.
+ */
+function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
+  const resumo = useMemo(() => buildResumoAlertas(contas), [contas]);
+  const proxima = resumo.todos[0];
+  const totalAtrasadas = resumo.atrasadas.length;
+  const totalHoje = resumo.hoje.length;
+  const totalAmanha = resumo.amanha.length;
+  const totalEm7 = resumo.proximos7.length;
+
+  if (resumo.totalRelevantes === 0) return null;
+
+  const tone =
+    totalAtrasadas > 0
+      ? "destructive"
+      : totalHoje > 0 || totalAmanha > 0
+        ? "warning"
+        : "brand";
+
+  return (
+    <section
+      className={cn(
+        "rounded-3xl border bg-card p-4 transition-colors animate-rise",
+        tone === "destructive"
+          ? "border-destructive/40"
+          : tone === "warning"
+            ? "border-warning/40"
+            : "border-border",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+              tone === "destructive"
+                ? "bg-destructive/15 text-destructive"
+                : tone === "warning"
+                  ? "bg-warning/15 text-warning"
+                  : "bg-card-elevated text-foreground",
+            )}
+          >
+            <Bell className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Alertas financeiros
+            </p>
+            <h2 className="text-sm font-semibold">
+              {totalAtrasadas > 0
+                ? `${totalAtrasadas} ${totalAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}`
+                : totalHoje > 0
+                  ? `${totalHoje} ${totalHoje === 1 ? "conta vence" : "contas vencem"} hoje`
+                  : totalAmanha > 0
+                    ? `${totalAmanha} ${totalAmanha === 1 ? "conta vence" : "contas vencem"} amanhã`
+                    : `${totalEm7} ${totalEm7 === 1 ? "conta vence" : "contas vencem"} nos próximos dias`}
+            </h2>
+          </div>
+        </div>
+        <Link
+          to="/contas-a-pagar"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Ver →
+        </Link>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <AlertaPill
+          label="Atrasadas"
+          count={totalAtrasadas}
+          tone="destructive"
+          icon={<AlertTriangle className="h-3 w-3" />}
+        />
+        <AlertaPill
+          label="Hoje/amanhã"
+          count={totalHoje + totalAmanha}
+          tone="warning"
+          icon={<Clock className="h-3 w-3" />}
+        />
+        <AlertaPill
+          label="Próx. 7 dias"
+          count={totalEm7}
+          tone="brand"
+          icon={<CalendarClock className="h-3 w-3" />}
+        />
+      </div>
+
+      {proxima && (
+        <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Próxima a vencer
+          </p>
+          <div className="mt-1 flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{proxima.conta.nome}</p>
+            <p className="num shrink-0 text-sm font-semibold">
+              {formatBRL(proxima.conta.valor)}
+            </p>
+          </div>
+          <p
+            className={cn(
+              "mt-0.5 text-[11px]",
+              proxima.severidade === "atrasada"
+                ? "text-destructive"
+                : proxima.severidade === "hoje" || proxima.severidade === "amanha"
+                  ? "text-warning"
+                  : "text-muted-foreground",
+            )}
+          >
+            {proxima.severidade === "atrasada"
+              ? `Vencida há ${Math.abs(proxima.dias)}d`
+              : proxima.severidade === "hoje"
+                ? "Vence hoje"
+                : proxima.severidade === "amanha"
+                  ? "Vence amanhã"
+                  : `Vence em ${proxima.dias}d`}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AlertaPill({
+  label,
+  count,
+  tone,
+  icon,
+}: {
+  label: string;
+  count: number;
+  tone: "destructive" | "warning" | "brand";
+  icon: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "destructive"
+      ? "bg-destructive/15 text-destructive"
+      : tone === "warning"
+        ? "bg-warning/15 text-warning"
+        : "bg-[hsl(var(--brand))]/15 text-[hsl(var(--brand))]";
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-2 text-center">
+      <span
+        className={cn(
+          "mx-auto mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full",
+          toneClass,
+        )}
+      >
+        {icon}
+      </span>
+      <p className="num text-base font-bold leading-none">{count}</p>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
