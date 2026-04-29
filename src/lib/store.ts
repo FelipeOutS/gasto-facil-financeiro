@@ -2167,6 +2167,8 @@ export type NovaReceitaBulkInput = {
   tipo: TipoReceita;
   horario?: string;
   origem?: string;
+  importBatchId?: string;
+  idOperacaoBanco?: string;
 };
 
 /** Insere várias receitas de uma vez (sem recorrência). */
@@ -2194,6 +2196,8 @@ export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
       ano: baseDate.getFullYear(),
       horario: inp.horario,
       origem: inp.origem,
+      importBatchId: inp.importBatchId,
+      idOperacaoBanco: inp.idOperacaoBanco,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -2210,6 +2214,8 @@ export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
       // colunas opcionais
       ...(inp.horario ? { horario: inp.horario } : {}),
       ...(inp.origem ? { origem: inp.origem } : {}),
+      ...(inp.importBatchId ? { import_batch_id: inp.importBatchId } : {}),
+      ...(inp.idOperacaoBanco ? { id_operacao_banco: inp.idOperacaoBanco } : {}),
     } as ReceitaInsert);
   }
 
