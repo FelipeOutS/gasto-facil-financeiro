@@ -149,10 +149,10 @@ export function FluxoCaixaChart({
         </div>
       </div>
 
-      <div className="mt-4 h-[260px] w-full">
+      <div className="mt-4 h-[220px] w-full sm:h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           {tipo === "area" ? (
-            <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--success)" stopOpacity={0.45} />
@@ -165,17 +165,17 @@ export function FluxoCaixaChart({
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={50} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={48} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Area type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
               <Area type="monotone" dataKey="gastos" name="Gastos" stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
             </AreaChart>
           ) : tipo === "line" ? (
-            <LineChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+            <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={50} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={48} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
@@ -183,10 +183,10 @@ export function FluxoCaixaChart({
               <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
             </LineChart>
           ) : tipo === "bar" ? (
-            <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+            <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={50} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={48} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="entradas" name="Entradas" fill="var(--success)" radius={[6, 6, 0, 0]} />
@@ -196,7 +196,7 @@ export function FluxoCaixaChart({
             <PieChart>
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number, n) => [formatBRL(v), n]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={95} paddingAngle={3} stroke="none">
+              <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={3} stroke="none">
                 <Cell fill="var(--success)" />
                 <Cell fill="var(--destructive)" />
               </Pie>
