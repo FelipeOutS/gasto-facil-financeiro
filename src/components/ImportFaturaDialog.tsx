@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ImageIcon,
   FileSpreadsheet,
+  FileText,
   Upload,
   X,
   Sparkles,
@@ -36,7 +37,8 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import {
   addGastosBulk,
-  findPossibleDuplicate,
+  findDuplicateGastoAdvanced,
+  normalizeDescricao,
   getCartoes,
   getCategorias,
   useStore,
@@ -50,13 +52,23 @@ import {
   type CsvColumnRole,
 } from "@/lib/csv-fatura";
 
-type Step = "source" | "image-upload" | "csv-upload" | "csv-mapping" | "review";
+type Step =
+  | "source"
+  | "image-upload"
+  | "pdf-upload"
+  | "csv-upload"
+  | "csv-mapping"
+  | "review";
+
+type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
 
 type ReviewItem = FaturaItemBruto & {
   id: string;
   cartaoId: string;
   selecionado: boolean;
+  /** Mantido por compatibilidade — true quando há qualquer suspeita. */
   duplicado: boolean;
+  dupStatus: DupStatus;
 };
 
 const COL_LABELS: Record<CsvColumnRole, string> = {
@@ -106,6 +118,12 @@ export function ImportFaturaDialog({
   const [imgStage, setImgStage] = useState(0);
   const imgStageRef = useRef<number | null>(null);
 
+  // PDF
+  const [pdfFile, setPdfFile] = useState<{ name: string; dataUri: string; size: number } | null>(
+    null,
+  );
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   // CSV
   const [csvText, setCsvText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -114,7 +132,7 @@ export function ImportFaturaDialog({
 
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
-  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_csv" | null>(null);
+  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_pdf" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -125,6 +143,8 @@ export function ImportFaturaDialog({
     setImages([]);
     setImgLoading(false);
     setImgStage(0);
+    setPdfFile(null);
+    setPdfLoading(false);
     setCsvText("");
     setCsvHeaders([]);
     setCsvRows([]);
@@ -162,25 +182,54 @@ export function ImportFaturaDialog({
   const buildReviewFromItens = useCallback(
     (brutos: FaturaItemBruto[], cartao: string | undefined) => {
       const cId = cartao ?? "";
-      return brutos.map<ReviewItem>((it, i) => {
+      const seenKeys = new Map<string, number>(); // key -> primeiro índice
+      const out: ReviewItem[] = [];
+      brutos.forEach((it, i) => {
         const desc = it.descricao || it.estabelecimento || "";
         const sugerida =
           it.categoriaSugerida ||
           (desc ? suggestCategoryFromDescription(desc) : "outros");
-        const duplicado =
-          !!cId && it.valor !== null && it.data
-            ? !!findPossibleDuplicate(it.valor, it.data, it.estabelecimento ?? desc, cId)
-            : false;
-        return {
+
+        // Chave de deduplicação intra-lote (normalizada)
+        const key = [
+          cId,
+          it.data ?? "",
+          (it.valor ?? 0).toFixed(2),
+          normalizeDescricao(desc),
+          it.horario ?? "",
+        ].join("|");
+
+        let dupStatus: DupStatus = "novo";
+        if (it.valor !== null && it.data) {
+          if (seenKeys.has(key)) {
+            dupStatus = "duplicado_lote";
+          } else {
+            seenKeys.set(key, i);
+            const existente = findDuplicateGastoAdvanced({
+              valor: it.valor,
+              data: it.data,
+              descricao: desc,
+              estabelecimento: it.estabelecimento ?? undefined,
+              cartaoId: cId || undefined,
+              horario: it.horario ?? undefined,
+            });
+            if (existente) dupStatus = "duplicado_existente";
+          }
+        }
+
+        out.push({
           ...it,
           descricao: desc,
           categoriaSugerida: sugerida,
           id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
           cartaoId: cId,
-          selecionado: true,
-          duplicado,
-        };
+          // Itens duplicados começam DESMARCADOS para o usuário decidir
+          selecionado: dupStatus === "novo",
+          duplicado: dupStatus !== "novo",
+          dupStatus,
+        });
       });
+      return out;
     },
     [],
   );
@@ -250,7 +299,73 @@ export function ImportFaturaDialog({
     }
   }
 
-  /* ---------- CSV ---------- */
+  /* ---------- PDF ---------- */
+
+  async function handlePdfFile(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setErrorMessage(null);
+    if (!/\.pdf$|application\/pdf/i.test(file.type || file.name)) {
+      const msg = "Envie um arquivo PDF.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      const msg = "PDF muito grande. Tente um arquivo menor que 12 MB.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      return;
+    }
+    const dataUri = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    setPdfFile({ name: file.name, dataUri, size: file.size });
+  }
+
+  async function processarPdf() {
+    if (!pdfFile) return;
+    setErrorMessage(null);
+    setPdfLoading(true);
+    try {
+      const resp = await fetch("/api/import-fatura-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdf: pdfFile.dataUri }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        const msg = data?.error || "Não consegui ler esse PDF com segurança.";
+        setErrorMessage(msg);
+        toast.error(msg);
+        setPdfLoading(false);
+        return;
+      }
+      const itens = Array.isArray(data?.itens) ? (data.itens as FaturaItemBruto[]) : [];
+      if (itens.length === 0) {
+        const msg =
+          "Nenhuma movimentação encontrada. Tente enviar um arquivo mais nítido ou revise se o documento contém lançamentos.";
+        setErrorMessage(msg);
+        toast.error(msg);
+        setPdfLoading(false);
+        return;
+      }
+      setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_pdf");
+      setPdfLoading(false);
+      setStep("review");
+    } catch (err) {
+      console.error(err);
+      const msg = "Não consegui ler esse PDF agora. Tente novamente.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      setPdfLoading(false);
+    }
+  }
+
 
   async function handleCsvFile(files: FileList | null) {
     const file = files?.[0];
@@ -350,6 +465,7 @@ export function ImportFaturaDialog({
       cartaoId: cartaoId ?? "",
       selecionado: true,
       duplicado: false,
+      dupStatus: "novo",
     };
     setItems((prev) => [novo, ...prev]);
   }
@@ -402,20 +518,30 @@ export function ImportFaturaDialog({
         };
       });
       const salvos = addGastosBulk(inputs);
-      const ignorados = items.length - validos.length;
-      if (salvos.length === 0) {
+      // Resumo da importação
+      const totalItens = items.length;
+      const naoConfirmados = items.filter((i) => !i.selecionado).length;
+      const duplicadosIgnorados = items.filter(
+        (i) => !i.selecionado && i.dupStatus !== "novo",
+      ).length;
+      const novos = salvos.length;
+      if (novos === 0) {
         toast.warning(
-          "Nada foi importado. Esses itens já existiam ou estavam incompletos.",
+          "Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.",
         );
-      } else if (ignorados > 0) {
+      } else if (duplicadosIgnorados > 0 || naoConfirmados > 0) {
         toast.success(
-          `Fatura importada com sucesso. ${salvos.length} compra(s) já foram atualizadas no app.`,
+          `Importação concluída: ${novos} novo(s), ${duplicadosIgnorados} duplicado(s) ignorado(s) e ${
+            naoConfirmados - duplicadosIgnorados
+          } item(ns) não confirmado(s).`,
         );
       } else {
         toast.success(
-          "Fatura importada com sucesso. Seus gastos já foram atualizados no app.",
+          `Importação concluída. ${novos} compra(s) adicionada(s) ao app.`,
         );
       }
+      // Suprimir warning de var não usada
+      void totalItens;
       onOpenChange(false);
     } catch (err) {
       console.error(err);
@@ -472,6 +598,17 @@ export function ImportFaturaDialog({
               loading={imgLoading}
               stage={imgStage}
               onProcess={() => void processarImagem()}
+              onBack={() => setStep("source")}
+            />
+          )}
+
+          {step === "pdf-upload" && (
+            <PdfStep
+              file={pdfFile}
+              onPick={(fl) => void handlePdfFile(fl)}
+              onClear={() => setPdfFile(null)}
+              loading={pdfLoading}
+              onProcess={() => void processarPdf()}
               onBack={() => setStep("source")}
             />
           )}
@@ -562,18 +699,25 @@ function SourceStep({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <SourceCard
           icon={<ImageIcon className="h-5 w-5" />}
-          title="Importar por imagem"
-          desc="Use print da fatura ou comprovante."
+          title="Imagens / prints"
+          desc="Envie 1 a 10 prints da fatura."
           onClick={() => onPick("image-upload")}
           disabled={cartoes.length === 0}
         />
         <SourceCard
+          icon={<FileText className="h-5 w-5" />}
+          title="PDF da fatura"
+          desc="Aceita PDF com texto ou escaneado."
+          onClick={() => onPick("pdf-upload")}
+          disabled={cartoes.length === 0}
+        />
+        <SourceCard
           icon={<FileSpreadsheet className="h-5 w-5" />}
-          title="Importar por CSV"
-          desc="Use uma planilha ou exportação do banco."
+          title="CSV / planilha"
+          desc="Exportação do app do banco."
           onClick={() => onPick("csv-upload")}
           disabled={cartoes.length === 0}
         />
@@ -1027,11 +1171,14 @@ function ReviewRow({
   const completo = valorOk && dataOk && descOk && cartaoOk;
 
   let badge: { label: string; tone: string } | null = null;
-  if (item.duplicado) badge = { label: "Possível duplicata", tone: "bg-warning/20 text-warning" };
+  if (item.dupStatus === "duplicado_existente")
+    badge = { label: "Já existe no app", tone: "bg-warning/20 text-warning" };
+  else if (item.dupStatus === "duplicado_lote")
+    badge = { label: "Repetido no envio", tone: "bg-warning/20 text-warning" };
   else if (!completo) badge = { label: "Incompleto", tone: "bg-destructive/15 text-destructive" };
   else if (item.confianca === "baixa")
     badge = { label: "Revisar", tone: "bg-warning/20 text-warning" };
-  else badge = { label: "Pronto para importar", tone: "bg-success/15 text-success" };
+  else badge = { label: "Novo", tone: "bg-success/15 text-success" };
 
   return (
     <div
@@ -1209,6 +1356,106 @@ function ReviewRow({
           </Field>
         </div>
       )}
+    </div>
+  );
+}
+
+function PdfStep({
+  file,
+  onPick,
+  onClear,
+  loading,
+  onProcess,
+  onBack,
+}: {
+  file: { name: string; dataUri: string; size: number } | null;
+  onPick: (fl: FileList | null) => void;
+  onClear: () => void;
+  loading: boolean;
+  onProcess: () => void;
+  onBack: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="grid place-items-center py-12">
+        <div className="flex flex-col items-center text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft motion-safe:animate-pulse-soft">
+            <FileText className="h-7 w-7" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold">Lendo seu PDF…</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Isso pode levar alguns segundos. Estamos extraindo apenas os
+            lançamentos da fatura.
+          </p>
+          <Loader2 className="mt-4 h-5 w-5 animate-spin text-brand" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <label
+        htmlFor="fatura-pdf"
+        className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card-elevated px-4 py-10 text-center transition-colors hover:border-brand"
+      >
+        <Upload className="h-6 w-6 text-muted-foreground" />
+        <p className="text-sm font-semibold">Clique para enviar o PDF da fatura</p>
+        <p className="text-xs text-muted-foreground">
+          Aceita PDF com texto selecionável ou escaneado. Até 12 MB.
+        </p>
+        <input
+          id="fatura-pdf"
+          type="file"
+          accept="application/pdf,.pdf"
+          className="hidden"
+          onChange={(e) => onPick(e.target.files)}
+        />
+      </label>
+
+      {file && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{file.name}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {(file.size / 1024).toFixed(0)} KB
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={onClear}
+            aria-label="Remover PDF"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Vamos ler apenas data, descrição, valor e forma de pagamento. Dados
+        como CPF e número de cartão são ignorados.
+      </p>
+
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Voltar
+        </Button>
+        <Button
+          onClick={onProcess}
+          disabled={!file}
+          className="bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
+        >
+          <Sparkles className="mr-2 h-4 w-4" />
+          Analisar PDF
+        </Button>
+      </div>
     </div>
   );
 }

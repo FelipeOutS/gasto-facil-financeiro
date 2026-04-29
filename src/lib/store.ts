@@ -1745,6 +1745,100 @@ export function findPossibleDuplicate(
   );
 }
 
+/* ============================================================
+ * DEDUP AVANÇADA — usado pelos importadores (imagem, PDF, CSV).
+ *
+ * Regra "equilibrada":
+ *   - mesmo cartão (quando informado);
+ *   - mesmo valor (tolerância ±R$ 0,01);
+ *   - data dentro de janela de ±1 dia;
+ *   - descrição/estabelecimento com similaridade alta após normalização;
+ *   - se ambos tiverem horário, exige <= 5 minutos de diferença para
+ *     reforçar match (mas a ausência de horário não bloqueia).
+ *
+ * Devolve o gasto existente que casou, ou undefined.
+ * ============================================================ */
+
+export function normalizeDescricao(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(ltda|me|sa|s\/a|eireli|brasil|br)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function descSimilarity(a: string, b: string): number {
+  const na = normalizeDescricao(a);
+  const nb = normalizeDescricao(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.9;
+  // Jaccard sobre tokens
+  const sa = new Set(na.split(" ").filter((t) => t.length >= 3));
+  const sb = new Set(nb.split(" ").filter((t) => t.length >= 3));
+  if (sa.size === 0 || sb.size === 0) return 0;
+  let inter = 0;
+  for (const t of sa) if (sb.has(t)) inter++;
+  return inter / (sa.size + sb.size - inter);
+}
+
+function diffDays(a: string, b: string): number {
+  const da = parseDateLocal(a);
+  const db = parseDateLocal(b);
+  if (!da || !db) return Number.POSITIVE_INFINITY;
+  return Math.abs((da.getTime() - db.getTime()) / 86_400_000);
+}
+
+function diffMinutes(a: string | undefined, b: string | undefined): number {
+  if (!a || !b) return Number.POSITIVE_INFINITY;
+  const ma = a.match(/^(\d{1,2}):(\d{2})$/);
+  const mb = b.match(/^(\d{1,2}):(\d{2})$/);
+  if (!ma || !mb) return Number.POSITIVE_INFINITY;
+  return Math.abs(
+    parseInt(ma[1], 10) * 60 + parseInt(ma[2], 10) - (parseInt(mb[1], 10) * 60 + parseInt(mb[2], 10)),
+  );
+}
+
+export type DedupCandidato = {
+  valor: number;
+  data: string;
+  descricao?: string;
+  estabelecimento?: string;
+  cartaoId?: string;
+  horario?: string;
+};
+
+/**
+ * Versão avançada do `findPossibleDuplicate`. Procura na base local de gastos
+ * uma entrada com forte indício de ser o mesmo lançamento. Aceita janela de
+ * ±1 dia e usa horário como reforço quando disponível.
+ */
+export function findDuplicateGastoAdvanced(c: DedupCandidato): Gasto | undefined {
+  const desc = c.descricao || c.estabelecimento || "";
+  return memGastos.find((g) => {
+    if (Math.abs(g.valor - c.valor) > 0.01) return false;
+    if (c.cartaoId && g.cartaoId && g.cartaoId !== c.cartaoId) return false;
+    const dDays = diffDays(g.data, c.data);
+    if (dDays > 1) return false;
+
+    const gDesc = g.estabelecimento || g.descricao || "";
+    const sim = descSimilarity(desc, gDesc);
+    // Sem descrição informada → exige data exata
+    if (!desc) return dDays === 0;
+
+    if (sim >= 0.7) return true;
+
+    // Reforço por horário muito próximo no mesmo dia
+    if (dDays === 0 && diffMinutes(g.horario, c.horario) <= 5 && sim >= 0.4) {
+      return true;
+    }
+    return false;
+  });
+}
+
 // ---------- Categorias ----------
 export function addCategoria(c: Omit<Categoria, "id" | "criadaPeloUsuario">): Categoria {
   // Bloqueia duplicata por nome normalizado — devolve a existente
