@@ -1476,17 +1476,36 @@ function PagarDialog({
   onClose: () => void;
   categoriasCount: number;
 }) {
-  const [criarGasto, setCriarGasto] = useState(categoriasCount > 0);
-  const [forma, setForma] = useState<FormaPagamento>("pix");
+  const categorias = getCategorias();
+  const [nome, setNome] = useState(conta.nome);
+  const [valorStr, setValorStr] = useState(
+    conta.valor.toFixed(2).replace(".", ","),
+  );
+  const [categoriaId, setCategoriaId] = useState<string>(conta.categoriaId ?? "");
+  const [criarGasto, setCriarGasto] = useState(true);
+  const [forma, setForma] = useState<FormaPagamento>(conta.formaPagamento ?? "pix");
   const [dataPag, setDataPag] = useState(todayISO());
-  const [obs, setObs] = useState("");
+  const [obs, setObs] = useState(conta.observacao ?? "");
 
   function handlePagar() {
+    const nomeTrim = nome.trim();
+    if (!nomeTrim) {
+      toast.error("Informe a descrição da conta.");
+      return;
+    }
+    const valorNum = parseBRLInput(valorStr);
+    if (!valorNum || valorNum <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
     marcarContaComoPago(conta.id, {
       criarGasto,
       formaPagamento: forma,
       dataPagamento: dataPag,
       observacao: obs.trim() || undefined,
+      nome: nomeTrim,
+      valor: valorNum,
+      categoriaId: categoriaId || undefined,
     });
     toast.success(
       criarGasto
@@ -1502,12 +1521,32 @@ function PagarDialog({
         <DialogHeader>
           <DialogTitle>Marcar como paga</DialogTitle>
           <DialogDescription>
-            {conta.nome} — {formatBRL(conta.valor)}
+            Revise os dados antes de confirmar o pagamento.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="pag-nome">Descrição</Label>
+            <Input
+              id="pag-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex: Internet"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pag-valor">Valor pago</Label>
+              <Input
+                id="pag-valor"
+                inputMode="decimal"
+                value={valorStr}
+                onChange={(e) => setValorStr(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="pag-data">Data do pagamento</Label>
               <Input
@@ -1517,6 +1556,9 @@ function PagarDialog({
                 onChange={(e) => setDataPag(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Forma de pagamento</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
@@ -1527,6 +1569,25 @@ function PagarDialog({
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Categoria</Label>
+              <Select
+                value={categoriaId || "__none__"}
+                onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sem categoria</SelectItem>
+                  {categorias.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1550,9 +1611,9 @@ function PagarDialog({
               <div className="min-w-0">
                 <p className="text-sm font-medium">Registrar como gasto</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {conta.categoriaId
-                    ? "Cria um lançamento em Gastos com a categoria desta conta."
-                    : "Sem categoria — vai para “Outros” em Gastos."}
+                  {categoriasCount === 0
+                    ? "Sem categorias cadastradas — vai para “Outros” em Gastos."
+                    : "Cria um lançamento em Gastos com a categoria selecionada."}
                 </p>
               </div>
               <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />
