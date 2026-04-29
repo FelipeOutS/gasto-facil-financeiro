@@ -15,11 +15,11 @@ import {
   Flame,
 } from "lucide-react";
 import {
-  MetaArt,
-  getMetaArtKey,
-  META_ART_OPTIONS,
-  type MetaArtKey,
-} from "@/components/MetaArt";
+  MetaCover,
+  getMetaCoverKey,
+  META_COVER_OPTIONS,
+  type MetaCoverKey,
+} from "@/components/MetaCover";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
