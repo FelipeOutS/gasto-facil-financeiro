@@ -173,6 +173,10 @@ export function ImportExtratoDialog({
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
   const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
+  const [importMeta, setImportMeta] = useState<{
+    nomeArquivo?: string;
+    tipoOrigem: "pdf" | "csv" | "imagem";
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -181,6 +185,7 @@ export function ImportExtratoDialog({
     setItems([]);
     setObservacaoIA(null);
     setResumoExtrato(null);
+    setImportMeta(null);
   }, []);
 
   const handleClose = useCallback(
