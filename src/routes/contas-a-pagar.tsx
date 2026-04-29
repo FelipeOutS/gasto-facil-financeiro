@@ -855,7 +855,7 @@ function ContaCard({
             {conta.recorrente && (
               <span className="inline-flex items-center gap-1">
                 <Repeat className="h-3 w-3" />
-                Mensal
+                {FREQUENCIAS_RECORRENCIA.find((f) => f.id === conta.frequenciaRecorrencia)?.label ?? "Recorrente"}
               </span>
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
