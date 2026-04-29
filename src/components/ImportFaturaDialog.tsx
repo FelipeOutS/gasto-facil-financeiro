@@ -336,6 +336,7 @@ export function ImportFaturaDialog({
       estabelecimento: null,
       valor: null,
       data: new Date().toISOString().slice(0, 10),
+      horario: null,
       parcelaAtual: null,
       totalParcelas: null,
       categoriaSugerida: "outros",
