@@ -1347,6 +1347,106 @@ function ReviewRow({
   );
 }
 
+function PdfStep({
+  file,
+  onPick,
+  onClear,
+  loading,
+  onProcess,
+  onBack,
+}: {
+  file: { name: string; dataUri: string; size: number } | null;
+  onPick: (fl: FileList | null) => void;
+  onClear: () => void;
+  loading: boolean;
+  onProcess: () => void;
+  onBack: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="grid place-items-center py-12">
+        <div className="flex flex-col items-center text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft motion-safe:animate-pulse-soft">
+            <FileText className="h-7 w-7" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold">Lendo seu PDF…</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Isso pode levar alguns segundos. Estamos extraindo apenas os
+            lançamentos da fatura.
+          </p>
+          <Loader2 className="mt-4 h-5 w-5 animate-spin text-brand" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <label
+        htmlFor="fatura-pdf"
+        className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card-elevated px-4 py-10 text-center transition-colors hover:border-brand"
+      >
+        <Upload className="h-6 w-6 text-muted-foreground" />
+        <p className="text-sm font-semibold">Clique para enviar o PDF da fatura</p>
+        <p className="text-xs text-muted-foreground">
+          Aceita PDF com texto selecionável ou escaneado. Até 12 MB.
+        </p>
+        <input
+          id="fatura-pdf"
+          type="file"
+          accept="application/pdf,.pdf"
+          className="hidden"
+          onChange={(e) => onPick(e.target.files)}
+        />
+      </label>
+
+      {file && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{file.name}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {(file.size / 1024).toFixed(0)} KB
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={onClear}
+            aria-label="Remover PDF"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Vamos ler apenas data, descrição, valor e forma de pagamento. Dados
+        como CPF e número de cartão são ignorados.
+      </p>
+
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Voltar
+        </Button>
+        <Button
+          onClick={onProcess}
+          disabled={!file}
+          className="bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
+        >
+          <Sparkles className="mr-2 h-4 w-4" />
+          Analisar PDF
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function Field({
   label,
   children,
