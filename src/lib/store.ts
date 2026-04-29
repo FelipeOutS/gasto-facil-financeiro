@@ -3266,6 +3266,8 @@ export function updateContaRecorrencia(
     updateContaAPagar(t.id, f);
   }
 }
+
+/**
  * Marca conta como paga. Opcionalmente cria um gasto correspondente no mês
  * do pagamento (categoria + valor da conta).
  */
