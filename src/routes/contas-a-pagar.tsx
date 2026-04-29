@@ -15,6 +15,8 @@ import {
   Repeat,
   RotateCcw,
   CalendarDays,
+  Search,
+  X,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -24,6 +26,7 @@ import { Copy, Upload } from "lucide-react";
 import {
   addContaAPagar,
   deleteContaAPagar,
+  deleteContaRecorrencia,
   desmarcarContaComoPago,
   getCategoriaById,
   getCategorias,
@@ -76,7 +79,7 @@ export const Route = createFileRoute("/contas-a-pagar")({
   component: ContasAPagarPage,
 });
 
-type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas";
+type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
 
 const FILTROS: Array<{ id: FilterId; label: string }> = [
   { id: "todas", label: "Todas" },
@@ -84,7 +87,16 @@ const FILTROS: Array<{ id: FilterId; label: string }> = [
   { id: "proximas", label: "Próximas" },
   { id: "atrasadas", label: "Atrasadas" },
   { id: "pagas", label: "Pagas" },
+  { id: "recorrentes", label: "Recorrentes" },
 ];
+
+function normalizar(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 function ContasAPagarPage() {
   const ready = useBootstrap();
@@ -97,6 +109,8 @@ function ContasAPagarPage() {
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
   const [importing, setImporting] = useState(false);
   const [filtro, setFiltro] = useState<FilterId>("todas");
+  const [busca, setBusca] = useState("");
+  const [confirmDeleteRec, setConfirmDeleteRec] = useState<ContaAPagar | null>(null);
 
   const contas = useStore(() => getContasAPagar());
   const categorias = useStore(() => getCategorias());
@@ -176,29 +190,56 @@ function ContasAPagarPage() {
   }, [doMes, hojeISO]);
 
   const filtradas = useMemo(() => {
+    const q = normalizar(busca);
     return doMes.filter((c) => {
       const s = statusContaEfetivo(c, hojeISO);
+      let okFiltro = true;
       switch (filtro) {
         case "todas":
-          return true;
+          okFiltro = true;
+          break;
         case "pendentes":
-          return s === "pendente" || s === "atrasado";
+          okFiltro = s === "pendente" || s === "atrasado";
+          break;
         case "proximas": {
-          if (s === "pago") return false;
-          if (s === "atrasado") return false;
-          const d = diasAteVenc(c);
-          return d >= 0 && d <= 7;
+          if (s === "pago" || s === "atrasado") {
+            okFiltro = false;
+          } else {
+            const d = diasAteVenc(c);
+            okFiltro = d >= 0 && d <= 7;
+          }
+          break;
         }
         case "atrasadas":
-          return s === "atrasado";
+          okFiltro = s === "atrasado";
+          break;
         case "pagas":
-          return s === "pago";
+          okFiltro = s === "pago";
+          break;
+        case "recorrentes":
+          okFiltro = !!c.recorrente;
+          break;
         default:
-          return true;
+          okFiltro = true;
       }
+      if (!okFiltro) return false;
+      if (!q) return true;
+      const cat = c.categoriaId ? getCategoriaById(c.categoriaId) : undefined;
+      const haystack = [
+        c.nome,
+        c.beneficiario ?? "",
+        cat?.nome ?? "",
+        formatBRL(c.valor),
+        String(c.valor).replace(".", ","),
+        formatDateBR(c.dataVencimento),
+        c.dataVencimento,
+      ]
+        .map(normalizar)
+        .join(" ");
+      return haystack.includes(q);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doMes, hojeISO, filtro]);
+  }, [doMes, hojeISO, filtro, busca]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -393,13 +434,37 @@ function ContasAPagarPage() {
         })}
       </div>
 
+      {/* Busca */}
+      <div className="relative mt-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, categoria, valor ou vencimento"
+          className="h-10 rounded-full pl-9 pr-9"
+          aria-label="Buscar contas"
+        />
+        {busca && (
+          <button
+            type="button"
+            onClick={() => setBusca("")}
+            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
           <EmptyState onAdd={() => setCreating(true)} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-            Nada nesse filtro por aqui.
+            {busca
+              ? `Nada encontrado para "${busca}".`
+              : "Nada nesse filtro por aqui."}
           </div>
         ) : (
           <div className="space-y-2.5 stagger">
@@ -409,7 +474,13 @@ function ContasAPagarPage() {
                 conta={conta}
                 hojeISO={hojeISO}
                 onEdit={() => setEditing(conta)}
-                onDelete={() => setConfirmDelete(conta)}
+                onDelete={() => {
+                  if (conta.recorrente && conta.recorrenciaId) {
+                    setConfirmDeleteRec(conta);
+                  } else {
+                    setConfirmDelete(conta);
+                  }
+                }}
                 onPagar={() => setPagar(conta)}
                 onDesmarcar={() => setConfirmDesmarcar(conta)}
               />
@@ -516,6 +587,73 @@ function ContasAPagarPage() {
             >
               Desfazer pagamento
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir conta recorrente — escopo */}
+      <AlertDialog
+        open={!!confirmDeleteRec}
+        onOpenChange={(o) => !o && setConfirmDeleteRec(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta recorrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteRec
+                ? `"${confirmDeleteRec.nome}" se repete em vários meses. O que você quer excluir?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec) {
+                  deleteContaAPagar(confirmDeleteRec.id, {
+                    excluirGastoVinculado: !!confirmDeleteRec.gastoId,
+                  });
+                  toast.success("Apenas esta ocorrência foi excluída.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Apenas esta ocorrência
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec?.recorrenciaId) {
+                  deleteContaRecorrencia(
+                    confirmDeleteRec.recorrenciaId,
+                    confirmDeleteRec.mes,
+                    confirmDeleteRec.ano,
+                  );
+                  toast.success("Esta e as próximas ocorrências foram excluídas.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Esta e as próximas
+            </Button>
+            <Button
+              variant="destructive"
+              className="justify-start"
+              onClick={() => {
+                if (confirmDeleteRec?.recorrenciaId) {
+                  deleteContaRecorrencia(confirmDeleteRec.recorrenciaId);
+                  toast.success("Toda a recorrência foi excluída.");
+                }
+                setConfirmDeleteRec(null);
+              }}
+            >
+              Excluir toda a recorrência
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
