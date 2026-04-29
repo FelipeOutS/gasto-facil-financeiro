@@ -31,6 +31,7 @@ import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
 import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
+import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 
 const ResumoRoute = ResumoRouteImport.update({
@@ -143,6 +144,11 @@ const ApiImportExtratoRoute = ApiImportExtratoRouteImport.update({
   path: '/api/import-extrato',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiImportContaPdfRoute = ApiImportContaPdfRouteImport.update({
+  id: '/api/import-conta-pdf',
+  path: '/api/import-conta-pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiImportContaRoute = ApiImportContaRouteImport.update({
   id: '/api/import-conta',
   path: '/api/import-conta',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-conta': typeof ApiImportContaRoute
+  '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-conta': typeof ApiImportContaRoute
+  '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/api/import-conta': typeof ApiImportContaRoute
+  '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-conta'
+    | '/api/import-conta-pdf'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-conta'
+    | '/api/import-conta-pdf'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/api/import-conta'
+    | '/api/import-conta-pdf'
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
+  ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportExtratoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/import-conta-pdf': {
+      id: '/api/import-conta-pdf'
+      path: '/api/import-conta-pdf'
+      fullPath: '/api/import-conta-pdf'
+      preLoaderRoute: typeof ApiImportContaPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/import-conta': {
       id: '/api/import-conta'
       path: '/api/import-conta'
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   ApiImportContaRoute: ApiImportContaRoute,
+  ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
