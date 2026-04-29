@@ -285,14 +285,18 @@ function MetaCard({
       </div>
 
       <div className="mt-3 flex items-baseline justify-between">
-        <p className="num text-2xl font-extrabold tracking-tight">{formatBRL(meta.valorAtual)}</p>
+        <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
         <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
       </div>
 
       <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: meta.colorHex }}
+          className="h-full rounded-full origin-left animate-fill"
+          style={{
+            width: `${pct}%`,
+            background: meta.colorHex,
+            transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+          }}
         />
       </div>
       <div className="mt-2 flex items-center justify-between text-xs">
@@ -301,15 +305,15 @@ function MetaCard({
       </div>
 
       {status === "concluida" ? (
-        <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs text-success">
+        <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs text-success animate-pop">
           <Sparkles className="h-3.5 w-3.5" />
-          Parabéns! Você concluiu sua meta.
+          Meta batida! Você chegou lá. 🏆
         </div>
       ) : (
         <Button
           variant="outline"
           size="sm"
-          className="mt-3 h-9 w-full rounded-xl"
+          className="card-press mt-3 h-9 w-full rounded-xl"
           onClick={onAdd}
         >
           <Plus className="mr-1 h-4 w-4" />
