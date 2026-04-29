@@ -275,6 +275,7 @@ export function ImportFaturaDialog({
     if (hasValor && hasData) {
       const itens = rowsToItens(parsed.rows, parsed.autoMap);
       setItems(buildReviewFromItens(itens, cartaoId));
+      setOrigem("fatura_csv");
       setStep("review");
     } else {
       setStep("csv-mapping");
@@ -291,6 +292,7 @@ export function ImportFaturaDialog({
     }
     const itens = rowsToItens(csvRows, csvMap);
     setItems(buildReviewFromItens(itens, cartaoId));
+    setOrigem("fatura_csv");
     setStep("review");
   }
 
