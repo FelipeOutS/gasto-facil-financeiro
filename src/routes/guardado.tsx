@@ -10,6 +10,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addBanco,
   addGuardado,
@@ -116,7 +117,7 @@ function GuardadoPage() {
     setOpenB(false);
   }
 
-  if (!ready) return <MobileShell><div /></MobileShell>;
+  if (!ready) return <PageSkeleton />;
 
   return (
     <MobileShell>
