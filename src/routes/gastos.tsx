@@ -3,11 +3,22 @@ import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
+  MoreVertical,
+  Pencil,
   Search,
   SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EditGastoDialog } from "@/components/EditGastoDialog";
+import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
