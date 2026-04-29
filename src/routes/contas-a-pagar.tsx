@@ -37,8 +37,8 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import type { ContaAPagar, StatusConta } from "@/lib/types";
-import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/types";
+import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
