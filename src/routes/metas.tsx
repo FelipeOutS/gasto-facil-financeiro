@@ -232,104 +232,148 @@ function MetaCard({
   onAdd,
   onRemove,
   onEdit,
+  onChangeImage,
   onDelete,
 }: {
   meta: Meta;
   onAdd: () => void;
   onRemove: () => void;
   onEdit: () => void;
+  onChangeImage: () => void;
   onDelete: () => void;
 }) {
   const status = statusMeta(meta);
   const pct = meta.valorObjetivo > 0 ? Math.min(100, (meta.valorAtual / meta.valorObjetivo) * 100) : 0;
   const restante = Math.max(0, meta.valorObjetivo - meta.valorAtual);
+  const isDone = status === "concluida";
+  const isAlmostDone = pct >= 80 && !isDone;
+
+  // imagemKey persistida tem prioridade; caso contrário, derivamos pelo nome.
+  const artKey = (meta.imagemKey as MetaArtKey | undefined) ?? getMetaArtKey(meta.nome, meta.descricao);
 
   return (
     <div
-      className="rounded-3xl border border-border bg-card p-4 hover-lift"
-      style={{ boxShadow: status === "concluida" ? `0 0 0 1px ${meta.colorHex} inset` : undefined }}
+      className={cn(
+        "group relative overflow-hidden rounded-3xl border border-border bg-card transition-all duration-300",
+        "hover:-translate-y-0.5 hover:shadow-elevated",
+        isDone && "ring-2",
+      )}
+      style={{
+        boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
+      }}
     >
-      <div className="flex items-start gap-3">
-        <span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
-          style={{ background: `color-mix(in oklab, ${meta.colorHex} 22%, transparent)`, color: meta.colorHex }}
-        >
-          {status === "concluida" ? <Trophy className="h-5 w-5" /> : <Target className="h-5 w-5" />}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold">{meta.nome}</p>
-          <p className="truncate text-xs text-muted-foreground">
+      {/* Cover ilustrado */}
+      <div className="relative h-32 w-full overflow-hidden">
+        <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+          <MetaArt artKey={artKey} className="h-full w-full" />
+        </div>
+        {/* Overlay para legibilidade do título */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/30 to-transparent" />
+
+        {/* Badges no topo */}
+        <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {isDone && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-success-foreground shadow-md animate-pop">
+                <Trophy className="h-3 w-3" /> Concluída
+              </span>
+            )}
+            {isAlmostDone && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
+                <Flame className="h-3 w-3" /> Quase lá
+              </span>
+            )}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                aria-label="Mais ações"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar meta
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onChangeImage}>
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Trocar imagem
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onAdd}>
+                <Plus className="mr-2 h-4 w-4" />
+                Atualizar valor
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
+                <Minus className="mr-2 h-4 w-4" />
+                Remover valor
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir meta
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Título sobre o cover */}
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-3">
+          <p className="line-clamp-1 text-base font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            {meta.nome}
+          </p>
+          <p className="line-clamp-1 text-[11px] text-white/85 drop-shadow">
             {STATUS_LABEL[status]}
             {meta.prazo ? ` · até ${formatDateBR(meta.prazo)}` : ""}
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
-              aria-label="Mais ações"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onSelect={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar meta
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onAdd}>
-              <Plus className="mr-2 h-4 w-4" />
-              Atualizar valor
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
-              <Minus className="mr-2 h-4 w-4" />
-              Remover valor
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir meta
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between">
-        <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
-        <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
-      </div>
-
-      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
-        <div
-          className="h-full rounded-full origin-left animate-fill"
-          style={{
-            width: `${pct}%`,
-            background: meta.colorHex,
-            transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-          }}
-        />
-      </div>
-      <div className="mt-2 flex items-center justify-between text-xs">
-        <span className="num font-semibold" style={{ color: meta.colorHex }}>{pct.toFixed(0)}%</span>
-        <span className="num text-muted-foreground">faltam {formatBRL(restante)}</span>
-      </div>
-
-      {status === "concluida" ? (
-        <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs text-success animate-pop">
-          <Sparkles className="h-3.5 w-3.5" />
-          Meta batida! Você chegou lá. 🏆
+      {/* Corpo */}
+      <div className="p-4">
+        <div className="flex items-baseline justify-between">
+          <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
+          <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
         </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="card-press mt-3 h-9 w-full rounded-xl"
-          onClick={onAdd}
-        >
-          <Plus className="mr-1 h-4 w-4" />
-          Atualizar valor
-        </Button>
-      )}
+
+        <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
+          <div
+            className="h-full rounded-full origin-left animate-fill"
+            style={{
+              width: `${pct}%`,
+              background: isDone
+                ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
+                : meta.colorHex,
+              transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+            }}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-xs">
+          <span className="num font-semibold" style={{ color: meta.colorHex }}>{pct.toFixed(0)}%</span>
+          <span className="num text-muted-foreground">faltam {formatBRL(restante)}</span>
+        </div>
+
+        {isDone ? (
+          <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs font-semibold text-success animate-pop">
+            <Sparkles className="h-3.5 w-3.5" />
+            Meta batida! Você chegou lá. 🏆
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="card-press mt-3 h-9 w-full rounded-xl"
+            onClick={onAdd}
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Atualizar valor
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
