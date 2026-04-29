@@ -24,6 +24,7 @@ import {
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,7 +154,7 @@ function CartoesPage() {
           Seus cartões 💳
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Acompanhe limites, faturas e gastos no crédito sem dor de cabeça.
+          Limites, faturas e gastos no crédito num lugar só.
         </p>
       </header>
 
@@ -161,25 +162,25 @@ function CartoesPage() {
       <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <ResumoCard
           label="Limite total"
-          value={formatBRL(resumo.limiteTotal)}
+          valueNum={resumo.limiteTotal}
           icon={<CreditCard className="h-4 w-4" />}
           tone="brand"
         />
         <ResumoCard
           label="Usado no mês"
-          value={formatBRL(resumo.usado)}
+          valueNum={resumo.usado}
           icon={<Wallet className="h-4 w-4" />}
           tone="warning"
         />
         <ResumoCard
           label="Disponível"
-          value={formatBRL(resumo.disponivel)}
+          valueNum={resumo.disponivel}
           icon={<Sparkles className="h-4 w-4" />}
           tone="success"
         />
         <ResumoCard
           label="Próxima fatura"
-          value={
+          valueText={
             resumo.proxima
               ? `${resumo.proxima.nome} • ${resumo.proximaDias === 0 ? "hoje" : `${resumo.proximaDias}d`}`
               : "—"
@@ -221,9 +222,9 @@ function CartoesPage() {
         </section>
       )}
 
-      <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
+      <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Nada de número, CVV ou dados sensíveis. Só o necessário.
+        Aqui só nome, banco/emissor, limite, fechamento e vencimento. Nada de número, CVV ou senha.
       </p>
 
       {/* Form modal */}
@@ -270,12 +271,14 @@ function CartoesPage() {
 
 function ResumoCard({
   label,
-  value,
+  valueNum,
+  valueText,
   icon,
   tone,
 }: {
   label: string;
-  value: string;
+  valueNum?: number;
+  valueText?: string;
   icon: React.ReactNode;
   tone: "brand" | "warning" | "success" | "muted";
 }) {
@@ -288,7 +291,7 @@ function ResumoCard({
           ? "bg-success/15 text-success"
           : "bg-card-elevated text-muted-foreground";
   return (
-    <div className="hover-lift rounded-2xl border border-border bg-card p-3.5">
+    <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
@@ -297,7 +300,11 @@ function ResumoCard({
           {icon}
         </span>
       </div>
-      <p className="num mt-2 truncate text-base font-bold">{value}</p>
+      {valueNum !== undefined ? (
+        <Money value={valueNum} className="num mt-2 block truncate text-base font-bold" />
+      ) : (
+        <p className="num mt-2 truncate text-base font-bold">{valueText ?? "—"}</p>
+      )}
     </div>
   );
 }
@@ -308,16 +315,16 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft animate-pop">
         <CreditCard className="h-6 w-6" />
       </div>
-      <h3 className="mt-3 text-base font-semibold">Nenhum cartão por aqui ainda.</h3>
+      <h3 className="mt-3 text-base font-semibold">Nenhum cartão por aqui ainda</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Cadastre seu primeiro cartão e pare de tentar lembrar tudo de cabeça.
+        Cadastre seu primeiro cartão e pare de tentar lembrar fechamento e vencimento de cabeça.
       </p>
       <Button
         onClick={onAdd}
         className="card-press mt-4 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
       >
         <Plus className="mr-1 h-4 w-4" />
-        Adicionar cartão
+        Adicionar primeiro cartão
       </Button>
     </div>
   );

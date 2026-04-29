@@ -25,6 +25,7 @@ import {
 } from "@/lib/store";
 import type { Meta } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,9 +129,9 @@ function MetasPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
+      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-xs font-medium text-muted-foreground">Total acumulado em metas</p>
-        <p className="num mt-1 text-4xl font-extrabold tracking-tight">{formatBRL(totalAcumulado)}</p>
+        <Money value={totalAcumulado} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
         <p className="mt-1 text-xs text-muted-foreground">
           {metas.length} {metas.length === 1 ? "meta" : "metas"} criadas
         </p>
@@ -138,7 +139,7 @@ function MetasPage() {
 
       <Button
         size="lg"
-        className="mt-4 h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
+        className="card-press mt-4 h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
         onClick={() => setDialog({ kind: "create" })}
       >
         <Plus className="mr-1 h-5 w-5" />
@@ -147,14 +148,24 @@ function MetasPage() {
 
       <section className="mt-5 space-y-3">
         {ordenadas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
-            <Target className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm font-medium text-foreground">
-              Sua primeira meta pode começar hoje.
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-rise">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-pop">
+              <Target className="h-6 w-6" />
+            </span>
+            <p className="mt-3 text-sm font-semibold text-foreground">
+              Escolha uma meta e acompanhe cada passo até chegar lá.
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Defina um objetivo e acompanhe seu progresso passo a passo.
+              Viagem, reserva, troca de carro — qualquer objetivo que valha a pena.
             </p>
+            <Button
+              size="sm"
+              className="card-press rounded-full mt-4"
+              onClick={() => setDialog({ kind: "create" })}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Criar primeira meta
+            </Button>
           </div>
         ) : (
           <div className="space-y-3 stagger">
@@ -274,14 +285,18 @@ function MetaCard({
       </div>
 
       <div className="mt-3 flex items-baseline justify-between">
-        <p className="num text-2xl font-extrabold tracking-tight">{formatBRL(meta.valorAtual)}</p>
+        <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
         <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
       </div>
 
       <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: meta.colorHex }}
+          className="h-full rounded-full origin-left animate-fill"
+          style={{
+            width: `${pct}%`,
+            background: meta.colorHex,
+            transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+          }}
         />
       </div>
       <div className="mt-2 flex items-center justify-between text-xs">
@@ -290,15 +305,15 @@ function MetaCard({
       </div>
 
       {status === "concluida" ? (
-        <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs text-success">
+        <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs text-success animate-pop">
           <Sparkles className="h-3.5 w-3.5" />
-          Parabéns! Você concluiu sua meta.
+          Meta batida! Você chegou lá. 🏆
         </div>
       ) : (
         <Button
           variant="outline"
           size="sm"
-          className="mt-3 h-9 w-full rounded-xl"
+          className="card-press mt-3 h-9 w-full rounded-xl"
           onClick={onAdd}
         >
           <Plus className="mr-1 h-4 w-4" />
