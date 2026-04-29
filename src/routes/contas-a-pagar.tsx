@@ -527,6 +527,8 @@ function ContasAPagarPage() {
           categoriasCount={categorias.length}
         />
       )}
+
+      <ImportContaDialog open={importing} onOpenChange={setImporting} />
     </MobileShell>
   );
 }
