@@ -392,11 +392,11 @@ function Index() {
 
       {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start lg:gap-5 xl:gap-6">
-        <div className="min-w-0 self-start lg:col-span-7 xl:col-span-8">
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
+        <div className="flex min-w-0 lg:col-span-7 xl:col-span-8">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
-        <div className="min-w-0 self-start lg:col-span-5 xl:col-span-4">
+        <div className="flex min-w-0 lg:col-span-5 xl:col-span-4">
           <RecentTransactionsCard ultimos={ultimos} />
         </div>
       </section>
@@ -884,7 +884,7 @@ function MinhaRendaCard({
 
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
   return (
-    <section className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
