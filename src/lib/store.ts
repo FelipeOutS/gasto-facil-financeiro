@@ -1153,6 +1153,10 @@ export type NovoGastoInput = {
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
+  /** Horário opcional (HH:mm). */
+  horario?: string;
+  /** Origem do registro: manual, fatura_imagem, fatura_csv. */
+  origem?: string;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
