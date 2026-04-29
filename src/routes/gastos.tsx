@@ -20,6 +20,8 @@ import {
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
+import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
+import { Upload } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Money, CountNumber } from "@/components/Money";
