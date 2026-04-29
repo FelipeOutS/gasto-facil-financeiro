@@ -789,6 +789,89 @@ function KpiCard({
   );
 }
 
+function LimiteMensalCard({
+  total,
+  limiteTotal,
+  usoLimite,
+  passouLimite,
+  proximoLimite,
+}: {
+  total: number;
+  limiteTotal: number;
+  usoLimite: number;
+  passouLimite: boolean;
+  proximoLimite: boolean;
+}) {
+  return (
+    <section className="h-auto self-start rounded-2xl border border-border bg-card p-4 shadow-card">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Limite mensal
+          </p>
+          <p className="num mt-1 text-sm font-semibold">
+            {formatBRL(total)} <span className="font-normal text-muted-foreground">/ {formatBRL(limiteTotal)}</span>
+          </p>
+        </div>
+        <PieChartIcon className="h-4 w-4 shrink-0 text-brand" />
+      </div>
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all animate-fill",
+            passouLimite ? "bg-destructive" : proximoLimite ? "bg-warning" : "bg-brand",
+          )}
+          style={{ width: `${Math.min(100, usoLimite)}%` }}
+        />
+      </div>
+      {passouLimite ? (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Limite ultrapassado em {formatBRL(total - limiteTotal)}
+        </p>
+      ) : proximoLimite ? (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
+        </p>
+      ) : (
+        <p className="num mt-2 text-[11px] text-muted-foreground">
+          {Math.round((total / limiteTotal) * 100)}% usado
+        </p>
+      )}
+    </section>
+  );
+}
+
+function MinhaRendaCard({
+  totalEntradas,
+  ano,
+  mes,
+}: {
+  totalEntradas: number;
+  ano: number;
+  mes: number;
+}) {
+  return (
+    <Link
+      to="/renda"
+      search={{ ano, mes }}
+      className="flex h-auto self-start items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+        <ArrowUp className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">Minha renda</p>
+        <p className="num truncate text-[11px] text-muted-foreground">
+          {formatBRL(totalEntradas)} este mês
+        </p>
+      </div>
+      <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+    </Link>
+  );
+}
+
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
   return (
     <section className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
@@ -808,7 +891,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
       </div>
       <div className="mt-3">
         {ultimos.length === 0 ? (
-          <div className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center animate-fade-in">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
               Tudo vazio por aqui ainda.
