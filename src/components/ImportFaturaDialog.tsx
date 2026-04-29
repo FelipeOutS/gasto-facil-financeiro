@@ -114,6 +114,7 @@ export function ImportFaturaDialog({
 
   // Revisão
   const [items, setItems] = useState<ReviewItem[]>([]);
+  const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
