@@ -98,6 +98,8 @@ CATEGORIA SUGERIDA heurística:
 
 PRIVACIDADE — NUNCA inclua na descrição: número completo do cartão, CVV, senha, CPF, número completo de conta/agência. Se aparecer, omita ou mascare.
 
+COMPLETUDE OBRIGATÓRIA — Liste TODAS as movimentações do trecho, sem cortar, sem resumir, sem limitar a 20/24/30 itens. Se houver 80, devolva 80. Mantenha a descrição completa do lançamento (não trunque). Não invente movimentações que não estejam no texto.
+
 Se o conteúdo não parece um extrato legível, retorne itens=[] com observacao explicando.`;
 
 type ItemBruto = {
@@ -207,7 +209,7 @@ function sanitizeText(text: string): string {
     .replace(/\bConta[:\s]*\d{5,}[-\s]?\d{0,2}\b/gi, "[Conta]")
     // CVV
     .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
-    .slice(0, 80_000);
+    .slice(0, 200_000);
 }
 
 function stripAccents(text: string) {
@@ -269,7 +271,7 @@ function suggestCategory(desc: string): string {
 
 function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto, "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"> {
   const t = stripAccents(desc).toLowerCase();
-  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|fatura/.test(t)) {
+  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|pagamento.*fatura|fatura.*cart[aã]o/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "boleto",
@@ -278,22 +280,33 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
       observacao: "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
     };
   }
-  if (/reserva por gastos|dinheiro reservado|reservado/.test(t)) {
+  // Cofrinho / Guardado — termos do Mercado Pago e nomes de objetivo (ex: "COMPRAR PLAY 5")
+  if (/reserva por gastos|dinheiro reservado|reservado|cofrinho|guardar|guardei|caixinha|meta de poupanca/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
       categoriaSugerida: "outros",
       statusRevisao: "reserva",
-      observacao: "Reserva interna. Não afeta o Dashboard.",
+      observacao: "Movimento para Guardado/Cofrinho. Não conta como gasto comum.",
     };
   }
-  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva/.test(t)) {
+  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva|retirei.*cofrinho|resgate.*cofrinho/.test(t)) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
       categoriaSugerida: "outros",
       statusRevisao: "resgate_reserva",
-      observacao: "Resgate de reserva. Não entra como receita.",
+      observacao: "Retirada do Guardado/Cofrinho. Não entra como receita comum.",
+    };
+  }
+  // Transferência entre contas próprias
+  if (/transferencia.*entre.*contas|entre contas proprias|minha conta|conta nubank|conta itau|conta inter|para minha conta/.test(t)) {
+    return {
+      tipoMovimentacao: "transferencia_interna",
+      formaPagamento: "transferencia",
+      categoriaSugerida: "outros",
+      statusRevisao: "revisar",
+      observacao: "Possível transferência entre contas próprias. Revise antes de confirmar.",
     };
   }
   if (/rendimento|venda de meli dolar/.test(t)) {
@@ -326,32 +339,96 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
 function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null; resumo: ExtratoResumo } | null {
   const normalized = stripAccents(text).toLowerCase();
   const hasMercadoPago = /mercado\s*pago/.test(normalized);
-  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,120}id da opera[cç][aã]o[\s\S]{0,80}valor[\s\S]{0,80}saldo/i.test(text);
+  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,160}id da opera[cç][aã]o[\s\S]{0,160}valor/i.test(text);
   if (!hasMercadoPago && !hasColumns) return null;
 
   const fallbackYear = guessYearFromText(text);
-  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
-  const itens: ItemBruto[] = [];
-  const rowPattern = /^(\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?)\s+(.+?)\s+([A-Z0-9][A-Z0-9._\-]{5,})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})\s+([+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2})$/i;
+  const rawLines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
 
-  for (const line of lines) {
-    const match = line.match(rowPattern);
-    if (!match) continue;
-    const data = parseDataBR(match[1], fallbackYear);
-    const signedValue = parseValorBR(match[4]);
-    if (!data || signedValue === null) continue;
-    const desc = match[2].trim();
+  // Linhas a ignorar (cabeçalhos, totais)
+  const skipLine = (l: string) => {
+    const lo = stripAccents(l).toLowerCase();
+    return (
+      /^(data|descricao|id da operacao|valor|saldo)$/i.test(l) ||
+      /saldo (inicial|final|do dia|anterior)/i.test(lo) ||
+      /total de (entradas|saidas)/i.test(lo) ||
+      /^periodo\b|^per[ií]odo\b/i.test(lo) ||
+      /^p[áa]gina\b|^pagina \d+/i.test(lo) ||
+      /^extrato\b/i.test(lo) ||
+      /^cnpj\b|^cpf\b/i.test(lo)
+    );
+  };
+
+  const dateAtStart = /^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?\b/;
+  const moneyRegex = /[+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2}/g;
+  const opIdRegex = /\b([A-Z0-9][A-Z0-9._\-]{6,})\b/;
+
+  // Segmenta em blocos: cada bloco começa numa linha que começa com data.
+  type Block = { dateStr: string; lines: string[] };
+  const blocks: Block[] = [];
+  let current: Block | null = null;
+  for (const line of rawLines) {
+    if (skipLine(line)) continue;
+    const m = line.match(dateAtStart);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { dateStr: m[0], lines: [line.slice(m[0].length).trim()].filter(Boolean) };
+    } else if (current) {
+      current.lines.push(line);
+    }
+  }
+  if (current) blocks.push(current);
+
+  const itens: ItemBruto[] = [];
+  for (const block of blocks) {
+    const data = parseDataBR(block.dateStr, fallbackYear);
+    if (!data) continue;
+    const joined = block.lines.join(" ").replace(/\s+/g, " ").trim();
+    if (!joined) continue;
+
+    // Encontra todos os valores monetários do bloco
+    const moneyMatches = joined.match(moneyRegex) || [];
+    if (moneyMatches.length === 0) continue;
+
+    // Heurística: o último valor é o saldo (quando há 2+); o penúltimo é o valor da movimentação.
+    // Se houver apenas 1, esse é o valor da movimentação.
+    let valorStr: string | undefined;
+    let saldoStr: string | undefined;
+    if (moneyMatches.length >= 2) {
+      valorStr = moneyMatches[moneyMatches.length - 2];
+      saldoStr = moneyMatches[moneyMatches.length - 1];
+    } else {
+      valorStr = moneyMatches[0];
+    }
+    if (!valorStr) continue;
+    const signedValue = parseValorBR(valorStr);
+    if (signedValue === null) continue;
+
+    // ID da operação: token alfanumérico longo (>=7) que não seja um valor.
+    const opMatch = joined.match(opIdRegex);
+    let idOperacao: string | null = null;
+    if (opMatch && !/^\d+[.,]?\d*$/.test(opMatch[1])) {
+      idOperacao = opMatch[1];
+    }
+
+    // Descrição: remove os matches de valor e o ID encontrado.
+    let desc = joined;
+    for (const mv of moneyMatches) desc = desc.replace(mv, " ");
+    if (idOperacao) desc = desc.replace(idOperacao, " ");
+    desc = desc.replace(/\s+/g, " ").trim();
+    if (!desc) desc = "Movimentação bancária";
+
     const classification = classifyMercadoPago(desc, signedValue);
     itens.push({
       descricao: desc,
       valor: Math.abs(signedValue),
       data,
       horario: null,
-      idOperacao: match[3].trim(),
-      saldo: parseValorBR(match[5]),
+      idOperacao,
+      saldo: saldoStr ? parseValorBR(saldoStr) : null,
       origemImportacao: "extrato_pdf",
       bancoOrigem: hasMercadoPago ? "Mercado Pago" : null,
-      confianca: "alta",
+      confianca: idOperacao ? "alta" : "media",
       ...classification,
     });
   }
@@ -458,10 +535,10 @@ function normalizeItens(rawItens: ItemBruto[]) {
         CATEGORIAS_VALIDAS.includes(it.categoriaSugerida)
           ? it.categoriaSugerida
           : null;
-      const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 120) : null;
+      const desc = typeof it.descricao === "string" ? it.descricao.trim() : null;
       const contraparte =
-        typeof it.contraparte === "string" ? it.contraparte.slice(0, 80) : null;
-      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.slice(0, 80) : null;
+        typeof it.contraparte === "string" ? it.contraparte.trim() : null;
+      const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.trim() : null;
       const saldo = typeof it.saldo === "number" && Number.isFinite(it.saldo) ? it.saldo : null;
       const origemImportacao = typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
       const bancoOrigem = typeof it.bancoOrigem === "string" ? it.bancoOrigem.slice(0, 60) : null;
@@ -702,66 +779,102 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
     });
   }
 
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    {
-      role: "user",
-      content: `Texto extraído do extrato bancário em PDF. Extraia a lista de movimentações.\n\n----INÍCIO----\n${cleanText}\n----FIM----`,
-    },
-  ];
-
-  const aiResp = await callGemini(apiKey, messages);
-  return await handleAIResponse(aiResp, totalPages, "texto");
+  const chunks = chunkTextByLines(cleanText, 12_000);
+  const allItens: ItemBruto[] = [];
+  let aggObs: string | null = null;
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `Texto extraído do extrato bancário em PDF (parte ${i + 1} de ${chunks.length}). Extraia TODAS as movimentações deste trecho, sem cortar.\n\n----INÍCIO----\n${chunk}\n----FIM----`,
+      },
+    ];
+    const aiResp = await callGemini(apiKey, messages);
+    const parsed = await parseAIResponse(aiResp);
+    if ("error" in parsed) {
+      // Se é o primeiro chunk e falhou, devolve erro. Senão, segue com o que já temos.
+      if (i === 0 && allItens.length === 0) return parsed.error;
+      console.error("[import-extrato] chunk falhou, seguindo com itens parciais", i, parsed);
+      continue;
+    }
+    allItens.push(...parsed.itens);
+    if (parsed.observacao && !aggObs) aggObs = parsed.observacao;
+  }
+  return Response.json({
+    itens: normalizeItens(allItens),
+    paginas: totalPages,
+    modo: "texto",
+    observacao: aggObs,
+  });
 }
 
+/** Divide o texto em chunks por linha, sem ultrapassar maxChars por chunk. */
+function chunkTextByLines(text: string, maxChars: number): string[] {
+  const lines = text.split(/\r?\n/);
+  const chunks: string[] = [];
+  let buf = "";
+  for (const line of lines) {
+    if (buf.length + line.length + 1 > maxChars && buf.length > 0) {
+      chunks.push(buf);
+      buf = "";
+    }
+    buf += (buf ? "\n" : "") + line;
+  }
+  if (buf) chunks.push(buf);
+  return chunks.length > 0 ? chunks : [text];
+}
 
-async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
+/**
+ * Parse de resposta da IA que devolve tool-call estruturado.
+ * Retorna {itens, observacao} em sucesso, ou {error: Response} pré-formatado em falha.
+ */
+async function parseAIResponse(
+  aiResp: Response,
+): Promise<{ itens: ItemBruto[]; observacao: string | null } | { error: Response }> {
   if (!aiResp.ok) {
-    const text = await aiResp.text();
-    console.error("[import-extrato] AI gateway error", aiResp.status, text);
+    const text = await aiResp.text().catch(() => "");
+    console.error("[import-extrato] AI gateway error", aiResp.status, text.slice(0, 300));
     if (aiResp.status === 429) {
-      return Response.json(
-        { error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." },
-        { status: 429 },
-      );
+      return { error: Response.json({ error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." }, { status: 429 }) };
     }
     if (aiResp.status === 402) {
-      return Response.json(
-        { error: "Sem créditos da IA. Adicione créditos no workspace para continuar." },
-        { status: 402 },
-      );
+      return { error: Response.json({ error: "Sem créditos da IA. Adicione créditos no workspace para continuar." }, { status: 402 }) };
     }
-    return Response.json(
-      {
-        error:
-          "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar).",
-      },
-      { status: 502 },
-    );
+    return {
+      error: Response.json(
+        { error: "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar)." },
+        { status: 502 },
+      ),
+    };
   }
-
-  const json = await aiResp.json();
-  const toolCall = json?.choices?.[0]?.message?.tool_calls?.[0];
+  const json = await aiResp.json().catch(() => null);
+  const toolCall = (json as { choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }> } }> } | null)
+    ?.choices?.[0]?.message?.tool_calls?.[0];
   const argsStr = toolCall?.function?.arguments;
   if (!argsStr) {
-    return Response.json(
-      { error: "A IA não conseguiu estruturar o extrato." },
-      { status: 502 },
-    );
+    return { error: Response.json({ error: "A IA não conseguiu estruturar o extrato." }, { status: 502 }) };
   }
   let parsed: { itens?: ItemBruto[]; observacao?: unknown };
   try {
     parsed = JSON.parse(argsStr);
   } catch {
-    return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
+    return { error: Response.json({ error: "Resposta inválida da IA." }, { status: 502 }) };
   }
-  const itensRaw = Array.isArray(parsed.itens) ? parsed.itens : [];
-  const itens = normalizeItens(itensRaw);
+  const itens = Array.isArray(parsed.itens) ? parsed.itens : [];
+  const observacao = typeof parsed.observacao === "string" ? parsed.observacao : null;
+  return { itens, observacao };
+}
 
+async function handleAIResponse(aiResp: Response, paginas: number, modo: string) {
+  const parsed = await parseAIResponse(aiResp);
+  if ("error" in parsed) return parsed.error;
   return Response.json({
-    itens,
+    itens: normalizeItens(parsed.itens),
     paginas,
     modo,
-    observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
+    observacao: parsed.observacao,
   });
 }
+
