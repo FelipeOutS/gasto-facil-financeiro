@@ -1473,6 +1473,10 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
   if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
+  if (patch.horario !== undefined)
+    (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
+  if (patch.origem !== undefined)
+    (row as GastoUpdate & { origem?: string | null }).origem = patch.origem ?? null;
 
   void supabase
     .from("gastos")
