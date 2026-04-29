@@ -107,6 +107,8 @@ function CartoesPage() {
   const [editing, setEditing] = useState<Cartao | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Cartao | null>(null);
 
+  const gastos = useStore(() => getGastos());
+
   const resumo = useMemo(() => {
     const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
     let usado = 0;
@@ -123,14 +125,44 @@ function CartoesPage() {
         }
       }
     }
+    let proximaData: Date | null = null;
+    let proximaValor = 0;
+    if (proxima && proxima.diaVencimento) {
+      const hoje = new Date();
+      const alvoEsteMes = new Date(hoje.getFullYear(), hoje.getMonth(), proxima.diaVencimento);
+      proximaData =
+        proxima.diaVencimento >= hoje.getDate()
+          ? alvoEsteMes
+          : new Date(hoje.getFullYear(), hoje.getMonth() + 1, proxima.diaVencimento);
+      proximaValor = resumoFaturaCartao(proxima.id).usadoMes;
+    }
     return {
       limiteTotal,
       usado,
       disponivel: Math.max(0, limiteTotal - usado),
       proxima,
       proximaDias: proxima ? proximaDias : null,
+      proximaData,
+      proximaValor,
     };
   }, [cartoes]);
+
+  // Próximos vencimentos (todos cartões com dia definido)
+  const proximosVencimentos = useMemo(() => {
+    return cartoes
+      .filter((c) => !!c.diaVencimento)
+      .map((c) => ({ cartao: c, dias: diasAte(c.diaVencimento) }))
+      .sort((a, b) => a.dias - b.dias)
+      .slice(0, 4);
+  }, [cartoes]);
+
+  // Últimas compras no crédito (todas, top 5)
+  const ultimasCompras = useMemo(() => {
+    return gastos
+      .filter((g) => g.formaPagamento === "credito" && g.cartaoId)
+      .sort((a, b) => (a.data < b.data ? 1 : -1))
+      .slice(0, 5);
+  }, [gastos]);
 
   function handleOpenNew() {
     setEditing(null);
