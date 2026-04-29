@@ -280,7 +280,10 @@ export function ImportFaturaDialog({
 
   function aplicarMapping() {
     if (!csvMap.includes("valor") || !csvMap.includes("data")) {
-      toast.error("Indique pelo menos as colunas de Data e Valor.");
+      const msg =
+        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     const itens = rowsToItens(csvRows, csvMap);
@@ -437,6 +440,12 @@ export function ImportFaturaDialog({
               onPick={(s) => setStep(s)}
               onClose={() => onOpenChange(false)}
             />
+          )}
+
+          {errorMessage && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </div>
           )}
 
           {step === "image-upload" && (
