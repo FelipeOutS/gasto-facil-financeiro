@@ -371,9 +371,14 @@ function MetaFormDialog({
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
     }
-    setValorStr("");
+    // Pré-preenche com o valor acumulado atual no modo "atualizar valor"
+    if (isAdd && baseMeta) {
+      setValorStr(formatBRL(baseMeta.valorAtual).replace("R$", "").trim());
+    } else {
+      setValorStr("");
+    }
     setMovBanco("nenhum");
-  }, [open, isCreate, baseMeta]);
+  }, [open, isCreate, isAdd, baseMeta]);
 
   function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
