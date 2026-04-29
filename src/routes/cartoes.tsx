@@ -399,6 +399,7 @@ function CartaoCard({
   const status = statusFatura(cartao);
   const cor = cartao.cor || "#8b5cf6";
   const theme = getCardTheme(cor, cartao.banco);
+  const semCompras = r.usadoMes === 0;
 
   return (
     <article
@@ -407,64 +408,100 @@ function CartaoCard({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"
+        className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl"
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
       />
-      <div className="relative flex items-start justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
+
+      {/* Header — banco + ações */}
+      <div className="relative flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="grid h-7 w-9 shrink-0 place-items-center rounded-md bg-white/20 backdrop-blur">
+            <CreditCard className="h-3.5 w-3.5" />
+          </div>
+          <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-white/80">
             {cartao.banco || "Cartão"}
           </p>
-          <h3 className="mt-0.5 truncate text-lg font-bold">{cartao.nome}</h3>
         </div>
-        <div className="flex shrink-0 items-center gap-1 opacity-80 transition-opacity group-hover:opacity-100">
-          <button
-            onClick={onEdit}
-            aria-label="Editar cartão"
-            className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={onDelete}
-            aria-label="Remover cartão"
-            className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="Mais ações"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar cartão
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remover cartão
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="relative mt-6">
-        <div className="flex items-baseline justify-between text-xs text-white/80">
-          <span>Usado no mês</span>
-          <span className="num">{Math.round(r.pct)}%</span>
+      {/* Nome do cartão */}
+      <h3 className="relative mt-3 truncate text-xl font-bold leading-tight">
+        {cartao.nome}
+      </h3>
+
+      {/* Bloco principal — usado / limite */}
+      <div className="relative mt-5">
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-white/70">
+              Usado no mês
+            </p>
+            <p className="num mt-0.5 truncate text-2xl font-bold">
+              {formatBRL(r.usadoMes)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-widest text-white/70">
+              Limite
+            </p>
+            <p className="num mt-0.5 text-sm font-semibold text-white/90">
+              {formatBRL(r.limite)}
+            </p>
+          </div>
         </div>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
+
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-full origin-left rounded-full bg-white/90 animate-fill"
+            className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
             style={{ width: `${r.pct}%` }}
           />
         </div>
-        <div className="mt-1.5 flex items-baseline justify-between text-xs">
-          <span className="num text-white">{formatBRL(r.usadoMes)}</span>
-          <span className="num text-white/80">de {formatBRL(r.limite)}</span>
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-white/80">
+          <span className="num">{Math.round(r.pct)}% do limite</span>
+          <span className="num">{formatBRL(r.disponivel)} disponível</span>
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-3 gap-2 text-[11px]">
-        <Stat label="Disponível" value={formatBRL(r.disponivel)} />
-        <Stat label="Fecha dia" value={cartao.diaFechamento ? `${cartao.diaFechamento}` : "—"} />
-        <Stat label="Vence dia" value={cartao.diaVencimento ? `${cartao.diaVencimento}` : "—"} />
-      </div>
-
-      <div className="relative mt-4 flex items-center justify-between">
+      {/* Footer — fechamento, vencimento, status */}
+      <div className="relative mt-5 flex flex-wrap items-center gap-2 border-t border-white/15 pt-3">
+        <div className="flex items-center gap-1.5 text-[11px] text-white/85">
+          <CalendarDays className="h-3.5 w-3.5 opacity-80" />
+          <span>
+            Fecha <strong className="num font-semibold">{cartao.diaFechamento || "—"}</strong>
+            {" · "}
+            Vence <strong className="num font-semibold">{cartao.diaVencimento || "—"}</strong>
+          </span>
+        </div>
         <span
           className={cn(
-            "rounded-full px-2.5 py-1 text-[10px] font-semibold",
+            "ml-auto rounded-full px-2.5 py-1 text-[10px] font-semibold",
             status.tone === "due"
               ? "bg-white/95 text-destructive animate-pulse-soft"
               : status.tone === "soon"
@@ -472,22 +509,204 @@ function CartaoCard({
                 : "bg-white/15 text-white",
           )}
         >
-          {status.label}
-        </span>
-        <span className="text-[10px] uppercase tracking-widest text-white/70">
-          Crédito
+          {semCompras && status.tone === "ok" ? "Sem compras ainda" : status.label}
         </span>
       </div>
+
+      <span className="pointer-events-none absolute bottom-3 right-5 text-[9px] uppercase tracking-[0.2em] text-white/55">
+        Crédito
+      </span>
     </article>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/* =============== Próxima fatura (resumo topo) =============== */
+
+function ProximaFaturaCard({
+  cartao,
+  dias,
+  data,
+  valor,
+}: {
+  cartao: Cartao | null;
+  dias: number | null;
+  data: Date | null;
+  valor: number;
+}) {
+  if (!cartao) {
+    return (
+      <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Próxima fatura
+          </p>
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-card-elevated text-muted-foreground">
+            <CalendarDays className="h-4 w-4" />
+          </span>
+        </div>
+        <p className="num mt-2 truncate text-base font-bold text-muted-foreground">—</p>
+      </div>
+    );
+  }
+  const dataStr = data
+    ? `${String(data.getDate()).padStart(2, "0")}/${String(data.getMonth() + 1).padStart(2, "0")}`
+    : "";
+  const tone =
+    dias !== null && dias <= 3
+      ? "bg-destructive/15 text-destructive"
+      : dias !== null && dias <= 7
+        ? "bg-warning/15 text-warning"
+        : "bg-brand-soft text-brand-on-soft";
+
   return (
-    <div className="rounded-xl bg-white/10 px-2 py-1.5 backdrop-blur">
-      <p className="text-[9px] uppercase tracking-wide text-white/70">{label}</p>
-      <p className="num mt-0.5 truncate text-xs font-semibold">{value}</p>
+    <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Próxima fatura
+        </p>
+        <span className={cn("grid h-7 w-7 place-items-center rounded-full", tone)}>
+          <CalendarDays className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-2 truncate text-sm font-bold">{cartao.nome}</p>
+      <p className="num mt-0.5 text-[11px] text-muted-foreground">
+        {dataStr}
+        {dias !== null && (
+          <>
+            {" · "}
+            {dias === 0 ? "vence hoje" : `${dias} ${dias === 1 ? "dia" : "dias"}`}
+          </>
+        )}
+      </p>
+      {valor > 0 && (
+        <p className="num mt-1 text-xs font-semibold text-foreground">
+          {formatBRL(valor)}
+        </p>
+      )}
     </div>
+  );
+}
+
+/* =============== Aside — próximos vencimentos =============== */
+
+function ProximosVencimentos({
+  items,
+}: {
+  items: Array<{ cartao: Cartao; dias: number }>;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
+      <div className="flex items-center gap-2">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
+          <Clock className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
+          <p className="text-[11px] text-muted-foreground">Fique de olho nas datas</p>
+        </div>
+      </div>
+      <ul className="mt-3 space-y-2">
+        {items.map(({ cartao, dias }) => {
+          const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
+          const tone =
+            dias <= 3 ? "text-destructive" : dias <= 7 ? "text-warning" : "text-muted-foreground";
+          return (
+            <li
+              key={cartao.id}
+              className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
+            >
+              <span
+                className="h-8 w-8 shrink-0 rounded-lg shadow-card"
+                style={{ background: theme.background }}
+                aria-hidden
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{cartao.nome}</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {cartao.banco || "Cartão"} · vence dia {cartao.diaVencimento}
+                </p>
+              </div>
+              <span className={cn("num shrink-0 text-xs font-semibold", tone)}>
+                {dias === 0 ? "hoje" : `${dias}d`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/* =============== Aside — últimas compras no crédito =============== */
+
+function UltimasCompras({
+  gastos,
+  cartoes,
+}: {
+  gastos: Gasto[];
+  cartoes: Cartao[];
+}) {
+  const cartaoMap = useMemo(() => {
+    const m = new Map<string, Cartao>();
+    for (const c of cartoes) m.set(c.id, c);
+    return m;
+  }, [cartoes]);
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
+      <div className="flex items-center gap-2">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
+          <Receipt className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight">Últimas compras no crédito</h3>
+          <p className="text-[11px] text-muted-foreground">
+            {gastos.length === 0 ? "Nada por aqui ainda" : "Movimentações recentes"}
+          </p>
+        </div>
+      </div>
+
+      {gastos.length === 0 ? (
+        <div className="mt-4 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Quando você lançar uma compra no crédito vinculada a um cartão, ela aparece aqui.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {gastos.map((g) => {
+            const c = g.cartaoId ? cartaoMap.get(g.cartaoId) : undefined;
+            const theme = c ? getCardTheme(c.cor || "#8b5cf6", c.banco) : null;
+            const dt = new Date(g.data + "T00:00:00");
+            const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
+            return (
+              <li
+                key={g.id}
+                className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
+              >
+                <span
+                  className="h-8 w-8 shrink-0 rounded-lg shadow-card"
+                  style={theme ? { background: theme.background } : undefined}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {g.descricao || g.estabelecimento || "Compra"}
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {c?.nome || "Cartão"} · {dtStr}
+                  </p>
+                </div>
+                <span className="num shrink-0 text-xs font-semibold">
+                  {formatBRL(g.valor)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 
