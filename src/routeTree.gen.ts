@@ -28,6 +28,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
+import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
 
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
@@ -124,6 +125,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   path: '/api/ocr-gasto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiImportFaturaImagemRoute = ApiImportFaturaImagemRouteImport.update({
+  id: '/api/import-fatura-imagem',
+  path: '/api/import-fatura-imagem',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRoutesById {
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
 }
 export interface FileRouteTypes {
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-fatura-imagem'
     | '/api/ocr-gasto'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-fatura-imagem'
     | '/api/ocr-gasto'
   id:
     | '__root__'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/api/import-fatura-imagem'
     | '/api/ocr-gasto'
   fileRoutesById: FileRoutesById
 }
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
 }
 
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOcrGastoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/import-fatura-imagem': {
+      id: '/api/import-fatura-imagem'
+      path: '/api/import-fatura-imagem'
+      fullPath: '/api/import-fatura-imagem'
+      preLoaderRoute: typeof ApiImportFaturaImagemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -434,8 +454,18 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

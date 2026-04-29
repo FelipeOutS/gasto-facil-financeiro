@@ -1188,6 +1188,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           grupo_parcelamento_id: grupo,
           essencial: input.essencial ?? null,
           gasto_fixo: input.gastoFixo ?? null,
+          cartao_id: input.cartaoId ?? null,
         },
         client: {
           id,
@@ -1208,6 +1209,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           grupoParcelamentoId: grupo,
           essencial: input.essencial,
           gastoFixo: input.gastoFixo,
+          cartaoId: input.cartaoId,
           criadoEm: now,
           atualizadoEm: now,
         },
@@ -1240,6 +1242,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           recorrencia_id: recId,
           essencial: input.essencial ?? null,
           gasto_fixo: fixoFlag,
+          cartao_id: input.cartaoId ?? null,
         },
         client: {
           id,
@@ -1258,6 +1261,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
           recorrenciaId: recId,
           essencial: input.essencial,
           gastoFixo: fixoFlag,
+          cartaoId: input.cartaoId,
           criadoEm: now,
           atualizadoEm: now,
         },
@@ -1283,6 +1287,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         tipo_gasto: "unico",
         essencial: input.essencial ?? null,
         gasto_fixo: input.gastoFixo ?? null,
+        cartao_id: input.cartaoId ?? null,
       },
       client: {
         id,
@@ -1300,6 +1305,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
         tipoGasto: "unico",
         essencial: input.essencial,
         gastoFixo: input.gastoFixo,
+        cartaoId: input.cartaoId,
         criadoEm: now,
         atualizadoEm: now,
       },
@@ -1327,6 +1333,33 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
     });
   if (input.estabelecimento) {
     rememberCategoryFor(input.estabelecimento, input.categoriaId);
+  }
+  return created;
+}
+
+/**
+ * Insere múltiplos gastos em uma única chamada (importação de fatura).
+ * Faz update otimista e sincroniza com o Supabase em background.
+ */
+export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
+  if (!activeUserId || inputs.length === 0) return [];
+  const allBuilt = inputs.flatMap((inp) => buildGastosFromInput(inp, activeUserId!));
+  const created = allBuilt.map((b) => b.client);
+  memGastos = [...memGastos, ...created];
+  emit();
+  void supabase
+    .from("gastos")
+    .insert(allBuilt.map((b) => b.row))
+    .then(({ error }) => {
+      if (error) {
+        console.error("[store] addGastosBulk failed", error);
+        void refreshGastos();
+      }
+    });
+  for (const inp of inputs) {
+    if (inp.estabelecimento) {
+      rememberCategoryFor(inp.estabelecimento, inp.categoriaId);
+    }
   }
   return created;
 }
@@ -1360,6 +1393,7 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.essencial !== undefined) row.essencial = patch.essencial ?? null;
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
+  if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
 
   void supabase
     .from("gastos")

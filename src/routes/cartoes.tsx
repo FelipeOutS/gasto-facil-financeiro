@@ -12,8 +12,10 @@ import {
   MoreHorizontal,
   Receipt,
   Clock,
+  FileUp,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
 import {
   addCartao,
   deleteCartao,
@@ -115,6 +117,8 @@ function CartoesPage() {
   const [editing, setEditing] = useState<Cartao | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Cartao | null>(null);
   const [openDetail, setOpenDetail] = useState<Cartao | null>(null);
+  const [openImport, setOpenImport] = useState(false);
+  const [importCartaoId, setImportCartaoId] = useState<string | undefined>(undefined);
 
   const gastos = useStore(() => getGastos());
 
