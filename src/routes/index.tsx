@@ -403,9 +403,13 @@ function Index() {
             mes={ym.mes}
             ano={ym.ano}
             saldo={saldo}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
             maiorCategoria={maior ?? null}
             categorias={categorias}
             gastosConfirmados={gastosConfirmados}
+            contasAtrasadas={contasResumo.atrasadasCount}
+            limiteTotal={limiteTotal}
           />
           <OrcamentoCard
             categorias={categorias}
