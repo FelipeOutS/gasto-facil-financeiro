@@ -19,6 +19,7 @@ import {
   type StatusConta,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
+import { parseDateLocal, toLocalISODate } from "./format";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -242,6 +243,142 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
+}
+
+type LegacyGastoShape = Gasto & {
+  cartao_id?: string | null;
+  forma_pagamento?: string | null;
+  importado?: boolean;
+  faturaId?: string | null;
+  createdAt?: string;
+  created_at?: string;
+};
+
+const FORMAS_VALIDAS = new Set<FormaPagamento>([
+  "pix",
+  "dinheiro",
+  "debito",
+  "credito",
+  "boleto",
+  "transferencia",
+  "vale_alimentacao",
+  "vale_refeicao",
+  "outro",
+]);
+
+function normalizeFormaPagamentoValue(value: unknown): FormaPagamento {
+  const raw = String(value ?? "").trim();
+  const normalized = raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (["credito", "cartao", "cartao_credito", "cartao_de_credito", "credit_card", "credit"].includes(normalized)) {
+    return "credito";
+  }
+  if (normalized === "debito" || normalized === "cartao_de_debito") return "debito";
+  if (normalized === "vale_alimentacao" || normalized === "vale_alimentacao_") return "vale_alimentacao";
+  if (normalized === "vale_refeicao" || normalized === "vale_refeicao_") return "vale_refeicao";
+  return FORMAS_VALIDAS.has(normalized as FormaPagamento) ? (normalized as FormaPagamento) : "outro";
+}
+
+function gastoCartaoId(g: Gasto): string | undefined {
+  const legacy = g as LegacyGastoShape;
+  return g.cartaoId ?? legacy.cartao_id ?? undefined;
+}
+
+function isImportadoOuFatura(g: Gasto): boolean {
+  const legacy = g as LegacyGastoShape;
+  const origem = String(g.origem ?? "").toLowerCase();
+  return origem.includes("fatura") || origem.includes("import") || legacy.importado === true || !!legacy.faturaId;
+}
+
+function inferNearestInvoiceDate(date: Date, context: Date): Date {
+  const candidates = [context.getFullYear() - 1, context.getFullYear(), context.getFullYear() + 1]
+    .map((year) => new Date(year, date.getMonth(), date.getDate()))
+    .filter((d) => d.getMonth() === date.getMonth() && d.getDate() === date.getDate());
+  return candidates.reduce((best, candidate) =>
+    Math.abs(candidate.getTime() - context.getTime()) < Math.abs(best.getTime() - context.getTime())
+      ? candidate
+      : best,
+  candidates[0] ?? date);
+}
+
+function normalizeInvoiceDateIfNeeded(dateISO: string, contextDate: Date, force = false): string {
+  const parsed = parseDateLocal(dateISO);
+  if (!parsed) return dateISO;
+  const nearest = inferNearestInvoiceDate(parsed, contextDate);
+  const dayMs = 24 * 60 * 60 * 1000;
+  const originalDistance = Math.abs(parsed.getTime() - contextDate.getTime()) / dayMs;
+  const nearestDistance = Math.abs(nearest.getTime() - contextDate.getTime()) / dayMs;
+  if ((force || originalDistance > 120) && nearestDistance <= 75) {
+    return toLocalISODate(nearest);
+  }
+  return toLocalISODate(parsed);
+}
+
+function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpdate } {
+  const row: GastoUpdate = {};
+  const normalized: Gasto = { ...g };
+  const cartao = gastoCartaoId(g);
+  if (cartao && normalized.cartaoId !== cartao) {
+    normalized.cartaoId = cartao;
+    row.cartao_id = cartao;
+  }
+
+  const formaNormalizada = normalizeFormaPagamentoValue((g as LegacyGastoShape).forma_pagamento ?? g.formaPagamento);
+  if (cartao && normalized.formaPagamento !== "credito") {
+    normalized.formaPagamento = "credito";
+    row.forma_pagamento = "credito";
+  } else if (!cartao && normalized.formaPagamento !== formaNormalizada) {
+    normalized.formaPagamento = formaNormalizada;
+    row.forma_pagamento = formaNormalizada;
+  }
+
+  const parsed = parseDateLocal(normalized.data);
+  if (parsed) {
+    const context = parseDateLocal((g as LegacyGastoShape).createdAt ?? (g as LegacyGastoShape).created_at ?? g.criadoEm) ?? new Date();
+    const shouldFixInvoiceYear = (cartao && normalized.formaPagamento === "credito") || isImportadoOuFatura(g);
+    const normalizedDate = shouldFixInvoiceYear
+      ? normalizeInvoiceDateIfNeeded(normalized.data, context, isImportadoOuFatura(g))
+      : toLocalISODate(parsed);
+    const dateForYm = parseDateLocal(normalizedDate) ?? parsed;
+    if (normalized.data !== normalizedDate) {
+      normalized.data = normalizedDate;
+      row.data = normalizedDate;
+    }
+    if (normalized.mes !== dateForYm.getMonth() + 1 || normalized.ano !== dateForYm.getFullYear()) {
+      normalized.mes = dateForYm.getMonth() + 1;
+      normalized.ano = dateForYm.getFullYear();
+      row.mes = normalized.mes;
+      row.ano = normalized.ano;
+    }
+  }
+
+  if (normalized.confirmado === undefined || normalized.confirmado === null) {
+    normalized.confirmado = true;
+    row.confirmado = true;
+  }
+
+  return Object.keys(row).length > 0 ? { gasto: normalized, row } : { gasto: normalized };
+}
+
+function normalizeGastosForCalculations(gastos: Gasto[], persist = false): Gasto[] {
+  const updates: Array<{ id: string; row: GastoUpdate }> = [];
+  const normalized = gastos.map((g) => {
+    const result = normalizeGastoForCalculations(g);
+    if (result.row) updates.push({ id: g.id, row: result.row });
+    return result.gasto;
+  });
+  if (persist && activeUserId && updates.length > 0) {
+    void Promise.all(
+      updates.map(({ id, row }) => supabase.from("gastos").update(row).eq("id", id)),
+    ).then((results) => {
+      const failed = results.find((r) => r.error);
+      if (failed?.error) console.error("[store] normalize gastos failed", failed.error);
+    });
+  }
+  return normalized;
 }
 
 type ReceitaRow = {
