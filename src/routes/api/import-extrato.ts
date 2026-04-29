@@ -464,7 +464,13 @@ async function handleAIResponse(aiResp: Response, paginas: number, modo: string)
         { status: 402 },
       );
     }
-    return Response.json({ error: "Não consegui ler esse extrato agora." }, { status: 502 });
+    return Response.json(
+      {
+        error:
+          "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar).",
+      },
+      { status: 502 },
+    );
   }
 
   const json = await aiResp.json();
