@@ -44,6 +44,7 @@ import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -262,8 +263,8 @@ function Index() {
   return (
     <MobileShell wide>
       {/* Header */}
-      <header className="flex items-center justify-between pt-2 animate-rise">
-        <div>
+      <header className="flex items-start justify-between gap-3 pt-2 animate-rise">
+        <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
             Resumo do seu mês
           </p>
@@ -274,8 +275,11 @@ function Index() {
             Entrou, saiu, sobrou: tudo aqui.
           </p>
         </div>
-        {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
-        <div className="lg:hidden">{monthSwitcher}</div>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
+          <div className="lg:hidden">{monthSwitcher}</div>
+          <NotificationBell contas={contas} />
+        </div>
       </header>
 
       {/* ===== KPIs ===== */}
