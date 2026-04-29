@@ -2268,6 +2268,8 @@ export type NovaTransferenciaInternaInput = {
   destino?: string;
   observacao?: string;
   origemImportacao?: string;
+  importBatchId?: string;
+  idOperacaoBanco?: string;
 };
 
 export function addTransferenciasInternasBulk(
@@ -2296,6 +2298,8 @@ export function addTransferenciasInternasBulk(
       destino: inp.destino,
       observacao: inp.observacao,
       origemImportacao: inp.origemImportacao,
+      importBatchId: inp.importBatchId,
+      idOperacaoBanco: inp.idOperacaoBanco,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
       criadoEm: now,
@@ -2312,6 +2316,8 @@ export function addTransferenciasInternasBulk(
       destino: inp.destino ?? null,
       observacao: inp.observacao ?? null,
       origem_importacao: inp.origemImportacao ?? null,
+      import_batch_id: inp.importBatchId ?? null,
+      id_operacao_banco: inp.idOperacaoBanco ?? null,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
     });
