@@ -754,6 +754,239 @@ function UltimasCompras({
   );
 }
 
+/* =============== Fatura Sheet (detalhe do cartão) =============== */
+
+function FaturaSheet({
+  cartao,
+  gastos,
+  onOpenChange,
+  onEdit,
+}: {
+  cartao: Cartao | null;
+  gastos: Gasto[];
+  onOpenChange: (open: boolean) => void;
+  onEdit: (c: Cartao) => void;
+}) {
+  // Compras vinculadas (memoizadas, ordenadas por data desc)
+  const compras = useMemo(() => {
+    if (!cartao) return [];
+    return gastos
+      .filter((g) => g.cartaoId === cartao.id && g.formaPagamento === "credito")
+      .sort((a, b) => (a.data < b.data ? 1 : -1));
+  }, [cartao, gastos]);
+
+  if (!cartao) {
+    return <Sheet open={false} onOpenChange={onOpenChange} />;
+  }
+
+  const r = resumoFaturaCartao(cartao.id);
+  const status = statusFatura(cartao);
+  const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
+  const semCompras = compras.length === 0;
+
+  // Compras do mês atual = "Fatura atual" (simplificação coerente com store)
+  const hoje = new Date();
+  const mes = hoje.getMonth() + 1;
+  const ano = hoje.getFullYear();
+  const comprasFaturaAtual = compras.filter((g) => g.mes === mes && g.ano === ano);
+  const totalFatura = comprasFaturaAtual.reduce((s, g) => s + g.valor, 0);
+
+  // Próxima data de vencimento
+  const alvoEsteMes = new Date(ano, hoje.getMonth(), cartao.diaVencimento);
+  const proxVenc =
+    cartao.diaVencimento >= hoje.getDate()
+      ? alvoEsteMes
+      : new Date(ano, hoje.getMonth() + 1, cartao.diaVencimento);
+  const vencStr = `${String(proxVenc.getDate()).padStart(2, "0")}/${String(proxVenc.getMonth() + 1).padStart(2, "0")}`;
+
+  return (
+    <Sheet open={!!cartao} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto p-0 sm:max-w-[560px]"
+      >
+        {/* Hero — visual do cartão */}
+        <div
+          className="relative overflow-hidden p-6 text-white"
+          style={{ background: theme.background }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
+          />
+          <SheetHeader className="relative space-y-1 text-left">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/80">
+              {cartao.banco || "Cartão"}
+            </p>
+            <SheetTitle className="text-2xl font-bold tracking-tight text-white">
+              {cartao.nome}
+            </SheetTitle>
+            <SheetDescription className="text-white/80">
+              Sua fatura atual e últimas compras no crédito.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="relative mt-5 grid grid-cols-3 gap-2">
+            <MiniStat label="Limite" value={formatBRL(r.limite)} />
+            <MiniStat label="Usado" value={formatBRL(r.usadoMes)} />
+            <MiniStat label="Disponível" value={formatBRL(r.disponivel)} />
+          </div>
+
+          <div className="relative mt-4">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
+              <div
+                className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
+                style={{ width: `${r.pct}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] text-white/80">
+              {Math.round(r.pct)}% do limite usado
+            </p>
+          </div>
+        </div>
+
+        {/* Corpo */}
+        <div className="space-y-5 p-5">
+          {/* Cards informativos */}
+          <div className="grid grid-cols-2 gap-3">
+            <InfoCard
+              label="Próximo vencimento"
+              value={vencStr}
+              hint={`Vence dia ${cartao.diaVencimento}`}
+            />
+            <InfoCard
+              label="Fechamento"
+              value={`Dia ${cartao.diaFechamento}`}
+              hint={status.label}
+            />
+          </div>
+
+          {/* Fatura atual */}
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold tracking-tight">Sua fatura atual</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {comprasFaturaAtual.length === 0
+                    ? "Nenhuma compra neste período."
+                    : `${comprasFaturaAtual.length} ${comprasFaturaAtual.length === 1 ? "compra" : "compras"} no período`}
+                </p>
+              </div>
+              <p className="num text-base font-bold">{formatBRL(totalFatura)}</p>
+            </div>
+          </section>
+
+          {/* Lista de compras */}
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight">
+                Compras no cartão
+              </h3>
+              {!semCompras && (
+                <span className="text-[11px] text-muted-foreground">
+                  {compras.length} {compras.length === 1 ? "lançamento" : "lançamentos"}
+                </span>
+              )}
+            </div>
+
+            {semCompras ? (
+              <div className="mt-3 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-6 text-center">
+                <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
+                <p className="mt-2 text-sm font-semibold">
+                  Nenhuma compra no crédito por aqui ainda
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Lançou uma compra no crédito? Ela aparece aqui.
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {compras.slice(0, 12).map((g) => {
+                  const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
+                  const dt = new Date(g.data + "T00:00:00");
+                  const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
+                  return (
+                    <li
+                      key={g.id}
+                      className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5"
+                    >
+                      <span
+                        className="h-9 w-9 shrink-0 rounded-lg shadow-card"
+                        style={{ background: theme.background }}
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                          {g.descricao || g.estabelecimento || "Compra"}
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {cat?.nome ? `${cat.nome} · ` : ""}
+                          {dtStr}
+                          {g.tipoGasto === "parcelado" && g.totalParcelas
+                            ? ` · parcela ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
+                            : ""}
+                        </p>
+                      </div>
+                      <span className="num shrink-0 text-sm font-semibold">
+                        {formatBRL(g.valor)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          {/* Ações */}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="card-press flex-1"
+              onClick={() => onEdit(cartao)}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar cartão
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white/15 px-3 py-2 backdrop-blur">
+      <p className="text-[9px] uppercase tracking-widest text-white/70">{label}</p>
+      <p className="num mt-0.5 truncate text-sm font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function InfoCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3.5">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className="num mt-1 text-base font-bold">{value}</p>
+      {hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
 /* =============== Form =============== */
 
 const CORES_CARTAO = [
