@@ -1161,11 +1161,14 @@ function ReviewRow({
   const completo = valorOk && dataOk && descOk && cartaoOk;
 
   let badge: { label: string; tone: string } | null = null;
-  if (item.duplicado) badge = { label: "Possível duplicata", tone: "bg-warning/20 text-warning" };
+  if (item.dupStatus === "duplicado_existente")
+    badge = { label: "Já existe no app", tone: "bg-warning/20 text-warning" };
+  else if (item.dupStatus === "duplicado_lote")
+    badge = { label: "Repetido no envio", tone: "bg-warning/20 text-warning" };
   else if (!completo) badge = { label: "Incompleto", tone: "bg-destructive/15 text-destructive" };
   else if (item.confianca === "baixa")
     badge = { label: "Revisar", tone: "bg-warning/20 text-warning" };
-  else badge = { label: "Pronto para importar", tone: "bg-success/15 text-success" };
+  else badge = { label: "Novo", tone: "bg-success/15 text-success" };
 
   return (
     <div
