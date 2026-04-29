@@ -122,6 +122,10 @@ export type Receita = {
   horario?: string;
   /** Origem do registro: manual, extrato_pdf, extrato_imagem, extrato_csv. */
   origem?: string;
+  /** Lote de importação (extrato bancário). */
+  importBatchId?: string;
+  /** ID da operação no banco. */
+  idOperacaoBanco?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
