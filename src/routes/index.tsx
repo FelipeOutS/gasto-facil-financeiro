@@ -375,7 +375,8 @@ function Index() {
 
       {/* ===== Próximas contas + Limite/Renda ===== */}
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <div className="min-w-0 lg:col-span-3">
+        <div className="min-w-0 space-y-3 lg:col-span-3">
+          <AlertasContasCard contas={contas} />
           <ContasCard resumo={contasResumo} variant="sideTop" />
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
