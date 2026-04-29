@@ -169,7 +169,7 @@ function RelatoriosPage() {
       a = p.ano;
     }
     for (const s of stack) {
-      const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias });
+      const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
       arr.push({
         label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
         mes: s.mes,
@@ -180,7 +180,7 @@ function RelatoriosPage() {
       });
     }
     return arr;
-  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias]);
+  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias, guardado]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
