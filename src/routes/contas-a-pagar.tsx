@@ -1080,8 +1080,8 @@ function ContaFormDialog({
         chavePix: chavePix.trim() || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
       };
-      // Se conta recorrente e ainda não paga, pergunta escopo da edição
-      if (conta.recorrente && conta.recorrenciaId && conta.status !== "pago") {
+      // Se conta recorrente, sempre pergunta escopo da edição
+      if (conta.recorrente && conta.recorrenciaId) {
         setEditScopeFields(fields);
         return;
       }
