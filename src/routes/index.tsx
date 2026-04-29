@@ -229,7 +229,7 @@ function Index() {
           </p>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 stagger">
+        <section className="mt-6 grid grid-cols-2 gap-3">
           <WelcomeCard
             to="/renda"
             search={{ ano: ym.ano, mes: ym.mes }}
@@ -364,21 +364,21 @@ function Index() {
 
       {/* ===== Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <div className="lg:col-span-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="min-w-0 lg:col-span-3">
             <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <RecentTransactionsCard ultimos={ultimos} />
         </div>
       </div>
 
       {/* ===== Próximas contas + Limite/Renda ===== */}
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
-        <div className="lg:col-span-3">
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-5 lg:items-stretch">
+        <div className="min-w-0 lg:col-span-3">
           <ContasCard resumo={contasResumo} variant="sideTop" />
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:col-span-2">
+        <div className="grid min-w-0 grid-cols-1 gap-3 lg:col-span-2">
           {limiteTotal ? (
             <section className="rounded-2xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
