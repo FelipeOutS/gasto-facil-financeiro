@@ -103,6 +103,16 @@ type ReviewItem = {
   dupStatus: DupStatus;
 };
 
+type ExtratoResumo = {
+  banco: string | null;
+  periodoInicio: string | null;
+  periodoFim: string | null;
+  saldoInicial: number | null;
+  totalEntradas: number | null;
+  totalSaidas: number | null;
+  saldoFinal: number | null;
+};
+
 const FORMA_OPCOES = FORMAS_PAGAMENTO;
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -161,6 +171,7 @@ export function ImportExtratoDialog({
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
+  const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -168,6 +179,7 @@ export function ImportExtratoDialog({
     setLoading(false);
     setItems([]);
     setObservacaoIA(null);
+    setResumoExtrato(null);
   }, []);
 
   const handleClose = useCallback(
