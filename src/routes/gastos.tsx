@@ -178,6 +178,7 @@ function GastosPage() {
   const [valorMax, setValorMax] = useState<string>("");
   const [advOpen, setAdvOpen] = useState(false);
   const [editing, setEditing] = useState<Gasto | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const range = useMemo(
     () => getRange(periodo, { from: customFrom, to: customTo }),
