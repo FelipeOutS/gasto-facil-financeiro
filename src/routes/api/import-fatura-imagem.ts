@@ -292,6 +292,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 estabelecimento: estab,
                 valor,
                 data,
+                horario,
                 parcelaAtual: pa,
                 totalParcelas: tp,
                 categoriaSugerida: cat,
