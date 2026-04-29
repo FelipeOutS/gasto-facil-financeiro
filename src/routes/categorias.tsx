@@ -119,10 +119,10 @@ function CategoriasPage() {
       </Link>
 
       {/* Aparência */}
-      <section className="mt-5 rounded-3xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-3xl border border-border bg-card p-5 animate-rise">
         <h2 className="text-sm font-semibold">Aparência</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Escolha como o app deve aparecer para você.
+          Escolha como o app deve aparecer pra você.
         </p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {([
@@ -156,7 +156,7 @@ function CategoriasPage() {
         <div className="mt-5">
           <p className="text-xs font-medium text-foreground">Cor de destaque</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Aplica em botões, ícones, gráficos, navegação e detalhes do app.
+            Muda botões, ícones, gráficos, tabs ativas e dá um leve toque da cor no fundo do app.
           </p>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
             {ACCENTS.map((a) => {
