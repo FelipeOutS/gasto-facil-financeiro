@@ -143,6 +143,8 @@ export function ImportFaturaDialog({
     setImages([]);
     setImgLoading(false);
     setImgStage(0);
+    setPdfFile(null);
+    setPdfLoading(false);
     setCsvText("");
     setCsvHeaders([]);
     setCsvRows([]);
