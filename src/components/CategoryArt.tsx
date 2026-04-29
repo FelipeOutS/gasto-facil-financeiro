@@ -10,7 +10,7 @@
 import * as React from "react";
 
 type ArtProps = { className?: string };
-type Art = (p: ArtProps) => JSX.Element;
+type Art = (p: ArtProps) => React.ReactElement;
 
 /* ---------------------------------------------------------------- */
 /* Helpers                                                          */
