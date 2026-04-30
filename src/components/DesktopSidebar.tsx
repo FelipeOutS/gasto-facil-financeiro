@@ -1,5 +1,6 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   Home,
   List,
