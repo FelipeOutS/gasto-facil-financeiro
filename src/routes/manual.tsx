@@ -24,7 +24,17 @@ export const Route = createFileRoute("/manual")({
 
 function Manual() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [pending, setPending] = useState<null | (() => void)>(null);
+
+  useEffect(() => {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      navigate({ to: "/meu-plano" });
+    }
+  }, [canWrite, requireSubscription, navigate]);
+
+  if (!canWrite) return null;
 
   return (
     <MobileShell>
