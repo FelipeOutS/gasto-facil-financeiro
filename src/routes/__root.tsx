@@ -83,7 +83,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider>
           <AccentProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+            </AuthProvider>
           </AccentProvider>
         </ThemeProvider>
         <Scripts />
