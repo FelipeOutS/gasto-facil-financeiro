@@ -226,8 +226,90 @@ export function proximaDataApartirDe(
   return toLocalISODate(d);
 }
 
+/**
+ * Palavras-chave fortes que indicam alta probabilidade de recorrência mesmo
+ * com apenas 1 ocorrência.
+ */
+const RECURRENCE_KEYWORDS = [
+  "spotify",
+  "netflix",
+  "totalpass",
+  "meli+",
+  "meli +",
+  "melimais",
+  "apple music",
+  "apple tv",
+  "disney",
+  "amazon prime",
+  "prime video",
+  "assinatura",
+  "mensalidade",
+  "plano",
+  "academia",
+  "internet",
+  "aluguel",
+  "condominio",
+  "seguro",
+  "celular",
+  "telefone",
+  "streaming",
+  "curso",
+  "faculdade",
+  "escola",
+  "software",
+  "armazenamento",
+  "cloud",
+  "icloud",
+  "google one",
+  "microsoft",
+  "adobe",
+  "youtube premium",
+  "hbo",
+  "max",
+  "deezer",
+  "tidal",
+  "dropbox",
+];
+
+/** Categorias cujos gastos têm forte indício de serem recorrentes. */
+const RECURRENCE_CATEGORY_KEYS = [
+  "assinatura",
+  "assinaturas",
+  "aluguel",
+  "moradia",
+  "internet",
+  "educacao",
+  "academia",
+  "plano",
+  "mensalidade",
+  "streaming",
+];
+
+function textoSugereRecorrencia(
+  estabelecimento: string,
+  descricao: string,
+  categoriaNome: string | null | undefined,
+): boolean {
+  const haystack = `${estabelecimento} ${descricao} ${categoriaNome ?? ""}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (RECURRENCE_KEYWORDS.some((k) => haystack.includes(k))) return true;
+  const catNorm = (categoriaNome ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (catNorm && RECURRENCE_CATEGORY_KEYS.some((k) => catNorm.includes(k)))
+    return true;
+  return false;
+}
+
 /** Agrupa gastos e identifica candidatos a recorrência. */
-export function detectarRecorrencias(gastos: Gasto[]): RecorrenciaSugerida[] {
+export function detectarRecorrencias(
+  gastos: Gasto[],
+  opts?: { categoriaNomePorId?: (id: string | null | undefined) => string | null },
+): RecorrenciaSugerida[] {
+  const getCatNome = opts?.categoriaNomePorId ?? (() => null);
   // Agrupa por nome normalizado + valor próximo (tolerância 5%).
   const grupos = new Map<string, Gasto[]>();
   for (const g of gastos) {
@@ -239,6 +321,32 @@ export function detectarRecorrencias(gastos: Gasto[]): RecorrenciaSugerida[] {
 
   const sugeridas: RecorrenciaSugerida[] = [];
   for (const [nameKey, lista] of grupos) {
+    // Caso especial: 1 ocorrência com palavra-chave forte → vira "suspeita".
+    if (lista.length === 1) {
+      const g = lista[0];
+      const catNome = getCatNome(g.categoriaId);
+      if (!textoSugereRecorrencia(g.estabelecimento || "", g.descricao || "", catNome)) {
+        continue;
+      }
+      const proxCob = proximaDataApartirDe(g.data, "mensal");
+      const detectionKey = `${nameKey}__${g.valor.toFixed(2)}__mensal`;
+      sugeridas.push({
+        detectionKey,
+        nome: g.estabelecimento || nameKey,
+        valor: g.valor,
+        ultimoValor: undefined,
+        categoriaId: g.categoriaId,
+        formaPagamento: g.formaPagamento,
+        cartaoId: g.cartaoId,
+        frequencia: "mensal",
+        proximaCobranca: proxCob,
+        ocorrencias: 1,
+        ultimaData: g.data,
+        variacaoValor: undefined,
+        gastoIds: [g.id],
+      });
+      continue;
+    }
     if (lista.length < 2) continue;
 
     // Subgrupos por valor (tolerância: 5% ou ±R$1, o maior).
