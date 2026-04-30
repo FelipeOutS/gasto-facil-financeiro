@@ -15,7 +15,7 @@ import { getCategoriaById, getGastos, useBootstrap, useStore } from "@/lib/store
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 
 export const Route = createFileRoute("/resumo")({
-  head: () => ({ meta: [{ title: "Resumo por categoria — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Resumo por categoria — Gasto Inteligente" }] }),
   component: ResumoPage,
 });
 

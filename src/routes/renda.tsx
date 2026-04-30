@@ -85,7 +85,7 @@ function normalizeDescricao(s: string): string {
 }
 
 export const Route = createFileRoute("/renda")({
-  head: () => ({ meta: [{ title: "Minha renda — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Minha renda — Gasto Inteligente" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
     const ano = Number(search.ano);
     const mes = Number(search.mes);

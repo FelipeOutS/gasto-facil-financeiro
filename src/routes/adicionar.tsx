@@ -5,7 +5,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/adicionar")({
-  head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
   component: Adicionar,
 });
 

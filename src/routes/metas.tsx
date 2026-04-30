@@ -88,7 +88,7 @@ const STATUS_LABEL = {
 } as const;
 
 export const Route = createFileRoute("/metas")({
-  head: () => ({ meta: [{ title: "Metas financeiras — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Metas financeiras — Gasto Inteligente" }] }),
   component: MetasPage,
 });
 

@@ -60,7 +60,7 @@ import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Gasto Fácil — Resumo do mês" }],
+    meta: [{ title: "Gasto Inteligente — Resumo do mês" }],
   }),
   component: Index,
 });
@@ -244,7 +244,7 @@ function Index() {
       <MobileShell wide>
         <header className="pt-2 animate-rise">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Gasto Fácil
+            Gasto Inteligente
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight">Bora começar? 🚀</h1>
           <p className="mt-2 text-sm text-muted-foreground">

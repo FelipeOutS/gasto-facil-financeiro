@@ -52,7 +52,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/orcamento")({
   head: () => ({
     meta: [
-      { title: "Orçamento — Gasto Fácil" },
+      { title: "Orçamento — Gasto Inteligente" },
       {
         name: "description",
         content: "Acompanhe seu orçamento mensal por categoria.",

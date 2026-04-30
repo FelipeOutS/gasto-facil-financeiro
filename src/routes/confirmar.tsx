@@ -36,7 +36,7 @@ import {
 import type { FormaPagamento } from "@/lib/types";
 
 export const Route = createFileRoute("/confirmar")({
-  head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Inteligente" }] }),
   component: Confirmar,
 });
 

@@ -74,7 +74,7 @@ export function AuthShell({
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-card shadow-elevated">
             <Wallet className="h-5 w-5 text-foreground" />
           </span>
-          <span className="text-lg font-extrabold tracking-tight">Gasto Fácil</span>
+          <span className="text-lg font-extrabold tracking-tight">Gasto Inteligente</span>
         </Link>
 
         <div className="mt-8">

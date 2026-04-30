@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Entrar — Gasto Inteligente" }] }),
   component: LoginPage,
 });
 

@@ -60,7 +60,7 @@ export function DesktopSidebar() {
     >
       <div className="px-5 pt-6 pb-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Gasto Fácil
+          Gasto Inteligente
         </p>
         <h2 className="mt-1 text-lg font-bold tracking-tight">Controle financeiro</h2>
       </div>
@@ -131,7 +131,7 @@ export function DesktopSidebar() {
       </nav>
 
       <div className="px-5 py-4 text-[10px] text-muted-foreground/70">
-        © Gasto Fácil
+        © Gasto Inteligente
       </div>
     </aside>
   );

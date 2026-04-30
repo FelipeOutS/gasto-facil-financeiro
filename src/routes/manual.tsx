@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/manual")({
-  head: () => ({ meta: [{ title: "Cadastrar manualmente — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Cadastrar manualmente — Gasto Inteligente" }] }),
   component: Manual,
 });
 

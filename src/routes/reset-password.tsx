@@ -11,7 +11,7 @@ import { PasswordChecklist } from "@/components/PasswordChecklist";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Redefinir senha — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Redefinir senha — Gasto Inteligente" }] }),
   component: ResetPasswordPage,
 });
 
