@@ -50,6 +50,7 @@ import {
   useBootstrap,
   useStore,
   type NovoCartaoInput,
+  type NovoGastoInput,
 } from "@/lib/store";
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
