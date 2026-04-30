@@ -513,10 +513,9 @@ export async function gerarGastoDoMes(
     formaPagamento: (rec.formaPagamento ?? "pix") as FormaPagamento,
     cartaoId: rec.cartaoId ?? undefined,
     tipoGasto: "unico",
-    confirmado: true,
     observacao: `Gerado a partir da recorrência: ${rec.nome}`,
     origem: "recorrencia",
-  } as any;
+  };
 
   const created = addGasto(input);
   const novo = Array.isArray(created) ? created[0] : null;
