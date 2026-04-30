@@ -35,6 +35,7 @@ import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
 import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -501,11 +502,14 @@ function CartaoCard({
 
       {/* Header — banco + ações */}
       <div className="relative flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="grid h-7 w-9 shrink-0 place-items-center rounded-md bg-white/20 backdrop-blur">
-            <CreditCard className="h-3.5 w-3.5" />
-          </div>
-          <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-white/80">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <BrandLogo
+            name={cartao.banco}
+            variant="bank"
+            onDark
+            className="h-9 w-9 shrink-0"
+          />
+          <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
             {cartao.banco || "Cartão"}
           </p>
         </div>
@@ -710,10 +714,17 @@ function ProximosVencimentos({
               className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
             >
               <span
-                className="h-8 w-8 shrink-0 rounded-lg shadow-card"
+                className="relative grid h-9 w-9 shrink-0 place-items-center rounded-lg shadow-card"
                 style={{ background: theme.background }}
                 aria-hidden
-              />
+              >
+                <BrandLogo
+                  name={cartao.banco}
+                  variant="bank"
+                  className="h-6 w-6"
+                  imgClassName="p-1"
+                />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
@@ -770,18 +781,18 @@ function UltimasCompras({
         <ul className="mt-3 space-y-2">
           {gastos.map((g) => {
             const c = g.cartaoId ? cartaoMap.get(g.cartaoId) : undefined;
-            const theme = c ? getCardTheme(c.cor || "#8b5cf6", c.banco) : null;
             const dt = new Date(g.data + "T00:00:00");
             const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
+            const merchantName = g.estabelecimento || g.descricao || "";
             return (
               <li
                 key={g.id}
                 className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
               >
-                <span
-                  className="h-8 w-8 shrink-0 rounded-lg shadow-card"
-                  style={theme ? { background: theme.background } : undefined}
-                  aria-hidden
+                <BrandLogo
+                  name={merchantName}
+                  variant="merchant"
+                  className="h-9 w-9 shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
@@ -874,9 +885,12 @@ function FaturaSheet({
             className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
           />
           <SheetHeader className="relative space-y-1 text-left">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/80">
-              {cartao.banco || "Cartão"}
-            </p>
+            <div className="flex items-center gap-2.5">
+              <BrandLogo name={cartao.banco} variant="bank" onDark />
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/85">
+                {cartao.banco || "Cartão"}
+              </p>
+            </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
               {cartao.nome}
             </SheetTitle>
@@ -969,10 +983,10 @@ function FaturaSheet({
                       key={g.id}
                       className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5"
                     >
-                      <span
-                        className="h-9 w-9 shrink-0 rounded-lg shadow-card"
-                        style={{ background: theme.background }}
-                        aria-hidden
+                      <BrandLogo
+                        name={g.estabelecimento || g.descricao}
+                        variant="merchant"
+                        className="h-9 w-9 shrink-0"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">
@@ -1297,13 +1311,16 @@ function CartaoFormDialog({
                       className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
                     />
                     <div className="relative flex h-full flex-col justify-between">
-                      <div className="flex items-start justify-between">
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-white/80">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <BrandLogo
+                          name={banco}
+                          variant="bank"
+                          onDark
+                          className="h-8 w-8 shrink-0"
+                        />
+                        <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
                           {banco || "Banco"}
                         </p>
-                        <div className="grid h-8 w-10 place-items-center rounded-md bg-white/20 backdrop-blur">
-                          <CreditCard className="h-4 w-4" />
-                        </div>
                       </div>
                       <div>
                         <p className="truncate text-lg font-bold leading-tight">
