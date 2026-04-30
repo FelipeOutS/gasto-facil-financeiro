@@ -122,6 +122,17 @@ function normalizeText(s: string): string {
     .trim();
 }
 
+/** Confirma que um gasto ainda existe na tabela principal. */
+async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
+  if (!gastoId) return false;
+  const { data } = await supabaseAdmin
+    .from("gastos")
+    .select("id")
+    .eq("id", gastoId)
+    .maybeSingle();
+  return !!data;
+}
+
 export async function processarMensagemWhatsApp(
   msg: WhatsAppMessageRow,
 ): Promise<ProcessOutcome> {
