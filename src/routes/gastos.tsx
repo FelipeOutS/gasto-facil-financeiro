@@ -682,15 +682,11 @@ function GastosPage() {
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
                 >
                   <div className="relative shrink-0">
-                    {hasMerchantLogo(g.estabelecimento || g.descricao) ? (
-                      <BrandLogo
-                        name={g.estabelecimento || g.descricao}
-                        variant="merchant"
-                        className="h-10 w-10"
-                      />
-                    ) : (
-                      <CategoryIcon categoria={cat} size="md" />
-                    )}
+                    <TransactionAvatar
+                      estabelecimento={g.estabelecimento || g.descricao}
+                      categoria={cat}
+                      size="md"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
