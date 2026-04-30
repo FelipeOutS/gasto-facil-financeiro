@@ -2,7 +2,13 @@
  * Helpers server-only para a integração WhatsApp.
  * NÃO importar em código de browser.
  */
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// As tabelas whatsapp_links / whatsapp_messages foram criadas após a última
+// regeneração de tipos. Usamos um cast frouxo neste arquivo de servidor para
+// destravar enquanto o types.ts não é regenerado pelo build.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin = _supabaseAdmin as any;
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
