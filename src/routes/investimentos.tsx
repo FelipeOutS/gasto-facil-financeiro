@@ -86,8 +86,15 @@ import {
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos")({
-  component: InvestimentosPage,
+  component: InvestimentosGate,
 });
+
+function InvestimentosGate() {
+  const { can, loading } = usePlan();
+  if (loading) return null;
+  if (!can("investimentos")) return <InvestimentosBloqueado />;
+  return <InvestimentosPage />;
+}
 
 const RENT_TIPOS = [
   { id: "cdi", label: "% do CDI" },
