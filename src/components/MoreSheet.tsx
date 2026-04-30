@@ -1,0 +1,151 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import {
+  ArrowUp,
+  CalendarClock,
+  HandCoins,
+  PieChart,
+  BarChart3,
+  Wallet,
+  Repeat,
+  TrendingUp,
+  Crown,
+  Settings2,
+  Lock,
+  Sparkles,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
+import { PLAN_LABEL, type FeatureKey } from "@/lib/plans";
+import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
+
+type MoreItem = {
+  to: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  feature?: FeatureKey;
+};
+
+export const MORE_ITEMS: MoreItem[] = [
+  { to: "/renda", label: "Minha renda", description: "Receitas e fontes de renda", icon: ArrowUp },
+  { to: "/contas-a-pagar", label: "Contas a pagar", description: "Despesas e vencimentos", icon: CalendarClock },
+  { to: "/contas-a-receber", label: "Contas a receber", description: "Valores que você tem para receber", icon: HandCoins },
+  { to: "/orcamento", label: "Orçamento", description: "Limites mensais por categoria", icon: PieChart },
+  { to: "/relatorios", label: "Relatórios", description: "Análises e gráficos", icon: BarChart3 },
+  { to: "/guardado", label: "Guardado", description: "Reserva e poupança", icon: Wallet },
+  { to: "/assinaturas", label: "Assinaturas", description: "Serviços recorrentes", icon: Repeat },
+  { to: "/investimentos", label: "Investimentos", description: "Carteira e rendimentos", icon: TrendingUp, feature: "investimentos" },
+  { to: "/meu-plano", label: "Meu plano", description: "Assinatura e recursos", icon: Crown },
+  { to: "/categorias", label: "Ajustes", description: "Preferências da conta", icon: Settings2 },
+];
+
+/** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
+export const MORE_PATHS = MORE_ITEMS.map((i) => i.to);
+
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+};
+
+export function MoreSheet({ open, onOpenChange }: Props) {
+  const navigate = useNavigate();
+  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const [investLockOpen, setInvestLockOpen] = useState(false);
+
+  function handleItem(item: MoreItem) {
+    const locked = item.feature ? !can(item.feature) : false;
+    if (locked) {
+      onOpenChange(false);
+      // pequeno delay para fechar antes de abrir o modal
+      setTimeout(() => setInvestLockOpen(true), 150);
+      return;
+    }
+    onOpenChange(false);
+    navigate({ to: item.to });
+  }
+
+  return (
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden"
+        >
+          <SheetHeader className="px-5 pt-5 pb-3 text-left">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <SheetTitle className="text-lg">Mais opções</SheetTitle>
+                <SheetDescription className="text-xs">
+                  Acesse as outras áreas do seu controle financeiro.
+                </SheetDescription>
+              </div>
+              <SheetClose className="rounded-full p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Fechar</span>
+              </SheetClose>
+            </div>
+          </SheetHeader>
+
+          <div className="px-5 pb-2">
+            <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Plano atual
+              </p>
+              <div className="mt-0.5 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
+                {isTrialActive && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                    <Sparkles className="h-3 w-3" />
+                    Teste grátis · {trialDaysLeft}d
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
+            <div className="grid grid-cols-2 gap-3">
+              {MORE_ITEMS.map((item) => {
+                const locked = item.feature ? !can(item.feature) : false;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.to}
+                    type="button"
+                    onClick={() => handleItem(item)}
+                    className={cn(
+                      "group relative flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card/60 p-3 text-left transition-all active:scale-[0.98] hover:border-border hover:bg-card/80",
+                    )}
+                  >
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft/60 text-brand-on-soft">
+                      <Icon className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                    <span className="flex w-full items-center gap-1">
+                      <span className="text-sm font-semibold leading-tight">{item.label}</span>
+                      {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
+                    </span>
+                    <span className="text-[11px] leading-snug text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+      <InvestimentosLockModal open={investLockOpen} onOpenChange={setInvestLockOpen} />
+    </>
+  );
+}
