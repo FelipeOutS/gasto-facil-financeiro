@@ -4001,6 +4001,43 @@ export function statusEfetivoFatura(cartao: Cartao, mes: number, ano: number, ho
   return "aberta";
 }
 
+/**
+ * Retorna a "fatura corrente" do cartão: o ciclo cuja data de vencimento
+ * ainda não passou (próximo vencimento). Se a fatura cujo vencimento já
+ * passou ainda não foi paga, ela continua sendo a corrente (vencida).
+ *
+ * Isso evita o bug onde o app marcava como "vencida" a fatura do mês atual
+ * apenas porque o dia do vencimento já passou no calendário, mesmo o usuário
+ * já estando no ciclo seguinte (que vence no mês que vem).
+ */
+export function faturaCorrente(
+  cartao: Cartao,
+  hoje: Date = new Date(),
+): { mes: number; ano: number } {
+  const diaVenc = cartao.diaVencimento ?? 10;
+  const anoBase = hoje.getFullYear();
+  const mesBase = hoje.getMonth(); // 0-indexed
+  // Data de vencimento da fatura do mês corrente (calendário).
+  const vencMesCorrente = new Date(anoBase, mesBase, diaVenc, 23, 59, 59, 999);
+
+  // Se a fatura cujo vencimento já passou neste mês NÃO foi paga,
+  // ela é a "corrente" (vencida) — usuário ainda precisa lidar com ela.
+  if (hoje > vencMesCorrente) {
+    const mes = mesBase + 1;
+    const ano = anoBase;
+    const reg = getFatura(cartao.id, mes, ano);
+    if (reg?.status !== "paga") {
+      return { mes, ano };
+    }
+    // Se já foi paga, a próxima é o mês seguinte.
+    const prox = new Date(anoBase, mesBase + 1, 1);
+    return { mes: prox.getMonth() + 1, ano: prox.getFullYear() };
+  }
+
+  // Vencimento ainda no futuro neste mês → fatura corrente é a deste mês.
+  return { mes: mesBase + 1, ano: anoBase };
+}
+
 export async function marcarFaturaPaga(
   cartaoId: string,
   mes: number,
