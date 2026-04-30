@@ -40,10 +40,22 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
   // Every bank logo (square or wide) renders at the same visual height so
   // cards stay consistent and never overlap card content.
   if (variant === "bank" && onDark && showLogo) {
+    // Wordmarks horizontalmente longos precisam de mais espaço para ficarem legíveis.
+    const WIDE_BANK_SLUGS = new Set([
+      "mercadopago-branco",
+      "logo-santander",
+      "Banco_Bradesco",
+      "banco-do-brasil",
+      "picpay",
+      "will-bank",
+      "banco-inter",
+    ]);
+    const isWide = !!resolved.slug && WIDE_BANK_SLUGS.has(resolved.slug);
     return (
       <span
         className={cn(
           "bank-logo-container relative inline-flex items-center justify-start overflow-hidden",
+          isWide && "bank-logo-wide",
           className,
         )}
         aria-hidden

@@ -460,21 +460,35 @@ body {
    regardless of intrinsic aspect ratio, left-aligned.
    ============================================================ */
 .bank-logo-container {
-  /* Default (in-card header / preview) */
-  width: 150px;
-  height: 42px;
-  max-width: 150px;
-  max-height: 42px;
+  /* Default (in-card header / preview) — square-ish logos like Itaú/Caixa/C6 */
+  width: 170px;
+  height: 46px;
+  max-width: 170px;
+  max-height: 46px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 .bank-logo-container > img,
 .bank-logo-container > svg {
-  max-width: 150px;
-  max-height: 34px;
+  max-width: 170px;
+  max-height: 38px;
   width: auto;
   height: auto;
   object-fit: contain;
+  object-position: left center;
   display: block;
+}
+
+/* Wide variant — for horizontally-long wordmarks (Mercado Pago, Santander,
+   Bradesco, Banco do Brasil, PicPay, Will Bank, Inter). Slightly larger
+   max-width and max-height so the wordmark stays legible without overpowering
+   the card content. */
+.bank-logo-container.bank-logo-wide > img,
+.bank-logo-container.bank-logo-wide > svg {
+  max-height: 42px;
 }
 
 /* Compact variant for tight rows (e.g. due-soon list) */
