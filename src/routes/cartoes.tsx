@@ -945,10 +945,10 @@ function FaturaSheet({
   onImport: (c: Cartao) => void;
 }) {
   const hoje = new Date();
-  const [ref, setRef] = useState<{ mes: number; ano: number }>({
-    mes: hoje.getMonth() + 1,
-    ano: hoje.getFullYear(),
-  });
+  const initialRef = cartao
+    ? faturaCorrente(cartao, hoje)
+    : { mes: hoje.getMonth() + 1, ano: hoje.getFullYear() };
+  const [ref, setRef] = useState<{ mes: number; ano: number }>(initialRef);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string | null>(null);
   const [editingGasto, setEditingGasto] = useState<Gasto | null>(null);
@@ -961,7 +961,7 @@ function FaturaSheet({
   // Reset state ao trocar de cartão / abrir
   useEffect(() => {
     if (cartao) {
-      setRef({ mes: hoje.getMonth() + 1, ano: hoje.getFullYear() });
+      setRef(faturaCorrente(cartao, hoje));
       setSearch("");
       setCatFilter(null);
     }
