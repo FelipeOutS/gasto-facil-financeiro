@@ -71,6 +71,11 @@ function MeuPlanoPage() {
     !isAdminMaster && status === "ativo" && !semAssinatura;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
+  const [pixCharge, setPixCharge] = useState<{
+    qr_code?: string | null;
+    qr_code_base64?: string | null;
+    ticket_url?: string | null;
+  } | null>(null);
 
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
@@ -79,7 +84,7 @@ function MeuPlanoPage() {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
       if (!token) {
-        toast.error("Faça login para escolher um plano.");
+        toast.error("Faça login para assinar um plano.");
         return;
       }
       const res = await fetch("/api/checkout/create", {
@@ -93,7 +98,11 @@ function MeuPlanoPage() {
       const data = (await res.json()) as {
         pendingIntegration?: boolean;
         message?: string;
-        payment?: { qr_code?: string; ticket_url?: string };
+        payment?: {
+          qr_code?: string | null;
+          qr_code_base64?: string | null;
+          ticket_url?: string | null;
+        };
         error?: string;
       };
       if (!res.ok) {
@@ -102,10 +111,15 @@ function MeuPlanoPage() {
       }
       if (data.pendingIntegration) {
         toast.info(
-          "Plano selecionado. Pagamento será liberado em breve assim que a integração for configurada.",
+          "Plano selecionado. Pagamento será liberado em breve assim que a integração for concluída.",
         );
-      } else {
-        toast.success("Cobrança Pix gerada! Veja as instruções de pagamento.");
+        setPixCharge(null);
+      } else if (data.payment) {
+        setPixCharge(data.payment);
+        toast.success("Cobrança Pix gerada! Use o QR Code abaixo para pagar.");
+        if (data.payment.ticket_url) {
+          window.open(data.payment.ticket_url, "_blank", "noopener");
+        }
       }
       await refresh();
     } catch {
