@@ -97,6 +97,8 @@ export const Route = createFileRoute("/renda")({
 
 function RendaPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/renda" });

@@ -101,6 +101,8 @@ function normalizar(s: string): string {
 
 function ContasAPagarPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
