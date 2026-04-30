@@ -105,9 +105,32 @@ export const DEFAULT_CATEGORIES: Array<{
   { id: "outros", nome: "Outros", iconName: "MoreHorizontal", colorVar: "--cat-outros" },
 ];
 
+// IMPORTANT: ordem importa. Regras mais específicas primeiro.
 export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
+  // Aluguel é prioritário sobre "moradia"/"contas"
   {
-    keywords: ["mercado", "supermerc", "atacad", "hortifrut", "açougue", "padaria", "mercear", "assaí", "carrefour", "extra", "pão de açúcar", "dia "],
+    keywords: ["aluguel", "imobiliária", "imobiliaria", "locação", "locacao"],
+    categoryId: "aluguel",
+  },
+  // Assinaturas tem prioridade sobre "contas" (mensalidade, plano)
+  {
+    keywords: [
+      "netflix", "spotify", "amazon prime", "disney", "hbo", "globoplay",
+      "youtube premium", "youtube music", "deezer", "tidal", "apple music",
+      "apple tv", "icloud", "totalpass", "total pass", "gympass", "audible", "kindle",
+      "office 365", "microsoft 365", "adobe", "canva pro", "chatgpt",
+      "openai", "github", "linkedin premium", "meli+", "meli +", "mercado livre meli",
+      "assinatura", "assinaturas", "mensalidade", "plano mensal", "plano anual",
+    ],
+    categoryId: "assinaturas",
+  },
+  // Moradia: utilities residenciais, condomínio
+  {
+    keywords: ["condomín", "condomin", "luz", "energia elétrica", "energia eletrica", "conta de luz", "conta de água", "conta de agua", "água", "agua", "internet residencial", "vivo fibra", "claro net", "moradia"],
+    categoryId: "moradia",
+  },
+  {
+    keywords: ["mercado", "supermerc", "atacad", "hortifrut", "açougue", "acougue", "padaria", "mercear", "assaí", "assai", "carrefour", "extra", "pão de açúcar", "dia "],
     categoryId: "mercado",
   },
   {
@@ -135,36 +158,22 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
     categoryId: "transporte",
   },
   {
-    keywords: [
-      "netflix", "spotify", "amazon prime", "disney", "hbo", "globoplay",
-      "youtube premium", "youtube music", "deezer", "tidal", "apple music",
-      "apple tv", "icloud", "totalpass", "gympass", "audible", "kindle",
-      "office 365", "microsoft 365", "adobe", "canva pro", "chatgpt",
-      "openai", "github", "linkedin premium",
-      "assinatura", "assinaturas", "mensalidade", "plano mensal",
-    ],
-    categoryId: "assinaturas",
-  },
-  {
     keywords: ["pet shop", "petshop", "petz", "cobasi", "ração", "racao", "veterinár", "veterinar", "banho e tosa"],
     categoryId: "pet",
-  },
-  {
-    keywords: ["aluguel", "imobiliária", "imobiliaria", "locação", "locacao"],
-    categoryId: "aluguel",
-  },
-  {
-    keywords: ["luz", "energia", "água", "agua", "internet", "vivo", "claro", "tim ", "boleto", "fatura", "condomín", "condomin"],
-    categoryId: "contas",
   },
   {
     keywords: ["coursera", "udemy", "alura", "rocketseat", "faculdade", "curso", "escola", "colégio", "colegio", "mensalidade escolar"],
     categoryId: "educacao",
   },
+  // Contas (boleto/imposto/telefone genérico) — fallback antes de "outros"
+  {
+    keywords: ["boleto", "fatura", "iptu", "ipva", "tributo", "imposto", "vivo", "claro", "tim "],
+    categoryId: "contas",
+  },
 ];
 
 export function suggestCategoryFromText(text: string): string {
-  const t = text.toLowerCase();
+  const t = (text || "").toLowerCase();
   for (const { keywords, categoryId } of KEYWORD_MAP) {
     if (keywords.some((k) => t.includes(k))) return categoryId;
   }
