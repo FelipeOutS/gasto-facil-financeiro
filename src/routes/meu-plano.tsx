@@ -264,11 +264,65 @@ function MeuPlanoPage() {
               disabled={submitting !== null}
             >
               <Zap className="mr-2 h-4 w-4" />
-              Escolher {PLAN_LABEL[recommended]}
+              Assinar agora — {PLAN_LABEL[recommended]}
             </Button>
           </div>
         )}
       </section>
+
+      {/* QR Code Pix — exibido após gerar cobrança */}
+      {!isAdminMaster && pixCharge && (pixCharge.qr_code_base64 || pixCharge.ticket_url) && (
+        <section className="mt-4 overflow-hidden rounded-3xl border border-amber-500/30 bg-amber-500/5 p-5">
+          <p className="text-[11px] uppercase tracking-widest text-amber-600 dark:text-amber-400">
+            Pague com Pix
+          </p>
+          <h3 className="mt-1 text-base font-bold">Escaneie o QR Code abaixo</h3>
+          {pixCharge.qr_code_base64 && (
+            <img
+              src={`data:image/png;base64,${pixCharge.qr_code_base64}`}
+              alt="QR Code Pix"
+              className="mx-auto mt-3 h-48 w-48 rounded-xl bg-white p-2"
+            />
+          )}
+          {pixCharge.qr_code && (
+            <div className="mt-3">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Pix Copia e Cola
+              </p>
+              <textarea
+                readOnly
+                value={pixCharge.qr_code}
+                className="mt-1 h-20 w-full resize-none rounded-xl border border-border bg-background p-2 text-xs"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 w-full rounded-xl"
+                onClick={() => {
+                  navigator.clipboard.writeText(pixCharge.qr_code ?? "");
+                  toast.success("Código Pix copiado!");
+                }}
+              >
+                Copiar código Pix
+              </Button>
+            </div>
+          )}
+          {pixCharge.ticket_url && (
+            <a
+              href={pixCharge.ticket_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 block rounded-xl border border-border bg-card px-3 py-2 text-center text-xs font-semibold hover:border-primary/40"
+            >
+              Abrir página de pagamento Mercado Pago
+            </a>
+          )}
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Após o pagamento ser aprovado, seu plano é ativado automaticamente.
+          </p>
+        </section>
+      )}
 
       {/* Recursos */}
       <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
