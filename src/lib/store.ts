@@ -1538,7 +1538,8 @@ function inferCategoriaForGasto(g: Pick<Gasto, "descricao" | "estabelecimento" |
 
 export async function reclassificarCategoriasExistentes(): Promise<number> {
   if (!activeUserId) return 0;
-  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
+  const userId = activeUserId;
+  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId);
   if (error || !data) {
     if (error) console.error("[store] reclassificarCategoriasExistentes load failed", error);
     return 0;
@@ -1562,7 +1563,7 @@ export async function reclassificarCategoriasExistentes(): Promise<number> {
 
   const results = await Promise.all(
     updates.map(({ id, categoriaUuid }) =>
-      supabase.from("gastos").update({ categoria_id: categoriaUuid }).eq("id", id).eq("user_id", activeUserId),
+      supabase.from("gastos").update({ categoria_id: categoriaUuid }).eq("id", id).eq("user_id", userId),
     ),
   );
   const failed = results.find((r) => r.error);
