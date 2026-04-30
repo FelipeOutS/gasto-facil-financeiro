@@ -239,6 +239,7 @@ function InvestimentosPage() {
                   Number(a.valor_aplicado || 0) > 0
                     ? (lucro / Number(a.valor_aplicado)) * 100
                     : 0;
+                const ult = descreverUltimaAtualizacao(a.ultima_atualizacao);
                 return (
                   <li key={a.id} className="py-3 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-brand-soft/60 grid place-items-center text-brand-on-soft font-semibold text-xs shrink-0">
@@ -256,6 +257,21 @@ function InvestimentosPage() {
                         {a.quantidade ? `${a.quantidade} · ` : ""}
                         Aplicado {formatBRL(Number(a.valor_aplicado || 0))} · Atual {formatBRL(Number(a.valor_atual || 0))}
                       </div>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] gap-1 ${ult.desatualizado ? "border-amber-500/40 text-amber-500" : "text-muted-foreground"}`}
+                        >
+                          <Clock className="h-2.5 w-2.5" />
+                          {ult.label}
+                        </Badge>
+                        {ult.desatualizado && a.ultima_atualizacao && (
+                          <span className="text-[10px] text-amber-500/80 flex items-center gap-1">
+                            <AlertTriangle className="h-2.5 w-2.5" />
+                            Valor pode estar desatualizado
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right shrink-0">
                       <div className={`text-sm font-semibold ${lucro >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
@@ -266,6 +282,15 @@ function InvestimentosPage() {
                       </div>
                     </div>
                     <div className="flex gap-1 ml-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-brand"
+                        title="Atualizar valor"
+                        onClick={() => setAtualizandoAtivo(a)}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(a); setOpenAdd(true); }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
