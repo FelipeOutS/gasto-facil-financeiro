@@ -30,6 +30,7 @@ import { Upload, History } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { BrandLogo } from "@/components/BrandLogo";
+import { hasMerchantLogo } from "@/lib/logos";
 import { Money, CountNumber } from "@/components/Money";
 import { AnimatePresence, motion } from "framer-motion";
 import {
