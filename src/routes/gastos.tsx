@@ -39,6 +39,7 @@ import {
   getCategoriaById,
   getCategorias,
   getGastos,
+  refreshGastos,
   useBootstrap,
   useStore,
 } from "@/lib/store";
