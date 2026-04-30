@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowLeft,
   Check,
   Crown,
+  Hourglass,
   Lock,
   Sparkles,
   Zap,
@@ -14,6 +16,7 @@ import {
   COMMERCIAL_PLANS,
   PLAN_FEATURES,
   PLAN_LABEL,
+  commercialPlanByTier,
   planAllowsFeature,
   suggestedUpgrade,
   type PlanTier,
@@ -25,6 +28,8 @@ import {
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/meu-plano")({
   head: () => ({ meta: [{ title: "Meu plano — Gasto Fácil" }] }),
@@ -34,24 +39,81 @@ export const Route = createFileRoute("/meu-plano")({
 const STATUS_LABEL: Record<string, string> = {
   ativo: "Ativo",
   teste: "Em teste",
+  aguardando_pagamento: "Aguardando pagamento",
   expirado: "Expirado",
   cancelado: "Cancelado",
+  sem_assinatura: "Sem assinatura",
 };
 
 const STATUS_TONE: Record<string, string> = {
   ativo: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
   teste: "border-primary/30 bg-primary/10 text-primary",
+  aguardando_pagamento:
+    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
   expirado: "border-destructive/30 bg-destructive/10 text-destructive",
   cancelado: "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
+  sem_assinatura:
+    "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
 };
 
 function MeuPlanoPage() {
   const { profile } = useAuth();
-  const { plan, status, trialEndsAt, loading, isAdminMaster } = usePlan();
+  const { plan, storedPlan, status, trialEndsAt, loading, isAdminMaster, refresh } =
+    usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
-  const semAssinatura = plan === "sem_assinatura" || plan === "free";
+  const semAssinatura =
+    !isAdminMaster &&
+    (storedPlan === "sem_assinatura" || storedPlan === "free");
+  const aguardando = !isAdminMaster && status === "aguardando_pagamento";
+  const ativoPago =
+    !isAdminMaster && status === "ativo" && !semAssinatura;
+
+  const [submitting, setSubmitting] = useState<PlanTier | null>(null);
+
+  async function escolherPlano(tier: PlanTier) {
+    if (isAdminMaster) return;
+    setSubmitting(tier);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        toast.error("Faça login para escolher um plano.");
+        return;
+      }
+      const res = await fetch("/api/checkout/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plano: tier, method: "pix" }),
+      });
+      const data = (await res.json()) as {
+        pendingIntegration?: boolean;
+        message?: string;
+        payment?: { qr_code?: string; ticket_url?: string };
+        error?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.error ?? "Não foi possível iniciar o pagamento.");
+        return;
+      }
+      if (data.pendingIntegration) {
+        toast.info(
+          "Plano selecionado. Pagamento será liberado em breve assim que a integração for configurada.",
+        );
+      } else {
+        toast.success("Cobrança Pix gerada! Veja as instruções de pagamento.");
+      }
+      await refresh();
+    } catch {
+      toast.error("Erro inesperado ao iniciar pagamento.");
+    } finally {
+      setSubmitting(null);
+    }
+  }
 
   return (
     <MobileShell wide>
@@ -77,9 +139,11 @@ function MeuPlanoPage() {
           "mt-6 overflow-hidden rounded-3xl border p-5 shadow-card",
           isAdminMaster
             ? "border-amber-400/40 bg-gradient-to-br from-amber-500/15 via-card to-primary/10"
-            : semAssinatura
-              ? "border-border bg-card"
-              : "border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card",
+            : aguardando
+              ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card"
+              : ativoPago
+                ? "border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card"
+                : "border-border bg-card",
         )}
       >
         <div className="flex items-start justify-between gap-3">
@@ -90,6 +154,8 @@ function MeuPlanoPage() {
             <div className="mt-1 flex items-center gap-2">
               {isAdminMaster ? (
                 <Crown className="h-5 w-5 text-amber-500" />
+              ) : aguardando ? (
+                <Hourglass className="h-5 w-5 text-amber-500" />
               ) : (
                 <Sparkles className="h-5 w-5 text-primary" />
               )}
@@ -98,19 +164,32 @@ function MeuPlanoPage() {
                   ? "Carregando…"
                   : isAdminMaster
                     ? "Acesso total"
-                    : semAssinatura
-                      ? "Sem assinatura ativa"
-                      : PLAN_LABEL[plan]}
+                    : aguardando
+                      ? "Aguardando pagamento"
+                      : semAssinatura
+                        ? "Sem assinatura ativa"
+                        : PLAN_LABEL[plan]}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Tipo:{" "}
               {isAdminMaster ? "Admin Master" : tipoCadastroLabel(tipo)}
             </p>
+            {ativoPago && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {commercialPlanByTier(plan)?.priceLabel}
+              </p>
+            )}
             {isAdminMaster && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Usuário com acesso completo ao sistema. Todos os recursos
-                atuais e futuros estão liberados.
+                Usuário com acesso completo. Todos os recursos atuais e futuros
+                estão liberados — sem cobrança.
+              </p>
+            )}
+            {aguardando && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Finalize o pagamento para liberar os recursos do plano{" "}
+                <strong>{PLAN_LABEL[plan]}</strong>.
               </p>
             )}
             {!isAdminMaster && semAssinatura && (
@@ -122,7 +201,7 @@ function MeuPlanoPage() {
           <span
             className={cn(
               "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-              STATUS_TONE[status] ?? STATUS_TONE.ativo,
+              STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
             )}
           >
             {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
@@ -138,26 +217,41 @@ function MeuPlanoPage() {
 
         {isAdminMaster ? (
           <div className="mt-5">
-            <Button
-              className="w-full rounded-2xl"
-              variant="outline"
-              disabled
-            >
+            <Button className="w-full rounded-2xl" variant="outline" disabled>
               <Crown className="mr-2 h-4 w-4 text-amber-500" />
               Acesso total liberado
             </Button>
           </div>
+        ) : aguardando ? (
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <Button
+              className="rounded-2xl sm:flex-1"
+              onClick={() => escolherPlano(plan)}
+              disabled={submitting !== null}
+            >
+              <Hourglass className="mr-2 h-4 w-4" />
+              Gerar nova cobrança Pix
+            </Button>
+          </div>
+        ) : ativoPago ? (
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+              Trocar plano
+            </Button>
+            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+              Cancelar assinatura
+            </Button>
+          </div>
         ) : (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Button className="rounded-2xl sm:flex-1" disabled>
+            <Button
+              className="rounded-2xl sm:flex-1"
+              onClick={() => escolherPlano(recommended)}
+              disabled={submitting !== null}
+            >
               <Zap className="mr-2 h-4 w-4" />
-              {semAssinatura
-                ? `Assinar ${PLAN_LABEL[recommended]}`
-                : `Fazer upgrade para ${PLAN_LABEL[recommended]}`}
+              Escolher {PLAN_LABEL[recommended]}
             </Button>
-            <span className="text-center text-[11px] text-muted-foreground sm:self-center">
-              Pagamento em breve
-            </span>
           </div>
         )}
       </section>
@@ -168,7 +262,9 @@ function MeuPlanoPage() {
       </h3>
       <section className="mt-3 grid gap-2 sm:grid-cols-2">
         {PLAN_FEATURES.map((f) => {
-          const allowed = planAllowsFeature(plan, f.feature);
+          const allowed =
+            isAdminMaster ||
+            (ativoPago && planAllowsFeature(plan, f.feature));
           return (
             <div
               key={f.feature}
@@ -203,9 +299,10 @@ function MeuPlanoPage() {
       <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
         Planos disponíveis
       </h3>
-      <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {COMMERCIAL_PLANS.map((p) => {
-          const isCurrent = !isAdminMaster && plan === p.tier;
+          const isCurrent = !isAdminMaster && plan === p.tier && ativoPago;
+          const isPending = !isAdminMaster && plan === p.tier && aguardando;
           return (
             <div
               key={p.tier}
@@ -213,7 +310,9 @@ function MeuPlanoPage() {
                 "flex flex-col rounded-2xl border p-4 transition-colors",
                 isCurrent
                   ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-primary/40",
+                  : isPending
+                    ? "border-amber-500/40 bg-amber-500/5"
+                    : "border-border bg-card hover:border-primary/40",
               )}
             >
               <div className="flex items-center justify-between gap-2">
@@ -221,6 +320,11 @@ function MeuPlanoPage() {
                 {isCurrent && (
                   <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
                     Atual
+                  </span>
+                )}
+                {isPending && (
+                  <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    Aguardando
                   </span>
                 )}
               </div>
@@ -244,20 +348,25 @@ function MeuPlanoPage() {
                   size="sm"
                   className="w-full rounded-xl"
                   variant={isCurrent ? "outline" : "default"}
-                  disabled
+                  disabled={isAdminMaster || isCurrent || submitting !== null}
+                  onClick={() => escolherPlano(p.tier)}
                 >
                   {isAdminMaster
                     ? "Acesso total"
                     : isCurrent
                       ? "Plano atual"
-                      : "Pagamento em breve"}
+                      : isPending
+                        ? "Gerar nova cobrança"
+                        : submitting === p.tier
+                          ? "Gerando…"
+                          : "Escolher plano"}
                 </Button>
               </div>
             </div>
           );
         })}
         {/* Investimentos: card "em breve" */}
-        <div className="flex flex-col rounded-2xl border border-dashed border-border bg-card/50 p-4 sm:col-span-2 xl:col-span-4">
+        <div className="flex flex-col rounded-2xl border border-dashed border-border bg-card/50 p-4 sm:col-span-2 xl:col-span-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-semibold">Investimentos</p>
             <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
@@ -272,12 +381,9 @@ function MeuPlanoPage() {
       </section>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
-        Pagamento ainda não disponível — você está visualizando a estrutura
-        comercial dos planos.
+        Pagamentos via Pix e cartão pelo Mercado Pago. A cobrança real é
+        liberada assim que a integração de pagamento estiver configurada.
       </p>
-
-      {/* Suprimir warning de variável não usada quando Admin Master */}
-      <span className="hidden">{recommended as PlanTier}</span>
     </MobileShell>
   );
 }
