@@ -92,17 +92,19 @@ export function DashboardCartoesInsights({
   const usoCartoes = useMemo(() => {
     return cartoes
       .map((c) => {
-        const gastos = gastosDaFatura(c.id, mes, ano);
+        // Usa o ciclo corrente do cartão (não o mês de calendário do dashboard).
+        const { mes: mesCorr, ano: anoCorr } = faturaCorrente(c, hoje);
+        const gastos = gastosDaFatura(c.id, mesCorr, anoCorr);
         const usado = gastos.reduce((s, g) => s + g.valor, 0);
         const limite = c.limiteTotal || 0;
         const pct = limite > 0 ? Math.min(150, (usado / limite) * 100) : 0;
-        const status = statusEfetivoFatura(c, mes, ano, hoje);
-        return { cartao: c, usado, limite, pct, qtd: gastos.length, status };
+        const status = statusEfetivoFatura(c, mesCorr, anoCorr, hoje);
+        return { cartao: c, usado, limite, pct, qtd: gastos.length, status, mes: mesCorr, ano: anoCorr };
       })
       .filter((u) => u.qtd > 0 || u.usado > 0)
       .sort((a, b) => b.usado - a.usado)
       .slice(0, 3);
-  }, [cartoes, mes, ano, hoje]);
+  }, [cartoes, hoje]);
 
   /* -------------------- Próximos vencimentos de fatura -------------------- */
   const proximosVencimentos = useMemo(() => {
@@ -120,39 +122,34 @@ export function DashboardCartoesInsights({
     }> = [];
 
     for (const c of cartoes) {
-      // Olha o mês corrente e os 2 próximos para encontrar a próxima fatura não-paga.
-      for (let offset = 0; offset <= 2; offset++) {
-        const ref = new Date(ano, mes - 1 + offset, 1);
-        const m = ref.getMonth() + 1;
-        const a = ref.getFullYear();
-        const status = statusEfetivoFatura(c, m, a, hoje);
-        if (status === "paga") continue;
-        const diaVenc = c.diaVencimento ?? 10;
-        const dataVenc = new Date(a, m - 1, diaVenc);
-        const dias = diffDays(dataVenc, hoje);
-        // Mostra somente o que vence em <=10 dias OU já está vencida.
-        if (dias > 10 && status !== "vencida") continue;
-        const gastos = gastosDaFatura(c.id, m, a);
-        const total = gastos.reduce((s, g) => s + g.valor, 0);
-        items.push({
-          cartaoId: c.id,
-          cartaoNome: c.nome,
-          banco: c.banco,
-          cor: c.cor,
-          mes: m,
-          ano: a,
-          dataVencimento: dataVenc,
-          diasRestantes: dias,
-          total,
-          status,
-        });
-        break; // só a próxima fatura relevante por cartão
-      }
+      // Fatura corrente do cartão (próximo vencimento real, não mês de calendário).
+      const { mes: mesCorr, ano: anoCorr } = faturaCorrente(c, hoje);
+      const status = statusEfetivoFatura(c, mesCorr, anoCorr, hoje);
+      if (status === "paga") continue;
+      const diaVenc = c.diaVencimento ?? 10;
+      const dataVenc = new Date(anoCorr, mesCorr - 1, diaVenc);
+      const dias = diffDays(dataVenc, hoje);
+      // Mostra somente o que vence em <=10 dias OU já está vencida.
+      if (dias > 10 && status !== "vencida") continue;
+      const gastos = gastosDaFatura(c.id, mesCorr, anoCorr);
+      const total = gastos.reduce((s, g) => s + g.valor, 0);
+      items.push({
+        cartaoId: c.id,
+        cartaoNome: c.nome,
+        banco: c.banco,
+        cor: c.cor,
+        mes: mesCorr,
+        ano: anoCorr,
+        dataVencimento: dataVenc,
+        diasRestantes: dias,
+        total,
+        status,
+      });
     }
     return items
       .sort((a, b) => a.dataVencimento.getTime() - b.dataVencimento.getTime())
       .slice(0, 4);
-  }, [cartoes, mes, ano, hoje]);
+  }, [cartoes, hoje]);
 
   /* -------------------- Maiores gastos do mês -------------------- */
   const maioresGastos = useMemo(() => {
