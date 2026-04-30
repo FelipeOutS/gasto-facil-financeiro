@@ -502,16 +502,14 @@ function CartaoCard({
 
       {/* Header — banco + ações */}
       <div className="relative flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center">
           <BrandLogo
             name={cartao.banco}
             variant="bank"
             onDark
-            className="h-9 w-9 shrink-0"
+            className="h-12 w-12 shrink-0"
+            imgClassName="p-1"
           />
-          <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
-            {cartao.banco || "Cartão"}
-          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
