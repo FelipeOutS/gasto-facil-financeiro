@@ -24,6 +24,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
+import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
@@ -116,6 +117,11 @@ const GuardadoRoute = GuardadoRouteImport.update({
 const GastosRoute = GastosRouteImport.update({
   id: '/gastos',
   path: '/gastos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContasAReceberRoute = ContasAReceberRouteImport.update({
+  id: '/contas-a-receber',
+  path: '/contas-a-receber',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAPagarRoute = ContasAPagarRouteImport.update({
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
+  '/contas-a-receber': typeof ContasAReceberRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
+  '/contas-a-receber': typeof ContasAReceberRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
+  '/contas-a-receber': typeof ContasAReceberRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
+    | '/contas-a-receber'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
+    | '/contas-a-receber'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
+    | '/contas-a-receber'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
   ContasAPagarRoute: typeof ContasAPagarRoute
+  ContasAReceberRoute: typeof ContasAReceberRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
   InvestimentosRoute: typeof InvestimentosRoute
@@ -566,6 +579,13 @@ declare module '@tanstack/react-router' {
       path: '/gastos'
       fullPath: '/gastos'
       preLoaderRoute: typeof GastosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contas-a-receber': {
+      id: '/contas-a-receber'
+      path: '/contas-a-receber'
+      fullPath: '/contas-a-receber'
+      preLoaderRoute: typeof ContasAReceberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contas-a-pagar': {
@@ -707,6 +727,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,
   ContasAPagarRoute: ContasAPagarRoute,
+  ContasAReceberRoute: ContasAReceberRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
   InvestimentosRoute: InvestimentosRoute,
