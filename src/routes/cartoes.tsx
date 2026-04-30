@@ -26,6 +26,14 @@ import {
   Receipt,
   Clock,
   FileUp,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  X,
+  CheckCircle2,
+  RotateCcw,
+  AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
