@@ -242,26 +242,34 @@ export function hasMerchantLogo(name: string | undefined | null): boolean {
 
 /** All bank logo URLs — useful for preloading on screens that swap cards. */
 export const ALL_BANK_LOGO_URLS: ReadonlyArray<string> = Object.values(BANK_URL);
+/** All merchant logo URLs — preload to make transaction lists feel instant. */
+export const ALL_MERCHANT_LOGO_URLS: ReadonlyArray<string> = Object.values(MERCHANT_URL);
 
-/**
- * Eagerly preload every bank logo into the browser cache. Idempotent.
- * Call once on the cards screen so swaps are instant — no flash, no delay.
- */
-let _preloaded = false;
-export function preloadAllBankLogos(): void {
-  if (_preloaded || typeof document === "undefined") return;
-  _preloaded = true;
-  for (const url of ALL_BANK_LOGO_URLS) {
-    // <link rel="preload"> ensures the asset is fetched and cached at high
-    // priority without triggering a layout image element.
+function preloadUrls(urls: ReadonlyArray<string>): void {
+  if (typeof document === "undefined") return;
+  for (const url of urls) {
     const link = document.createElement("link");
     link.rel = "preload";
     link.as = "image";
     link.href = url;
     link.type = "image/svg+xml";
     document.head.appendChild(link);
-    // Belt & suspenders: also prime the HTTP cache via Image().
     const img = new Image();
     img.src = url;
   }
 }
+
+let _bankPreloaded = false;
+export function preloadAllBankLogos(): void {
+  if (_bankPreloaded) return;
+  _bankPreloaded = true;
+  preloadUrls(ALL_BANK_LOGO_URLS);
+}
+
+let _merchantPreloaded = false;
+export function preloadAllMerchantLogos(): void {
+  if (_merchantPreloaded) return;
+  _merchantPreloaded = true;
+  preloadUrls(ALL_MERCHANT_LOGO_URLS);
+}
+
