@@ -712,6 +712,7 @@ function GastosPage() {
               return (
                 <motion.li
                   key={g.id}
+                  id={`gasto-${g.id}`}
                   layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{
@@ -724,7 +725,10 @@ function GastosPage() {
                     x: 80,
                     transition: { duration: 0.22 },
                   }}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
+                  className={cn(
+                    "flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift",
+                    highlightId === g.id && "ring-2 ring-emerald-500/70 border-emerald-500/40 bg-emerald-500/5",
+                  )}
                 >
                   <div className="relative shrink-0">
                     <TransactionAvatar
