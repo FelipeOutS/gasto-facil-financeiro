@@ -146,7 +146,15 @@ function InvestimentosPage() {
               Acompanhe sua carteira, evolução patrimonial e rendimentos em um só lugar.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)}>
+              <History className="h-4 w-4 mr-1.5" /> Importações
+              {importacoes.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5">
+                  {importacoes.length}
+                </Badge>
+              )}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Importar
             </Button>
