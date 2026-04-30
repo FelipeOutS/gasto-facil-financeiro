@@ -21,6 +21,7 @@ import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
@@ -100,6 +101,11 @@ const ManualRoute = ManualRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestimentosRoute = InvestimentosRouteImport.update({
+  id: '/investimentos',
+  path: '/investimentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuardadoRoute = GuardadoRouteImport.update({
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/investimentos': typeof InvestimentosRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/investimentos': typeof InvestimentosRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
+  '/investimentos': typeof InvestimentosRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
+    | '/investimentos'
     | '/login'
     | '/manual'
     | '/metas'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
+    | '/investimentos'
     | '/login'
     | '/manual'
     | '/metas'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/gastos'
     | '/guardado'
+    | '/investimentos'
     | '/login'
     | '/manual'
     | '/metas'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   ContasAPagarRoute: typeof ContasAPagarRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
+  InvestimentosRoute: typeof InvestimentosRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
   MetasRoute: typeof MetasRoute
@@ -532,6 +545,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investimentos': {
+      id: '/investimentos'
+      path: '/investimentos'
+      fullPath: '/investimentos'
+      preLoaderRoute: typeof InvestimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guardado': {
@@ -689,6 +709,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAPagarRoute: ContasAPagarRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
+  InvestimentosRoute: InvestimentosRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
   MetasRoute: MetasRoute,

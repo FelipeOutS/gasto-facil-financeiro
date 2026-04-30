@@ -15,6 +15,7 @@ import {
   CreditCard,
   BarChart3,
   Crown,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
