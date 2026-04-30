@@ -29,6 +29,7 @@ import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
@@ -141,6 +142,11 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssinaturasRoute = AssinaturasRouteImport.update({
+  id: '/assinaturas',
+  path: '/assinaturas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdicionarRoute = AdicionarRouteImport.update({
   id: '/adicionar',
   path: '/adicionar',
@@ -202,6 +208,7 @@ const ApiPublicWebhooksMercadopagoRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/adicionar'
+    | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/adicionar'
+    | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/adicionar'
+    | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
@@ -404,6 +416,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
+  AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
   CartoesRoute: typeof CartoesRoute
   CategoriasRoute: typeof CategoriasRoute
@@ -577,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assinaturas': {
+      id: '/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/assinaturas'
+      preLoaderRoute: typeof AssinaturasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/adicionar': {
       id: '/adicionar'
       path: '/adicionar'
@@ -660,6 +680,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
+  AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
   CartoesRoute: CartoesRoute,
   CategoriasRoute: CategoriasRoute,
