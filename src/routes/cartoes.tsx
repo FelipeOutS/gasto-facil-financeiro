@@ -128,14 +128,23 @@ function CartoesPage() {
 
   const gastos = useStore(() => getGastos());
 
+  // Pré-computa resumo de TODOS os cartões em um único memo. Evita chamar
+  // resumoFaturaCartao() repetidamente durante render dos cards e no aside,
+  // o que pesava ao tocar/abrir um cartão.
+  const resumosPorCartao = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof resumoFaturaCartao>>();
+    for (const c of cartoes) map.set(c.id, resumoFaturaCartao(c.id));
+    return map;
+  }, [cartoes, gastos]);
+
   const resumo = useMemo(() => {
     const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
     let usado = 0;
     let proxima: Cartao | null = null;
     let proximaDias = Infinity;
     for (const c of cartoes) {
-      const r = resumoFaturaCartao(c.id);
-      usado += r.usadoMes;
+      const r = resumosPorCartao.get(c.id);
+      if (r) usado += r.usadoMes;
       if (c.diaVencimento) {
         const d = diasAte(c.diaVencimento);
         if (d < proximaDias) {
@@ -153,7 +162,7 @@ function CartoesPage() {
         proxima.diaVencimento >= hoje.getDate()
           ? alvoEsteMes
           : new Date(hoje.getFullYear(), hoje.getMonth() + 1, proxima.diaVencimento);
-      proximaValor = resumoFaturaCartao(proxima.id).usadoMes;
+      proximaValor = resumosPorCartao.get(proxima.id)?.usadoMes ?? 0;
     }
     return {
       limiteTotal,
@@ -164,7 +173,7 @@ function CartoesPage() {
       proximaData,
       proximaValor,
     };
-  }, [cartoes, gastos]);
+  }, [cartoes, resumosPorCartao]);
 
   // Próximos vencimentos (todos cartões com dia definido)
   const proximosVencimentos = useMemo(() => {
