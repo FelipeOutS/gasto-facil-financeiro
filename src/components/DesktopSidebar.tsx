@@ -39,6 +39,7 @@ const ITEMS: NavItem[] = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
   { to: "/renda", label: "Minha renda", icon: ArrowUp },
   { to: "/contas-a-pagar", label: "Contas a pagar", icon: CalendarClock },
+  { to: "/contas-a-receber", label: "Contas a receber", icon: HandCoins },
   { to: "/orcamento", label: "Orçamento", icon: PieChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/guardado", label: "Guardado", icon: Wallet },
@@ -52,6 +53,9 @@ export function DesktopSidebar() {
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
+  const { can } = usePlan();
+  const [investLockOpen, setInvestLockOpen] = useState(false);
+  const investBlocked = !can("investimentos");
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
 
