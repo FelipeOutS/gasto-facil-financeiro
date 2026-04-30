@@ -49,6 +49,8 @@ import {
   getCartaoById,
   getLimite,
   getGastos,
+  refreshGastos,
+  useBootstrap,
 } from "@/lib/store";
 import {
   hydrateRecorrencias,
@@ -63,6 +65,7 @@ import {
   type Recorrencia,
   type FrequenciaRecorrencia,
   type StatusRecorrencia,
+  type TipoRecorrencia,
 } from "@/lib/recorrencias";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 
@@ -102,6 +105,11 @@ const STATUS_LABEL: Record<StatusRecorrencia, string> = {
   cancelada: "Cancelada",
   suspeita: "Suspeita",
   aguardando: "Aguardando confirmação",
+};
+
+const TIPO_LABEL: Record<TipoRecorrencia, string> = {
+  assinatura: "Assinatura",
+  recorrencia_fixa: "Recorrência fixa",
 };
 
 function diasAteHoje(iso?: string | null): number | null {
