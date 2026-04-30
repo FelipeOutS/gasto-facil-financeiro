@@ -1521,6 +1521,64 @@ function categoriaUuidFor(key: string): string | null {
   return categoriaKeyToUuid.get(key) ?? null;
 }
 
+function categoriaKeyFromUuid(uuid: string | null | undefined): string {
+  if (!uuid) return "outros";
+  const categoria = memCategorias.find((c) => categoriaKeyToUuid.get(c.id) === uuid || c.id === uuid);
+  return categoria?.id ?? uuid;
+}
+
+function categoriaAtualEhOutros(g: Gasto): boolean {
+  const cat = getCategoriaById(g.categoriaId);
+  return !cat || normalizeCategoriaNome(cat.nome) === "outros" || g.categoriaId === "outros";
+}
+
+function inferCategoriaForGasto(g: Pick<Gasto, "descricao" | "estabelecimento" | "observacao">): string {
+  return suggestCategoryFromText(`${g.estabelecimento ?? ""} ${g.descricao ?? ""} ${g.observacao ?? ""}`.trim());
+}
+
+export async function reclassificarCategoriasExistentes(): Promise<number> {
+  if (!activeUserId) return 0;
+  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
+  if (error || !data) {
+    if (error) console.error("[store] reclassificarCategoriasExistentes load failed", error);
+    return 0;
+  }
+
+  const updates = (data as GastoRow[]).flatMap((row) => {
+    const atualKey = categoriaKeyFromUuid(row.categoria_id);
+    const atualCat = getCategoriaById(atualKey);
+    const isOutros = !atualCat || normalizeCategoriaNome(atualCat.nome) === "outros" || atualKey === "outros";
+    if (!isOutros) return [];
+    const categoriaKey = suggestCategoryFromText(
+      `${row.estabelecimento ?? ""} ${row.descricao ?? ""} ${row.observacao ?? ""}`.trim(),
+    );
+    if (!categoriaKey || categoriaKey === "outros") return [];
+    const categoriaUuid = categoriaUuidFor(categoriaKey);
+    if (!categoriaUuid || categoriaUuid === row.categoria_id) return [];
+    return [{ id: row.id, categoriaKey, categoriaUuid }];
+  });
+
+  if (updates.length === 0) return 0;
+
+  const results = await Promise.all(
+    updates.map(({ id, categoriaUuid }) =>
+      supabase.from("gastos").update({ categoria_id: categoriaUuid }).eq("id", id).eq("user_id", activeUserId),
+    ),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) console.error("[store] reclassificarCategoriasExistentes update failed", failed.error);
+
+  const successIds = new Set(updates.filter((_, idx) => !results[idx].error).map((u) => u.id));
+  memGastos = memGastos.map((g) => {
+    if (!successIds.has(g.id)) return g;
+    const update = updates.find((u) => u.id === g.id);
+    return update ? { ...g, categoriaId: update.categoriaKey, atualizadoEm: new Date().toISOString() } : g;
+  });
+  emit();
+  void refreshGastos();
+  return successIds.size;
+}
+
 export async function refreshGastos() {
   if (!activeUserId) return;
   const { data } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
