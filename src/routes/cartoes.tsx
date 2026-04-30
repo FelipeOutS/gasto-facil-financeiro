@@ -714,10 +714,17 @@ function ProximosVencimentos({
               className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
             >
               <span
-                className="h-8 w-8 shrink-0 rounded-lg shadow-card"
+                className="relative grid h-9 w-9 shrink-0 place-items-center rounded-lg shadow-card"
                 style={{ background: theme.background }}
                 aria-hidden
-              />
+              >
+                <BrandLogo
+                  name={cartao.banco}
+                  variant="bank"
+                  className="h-6 w-6"
+                  imgClassName="p-1"
+                />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
@@ -774,18 +781,18 @@ function UltimasCompras({
         <ul className="mt-3 space-y-2">
           {gastos.map((g) => {
             const c = g.cartaoId ? cartaoMap.get(g.cartaoId) : undefined;
-            const theme = c ? getCardTheme(c.cor || "#8b5cf6", c.banco) : null;
             const dt = new Date(g.data + "T00:00:00");
             const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
+            const merchantName = g.estabelecimento || g.descricao || "";
             return (
               <li
                 key={g.id}
                 className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
               >
-                <span
-                  className="h-8 w-8 shrink-0 rounded-lg shadow-card"
-                  style={theme ? { background: theme.background } : undefined}
-                  aria-hidden
+                <BrandLogo
+                  name={merchantName}
+                  variant="merchant"
+                  className="h-9 w-9 shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
@@ -878,9 +885,12 @@ function FaturaSheet({
             className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
           />
           <SheetHeader className="relative space-y-1 text-left">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/80">
-              {cartao.banco || "Cartão"}
-            </p>
+            <div className="flex items-center gap-2.5">
+              <BrandLogo name={cartao.banco} variant="bank" onDark />
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/85">
+                {cartao.banco || "Cartão"}
+              </p>
+            </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
               {cartao.nome}
             </SheetTitle>
