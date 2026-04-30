@@ -102,6 +102,57 @@ export function DesktopSidebar() {
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
             const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
+            const locked = to === "/investimentos" && investBlocked;
+            const linkClasses = cn(
+              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
+              active
+                ? "bg-brand-soft text-brand-on-soft shadow-card"
+                : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+            );
+            const iconNode = (
+              <span className="relative">
+                <Icon
+                  className={cn("h-4 w-4 shrink-0", active && "text-brand")}
+                  strokeWidth={active ? 2.4 : 1.8}
+                />
+                {showDot && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute -right-1 -top-1 h-2 w-2 rounded-full ring-2 ring-card",
+                      alerta === "vermelho" ? "bg-destructive" : "bg-warning",
+                    )}
+                  />
+                )}
+              </span>
+            );
+            const labelNode = (
+              <>
+                <span className="truncate">{label}</span>
+                {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
+                {showDot && (
+                  <span className="sr-only">
+                    {alerta === "vermelho"
+                      ? "Há contas atrasadas"
+                      : "Há contas vencendo em breve"}
+                  </span>
+                )}
+              </>
+            );
+            if (locked) {
+              return (
+                <li key={to}>
+                  <button
+                    type="button"
+                    onClick={() => setInvestLockOpen(true)}
+                    className={cn(linkClasses, "w-full text-left")}
+                  >
+                    {iconNode}
+                    {labelNode}
+                  </button>
+                </li>
+              );
+            }
             return (
               <li key={to}>
                 <Link
@@ -109,12 +160,7 @@ export function DesktopSidebar() {
                   preload="intent"
                   preloadDelay={0}
                   onClick={(event) => handleNavClick(to, event)}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
-                    active
-                      ? "bg-brand-soft text-brand-on-soft shadow-card"
-                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-                  )}
+                  className={linkClasses}
                 >
                   {active && (
                     <span
@@ -122,29 +168,8 @@ export function DesktopSidebar() {
                       className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
                     />
                   )}
-                  <span className="relative">
-                    <Icon
-                      className={cn("h-4 w-4 shrink-0", active && "text-brand")}
-                      strokeWidth={active ? 2.4 : 1.8}
-                    />
-                    {showDot && (
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "absolute -right-1 -top-1 h-2 w-2 rounded-full ring-2 ring-card",
-                          alerta === "vermelho" ? "bg-destructive" : "bg-warning",
-                        )}
-                      />
-                    )}
-                  </span>
-                  <span className="truncate">{label}</span>
-                  {showDot && (
-                    <span className="sr-only">
-                      {alerta === "vermelho"
-                        ? "Há contas atrasadas"
-                        : "Há contas vencendo em breve"}
-                    </span>
-                  )}
+                  {iconNode}
+                  {labelNode}
                 </Link>
               </li>
             );
