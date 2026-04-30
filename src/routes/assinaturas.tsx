@@ -392,34 +392,23 @@ function AssinaturasPage() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
           icon={<CalendarClock className="h-4 w-4" />}
-          label="Total mensal"
+          label="Total mensal confirmado"
           value={formatBRL(totais.mensal)}
         />
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Total anual estimado"
-          value={formatBRL(totais.anual)}
+          label="Possíveis recorrências"
+          value={formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))}
         />
         <SummaryCard
           icon={<Sparkles className="h-4 w-4" />}
-          label="Próxima cobrança"
-          value={
-            proxima
-              ? `${proxima.nome.split(" ")[0]} • ${descrevePrazo(proxima.proximaCobranca)}`
-              : "—"
-          }
-          small
+          label="Recorrências ativas"
+          value={`${totais.ativas}`}
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label={
-            suspeitas.length > 0 ? "Possíveis recorrências" : "Recorrências ativas"
-          }
-          value={
-            suspeitas.length > 0
-              ? formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))
-              : `${totais.ativas}`
-          }
+          label="Suspeitas"
+          value={`${suspeitas.length}`}
         />
       </section>
 
@@ -454,11 +443,21 @@ function AssinaturasPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{r.nome}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatBRL(r.valor)} · {FREQ_LABEL[r.frequencia]}
+                      {formatBRL(r.valor)} · {TIPO_LABEL[r.tipoRecorrencia]} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? "Sem categoria"} · {FREQ_LABEL[r.frequencia]}
                     </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditing(r);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Editar
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -549,6 +548,8 @@ function AssinaturasPage() {
             <RecorrenciaCard
               key={r.id}
               rec={r}
+              onConfirmar={() => handleConfirmarSuspeita(r)}
+              onIgnorar={() => handleIgnorar(r)}
               onEdit={() => {
                 setEditing(r);
                 setDialogOpen(true);
