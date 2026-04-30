@@ -84,22 +84,75 @@ export function isValidCNPJ(value: string): boolean {
 
 // ---------- Personalização de textos ----------
 export type Vocab = {
+  // genéricos
   contas: string;
   receitas: string;
   despesas: string;
   controle: string;
   tagLabel: string | null;
+
+  // dashboard
+  dashboardEyebrow: string;
+  dashboardSubtitle: string;
+
+  // relatórios
+  relatoriosTitle: string;
+  relatoriosSubtitle: string;
+
+  // orçamento
+  orcamentoTitle: string;
+  orcamentoSubtitle: string;
+
+  // contas a pagar
+  contasAPagarTitle: string;
+  importarContaTitle: string;
+
+  // receitas / minha renda
+  rendaTitle: string;
+
+  // gastos
+  gastosTitle: string;
+
+  // mensagens / insight de saldo positivo
+  saldoPositivoMsg: string;
 };
 
+/**
+ * Tipo efetivo: usuários antigos (sem tipo definido) caem como "pessoa_fisica" para
+ * efeito de personalização de textos — sem alterar o registro no banco.
+ */
+export function tipoEfetivo(tipo: TipoCadastro): Exclude<TipoCadastro, null> {
+  return tipo ?? "pessoa_fisica";
+}
+
 export function getVocab(tipo: TipoCadastro): Vocab {
-  switch (tipo) {
+  switch (tipoEfetivo(tipo)) {
     case "mei":
       return {
         contas: "contas do MEI",
         receitas: "receitas do MEI",
         despesas: "despesas do negócio",
-        controle: "Controle financeiro do seu negócio",
+        controle: "Controle financeiro do MEI",
         tagLabel: "Perfil MEI",
+
+        dashboardEyebrow: "Resumo do seu MEI",
+        dashboardSubtitle:
+          "Acompanhe entradas, gastos e compromissos do seu negócio.",
+
+        relatoriosTitle: "Relatórios do MEI",
+        relatoriosSubtitle:
+          "Veja como o dinheiro entrou, saiu e onde melhorar.",
+
+        orcamentoTitle: "Orçamento do MEI",
+        orcamentoSubtitle: "Controle limites por categoria do seu negócio.",
+
+        contasAPagarTitle: "Contas do MEI",
+        importarContaTitle: "Importar boleto, Pix ou conta do MEI",
+
+        rendaTitle: "Entradas do MEI",
+        gastosTitle: "Gastos do MEI",
+
+        saldoPositivoMsg: "Seu MEI fechou o mês com saldo positivo.",
       };
     case "empresa":
       return {
@@ -108,22 +161,52 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         despesas: "despesas da empresa",
         controle: "Controle financeiro empresarial",
         tagLabel: "Perfil empresarial",
+
+        dashboardEyebrow: "Resumo da empresa",
+        dashboardSubtitle:
+          "Veja receitas, despesas, contas e saldo da sua empresa.",
+
+        relatoriosTitle: "Relatórios empresariais",
+        relatoriosSubtitle:
+          "Acompanhe desempenho, custos, entradas e saldo da empresa.",
+
+        orcamentoTitle: "Orçamento empresarial",
+        orcamentoSubtitle: "Acompanhe limites e custos operacionais.",
+
+        contasAPagarTitle: "Contas da empresa",
+        importarContaTitle: "Importar boleto, Pix ou conta da empresa",
+
+        rendaTitle: "Receitas da empresa",
+        gastosTitle: "Despesas da empresa",
+
+        saldoPositivoMsg: "Sua empresa manteve saldo positivo no período.",
       };
     case "pessoa_fisica":
-      return {
-        contas: "suas contas",
-        receitas: "sua renda",
-        despesas: "seus gastos",
-        controle: "Controle suas finanças",
-        tagLabel: null,
-      };
     default:
       return {
         contas: "suas contas",
         receitas: "sua renda",
         despesas: "seus gastos",
-        controle: "Controle suas finanças",
+        controle: "Controle financeiro pessoal",
         tagLabel: null,
+
+        dashboardEyebrow: "Resumo do seu mês",
+        dashboardSubtitle: "Entenda para onde seu dinheiro foi.",
+
+        relatoriosTitle: "Relatórios pessoais",
+        relatoriosSubtitle:
+          "Entenda seus gastos e sua evolução financeira.",
+
+        orcamentoTitle: "Orçamento do mês",
+        orcamentoSubtitle: "Defina limites para organizar seus gastos.",
+
+        contasAPagarTitle: "Contas a pagar",
+        importarContaTitle: "Importar boleto, Pix ou conta",
+
+        rendaTitle: "Minha renda",
+        gastosTitle: "Gastos",
+
+        saldoPositivoMsg: "Você economizou bem este mês.",
       };
   }
 }
