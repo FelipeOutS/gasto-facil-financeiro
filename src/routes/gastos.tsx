@@ -412,7 +412,17 @@ function GastosPage() {
       </header>
 
       {/* Botões mobile */}
-      <div className="mt-3 sm:hidden grid grid-cols-2 gap-2">
+      <div className="mt-3 sm:hidden grid grid-cols-3 gap-2">
+        <Button
+          type="button"
+          onClick={handleReclassificar}
+          className="h-11 rounded-2xl px-2"
+          variant="outline"
+          disabled={reclassificando}
+        >
+          <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
+          Revisar
+        </Button>
         <Button
           type="button"
           onClick={tryImportar}
