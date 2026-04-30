@@ -1,0 +1,154 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
+
+/**
+ * Webhook público do WhatsApp Cloud API (Meta).
+ *
+ *  GET  → verificação (hub.mode=subscribe, hub.verify_token, hub.challenge).
+ *  POST → recebimento de mensagens reais.
+ *
+ * Segue o formato de payload do WhatsApp Cloud API. Mensagens não-texto
+ * (imagem, áudio etc.) são ignoradas com 200 ok para não retentar.
+ */
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
+
+export const Route = createFileRoute("/api/public/whatsapp/expense")({
+  server: {
+    handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
+
+      // ---- Verification (Meta calls GET when you save the webhook URL) ----
+      GET: async ({ request }) => {
+        const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+        if (!verifyToken) {
+          return new Response("Webhook not configured", {
+            status: 503,
+            headers: corsHeaders,
+          });
+        }
+        const url = new URL(request.url);
+        const mode = url.searchParams.get("hub.mode");
+        const token = url.searchParams.get("hub.verify_token");
+        const challenge = url.searchParams.get("hub.challenge") ?? "";
+
+        if (mode === "subscribe" && token === verifyToken) {
+          return new Response(challenge, {
+            status: 200,
+            headers: { "Content-Type": "text/plain", ...corsHeaders },
+          });
+        }
+        return new Response("Forbidden", { status: 403, headers: corsHeaders });
+      },
+
+      // ---- Receiving messages ----
+      POST: async ({ request }) => {
+        let payload: unknown;
+        try {
+          payload = await request.json();
+        } catch {
+          return jsonResponse({ error: "invalid_json" }, 400);
+        }
+
+        // Modo "teste manual" ou clientes que não usam o formato Meta.
+        // Aceita também { telefone, texto, external_id } direto.
+        const flatMessages = extractMessages(payload);
+        if (flatMessages.length === 0) {
+          // Sempre 200 para o Meta não retentar. Apenas logamos.
+          return jsonResponse({ ok: true, processed: 0, skipped: "no_messages" });
+        }
+
+        const results: Array<{ status: string; gasto_id?: string }> = [];
+        for (const msg of flatMessages) {
+          if (!msg.texto?.trim()) continue;
+          // Limites de segurança: descarta payloads enormes / suspeitos.
+          if (msg.texto.length > 1000) {
+            results.push({ status: "ignorada_grande" });
+            continue;
+          }
+          try {
+            const out = await processarMensagemWhatsApp(msg);
+            results.push({ status: out.status, gasto_id: out.gastoId });
+          } catch (e) {
+            console.error("[whatsapp] processar erro", e);
+            results.push({ status: "erro" });
+          }
+        }
+        return jsonResponse({ ok: true, processed: results.length, results });
+      },
+    },
+  },
+});
+
+type FlatMessage = {
+  external_id: string | null;
+  telefone: string;
+  texto: string;
+  recebida_em?: string;
+};
+
+/**
+ * Aceita 2 formatos:
+ *  1) WhatsApp Cloud API: { entry: [{ changes: [{ value: { messages, metadata } }] }] }
+ *  2) Formato simples: { telefone, texto, external_id?, recebida_em? }
+ */
+function extractMessages(payload: unknown): FlatMessage[] {
+  if (!payload || typeof payload !== "object") return [];
+  const obj = payload as Record<string, unknown>;
+
+  // Formato simples
+  if (typeof obj.telefone === "string" && typeof obj.texto === "string") {
+    return [
+      {
+        telefone: String(obj.telefone),
+        texto: String(obj.texto),
+        external_id:
+          typeof obj.external_id === "string" ? obj.external_id : null,
+        recebida_em:
+          typeof obj.recebida_em === "string" ? obj.recebida_em : undefined,
+      },
+    ];
+  }
+
+  // Formato Meta
+  const out: FlatMessage[] = [];
+  const entries = Array.isArray(obj.entry) ? obj.entry : [];
+  for (const entry of entries) {
+    const changes = Array.isArray((entry as { changes?: unknown[] }).changes)
+      ? (entry as { changes: unknown[] }).changes
+      : [];
+    for (const ch of changes) {
+      const value = (ch as { value?: Record<string, unknown> }).value;
+      if (!value) continue;
+      const messages = Array.isArray(value.messages)
+        ? (value.messages as Array<Record<string, unknown>>)
+        : [];
+      for (const m of messages) {
+        if (m.type !== "text") continue;
+        const text = (m.text as { body?: string } | undefined)?.body ?? "";
+        const from = typeof m.from === "string" ? m.from : "";
+        if (!from || !text) continue;
+        const id = typeof m.id === "string" ? m.id : null;
+        const ts = typeof m.timestamp === "string" ? m.timestamp : null;
+        out.push({
+          external_id: id,
+          telefone: from,
+          texto: text,
+          recebida_em: ts ? new Date(Number(ts) * 1000).toISOString() : undefined,
+        });
+      }
+    }
+  }
+  return out;
+}

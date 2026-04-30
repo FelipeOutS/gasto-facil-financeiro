@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
@@ -37,8 +38,14 @@ import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrat
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
+import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
   path: '/resumo',
@@ -179,6 +186,12 @@ const ApiCheckoutCreateRoute = ApiCheckoutCreateRouteImport.update({
   path: '/api/checkout/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappExpenseRoute =
+  ApiPublicWhatsappExpenseRouteImport.update({
+    id: '/api/public/whatsapp/expense',
+    path: '/api/public/whatsapp/expense',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -208,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -216,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -239,6 +254,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -247,6 +263,7 @@ export interface FileRoutesByTo {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -271,6 +288,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -279,6 +297,7 @@ export interface FileRoutesById {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -304,6 +323,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -312,6 +332,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -335,6 +356,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -343,6 +365,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   id:
     | '__root__'
     | '/'
@@ -366,6 +389,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -374,6 +398,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -398,6 +423,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  WhatsappRoute: typeof WhatsappRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
@@ -406,10 +432,18 @@ export interface RootRouteChildren {
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
+  ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resumo': {
       id: '/resumo'
       path: '/resumo'
@@ -606,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCheckoutCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp/expense': {
+      id: '/api/public/whatsapp/expense'
+      path: '/api/public/whatsapp/expense'
+      fullPath: '/api/public/whatsapp/expense'
+      preLoaderRoute: typeof ApiPublicWhatsappExpenseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -638,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  WhatsappRoute: WhatsappRoute,
   ApiImportContaRoute: ApiImportContaRoute,
   ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,
@@ -646,6 +688,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
+  ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
