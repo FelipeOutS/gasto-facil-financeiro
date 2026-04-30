@@ -49,6 +49,8 @@ import {
   getCartaoById,
   getLimite,
   getGastos,
+  refreshGastos,
+  useBootstrap,
 } from "@/lib/store";
 import {
   hydrateRecorrencias,
@@ -63,6 +65,7 @@ import {
   type Recorrencia,
   type FrequenciaRecorrencia,
   type StatusRecorrencia,
+  type TipoRecorrencia,
 } from "@/lib/recorrencias";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 
@@ -104,6 +107,11 @@ const STATUS_LABEL: Record<StatusRecorrencia, string> = {
   aguardando: "Aguardando confirmação",
 };
 
+const TIPO_LABEL: Record<TipoRecorrencia, string> = {
+  assinatura: "Assinatura",
+  recorrencia_fixa: "Recorrência fixa",
+};
+
 function diasAteHoje(iso?: string | null): number | null {
   if (!iso) return null;
   const d = parseDateLocal(iso);
@@ -127,6 +135,7 @@ function descrevePrazo(iso?: string | null): string {
 function AssinaturasPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const ready = useBootstrap();
 
   const recs = useRecorrencias();
   const gastos = useStore(getGastos);
@@ -140,6 +149,16 @@ function AssinaturasPage() {
   const [filtroStatus, setFiltroStatus] = useState<"todas" | StatusRecorrencia>(
     "todas",
   );
+  const [debugAnalise, setDebugAnalise] = useState<null | {
+    gastos: number;
+    analisados: number;
+    encontradas: number;
+    criadas: number;
+    suspeitas: number;
+    assinaturas: number;
+    fixas: number;
+    nomes: string[];
+  }>(null);
 
   const categoriaNomePorId = useMemo(() => {
     const map = new Map(categorias.map((c) => [c.id, c.nome]));
@@ -148,15 +167,27 @@ function AssinaturasPage() {
 
   // Hidrata + sincroniza detecções na entrada da página.
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !ready) return;
     let cancelado = false;
     (async () => {
+      await refreshGastos();
       await hydrateRecorrencias(userId);
       if (cancelado) return;
-      const r = await sincronizarDeteccoes(userId, getGastos(), {
+      const gastosAtuais = getGastos();
+      const r = await sincronizarDeteccoes(userId, gastosAtuais, {
         categoriaNomePorId,
       });
       if (cancelado) return;
+      setDebugAnalise({
+        gastos: gastosAtuais.length,
+        analisados: r.analisados,
+        encontradas: r.encontradas,
+        criadas: r.criadas,
+        suspeitas: r.suspeitas,
+        assinaturas: r.assinaturas,
+        fixas: r.fixas,
+        nomes: gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean).slice(0, 20),
+      });
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
           `${r.criadas} recorrências detectadas${
@@ -169,7 +200,7 @@ function AssinaturasPage() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, ready]);
 
   const totais = useMemo(() => totaisRecorrencias(recs), [recs]);
 
@@ -253,11 +284,30 @@ function AssinaturasPage() {
     if (!userId) return;
     setSyncing(true);
     try {
-      const r = await sincronizarDeteccoes(userId, gastos, {
+      await refreshGastos();
+      const gastosAtuais = getGastos();
+      const r = await sincronizarDeteccoes(userId, gastosAtuais, {
         categoriaNomePorId,
       });
+      const nomes = gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean);
+      console.info("Gastos analisados:", r.analisados);
+      console.info("Nomes dos gastos analisados:", nomes);
+      console.info("Categorias dos gastos analisados:", gastosAtuais.map((g) => categoriaNomePorId(g.categoriaId) ?? g.categoriaId));
+      console.info("Sugestões encontradas:", r.encontradas);
+      console.info("Recorrências criadas:", r.criadas);
+      console.info("Suspeitas criadas:", r.suspeitas);
+      setDebugAnalise({
+        gastos: gastosAtuais.length,
+        analisados: r.analisados,
+        encontradas: r.encontradas,
+        criadas: r.criadas,
+        suspeitas: r.suspeitas,
+        assinaturas: r.assinaturas,
+        fixas: r.fixas,
+        nomes: nomes.slice(0, 20),
+      });
       toast.success(
-        `Análise concluída: ${r.criadas} novas, ${r.suspeitas} suspeitas`,
+        `Análise concluída: ${r.criadas} ativas, ${r.suspeitas} suspeitas`,
       );
     } finally {
       setSyncing(false);
@@ -342,34 +392,23 @@ function AssinaturasPage() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
           icon={<CalendarClock className="h-4 w-4" />}
-          label="Total mensal"
+          label="Total mensal confirmado"
           value={formatBRL(totais.mensal)}
         />
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Total anual estimado"
-          value={formatBRL(totais.anual)}
+          label="Possíveis recorrências"
+          value={formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))}
         />
         <SummaryCard
           icon={<Sparkles className="h-4 w-4" />}
-          label="Próxima cobrança"
-          value={
-            proxima
-              ? `${proxima.nome.split(" ")[0]} • ${descrevePrazo(proxima.proximaCobranca)}`
-              : "—"
-          }
-          small
+          label="Recorrências ativas"
+          value={`${totais.ativas}`}
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label={
-            suspeitas.length > 0 ? "Possíveis recorrências" : "Recorrências ativas"
-          }
-          value={
-            suspeitas.length > 0
-              ? formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))
-              : `${totais.ativas}`
-          }
+          label="Suspeitas"
+          value={`${suspeitas.length}`}
         />
       </section>
 
@@ -404,11 +443,21 @@ function AssinaturasPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{r.nome}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatBRL(r.valor)} · {FREQ_LABEL[r.frequencia]}
+                      {formatBRL(r.valor)} · {TIPO_LABEL[r.tipoRecorrencia]} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? "Sem categoria"} · {FREQ_LABEL[r.frequencia]}
                     </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditing(r);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Editar
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -493,12 +542,26 @@ function AssinaturasPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui.
             </p>
+            {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
+              <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
+                <p>Gastos encontrados: {debugAnalise.gastos}</p>
+                <p>Gastos analisados: {debugAnalise.analisados}</p>
+                <p>Palavras-chave/recorrências encontradas: {debugAnalise.encontradas}</p>
+                <p>Ativas criadas: {debugAnalise.criadas}</p>
+                <p>Suspeitas criadas: {debugAnalise.suspeitas}</p>
+                <p>Assinaturas: {debugAnalise.assinaturas}</p>
+                <p>Recorrências fixas: {debugAnalise.fixas}</p>
+                <p className="mt-2 truncate">Amostra: {debugAnalise.nomes.join(", ") || "—"}</p>
+              </div>
+            )}
           </div>
         ) : (
           recsFiltradas.map((r) => (
             <RecorrenciaCard
               key={r.id}
               rec={r}
+              onConfirmar={() => handleConfirmarSuspeita(r)}
+              onIgnorar={() => handleIgnorar(r)}
               onEdit={() => {
                 setEditing(r);
                 setDialogOpen(true);
@@ -572,6 +635,8 @@ function SummaryCard({
 
 function RecorrenciaCard({
   rec,
+  onConfirmar,
+  onIgnorar,
   onEdit,
   onTogglePause,
   onCancelar,
@@ -580,6 +645,8 @@ function RecorrenciaCard({
   onGerarGasto,
 }: {
   rec: Recorrencia;
+  onConfirmar: () => void;
+  onIgnorar: () => void;
   onEdit: () => void;
   onTogglePause: () => void;
   onCancelar: () => void;
@@ -619,7 +686,7 @@ function RecorrenciaCard({
             </span>
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {cat?.nome ?? "Sem categoria"}
+            {TIPO_LABEL[rec.tipoRecorrencia]} · {cat?.nome ?? "Sem categoria"}
             {formaLabel && ` · ${formaLabel}`}
             {cartao && ` · ${cartao.nome}`}
             {rec.proximaCobranca && ` · próxima ${descrevePrazo(rec.proximaCobranca)}`}
@@ -639,6 +706,16 @@ function RecorrenciaCard({
         <Button size="sm" variant="ghost" onClick={onEdit}>
           <Pencil className="h-3.5 w-3.5" /> Editar
         </Button>
+        {rec.status === "suspeita" && (
+          <>
+            <Button size="sm" variant="ghost" onClick={onIgnorar}>
+              <X className="h-3.5 w-3.5" /> Ignorar
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onConfirmar}>
+              <Check className="h-3.5 w-3.5" /> Confirmar
+            </Button>
+          </>
+        )}
         {rec.status !== "cancelada" && (
           <>
             <Button size="sm" variant="ghost" onClick={onTogglePause}>

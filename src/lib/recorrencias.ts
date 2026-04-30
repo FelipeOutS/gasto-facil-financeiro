@@ -33,6 +33,8 @@ export type StatusRecorrencia =
   | "suspeita"
   | "aguardando";
 
+export type TipoRecorrencia = "assinatura" | "recorrencia_fixa";
+
 export type Recorrencia = {
   id: string;
   nome: string;
@@ -43,6 +45,7 @@ export type Recorrencia = {
   formaPagamento?: FormaPagamento | null;
   cartaoId?: string | null;
   status: StatusRecorrencia;
+  tipoRecorrencia: TipoRecorrencia;
   origem: "manual" | "detectada";
   observacao?: string | null;
   ultimoValor?: number | null;
@@ -65,6 +68,7 @@ export type RecorrenciaSugerida = {
   ultimaData: string;
   variacaoValor?: number; // diferença entre último e penúltimo
   gastoIds: string[];
+  tipoRecorrencia: TipoRecorrencia;
 };
 
 const FREQ_VALUES: FrequenciaRecorrencia[] = [
@@ -97,20 +101,59 @@ function subscribe(l: () => void) {
 
 let hydratedUserId: string | null = null;
 let hydrating = false;
+let categoriaKeyToUuidRec = new Map<string, string>();
+let categoriaUuidToKeyRec = new Map<string, string>();
+
+function isUuid(v: string | null | undefined): boolean {
+  return !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
+async function syncCategoriaMaps(userId: string): Promise<void> {
+  const { data, error } = await (supabase as any)
+    .from("categorias")
+    .select("id, legacy_id, nome")
+    .eq("user_id", userId);
+  if (error) {
+    console.warn("[recorrencias] categorias map warning", error);
+    return;
+  }
+  categoriaKeyToUuidRec = new Map();
+  categoriaUuidToKeyRec = new Map();
+  for (const c of data ?? []) {
+    const key = c.legacy_id || c.id;
+    categoriaKeyToUuidRec.set(key, c.id);
+    categoriaUuidToKeyRec.set(c.id, key);
+  }
+}
+
+function categoriaKeyFromDb(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return categoriaUuidToKeyRec.get(id) ?? id;
+}
+
+async function categoriaDbId(userId: string | null, id: string | null | undefined): Promise<string | null> {
+  if (!id || id === "outros") return null;
+  if (isUuid(id)) return id;
+  if (userId && categoriaKeyToUuidRec.size === 0) await syncCategoriaMaps(userId);
+  return categoriaKeyToUuidRec.get(id) ?? null;
+}
 
 function rowToRec(r: any): Recorrencia {
   const freq = FREQ_VALUES.includes(r.frequencia) ? r.frequencia : "mensal";
   const status = STATUS_VALUES.includes(r.status) ? r.status : "ativa";
+  const tipo: TipoRecorrencia =
+    r.tipo_recorrencia === "recorrencia_fixa" ? "recorrencia_fixa" : "assinatura";
   return {
     id: r.id,
     nome: r.nome,
     valor: Number(r.valor) || 0,
-    categoriaId: r.categoria_id ?? null,
+    categoriaId: categoriaKeyFromDb(r.categoria_id),
     frequencia: freq,
     proximaCobranca: r.proxima_cobranca ?? null,
     formaPagamento: (r.forma_pagamento ?? null) as FormaPagamento | null,
     cartaoId: r.cartao_id ?? null,
     status,
+    tipoRecorrencia: tipo,
     origem: r.origem === "detectada" ? "detectada" : "manual",
     observacao: r.observacao ?? null,
     ultimoValor: r.ultimo_valor != null ? Number(r.ultimo_valor) : null,
@@ -130,6 +173,7 @@ export async function hydrateRecorrencias(userId: string | null): Promise<void> 
   if (hydratedUserId === userId || hydrating) return;
   hydrating = true;
   try {
+    await syncCategoriaMaps(userId);
     const { data, error } = await (supabase as any)
       .from("recorrencias")
       .select("*")
@@ -271,6 +315,49 @@ const RECURRENCE_KEYWORDS = [
   "dropbox",
 ];
 
+const ASSINATURA_KEYWORDS = [
+  "spotify",
+  "netflix",
+  "totalpass",
+  "total pass",
+  "gympass",
+  "meli+",
+  "meli +",
+  "melimais",
+  "apple",
+  "disney",
+  "amazon prime",
+  "prime video",
+  "assinatura",
+  "streaming",
+  "software",
+  "adobe",
+  "microsoft",
+  "google one",
+  "icloud",
+  "youtube premium",
+  "hbo",
+  "max",
+  "deezer",
+  "tidal",
+  "dropbox",
+];
+
+const RECORRENCIA_FIXA_KEYWORDS = [
+  "aluguel",
+  "condominio",
+  "internet",
+  "seguro",
+  "celular",
+  "telefone",
+  "mensalidade",
+  "plano",
+  "academia",
+  "curso",
+  "faculdade",
+  "escola",
+];
+
 /** Categorias cujos gastos têm forte indício de serem recorrentes. */
 const RECURRENCE_CATEGORY_KEYS = [
   "assinatura",
@@ -304,6 +391,39 @@ function textoSugereRecorrencia(
   return false;
 }
 
+function normalizeText(text: string): string {
+  return (text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function classificarTipoRecorrencia(
+  estabelecimento: string,
+  descricao: string,
+  categoriaNome: string | null | undefined,
+): TipoRecorrencia {
+  const haystack = normalizeText(`${estabelecimento} ${descricao} ${categoriaNome ?? ""}`);
+  const assinatura = ASSINATURA_KEYWORDS.some((k) => haystack.includes(normalizeText(k)));
+  const fixa = RECORRENCIA_FIXA_KEYWORDS.some((k) => haystack.includes(normalizeText(k)));
+  if (fixa && !assinatura) return "recorrencia_fixa";
+  return "assinatura";
+}
+
+function categoriaSugeridaParaRecorrencia(
+  tipo: TipoRecorrencia,
+  nome: string,
+  categoriaId?: string | null,
+): string | null | undefined {
+  const t = normalizeText(nome);
+  if (tipo === "assinatura") return "assinaturas";
+  if (t.includes("aluguel")) return "aluguel";
+  if (categoriaId && categoriaId !== "outros" && categoriaId !== "assinaturas") return categoriaId;
+  const sugerida = suggestCategoryFromText(nome);
+  if (sugerida && sugerida !== "outros" && sugerida !== "assinaturas") return sugerida;
+  return "moradia";
+}
+
 /** Agrupa gastos e identifica candidatos a recorrência. */
 export function detectarRecorrencias(
   gastos: Gasto[],
@@ -313,8 +433,9 @@ export function detectarRecorrencias(
   // Agrupa por nome normalizado + valor próximo (tolerância 5%).
   const grupos = new Map<string, Gasto[]>();
   for (const g of gastos) {
-    if (!g.confirmado || !g.estabelecimento) continue;
-    const key = normName(g.estabelecimento);
+    const nomeBase = g.estabelecimento || g.descricao;
+    if (!g.confirmado || !nomeBase) continue;
+    const key = normName(nomeBase);
     if (!key) continue;
     grupos.set(key, [...(grupos.get(key) ?? []), g]);
   }
@@ -328,14 +449,16 @@ export function detectarRecorrencias(
       if (!textoSugereRecorrencia(g.estabelecimento || "", g.descricao || "", catNome)) {
         continue;
       }
+      const nome = g.estabelecimento || g.descricao || nameKey;
+      const tipoRecorrencia = classificarTipoRecorrencia(nome, g.descricao || "", catNome);
       const proxCob = proximaDataApartirDe(g.data, "mensal");
       const detectionKey = `${nameKey}__${g.valor.toFixed(2)}__mensal`;
       sugeridas.push({
         detectionKey,
-        nome: g.estabelecimento || nameKey,
+        nome,
         valor: g.valor,
         ultimoValor: undefined,
-        categoriaId: g.categoriaId,
+        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, g.categoriaId) ?? undefined,
         formaPagamento: g.formaPagamento,
         cartaoId: g.cartaoId,
         frequencia: "mensal",
@@ -344,6 +467,7 @@ export function detectarRecorrencias(
         ultimaData: g.data,
         variacaoValor: undefined,
         gastoIds: [g.id],
+        tipoRecorrencia,
       });
       continue;
     }
@@ -380,13 +504,15 @@ export function detectarRecorrencias(
       // Bucket de 1 só com indício forte → suspeita
       if (bucket.length < 2) {
         if (!temIndicio) continue;
+        const nome = ultimo.estabelecimento || ultimo.descricao || nameKey;
+        const tipoRecorrencia = classificarTipoRecorrencia(nome, ultimo.descricao || "", catNome);
         const proxCob = proximaDataApartirDe(ultimo.data, "mensal");
         const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__mensal`;
         sugeridas.push({
           detectionKey,
-          nome: ultimo.estabelecimento || nameKey,
+          nome,
           valor: ultimo.valor,
-          categoriaId: ultimo.categoriaId,
+          categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
           formaPagamento: ultimo.formaPagamento,
           cartaoId: ultimo.cartaoId,
           frequencia: "mensal",
@@ -394,6 +520,7 @@ export function detectarRecorrencias(
           ocorrencias: 1,
           ultimaData: ultimo.data,
           gastoIds: [ultimo.id],
+          tipoRecorrencia,
         });
         continue;
       }
@@ -417,13 +544,15 @@ export function detectarRecorrencias(
       const proxCob = proximaDataApartirDe(ultimo.data, freq);
       const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__${freq}`;
       const variacao = ultimo.valor - penultimo.valor;
+      const nome = ultimo.estabelecimento || ultimo.descricao || nameKey;
+      const tipoRecorrencia = classificarTipoRecorrencia(nome, ultimo.descricao || "", catNome);
 
       sugeridas.push({
         detectionKey,
-        nome: ultimo.estabelecimento || nameKey,
+        nome,
         valor: ultimo.valor,
         ultimoValor: penultimo.valor,
-        categoriaId: ultimo.categoriaId,
+        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
         formaPagamento: ultimo.formaPagamento,
         cartaoId: ultimo.cartaoId,
         frequencia: freq,
@@ -432,6 +561,7 @@ export function detectarRecorrencias(
         ultimaData: ultimo.data,
         variacaoValor: Math.abs(variacao) > 0.01 ? variacao : undefined,
         gastoIds: porData.map((g) => g.id),
+        tipoRecorrencia,
       });
     }
   }
@@ -452,6 +582,7 @@ export type NovaRecorrenciaInput = {
   formaPagamento?: FormaPagamento | null;
   cartaoId?: string | null;
   status?: StatusRecorrencia;
+  tipoRecorrencia?: TipoRecorrencia;
   origem?: "manual" | "detectada";
   observacao?: string | null;
   ultimoValor?: number | null;
@@ -481,12 +612,13 @@ export async function criarRecorrencia(
     user_id: userId,
     nome: input.nome.trim(),
     valor: input.valor,
-    categoria_id: input.categoriaId ?? null,
+    categoria_id: await categoriaDbId(userId, input.categoriaId),
     frequencia: input.frequencia,
     proxima_cobranca: input.proximaCobranca ?? null,
     forma_pagamento: input.formaPagamento ?? null,
     cartao_id: input.cartaoId ?? null,
     status: input.status ?? "ativa",
+    tipo_recorrencia: input.tipoRecorrencia ?? "assinatura",
     origem: input.origem ?? "manual",
     observacao: input.observacao ?? null,
     ultimo_valor: input.ultimoValor ?? null,
@@ -515,7 +647,8 @@ export async function atualizarRecorrencia(
   const update: any = {};
   if (patch.nome !== undefined) update.nome = patch.nome;
   if (patch.valor !== undefined) update.valor = patch.valor;
-  if (patch.categoriaId !== undefined) update.categoria_id = patch.categoriaId;
+  if (patch.categoriaId !== undefined)
+    update.categoria_id = await categoriaDbId(hydratedUserId, patch.categoriaId);
   if (patch.frequencia !== undefined) update.frequencia = patch.frequencia;
   if (patch.proximaCobranca !== undefined)
     update.proxima_cobranca = patch.proximaCobranca;
@@ -523,6 +656,8 @@ export async function atualizarRecorrencia(
     update.forma_pagamento = patch.formaPagamento;
   if (patch.cartaoId !== undefined) update.cartao_id = patch.cartaoId;
   if (patch.status !== undefined) update.status = patch.status;
+  if (patch.tipoRecorrencia !== undefined)
+    update.tipo_recorrencia = patch.tipoRecorrencia;
   if (patch.observacao !== undefined) update.observacao = patch.observacao;
   if (patch.ultimoValor !== undefined) update.ultimo_valor = patch.ultimoValor;
 
@@ -564,29 +699,32 @@ export async function sincronizarDeteccoes(
   userId: string,
   gastos: Gasto[],
   opts?: { categoriaNomePorId?: (id: string | null | undefined) => string | null },
-): Promise<{ criadas: number; suspeitas: number }> {
+): Promise<{ criadas: number; suspeitas: number; analisados: number; encontradas: number; assinaturas: number; fixas: number }> {
+  await hydrateRecorrencias(userId);
+  await syncCategoriaMaps(userId);
   const sugeridas = detectarRecorrencias(gastos, opts);
   let criadas = 0;
   let suspeitas = 0;
+  let assinaturas = 0;
+  let fixas = 0;
   for (const s of sugeridas) {
+    if (s.tipoRecorrencia === "recorrencia_fixa") fixas++;
+    else assinaturas++;
     const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
     if (existente) {
       // Atualiza valor/próxima cobrança se houver mudança
-      if (
-        existente.status === "ativa" &&
-        Math.abs(existente.valor - s.valor) > 0.01
-      ) {
-        await atualizarRecorrencia(existente.id, {
-          valor: s.valor,
-          ultimoValor: existente.valor,
-          proximaCobranca: s.proximaCobranca,
-        });
-      }
+      await atualizarRecorrencia(existente.id, {
+        valor: s.valor,
+        ultimoValor:
+          Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
+        categoriaId: s.categoriaId,
+        tipoRecorrencia: s.tipoRecorrencia,
+        proximaCobranca: s.proximaCobranca,
+      });
       continue;
     }
     const status: StatusRecorrencia = s.ocorrencias >= 3 ? "ativa" : "suspeita";
-    const categoriaId =
-      s.categoriaId || suggestCategoryFromText(s.nome) || undefined;
+    const categoriaId = s.categoriaId || suggestCategoryFromText(s.nome) || undefined;
     const created = await criarRecorrencia(userId, {
       nome: s.nome,
       valor: s.valor,
@@ -596,6 +734,7 @@ export async function sincronizarDeteccoes(
       formaPagamento: s.formaPagamento,
       cartaoId: s.cartaoId,
       status,
+      tipoRecorrencia: s.tipoRecorrencia,
       origem: "detectada",
       ultimoValor: s.ultimoValor,
       detectionKey: s.detectionKey,
@@ -605,7 +744,14 @@ export async function sincronizarDeteccoes(
       else suspeitas++;
     }
   }
-  return { criadas, suspeitas };
+  return {
+    criadas,
+    suspeitas,
+    analisados: gastos.filter((g) => g.confirmado && (g.estabelecimento || g.descricao)).length,
+    encontradas: sugeridas.length,
+    assinaturas,
+    fixas,
+  };
 }
 
 // ============================================================
