@@ -162,6 +162,14 @@ function InvestimentosPage() {
                 </Badge>
               )}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpenAtualizarLote(true)}
+              disabled={ativos.length === 0}
+            >
+              <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar valores
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Importar
             </Button>
@@ -169,6 +177,13 @@ function InvestimentosPage() {
               <Plus className="h-4 w-4 mr-1.5" /> Adicionar investimento
             </Button>
           </div>
+        </div>
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/40 bg-muted/20 p-2.5 text-[11px] text-muted-foreground max-w-3xl">
+          <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>
+            Os valores são calculados com base nas informações cadastradas ou importadas. Para acompanhar a carteira
+            com mais precisão, atualize o valor atual dos investimentos periodicamente.
+          </span>
         </div>
       </header>
 
