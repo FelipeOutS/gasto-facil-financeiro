@@ -479,6 +479,21 @@ function InvestimentosPage() {
         userId={userId}
         onChanged={reload}
       />
+
+      <AtualizarValorDialog
+        ativo={atualizandoAtivo}
+        userId={userId}
+        onClose={() => setAtualizandoAtivo(null)}
+        onSaved={() => { setAtualizandoAtivo(null); reload(); }}
+      />
+
+      <AtualizarLoteDialog
+        open={openAtualizarLote}
+        onOpenChange={setOpenAtualizarLote}
+        ativos={ativos}
+        userId={userId}
+        onSaved={() => { setOpenAtualizarLote(false); reload(); }}
+      />
     </MobileShell>
   );
 }
