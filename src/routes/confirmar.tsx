@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { FormaPagamento } from "@/lib/types";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 
 export const Route = createFileRoute("/confirmar")({
   head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Inteligente" }] }),
