@@ -887,8 +887,7 @@ function FaturaSheet({
                 name={cartao.banco}
                 variant="bank"
                 onDark
-                className="h-14 w-14"
-                imgClassName="p-1"
+                className="h-12 w-auto max-w-[55%]"
               />
             </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
