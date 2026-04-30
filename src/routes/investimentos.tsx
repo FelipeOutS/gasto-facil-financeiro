@@ -188,6 +188,22 @@ function InvestimentosPage() {
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar valores
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMovDialog({ open: true, mov: null })}
+              disabled={ativos.length === 0}
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Movimentação
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRendDialog({ open: true, rend: null })}
+              disabled={ativos.length === 0}
+            >
+              <HandCoins className="h-4 w-4 mr-1.5" /> Rendimento
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Importar
             </Button>
