@@ -413,10 +413,11 @@ function ContasAPagarPage() {
           size="lg"
           variant="outline"
           className="card-press h-14 rounded-2xl text-sm font-semibold"
-          onClick={() => setImporting(true)}
+          onClick={tryImportConta}
         >
           <Upload className="mr-1 h-5 w-5" />
           Importar conta
+          {!can("importar_conta") && <LockChip />}
         </Button>
       </div>
 
@@ -680,6 +681,13 @@ function ContasAPagarPage() {
       )}
 
       <ImportContaDialog open={importing} onOpenChange={setImporting} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="importar_conta"
+        featureLabel="Importar boleto, Pix ou conta"
+        benefit="Identifique automaticamente boletos, Pix e contas a pagar."
+      />
     </MobileShell>
   );
 }
