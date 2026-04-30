@@ -82,10 +82,23 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
 
         if (userId && plano) {
           if (APPROVED.has(status)) {
-            await supabaseAdmin.from("user_plans").upsert(
-              { user_id: userId, plano, status: "ativo" },
-              { onConflict: "user_id" },
-            );
+            const { data: existing } = await supabaseAdmin
+              .from("user_plans")
+              .select("user_id")
+              .eq("user_id", userId)
+              .maybeSingle();
+            if (existing) {
+              await supabaseAdmin
+                .from("user_plans")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .update({ plano: plano as any, status: "ativo" })
+                .eq("user_id", userId);
+            } else {
+              await supabaseAdmin
+                .from("user_plans")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .insert({ user_id: userId, plano: plano as any, status: "ativo" });
+            }
           } else if (FAILED.has(status)) {
             await supabaseAdmin
               .from("user_plans")

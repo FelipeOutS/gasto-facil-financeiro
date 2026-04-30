@@ -36,6 +36,8 @@ import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-f
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
+import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
+import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
@@ -172,6 +174,17 @@ const ApiImportContaRoute = ApiImportContaRouteImport.update({
   path: '/api/import-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCheckoutCreateRoute = ApiCheckoutCreateRouteImport.update({
+  id: '/api/checkout/create',
+  path: '/api/checkout/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksMercadopagoRoute =
+  ApiPublicWebhooksMercadopagoRouteImport.update({
+    id: '/api/public/webhooks/mercadopago',
+    path: '/api/public/webhooks/mercadopago',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,6 +214,8 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -230,6 +245,8 @@ export interface FileRoutesByTo {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -260,6 +277,8 @@ export interface FileRoutesById {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,6 +310,8 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
+    | '/api/checkout/create'
+    | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +341,8 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
+    | '/api/checkout/create'
+    | '/api/public/webhooks/mercadopago'
   id:
     | '__root__'
     | '/'
@@ -349,6 +372,8 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
+    | '/api/checkout/create'
+    | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,6 +404,8 @@ export interface RootRouteChildren {
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
+  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -572,6 +599,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/checkout/create': {
+      id: '/api/checkout/create'
+      path: '/api/checkout/create'
+      fullPath: '/api/checkout/create'
+      preLoaderRoute: typeof ApiCheckoutCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/mercadopago': {
+      id: '/api/public/webhooks/mercadopago'
+      path: '/api/public/webhooks/mercadopago'
+      fullPath: '/api/public/webhooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -603,6 +644,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
+  ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
