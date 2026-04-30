@@ -244,6 +244,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Lançamentos manuais ilimitados",
       "Gastos, receitas e contas a pagar",
+      "Contas a receber simples",
       "Metas, guardado e orçamento",
       "Relatórios básicos",
       "Sem importações automáticas",
@@ -258,9 +259,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Tudo do Pessoa Física Manual",
       "Importar extrato, fatura e boleto/Pix",
+      "Contas a receber completas",
       "Metas com imagens",
       "Relatórios avançados e insights",
-      "Investimentos em breve",
+      "Investimentos liberados",
+      "Assinaturas e recorrências",
+      "Histórico de importações",
     ],
   },
   {
@@ -273,6 +277,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Tudo do Pessoa Física Manual",
       "Linguagem e visão para MEI",
       "Contas e relatórios do negócio",
+      "Contas a receber para clientes",
       "Separação pessoal × negócio",
       "Sem importações automáticas",
     ],
@@ -286,9 +291,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Tudo do MEI Essencial",
       "Importar extrato, fatura e boleto/Pix",
+      "Contas a receber avançadas",
       "Relatórios avançados do negócio",
       "Metas com imagens",
-      "Investimentos em breve",
+      "Investimentos liberados",
+      "Histórico de importações",
+      "Insights do negócio",
     ],
   },
   {
@@ -301,8 +309,13 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Tudo do MEI Inteligente",
       "Perfil empresarial com CNPJ",
       "Controle financeiro empresarial",
+      "Contas a receber avançadas",
+      "Controle por cliente/empresa",
+      "Controle por centro de custo",
       "Relatórios completos",
-      "Investimentos em breve",
+      "Fluxo de caixa empresarial",
+      "Investimentos liberados",
+      "Exportação de relatórios",
     ],
   },
 ];
