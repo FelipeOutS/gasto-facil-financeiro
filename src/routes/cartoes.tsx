@@ -507,7 +507,6 @@ function CartaoCard({
             name={cartao.banco}
             variant="bank"
             onDark
-            className="h-10 w-auto max-w-[60%] shrink-0"
           />
         </div>
         <DropdownMenu>
@@ -719,7 +718,7 @@ function ProximosVencimentos({
                   name={cartao.banco}
                   variant="bank"
                   onDark
-                  className="h-7 w-auto max-w-[80%]"
+                  className="bank-logo-sm"
                 />
               </span>
               <div className="min-w-0 flex-1">
@@ -887,7 +886,6 @@ function FaturaSheet({
                 name={cartao.banco}
                 variant="bank"
                 onDark
-                className="h-12 w-auto max-w-[55%]"
               />
             </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
@@ -1315,7 +1313,6 @@ function CartaoFormDialog({
                           name={banco}
                           variant="bank"
                           onDark
-                          className="h-10 w-auto max-w-[60%] shrink-0"
                         />
                       </div>
                       <div>

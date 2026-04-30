@@ -453,3 +453,39 @@ body {
   .hover-lift:hover { transform: none !important; }
   * { transition-duration: 0.01ms !important; }
 }
+
+/* ============================================================
+   Bank logo container — standardized size for card previews.
+   Ensures every bank SVG renders at the SAME visual height
+   regardless of intrinsic aspect ratio, left-aligned.
+   ============================================================ */
+.bank-logo-container {
+  /* Default (in-card header / preview) */
+  width: 150px;
+  height: 42px;
+  max-width: 150px;
+  max-height: 42px;
+  flex-shrink: 0;
+}
+.bank-logo-container > img,
+.bank-logo-container > svg {
+  max-width: 150px;
+  max-height: 34px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Compact variant for tight rows (e.g. due-soon list) */
+.bank-logo-container.bank-logo-sm {
+  width: 56px;
+  height: 28px;
+  max-width: 56px;
+  max-height: 28px;
+}
+.bank-logo-container.bank-logo-sm > img,
+.bank-logo-container.bank-logo-sm > svg {
+  max-width: 56px;
+  max-height: 22px;
+}

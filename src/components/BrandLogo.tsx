@@ -36,12 +36,14 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
   const FallbackIcon = variant === "bank" ? Building2 : Store;
 
   // ---- Bank on dark surface: render SVG directly, no white pill ----
+  // Standardized container: fixed visual height, contained width, left-aligned.
+  // Every bank logo (square or wide) renders at the same visual height so
+  // cards stay consistent and never overlap card content.
   if (variant === "bank" && onDark && showLogo) {
     return (
       <span
         className={cn(
-          "relative inline-grid place-items-center",
-          "h-12 w-auto min-w-[3rem]",
+          "bank-logo-container relative inline-flex items-center justify-start overflow-hidden",
           className,
         )}
         aria-hidden
@@ -49,7 +51,10 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
         <img
           src={resolved.logoUrl!}
           alt=""
-          className={cn("h-full w-full object-contain object-left", imgClassName)}
+          className={cn(
+            "block h-auto w-auto max-h-full max-w-full object-contain object-left",
+            imgClassName,
+          )}
           onError={() => setErrored(true)}
           loading="lazy"
           decoding="async"
