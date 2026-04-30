@@ -92,49 +92,38 @@ function MeuPlanoPage() {
     if (isAdminMaster) return;
     setSubmitting(tier);
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) {
-        toast.error("Faça login para assinar um plano.");
-        return;
-      }
-      const res = await fetch("/api/checkout/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plano: tier, method: "pix" }),
-      });
-      const data = (await res.json()) as {
-        pendingIntegration?: boolean;
-        message?: string;
-        payment?: {
-          qr_code?: string | null;
-          qr_code_base64?: string | null;
-          ticket_url?: string | null;
-        };
-        error?: string;
-      };
+      // Pagamento real ainda não está integrado nesta versão.
+      toast.info(
+        "Assinatura em breve. Esta versão ainda não possui pagamento integrado.",
+      );
+      setPixCharge(null);
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
+  async function iniciarTeste(tier: PlanTier) {
+    if (isAdminMaster) return;
+    if (!user?.id) {
+      toast.error("Faça login para iniciar o teste.");
+      return;
+    }
+    if (trialUsed) {
+      toast.error("Você já utilizou o teste gratuito.");
+      return;
+    }
+    setSubmitting(tier);
+    try {
+      const { startTrial } = await import("@/lib/use-plan");
+      const res = await startTrial(user.id, tier);
       if (!res.ok) {
-        toast.error(data.error ?? "Não foi possível iniciar o pagamento.");
+        toast.error(res.reason);
         return;
       }
-      if (data.pendingIntegration) {
-        toast.info(
-          "Plano selecionado. Pagamento será liberado em breve assim que a integração for concluída.",
-        );
-        setPixCharge(null);
-      } else if (data.payment) {
-        setPixCharge(data.payment);
-        toast.success("Cobrança Pix gerada! Use o QR Code abaixo para pagar.");
-        if (data.payment.ticket_url) {
-          window.open(data.payment.ticket_url, "_blank", "noopener");
-        }
-      }
+      toast.success(`Teste grátis ativado! ${PLAN_LABEL[tier]} liberado por 10 dias.`);
       await refresh();
     } catch {
-      toast.error("Erro inesperado ao iniciar pagamento.");
+      toast.error("Erro ao iniciar o teste.");
     } finally {
       setSubmitting(null);
     }
