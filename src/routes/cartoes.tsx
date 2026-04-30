@@ -1311,13 +1311,16 @@ function CartaoFormDialog({
                       className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
                     />
                     <div className="relative flex h-full flex-col justify-between">
-                      <div className="flex items-start justify-between">
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-white/80">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <BrandLogo
+                          name={banco}
+                          variant="bank"
+                          onDark
+                          className="h-8 w-8 shrink-0"
+                        />
+                        <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
                           {banco || "Banco"}
                         </p>
-                        <div className="grid h-8 w-10 place-items-center rounded-md bg-white/20 backdrop-blur">
-                          <CreditCard className="h-4 w-4" />
-                        </div>
                       </div>
                       <div>
                         <p className="truncate text-lg font-bold leading-tight">
