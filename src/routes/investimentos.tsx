@@ -1176,3 +1176,361 @@ function HistoricoImportacoesDialog({
     </>
   );
 }
+
+// ===== Modal: Atualizar valor (individual) =====
+function AtualizarValorDialog({
+  ativo,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  ativo: Ativo | null;
+  userId: string | undefined;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [valorAtual, setValorAtual] = useState("");
+  const [precoAtual, setPrecoAtual] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [observacao, setObservacao] = useState("");
+  const [data, setData] = useState(todayISO());
+  const [salvando, setSalvando] = useState(false);
+
+  const isVariavel = ativo
+    ? ["acoes", "fii", "etf", "bdr", "cripto"].includes(ativo.tipo)
+    : false;
+
+  useEffect(() => {
+    if (!ativo) return;
+    setValorAtual(
+      ativo.valor_atual != null ? String(ativo.valor_atual).replace(".", ",") : "",
+    );
+    setPrecoAtual(
+      ativo.preco_atual != null ? String(ativo.preco_atual).replace(".", ",") : "",
+    );
+    setQuantidade(
+      ativo.quantidade != null ? String(ativo.quantidade).replace(".", ",") : "",
+    );
+    setObservacao("");
+    setData(todayISO());
+  }, [ativo]);
+
+  // Auto-calcular valor atual a partir de preço × quantidade (renda variável)
+  useEffect(() => {
+    if (!isVariavel) return;
+    const p = Number(precoAtual.replace(",", "."));
+    const q = Number(quantidade.replace(",", "."));
+    if (p > 0 && q > 0) {
+      setValorAtual((p * q).toFixed(2).replace(".", ","));
+    }
+  }, [precoAtual, quantidade, isVariavel]);
+
+  if (!ativo) return null;
+
+  async function salvar() {
+    if (!ativo || !userId) return;
+    const valorNovo = parseBRLInput(valorAtual);
+    if (!Number.isFinite(valorNovo) || valorNovo < 0) {
+      toast.error("Informe um valor atual válido.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      await atualizarValorAtivo(userId, ativo, {
+        valor_novo: valorNovo,
+        preco_novo: precoAtual ? parseBRLInput(precoAtual) : null,
+        quantidade: quantidade ? Number(quantidade.replace(",", ".")) : null,
+        observacao: observacao || null,
+        data_atualizacao: new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString(),
+        origem: "manual",
+      });
+      toast.success("Valor atualizado.");
+      onSaved();
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível atualizar o valor.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!ativo} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Atualizar valor
+          </DialogTitle>
+          <DialogDescription>
+            Atualização manual · valor informado pelo usuário.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Investimento</label>
+            <div className="text-sm font-medium">{ativo.nome}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {tipoLabel(ativo.tipo)}
+              {ativo.instituicao ? ` · ${ativo.instituicao}` : ""}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Valor aplicado</label>
+            <Input
+              value={formatBRL(Number(ativo.valor_aplicado || 0))}
+              disabled
+              className="bg-muted/30"
+            />
+          </div>
+
+          {isVariavel && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Preço atual</label>
+                <Input
+                  value={precoAtual}
+                  onChange={(e) => setPrecoAtual(e.target.value)}
+                  placeholder="0,00"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Quantidade</label>
+                <Input
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs text-muted-foreground">
+              Valor atual{isVariavel ? " (calculado)" : ""}
+            </label>
+            <Input
+              value={valorAtual}
+              onChange={(e) => setValorAtual(e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Data da atualização</label>
+            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Observação</label>
+            <Textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder="Ex.: cotação consultada na corretora"
+              rows={2}
+            />
+          </div>
+
+          {ativo.ultima_atualizacao && (
+            <div className="text-[11px] text-muted-foreground">
+              Última atualização: {formatarDataHora(ativo.ultima_atualizacao)}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>
+            Cancelar
+          </Button>
+          <Button onClick={salvar} disabled={salvando}>
+            {salvando ? "Salvando…" : "Salvar atualização"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===== Modal: Atualizar valores em lote =====
+function AtualizarLoteDialog({
+  open,
+  onOpenChange,
+  ativos,
+  userId,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  ativos: Ativo[];
+  userId: string | undefined;
+  onSaved: () => void;
+}) {
+  const [valores, setValores] = useState<Record<string, { valor: string; preco: string; obs: string }>>({});
+  const [data, setData] = useState(todayISO());
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const map: Record<string, { valor: string; preco: string; obs: string }> = {};
+    for (const a of ativos) {
+      map[a.id] = {
+        valor: a.valor_atual != null ? String(a.valor_atual).replace(".", ",") : "",
+        preco: a.preco_atual != null ? String(a.preco_atual).replace(".", ",") : "",
+        obs: "",
+      };
+    }
+    setValores(map);
+    setData(todayISO());
+  }, [open, ativos]);
+
+  function setCampo(id: string, campo: "valor" | "preco" | "obs", v: string) {
+    setValores((prev) => ({ ...prev, [id]: { ...(prev[id] ?? { valor: "", preco: "", obs: "" }), [campo]: v } }));
+  }
+
+  async function salvarTodos() {
+    if (!userId) return;
+    setSalvando(true);
+    let ok = 0;
+    let erros = 0;
+    const dataIso = new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString();
+    for (const a of ativos) {
+      const entry = valores[a.id];
+      if (!entry) continue;
+      const isVariavel = ["acoes", "fii", "etf", "bdr", "cripto"].includes(a.tipo);
+      let valorNovo = parseBRLInput(entry.valor);
+      const precoNovo = entry.preco ? parseBRLInput(entry.preco) : null;
+      // Se variável e tem preço + quantidade existente, recalcular valor automaticamente
+      if (isVariavel && precoNovo != null && a.quantidade && a.quantidade > 0) {
+        valorNovo = precoNovo * Number(a.quantidade);
+      }
+      const valorAnterior = Number(a.valor_atual ?? 0);
+      const precoAnterior = a.preco_atual != null ? Number(a.preco_atual) : null;
+      // Pula se nada mudou
+      if (
+        valorNovo === valorAnterior &&
+        (precoNovo ?? null) === precoAnterior &&
+        !entry.obs
+      ) {
+        continue;
+      }
+      if (!Number.isFinite(valorNovo)) {
+        erros++;
+        continue;
+      }
+      try {
+        await atualizarValorAtivo(userId, a, {
+          valor_novo: valorNovo,
+          preco_novo: precoNovo,
+          observacao: entry.obs || null,
+          data_atualizacao: dataIso,
+          origem: "manual",
+        });
+        ok++;
+      } catch (e) {
+        console.error(e);
+        erros++;
+      }
+    }
+    setSalvando(false);
+    if (ok > 0) toast.success(`${ok} investimento(s) atualizado(s).`);
+    if (erros > 0) toast.error(`${erros} falha(s) ao atualizar.`);
+    if (ok === 0 && erros === 0) toast.info("Nenhuma alteração para salvar.");
+    onSaved();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Atualizar valores
+          </DialogTitle>
+          <DialogDescription>
+            Atualize os valores atuais dos seus investimentos. Valor informado pelo usuário.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex items-center gap-2 mb-2">
+          <label className="text-xs text-muted-foreground">Data da atualização</label>
+          <Input
+            type="date"
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+            className="max-w-[180px]"
+          />
+        </div>
+
+        <div className="space-y-3">
+          {ativos.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhum investimento cadastrado.
+            </p>
+          ) : (
+            ativos.map((a) => {
+              const isVariavel = ["acoes", "fii", "etf", "bdr", "cripto"].includes(a.tipo);
+              const ult = descreverUltimaAtualizacao(a.ultima_atualizacao);
+              const entry = valores[a.id] ?? { valor: "", preco: "", obs: "" };
+              return (
+                <div key={a.id} className="rounded-xl border border-border/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <div className="text-sm font-medium">{a.nome}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {tipoLabel(a.tipo)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                      </div>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] gap-1 ${ult.desatualizado ? "border-amber-500/40 text-amber-500" : "text-muted-foreground"}`}
+                    >
+                      <Clock className="h-2.5 w-2.5" />
+                      {ult.label}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {isVariavel && (
+                      <div>
+                        <label className="text-[11px] text-muted-foreground">Preço atual</label>
+                        <Input
+                          value={entry.preco}
+                          onChange={(e) => setCampo(a.id, "preco", e.target.value)}
+                          placeholder="0,00"
+                        />
+                      </div>
+                    )}
+                    <div className={isVariavel ? "" : "md:col-span-2"}>
+                      <label className="text-[11px] text-muted-foreground">Valor atual</label>
+                      <Input
+                        value={entry.valor}
+                        onChange={(e) => setCampo(a.id, "valor", e.target.value)}
+                        placeholder="0,00"
+                      />
+                    </div>
+                    <div className={isVariavel ? "" : "md:col-span-1"}>
+                      <label className="text-[11px] text-muted-foreground">Observação</label>
+                      <Input
+                        value={entry.obs}
+                        onChange={(e) => setCampo(a.id, "obs", e.target.value)}
+                        placeholder="opcional"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvando}>
+            Cancelar
+          </Button>
+          <Button onClick={salvarTodos} disabled={salvando || ativos.length === 0}>
+            {salvando ? "Salvando…" : "Salvar atualizações"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
