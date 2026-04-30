@@ -367,21 +367,52 @@ export function detectarRecorrencias(
     }
 
     for (const bucket of buckets) {
-      if (bucket.length < 2) continue;
       const porData = [...bucket].sort((a, b) => (a.data < b.data ? -1 : 1));
       const datas = porData.map((g) => g.data);
+      const ultimo = porData[porData.length - 1];
+      const catNome = getCatNome(ultimo.categoriaId);
+      const temIndicio = textoSugereRecorrencia(
+        ultimo.estabelecimento || "",
+        ultimo.descricao || "",
+        catNome,
+      );
+
+      // Bucket de 1 só com indício forte → suspeita
+      if (bucket.length < 2) {
+        if (!temIndicio) continue;
+        const proxCob = proximaDataApartirDe(ultimo.data, "mensal");
+        const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__mensal`;
+        sugeridas.push({
+          detectionKey,
+          nome: ultimo.estabelecimento || nameKey,
+          valor: ultimo.valor,
+          categoriaId: ultimo.categoriaId,
+          formaPagamento: ultimo.formaPagamento,
+          cartaoId: ultimo.cartaoId,
+          frequencia: "mensal",
+          proximaCobranca: proxCob,
+          ocorrencias: 1,
+          ultimaData: ultimo.data,
+          gastoIds: [ultimo.id],
+        });
+        continue;
+      }
+
       const intervalos: number[] = [];
       for (let i = 1; i < datas.length; i++) {
         intervalos.push(diasEntre(datas[i - 1], datas[i]));
       }
-      // Para qualificar como recorrência, intervalos devem ser razoavelmente regulares.
       const media = intervalos.reduce((s, x) => s + x, 0) / intervalos.length;
-      if (media < 5 || media > 400) continue;
-      const desvio = Math.max(...intervalos.map((x) => Math.abs(x - media)));
-      if (desvio > Math.max(7, media * 0.4)) continue;
+      // Filtros de regularidade: relaxados quando há indício de recorrência
+      if (!temIndicio) {
+        if (media < 5 || media > 400) continue;
+        const desvio = Math.max(...intervalos.map((x) => Math.abs(x - media)));
+        if (desvio > Math.max(7, media * 0.4)) continue;
+      } else {
+        if (media < 3 || media > 400) continue;
+      }
 
       const freq = inferFrequencia(datas);
-      const ultimo = porData[porData.length - 1];
       const penultimo = porData[porData.length - 2];
       const proxCob = proximaDataApartirDe(ultimo.data, freq);
       const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__${freq}`;
