@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { refreshGastos } from "@/lib/store";
+import { ExternalLink } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
