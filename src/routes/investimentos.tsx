@@ -843,3 +843,274 @@ function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
     </Dialog>
   );
 }
+
+function HistoricoImportacoesDialog({
+  open,
+  onOpenChange,
+  importacoes,
+  userId,
+  onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  importacoes: Importacao[];
+  userId?: string;
+  onChanged: () => void;
+}) {
+  const [detalhe, setDetalhe] = useState<Importacao | null>(null);
+  const [confirmar, setConfirmar] = useState<Importacao | null>(null);
+  const [itensDetalhe, setItensDetalhe] = useState<ItensImportacao | null>(null);
+  const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function abrirDetalhe(imp: Importacao) {
+    if (!userId) return;
+    setDetalhe(imp);
+    setItensDetalhe(null);
+    setCarregandoDetalhe(true);
+    try {
+      const itens = await listarItensImportacao(userId, imp.id);
+      setItensDetalhe(itens);
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível carregar os detalhes.");
+    } finally {
+      setCarregandoDetalhe(false);
+    }
+  }
+
+  async function handleExcluir(modo: "historico" | "tudo") {
+    if (!userId || !confirmar) return;
+    setExcluindo(true);
+    try {
+      if (modo === "historico") {
+        await excluirImportacaoSomenteHistorico(confirmar.id);
+        toast.success("Histórico da importação excluído.");
+      } else {
+        await excluirImportacaoComDados(userId, confirmar.id);
+        toast.success("Importação e dados vinculados excluídos.");
+      }
+      setConfirmar(null);
+      setDetalhe(null);
+      onChanged();
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível excluir.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Histórico de importações</DialogTitle>
+            <DialogDescription>
+              Veja todas as importações realizadas e remova quando precisar.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importacoes.length === 0 ? (
+            <div className="py-10 text-center">
+              <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-soft/60 grid place-items-center text-brand-on-soft mb-3">
+                <History className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold">Nenhuma importação ainda</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Quando você importar extratos da B3, corretora, CSV ou PDF, eles aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-2.5">
+              {importacoes.map((imp) => {
+                const r = imp.resumo ?? {};
+                const data = new Date(imp.created_at).toLocaleDateString("pt-BR");
+                return (
+                  <li
+                    key={imp.id}
+                    className="rounded-xl border border-border/60 bg-card/40 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm truncate">
+                          {imp.arquivo_nome || "Importação manual"}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {TIPO_IMPORTACAO_LABEL[imp.tipo] ?? imp.tipo}
+                          </Badge>
+                          <Badge
+                            variant={imp.status === "concluida" ? "secondary" : "outline"}
+                            className="text-[10px] capitalize"
+                          >
+                            {imp.status}
+                          </Badge>
+                          <span className="text-[11px] text-muted-foreground">
+                            Importado em {data}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1.5">
+                          {(r.ativos ?? 0)} ativos · {(r.movimentacoes ?? 0)} movimentações ·{" "}
+                          {(r.rendimentos ?? 0)} rendimentos
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <Button size="sm" variant="outline" onClick={() => abrirDetalhe(imp)}>
+                          Ver detalhes
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 text-rose-500 hover:text-rose-500"
+                          onClick={() => setConfirmar(imp)}
+                          aria-label="Excluir importação"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detalhes */}
+      <Dialog open={!!detalhe} onOpenChange={(v) => !v && setDetalhe(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes da importação</DialogTitle>
+            <DialogDescription>
+              {detalhe?.arquivo_nome || "Importação manual"} ·{" "}
+              {detalhe ? new Date(detalhe.created_at).toLocaleDateString("pt-BR") : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {carregandoDetalhe ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Carregando…</p>
+          ) : itensDetalhe ? (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-3 gap-2">
+                <MiniStat label="Ativos" value={String(itensDetalhe.ativos.length)} />
+                <MiniStat label="Movimentações" value={String(itensDetalhe.movimentacoes.length)} />
+                <MiniStat label="Rendimentos" value={String(itensDetalhe.rendimentos.length)} />
+              </div>
+
+              {itensDetalhe.ativos.length > 0 && (
+                <section>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                    Ativos criados
+                  </div>
+                  <ul className="space-y-1">
+                    {itensDetalhe.ativos.map((a) => (
+                      <li key={a.id} className="flex justify-between gap-2">
+                        <span className="truncate">{a.nome}</span>
+                        <span className="text-xs text-muted-foreground">{tipoLabel(a.tipo)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {itensDetalhe.movimentacoes.length > 0 && (
+                <section>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                    Movimentações
+                  </div>
+                  <ul className="space-y-1">
+                    {itensDetalhe.movimentacoes.map((m) => (
+                      <li key={m.id} className="flex justify-between gap-2">
+                        <span className="capitalize">{m.tipo}</span>
+                        <span className="text-xs text-muted-foreground">{m.data}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {itensDetalhe.rendimentos.length > 0 && (
+                <section>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                    Rendimentos
+                  </div>
+                  <ul className="space-y-1">
+                    {itensDetalhe.rendimentos.map((r) => (
+                      <li key={r.id} className="flex justify-between gap-2">
+                        <span className="capitalize">{r.tipo.replace("_", " ")}</span>
+                        <span className="text-xs text-muted-foreground">{r.data_pagamento}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {detalhe?.erros && (
+                <div className="rounded-lg bg-rose-500/10 text-rose-500 p-2.5 text-xs">
+                  {detalhe.erros}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDetalhe(null)}>Fechar</Button>
+            {detalhe && (
+              <Button variant="destructive" onClick={() => setConfirmar(detalhe)}>
+                <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmar exclusão */}
+      <Dialog open={!!confirmar} onOpenChange={(v) => !v && !excluindo && setConfirmar(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deseja excluir esta importação?</DialogTitle>
+            <DialogDescription>
+              Você pode excluir apenas o histórico da importação ou excluir também os investimentos,
+              movimentações e rendimentos criados por ela.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 text-amber-500 p-2.5 text-xs">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>
+              Apenas ativos, movimentações e rendimentos vinculados a esta importação serão removidos.
+              Investimentos cadastrados manualmente não são afetados.
+            </span>
+          </div>
+
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setConfirmar(null)} disabled={excluindo}>
+              Cancelar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleExcluir("historico")}
+              disabled={excluindo}
+            >
+              Excluir apenas histórico
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleExcluir("tudo")}
+              disabled={excluindo}
+            >
+              {excluindo ? "Excluindo…" : "Excluir tudo relacionado"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
