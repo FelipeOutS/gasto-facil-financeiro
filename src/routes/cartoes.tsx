@@ -36,6 +36,7 @@ import { formatBRL, parseBRLInput } from "@/lib/format";
 import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
+import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
