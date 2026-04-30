@@ -933,6 +933,12 @@ export async function hydrateUser(userId: string): Promise<void> {
     memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
       (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
     );
+    if (faturasRes.error) {
+      console.warn("[store] faturas_cartao load warning", faturasRes.error);
+      memFaturas = [];
+    } else {
+      memFaturas = (faturasRes.data ?? []).map(rowToFatura);
+    }
 
     setHydrationStatus("ready");
 
