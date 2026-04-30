@@ -563,8 +563,9 @@ export async function excluirRecorrencia(id: string): Promise<void> {
 export async function sincronizarDeteccoes(
   userId: string,
   gastos: Gasto[],
+  opts?: { categoriaNomePorId?: (id: string | null | undefined) => string | null },
 ): Promise<{ criadas: number; suspeitas: number }> {
-  const sugeridas = detectarRecorrencias(gastos);
+  const sugeridas = detectarRecorrencias(gastos, opts);
   let criadas = 0;
   let suspeitas = 0;
   for (const s of sugeridas) {
