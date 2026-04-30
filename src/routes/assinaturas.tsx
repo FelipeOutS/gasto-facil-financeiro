@@ -623,6 +623,8 @@ function SummaryCard({
 
 function RecorrenciaCard({
   rec,
+  onConfirmar,
+  onIgnorar,
   onEdit,
   onTogglePause,
   onCancelar,
@@ -631,6 +633,8 @@ function RecorrenciaCard({
   onGerarGasto,
 }: {
   rec: Recorrencia;
+  onConfirmar: () => void;
+  onIgnorar: () => void;
   onEdit: () => void;
   onTogglePause: () => void;
   onCancelar: () => void;
@@ -670,7 +674,7 @@ function RecorrenciaCard({
             </span>
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {cat?.nome ?? "Sem categoria"}
+            {TIPO_LABEL[rec.tipoRecorrencia]} · {cat?.nome ?? "Sem categoria"}
             {formaLabel && ` · ${formaLabel}`}
             {cartao && ` · ${cartao.nome}`}
             {rec.proximaCobranca && ` · próxima ${descrevePrazo(rec.proximaCobranca)}`}
@@ -690,6 +694,16 @@ function RecorrenciaCard({
         <Button size="sm" variant="ghost" onClick={onEdit}>
           <Pencil className="h-3.5 w-3.5" /> Editar
         </Button>
+        {rec.status === "suspeita" && (
+          <>
+            <Button size="sm" variant="ghost" onClick={onIgnorar}>
+              <X className="h-3.5 w-3.5" /> Ignorar
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onConfirmar}>
+              <Check className="h-3.5 w-3.5" /> Confirmar
+            </Button>
+          </>
+        )}
         {rec.status !== "cancelada" && (
           <>
             <Button size="sm" variant="ghost" onClick={onTogglePause}>
