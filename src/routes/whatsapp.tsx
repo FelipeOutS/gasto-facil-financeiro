@@ -219,8 +219,14 @@ function WhatsAppPage() {
       const out = await res.json();
       if (!res.ok) throw new Error(out?.error ?? "Falha no teste");
       const first = out.results?.[0];
-      toast.success(`Status: ${first?.status ?? "ok"}`);
-      await refresh();
+      const status = first?.status ?? "ok";
+      if (status === "salva" && first?.gasto_id) {
+        toast.success(`Gasto salvo (id ${String(first.gasto_id).slice(0, 8)})`);
+      } else {
+        toast.success(`Status: ${status}`);
+      }
+      // Invalida cache de gastos para que /gastos e dashboard reflitam o novo registro.
+      await Promise.all([refresh(), refreshGastos()]);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
