@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { useRoles } from "@/lib/use-roles";
 import {
+  getEffectiveUserPlan,
+  isAdminMasterEmail,
   planAllowsFeature,
   type FeatureKey,
   type PlanTier,
@@ -17,28 +18,31 @@ export type UserPlan = {
 
 type PlanState = UserPlan & {
   loading: boolean;
-  /** Pode acessar o recurso? Considera owner = admin_master automaticamente. */
+  isAdminMaster: boolean;
+  /** Pode acessar o recurso? Considera Admin Master automaticamente. */
   can: (feature: FeatureKey) => boolean;
 };
 
 /**
- * Lê o plano efetivo do usuário. Owner sempre tem `admin_master`,
- * independentemente do que estiver gravado em `user_plans`.
+ * Lê o plano efetivo do usuário, sempre passando pela regra central
+ * `getEffectiveUserPlan(user, storedPlan)`. Admin Master por e-mail
+ * tem precedência absoluta sobre qualquer valor salvo.
  */
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
-  const { isOwner, loading: rolesLoading } = useRoles();
-  const [plan, setPlan] = useState<PlanTier>("free");
+  const [storedPlan, setStoredPlan] = useState<string | null>(null);
   const [status, setStatus] = useState<SubscriptionStatus>("ativo");
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (authLoading || rolesLoading) return;
+      if (authLoading) return;
       if (!user) {
-        setPlan("free");
+        setStoredPlan(null);
         setStatus("ativo");
         setTrialEndsAt(null);
         setLoading(false);
@@ -51,18 +55,12 @@ export function usePlan(): PlanState {
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      // Owner sempre vê admin_master (mesmo se a row dele tem outro plano).
-      if (isOwner) {
-        setPlan("admin_master");
-        setStatus("ativo");
-        setTrialEndsAt(null);
-      } else if (data) {
-        setPlan(data.plano as PlanTier);
-        setStatus(data.status as SubscriptionStatus);
+      if (data) {
+        setStoredPlan(String(data.plano ?? ""));
+        setStatus((data.status as SubscriptionStatus) ?? "ativo");
         setTrialEndsAt(data.trial_ends_at ?? null);
       } else {
-        // Usuário antigo sem registro: tratar como free/ativo.
-        setPlan("free");
+        setStoredPlan(null);
         setStatus("ativo");
         setTrialEndsAt(null);
       }
@@ -72,13 +70,16 @@ export function usePlan(): PlanState {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, rolesLoading, isOwner]);
+  }, [user, authLoading]);
+
+  const plan: PlanTier = getEffectiveUserPlan(user, storedPlan);
 
   return {
     plan,
-    status,
-    trialEndsAt,
+    status: isAdminMaster ? "ativo" : status,
+    trialEndsAt: isAdminMaster ? null : trialEndsAt,
     loading,
+    isAdminMaster,
     can: (feature) => planAllowsFeature(plan, feature),
   };
 }

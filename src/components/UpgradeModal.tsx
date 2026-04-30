@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function UpgradeModal({ open, onOpenChange, feature, featureLabel, benefit }: Props) {
-  const min = feature ? minPlanFor(feature) : "pessoal";
+  const min = feature ? minPlanFor(feature) : "pessoal_manual";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
