@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Mon
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 import { useAccent, ACCENTS } from "@/lib/accent";
 import {
@@ -356,6 +357,14 @@ function CategoriasPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* ===== Conta e privacidade ===== */}
+      <section className="mt-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Conta e privacidade
+        </p>
+        <ZonaDeRiscoCard />
       </section>
     </MobileShell>
   );

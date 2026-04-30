@@ -10,6 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
@@ -478,6 +479,14 @@ function MeuPlanoPage() {
         Pagamentos via Pix e cartão pelo Mercado Pago. A cobrança real é
         liberada assim que a integração de pagamento estiver configurada.
       </p>
+
+      {/* ===== Conta e privacidade ===== */}
+      <section className="mt-8">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Conta e privacidade
+        </p>
+        <ZonaDeRiscoCard />
+      </section>
     </MobileShell>
   );
 }
