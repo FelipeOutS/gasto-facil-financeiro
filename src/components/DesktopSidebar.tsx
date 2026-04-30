@@ -15,6 +15,7 @@ import {
   CreditCard,
   BarChart3,
   Crown,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
@@ -31,6 +32,7 @@ const ITEMS: NavItem[] = [
   { to: "/gastos", label: "Gastos", icon: List },
   { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/assinaturas", label: "Assinaturas", icon: Repeat },
+  { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
   { to: "/renda", label: "Minha renda", icon: ArrowUp },
   { to: "/contas-a-pagar", label: "Contas a pagar", icon: CalendarClock },
   { to: "/orcamento", label: "Orçamento", icon: PieChart },
