@@ -661,6 +661,18 @@ function Index() {
         </>
       )}
 
+      {/* ===== Cartões, faturas e insights ===== */}
+      <SectionLabel>Cartões e insights</SectionLabel>
+      <DashboardCartoesInsights
+        mes={ym.mes}
+        ano={ym.ano}
+        gastosMes={doMes}
+        totalMes={total}
+        totalMesAnterior={totalMesAnterior}
+        maiorCategoria={maior ?? null}
+        onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+      />
+
       {/* ===== 4. METAS ===== */}
       {(metaProxima || metasAndamento.length > 0) && (
         <>
