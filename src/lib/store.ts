@@ -915,6 +915,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
       true,
     );
+    memGastos = memGastos.map(applyCategoriaInferida);
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
@@ -947,6 +948,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     // antes do sistema de batch existir. Não bloqueia hidratação.
     void backfillExtratosImportados().catch((err) => {
       console.warn("[store] backfillExtratosImportados failed", err);
+    });
+    void reclassificarCategoriasExistentes().catch((err) => {
+      console.warn("[store] reclassificarCategoriasExistentes failed", err);
     });
   } catch (e) {
     console.error("[store] hydrateUser failed", e);
@@ -1521,6 +1525,61 @@ function categoriaUuidFor(key: string): string | null {
   return categoriaKeyToUuid.get(key) ?? null;
 }
 
+function categoriaKeyFromUuid(uuid: string | null | undefined): string {
+  if (!uuid) return "outros";
+  const categoria = memCategorias.find((c) => categoriaKeyToUuid.get(c.id) === uuid || c.id === uuid);
+  return categoria?.id ?? uuid;
+}
+
+function inferCategoriaForGasto(g: Pick<Gasto, "descricao" | "estabelecimento" | "observacao">): string {
+  return suggestCategoryFromText(`${g.estabelecimento ?? ""} ${g.descricao ?? ""} ${g.observacao ?? ""}`.trim());
+}
+
+function applyCategoriaInferida(g: Gasto): Gasto {
+  const categoriaId = inferCategoriaForGasto(g);
+  return categoriaId && categoriaId !== "outros" && categoriaId !== g.categoriaId ? { ...g, categoriaId } : g;
+}
+
+export async function reclassificarCategoriasExistentes(): Promise<number> {
+  if (!activeUserId) return 0;
+  const userId = activeUserId;
+  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId);
+  if (error || !data) {
+    if (error) console.error("[store] reclassificarCategoriasExistentes load failed", error);
+    return 0;
+  }
+
+  const updates = (data as GastoRow[]).flatMap((row) => {
+    const categoriaKey = suggestCategoryFromText(
+      `${row.estabelecimento ?? ""} ${row.descricao ?? ""} ${row.observacao ?? ""}`.trim(),
+    );
+    if (!categoriaKey || categoriaKey === "outros") return [];
+    const categoriaUuid = categoriaUuidFor(categoriaKey);
+    if (!categoriaUuid || categoriaUuid === row.categoria_id) return [];
+    return [{ id: row.id, categoriaKey, categoriaUuid }];
+  });
+
+  if (updates.length === 0) return 0;
+
+  const results = await Promise.all(
+    updates.map(({ id, categoriaUuid }) =>
+      supabase.from("gastos").update({ categoria_id: categoriaUuid }).eq("id", id).eq("user_id", userId),
+    ),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) console.error("[store] reclassificarCategoriasExistentes update failed", failed.error);
+
+  const successIds = new Set(updates.filter((_, idx) => !results[idx].error).map((u) => u.id));
+  memGastos = memGastos.map((g) => {
+    if (!successIds.has(g.id)) return g;
+    const update = updates.find((u) => u.id === g.id);
+    return update ? { ...g, categoriaId: update.categoriaKey, atualizadoEm: new Date().toISOString() } : g;
+  });
+  emit();
+  void refreshGastos();
+  return successIds.size;
+}
+
 export async function refreshGastos() {
   if (!activeUserId) return;
   const { data } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
@@ -1531,6 +1590,7 @@ export async function refreshGastos() {
     data.map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
     true,
   );
+  memGastos = memGastos.map(applyCategoriaInferida);
   emit();
 }
 
@@ -1572,7 +1632,11 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   // Auto-categorização: se vier "outros" ou vazio, tenta inferir pelo nome/estabelecimento.
   if (!input.categoriaId || input.categoriaId === "outros") {
-    const guess = suggestCategory(`${input.estabelecimento ?? ""} ${input.descricao ?? ""}`.trim());
+    const guess = inferCategoriaForGasto({
+      estabelecimento: input.estabelecimento ?? "",
+      descricao: input.descricao ?? "",
+      observacao: input.observacao,
+    });
     if (guess && guess !== "outros") input = { ...input, categoriaId: guess };
   }
   const catUuid = categoriaUuidFor(input.categoriaId);
