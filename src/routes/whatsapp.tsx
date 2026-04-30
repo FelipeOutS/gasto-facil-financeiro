@@ -75,6 +75,7 @@ const STATUS_STYLES: Record<string, string> = {
   erro: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   valor_invalido: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   recebida: "border-border text-muted-foreground bg-card",
+  gasto_excluido: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
 };
 
 function StatusBadge({ status }: { status: string }) {
