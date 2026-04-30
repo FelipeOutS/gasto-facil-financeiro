@@ -108,6 +108,11 @@ const MERCHANT_ALIASES: Record<string, string> = {
   "microsoft 365": "microsoft",
   "office 365": "microsoft",
   "xbox": "microsoft",
+  "totalpass": "totalpass",
+  "total pass": "totalpass",
+  "gympass": "totalpass",
+  "cobasi": "cobasi",
+  "coursera": "coursera",
 };
 
 const MERCHANT_COLOR: Record<string, string> = {
