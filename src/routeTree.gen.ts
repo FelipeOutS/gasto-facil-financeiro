@@ -37,6 +37,7 @@ import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrat
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
+import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 
 const ResumoRoute = ResumoRouteImport.update({
@@ -179,6 +180,12 @@ const ApiCheckoutCreateRoute = ApiCheckoutCreateRouteImport.update({
   path: '/api/checkout/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappExpenseRoute =
+  ApiPublicWhatsappExpenseRouteImport.update({
+    id: '/api/public/whatsapp/expense',
+    path: '/api/public/whatsapp/expense',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -247,6 +255,7 @@ export interface FileRoutesByTo {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -279,6 +288,7 @@ export interface FileRoutesById {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   id:
     | '__root__'
     | '/'
@@ -374,6 +386,7 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/public/webhooks/mercadopago'
+    | '/api/public/whatsapp/expense'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -406,6 +419,7 @@ export interface RootRouteChildren {
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
+  ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -606,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCheckoutCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp/expense': {
+      id: '/api/public/whatsapp/expense'
+      path: '/api/public/whatsapp/expense'
+      fullPath: '/api/public/whatsapp/expense'
+      preLoaderRoute: typeof ApiPublicWhatsappExpenseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -646,6 +667,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
+  ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
