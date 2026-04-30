@@ -22,6 +22,8 @@ import {
   type ExtratoImportado,
   type StatusExtratoImportado,
   type TipoOrigemExtrato,
+  type FaturaCartao,
+  type StatusFatura,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
