@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
+  RefreshCw,
   MoreVertical,
   Pencil,
   Search,
@@ -39,6 +40,7 @@ import {
   getCategoriaById,
   getCategorias,
   getGastos,
+  reclassificarCategoriasExistentes,
   refreshGastos,
   useBootstrap,
   useStore,
