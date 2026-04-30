@@ -184,6 +184,43 @@ function GastosPage() {
     if (ready) void refreshGastos();
   }, [ready]);
 
+  // Suporte a ?highlight=<id> para destacar um gasto vindo de outras telas
+  // (ex: /whatsapp → "Ver em Gastos"). Limpa filtros para garantir visibilidade.
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("highlight");
+    if (!id) return;
+    setHighlightId(id);
+    // Remove o parâmetro da URL sem recarregar.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("highlight");
+    window.history.replaceState({}, "", url.toString());
+    // Auto-limpa o destaque após 6s.
+    const t = setTimeout(() => setHighlightId(null), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Quando há highlight ativo, garante que filtros não escondam o gasto.
+  useEffect(() => {
+    if (!highlightId) return;
+    const alvo = gastos.find((g) => g.id === highlightId);
+    if (!alvo) return;
+    // Reset suave: remove filtros e período para o item ser visível.
+    setQ("");
+    setPeriodo("todos");
+    setCatFilter("todas");
+    setPagFilter("todas");
+    setValorMin("");
+    setValorMax("");
+    // Scroll até o card depois do render.
+    setTimeout(() => {
+      const el = document.getElementById(`gasto-${highlightId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
+  }, [highlightId, gastos]);
+
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
