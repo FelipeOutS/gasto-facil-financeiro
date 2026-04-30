@@ -915,11 +915,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
       true,
     );
-    memGastos = memGastos.map((g) => {
-      if (!categoriaAtualEhOutros(g)) return g;
-      const categoriaId = inferCategoriaForGasto(g);
-      return categoriaId && categoriaId !== "outros" ? { ...g, categoriaId } : g;
-    });
+    memGastos = memGastos.map(applyCategoriaInferida);
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
@@ -1594,11 +1590,7 @@ export async function refreshGastos() {
     data.map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
     true,
   );
-  memGastos = memGastos.map((g) => {
-    if (!categoriaAtualEhOutros(g)) return g;
-    const categoriaId = inferCategoriaForGasto(g);
-    return categoriaId && categoriaId !== "outros" ? { ...g, categoriaId } : g;
-  });
+  memGastos = memGastos.map(applyCategoriaInferida);
   emit();
 }
 
