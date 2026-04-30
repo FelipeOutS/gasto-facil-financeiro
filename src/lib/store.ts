@@ -1791,6 +1791,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
 
 export function addGasto(input: NovoGastoInput): Gasto[] {
   if (!activeUserId) return [];
+  if (!ensureCanWrite("addGasto")) return [];
   const built = buildGastosFromInput(input, activeUserId);
   const created = built.map((b) => b.client);
   // Optimistic update
