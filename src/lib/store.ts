@@ -145,6 +145,7 @@ let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
+let memFaturas: FaturaCartao[] = [];
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
