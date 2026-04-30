@@ -97,6 +97,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  // Preload bank + merchant logos once so transaction lists and card swaps
+  // render instantly — no white flash, no late-arriving images.
+  useEffect(() => {
+    preloadAllBankLogos();
+    preloadAllMerchantLogos();
+  }, []);
+
   return (
     <>
       <Outlet />
