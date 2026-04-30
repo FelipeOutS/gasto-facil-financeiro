@@ -53,8 +53,8 @@ async function carregarCartoes(userId: string): Promise<Cartao[]> {
     .select("*")
     .eq("user_id", userId);
   if (!data) return [];
-  return data.map(
-    (c): Cartao => ({
+  return (data as Array<Record<string, unknown>>).map(
+    (c: Record<string, unknown>): Cartao => ({
       id: c.id,
       nome: c.nome,
       banco: c.banco ?? "",
