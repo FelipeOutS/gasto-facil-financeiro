@@ -536,6 +536,7 @@ export type Database = {
           rentabilidade_tipo: string | null
           ticker: string | null
           tipo: string
+          ultima_atualizacao: string | null
           updated_at: string
           user_id: string
           valor_aplicado: number
@@ -559,6 +560,7 @@ export type Database = {
           rentabilidade_tipo?: string | null
           ticker?: string | null
           tipo?: string
+          ultima_atualizacao?: string | null
           updated_at?: string
           user_id: string
           valor_aplicado?: number
@@ -582,10 +584,53 @@ export type Database = {
           rentabilidade_tipo?: string | null
           ticker?: string | null
           tipo?: string
+          ultima_atualizacao?: string | null
           updated_at?: string
           user_id?: string
           valor_aplicado?: number
           valor_atual?: number
+        }
+        Relationships: []
+      }
+      investimentos_atualizacoes: {
+        Row: {
+          ativo_id: string
+          created_at: string
+          data_atualizacao: string
+          id: string
+          observacao: string | null
+          origem: string
+          preco_anterior: number | null
+          preco_novo: number | null
+          user_id: string
+          valor_anterior: number | null
+          valor_novo: number | null
+        }
+        Insert: {
+          ativo_id: string
+          created_at?: string
+          data_atualizacao?: string
+          id?: string
+          observacao?: string | null
+          origem?: string
+          preco_anterior?: number | null
+          preco_novo?: number | null
+          user_id: string
+          valor_anterior?: number | null
+          valor_novo?: number | null
+        }
+        Update: {
+          ativo_id?: string
+          created_at?: string
+          data_atualizacao?: string
+          id?: string
+          observacao?: string | null
+          origem?: string
+          preco_anterior?: number | null
+          preco_novo?: number | null
+          user_id?: string
+          valor_anterior?: number | null
+          valor_novo?: number | null
         }
         Relationships: []
       }

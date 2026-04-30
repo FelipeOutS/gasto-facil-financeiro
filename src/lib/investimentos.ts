@@ -105,8 +105,22 @@ export type Ativo = {
   liquidez: string | null;
   observacao: string | null;
   origem: string | null;
+  ultima_atualizacao: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AtualizacaoValor = {
+  id: string;
+  ativo_id: string;
+  valor_anterior: number | null;
+  valor_novo: number | null;
+  preco_anterior: number | null;
+  preco_novo: number | null;
+  data_atualizacao: string;
+  observacao: string | null;
+  origem: string;
+  created_at: string;
 };
 
 export type Movimentacao = {
@@ -383,3 +397,99 @@ export const TIPO_IMPORTACAO_LABEL: Record<string, string> = {
   pdf: "PDF",
   manual: "Manual",
 };
+
+// ===== Atualização de valores =====
+
+export type AtualizarValorPayload = {
+  valor_novo: number;
+  preco_novo?: number | null;
+  quantidade?: number | null;
+  observacao?: string | null;
+  data_atualizacao?: string; // ISO
+  origem?: string;
+};
+
+export async function atualizarValorAtivo(
+  userId: string,
+  ativo: Ativo,
+  payload: AtualizarValorPayload,
+): Promise<void> {
+  const dataIso = payload.data_atualizacao ?? new Date().toISOString();
+  const valor_anterior = Number(ativo.valor_atual ?? 0);
+  const preco_anterior = ativo.preco_atual != null ? Number(ativo.preco_atual) : null;
+
+  const patch: Partial<Ativo> = {
+    valor_atual: payload.valor_novo,
+    ultima_atualizacao: dataIso,
+  };
+  if (payload.preco_novo != null) patch.preco_atual = payload.preco_novo;
+  if (payload.quantidade != null) patch.quantidade = payload.quantidade;
+
+  const { error: upErr } = await supabase
+    .from("investimentos_ativos" as never)
+    .update(patch as never)
+    .eq("id", ativo.id);
+  if (upErr) throw upErr;
+
+  const { error: histErr } = await supabase
+    .from("investimentos_atualizacoes" as never)
+    .insert({
+      user_id: userId,
+      ativo_id: ativo.id,
+      valor_anterior,
+      valor_novo: payload.valor_novo,
+      preco_anterior,
+      preco_novo: payload.preco_novo ?? null,
+      data_atualizacao: dataIso,
+      observacao: payload.observacao ?? null,
+      origem: payload.origem ?? "manual",
+    } as never);
+  if (histErr) throw histErr;
+}
+
+export async function listarAtualizacoesAtivo(
+  userId: string,
+  ativoId: string,
+): Promise<AtualizacaoValor[]> {
+  const { data, error } = await supabase
+    .from("investimentos_atualizacoes" as never)
+    .select("*")
+    .eq("user_id", userId)
+    .eq("ativo_id", ativoId)
+    .order("data_atualizacao", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as AtualizacaoValor[];
+}
+
+/** Retorna texto relativo: "Atualizado hoje", "há 7 dias", etc. */
+export function descreverUltimaAtualizacao(iso: string | null): {
+  label: string;
+  diasDesde: number | null;
+  desatualizado: boolean;
+} {
+  if (!iso) return { label: "Sem atualização recente", diasDesde: null, desatualizado: true };
+  const data = new Date(iso);
+  if (isNaN(data.getTime())) return { label: "Sem atualização recente", diasDesde: null, desatualizado: true };
+  const agora = new Date();
+  const diffMs = agora.getTime() - data.getTime();
+  const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  let label: string;
+  if (dias <= 0) label = "Atualizado hoje";
+  else if (dias === 1) label = "Atualizado ontem";
+  else if (dias < 30) label = `Atualizado há ${dias} dias`;
+  else if (dias < 60) label = "Atualizado há mais de 1 mês";
+  else label = `Atualizado há ${Math.floor(dias / 30)} meses`;
+  return { label, diasDesde: dias, desatualizado: dias >= 30 };
+}
+
+export function formatarDataHora(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yyyy} às ${hh}:${mi}`;
+}
