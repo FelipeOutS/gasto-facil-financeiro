@@ -5,16 +5,15 @@ import {
   Crown,
   Lock,
   Sparkles,
-  Star,
   Zap,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
+  COMMERCIAL_PLANS,
   PLAN_FEATURES,
   PLAN_LABEL,
-  planSummary,
   planAllowsFeature,
   suggestedUpgrade,
   type PlanTier,
@@ -48,11 +47,11 @@ const STATUS_TONE: Record<string, string> = {
 
 function MeuPlanoPage() {
   const { profile } = useAuth();
-  const { plan, status, trialEndsAt, loading } = usePlan();
+  const { plan, status, trialEndsAt, loading, isAdminMaster } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
-  const summary = planSummary(plan);
+  const semAssinatura = plan === "sem_assinatura" || plan === "free";
 
   return (
     <MobileShell wide>
@@ -68,9 +67,7 @@ function MeuPlanoPage() {
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
             Meu plano
           </p>
-          <h1 className="text-xl font-bold tracking-tight">
-            {vocab.controle}
-          </h1>
+          <h1 className="text-xl font-bold tracking-tight">{vocab.controle}</h1>
         </div>
       </header>
 
@@ -78,9 +75,9 @@ function MeuPlanoPage() {
       <section
         className={cn(
           "mt-6 overflow-hidden rounded-3xl border p-5 shadow-card",
-          plan === "admin_master"
+          isAdminMaster
             ? "border-amber-400/40 bg-gradient-to-br from-amber-500/15 via-card to-primary/10"
-            : plan === "free"
+            : semAssinatura
               ? "border-border bg-card"
               : "border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card",
         )}
@@ -88,26 +85,37 @@ function MeuPlanoPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-              Plano atual
+              {isAdminMaster ? "Acesso" : "Plano atual"}
             </p>
             <div className="mt-1 flex items-center gap-2">
-              {plan === "admin_master" ? (
+              {isAdminMaster ? (
                 <Crown className="h-5 w-5 text-amber-500" />
-              ) : plan === "free" ? (
-                <Star className="h-5 w-5 text-muted-foreground" />
               ) : (
                 <Sparkles className="h-5 w-5 text-primary" />
               )}
-            <h2 className="text-2xl font-bold">
-                {loading ? "Carregando…" : PLAN_LABEL[plan]}
+              <h2 className="text-2xl font-bold">
+                {loading
+                  ? "Carregando…"
+                  : isAdminMaster
+                    ? "Acesso total"
+                    : semAssinatura
+                      ? "Sem assinatura ativa"
+                      : PLAN_LABEL[plan]}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Tipo: {plan === "admin_master" ? "Acesso total" : tipoCadastroLabel(tipo)}
+              Tipo:{" "}
+              {isAdminMaster ? "Admin Master" : tipoCadastroLabel(tipo)}
             </p>
-            {plan === "admin_master" && (
+            {isAdminMaster && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Este perfil tem acesso total ao sistema para administração, testes e validação.
+                Usuário com acesso completo ao sistema. Todos os recursos
+                atuais e futuros estão liberados.
+              </p>
+            )}
+            {!isAdminMaster && semAssinatura && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Escolha um dos planos abaixo para liberar todos os recursos.
               </p>
             )}
           </div>
@@ -117,33 +125,35 @@ function MeuPlanoPage() {
               STATUS_TONE[status] ?? STATUS_TONE.ativo,
             )}
           >
-            {STATUS_LABEL[status] ?? status}
+            {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
           </span>
         </div>
 
-        {trialEndsAt && status === "teste" && (
+        {!isAdminMaster && trialEndsAt && status === "teste" && (
           <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-xs text-primary">
             Período de teste até{" "}
-            <strong>
-              {new Date(trialEndsAt).toLocaleDateString("pt-BR")}
-            </strong>
-            .
+            <strong>{new Date(trialEndsAt).toLocaleDateString("pt-BR")}</strong>.
           </p>
         )}
 
-        <ul className="mt-4 space-y-1.5">
-          {summary.highlights.map((h) => (
-            <li key={h} className="flex items-center gap-2 text-sm">
-              <Check className="h-4 w-4 text-emerald-500" /> {h}
-            </li>
-          ))}
-        </ul>
-
-        {plan !== "admin_master" && (
+        {isAdminMaster ? (
+          <div className="mt-5">
+            <Button
+              className="w-full rounded-2xl"
+              variant="outline"
+              disabled
+            >
+              <Crown className="mr-2 h-4 w-4 text-amber-500" />
+              Acesso total liberado
+            </Button>
+          </div>
+        ) : (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <Button className="rounded-2xl sm:flex-1" disabled>
               <Zap className="mr-2 h-4 w-4" />
-              Fazer upgrade para {PLAN_LABEL[recommended]}
+              {semAssinatura
+                ? `Assinar ${PLAN_LABEL[recommended]}`
+                : `Fazer upgrade para ${PLAN_LABEL[recommended]}`}
             </Button>
             <span className="text-center text-[11px] text-muted-foreground sm:self-center">
               Pagamento em breve
@@ -189,34 +199,37 @@ function MeuPlanoPage() {
         })}
       </section>
 
-      {/* Tabela rápida de planos */}
+      {/* Tabela de planos comerciais (sem Free) */}
       <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-        Comparar planos
+        Planos disponíveis
       </h3>
       <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {(["free", "pessoal", "mei", "empresa"] as PlanTier[]).map((p) => {
-          const isCurrent = plan === p;
-          const s = planSummary(p);
+        {COMMERCIAL_PLANS.map((p) => {
+          const isCurrent = !isAdminMaster && plan === p.tier;
           return (
             <div
-              key={p}
+              key={p.tier}
               className={cn(
-                "rounded-2xl border p-4 transition-colors",
+                "flex flex-col rounded-2xl border p-4 transition-colors",
                 isCurrent
                   ? "border-primary bg-primary/5"
                   : "border-border bg-card hover:border-primary/40",
               )}
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">{PLAN_LABEL[p]}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">{p.name}</p>
                 {isCurrent && (
                   <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
                     Atual
                   </span>
                 )}
               </div>
-              <ul className="mt-2 space-y-1">
-                {s.highlights.map((h) => (
+              <p className="mt-0.5 text-base font-bold">{p.priceLabel}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {p.tagline}
+              </p>
+              <ul className="mt-3 space-y-1">
+                {p.highlights.map((h) => (
                   <li
                     key={h}
                     className="flex items-start gap-1.5 text-xs text-muted-foreground"
@@ -226,15 +239,45 @@ function MeuPlanoPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-4">
+                <Button
+                  size="sm"
+                  className="w-full rounded-xl"
+                  variant={isCurrent ? "outline" : "default"}
+                  disabled
+                >
+                  {isAdminMaster
+                    ? "Acesso total"
+                    : isCurrent
+                      ? "Plano atual"
+                      : "Pagamento em breve"}
+                </Button>
+              </div>
             </div>
           );
         })}
+        {/* Investimentos: card "em breve" */}
+        <div className="flex flex-col rounded-2xl border border-dashed border-border bg-card/50 p-4 sm:col-span-2 xl:col-span-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold">Investimentos</p>
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+              Em breve
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Estrutura preparada para acompanhar investimentos pessoais e
+            empresariais nos planos Premium, MEI e Empresa.
+          </p>
+        </div>
       </section>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
         Pagamento ainda não disponível — você está visualizando a estrutura
-        de planos.
+        comercial dos planos.
       </p>
+
+      {/* Suprimir warning de variável não usada quando Admin Master */}
+      <span className="hidden">{recommended as PlanTier}</span>
     </MobileShell>
   );
 }
