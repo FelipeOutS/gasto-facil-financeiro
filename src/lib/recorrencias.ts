@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   getGastos,
   getCartoes,
+  getCategorias,
   useStore,
   addGasto,
   type NovoGastoInput,
@@ -33,6 +34,8 @@ export type StatusRecorrencia =
   | "suspeita"
   | "aguardando";
 
+export type TipoRecorrencia = "assinatura" | "recorrencia_fixa";
+
 export type Recorrencia = {
   id: string;
   nome: string;
@@ -43,6 +46,7 @@ export type Recorrencia = {
   formaPagamento?: FormaPagamento | null;
   cartaoId?: string | null;
   status: StatusRecorrencia;
+  tipoRecorrencia: TipoRecorrencia;
   origem: "manual" | "detectada";
   observacao?: string | null;
   ultimoValor?: number | null;
@@ -65,6 +69,7 @@ export type RecorrenciaSugerida = {
   ultimaData: string;
   variacaoValor?: number; // diferença entre último e penúltimo
   gastoIds: string[];
+  tipoRecorrencia: TipoRecorrencia;
 };
 
 const FREQ_VALUES: FrequenciaRecorrencia[] = [
@@ -97,20 +102,59 @@ function subscribe(l: () => void) {
 
 let hydratedUserId: string | null = null;
 let hydrating = false;
+let categoriaKeyToUuidRec = new Map<string, string>();
+let categoriaUuidToKeyRec = new Map<string, string>();
+
+function isUuid(v: string | null | undefined): boolean {
+  return !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
+async function syncCategoriaMaps(userId: string): Promise<void> {
+  const { data, error } = await (supabase as any)
+    .from("categorias")
+    .select("id, legacy_id, nome")
+    .eq("user_id", userId);
+  if (error) {
+    console.warn("[recorrencias] categorias map warning", error);
+    return;
+  }
+  categoriaKeyToUuidRec = new Map();
+  categoriaUuidToKeyRec = new Map();
+  for (const c of data ?? []) {
+    const key = c.legacy_id || c.id;
+    categoriaKeyToUuidRec.set(key, c.id);
+    categoriaUuidToKeyRec.set(c.id, key);
+  }
+}
+
+function categoriaKeyFromDb(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return categoriaUuidToKeyRec.get(id) ?? id;
+}
+
+async function categoriaDbId(userId: string | null, id: string | null | undefined): Promise<string | null> {
+  if (!id || id === "outros") return null;
+  if (isUuid(id)) return id;
+  if (userId && categoriaKeyToUuidRec.size === 0) await syncCategoriaMaps(userId);
+  return categoriaKeyToUuidRec.get(id) ?? null;
+}
 
 function rowToRec(r: any): Recorrencia {
   const freq = FREQ_VALUES.includes(r.frequencia) ? r.frequencia : "mensal";
   const status = STATUS_VALUES.includes(r.status) ? r.status : "ativa";
+  const tipo: TipoRecorrencia =
+    r.tipo_recorrencia === "recorrencia_fixa" ? "recorrencia_fixa" : "assinatura";
   return {
     id: r.id,
     nome: r.nome,
     valor: Number(r.valor) || 0,
-    categoriaId: r.categoria_id ?? null,
+    categoriaId: categoriaKeyFromDb(r.categoria_id),
     frequencia: freq,
     proximaCobranca: r.proxima_cobranca ?? null,
     formaPagamento: (r.forma_pagamento ?? null) as FormaPagamento | null,
     cartaoId: r.cartao_id ?? null,
     status,
+    tipoRecorrencia: tipo,
     origem: r.origem === "detectada" ? "detectada" : "manual",
     observacao: r.observacao ?? null,
     ultimoValor: r.ultimo_valor != null ? Number(r.ultimo_valor) : null,
