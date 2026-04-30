@@ -7,17 +7,27 @@ import type { TipoCadastro } from "./profile-utils";
 /**
  * Tiers de plano. `free` permanece apenas para compatibilidade interna
  * (registros antigos), mas NÃO é exibido como plano comercial.
+ *
+ * `mei` é mantido como alias legado e mapeado para `mei_essencial`.
  */
 export type PlanTier =
   | "free"
   | "sem_assinatura"
   | "pessoal_manual"
   | "pessoal_premium"
-  | "mei"
+  | "mei_essencial"
+  | "mei_inteligente"
   | "empresa"
   | "admin_master";
 
-export type SubscriptionStatus = "ativo" | "teste" | "expirado" | "cancelado";
+/** Estados de assinatura visíveis na UI e usados na lógica de bloqueio. */
+export type SubscriptionStatus =
+  | "ativo"
+  | "teste"
+  | "aguardando_pagamento"
+  | "expirado"
+  | "cancelado"
+  | "sem_assinatura";
 
 export type FeatureKey =
   | "importar_extrato"
@@ -39,7 +49,8 @@ export const PLAN_LABEL: Record<PlanTier, string> = {
   sem_assinatura: "Sem assinatura",
   pessoal_manual: "Pessoa Física Manual",
   pessoal_premium: "Pessoa Física Premium",
-  mei: "MEI",
+  mei_essencial: "MEI Essencial",
+  mei_inteligente: "MEI Inteligente",
   empresa: "Empresa",
   admin_master: "Admin Master",
 };
@@ -49,8 +60,9 @@ export const PLAN_ORDER: Record<PlanTier, number> = {
   free: 0,
   pessoal_manual: 1,
   pessoal_premium: 2,
-  mei: 3,
-  empresa: 4,
+  mei_essencial: 3,
+  mei_inteligente: 4,
+  empresa: 5,
   admin_master: 99,
 };
 
@@ -68,7 +80,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   relatorios_avancados: "pessoal_premium",
   metas_visuais: "pessoal_premium",
   // Recursos por tipo
-  recursos_mei: "mei",
+  recursos_mei: "mei_essencial",
   perfil_empresarial: "empresa",
   recursos_empresa: "empresa",
   investimentos_futuro: "empresa",
@@ -100,10 +112,9 @@ export function isAdminMasterEmail(email: string | null | undefined): boolean {
 
 /**
  * Plano efetivo do usuário.
- * - Se o e-mail é Admin Master => `admin_master`, sempre.
- * - Caso contrário => o plano salvo, ou `sem_assinatura` se não houver.
- *
- * Mantém compatibilidade com tiers legados (`pessoal` => `pessoal_manual`).
+ * - Admin Master por e-mail vence sempre.
+ * - `mei` legado => `mei_essencial`.
+ * - Sem registro válido => `sem_assinatura`.
  */
 export function getEffectiveUserPlan(
   user: { email?: string | null } | null | undefined,
@@ -111,30 +122,29 @@ export function getEffectiveUserPlan(
 ): PlanTier {
   if (isAdminMasterEmail(user?.email)) return "admin_master";
   const p = (storedPlan ?? "").toLowerCase();
-  // Mapeamentos legados
   if (p === "pessoal") return "pessoal_manual";
+  if (p === "mei") return "mei_essencial";
   if (p === "admin_master") return "admin_master";
   if (
     p === "pessoal_manual" ||
     p === "pessoal_premium" ||
-    p === "mei" ||
+    p === "mei_essencial" ||
+    p === "mei_inteligente" ||
     p === "empresa"
   ) {
     return p as PlanTier;
   }
-  if (p === "free" || p === "" || p === "sem_assinatura") return "sem_assinatura";
   return "sem_assinatura";
 }
 
-/** Plano sugerido para upgrade considerando o tipo de cadastro do usuário. */
+/** Plano sugerido para upgrade considerando o tipo de cadastro. */
 export function suggestedUpgrade(
   current: PlanTier,
   tipo: TipoCadastro,
 ): PlanTier {
   if (current === "admin_master") return current;
   if (tipo === "empresa") return "empresa";
-  if (tipo === "mei") return "mei";
-  // Pessoa física: sugere o premium como upgrade padrão
+  if (tipo === "mei") return current === "mei_essencial" ? "mei_inteligente" : "mei_essencial";
   return current === "pessoal_manual" ? "pessoal_premium" : "pessoal_manual";
 }
 
@@ -166,6 +176,8 @@ export const PLAN_FEATURES: PlanFeature[] = [
 export type CommercialPlan = {
   tier: PlanTier;
   name: string;
+  /** Em centavos para uso no gateway. */
+  priceCents: number;
   priceLabel: string;
   tagline: string;
   highlights: string[];
@@ -175,6 +187,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   {
     tier: "pessoal_manual",
     name: "Pessoa Física Manual",
+    priceCents: 2500,
     priceLabel: "R$ 25,00/mês",
     tagline: "Para quem quer organizar tudo manualmente.",
     highlights: [
@@ -188,6 +201,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   {
     tier: "pessoal_premium",
     name: "Pessoa Física Premium",
+    priceCents: 5000,
     priceLabel: "R$ 50,00/mês",
     tagline: "Mais automação para o seu dia a dia.",
     highlights: [
@@ -199,25 +213,41 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     ],
   },
   {
-    tier: "mei",
-    name: "MEI",
-    priceLabel: "a partir de R$ 39,90/mês",
-    tagline: "Para o seu negócio como MEI.",
+    tier: "mei_essencial",
+    name: "MEI Essencial",
+    priceCents: 3990,
+    priceLabel: "R$ 39,90/mês",
+    tagline: "O essencial para o seu MEI.",
     highlights: [
-      "Tudo do Pessoa Física Premium",
-      "Perfil e linguagem para MEI",
+      "Tudo do Pessoa Física Manual",
+      "Linguagem e visão para MEI",
       "Contas e relatórios do negócio",
       "Separação pessoal × negócio",
+      "Sem importações automáticas",
+    ],
+  },
+  {
+    tier: "mei_inteligente",
+    name: "MEI Inteligente",
+    priceCents: 7000,
+    priceLabel: "R$ 70,00/mês",
+    tagline: "MEI com automação completa.",
+    highlights: [
+      "Tudo do MEI Essencial",
+      "Importar extrato, fatura e boleto/Pix",
+      "Relatórios avançados do negócio",
+      "Metas com imagens",
       "Investimentos em breve",
     ],
   },
   {
     tier: "empresa",
     name: "Empresa",
+    priceCents: 15000,
     priceLabel: "R$ 150,00/mês",
     tagline: "Visão financeira completa para a sua empresa.",
     highlights: [
-      "Tudo do MEI",
+      "Tudo do MEI Inteligente",
       "Perfil empresarial com CNPJ",
       "Controle financeiro empresarial",
       "Relatórios completos",
@@ -226,24 +256,17 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
 ];
 
+export function commercialPlanByTier(tier: PlanTier): CommercialPlan | undefined {
+  return COMMERCIAL_PLANS.find((p) => p.tier === tier);
+}
+
 export function planSummary(plan: PlanTier): { highlights: string[] } {
-  switch (plan) {
-    case "admin_master":
-      return { highlights: ["Acesso total", "Sem limites", "Todos os recursos atuais e futuros"] };
-    case "empresa":
-      return COMMERCIAL_PLANS[3] ? { highlights: COMMERCIAL_PLANS[3].highlights } : { highlights: [] };
-    case "mei":
-      return { highlights: COMMERCIAL_PLANS[2].highlights };
-    case "pessoal_premium":
-      return { highlights: COMMERCIAL_PLANS[1].highlights };
-    case "pessoal_manual":
-      return { highlights: COMMERCIAL_PLANS[0].highlights };
-    default:
-      return {
-        highlights: [
-          "Sem assinatura ativa",
-          "Escolha um plano para liberar recursos",
-        ],
-      };
+  if (plan === "admin_master") {
+    return { highlights: ["Acesso total", "Sem limites", "Todos os recursos atuais e futuros"] };
   }
+  const c = commercialPlanByTier(plan);
+  if (c) return { highlights: c.highlights };
+  return {
+    highlights: ["Sem assinatura ativa", "Escolha um plano para liberar recursos"],
+  };
 }
