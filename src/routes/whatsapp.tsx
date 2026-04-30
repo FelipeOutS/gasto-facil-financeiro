@@ -19,14 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  deleteWhatsAppLink,
-  listWhatsAppLinks,
-  listWhatsAppMessages,
-  testarWebhookWhatsApp,
-  upsertWhatsAppLink,
-} from "@/server/whatsapp.functions";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import { supabase as _supabase } from "@/integrations/supabase/client";
+// As tabelas whatsapp_* foram criadas após a regeneração de tipos.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = _supabase as any;
 
 export const Route = createFileRoute("/whatsapp")({
   head: () => ({
@@ -86,12 +83,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function normTel(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
+
 function WhatsAppPage() {
-  const list = useServerFn(listWhatsAppLinks);
-  const upsert = useServerFn(upsertWhatsAppLink);
-  const remove = useServerFn(deleteWhatsAppLink);
-  const listMsgs = useServerFn(listWhatsAppMessages);
-  const testar = useServerFn(testarWebhookWhatsApp);
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
@@ -112,9 +108,29 @@ function WhatsAppPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const [a, b] = await Promise.all([list(), listMsgs()]);
-      setLinks(a.links as Link[]);
-      setMsgs(b.messages as Message[]);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLinks([]);
+        setMsgs([]);
+        return;
+      }
+      const [linksRes, msgsRes] = await Promise.all([
+        supabase
+          .from("whatsapp_links")
+          .select("id, telefone, ativo, ultimo_uso, created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("whatsapp_messages")
+          .select(
+            "id, telefone, texto, status, gasto_id, confianca, recebida_em, resposta_sugerida, erro",
+          )
+          .order("recebida_em", { ascending: false })
+          .limit(50),
+      ]);
+      if (linksRes.error) throw new Error(linksRes.error.message);
+      if (msgsRes.error) throw new Error(msgsRes.error.message);
+      setLinks((linksRes.data ?? []) as Link[]);
+      setMsgs((msgsRes.data ?? []) as Message[]);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -129,9 +145,35 @@ function WhatsAppPage() {
 
   async function adicionar() {
     if (!novoTel.trim()) return;
+    const tel = normTel(novoTel);
+    if (tel.length < 8) {
+      toast.error("Telefone inválido");
+      return;
+    }
     setAdding(true);
     try {
-      await upsert({ data: { telefone: novoTel, ativo: true } });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Faça login primeiro");
+      const { data: existing } = await supabase
+        .from("whatsapp_links")
+        .select("id, user_id")
+        .eq("telefone", tel)
+        .maybeSingle();
+      if (existing && existing.user_id !== user.id) {
+        throw new Error("Esse número já está vinculado a outra conta.");
+      }
+      if (existing) {
+        const { error } = await supabase
+          .from("whatsapp_links")
+          .update({ ativo: true })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("whatsapp_links")
+          .insert({ user_id: user.id, telefone: tel, ativo: true });
+        if (error) throw new Error(error.message);
+      }
       toast.success("Número vinculado");
       setNovoTel("");
       await refresh();
@@ -144,7 +186,11 @@ function WhatsAppPage() {
 
   async function excluir(id: string) {
     try {
-      await remove({ data: { id } });
+      const { error } = await supabase
+        .from("whatsapp_links")
+        .delete()
+        .eq("id", id);
+      if (error) throw new Error(error.message);
       toast.success("Vínculo removido");
       await refresh();
     } catch (e) {
@@ -159,10 +205,19 @@ function WhatsAppPage() {
     }
     setTestando(true);
     try {
-      const out = await testar({
-        data: { telefone: links[0].telefone, texto: testTexto },
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telefone: links[0].telefone,
+          texto: testTexto,
+          external_id: `test-${Date.now()}`,
+        }),
       });
-      toast.success(out.resposta);
+      const out = await res.json();
+      if (!res.ok) throw new Error(out?.error ?? "Falha no teste");
+      const first = out.results?.[0];
+      toast.success(`Status: ${first?.status ?? "ok"}`);
       await refresh();
     } catch (e) {
       toast.error((e as Error).message);
