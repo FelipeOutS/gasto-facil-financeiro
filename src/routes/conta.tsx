@@ -13,6 +13,7 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { useRoles } from "@/lib/use-roles";
 import {
   displayCPF,
   displayCNPJ,
