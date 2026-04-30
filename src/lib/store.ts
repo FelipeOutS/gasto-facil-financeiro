@@ -915,6 +915,11 @@ export async function hydrateUser(userId: string): Promise<void> {
       (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
       true,
     );
+    memGastos = memGastos.map((g) => {
+      if (!categoriaAtualEhOutros(g)) return g;
+      const categoriaId = inferCategoriaForGasto(g);
+      return categoriaId && categoriaId !== "outros" ? { ...g, categoriaId } : g;
+    });
     memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
     memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
@@ -947,6 +952,9 @@ export async function hydrateUser(userId: string): Promise<void> {
     // antes do sistema de batch existir. Não bloqueia hidratação.
     void backfillExtratosImportados().catch((err) => {
       console.warn("[store] backfillExtratosImportados failed", err);
+    });
+    void reclassificarCategoriasExistentes().catch((err) => {
+      console.warn("[store] reclassificarCategoriasExistentes failed", err);
     });
   } catch (e) {
     console.error("[store] hydrateUser failed", e);
