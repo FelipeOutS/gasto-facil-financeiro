@@ -542,6 +542,18 @@ function AssinaturasPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui.
             </p>
+            {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
+              <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
+                <p>Gastos encontrados: {debugAnalise.gastos}</p>
+                <p>Gastos analisados: {debugAnalise.analisados}</p>
+                <p>Palavras-chave/recorrências encontradas: {debugAnalise.encontradas}</p>
+                <p>Ativas criadas: {debugAnalise.criadas}</p>
+                <p>Suspeitas criadas: {debugAnalise.suspeitas}</p>
+                <p>Assinaturas: {debugAnalise.assinaturas}</p>
+                <p>Recorrências fixas: {debugAnalise.fixas}</p>
+                <p className="mt-2 truncate">Amostra: {debugAnalise.nomes.join(", ") || "—"}</p>
+              </div>
+            )}
           </div>
         ) : (
           recsFiltradas.map((r) => (
