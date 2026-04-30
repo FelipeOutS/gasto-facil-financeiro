@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
@@ -40,6 +41,11 @@ import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.cre
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
   path: '/resumo',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/whatsapp': typeof WhatsappRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/whatsapp'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -411,6 +423,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  WhatsappRoute: typeof WhatsappRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
@@ -424,6 +437,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resumo': {
       id: '/resumo'
       path: '/resumo'
@@ -659,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  WhatsappRoute: WhatsappRoute,
   ApiImportContaRoute: ApiImportContaRoute,
   ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,
