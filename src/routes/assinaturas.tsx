@@ -362,8 +362,14 @@ function AssinaturasPage() {
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Recorrências ativas"
-          value={`${totais.ativas}`}
+          label={
+            suspeitas.length > 0 ? "Possíveis recorrências" : "Recorrências ativas"
+          }
+          value={
+            suspeitas.length > 0
+              ? formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))
+              : `${totais.ativas}`
+          }
         />
       </section>
 
