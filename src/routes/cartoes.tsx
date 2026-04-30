@@ -143,6 +143,8 @@ function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" }
 function CartoesPage() {
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
+  const { abrir } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   // Preload every bank logo on mount so card swaps are instant — no delay
   // between color change and logo render, no fallback flash.
@@ -157,6 +159,18 @@ function CartoesPage() {
   const [importCartaoId, setImportCartaoId] = useState<string | undefined>(undefined);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { can } = usePlan();
+
+  // Deep-link: ?abrir=<cartaoId> abre automaticamente o detalhe da fatura.
+  useEffect(() => {
+    if (!ready || !abrir) return;
+    const alvo = cartoes.find((c) => c.id === abrir);
+    if (alvo) {
+      setOpenDetail(alvo);
+      // Limpa o param para não reabrir ao voltar.
+      navigate({ search: { abrir: undefined }, replace: true });
+    }
+  }, [ready, abrir, cartoes, navigate]);
+
 
   const gastos = useStore(() => getGastos());
 
