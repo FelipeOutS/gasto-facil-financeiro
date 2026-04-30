@@ -16,6 +16,8 @@ import {
   Info,
   History,
   AlertTriangle,
+  RefreshCw,
+  Clock,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
