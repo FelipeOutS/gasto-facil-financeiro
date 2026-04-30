@@ -440,13 +440,24 @@ function WhatsAppPage() {
             onChange={(e) => setTestTexto(e.target.value)}
             className="min-h-[72px] bg-card-elevated text-sm"
           />
-          <Button
-            onClick={testarWebhook}
-            disabled={testando || links.length === 0}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            {testando ? "Testando..." : "Disparar teste"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={testarWebhook}
+              disabled={testando || links.length === 0}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              {testando ? "Testando..." : "Disparar teste"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={limparDuplicados}
+              disabled={limpando}
+              className="border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {limpando ? "Limpando..." : "Limpar duplicados"}
+            </Button>
+          </div>
         </section>
 
         {/* Histórico */}
