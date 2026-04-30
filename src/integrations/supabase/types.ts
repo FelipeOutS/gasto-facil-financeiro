@@ -720,6 +720,63 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          method: string
+          paid_at: string | null
+          payload: Json | null
+          plano: Database["public"]["Enums"]["plan_tier"]
+          provider: string
+          provider_payment_id: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
+          status: string
+          ticket_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          paid_at?: string | null
+          payload?: Json | null
+          plano: Database["public"]["Enums"]["plan_tier"]
+          provider?: string
+          provider_payment_id?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          ticket_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          paid_at?: string | null
+          payload?: Json | null
+          plano?: Database["public"]["Enums"]["plan_tier"]
+          provider?: string
+          provider_payment_id?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          ticket_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transferencias_internas: {
         Row: {
           ano: number
@@ -848,8 +905,24 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
-      plan_tier: "free" | "pessoal" | "mei" | "empresa" | "admin_master"
-      subscription_status: "ativo" | "teste" | "expirado" | "cancelado"
+      plan_tier:
+        | "free"
+        | "pessoal"
+        | "mei"
+        | "empresa"
+        | "admin_master"
+        | "pessoal_manual"
+        | "pessoal_premium"
+        | "mei_essencial"
+        | "mei_inteligente"
+        | "sem_assinatura"
+      subscription_status:
+        | "ativo"
+        | "teste"
+        | "expirado"
+        | "cancelado"
+        | "sem_assinatura"
+        | "aguardando_pagamento"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -978,8 +1051,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "user"],
-      plan_tier: ["free", "pessoal", "mei", "empresa", "admin_master"],
-      subscription_status: ["ativo", "teste", "expirado", "cancelado"],
+      plan_tier: [
+        "free",
+        "pessoal",
+        "mei",
+        "empresa",
+        "admin_master",
+        "pessoal_manual",
+        "pessoal_premium",
+        "mei_essencial",
+        "mei_inteligente",
+        "sem_assinatura",
+      ],
+      subscription_status: [
+        "ativo",
+        "teste",
+        "expirado",
+        "cancelado",
+        "sem_assinatura",
+        "aguardando_pagamento",
+      ],
     },
   },
 } as const
