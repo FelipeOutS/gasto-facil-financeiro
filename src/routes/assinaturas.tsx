@@ -253,7 +253,9 @@ function AssinaturasPage() {
     if (!userId) return;
     setSyncing(true);
     try {
-      const r = await sincronizarDeteccoes(userId, gastos);
+      const r = await sincronizarDeteccoes(userId, gastos, {
+        categoriaNomePorId,
+      });
       toast.success(
         `Análise concluída: ${r.criadas} novas, ${r.suspeitas} suspeitas`,
       );
