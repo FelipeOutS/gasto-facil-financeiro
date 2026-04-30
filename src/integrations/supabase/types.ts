@@ -517,6 +517,192 @@ export type Database = {
           },
         ]
       }
+      investimentos_ativos: {
+        Row: {
+          created_at: string
+          data_inicio: string | null
+          data_vencimento: string | null
+          id: string
+          instituicao: string | null
+          liquidez: string | null
+          nome: string
+          observacao: string | null
+          origem: string | null
+          preco_atual: number | null
+          preco_medio: number | null
+          quantidade: number | null
+          rentabilidade_percentual: string | null
+          rentabilidade_tipo: string | null
+          ticker: string | null
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor_aplicado: number
+          valor_atual: number
+        }
+        Insert: {
+          created_at?: string
+          data_inicio?: string | null
+          data_vencimento?: string | null
+          id?: string
+          instituicao?: string | null
+          liquidez?: string | null
+          nome: string
+          observacao?: string | null
+          origem?: string | null
+          preco_atual?: number | null
+          preco_medio?: number | null
+          quantidade?: number | null
+          rentabilidade_percentual?: string | null
+          rentabilidade_tipo?: string | null
+          ticker?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id: string
+          valor_aplicado?: number
+          valor_atual?: number
+        }
+        Update: {
+          created_at?: string
+          data_inicio?: string | null
+          data_vencimento?: string | null
+          id?: string
+          instituicao?: string | null
+          liquidez?: string | null
+          nome?: string
+          observacao?: string | null
+          origem?: string | null
+          preco_atual?: number | null
+          preco_medio?: number | null
+          quantidade?: number | null
+          rentabilidade_percentual?: string | null
+          rentabilidade_tipo?: string | null
+          ticker?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor_aplicado?: number
+          valor_atual?: number
+        }
+        Relationships: []
+      }
+      investimentos_importacoes: {
+        Row: {
+          arquivo_nome: string | null
+          created_at: string
+          dados_extraidos: Json | null
+          erros: string | null
+          id: string
+          status: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          created_at?: string
+          dados_extraidos?: Json | null
+          erros?: string | null
+          id?: string
+          status?: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          created_at?: string
+          dados_extraidos?: Json | null
+          erros?: string | null
+          id?: string
+          status?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investimentos_movimentacoes: {
+        Row: {
+          ativo_id: string | null
+          created_at: string
+          data: string
+          id: string
+          instituicao: string | null
+          observacao: string | null
+          origem: string | null
+          quantidade: number | null
+          tipo: string
+          user_id: string
+          valor_total: number
+          valor_unitario: number | null
+        }
+        Insert: {
+          ativo_id?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          instituicao?: string | null
+          observacao?: string | null
+          origem?: string | null
+          quantidade?: number | null
+          tipo: string
+          user_id: string
+          valor_total?: number
+          valor_unitario?: number | null
+        }
+        Update: {
+          ativo_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          instituicao?: string | null
+          observacao?: string | null
+          origem?: string | null
+          quantidade?: number | null
+          tipo?: string
+          user_id?: string
+          valor_total?: number
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
+      investimentos_rendimentos: {
+        Row: {
+          ativo_id: string | null
+          created_at: string
+          data_pagamento: string
+          id: string
+          observacao: string | null
+          origem: string | null
+          status: string
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          ativo_id?: string | null
+          created_at?: string
+          data_pagamento: string
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          tipo?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          ativo_id?: string | null
+          created_at?: string
+          data_pagamento?: string
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          status?: string
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       limites: {
         Row: {
           ano: number
