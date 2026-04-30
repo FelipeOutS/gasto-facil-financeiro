@@ -1,16 +1,42 @@
 /**
  * Brand logos registry.
  *
- * Resolves a logo URL for banks/issuers and merchants by name. If no logo
- * file exists for the given key, returns `null` and the UI shows an elegant
- * fallback (initial inside a colored circle).
- *
- * Local files should live under:
- *   /public/logos/bancos/<slug>.svg|png
- *   /public/logos/empresas/<slug>.svg|png
- *
- * Until those files are added, the fallback is used automatically.
+ * All bank/merchant SVGs are imported statically via Vite so the bundler
+ * fingerprints them and they're available immediately as URLs (no runtime
+ * fetch path resolution). This eliminates the visual delay between card
+ * color change and logo appearance.
  */
+
+/* -------------------- Static imports (banks) -------------------- */
+import bradescoUrl from "/public/logos/bancos/Banco_Bradesco.svg?url";
+import bbUrl from "/public/logos/bancos/banco-do-brasil.svg?url";
+import interUrl from "/public/logos/bancos/banco-inter.svg?url";
+import itauUrl from "/public/logos/bancos/banco-itau.svg?url";
+import c6Url from "/public/logos/bancos/Logo_C6_Bank.svg?url";
+import caixaUrl from "/public/logos/bancos/logo-caixa.svg?url";
+import santanderUrl from "/public/logos/bancos/logo-santander.svg?url";
+import mpUrl from "/public/logos/bancos/mercadopago-branco.svg?url";
+import nubankUrl from "/public/logos/bancos/nubank.svg?url";
+import picpayUrl from "/public/logos/bancos/picpay.svg?url";
+import willUrl from "/public/logos/bancos/will-bank.svg?url";
+import neonUrl from "/public/logos/bancos/neon.svg?url";
+
+/* -------------------- Static imports (merchants) -------------------- */
+import adobeUrl from "/public/logos/empresas/adobe.svg?url";
+import amazonUrl from "/public/logos/empresas/amazon.svg?url";
+import appleUrl from "/public/logos/empresas/apple.svg?url";
+import cobasiUrl from "/public/logos/empresas/cobasi.svg?url";
+import courseraUrl from "/public/logos/empresas/coursera.svg?url";
+import googleUrl from "/public/logos/empresas/google.svg?url";
+import ifoodUrl from "/public/logos/empresas/ifood.svg?url";
+import mlUrl from "/public/logos/empresas/mercado-livre.svg?url";
+import microsoftUrl from "/public/logos/empresas/microsoft.svg?url";
+import netflixUrl from "/public/logos/empresas/netflix.svg?url";
+import spotifyUrl from "/public/logos/empresas/spotify.svg?url";
+import totalpassUrl from "/public/logos/empresas/totalpass.svg?url";
+import uberEatsUrl from "/public/logos/empresas/uber-eats.svg?url";
+import uberUrl from "/public/logos/empresas/uber.svg?url";
+import youtubeUrl from "/public/logos/empresas/youtube.svg?url";
 
 /** Normalize a free-form name for matching. Case/diacritics/whitespace insensitive. */
 export function normalizeName(input: string | undefined | null): string {
@@ -25,17 +51,27 @@ export function normalizeName(input: string | undefined | null): string {
     .trim();
 }
 
-/** Slugify normalized name into kebab-case (for filenames). */
 function toSlug(normalized: string): string {
   return normalized.replace(/\s+/g, "-");
 }
 
-/* -------------------- Bancos / emissores -------------------- */
+/* -------------------- Bancos -------------------- */
 
-/**
- * Map of normalized name (or alias) -> canonical slug used as filename in
- * /public/logos/bancos/. Add aliases here as users type variations.
- */
+const BANK_URL: Record<string, string> = {
+  "nubank": nubankUrl,
+  "mercadopago-branco": mpUrl,
+  "banco-inter": interUrl,
+  "banco-itau": itauUrl,
+  "logo-santander": santanderUrl,
+  "Banco_Bradesco": bradescoUrl,
+  "logo-caixa": caixaUrl,
+  "banco-do-brasil": bbUrl,
+  "picpay": picpayUrl,
+  "neon": neonUrl,
+  "Logo_C6_Bank": c6Url,
+  "will-bank": willUrl,
+};
+
 const BANK_ALIASES: Record<string, string> = {
   "nubank": "nubank",
   "nu pagamentos": "nubank",
@@ -63,7 +99,6 @@ const BANK_ALIASES: Record<string, string> = {
   "will": "will-bank",
 };
 
-/** Brand color suggestion per bank (used for fallback bubble bg). */
 const BANK_COLOR: Record<string, string> = {
   "nubank": "#820ad1",
   "mercadopago-branco": "#00b1ea",
@@ -79,7 +114,25 @@ const BANK_COLOR: Record<string, string> = {
   "will-bank": "#0f9b5e",
 };
 
-/* -------------------- Empresas / merchants -------------------- */
+/* -------------------- Merchants -------------------- */
+
+const MERCHANT_URL: Record<string, string> = {
+  "spotify": spotifyUrl,
+  "apple": appleUrl,
+  "uber": uberUrl,
+  "uber-eats": uberEatsUrl,
+  "ifood": ifoodUrl,
+  "netflix": netflixUrl,
+  "amazon": amazonUrl,
+  "google": googleUrl,
+  "youtube": youtubeUrl,
+  "mercado-livre": mlUrl,
+  "adobe": adobeUrl,
+  "microsoft": microsoftUrl,
+  "totalpass": totalpassUrl,
+  "cobasi": cobasiUrl,
+  "coursera": courseraUrl,
+};
 
 const MERCHANT_ALIASES: Record<string, string> = {
   "spotify": "spotify",
@@ -136,30 +189,23 @@ const MERCHANT_COLOR: Record<string, string> = {
 /* -------------------- Resolution -------------------- */
 
 export type BrandResolved = {
-  /** Canonical slug (or null if unknown) */
   slug: string | null;
-  /** Public URL to the local logo file (may 404 until file is added) */
   logoUrl: string | null;
-  /** Suggested brand color for fallback bubble background */
   brandColor: string | null;
-  /** First letter for fallback */
   initial: string;
 };
 
 function resolve(
   name: string | undefined | null,
   aliasMap: Record<string, string>,
+  urlMap: Record<string, string>,
   colorMap: Record<string, string>,
-  folder: "bancos" | "empresas",
 ): BrandResolved {
   const norm = normalizeName(name);
   const initial = (norm[0] || "?").toUpperCase();
   if (!norm) return { slug: null, logoUrl: null, brandColor: null, initial };
 
-  // Direct alias hit
   let slug = aliasMap[norm];
-
-  // Fallback: see if any alias is a substring (e.g. "ifood delivery sp")
   if (!slug) {
     for (const key of Object.keys(aliasMap)) {
       if (norm.includes(key)) {
@@ -168,33 +214,54 @@ function resolve(
       }
     }
   }
-
-  // Last resort: try slug from normalized name itself
   if (!slug) {
     const guess = toSlug(norm);
-    // Only treat as known if we have a brand color for it
     if (colorMap[guess]) slug = guess;
   }
-
   if (!slug) return { slug: null, logoUrl: null, brandColor: null, initial };
 
   return {
     slug,
-    logoUrl: `/logos/${folder}/${slug}.svg`,
+    logoUrl: urlMap[slug] ?? null,
     brandColor: colorMap[slug] ?? null,
     initial,
   };
 }
 
 export function getBankLogo(name: string | undefined | null): BrandResolved {
-  return resolve(name, BANK_ALIASES, BANK_COLOR, "bancos");
+  return resolve(name, BANK_ALIASES, BANK_URL, BANK_COLOR);
 }
 
 export function getMerchantLogo(name: string | undefined | null): BrandResolved {
-  return resolve(name, MERCHANT_ALIASES, MERCHANT_COLOR, "empresas");
+  return resolve(name, MERCHANT_ALIASES, MERCHANT_URL, MERCHANT_COLOR);
 }
 
-/** True when the name maps to a known merchant slug (logo file should exist). */
 export function hasMerchantLogo(name: string | undefined | null): boolean {
   return getMerchantLogo(name).slug !== null;
+}
+
+/** All bank logo URLs — useful for preloading on screens that swap cards. */
+export const ALL_BANK_LOGO_URLS: ReadonlyArray<string> = Object.values(BANK_URL);
+
+/**
+ * Eagerly preload every bank logo into the browser cache. Idempotent.
+ * Call once on the cards screen so swaps are instant — no flash, no delay.
+ */
+let _preloaded = false;
+export function preloadAllBankLogos(): void {
+  if (_preloaded || typeof document === "undefined") return;
+  _preloaded = true;
+  for (const url of ALL_BANK_LOGO_URLS) {
+    // <link rel="preload"> ensures the asset is fetched and cached at high
+    // priority without triggering a layout image element.
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = url;
+    link.type = "image/svg+xml";
+    document.head.appendChild(link);
+    // Belt & suspenders: also prime the HTTP cache via Image().
+    const img = new Image();
+    img.src = url;
+  }
 }
