@@ -40,9 +40,9 @@ const BANK_ALIASES: Record<string, string> = {
   "nubank": "nubank",
   "nu pagamentos": "nubank",
   "nu": "nubank",
-  "mercado pago": "mercado-pago",
-  "mercadopago": "mercado-pago",
-  "mp": "mercado-pago",
+  "mercado pago": "mercadopago-branco",
+  "mercadopago": "mercadopago-branco",
+  "mp": "mercadopago-branco",
   "inter": "banco-inter",
   "banco inter": "banco-inter",
   "itau": "banco-itau",
@@ -57,8 +57,8 @@ const BANK_ALIASES: Record<string, string> = {
   "bb": "banco-do-brasil",
   "picpay": "picpay",
   "neon": "neon",
-  "c6": "c6-bank",
-  "c6 bank": "c6-bank",
+  "c6": "Logo_C6_Bank",
+  "c6 bank": "Logo_C6_Bank",
   "will bank": "will-bank",
   "will": "will-bank",
 };
@@ -66,7 +66,7 @@ const BANK_ALIASES: Record<string, string> = {
 /** Brand color suggestion per bank (used for fallback bubble bg). */
 const BANK_COLOR: Record<string, string> = {
   "nubank": "#820ad1",
-  "mercado-pago": "#00b1ea",
+  "mercadopago-branco": "#00b1ea",
   "banco-inter": "#ff7a00",
   "banco-itau": "#ec7000",
   "logo-santander": "#ec0000",
@@ -75,7 +75,7 @@ const BANK_COLOR: Record<string, string> = {
   "banco-do-brasil": "#fae128",
   "picpay": "#21c25e",
   "neon": "#00d563",
-  "c6-bank": "#1f1f1f",
+  "Logo_C6_Bank": "#1f1f1f",
   "will-bank": "#0f9b5e",
 };
 
