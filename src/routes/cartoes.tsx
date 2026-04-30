@@ -507,8 +507,7 @@ function CartaoCard({
             name={cartao.banco}
             variant="bank"
             onDark
-            className="h-12 w-12 shrink-0"
-            imgClassName="p-1"
+            className="h-10 w-auto max-w-[60%] shrink-0"
           />
         </div>
         <DropdownMenu>
@@ -712,15 +711,15 @@ function ProximosVencimentos({
               className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
             >
               <span
-                className="relative grid h-9 w-9 shrink-0 place-items-center rounded-lg shadow-card"
+                className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg shadow-card"
                 style={{ background: theme.background }}
                 aria-hidden
               >
                 <BrandLogo
                   name={cartao.banco}
                   variant="bank"
-                  className="h-6 w-6"
-                  imgClassName="p-1"
+                  onDark
+                  className="h-7 w-auto max-w-[80%]"
                 />
               </span>
               <div className="min-w-0 flex-1">
@@ -888,8 +887,7 @@ function FaturaSheet({
                 name={cartao.banco}
                 variant="bank"
                 onDark
-                className="h-14 w-14"
-                imgClassName="p-1"
+                className="h-12 w-auto max-w-[55%]"
               />
             </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
@@ -1317,8 +1315,7 @@ function CartaoFormDialog({
                           name={banco}
                           variant="bank"
                           onDark
-                          className="h-12 w-12 shrink-0"
-                          imgClassName="p-1"
+                          className="h-10 w-auto max-w-[60%] shrink-0"
                         />
                       </div>
                       <div>

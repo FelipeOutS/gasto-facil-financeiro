@@ -10,7 +10,11 @@ type Props = {
   variant: Variant;
   /** Tailwind size class for the wrapper (h-* w-*). Default: h-9 w-9 */
   className?: string;
-  /** When true, force a white/translucent background suitable for dark cards */
+  /**
+   * When true, render the logo directly over a dark surface (e.g. card
+   * background). The local SVGs are designed in white, so we skip the
+   * white circle wrapper and let the SVG breathe over the card color.
+   */
   onDark?: boolean;
   /** Custom inner padding for the logo image */
   imgClassName?: string;
@@ -30,6 +34,29 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
   // Fallback background — brand color when known, otherwise neutral.
   const bg = resolved.brandColor || (variant === "bank" ? "#3b82f6" : "#64748b");
   const FallbackIcon = variant === "bank" ? Building2 : Store;
+
+  // ---- Bank on dark surface: render SVG directly, no white pill ----
+  if (variant === "bank" && onDark && showLogo) {
+    return (
+      <span
+        className={cn(
+          "relative inline-grid place-items-center",
+          "h-12 w-auto min-w-[3rem]",
+          className,
+        )}
+        aria-hidden
+      >
+        <img
+          src={resolved.logoUrl!}
+          alt=""
+          className={cn("h-full w-full object-contain object-left", imgClassName)}
+          onError={() => setErrored(true)}
+          loading="lazy"
+          decoding="async"
+        />
+      </span>
+    );
+  }
 
   return (
     <span
