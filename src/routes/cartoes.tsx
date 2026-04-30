@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, memo } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import {
   Plus,
   CreditCard,
@@ -36,6 +36,7 @@ import { formatBRL, parseBRLInput } from "@/lib/format";
 import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
+import { preloadAllBankLogos } from "@/lib/logos";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +118,12 @@ function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" }
 function CartoesPage() {
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
+
+  // Preload every bank logo on mount so card swaps are instant — no delay
+  // between color change and logo render, no fallback flash.
+  useEffect(() => {
+    preloadAllBankLogos();
+  }, []);
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Cartao | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Cartao | null>(null);
