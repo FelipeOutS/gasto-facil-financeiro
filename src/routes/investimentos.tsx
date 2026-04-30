@@ -482,6 +482,34 @@ function AddAtivoDialog({
   const [liquidez, setLiquidez] = useState("");
   const [observacao, setObservacao] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showAvancado, setShowAvancado] = useState(false);
+
+  const classe = classeAtivo(tipo);
+  const isRendaVariavel = classe === "Renda variável" || tipo === "cripto";
+  const isRendaFixa = classe === "Renda fixa" || classe === "Fundos";
+
+  // Auto-cálculo para renda variável: quantidade × preço
+  useEffect(() => {
+    if (!isRendaVariavel) return;
+    const qtd = quantidade ? Number(quantidade.replace(",", ".")) : NaN;
+    const pm = precoMedio ? Number(precoMedio.replace(",", ".")) : NaN;
+    if (!isNaN(qtd) && !isNaN(pm) && qtd > 0 && pm > 0) {
+      const total = qtd * pm;
+      setValorAplicado(total.toFixed(2).replace(".", ","));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantidade, precoMedio, isRendaVariavel]);
+
+  useEffect(() => {
+    if (!isRendaVariavel) return;
+    const qtd = quantidade ? Number(quantidade.replace(",", ".")) : NaN;
+    const pa = precoAtual ? Number(precoAtual.replace(",", ".")) : NaN;
+    if (!isNaN(qtd) && !isNaN(pa) && qtd > 0 && pa > 0) {
+      const total = qtd * pa;
+      setValorAtual(total.toFixed(2).replace(".", ","));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantidade, precoAtual, isRendaVariavel]);
 
   useEffect(() => {
     if (editing) {
