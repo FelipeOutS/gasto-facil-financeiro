@@ -108,6 +108,11 @@ const MERCHANT_ALIASES: Record<string, string> = {
   "microsoft 365": "microsoft",
   "office 365": "microsoft",
   "xbox": "microsoft",
+  "totalpass": "totalpass",
+  "total pass": "totalpass",
+  "gympass": "totalpass",
+  "cobasi": "cobasi",
+  "coursera": "coursera",
 };
 
 const MERCHANT_COLOR: Record<string, string> = {
@@ -123,6 +128,9 @@ const MERCHANT_COLOR: Record<string, string> = {
   "mercado-livre": "#fff159",
   "adobe": "#fa0f00",
   "microsoft": "#0078d4",
+  "totalpass": "#0a2540",
+  "cobasi": "#0072ce",
+  "coursera": "#0056d2",
 };
 
 /* -------------------- Resolution -------------------- */
@@ -184,4 +192,9 @@ export function getBankLogo(name: string | undefined | null): BrandResolved {
 
 export function getMerchantLogo(name: string | undefined | null): BrandResolved {
   return resolve(name, MERCHANT_ALIASES, MERCHANT_COLOR, "empresas");
+}
+
+/** True when the name maps to a known merchant slug (logo file should exist). */
+export function hasMerchantLogo(name: string | undefined | null): boolean {
+  return getMerchantLogo(name).slug !== null;
 }

@@ -30,6 +30,7 @@ import { Upload, History } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { BrandLogo } from "@/components/BrandLogo";
+import { hasMerchantLogo } from "@/lib/logos";
 import { Money, CountNumber } from "@/components/Money";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -680,11 +681,17 @@ function GastosPage() {
                   }}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
                 >
-                  <BrandLogo
-                    name={g.estabelecimento || g.descricao}
-                    variant="merchant"
-                    className="h-10 w-10 shrink-0"
-                  />
+                  <div className="relative shrink-0">
+                    <CategoryIcon categoria={cat} size="md" />
+                    {hasMerchantLogo(g.estabelecimento || g.descricao) && (
+                      <BrandLogo
+                        name={g.estabelecimento || g.descricao}
+                        variant="merchant"
+                        className="absolute -bottom-1 -right-1 h-5 w-5 ring-2 ring-card"
+                        imgClassName="p-0.5"
+                      />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
                       {g.estabelecimento || g.descricao}
