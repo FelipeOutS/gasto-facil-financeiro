@@ -102,7 +102,8 @@ export type ProcessOutcome = {
     | "pendente"
     | "sem_vinculo"
     | "erro"
-    | "valor_invalido";
+    | "valor_invalido"
+    | "gasto_excluido";
   gastoId?: string;
   confianca?: number;
   resposta: string;
@@ -122,10 +123,23 @@ function normalizeText(s: string): string {
     .trim();
 }
 
+/** Confirma que um gasto ainda existe na tabela principal. */
+async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
+  if (!gastoId) return false;
+  const { data } = await supabaseAdmin
+    .from("gastos")
+    .select("id")
+    .eq("id", gastoId)
+    .maybeSingle();
+  return !!data;
+}
+
 export async function processarMensagemWhatsApp(
   msg: WhatsAppMessageRow,
 ): Promise<ProcessOutcome> {
-  // 1a) Dedupe por external_id, se houver
+  // 1a) Dedupe por external_id, se houver — só bloqueia se o gasto vinculado
+  // ainda existir. Se o usuário excluiu o gasto, a mesma mensagem pode ser
+  // reprocessada para criar um novo gasto.
   if (msg.external_id) {
     const { data: existente } = await supabaseAdmin
       .from("whatsapp_messages")
@@ -133,11 +147,16 @@ export async function processarMensagemWhatsApp(
       .eq("external_id", msg.external_id)
       .maybeSingle();
     if (existente) {
-      return {
-        status: "duplicada",
-        gastoId: existente.gasto_id ?? undefined,
-        resposta: "Mensagem já processada anteriormente.",
-      };
+      const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
+      if (gastoAindaExiste) {
+        return {
+          status: "duplicada",
+          gastoId: existente.gasto_id ?? undefined,
+          resposta: "Mensagem já processada anteriormente.",
+        };
+      }
+      // Gasto não existe mais → remove o registro antigo para permitir reprocessar.
+      await supabaseAdmin.from("whatsapp_messages").delete().eq("id", existente.id);
     }
   }
 
@@ -179,12 +198,23 @@ export async function processarMensagemWhatsApp(
       r.status === "salva",
   );
   if (dup) {
-    return {
-      status: "duplicada",
-      gastoId: dup.gasto_id,
-      resposta:
-        "Essa mensagem já foi processada. Nenhum gasto duplicado foi criado.",
-    };
+    // Confirma que o gasto referenciado AINDA existe na tabela principal.
+    // Sem essa checagem, a mensagem ficaria "duplicada" apontando para um
+    // gasto que o usuário já excluiu — link quebrado.
+    const aindaExiste = await verificarGastoExiste(dup.gasto_id);
+    if (aindaExiste) {
+      return {
+        status: "duplicada",
+        gastoId: dup.gasto_id,
+        resposta:
+          "Essa mensagem já foi processada. Nenhum gasto duplicado foi criado.",
+      };
+    }
+    // Gasto foi excluído → arquiva o log antigo e segue criando um novo.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "gasto_excluido", gasto_id: null })
+      .eq("id", dup.id);
   }
 
   // 3) Parser
