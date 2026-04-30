@@ -237,10 +237,24 @@ function GastosPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [reclassificando, setReclassificando] = useState(false);
   const { can } = usePlan();
   const tryImportar = () => {
     if (can("importar_extrato")) setImportOpen(true);
     else setUpgradeOpen(true);
+  };
+  const handleReclassificar = async () => {
+    setReclassificando(true);
+    try {
+      const count = await reclassificarCategoriasExistentes();
+      await refreshGastos();
+      toast.success(count > 0 ? `${count} gasto(s) reclassificado(s).` : "Categorias já estavam atualizadas.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível reclassificar agora.");
+    } finally {
+      setReclassificando(false);
+    }
   };
 
   const range = useMemo(
@@ -363,6 +377,17 @@ function GastosPage() {
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={handleReclassificar}
+            className="h-10 rounded-full"
+            variant="outline"
+            disabled={reclassificando}
+            title="Reclassificar categorias"
+          >
+            <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
+            Reclassificar
+          </Button>
           <Button
             type="button"
             onClick={() => setHistoryOpen(true)}
