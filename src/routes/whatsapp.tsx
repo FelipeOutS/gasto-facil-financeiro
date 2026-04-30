@@ -490,19 +490,7 @@ function WhatsAppPage() {
                     <AlertTriangle className="h-3 w-3" /> {m.erro}
                   </p>
                 )}
-                {m.gasto_id && (
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      ID: {m.gasto_id.slice(0, 8)}
-                    </span>
-                    <Link
-                      to="/gastos"
-                      className="text-[11px] text-emerald-400 hover:underline inline-flex items-center gap-1"
-                    >
-                      Ver em Gastos <ExternalLink className="h-3 w-3" />
-                    </Link>
-                  </div>
-                )}
+                <MessageActions msg={m} onChanged={refresh} />
               </li>
             ))}
           </ul>
