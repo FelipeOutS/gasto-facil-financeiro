@@ -111,6 +111,9 @@ function InvestimentosPage() {
   const [openAtualizarLote, setOpenAtualizarLote] = useState(false);
   const [atualizandoAtivo, setAtualizandoAtivo] = useState<Ativo | null>(null);
   const [editing, setEditing] = useState<Ativo | null>(null);
+  const [movDialog, setMovDialog] = useState<{ open: boolean; mov: Movimentacao | null; ativoId?: string | null }>({ open: false, mov: null });
+  const [rendDialog, setRendDialog] = useState<{ open: boolean; rend: Rendimento | null; ativoId?: string | null }>({ open: false, rend: null });
+  const [detalheAtivo, setDetalheAtivo] = useState<Ativo | null>(null);
 
   async function reload() {
     if (!userId) return;
