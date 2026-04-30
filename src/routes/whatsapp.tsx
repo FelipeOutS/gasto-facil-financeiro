@@ -507,3 +507,134 @@ function WhatsAppPage() {
     </MobileShell>
   );
 }
+
+function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Promise<void> | void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function verEmGastos() {
+    if (!msg.gasto_id) return;
+    const { data, error } = await supabase
+      .from("gastos")
+      .select("id")
+      .eq("id", msg.gasto_id)
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("Esse gasto não foi encontrado. Você pode reprocessar a mensagem.");
+      await supabase
+        .from("whatsapp_messages")
+        .update({ status: "gasto_excluido", gasto_id: null, resposta_sugerida: "Gasto não encontrado." })
+        .eq("id", msg.id);
+      await onChanged();
+      return;
+    }
+    window.location.href = `/gastos?highlight=${msg.gasto_id}`;
+  }
+
+  async function excluirGasto() {
+    if (!msg.gasto_id) return;
+    if (!confirm("Tem certeza que deseja excluir este gasto? Essa ação também atualizará cartões, faturas, dashboard e relatórios.")) return;
+    setBusy("delete-gasto");
+    try {
+      const { error: delErr } = await supabase.from("gastos").delete().eq("id", msg.gasto_id);
+      if (delErr) throw new Error(delErr.message);
+      await supabase
+        .from("contas_a_pagar")
+        .update({ status: "pendente", data_pagamento: null, gasto_id: null })
+        .eq("gasto_id", msg.gasto_id);
+      await supabase
+        .from("whatsapp_messages")
+        .update({ status: "gasto_excluido", gasto_id: null, resposta_sugerida: "Gasto excluído pelo usuário." })
+        .eq("id", msg.id);
+      toast.success("Gasto excluído. Tudo recalculado.");
+      await Promise.all([onChanged(), refreshGastos()]);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function reprocessar() {
+    setBusy("reproc");
+    try {
+      await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
+      const res = await fetch(`${window.location.origin}/api/public/whatsapp/expense`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telefone: msg.telefone,
+          texto: msg.texto,
+          external_id: `reproc-${Date.now()}`,
+        }),
+      });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out?.error ?? "Falha ao reprocessar");
+      toast.success(`Status: ${out.results?.[0]?.status ?? "ok"}`);
+      await Promise.all([onChanged(), refreshGastos()]);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function excluirLog() {
+    if (!confirm("Excluir apenas o registro desta mensagem? O gasto não será removido.")) return;
+    setBusy("delete-log");
+    try {
+      const { error } = await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
+      if (error) throw new Error(error.message);
+      toast.success("Log removido.");
+      await onChanged();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const isSalva = msg.status === "salva" && !!msg.gasto_id;
+  const isExcluido = msg.status === "gasto_excluido";
+  const isDuplicada = msg.status === "duplicada";
+  const podeReproc = isExcluido || isDuplicada || msg.status === "pendente" || msg.status === "erro" || msg.status === "valor_invalido";
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+      {isSalva && (
+        <>
+          <Button size="sm" variant="outline" onClick={verEmGastos} className="h-7 text-[11px]">
+            <ExternalLink className="h-3 w-3 mr-1" /> Ver em Gastos
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={excluirGasto}
+            disabled={busy === "delete-gasto"}
+            className="h-7 text-[11px] border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+          >
+            <Trash2 className="h-3 w-3 mr-1" /> Excluir gasto
+          </Button>
+        </>
+      )}
+      {isDuplicada && msg.gasto_id && (
+        <Button size="sm" variant="outline" onClick={verEmGastos} className="h-7 text-[11px]">
+          <ExternalLink className="h-3 w-3 mr-1" /> Ver gasto existente
+        </Button>
+      )}
+      {podeReproc && (
+        <Button size="sm" variant="outline" onClick={reprocessar} disabled={busy === "reproc"} className="h-7 text-[11px]">
+          <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar
+        </Button>
+      )}
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={excluirLog}
+        disabled={busy === "delete-log"}
+        className="h-7 text-[11px] text-muted-foreground hover:text-rose-300"
+      >
+        Excluir log
+      </Button>
+    </div>
+  );
+}
