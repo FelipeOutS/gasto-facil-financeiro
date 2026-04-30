@@ -30,6 +30,7 @@ export const Route = createFileRoute("/conta")({
 
 function ContaPage() {
   const { user, profile, signOut } = useAuth();
+  const { isOwner, isAdmin } = useRoles();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -73,11 +74,23 @@ function ContaPage() {
             <p className="truncate text-base font-semibold">{nomeExibicao}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
-          {vocab.tagLabel && (
-            <span className="inline-flex shrink-0 items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
-              {vocab.tagLabel}
-            </span>
-          )}
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            {isOwner && (
+              <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-500">
+                Acesso total
+              </span>
+            )}
+            {!isOwner && isAdmin && (
+              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Admin
+              </span>
+            )}
+            {vocab.tagLabel && (
+              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                {vocab.tagLabel}
+              </span>
+            )}
+          </div>
         </div>
       </section>
 
