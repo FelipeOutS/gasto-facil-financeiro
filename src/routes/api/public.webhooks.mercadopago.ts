@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
@@ -33,25 +34,46 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "webhook_not_configured" }, 503);
         }
 
-        // Validação de assinatura: implementação completa quando
-        // o segredo do webhook for fornecido pelo Mercado Pago.
-        // Por enquanto, exigimos apenas a presença do header.
-        const signature = request.headers.get("x-signature");
-        if (!signature) return json({ error: "missing_signature" }, 401);
-
+        // Lê o corpo bruto para validar a assinatura HMAC do Mercado Pago.
+        const rawBody = await request.text();
         let body: {
           type?: string;
           action?: string;
           data?: { id?: string | number };
         } = {};
         try {
-          body = (await request.json()) as typeof body;
+          body = JSON.parse(rawBody) as typeof body;
         } catch {
           return json({ error: "invalid_body" }, 400);
         }
 
         const paymentId = body.data?.id ? String(body.data.id) : null;
-        if (!paymentId) return json({ ok: true, ignored: true });
+
+        // Validação de assinatura conforme docs do Mercado Pago:
+        // header `x-signature` traz "ts=<timestamp>,v1=<hash>"; o manifest
+        // a ser assinado é "id:<dataId>;request-id:<x-request-id>;ts:<ts>;".
+        const signatureHeader = request.headers.get("x-signature") ?? "";
+        const requestId = request.headers.get("x-request-id") ?? "";
+        const parts = Object.fromEntries(
+          signatureHeader.split(",").map((kv) => {
+            const [k, ...rest] = kv.split("=");
+            return [k?.trim() ?? "", rest.join("=").trim()];
+          }),
+        ) as Record<string, string>;
+        const ts = parts.ts;
+        const v1 = parts.v1;
+        if (!ts || !v1 || !paymentId) {
+          return json({ error: "missing_signature" }, 401);
+        }
+        const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+        const expected = createHmac("sha256", webhookSecret)
+          .update(manifest)
+          .digest("hex");
+        const a = Buffer.from(expected, "hex");
+        const b = Buffer.from(v1, "hex");
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          return json({ error: "invalid_signature" }, 401);
+        }
 
         // Busca status real direto na API do MP
         const res = await fetch(
