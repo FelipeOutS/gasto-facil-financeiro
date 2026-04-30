@@ -102,14 +102,49 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   centro_de_custo: "empresa",
 };
 
+/**
+ * Whitelist explícita de planos por feature, quando a regra não é uma
+ * escala linear. Se a feature está aqui, só os planos listados liberam.
+ */
+const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
+  // Investimentos: somente planos premium específicos
+  investimentos: ["pessoal_premium", "mei_inteligente", "empresa"],
+  investimentos_futuro: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Importações automáticas: só nos premium e MEI Inteligente / Empresa
+  importacoes: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_extrato: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_fatura: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_conta: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Centro de custo e CNPJ: só Empresa
+  centro_de_custo: ["empresa"],
+  perfil_cnpj: ["empresa"],
+  perfil_empresarial: ["empresa"],
+  recursos_empresa: ["empresa"],
+  // MEI: somente planos MEI
+  recursos_mei: ["mei_essencial", "mei_inteligente"],
+  // Contas a receber avançado: premium e MEI Inteligente / Empresa
+  contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
+};
+
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
   if (plan === "admin_master") return true;
+  const whitelist = FEATURE_PLAN_WHITELIST[feature];
+  if (whitelist) return whitelist.includes(plan);
   const min = FEATURE_MIN_PLAN[feature];
   return PLAN_ORDER[plan] >= PLAN_ORDER[min];
 }
 
 export function minPlanFor(feature: FeatureKey): PlanTier {
   return FEATURE_MIN_PLAN[feature];
+}
+
+export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
+  const whitelist = FEATURE_PLAN_WHITELIST[feature];
+  if (whitelist) return whitelist;
+  const min = FEATURE_MIN_PLAN[feature];
+  return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
+    (p) => p !== "free" && p !== "sem_assinatura" && PLAN_ORDER[p] >= PLAN_ORDER[min],
+  );
 }
 
 /* ===========================================================
