@@ -57,6 +57,10 @@ function Manual() {
           onSubmit={(data) => {
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
             const save = () => {
+              if (!canWrite) {
+                requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                return;
+              }
               addGasto(data);
               toast.success("Gasto registrado. ✅");
               navigate({ to: "/" });
