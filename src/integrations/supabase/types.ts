@@ -523,6 +523,7 @@ export type Database = {
           data_inicio: string | null
           data_vencimento: string | null
           id: string
+          importacao_id: string | null
           instituicao: string | null
           liquidez: string | null
           nome: string
@@ -545,6 +546,7 @@ export type Database = {
           data_inicio?: string | null
           data_vencimento?: string | null
           id?: string
+          importacao_id?: string | null
           instituicao?: string | null
           liquidez?: string | null
           nome: string
@@ -567,6 +569,7 @@ export type Database = {
           data_inicio?: string | null
           data_vencimento?: string | null
           id?: string
+          importacao_id?: string | null
           instituicao?: string | null
           liquidez?: string | null
           nome?: string
@@ -593,6 +596,7 @@ export type Database = {
           dados_extraidos: Json | null
           erros: string | null
           id: string
+          resumo: Json | null
           status: string
           tipo: string
           user_id: string
@@ -603,6 +607,7 @@ export type Database = {
           dados_extraidos?: Json | null
           erros?: string | null
           id?: string
+          resumo?: Json | null
           status?: string
           tipo: string
           user_id: string
@@ -613,6 +618,7 @@ export type Database = {
           dados_extraidos?: Json | null
           erros?: string | null
           id?: string
+          resumo?: Json | null
           status?: string
           tipo?: string
           user_id?: string
@@ -625,6 +631,7 @@ export type Database = {
           created_at: string
           data: string
           id: string
+          importacao_id: string | null
           instituicao: string | null
           observacao: string | null
           origem: string | null
@@ -639,6 +646,7 @@ export type Database = {
           created_at?: string
           data: string
           id?: string
+          importacao_id?: string | null
           instituicao?: string | null
           observacao?: string | null
           origem?: string | null
@@ -653,6 +661,7 @@ export type Database = {
           created_at?: string
           data?: string
           id?: string
+          importacao_id?: string | null
           instituicao?: string | null
           observacao?: string | null
           origem?: string | null
@@ -670,6 +679,7 @@ export type Database = {
           created_at: string
           data_pagamento: string
           id: string
+          importacao_id: string | null
           observacao: string | null
           origem: string | null
           status: string
@@ -682,6 +692,7 @@ export type Database = {
           created_at?: string
           data_pagamento: string
           id?: string
+          importacao_id?: string | null
           observacao?: string | null
           origem?: string | null
           status?: string
@@ -694,6 +705,7 @@ export type Database = {
           created_at?: string
           data_pagamento?: string
           id?: string
+          importacao_id?: string | null
           observacao?: string | null
           origem?: string | null
           status?: string
