@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import { Building2, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBankLogo, getMerchantLogo, type BrandResolved } from "@/lib/logos";
@@ -8,39 +8,69 @@ type Variant = "bank" | "merchant";
 type Props = {
   name: string | undefined | null;
   variant: Variant;
-  /** Tailwind size class for the wrapper (h-* w-*). Default: h-9 w-9 */
   className?: string;
-  /**
-   * When true, render the logo directly over a dark surface (e.g. card
-   * background). The local SVGs are designed in white, so we skip the
-   * white circle wrapper and let the SVG breathe over the card color.
-   */
   onDark?: boolean;
-  /** Custom inner padding for the logo image */
   imgClassName?: string;
 };
 
 /**
  * Renders a brand logo with elegant fallback (colored circle + initial).
- * Never shows a broken image: if the local file 404s we swap to fallback.
+ * Keeps the previously displayed logo visible until the next one is decoded
+ * to prevent flashes / empty space when switching between cards.
  */
-export function BrandLogo({ name, variant, className, onDark, imgClassName }: Props) {
+function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props) {
   const resolved: BrandResolved =
     variant === "bank" ? getBankLogo(name) : getMerchantLogo(name);
+
+  // The URL we are currently *displaying*. Starts as the resolved URL so the
+  // very first paint shows the correct logo (no fallback flicker).
+  const [displayedUrl, setDisplayedUrl] = useState<string | null>(resolved.logoUrl);
   const [errored, setErrored] = useState(false);
+  const lastLoadedRef = useRef<string | null>(null);
 
-  const showLogo = !!resolved.logoUrl && !errored;
+  // When the resolved URL changes, decode the new image off-screen first; only
+  // swap the visible <img> src once it's ready. Static Vite imports mean the
+  // file is already in the bundle/HTTP cache, so this resolves immediately.
+  useEffect(() => {
+    const next = resolved.logoUrl;
+    if (!next) {
+      setDisplayedUrl(null);
+      setErrored(false);
+      return;
+    }
+    if (next === lastLoadedRef.current) {
+      setDisplayedUrl(next);
+      setErrored(false);
+      return;
+    }
+    let cancelled = false;
+    const img = new Image();
+    img.src = next;
+    const apply = () => {
+      if (cancelled) return;
+      lastLoadedRef.current = next;
+      setDisplayedUrl(next);
+      setErrored(false);
+    };
+    if (img.complete && img.naturalWidth > 0) {
+      apply();
+    } else {
+      img.onload = apply;
+      img.onerror = () => {
+        if (cancelled) return;
+        setErrored(true);
+      };
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [resolved.logoUrl]);
 
-  // Fallback background — brand color when known, otherwise neutral.
+  const showLogo = !!displayedUrl && !errored;
   const bg = resolved.brandColor || (variant === "bank" ? "#3b82f6" : "#64748b");
   const FallbackIcon = variant === "bank" ? Building2 : Store;
 
-  // ---- Bank on dark surface: render SVG directly, no white pill ----
-  // Standardized container: fixed visual height, contained width, left-aligned.
-  // Every bank logo (square or wide) renders at the same visual height so
-  // cards stay consistent and never overlap card content.
   if (variant === "bank" && onDark && showLogo) {
-    // Wordmarks horizontalmente longos precisam de mais espaço para ficarem legíveis.
     const WIDE_BANK_SLUGS = new Set([
       "mercadopago-branco",
       "logo-santander",
@@ -61,15 +91,15 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
         aria-hidden
       >
         <img
-          src={resolved.logoUrl!}
+          src={displayedUrl!}
           alt=""
           className={cn(
             "block h-auto w-auto max-h-full max-w-full object-contain object-left",
             imgClassName,
           )}
           onError={() => setErrored(true)}
-          loading="lazy"
           decoding="async"
+          // No lazy loading — these must appear instantly when a card is selected.
         />
       </span>
     );
@@ -79,27 +109,19 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
     <span
       className={cn(
         "relative grid place-items-center overflow-hidden rounded-full shadow-sm ring-1",
-        onDark
-          ? "bg-white ring-white/40"
-          : "bg-white ring-border",
+        onDark ? "bg-white ring-white/40" : "bg-white ring-border",
         "h-9 w-9",
         className,
       )}
       aria-hidden
-      style={
-        // Use brand color as background ONLY for fallback (when no image)
-        showLogo
-          ? undefined
-          : { background: bg, color: "#fff" }
-      }
+      style={showLogo ? undefined : { background: bg, color: "#fff" }}
     >
       {showLogo ? (
         <img
-          src={resolved.logoUrl!}
+          src={displayedUrl!}
           alt=""
           className={cn("h-full w-full object-contain p-1.5", imgClassName)}
           onError={() => setErrored(true)}
-          loading="lazy"
           decoding="async"
         />
       ) : resolved.initial && resolved.initial !== "?" ? (
@@ -112,3 +134,5 @@ export function BrandLogo({ name, variant, className, onDark, imgClassName }: Pr
     </span>
   );
 }
+
+export const BrandLogo = memo(BrandLogoBase);
