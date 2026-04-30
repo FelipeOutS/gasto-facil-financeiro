@@ -285,7 +285,8 @@ export function parseWhatsAppExpenseMessage(
 
   const data = estr?.data ?? parseData(original).iso;
   const dataMatched = !!estr?.data || parseData(original).matched;
-  if (!dataMatched) notas.push("Data não citada — usando hoje");
+  // Ausência de data NÃO é considerada falha de revisão:
+  // se não vier data, usamos hoje silenciosamente.
 
   const fp = parseFormaPagamento(original);
   if (!fp.matched) notas.push("Forma de pagamento inferida (crédito)");
