@@ -358,6 +358,14 @@ function CategoriasPage() {
           ))}
         </ul>
       </section>
+
+      {/* ===== Conta e privacidade ===== */}
+      <section className="mt-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Conta e privacidade
+        </p>
+        <ZonaDeRiscoCard />
+      </section>
     </MobileShell>
   );
 }
