@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight } from "lucide-react";
+import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
+import { WhatsAppExpenseDialog } from "@/components/WhatsAppExpenseDialog";
 
 export const Route = createFileRoute("/adicionar")({
   head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
@@ -14,6 +15,7 @@ function Adicionar() {
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [busy, setBusy] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
 
   useEffect(() => {
     if (!canWrite) {
@@ -102,6 +104,26 @@ function Adicionar() {
               requireSubscription("Para adicionar gastos, escolha um plano ativo.");
               return;
             }
+            setWaOpen(true);
+          }}
+          className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-emerald-500/60 hover:bg-card-elevated"
+        >
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-400 transition-transform group-hover:scale-110">
+            <MessageCircle className="h-6 w-6" />
+          </span>
+          <span className="flex-1">
+            <span className="block text-base font-semibold">Colar mensagem do WhatsApp</span>
+            <span className="block text-xs text-muted-foreground">Ex.: "Spotify 19,90 Nubank"</span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+        </button>
+
+        <button
+          onClick={() => {
+            if (!canWrite) {
+              requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+              return;
+            }
             navigate({ to: "/manual" });
           }}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated"
@@ -126,6 +148,8 @@ function Adicionar() {
           <Link to="/">Cancelar</Link>
         </Button>
       </div>
+
+      <WhatsAppExpenseDialog open={waOpen} onOpenChange={setWaOpen} />
     </MobileShell>
   );
 }
