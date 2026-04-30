@@ -41,6 +41,8 @@ const ITEMS: NavItem[] = [
 
 export function DesktopSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
