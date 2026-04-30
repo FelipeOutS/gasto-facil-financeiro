@@ -397,6 +397,10 @@ function Confirmar() {
                 data.estabelecimento,
               );
               const save = () => {
+                if (!canWrite) {
+                  requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                  return;
+                }
                 addGasto(data);
                 toast.success("Pronto, gasto salvo!");
                 setStep("sucesso");
