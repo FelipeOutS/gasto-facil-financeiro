@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Mon
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 import { useAccent, ACCENTS } from "@/lib/accent";
 import {
