@@ -1819,6 +1819,7 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
  */
 export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   if (!activeUserId || inputs.length === 0) return [];
+  if (!ensureCanWrite("addGastosBulk")) return [];
   const uniqueInputs = inputs.filter((inp, index, arr) => {
     const desc = inp.descricao || inp.estabelecimento || "";
     const key = `${inp.cartaoId ?? ""}|${inp.data}|${desc.trim().toLowerCase()}|${inp.valor.toFixed(2)}`;
