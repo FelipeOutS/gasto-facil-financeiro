@@ -35,6 +35,7 @@ import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
 import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -501,11 +502,14 @@ function CartaoCard({
 
       {/* Header — banco + ações */}
       <div className="relative flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="grid h-7 w-9 shrink-0 place-items-center rounded-md bg-white/20 backdrop-blur">
-            <CreditCard className="h-3.5 w-3.5" />
-          </div>
-          <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-white/80">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <BrandLogo
+            name={cartao.banco}
+            variant="bank"
+            onDark
+            className="h-9 w-9 shrink-0"
+          />
+          <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
             {cartao.banco || "Cartão"}
           </p>
         </div>
