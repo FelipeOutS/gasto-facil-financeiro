@@ -121,6 +121,7 @@ export type Movimentacao = {
   observacao: string | null;
   origem: string | null;
   created_at: string;
+  importacao_id?: string | null;
 };
 
 export type Rendimento = {
@@ -133,6 +134,7 @@ export type Rendimento = {
   observacao: string | null;
   origem: string | null;
   created_at: string;
+  importacao_id?: string | null;
 };
 
 export function tipoLabel(t: string): string {
