@@ -687,13 +687,12 @@ function HistoricoLista({
               {parseDateLocal(g.data)?.toLocaleDateString("pt-BR")}
             </p>
           </div>
-          <Link
-            to="/gastos"
-            search={{ highlight: g.id } as any}
+          <a
+            href={`/gastos?highlight=${g.id}`}
             className="text-xs text-brand hover:underline"
           >
             Ver
-          </Link>
+          </a>
         </div>
       ))}
       {rec.proximaCobranca && rec.status === "ativa" && (
