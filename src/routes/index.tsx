@@ -16,6 +16,7 @@ import {
   CalendarClock,
   Clock,
   Bell,
+  HandCoins,
 } from "lucide-react";
 import {
   PieChart,
