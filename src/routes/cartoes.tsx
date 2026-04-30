@@ -883,11 +883,14 @@ function FaturaSheet({
             className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
           />
           <SheetHeader className="relative space-y-1 text-left">
-            <div className="flex items-center gap-2.5">
-              <BrandLogo name={cartao.banco} variant="bank" onDark />
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/85">
-                {cartao.banco || "Cartão"}
-              </p>
+            <div className="flex items-center">
+              <BrandLogo
+                name={cartao.banco}
+                variant="bank"
+                onDark
+                className="h-14 w-14"
+                imgClassName="p-1"
+              />
             </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
               {cartao.nome}
