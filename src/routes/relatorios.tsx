@@ -33,6 +33,8 @@ import {
   Line,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,

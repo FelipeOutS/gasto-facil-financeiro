@@ -20,6 +20,8 @@ import {
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
 import { ExtratosImportadosDialog } from "@/components/ExtratosImportadosDialog";
 import { Upload, History } from "lucide-react";

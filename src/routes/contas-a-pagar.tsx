@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ImportContaDialog } from "@/components/ImportContaDialog";
