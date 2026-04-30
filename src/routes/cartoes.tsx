@@ -1,4 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EditGastoDialog } from "@/components/EditGastoDialog";
+import { GastoForm } from "@/components/GastoForm";
+import {
+  addGasto,
+  deleteGasto,
+  gastosDaFatura,
+  resumoFaturaPorMes,
+  statusEfetivoFatura,
+  getFatura,
+  marcarFaturaPaga,
+  desmarcarFaturaPaga,
+} from "@/lib/store";
+import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
 import {
   Plus,
