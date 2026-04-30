@@ -56,6 +56,7 @@ type AIResult = {
 
 function Confirmar() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const categorias = useStore(() => getCategorias());
 
   const [imagem, setImagem] = useState<string | undefined>();
