@@ -112,10 +112,20 @@ export type ProcessOutcome = {
  * Processa uma mensagem recebida (do webhook) usando o mesmo parser do
  * simulador. Salva gasto se confiança alta + valor + (cartão ou forma != crédito).
  */
+/** Normaliza texto para comparação de duplicidade. */
+function normalizeText(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function processarMensagemWhatsApp(
   msg: WhatsAppMessageRow,
 ): Promise<ProcessOutcome> {
-  // 1) Dedupe por external_id, se houver
+  // 1a) Dedupe por external_id, se houver
   if (msg.external_id) {
     const { data: existente } = await supabaseAdmin
       .from("whatsapp_messages")
@@ -139,12 +149,41 @@ export async function processarMensagemWhatsApp(
   // 2) Resolver usuário pelo telefone
   const userId = await resolveUserId(msg.telefone);
   if (!userId) {
-    // registra mesmo sem user para a tela de log do owner futuramente?
-    // sem user_id, RLS bloqueia tudo — não persiste.
     return {
       status: "sem_vinculo",
       resposta:
         "Número não vinculado a nenhuma conta. Acesse o app em /whatsapp e vincule seu número.",
+    };
+  }
+
+  // 1b) Dedupe forte: mesmo telefone + mesmo texto normalizado + mesmo
+  // user, processado nas últimas 2 horas com gasto criado. Evita que clicar
+  // em "Disparar teste" várias vezes crie gastos duplicados.
+  const textoNorm = normalizeText(texto);
+  const janelaMs = 2 * 60 * 60 * 1000;
+  const desde = new Date(Date.now() - janelaMs).toISOString();
+  const { data: recentes } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, gasto_id, texto, status, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", msg.telefone)
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(20);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dup = (recentes as any[] | null)?.find(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any) =>
+      normalizeText(r.texto ?? "") === textoNorm &&
+      r.gasto_id &&
+      r.status === "salva",
+  );
+  if (dup) {
+    return {
+      status: "duplicada",
+      gastoId: dup.gasto_id,
+      resposta:
+        "Essa mensagem já foi processada. Nenhum gasto duplicado foi criado.",
     };
   }
 
