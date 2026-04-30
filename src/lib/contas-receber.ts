@@ -198,7 +198,7 @@ export async function marcarRecebida(
 
   const { data, error } = await supabase
     .from("contas_a_receber")
-    .update(patch)
+    .update(patch as never)
     .eq("id", id)
     .select()
     .single();
