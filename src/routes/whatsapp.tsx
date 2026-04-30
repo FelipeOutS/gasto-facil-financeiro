@@ -19,14 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  deleteWhatsAppLink,
-  listWhatsAppLinks,
-  listWhatsAppMessages,
-  testarWebhookWhatsApp,
-  upsertWhatsAppLink,
-} from "@/server/whatsapp.functions";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import { supabase as _supabase } from "@/integrations/supabase/client";
+// As tabelas whatsapp_* foram criadas após a regeneração de tipos.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = _supabase as any;
 
 export const Route = createFileRoute("/whatsapp")({
   head: () => ({
