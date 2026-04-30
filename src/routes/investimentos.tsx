@@ -482,6 +482,34 @@ function AddAtivoDialog({
   const [liquidez, setLiquidez] = useState("");
   const [observacao, setObservacao] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showAvancado, setShowAvancado] = useState(false);
+
+  const classe = classeAtivo(tipo);
+  const isRendaVariavel = classe === "Renda variável" || tipo === "cripto";
+  const isRendaFixa = classe === "Renda fixa" || classe === "Fundos";
+
+  // Auto-cálculo para renda variável: quantidade × preço
+  useEffect(() => {
+    if (!isRendaVariavel) return;
+    const qtd = quantidade ? Number(quantidade.replace(",", ".")) : NaN;
+    const pm = precoMedio ? Number(precoMedio.replace(",", ".")) : NaN;
+    if (!isNaN(qtd) && !isNaN(pm) && qtd > 0 && pm > 0) {
+      const total = qtd * pm;
+      setValorAplicado(total.toFixed(2).replace(".", ","));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantidade, precoMedio, isRendaVariavel]);
+
+  useEffect(() => {
+    if (!isRendaVariavel) return;
+    const qtd = quantidade ? Number(quantidade.replace(",", ".")) : NaN;
+    const pa = precoAtual ? Number(precoAtual.replace(",", ".")) : NaN;
+    if (!isNaN(qtd) && !isNaN(pa) && qtd > 0 && pa > 0) {
+      const total = qtd * pa;
+      setValorAtual(total.toFixed(2).replace(".", ","));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantidade, precoAtual, isRendaVariavel]);
 
   useEffect(() => {
     if (editing) {
@@ -564,14 +592,18 @@ function AddAtivoDialog({
         </DialogHeader>
 
         <div className="grid gap-3">
-          <Field label="Nome do investimento *">
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Tesouro Selic 2029" />
-          </Field>
+          {/* Texto de ajuda contextual */}
+          <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              {isRendaVariavel
+                ? "Use quantidade, preço médio e preço atual para calcular os valores automaticamente."
+                : "Use valor aplicado e valor atual. Quantidade e preço médio não são necessários."}
+            </span>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Ticker / código">
-              <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="MXRF11" />
-            </Field>
-            <Field label="Tipo">
+            <Field label="Tipo *">
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -581,55 +613,142 @@ function AddAtivoDialog({
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Instituição / corretora">
+              <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder="XP, Nubank, Rico…" />
+            </Field>
           </div>
-          <Field label="Instituição / corretora">
-            <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder="XP, Nubank, Rico…" />
+
+          <Field label="Nome do investimento *">
+            <Input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder={isRendaVariavel ? "Ex.: Maxi Renda FII" : "Ex.: Tesouro Selic 2029"}
+            />
           </Field>
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Quantidade">
-              <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
+
+          {/* Ticker — destaque para renda variável, opcional/escondido para renda fixa */}
+          {isRendaVariavel && (
+            <Field label="Ticker / código *">
+              <Input
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                placeholder="MXRF11, PETR4, BTC…"
+              />
             </Field>
-            <Field label="Preço médio">
-              <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder="10,20" />
-            </Field>
-            <Field label="Preço atual">
-              <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder="10,50" />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Valor aplicado">
-              <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
-            </Field>
-            <Field label="Valor atual">
-              <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Tipo de rentabilidade">
-              <Select value={rentTipo} onValueChange={setRentTipo}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {RENT_TIPOS.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Percentual / índice">
-              <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder="110% do CDI" />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Data da aplicação">
-              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-            </Field>
-            <Field label="Vencimento">
-              <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
-            </Field>
-          </div>
-          <Field label="Liquidez">
-            <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder="Diária, no vencimento…" />
-          </Field>
+          )}
+
+          {/* Renda variável: quantidade + preços com auto-cálculo */}
+          {isRendaVariavel && (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Quantidade">
+                  <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
+                </Field>
+                <Field label="Preço médio">
+                  <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder="10,20" />
+                </Field>
+                <Field label="Preço atual">
+                  <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder="10,50" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Valor aplicado (auto)">
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 102,00" />
+                </Field>
+                <Field label="Valor atual (auto)">
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 105,00" />
+                </Field>
+              </div>
+              <Field label="Data da compra">
+                <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              </Field>
+            </>
+          )}
+
+          {/* Renda fixa / fundos: valores + rentabilidade + datas */}
+          {isRendaFixa && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Valor aplicado *">
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+                </Field>
+                <Field label="Valor atual">
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Tipo de rentabilidade">
+                  <Select value={rentTipo} onValueChange={setRentTipo}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      {RENT_TIPOS.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Percentual / índice">
+                  <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder="110% do CDI" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Data da aplicação">
+                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                </Field>
+                <Field label="Vencimento">
+                  <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
+                </Field>
+              </div>
+              <Field label="Liquidez">
+                <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder="Diária, no vencimento…" />
+              </Field>
+
+              {/* Avançado: ticker/quantidade/preços ocultos por padrão */}
+              <button
+                type="button"
+                onClick={() => setShowAvancado((v) => !v)}
+                className="text-xs text-brand hover:underline self-start"
+              >
+                {showAvancado ? "Ocultar campos avançados" : "Mostrar campos avançados (ticker, quantidade)"}
+              </button>
+              {showAvancado && (
+                <div className="grid gap-3 rounded-lg border border-dashed border-border/60 p-3">
+                  <Field label="Ticker / código (opcional)">
+                    <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="—" />
+                  </Field>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field label="Quantidade">
+                      <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
+                    </Field>
+                    <Field label="Preço médio">
+                      <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} />
+                    </Field>
+                    <Field label="Preço atual">
+                      <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} />
+                    </Field>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Fallback "Outros" — campos genéricos */}
+          {!isRendaVariavel && !isRendaFixa && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Valor aplicado">
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+                </Field>
+                <Field label="Valor atual">
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+                </Field>
+              </div>
+              <Field label="Data da aplicação">
+                <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              </Field>
+            </>
+          )}
+
           <Field label="Observação">
             <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
           </Field>
