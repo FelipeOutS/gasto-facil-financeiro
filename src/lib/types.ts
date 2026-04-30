@@ -277,7 +277,19 @@ export const BANCOS_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
   { nome: "Outro", cor: "#8b5cf6" },
 ];
 
-export type StatusFatura = "aberta" | "fechada" | "paga";
+export type StatusFatura = "aberta" | "fechada" | "paga" | "vencida";
+
+export type FaturaCartao = {
+  id: string;
+  cartaoId: string;
+  mes: number; // 1-12 — mês do vencimento
+  ano: number;
+  status: StatusFatura;
+  dataPagamento?: string; // ISO yyyy-mm-dd
+  valorPago: number;
+  observacao?: string;
+};
+
 
 // ---------- Contas a pagar ----------
 export type StatusConta = "pendente" | "pago" | "atrasado";

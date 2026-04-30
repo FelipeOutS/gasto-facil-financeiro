@@ -377,6 +377,48 @@ export type Database = {
         }
         Relationships: []
       }
+      faturas_cartao: {
+        Row: {
+          ano: number
+          cartao_id: string
+          created_at: string
+          data_pagamento: string | null
+          id: string
+          mes: number
+          observacao: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor_pago: number
+        }
+        Insert: {
+          ano: number
+          cartao_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          mes: number
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor_pago?: number
+        }
+        Update: {
+          ano?: number
+          cartao_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          mes?: number
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_pago?: number
+        }
+        Relationships: []
+      }
       gastos: {
         Row: {
           ano: number

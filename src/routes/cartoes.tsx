@@ -1,4 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EditGastoDialog } from "@/components/EditGastoDialog";
+import { GastoForm } from "@/components/GastoForm";
+import {
+  addGasto,
+  deleteGasto,
+  gastosDaFatura,
+  resumoFaturaPorMes,
+  statusEfetivoFatura,
+  getFatura,
+  marcarFaturaPaga,
+  desmarcarFaturaPaga,
+} from "@/lib/store";
+import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
 import {
   Plus,
@@ -13,6 +26,14 @@ import {
   Receipt,
   Clock,
   FileUp,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  X,
+  CheckCircle2,
+  RotateCcw,
+  AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
@@ -29,6 +50,7 @@ import {
   useBootstrap,
   useStore,
   type NovoCartaoInput,
+  type NovoGastoInput,
 } from "@/lib/store";
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
@@ -859,9 +881,41 @@ function UltimasCompras({
 
 /* =============== Fatura Sheet (detalhe do cartão) =============== */
 
+const MESES_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_FULL = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+function statusBadgeStyle(status: StatusFatura): { label: string; cls: string; icon: React.ReactNode } {
+  switch (status) {
+    case "paga":
+      return {
+        label: "Paga",
+        cls: "bg-success/20 text-success border-success/30",
+        icon: <CheckCircle2 className="h-3 w-3" />,
+      };
+    case "vencida":
+      return {
+        label: "Vencida",
+        cls: "bg-destructive/20 text-destructive border-destructive/30",
+        icon: <AlertTriangle className="h-3 w-3" />,
+      };
+    case "fechada":
+      return {
+        label: "Fechada",
+        cls: "bg-warning/20 text-warning border-warning/30",
+        icon: <Lock className="h-3 w-3" />,
+      };
+    default:
+      return {
+        label: "Aberta",
+        cls: "bg-brand-soft text-brand-on-soft border-brand/20",
+        icon: <Sparkles className="h-3 w-3" />,
+      };
+  }
+}
+
 function FaturaSheet({
   cartao,
-  gastos,
+  gastos: _gastosAll,
   onOpenChange,
   onEdit,
   onImport,
@@ -872,43 +926,142 @@ function FaturaSheet({
   onEdit: (c: Cartao) => void;
   onImport: (c: Cartao) => void;
 }) {
-  // Compras vinculadas (memoizadas, ordenadas por data desc)
-  const compras = useMemo(() => {
-    if (!cartao) return [];
-    return gastos
-      .filter((g) => g.cartaoId === cartao.id && g.formaPagamento === "credito")
-      .sort((a, b) => (a.data < b.data ? 1 : -1));
-  }, [cartao, gastos]);
+  const hoje = new Date();
+  const [ref, setRef] = useState<{ mes: number; ano: number }>({
+    mes: hoje.getMonth() + 1,
+    ano: hoje.getFullYear(),
+  });
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState<string | null>(null);
+  const [editingGasto, setEditingGasto] = useState<Gasto | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Gasto | null>(null);
+  const [openAdd, setOpenAdd] = useState(false);
+
+  // Subscribe to store updates so list refreshes after add/edit/delete/pay
+  useStore(() => 0);
+
+  // Reset state ao trocar de cartão / abrir
+  useEffect(() => {
+    if (cartao) {
+      setRef({ mes: hoje.getMonth() + 1, ano: hoje.getFullYear() });
+      setSearch("");
+      setCatFilter(null);
+    }
+  }, [cartao?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!cartao) {
     return <Sheet open={false} onOpenChange={onOpenChange} />;
   }
 
-  const r = resumoFaturaCartao(cartao.id);
-  const status = statusFatura(cartao);
+  const compras = gastosDaFatura(cartao.id, ref.mes, ref.ano);
+  const resumo = resumoFaturaPorMes(cartao.id, ref.mes, ref.ano);
+  const status = statusEfetivoFatura(cartao, ref.mes, ref.ano, hoje);
+  const registroFatura = getFatura(cartao.id, ref.mes, ref.ano);
   const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
-  const semCompras = compras.length === 0;
+  const badge = statusBadgeStyle(status);
 
-  // Compras do mês atual = "Fatura atual" (simplificação coerente com store)
-  const hoje = new Date();
-  const mes = hoje.getMonth() + 1;
-  const ano = hoje.getFullYear();
-  const comprasFaturaAtual = compras.filter((g) => g.mes === mes && g.ano === ano);
-  const totalFatura = comprasFaturaAtual.reduce((s, g) => s + g.valor, 0);
+  // Categorias presentes na fatura, com totais
+  const totaisPorCategoria = (() => {
+    const map = new Map<string, { id: string; nome: string; total: number; count: number }>();
+    let semCat = 0;
+    let semCatCount = 0;
+    for (const g of compras) {
+      if (g.categoriaId) {
+        const cat = getCategoriaById(g.categoriaId);
+        const id = g.categoriaId;
+        const nome = cat?.nome ?? "Categoria";
+        const cur = map.get(id) ?? { id, nome, total: 0, count: 0 };
+        cur.total += g.valor;
+        cur.count += 1;
+        map.set(id, cur);
+      } else {
+        semCat += g.valor;
+        semCatCount += 1;
+      }
+    }
+    const arr = Array.from(map.values()).sort((a, b) => b.total - a.total);
+    if (semCatCount > 0) {
+      arr.push({ id: "__sem__", nome: "Sem categoria", total: semCat, count: semCatCount });
+    }
+    return arr;
+  })();
 
-  // Próxima data de vencimento
-  const alvoEsteMes = new Date(ano, hoje.getMonth(), cartao.diaVencimento);
-  const proxVenc =
-    cartao.diaVencimento >= hoje.getDate()
-      ? alvoEsteMes
-      : new Date(ano, hoje.getMonth() + 1, cartao.diaVencimento);
-  const vencStr = `${String(proxVenc.getDate()).padStart(2, "0")}/${String(proxVenc.getMonth() + 1).padStart(2, "0")}`;
+  // Aplicar filtros: categoria + busca
+  const comprasFiltradas = compras.filter((g) => {
+    if (catFilter) {
+      if (catFilter === "__sem__") {
+        if (g.categoriaId) return false;
+      } else if (g.categoriaId !== catFilter) {
+        return false;
+      }
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const haystack = `${g.descricao ?? ""} ${g.estabelecimento ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Agrupar por data
+  const gruposPorData = (() => {
+    const map = new Map<string, Gasto[]>();
+    for (const g of comprasFiltradas) {
+      const arr = map.get(g.data) ?? [];
+      arr.push(g);
+      map.set(g.data, arr);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => (a < b ? 1 : -1));
+  })();
+
+  // Vencimento em string e dias até vencer
+  const proxVencDate = new Date(ref.ano, ref.mes - 1, cartao.diaVencimento || 10);
+  const diasParaVencer = Math.ceil(
+    (proxVencDate.getTime() - new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
+  const vencStr = `${String(proxVencDate.getDate()).padStart(2, "0")}/${String(proxVencDate.getMonth() + 1).padStart(2, "0")}`;
+
+  function navMes(delta: number) {
+    setRef((r) => {
+      const total = r.ano * 12 + (r.mes - 1) + delta;
+      return { ano: Math.floor(total / 12), mes: (total % 12) + 1 };
+    });
+  }
+
+  async function togglePaga() {
+    try {
+      if (status === "paga") {
+        await desmarcarFaturaPaga(cartao!.id, ref.mes, ref.ano);
+        toast.success("Fatura marcada como em aberto.");
+      } else {
+        await marcarFaturaPaga(cartao!.id, ref.mes, ref.ano, { valorPago: resumo.total });
+        toast.success("Fatura marcada como paga! ✅");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível atualizar a fatura.");
+    }
+  }
+
+  function handleAddCompra(data: NovoGastoInput) {
+    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id });
+    toast.success("Compra adicionada à fatura.");
+    setOpenAdd(false);
+  }
+
+  function handleDeleteCompra() {
+    if (!confirmDelete) return;
+    deleteGasto(confirmDelete.id);
+    toast.success("Compra removida.");
+    setConfirmDelete(null);
+  }
 
   return (
     <Sheet open={!!cartao} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full overflow-y-auto p-0 sm:max-w-[560px]"
+        className="w-full overflow-y-auto p-0 sm:max-w-[640px]"
       >
         {/* Hero — visual do cartão */}
         <div
@@ -923,156 +1076,381 @@ function FaturaSheet({
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
           />
-          <SheetHeader className="relative space-y-1 text-left">
-            <div className="flex items-center">
-              <BrandLogo
-                name={cartao.banco}
-                variant="bank"
-                onDark
-              />
+          <SheetHeader className="relative space-y-2 text-left">
+            <div className="flex items-start justify-between gap-3">
+              <BrandLogo name={cartao.banco} variant="bank" onDark />
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur",
+                  "border-white/30 bg-white/15 text-white",
+                )}
+              >
+                {badge.icon}
+                {badge.label}
+              </span>
             </div>
             <SheetTitle className="text-2xl font-bold tracking-tight text-white">
               {cartao.nome}
             </SheetTitle>
             <SheetDescription className="text-white/80">
-              Sua fatura atual e últimas compras no crédito.
+              Fatura de {MESES_FULL[ref.mes - 1]} de {ref.ano}.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="relative mt-5 grid grid-cols-3 gap-2">
-            <MiniStat label="Limite" value={formatBRL(r.limite)} />
-            <MiniStat label="Usado" value={formatBRL(r.usadoMes)} />
-            <MiniStat label="Disponível" value={formatBRL(r.disponivel)} />
+          {/* Navegação de mês */}
+          <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
+            <button
+              type="button"
+              onClick={() => navMes(-1)}
+              className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-sm font-semibold tracking-tight">
+              {MESES_ABBR[ref.mes - 1]}/{ref.ano}
+            </span>
+            <button
+              type="button"
+              onClick={() => navMes(1)}
+              className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
+              aria-label="Próximo mês"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
 
+          {/* Total da fatura */}
           <div className="relative mt-4">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
+              Total da fatura
+            </p>
+            <p className="num mt-1 text-3xl font-bold tracking-tight">
+              {formatBRL(resumo.total)}
+            </p>
+            {status !== "paga" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
+              <p className="mt-1 text-[11px] text-white/80">
+                {diasParaVencer === 0
+                  ? "⚠️ Vence hoje"
+                  : `Vence em ${diasParaVencer} ${diasParaVencer === 1 ? "dia" : "dias"}`}
+              </p>
+            )}
+            {status === "paga" && registroFatura?.dataPagamento && (
+              <p className="mt-1 text-[11px] text-white/80">
+                Paga em {(() => {
+                  const d = new Date(registroFatura.dataPagamento + "T00:00:00");
+                  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                })()}
+              </p>
+            )}
+          </div>
+
+          <div className="relative mt-4 grid grid-cols-3 gap-2">
+            <MiniStat label="Limite" value={formatBRL(resumo.limite)} />
+            <MiniStat label="Disponível" value={formatBRL(resumo.disponivel)} />
+            <MiniStat label="Uso" value={`${Math.round(resumo.pct)}%`} />
+          </div>
+
+          <div className="relative mt-3">
             <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
               <div
                 className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
-                style={{ width: `${r.pct}%` }}
+                style={{ width: `${resumo.pct}%` }}
               />
             </div>
-            <p className="mt-1.5 text-[11px] text-white/80">
-              {Math.round(r.pct)}% do limite usado
-            </p>
           </div>
         </div>
 
         {/* Corpo */}
         <div className="space-y-5 p-5">
           {/* Cards informativos */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
+            <InfoCard label="Fechamento" value={`Dia ${cartao.diaFechamento ?? "—"}`} />
+            <InfoCard label="Vencimento" value={vencStr} />
             <InfoCard
-              label="Próximo vencimento"
-              value={vencStr}
-              hint={`Vence dia ${cartao.diaVencimento}`}
-            />
-            <InfoCard
-              label="Fechamento"
-              value={`Dia ${cartao.diaFechamento}`}
-              hint={status.label}
+              label="Lançamentos"
+              value={String(resumo.qtd)}
+              hint={resumo.qtd === 1 ? "compra" : "compras"}
             />
           </div>
 
-          {/* Fatura atual */}
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-semibold tracking-tight">Sua fatura atual</h3>
-                <p className="text-[11px] text-muted-foreground">
-                  {comprasFaturaAtual.length === 0
-                    ? "Nenhuma compra neste período."
-                    : `${comprasFaturaAtual.length} ${comprasFaturaAtual.length === 1 ? "compra" : "compras"} no período`}
-                </p>
-              </div>
-              <p className="num text-base font-bold">{formatBRL(totalFatura)}</p>
-            </div>
-          </section>
-
-          {/* Lista de compras */}
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold tracking-tight">
-                Compras no cartão
-              </h3>
-              {!semCompras && (
-                <span className="text-[11px] text-muted-foreground">
-                  {compras.length} {compras.length === 1 ? "lançamento" : "lançamentos"}
-                </span>
+          {/* Ações principais */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Button
+              size="sm"
+              className="card-press"
+              onClick={() => setOpenAdd(true)}
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              Compra
+            </Button>
+            <Button
+              size="sm"
+              variant={status === "paga" ? "secondary" : "default"}
+              className="card-press"
+              onClick={togglePaga}
+              disabled={resumo.qtd === 0 && status !== "paga"}
+            >
+              {status === "paga" ? (
+                <>
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  Reabrir
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                  Marcar paga
+                </>
               )}
-            </div>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="card-press"
+              onClick={() => onImport(cartao)}
+            >
+              <FileUp className="mr-1.5 h-4 w-4" />
+              Importar
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="card-press"
+              onClick={() => onEdit(cartao)}
+            >
+              <Pencil className="mr-1.5 h-4 w-4" />
+              Editar
+            </Button>
+          </div>
 
-            {semCompras ? (
-              <div className="mt-3 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-6 text-center">
+          {/* Busca */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por descrição ou estabelecimento"
+              className="h-10 pl-9 pr-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-card-elevated"
+                aria-label="Limpar busca"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Chips de categoria */}
+          {totaisPorCategoria.length > 0 && (
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                onClick={() => setCatFilter(null)}
+                className={cn(
+                  "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                  catFilter === null
+                    ? "border-brand bg-brand-soft text-brand-on-soft"
+                    : "border-border bg-card hover:bg-card-elevated",
+                )}
+              >
+                Todas · {formatBRL(resumo.total)}
+              </button>
+              {totaisPorCategoria.map((c) => {
+                const active = catFilter === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCatFilter(active ? null : c.id)}
+                    className={cn(
+                      "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                      active
+                        ? "border-brand bg-brand-soft text-brand-on-soft"
+                        : "border-border bg-card hover:bg-card-elevated",
+                    )}
+                  >
+                    {c.nome} · {formatBRL(c.total)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Lista agrupada por data */}
+          <section className="rounded-2xl border border-border bg-card p-2 sm:p-3">
+            {comprasFiltradas.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-card-elevated px-3 py-8 text-center">
                 <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
                 <p className="mt-2 text-sm font-semibold">
-                  Nenhuma compra no crédito por aqui ainda
+                  {compras.length === 0
+                    ? "Nenhuma compra nesta fatura"
+                    : "Nenhuma compra encontrada com esses filtros"}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Lançou uma compra no crédito? Ela aparece aqui.
+                  {compras.length === 0
+                    ? "Adicione uma compra ou importe a fatura para começar."
+                    : "Tente limpar a busca ou os filtros."}
                 </p>
               </div>
             ) : (
-              <ul className="mt-3 space-y-2">
-                {compras.slice(0, 12).map((g) => {
-                  const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
-                  const dt = new Date(g.data + "T00:00:00");
-                  const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
+              <div className="space-y-4">
+                {gruposPorData.map(([data, items]) => {
+                  const dt = new Date(data + "T00:00:00");
+                  const totalDia = items.reduce((s, g) => s + g.valor, 0);
+                  const dtLabel = `${String(dt.getDate()).padStart(2, "0")} de ${MESES_FULL[dt.getMonth()]}`;
                   return (
-                    <li
-                      key={g.id}
-                      className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5"
-                    >
-                      <TransactionAvatar
-                        estabelecimento={g.estabelecimento || g.descricao}
-                        categoria={cat}
-                        size="md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">
-                          {g.descricao || g.estabelecimento || "Compra"}
+                    <div key={data}>
+                      <div className="mb-1.5 flex items-center justify-between px-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {dtLabel}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {cat?.nome ? `${cat.nome} · ` : ""}
-                          {dtStr}
-                          {g.tipoGasto === "parcelado" && g.totalParcelas
-                            ? ` · parcela ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
-                            : ""}
+                        <p className="num text-[11px] text-muted-foreground">
+                          {formatBRL(totalDia)}
                         </p>
                       </div>
-                      <span className="num shrink-0 text-sm font-semibold">
-                        {formatBRL(g.valor)}
-                      </span>
-                    </li>
+                      <ul className="space-y-1.5">
+                        {items.map((g) => {
+                          const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
+                          return (
+                            <li key={g.id} className="group">
+                              <button
+                                type="button"
+                                onClick={() => setEditingGasto(g)}
+                                className="card-press flex w-full items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5 text-left transition hover:bg-card-elevated/80"
+                              >
+                                <TransactionAvatar
+                                  estabelecimento={g.estabelecimento || g.descricao}
+                                  categoria={cat}
+                                  size="md"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-semibold">
+                                    {g.descricao || g.estabelecimento || "Compra"}
+                                  </p>
+                                  <p className="truncate text-[11px] text-muted-foreground">
+                                    {cat?.nome ?? "Sem categoria"}
+                                    {g.tipoGasto === "parcelado" && g.totalParcelas
+                                      ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
+                                      : ""}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="num shrink-0 text-sm font-semibold">
+                                    {formatBRL(g.valor)}
+                                  </span>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <span
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-card focus:outline-none"
+                                        aria-label="Opções da compra"
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </span>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align="end"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <DropdownMenuItem onClick={() => setEditingGasto(g)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() => setConfirmDelete(g)}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             )}
           </section>
-
-          {/* Ações */}
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="outline"
-              className="card-press flex-1"
-              onClick={() => onImport(cartao)}
-            >
-              <FileUp className="mr-2 h-4 w-4" />
-              Importar fatura
-            </Button>
-            <Button
-              variant="outline"
-              className="card-press flex-1"
-              onClick={() => onEdit(cartao)}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar cartão
-            </Button>
-          </div>
         </div>
+
+        {/* Editar gasto */}
+        <EditGastoDialog
+          gasto={editingGasto}
+          open={!!editingGasto}
+          onOpenChange={(o) => !o && setEditingGasto(null)}
+        />
+
+        {/* Adicionar compra */}
+        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+          <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
+            <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
+              <DialogTitle className="text-xl font-bold tracking-tight">
+                Nova compra no cartão
+              </DialogTitle>
+              <DialogDescription>
+                Será adicionada à fatura de {MESES_FULL[ref.mes - 1]}/{ref.ano} no crédito.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-6 py-4">
+              <GastoForm
+                initial={{
+                  formaPagamento: "credito",
+                  cartaoId: cartao.id,
+                  data: toISODateLocal(new Date()),
+                }}
+                submitLabel="Adicionar compra"
+                onSubmit={handleAddCompra}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmar exclusão */}
+        <AlertDialog
+          open={!!confirmDelete}
+          onOpenChange={(o) => !o && setConfirmDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir esta compra?</AlertDialogTitle>
+              <AlertDialogDescription>
+                A compra será removida da fatura. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteCompra}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );
+}
+
+function toISODateLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {

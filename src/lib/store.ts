@@ -22,6 +22,8 @@ import {
   type ExtratoImportado,
   type StatusExtratoImportado,
   type TipoOrigemExtrato,
+  type FaturaCartao,
+  type StatusFatura,
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
@@ -145,6 +147,7 @@ let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
+let memFaturas: FaturaCartao[] = [];
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -176,6 +179,7 @@ export function setActiveUserId(uid: string | null) {
   memContas = EMPTY_CONTAS;
   memTransferencias = EMPTY_TRANSFERENCIAS;
   memExtratos = EMPTY_EXTRATOS;
+  memFaturas = [];
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -881,7 +885,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes, faturasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -892,6 +896,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
       sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
       sbAny.from("extratos_importados").select("*").eq("user_id", userId).order("data_importacao", { ascending: false }),
+      sbAny.from("faturas_cartao").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
@@ -929,6 +934,12 @@ export async function hydrateUser(userId: string): Promise<void> {
     memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
       (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
     );
+    if (faturasRes.error) {
+      console.warn("[store] faturas_cartao load warning", faturasRes.error);
+      memFaturas = [];
+    } else {
+      memFaturas = (faturasRes.data ?? []).map(rowToFatura);
+    }
 
     setHydrationStatus("ready");
 
@@ -3887,4 +3898,193 @@ export function useBootstrap() {
   // If no user is active, don't block on cloud hydration.
   if (!activeUserId) return localReady;
   return localReady && (status === "ready" || status === "error");
+}
+
+// ============================================================
+// FATURAS CARTAO — status pago/aberta/fechada/vencida por mês/ano
+// ============================================================
+type FaturaRow = {
+  id: string;
+  user_id: string;
+  cartao_id: string;
+  mes: number;
+  ano: number;
+  status: string;
+  data_pagamento: string | null;
+  valor_pago: number | string;
+  observacao: string | null;
+};
+
+function rowToFatura(r: FaturaRow): FaturaCartao {
+  const allowed: StatusFatura[] = ["aberta", "fechada", "paga", "vencida"];
+  const status = (allowed.includes(r.status as StatusFatura) ? r.status : "aberta") as StatusFatura;
+  return {
+    id: r.id,
+    cartaoId: r.cartao_id,
+    mes: Number(r.mes),
+    ano: Number(r.ano),
+    status,
+    dataPagamento: r.data_pagamento ?? undefined,
+    valorPago: Number(r.valor_pago) || 0,
+    observacao: r.observacao ?? undefined,
+  };
+}
+
+export function getFaturas(): FaturaCartao[] {
+  return memFaturas;
+}
+
+export function getFatura(cartaoId: string, mes: number, ano: number): FaturaCartao | undefined {
+  return memFaturas.find((f) => f.cartaoId === cartaoId && f.mes === mes && f.ano === ano);
+}
+
+/**
+ * Calcula o ciclo da fatura de referência mes/ano (mês de VENCIMENTO).
+ * Retorna o intervalo [inicio, fim] de datas dos lançamentos que compõem essa fatura.
+ */
+export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio: Date; fim: Date } {
+  const diaFech = cartao.diaFechamento && cartao.diaFechamento > 0 ? cartao.diaFechamento : 1;
+  // Convenção: a fatura que vence no mês X foi fechada no mês X (se diaVencimento > diaFech)
+  // ou no mês X-1 (se diaVencimento < diaFech). Para simplificar, considera-se que a fatura
+  // do mês "mes" abrange compras feitas entre o dia seguinte ao fechamento do mês anterior
+  // e o fechamento do próprio mês "mes".
+  const fim = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
+  const inicio = new Date(ano, mes - 2, diaFech + 1, 0, 0, 0, 0);
+  return { inicio, fim };
+}
+
+export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
+  const cartao = memCartoes.find((c) => c.id === cartaoId);
+  if (!cartao) return [];
+  const { inicio, fim } = cicloFatura(cartao, mes, ano);
+  const analisados = normalizeGastosForCalculations(memGastos);
+  return analisados
+    .filter(
+      (g) =>
+        gastoCartaoId(g) === cartaoId &&
+        g.formaPagamento === "credito" &&
+        g.confirmado !== false,
+    )
+    .filter((g) => {
+      const d = parseDateLocal(g.data);
+      return !!d && d >= inicio && d <= fim;
+    })
+    .sort((a, b) => (a.data < b.data ? 1 : -1));
+}
+
+export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
+  const cartao = memCartoes.find((c) => c.id === cartaoId);
+  const limite = cartao?.limiteTotal ?? 0;
+  const gastos = gastosDaFatura(cartaoId, mes, ano);
+  const total = gastos.reduce((s, g) => s + g.valor, 0);
+  return {
+    total,
+    limite,
+    disponivel: Math.max(0, limite - total),
+    pct: limite > 0 ? Math.min(100, (total / limite) * 100) : 0,
+    qtd: gastos.length,
+  };
+}
+
+/**
+ * Calcula status efetivo da fatura: 'paga' (se marcada), 'vencida', 'fechada' ou 'aberta'.
+ */
+export function statusEfetivoFatura(cartao: Cartao, mes: number, ano: number, hoje: Date = new Date()): StatusFatura {
+  const registro = getFatura(cartao.id, mes, ano);
+  if (registro?.status === "paga") return "paga";
+  const diaFech = cartao.diaFechamento ?? 1;
+  const diaVenc = cartao.diaVencimento ?? 10;
+  const dataFechamento = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
+  const dataVencimento = new Date(ano, mes - 1, diaVenc, 23, 59, 59, 999);
+  if (hoje > dataVencimento) return "vencida";
+  if (hoje > dataFechamento) return "fechada";
+  return "aberta";
+}
+
+export async function marcarFaturaPaga(
+  cartaoId: string,
+  mes: number,
+  ano: number,
+  opts?: { dataPagamento?: string; valorPago?: number; observacao?: string },
+): Promise<void> {
+  if (!activeUserId) return;
+  if (!ensureCanWrite("marcarFaturaPaga")) return;
+  const existente = getFatura(cartaoId, mes, ano);
+  const valorPago = opts?.valorPago ?? resumoFaturaPorMes(cartaoId, mes, ano).total;
+  const dataPagamento = opts?.dataPagamento ?? toLocalISODate(new Date());
+  const observacao = opts?.observacao;
+
+  if (existente) {
+    const updated: FaturaCartao = {
+      ...existente,
+      status: "paga",
+      dataPagamento,
+      valorPago,
+      observacao: observacao ?? existente.observacao,
+    };
+    memFaturas = memFaturas.map((f) => (f.id === existente.id ? updated : f));
+    emit();
+    const { error } = await sbAny
+      .from("faturas_cartao")
+      .update({
+        status: "paga",
+        data_pagamento: dataPagamento,
+        valor_pago: valorPago,
+        observacao: observacao ?? existente.observacao ?? null,
+      })
+      .eq("id", existente.id);
+    if (error) {
+      console.error("[store] marcarFaturaPaga update failed", error);
+    }
+  } else {
+    const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+    const novo: FaturaCartao = {
+      id: tempId,
+      cartaoId,
+      mes,
+      ano,
+      status: "paga",
+      dataPagamento,
+      valorPago,
+      observacao,
+    };
+    memFaturas = [...memFaturas, novo];
+    emit();
+    const { data, error } = await sbAny
+      .from("faturas_cartao")
+      .insert({
+        user_id: activeUserId,
+        cartao_id: cartaoId,
+        mes,
+        ano,
+        status: "paga",
+        data_pagamento: dataPagamento,
+        valor_pago: valorPago,
+        observacao: observacao ?? null,
+      })
+      .select()
+      .single();
+    if (error) {
+      console.error("[store] marcarFaturaPaga insert failed", error);
+      memFaturas = memFaturas.filter((f) => f.id !== tempId);
+      emit();
+    } else if (data) {
+      const persisted = rowToFatura(data as FaturaRow);
+      memFaturas = memFaturas.map((f) => (f.id === tempId ? persisted : f));
+      emit();
+    }
+  }
+}
+
+export async function desmarcarFaturaPaga(cartaoId: string, mes: number, ano: number): Promise<void> {
+  if (!activeUserId) return;
+  if (!ensureCanWrite("desmarcarFaturaPaga")) return;
+  const existente = getFatura(cartaoId, mes, ano);
+  if (!existente) return;
+  memFaturas = memFaturas.filter((f) => f.id !== existente.id);
+  emit();
+  const { error } = await sbAny.from("faturas_cartao").delete().eq("id", existente.id);
+  if (error) {
+    console.error("[store] desmarcarFaturaPaga failed", error);
+  }
 }
