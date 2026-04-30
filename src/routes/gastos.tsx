@@ -20,6 +20,8 @@ import {
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
 import { ExtratosImportadosDialog } from "@/components/ExtratosImportadosDialog";
 import { Upload, History } from "lucide-react";
@@ -165,6 +167,8 @@ function getRange(
 
 function GastosPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
 
@@ -296,7 +300,7 @@ function GastosPage() {
         </Link>
         <div className="flex-1 min-w-0">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Histórico</p>
-          <h1 className="text-2xl font-bold tracking-tight">Gastos</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{vocab.gastosTitle}</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Encontre rapidinho para onde seu dinheiro foi.
           </p>

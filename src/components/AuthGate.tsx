@@ -1,10 +1,14 @@
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useRoles } from "@/lib/use-roles";
 import { Wallet } from "lucide-react";
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
+  // Garante carregamento de roles e auto-claim do primeiro owner
+  // assim que o usuário entra em qualquer rota protegida.
+  useRoles();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
 

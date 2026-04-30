@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ImportContaDialog } from "@/components/ImportContaDialog";
@@ -101,6 +103,8 @@ function normalizar(s: string): string {
 
 function ContasAPagarPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
@@ -263,7 +267,7 @@ function ContasAPagarPage() {
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Contas a pagar
+            {vocab.contasAPagarTitle}
           </p>
           <h1 className="truncate text-xl font-bold tracking-tight capitalize">
             {formatMonthYear(ym.ano, ym.mes)}

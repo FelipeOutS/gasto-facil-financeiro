@@ -12,6 +12,8 @@ import {
   Search,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addReceita,
@@ -97,6 +99,8 @@ export const Route = createFileRoute("/renda")({
 
 function RendaPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/renda" });
@@ -271,7 +275,7 @@ function RendaPage() {
         </Link>
         <div className="flex-1">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Entradas</p>
-          <h1 className="text-2xl font-bold tracking-tight">Minha renda</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
         </div>
       </header>
 

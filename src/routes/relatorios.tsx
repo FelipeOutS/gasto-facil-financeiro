@@ -33,6 +33,8 @@ import {
   Line,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
@@ -88,6 +90,8 @@ type Periodo = "mes" | "anterior" | "3m" | "6m" | "ano";
 
 function RelatoriosPage() {
   const ready = useBootstrap();
+  const { profile } = useAuth();
+  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
   const [periodo, setPeriodo] = useState<Periodo>("mes");
@@ -209,13 +213,13 @@ function RelatoriosPage() {
       <header className="flex items-start justify-between gap-3 pt-2 animate-rise">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Relatórios
+            {vocab.relatoriosTitle}
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            Entenda para onde seu dinheiro foi e como melhorar no próximo mês.
+            {vocab.relatoriosSubtitle}
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0 rounded-full border border-border bg-card p-1">

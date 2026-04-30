@@ -55,6 +55,7 @@ import {
 import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -310,13 +311,13 @@ function Index() {
       <header className="flex items-start justify-between gap-3 pt-2 animate-rise">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Resumo do seu mês
+            {getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            Entrou, saiu, sobrou: tudo aqui.
+            {getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardSubtitle}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
