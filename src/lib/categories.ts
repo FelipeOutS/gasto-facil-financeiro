@@ -135,11 +135,18 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
     categoryId: "transporte",
   },
   {
-    keywords: ["netflix", "spotify", "amazon prime", "disney", "hbo", "globoplay", "youtube premium", "assinatura", "mensalidade"],
+    keywords: [
+      "netflix", "spotify", "amazon prime", "disney", "hbo", "globoplay",
+      "youtube premium", "youtube music", "deezer", "tidal", "apple music",
+      "apple tv", "icloud", "totalpass", "gympass", "audible", "kindle",
+      "office 365", "microsoft 365", "adobe", "canva pro", "chatgpt",
+      "openai", "github", "linkedin premium",
+      "assinatura", "assinaturas", "mensalidade", "plano mensal",
+    ],
     categoryId: "assinaturas",
   },
   {
-    keywords: ["pet shop", "petshop", "petz", "ração", "racao", "veterinár", "veterinar", "banho e tosa"],
+    keywords: ["pet shop", "petshop", "petz", "cobasi", "ração", "racao", "veterinár", "veterinar", "banho e tosa"],
     categoryId: "pet",
   },
   {
@@ -149,6 +156,10 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
   {
     keywords: ["luz", "energia", "água", "agua", "internet", "vivo", "claro", "tim ", "boleto", "fatura", "condomín", "condomin"],
     categoryId: "contas",
+  },
+  {
+    keywords: ["coursera", "udemy", "alura", "rocketseat", "faculdade", "curso", "escola", "colégio", "colegio", "mensalidade escolar"],
+    categoryId: "educacao",
   },
 ];
 
