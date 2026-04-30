@@ -1598,6 +1598,11 @@ export async function refreshGastos() {
     data.map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
     true,
   );
+  memGastos = memGastos.map((g) => {
+    if (!categoriaAtualEhOutros(g)) return g;
+    const categoriaId = inferCategoriaForGasto(g);
+    return categoriaId && categoriaId !== "outros" ? { ...g, categoriaId } : g;
+  });
   emit();
 }
 
@@ -1639,7 +1644,11 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const fixoFlag = input.gastoFixo ?? tipo === "recorrente";
   // Auto-categorização: se vier "outros" ou vazio, tenta inferir pelo nome/estabelecimento.
   if (!input.categoriaId || input.categoriaId === "outros") {
-    const guess = suggestCategory(`${input.estabelecimento ?? ""} ${input.descricao ?? ""}`.trim());
+    const guess = inferCategoriaForGasto({
+      estabelecimento: input.estabelecimento ?? "",
+      descricao: input.descricao ?? "",
+      observacao: input.observacao,
+    });
     if (guess && guess !== "outros") input = { ...input, categoriaId: guess };
   }
   const catUuid = categoriaUuidFor(input.categoriaId);
