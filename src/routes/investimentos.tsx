@@ -83,23 +83,27 @@ function InvestimentosPage() {
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [rends, setRends] = useState<Rendimento[]>([]);
+  const [importacoes, setImportacoes] = useState<Importacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [openAdd, setOpenAdd] = useState(false);
   const [openImport, setOpenImport] = useState(false);
+  const [openHistorico, setOpenHistorico] = useState(false);
   const [editing, setEditing] = useState<Ativo | null>(null);
 
   async function reload() {
     if (!userId) return;
     setLoading(true);
     try {
-      const [a, m, r] = await Promise.all([
+      const [a, m, r, imps] = await Promise.all([
         listarAtivos(userId),
         listarMovimentacoes(userId),
         listarRendimentos(userId),
+        listarImportacoes(userId),
       ]);
       setAtivos(a);
       setMovs(m);
       setRends(r);
+      setImportacoes(imps);
     } catch (e) {
       console.error(e);
       toast.error("Não foi possível carregar os investimentos.");
