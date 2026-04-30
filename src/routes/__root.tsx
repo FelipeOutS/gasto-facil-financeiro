@@ -35,21 +35,21 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Gasto Fácil — Controle de gastos do mês" },
+      { title: "Gasto inteligente — Controle de gastos do mês" },
       {
         name: "description",
         content:
           "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
       },
       { name: "theme-color", content: "#181818" },
-      { property: "og:title", content: "Gasto Fácil — Controle de gastos do mês" },
+      { property: "og:title", content: "Gasto inteligente — Controle de gastos do mês" },
       {
         property: "og:description",
         content: "Controle simples e visual dos seus gastos do mês.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Gasto Fácil — Controle de gastos do mês" },
+      { name: "twitter:title", content: "Gasto inteligente — Controle de gastos do mês" },
       { name: "description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
       { property: "og:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
       { name: "twitter:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
