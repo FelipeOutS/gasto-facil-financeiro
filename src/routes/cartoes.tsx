@@ -383,6 +383,13 @@ function CartoesPage() {
         onOpenChange={setOpenImport}
         cartaoIdInicial={importCartaoId}
       />
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="importar_fatura"
+        featureLabel="Importar fatura de cartão"
+        benefit="Importe a fatura em PDF/imagem e categorize tudo automaticamente."
+      />
     </MobileShell>
   );
 }
