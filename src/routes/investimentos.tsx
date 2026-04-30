@@ -424,24 +424,72 @@ function InvestimentosPage() {
       {/* Movimentações + Rendimentos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
-          <h2 className="font-semibold mb-3">Movimentações</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Movimentações</h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => setMovDialog({ open: true, mov: null })}
+              disabled={ativos.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Nova
+            </Button>
+          </div>
           {movs.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sem movimentações ainda.</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
-              {movs.slice(0, 8).map((m) => {
+              {movs.slice(0, 10).map((m) => {
                 const ativo = ativos.find((a) => a.id === m.ativo_id);
                 return (
-                  <li key={m.id} className="py-2 flex justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium capitalize">{m.tipo}</div>
+                  <li key={m.id} className="py-2 flex justify-between gap-2 items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium capitalize">{m.tipo}</span>
+                        {m.instituicao && (
+                          <span className="text-[10px] text-muted-foreground">· {m.instituicao}</span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {ativo?.nome ?? "—"} · {m.data}
+                        {ativo?.nome ?? "—"} · {formatDataBR(m.data)}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="font-semibold">{formatBRL(Number(m.valor_total || 0))}</div>
-                      {m.quantidade ? <div className="text-xs text-muted-foreground">{m.quantidade}</div> : null}
+                      {m.quantidade ? <div className="text-[11px] text-muted-foreground">{m.quantidade}</div> : null}
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar"
+                        onClick={() => setMovDialog({ open: true, mov: m })}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
+                        onClick={async () => {
+                          if (!confirm("Excluir movimentação? Os totais do investimento serão recalculados.")) return;
+                          try {
+                            const aId = m.ativo_id;
+                            await excluirMovimentacao(m.id);
+                            if (aId && userId) await recalcularAtivoPorMovimentacoes(userId, aId);
+                            toast.success("Movimentação excluída.");
+                            reload();
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Não foi possível excluir.");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </li>
                 );
@@ -451,24 +499,65 @@ function InvestimentosPage() {
         </section>
 
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
-          <h2 className="font-semibold mb-3">Rendimentos</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Rendimentos</h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => setRendDialog({ open: true, rend: null })}
+              disabled={ativos.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Novo
+            </Button>
+          </div>
           {rends.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sem rendimentos cadastrados.</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
-              {rends.slice(0, 8).map((r) => {
+              {rends.slice(0, 10).map((r) => {
                 const ativo = ativos.find((a) => a.id === r.ativo_id);
                 return (
-                  <li key={r.id} className="py-2 flex justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium capitalize">{r.tipo.replace("_", " ")}</div>
+                  <li key={r.id} className="py-2 flex justify-between gap-2 items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium capitalize">{r.tipo.replace(/_/g, " ")}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {ativo?.nome ?? "—"} · {r.data_pagamento}
+                        {ativo?.nome ?? "—"} · {formatDataBR(r.data_pagamento)}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
                       <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar"
+                        onClick={() => setRendDialog({ open: true, rend: r })}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
+                        onClick={async () => {
+                          if (!confirm("Excluir rendimento?")) return;
+                          try {
+                            await excluirRendimento(r.id);
+                            toast.success("Rendimento excluído.");
+                            reload();
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Não foi possível excluir.");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </li>
                 );
