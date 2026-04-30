@@ -424,6 +424,14 @@ function InvestimentosPage() {
       />
 
       <ImportDialog open={openImport} onOpenChange={setOpenImport} />
+
+      <HistoricoImportacoesDialog
+        open={openHistorico}
+        onOpenChange={setOpenHistorico}
+        importacoes={importacoes}
+        userId={userId}
+        onChanged={reload}
+      />
     </MobileShell>
   );
 }
