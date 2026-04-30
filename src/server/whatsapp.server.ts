@@ -53,8 +53,10 @@ async function carregarCartoes(userId: string): Promise<Cartao[]> {
     .select("*")
     .eq("user_id", userId);
   if (!data) return [];
-  return (data as Array<Record<string, unknown>>).map(
-    (c: Record<string, unknown>): Cartao => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c: any): Cartao => ({
       id: c.id,
       nome: c.nome,
       banco: c.banco ?? "",
@@ -79,13 +81,17 @@ async function resolveCategoriaId(
     .select("id, legacy_id, nome")
     .eq("user_id", userId);
   if (!data || data.length === 0) return null;
-  const byLegacy = data.find((c) => c.legacy_id === categoriaKey);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = data as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const byLegacy = arr.find((c: any) => c.legacy_id === categoriaKey);
   if (byLegacy) return byLegacy.id;
   const norm = categoriaKey.toLowerCase();
-  const byName = data.find((c) => c.nome.toLowerCase() === norm);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const byName = arr.find((c: any) => c.nome.toLowerCase() === norm);
   if (byName) return byName.id;
-  // fallback: "outros"
-  const outros = data.find((c) => c.legacy_id === "outros") ?? data[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const outros = arr.find((c: any) => c.legacy_id === "outros") ?? arr[0];
   return outros?.id ?? null;
 }
 
