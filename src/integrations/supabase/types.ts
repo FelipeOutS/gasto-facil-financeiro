@@ -776,6 +776,7 @@ export type Database = {
           origem: string
           proxima_cobranca: string | null
           status: string
+          tipo_recorrencia: string
           ultimo_valor: number | null
           updated_at: string
           user_id: string
@@ -794,6 +795,7 @@ export type Database = {
           origem?: string
           proxima_cobranca?: string | null
           status?: string
+          tipo_recorrencia?: string
           ultimo_valor?: number | null
           updated_at?: string
           user_id: string
@@ -812,6 +814,7 @@ export type Database = {
           origem?: string
           proxima_cobranca?: string | null
           status?: string
+          tipo_recorrencia?: string
           ultimo_valor?: number | null
           updated_at?: string
           user_id?: string
