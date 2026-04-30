@@ -105,8 +105,22 @@ export type Ativo = {
   liquidez: string | null;
   observacao: string | null;
   origem: string | null;
+  ultima_atualizacao: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AtualizacaoValor = {
+  id: string;
+  ativo_id: string;
+  valor_anterior: number | null;
+  valor_novo: number | null;
+  preco_anterior: number | null;
+  preco_novo: number | null;
+  data_atualizacao: string;
+  observacao: string | null;
+  origem: string;
+  created_at: string;
 };
 
 export type Movimentacao = {
