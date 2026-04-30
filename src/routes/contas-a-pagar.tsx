@@ -21,6 +21,8 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { usePlan } from "@/lib/use-plan";
+import { UpgradeModal, LockChip } from "@/components/UpgradeModal";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ImportContaDialog } from "@/components/ImportContaDialog";
@@ -113,6 +115,12 @@ function ContasAPagarPage() {
   const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
   const [importing, setImporting] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { can } = usePlan();
+  const tryImportConta = () => {
+    if (can("importar_conta")) setImporting(true);
+    else setUpgradeOpen(true);
+  };
   const [filtro, setFiltro] = useState<FilterId>("todas");
   const [busca, setBusca] = useState("");
   const [confirmDeleteRec, setConfirmDeleteRec] = useState<ContaAPagar | null>(null);
@@ -405,10 +413,11 @@ function ContasAPagarPage() {
           size="lg"
           variant="outline"
           className="card-press h-14 rounded-2xl text-sm font-semibold"
-          onClick={() => setImporting(true)}
+          onClick={tryImportConta}
         >
           <Upload className="mr-1 h-5 w-5" />
           Importar conta
+          {!can("importar_conta") && <LockChip />}
         </Button>
       </div>
 
@@ -672,6 +681,13 @@ function ContasAPagarPage() {
       )}
 
       <ImportContaDialog open={importing} onOpenChange={setImporting} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="importar_conta"
+        featureLabel="Importar boleto, Pix ou conta"
+        benefit="Identifique automaticamente boletos, Pix e contas a pagar."
+      />
     </MobileShell>
   );
 }

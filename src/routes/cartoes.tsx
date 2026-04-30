@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
+import { usePlan } from "@/lib/use-plan";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import {
   addCartao,
   deleteCartao,
@@ -119,6 +121,8 @@ function CartoesPage() {
   const [openDetail, setOpenDetail] = useState<Cartao | null>(null);
   const [openImport, setOpenImport] = useState(false);
   const [importCartaoId, setImportCartaoId] = useState<string | undefined>(undefined);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { can } = usePlan();
 
   const gastos = useStore(() => getGastos());
 
@@ -187,6 +191,10 @@ function CartoesPage() {
   }
 
   function handleOpenImport(cartaoId?: string) {
+    if (!can("importar_fatura")) {
+      setUpgradeOpen(true);
+      return;
+    }
     setImportCartaoId(cartaoId);
     setOpenImport(true);
   }
@@ -374,6 +382,13 @@ function CartoesPage() {
         open={openImport}
         onOpenChange={setOpenImport}
         cartaoIdInicial={importCartaoId}
+      />
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="importar_fatura"
+        featureLabel="Importar fatura de cartão"
+        benefit="Importe a fatura em PDF/imagem e categorize tudo automaticamente."
       />
     </MobileShell>
   );

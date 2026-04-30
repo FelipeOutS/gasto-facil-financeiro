@@ -777,6 +777,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plans: {
+        Row: {
+          created_at: string
+          plano: Database["public"]["Enums"]["plan_tier"]
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          plano?: Database["public"]["Enums"]["plan_tier"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          plano?: Database["public"]["Enums"]["plan_tier"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -804,6 +831,10 @@ export type Database = {
     }
     Functions: {
       claim_owner_if_first: { Args: never; Returns: boolean }
+      current_plan: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["plan_tier"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -815,6 +846,8 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
+      plan_tier: "free" | "pessoal" | "mei" | "empresa" | "admin_master"
+      subscription_status: "ativo" | "teste" | "expirado" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -943,6 +976,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "user"],
+      plan_tier: ["free", "pessoal", "mei", "empresa", "admin_master"],
+      subscription_status: ["ativo", "teste", "expirado", "cancelado"],
     },
   },
 } as const
