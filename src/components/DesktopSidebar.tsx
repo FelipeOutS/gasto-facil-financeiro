@@ -12,6 +12,7 @@ import {
   PieChart,
   CreditCard,
   BarChart3,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
@@ -33,6 +34,7 @@ const ITEMS: NavItem[] = [
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/guardado", label: "Guardado", icon: Wallet },
   { to: "/metas", label: "Metas", icon: Target },
+  { to: "/meu-plano", label: "Meu plano", icon: Crown },
   { to: "/categorias", label: "Ajustes", icon: Settings2 },
 ];
 

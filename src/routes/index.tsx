@@ -25,6 +25,7 @@ import {
   Tooltip as RTooltip,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import {
@@ -335,6 +336,9 @@ function Index() {
           />
         </div>
       </header>
+
+      {/* Card de assinatura/plano */}
+      <PlanoCard className="mt-4" />
 
       {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
       {profile && !profile.tipo_cadastro && (
