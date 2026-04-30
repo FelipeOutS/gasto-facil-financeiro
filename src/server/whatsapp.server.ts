@@ -102,7 +102,8 @@ export type ProcessOutcome = {
     | "pendente"
     | "sem_vinculo"
     | "erro"
-    | "valor_invalido";
+    | "valor_invalido"
+    | "gasto_excluido";
   gastoId?: string;
   confianca?: number;
   resposta: string;
