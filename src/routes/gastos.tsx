@@ -22,6 +22,8 @@ import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { usePlan } from "@/lib/use-plan";
+import { UpgradeModal, LockChip } from "@/components/UpgradeModal";
 import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
 import { ExtratosImportadosDialog } from "@/components/ExtratosImportadosDialog";
 import { Upload, History } from "lucide-react";
@@ -185,6 +187,12 @@ function GastosPage() {
   const [editing, setEditing] = useState<Gasto | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { can } = usePlan();
+  const tryImportar = () => {
+    if (can("importar_extrato")) setImportOpen(true);
+    else setUpgradeOpen(true);
+  };
 
   const range = useMemo(
     () => getRange(periodo, { from: customFrom, to: customTo }),
@@ -318,12 +326,13 @@ function GastosPage() {
           </Button>
           <Button
             type="button"
-            onClick={() => setImportOpen(true)}
+            onClick={tryImportar}
             className="h-10 rounded-full"
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
             Importar extrato
+            {!can("importar_extrato") && <LockChip />}
           </Button>
         </div>
       </header>
@@ -332,12 +341,13 @@ function GastosPage() {
       <div className="mt-3 sm:hidden grid grid-cols-2 gap-2">
         <Button
           type="button"
-          onClick={() => setImportOpen(true)}
+          onClick={tryImportar}
           className="h-11 rounded-2xl"
           variant="secondary"
         >
           <Upload className="h-4 w-4" />
           Importar
+          {!can("importar_extrato") && <LockChip />}
         </Button>
         <Button
           type="button"
@@ -352,6 +362,13 @@ function GastosPage() {
 
       <ImportExtratoDialog open={importOpen} onOpenChange={setImportOpen} />
       <ExtratosImportadosDialog open={historyOpen} onOpenChange={setHistoryOpen} />
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="importar_extrato"
+        featureLabel="Importar extrato bancário"
+        benefit="Importe seu extrato em PDF/CSV e o app categoriza tudo automaticamente."
+      />
 
       {/* Busca grande */}
       <div className="mt-4 relative">
