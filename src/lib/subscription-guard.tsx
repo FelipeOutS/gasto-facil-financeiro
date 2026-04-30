@@ -21,6 +21,7 @@ import { usePlan } from "@/lib/use-plan";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { setStoreCanWrite } from "@/lib/store";
 
 /** Status que liberam ações financeiras. */
 const ACTIVE_STATUSES = new Set(
