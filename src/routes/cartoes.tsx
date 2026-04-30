@@ -7,6 +7,7 @@ import {
   gastosDaFatura,
   resumoFaturaPorMes,
   statusEfetivoFatura,
+  faturaCorrente,
   getFatura,
   marcarFaturaPaga,
   desmarcarFaturaPaga,
