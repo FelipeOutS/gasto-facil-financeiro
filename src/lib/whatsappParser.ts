@@ -303,13 +303,14 @@ export function parseWhatsAppExpenseMessage(
     ? estr.nome
     : extractNome(original, valor ?? null)) || "Gasto WhatsApp";
 
-  // confiança
+  // confiança — ausência de data NÃO penaliza (usa hoje por padrão)
   let confianca = 0;
-  if (valor && valor > 0) confianca += 0.45;
-  if (nome && nome.length >= 3) confianca += 0.2;
-  if (dataMatched) confianca += 0.1;
+  if (valor && valor > 0) confianca += 0.5;
+  if (nome && nome.length >= 3) confianca += 0.25;
   if (fp.matched) confianca += 0.1;
   if (fp.forma !== "credito" || card.cartaoId) confianca += 0.15;
+  // Pequeno bônus quando a data foi explicitamente citada (não obrigatório)
+  if (dataMatched) confianca += 0.05;
   confianca = Math.min(1, confianca);
 
   return {
