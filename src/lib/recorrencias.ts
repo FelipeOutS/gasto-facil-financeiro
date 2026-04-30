@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   getGastos,
   getCartoes,
-  getCategorias,
   useStore,
   addGasto,
   type NovoGastoInput,
