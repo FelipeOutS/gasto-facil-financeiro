@@ -583,6 +583,7 @@ export type NovaRecorrenciaInput = {
   formaPagamento?: FormaPagamento | null;
   cartaoId?: string | null;
   status?: StatusRecorrencia;
+  tipoRecorrencia?: TipoRecorrencia;
   origem?: "manual" | "detectada";
   observacao?: string | null;
   ultimoValor?: number | null;
@@ -612,12 +613,13 @@ export async function criarRecorrencia(
     user_id: userId,
     nome: input.nome.trim(),
     valor: input.valor,
-    categoria_id: input.categoriaId ?? null,
+    categoria_id: await categoriaDbId(userId, input.categoriaId),
     frequencia: input.frequencia,
     proxima_cobranca: input.proximaCobranca ?? null,
     forma_pagamento: input.formaPagamento ?? null,
     cartao_id: input.cartaoId ?? null,
     status: input.status ?? "ativa",
+    tipo_recorrencia: input.tipoRecorrencia ?? "assinatura",
     origem: input.origem ?? "manual",
     observacao: input.observacao ?? null,
     ultimo_valor: input.ultimoValor ?? null,
@@ -646,7 +648,8 @@ export async function atualizarRecorrencia(
   const update: any = {};
   if (patch.nome !== undefined) update.nome = patch.nome;
   if (patch.valor !== undefined) update.valor = patch.valor;
-  if (patch.categoriaId !== undefined) update.categoria_id = patch.categoriaId;
+  if (patch.categoriaId !== undefined)
+    update.categoria_id = await categoriaDbId(hydratedUserId, patch.categoriaId);
   if (patch.frequencia !== undefined) update.frequencia = patch.frequencia;
   if (patch.proximaCobranca !== undefined)
     update.proxima_cobranca = patch.proximaCobranca;
@@ -654,6 +657,8 @@ export async function atualizarRecorrencia(
     update.forma_pagamento = patch.formaPagamento;
   if (patch.cartaoId !== undefined) update.cartao_id = patch.cartaoId;
   if (patch.status !== undefined) update.status = patch.status;
+  if (patch.tipoRecorrencia !== undefined)
+    update.tipo_recorrencia = patch.tipoRecorrencia;
   if (patch.observacao !== undefined) update.observacao = patch.observacao;
   if (patch.ultimoValor !== undefined) update.ultimo_valor = patch.ultimoValor;
 
