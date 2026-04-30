@@ -1,19 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 
 export const Route = createFileRoute("/adicionar")({
-  head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
   component: Adicionar,
 });
 
 function Adicionar() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+    }
+  }, [canWrite, requireSubscription]);
+
   function pickImage(camera: boolean) {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      return;
+    }
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -84,8 +96,14 @@ function Adicionar() {
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
 
-        <Link
-          to="/manual"
+        <button
+          onClick={() => {
+            if (!canWrite) {
+              requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+              return;
+            }
+            navigate({ to: "/manual" });
+          }}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated"
         >
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cat-mercado/15 text-[var(--cat-mercado)] transition-transform group-hover:scale-110">
@@ -96,7 +114,7 @@ function Adicionar() {
             <span className="block text-xs text-muted-foreground">Digite os dados do gasto</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-        </Link>
+        </button>
       </div>
 
       <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground animate-fade-in">

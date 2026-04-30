@@ -34,9 +34,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { FormaPagamento } from "@/lib/types";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 
 export const Route = createFileRoute("/confirmar")({
-  head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Inteligente" }] }),
   component: Confirmar,
 });
 
@@ -55,6 +56,7 @@ type AIResult = {
 
 function Confirmar() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const categorias = useStore(() => getCategorias());
 
   const [imagem, setImagem] = useState<string | undefined>();
@@ -396,6 +398,10 @@ function Confirmar() {
                 data.estabelecimento,
               );
               const save = () => {
+                if (!canWrite) {
+                  requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                  return;
+                }
                 addGasto(data);
                 toast.success("Pronto, gasto salvo!");
                 setStep("sucesso");

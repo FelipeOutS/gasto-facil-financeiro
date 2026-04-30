@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/recuperar-senha")({
-  head: () => ({ meta: [{ title: "Recuperar senha — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Recuperar senha — Gasto Inteligente" }] }),
   component: RecoverPage,
 });
 

@@ -4,7 +4,8 @@ import { MobileShell } from "@/components/MobileShell";
 import { GastoForm } from "@/components/GastoForm";
 import { addGasto, findPossibleDuplicate } from "@/lib/store";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,13 +18,23 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/manual")({
-  head: () => ({ meta: [{ title: "Cadastrar manualmente — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Cadastrar manualmente — Gasto Inteligente" }] }),
   component: Manual,
 });
 
 function Manual() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [pending, setPending] = useState<null | (() => void)>(null);
+
+  useEffect(() => {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      navigate({ to: "/meu-plano" });
+    }
+  }, [canWrite, requireSubscription, navigate]);
+
+  if (!canWrite) return null;
 
   return (
     <MobileShell>
@@ -46,6 +57,10 @@ function Manual() {
           onSubmit={(data) => {
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
             const save = () => {
+              if (!canWrite) {
+                requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                return;
+              }
               addGasto(data);
               toast.success("Gasto registrado. ✅");
               navigate({ to: "/" });

@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/perfil")({
-  head: () => ({ meta: [{ title: "Meu perfil — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Meu perfil — Gasto Inteligente" }] }),
   component: PerfilPage,
 });
 

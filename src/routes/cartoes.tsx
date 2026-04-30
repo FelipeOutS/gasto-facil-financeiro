@@ -79,7 +79,7 @@ import {
 export const Route = createFileRoute("/cartoes")({
   head: () => ({
     meta: [
-      { title: "Cartões — Gasto Fácil" },
+      { title: "Cartões — Gasto Inteligente" },
       {
         name: "description",
         content:

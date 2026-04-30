@@ -80,7 +80,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/contas-a-pagar")({
-  head: () => ({ meta: [{ title: "Contas a pagar — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),
   component: ContasAPagarPage,
 });
 

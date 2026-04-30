@@ -25,7 +25,7 @@ import {
 } from "@/lib/profile-utils";
 
 export const Route = createFileRoute("/conta")({
-  head: () => ({ meta: [{ title: "Minha conta — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Minha conta — Gasto Inteligente" }] }),
   component: ContaPage,
 });
 

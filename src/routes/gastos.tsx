@@ -65,7 +65,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/gastos")({
-  head: () => ({ meta: [{ title: "Gastos — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Gastos — Gasto Inteligente" }] }),
   component: GastosPage,
 });
 

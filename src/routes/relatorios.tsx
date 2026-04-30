@@ -76,7 +76,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
     meta: [
-      { title: "Relatórios — Gasto Fácil" },
+      { title: "Relatórios — Gasto Inteligente" },
       {
         name: "description",
         content: "Entenda para onde seu dinheiro foi e como melhorar no próximo mês.",

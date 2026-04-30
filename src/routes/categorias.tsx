@@ -48,7 +48,7 @@ const COLOR_OPTIONS = [
 const ICON_OPTIONS = Object.keys(ICON_MAP);
 
 export const Route = createFileRoute("/categorias")({
-  head: () => ({ meta: [{ title: "Ajustes — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Ajustes — Gasto Inteligente" }] }),
   component: CategoriasPage,
 });
 

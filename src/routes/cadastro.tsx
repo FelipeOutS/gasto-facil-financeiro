@@ -10,7 +10,7 @@ import { PasswordChecklist } from "@/components/PasswordChecklist";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/cadastro")({
-  head: () => ({ meta: [{ title: "Criar conta — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Criar conta — Gasto Inteligente" }] }),
   component: CadastroPage,
 });
 

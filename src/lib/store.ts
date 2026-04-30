@@ -28,6 +28,27 @@ import { parseDateLocal, toLocalISODate } from "./format";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
+/**
+ * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
+ * Defaultamos para `false` — só liberamos escrita quando o provider confirmar
+ * que o usuário tem assinatura ativa ou é Admin Master.
+ */
+let canWriteFinancial = false;
+export function setStoreCanWrite(v: boolean) {
+  canWriteFinancial = v;
+}
+function ensureCanWrite(action: string): boolean {
+  if (canWriteFinancial) return true;
+  if (typeof window !== "undefined") {
+    // Aviso amigável caso uma chamada burle o front-end.
+    void import("sonner").then(({ toast }) => {
+      toast.error("Você precisa de uma assinatura ativa para usar este recurso.");
+    });
+    console.warn(`[store] Bloqueado: ${action} requer assinatura ativa.`);
+  }
+  return false;
+}
+
 type GastoInsert = TablesInsert<"gastos">;
 type GastoUpdate = TablesUpdate<"gastos">;
 type ReceitaInsert = TablesInsert<"receitas">;
@@ -1770,6 +1791,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
 
 export function addGasto(input: NovoGastoInput): Gasto[] {
   if (!activeUserId) return [];
+  if (!ensureCanWrite("addGasto")) return [];
   const built = buildGastosFromInput(input, activeUserId);
   const created = built.map((b) => b.client);
   // Optimistic update
@@ -1797,6 +1819,7 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
  */
 export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   if (!activeUserId || inputs.length === 0) return [];
+  if (!ensureCanWrite("addGastosBulk")) return [];
   const uniqueInputs = inputs.filter((inp, index, arr) => {
     const desc = inp.descricao || inp.estabelecimento || "";
     const key = `${inp.cartaoId ?? ""}|${inp.data}|${desc.trim().toLowerCase()}|${inp.valor.toFixed(2)}`;

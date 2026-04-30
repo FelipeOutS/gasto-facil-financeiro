@@ -32,7 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/meu-plano")({
-  head: () => ({ meta: [{ title: "Meu plano — Gasto Fácil" }] }),
+  head: () => ({ meta: [{ title: "Meu plano — Gasto Inteligente" }] }),
   component: MeuPlanoPage,
 });
 

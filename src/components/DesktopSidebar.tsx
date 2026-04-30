@@ -1,5 +1,6 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   Home,
   List,
@@ -40,6 +41,8 @@ const ITEMS: NavItem[] = [
 
 export function DesktopSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
@@ -60,18 +63,25 @@ export function DesktopSidebar() {
     >
       <div className="px-5 pt-6 pb-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Gasto Fácil
+          Gasto Inteligente
         </p>
         <h2 className="mt-1 text-lg font-bold tracking-tight">Controle financeiro</h2>
       </div>
 
-      <Link
-        to="/adicionar"
+      <button
+        type="button"
+        onClick={() => {
+          if (!canWrite) {
+            requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+            return;
+          }
+          navigate({ to: "/adicionar" });
+        }}
         className="card-press mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-grad px-4 py-2.5 text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
         Adicionar gasto
-      </Link>
+      </button>
 
       <nav className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-1">
@@ -131,7 +141,7 @@ export function DesktopSidebar() {
       </nav>
 
       <div className="px-5 py-4 text-[10px] text-muted-foreground/70">
-        © Gasto Fácil
+        © Gasto Inteligente
       </div>
     </aside>
   );
