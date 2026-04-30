@@ -128,6 +128,9 @@ const MERCHANT_COLOR: Record<string, string> = {
   "mercado-livre": "#fff159",
   "adobe": "#fa0f00",
   "microsoft": "#0078d4",
+  "totalpass": "#0a2540",
+  "cobasi": "#0072ce",
+  "coursera": "#0056d2",
 };
 
 /* -------------------- Resolution -------------------- */
