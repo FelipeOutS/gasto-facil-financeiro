@@ -98,13 +98,18 @@ function MeuPlanoPage() {
               ) : (
                 <Sparkles className="h-5 w-5 text-primary" />
               )}
-              <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold">
                 {loading ? "Carregando…" : PLAN_LABEL[plan]}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Tipo: {tipoCadastroLabel(tipo)}
+              Tipo: {plan === "admin_master" ? "Acesso total" : tipoCadastroLabel(tipo)}
             </p>
+            {plan === "admin_master" && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Este perfil tem acesso total ao sistema para administração, testes e validação.
+              </p>
+            )}
           </div>
           <span
             className={cn(
