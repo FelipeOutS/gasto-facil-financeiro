@@ -32,6 +32,7 @@ import {
   cicloFatura,
   gastosDaFatura,
   statusEfetivoFatura,
+  faturaCorrente,
   useStore,
 } from "@/lib/store";
 import { formatBRL, parseDateLocal } from "@/lib/format";
