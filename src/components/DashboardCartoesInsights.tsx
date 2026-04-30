@@ -275,14 +275,14 @@ export function DashboardCartoesInsights({
                 <li
                   key={u.cartao.id}
                   className="card-press rounded-2xl border border-border bg-card-elevated/40 p-3 transition-colors hover:bg-card-elevated"
-                  onClick={() => onAbrirFatura?.(u.cartao.id, mes, ano)}
+                  onClick={() => onAbrirFatura?.(u.cartao.id, u.mes, u.ano)}
                   role={onAbrirFatura ? "button" : undefined}
                   tabIndex={onAbrirFatura ? 0 : undefined}
                   onKeyDown={(e) => {
                     if (!onAbrirFatura) return;
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      onAbrirFatura(u.cartao.id, mes, ano);
+                      onAbrirFatura(u.cartao.id, u.mes, u.ano);
                     }
                   }}
                 >
