@@ -105,26 +105,41 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
     );
   }
 
+  // Merchant (or non-onDark bank): when a logo is available, render it
+  // transparently — no white box, no circle, the SVG breathes over the dark
+  // surface. The colored circle is reserved for the fallback (initial).
+  if (showLogo) {
+    return (
+      <span
+        className={cn(
+          "transaction-avatar logo-mode relative grid place-items-center overflow-hidden",
+          "h-9 w-9",
+          className,
+        )}
+        aria-hidden
+      >
+        <img
+          src={displayedUrl!}
+          alt=""
+          className={cn("h-full w-full object-contain", imgClassName)}
+          onError={() => setErrored(true)}
+          decoding="async"
+        />
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn(
-        "relative grid place-items-center overflow-hidden rounded-full shadow-sm ring-1",
-        onDark ? "bg-white ring-white/40" : "bg-white ring-border",
+        "transaction-avatar relative grid place-items-center overflow-hidden rounded-full",
         "h-9 w-9",
         className,
       )}
       aria-hidden
-      style={showLogo ? undefined : { background: bg, color: "#fff" }}
+      style={{ background: bg, color: "#fff" }}
     >
-      {showLogo ? (
-        <img
-          src={displayedUrl!}
-          alt=""
-          className={cn("h-full w-full object-contain p-1.5", imgClassName)}
-          onError={() => setErrored(true)}
-          decoding="async"
-        />
-      ) : resolved.initial && resolved.initial !== "?" ? (
+      {resolved.initial && resolved.initial !== "?" ? (
         <span className="text-xs font-bold leading-none text-white">
           {resolved.initial}
         </span>
