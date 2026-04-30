@@ -815,15 +815,16 @@ function UltimasCompras({
             const dt = new Date(g.data + "T00:00:00");
             const dtStr = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
             const merchantName = g.estabelecimento || g.descricao || "";
+            const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
             return (
               <li
                 key={g.id}
                 className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
               >
-                <BrandLogo
-                  name={merchantName}
-                  variant="merchant"
-                  className="h-9 w-9 shrink-0"
+                <TransactionAvatar
+                  estabelecimento={merchantName}
+                  categoria={cat}
+                  size="sm"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
