@@ -27,6 +27,7 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
+import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import {
   getCategoriaById,
