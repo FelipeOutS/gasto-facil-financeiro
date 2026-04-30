@@ -135,6 +135,7 @@ function descrevePrazo(iso?: string | null): string {
 function AssinaturasPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const ready = useBootstrap();
 
   const recs = useRecorrencias();
   const gastos = useStore(getGastos);
@@ -148,6 +149,16 @@ function AssinaturasPage() {
   const [filtroStatus, setFiltroStatus] = useState<"todas" | StatusRecorrencia>(
     "todas",
   );
+  const [debugAnalise, setDebugAnalise] = useState<null | {
+    gastos: number;
+    analisados: number;
+    encontradas: number;
+    criadas: number;
+    suspeitas: number;
+    assinaturas: number;
+    fixas: number;
+    nomes: string[];
+  }>(null);
 
   const categoriaNomePorId = useMemo(() => {
     const map = new Map(categorias.map((c) => [c.id, c.nome]));
@@ -156,15 +167,27 @@ function AssinaturasPage() {
 
   // Hidrata + sincroniza detecções na entrada da página.
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !ready) return;
     let cancelado = false;
     (async () => {
+      await refreshGastos();
       await hydrateRecorrencias(userId);
       if (cancelado) return;
-      const r = await sincronizarDeteccoes(userId, getGastos(), {
+      const gastosAtuais = getGastos();
+      const r = await sincronizarDeteccoes(userId, gastosAtuais, {
         categoriaNomePorId,
       });
       if (cancelado) return;
+      setDebugAnalise({
+        gastos: gastosAtuais.length,
+        analisados: r.analisados,
+        encontradas: r.encontradas,
+        criadas: r.criadas,
+        suspeitas: r.suspeitas,
+        assinaturas: r.assinaturas,
+        fixas: r.fixas,
+        nomes: gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean).slice(0, 20),
+      });
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
           `${r.criadas} recorrências detectadas${
@@ -177,7 +200,7 @@ function AssinaturasPage() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, ready]);
 
   const totais = useMemo(() => totaisRecorrencias(recs), [recs]);
 
@@ -261,11 +284,30 @@ function AssinaturasPage() {
     if (!userId) return;
     setSyncing(true);
     try {
-      const r = await sincronizarDeteccoes(userId, gastos, {
+      await refreshGastos();
+      const gastosAtuais = getGastos();
+      const r = await sincronizarDeteccoes(userId, gastosAtuais, {
         categoriaNomePorId,
       });
+      const nomes = gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean);
+      console.info("Gastos analisados:", r.analisados);
+      console.info("Nomes dos gastos analisados:", nomes);
+      console.info("Categorias dos gastos analisados:", gastosAtuais.map((g) => categoriaNomePorId(g.categoriaId) ?? g.categoriaId));
+      console.info("Sugestões encontradas:", r.encontradas);
+      console.info("Recorrências criadas:", r.criadas);
+      console.info("Suspeitas criadas:", r.suspeitas);
+      setDebugAnalise({
+        gastos: gastosAtuais.length,
+        analisados: r.analisados,
+        encontradas: r.encontradas,
+        criadas: r.criadas,
+        suspeitas: r.suspeitas,
+        assinaturas: r.assinaturas,
+        fixas: r.fixas,
+        nomes: nomes.slice(0, 20),
+      });
       toast.success(
-        `Análise concluída: ${r.criadas} novas, ${r.suspeitas} suspeitas`,
+        `Análise concluída: ${r.criadas} ativas, ${r.suspeitas} suspeitas`,
       );
     } finally {
       setSyncing(false);
