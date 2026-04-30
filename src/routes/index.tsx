@@ -742,7 +742,7 @@ function Index() {
                     key={g.id}
                     className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
                   >
-                    <CategoryIcon categoria={cat} />
+                    <TransactionAvatar estabelecimento={g.estabelecimento} categoria={cat} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
                         {g.estabelecimento || g.descricao}
@@ -945,7 +945,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
                   key={g.id}
                   className="flex items-center gap-3 rounded-2xl bg-card-elevated/60 p-2.5 hover-lift hover:bg-card-elevated"
                 >
-                  <CategoryIcon categoria={cat} />
+                  <TransactionAvatar estabelecimento={g.estabelecimento} categoria={cat} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
                       {g.estabelecimento || g.descricao}
