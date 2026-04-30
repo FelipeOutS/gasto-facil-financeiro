@@ -523,6 +523,9 @@ function Index() {
         </>
       )}
 
+      {/* ===== Contas a receber ===== */}
+      <ContasAReceberCard />
+
       {/* ===== Atalhos secundários ===== */}
       <SectionLabel>Controle financeiro</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
