@@ -28,6 +28,27 @@ import { parseDateLocal, toLocalISODate } from "./format";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
+/**
+ * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
+ * Defaultamos para `false` — só liberamos escrita quando o provider confirmar
+ * que o usuário tem assinatura ativa ou é Admin Master.
+ */
+let canWriteFinancial = false;
+export function setStoreCanWrite(v: boolean) {
+  canWriteFinancial = v;
+}
+function ensureCanWrite(action: string): boolean {
+  if (canWriteFinancial) return true;
+  if (typeof window !== "undefined") {
+    // Aviso amigável caso uma chamada burle o front-end.
+    void import("sonner").then(({ toast }) => {
+      toast.error("Você precisa de uma assinatura ativa para usar este recurso.");
+    });
+    console.warn(`[store] Bloqueado: ${action} requer assinatura ativa.`);
+  }
+  return false;
+}
+
 type GastoInsert = TablesInsert<"gastos">;
 type GastoUpdate = TablesUpdate<"gastos">;
 type ReceitaInsert = TablesInsert<"receitas">;
