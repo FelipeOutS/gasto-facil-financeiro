@@ -15,6 +15,7 @@ function Adicionar() {
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [busy, setBusy] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
 
   useEffect(() => {
     if (!canWrite) {
