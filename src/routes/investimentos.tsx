@@ -93,6 +93,8 @@ function InvestimentosPage() {
   const [openAdd, setOpenAdd] = useState(false);
   const [openImport, setOpenImport] = useState(false);
   const [openHistorico, setOpenHistorico] = useState(false);
+  const [openAtualizarLote, setOpenAtualizarLote] = useState(false);
+  const [atualizandoAtivo, setAtualizandoAtivo] = useState<Ativo | null>(null);
   const [editing, setEditing] = useState<Ativo | null>(null);
 
   async function reload() {
