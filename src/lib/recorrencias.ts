@@ -434,8 +434,9 @@ export function detectarRecorrencias(
   // Agrupa por nome normalizado + valor próximo (tolerância 5%).
   const grupos = new Map<string, Gasto[]>();
   for (const g of gastos) {
-    if (!g.confirmado || !g.estabelecimento) continue;
-    const key = normName(g.estabelecimento);
+    const nomeBase = g.estabelecimento || g.descricao;
+    if (!g.confirmado || !nomeBase) continue;
+    const key = normName(nomeBase);
     if (!key) continue;
     grupos.set(key, [...(grupos.get(key) ?? []), g]);
   }
@@ -449,14 +450,16 @@ export function detectarRecorrencias(
       if (!textoSugereRecorrencia(g.estabelecimento || "", g.descricao || "", catNome)) {
         continue;
       }
+      const nome = g.estabelecimento || g.descricao || nameKey;
+      const tipoRecorrencia = classificarTipoRecorrencia(nome, g.descricao || "", catNome);
       const proxCob = proximaDataApartirDe(g.data, "mensal");
       const detectionKey = `${nameKey}__${g.valor.toFixed(2)}__mensal`;
       sugeridas.push({
         detectionKey,
-        nome: g.estabelecimento || nameKey,
+        nome,
         valor: g.valor,
         ultimoValor: undefined,
-        categoriaId: g.categoriaId,
+        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, g.categoriaId) ?? undefined,
         formaPagamento: g.formaPagamento,
         cartaoId: g.cartaoId,
         frequencia: "mensal",
@@ -465,6 +468,7 @@ export function detectarRecorrencias(
         ultimaData: g.data,
         variacaoValor: undefined,
         gastoIds: [g.id],
+        tipoRecorrencia,
       });
       continue;
     }
@@ -501,13 +505,15 @@ export function detectarRecorrencias(
       // Bucket de 1 só com indício forte → suspeita
       if (bucket.length < 2) {
         if (!temIndicio) continue;
+        const nome = ultimo.estabelecimento || ultimo.descricao || nameKey;
+        const tipoRecorrencia = classificarTipoRecorrencia(nome, ultimo.descricao || "", catNome);
         const proxCob = proximaDataApartirDe(ultimo.data, "mensal");
         const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__mensal`;
         sugeridas.push({
           detectionKey,
-          nome: ultimo.estabelecimento || nameKey,
+          nome,
           valor: ultimo.valor,
-          categoriaId: ultimo.categoriaId,
+          categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
           formaPagamento: ultimo.formaPagamento,
           cartaoId: ultimo.cartaoId,
           frequencia: "mensal",
@@ -515,6 +521,7 @@ export function detectarRecorrencias(
           ocorrencias: 1,
           ultimaData: ultimo.data,
           gastoIds: [ultimo.id],
+          tipoRecorrencia,
         });
         continue;
       }
@@ -538,13 +545,15 @@ export function detectarRecorrencias(
       const proxCob = proximaDataApartirDe(ultimo.data, freq);
       const detectionKey = `${nameKey}__${ultimo.valor.toFixed(2)}__${freq}`;
       const variacao = ultimo.valor - penultimo.valor;
+      const nome = ultimo.estabelecimento || ultimo.descricao || nameKey;
+      const tipoRecorrencia = classificarTipoRecorrencia(nome, ultimo.descricao || "", catNome);
 
       sugeridas.push({
         detectionKey,
-        nome: ultimo.estabelecimento || nameKey,
+        nome,
         valor: ultimo.valor,
         ultimoValor: penultimo.valor,
-        categoriaId: ultimo.categoriaId,
+        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
         formaPagamento: ultimo.formaPagamento,
         cartaoId: ultimo.cartaoId,
         frequencia: freq,
@@ -553,6 +562,7 @@ export function detectarRecorrencias(
         ultimaData: ultimo.data,
         variacaoValor: Math.abs(variacao) > 0.01 ? variacao : undefined,
         gastoIds: porData.map((g) => g.id),
+        tipoRecorrencia,
       });
     }
   }
