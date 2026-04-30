@@ -79,16 +79,21 @@ export const Route = createFileRoute("/api/checkout/create")({
         const info = PLAN_PRICES[plano];
 
         // Atualiza/insere o registro de plano do usuário como aguardando_pagamento
-        await supabaseAdmin
+        const { data: existingPlan } = await supabaseAdmin
           .from("user_plans")
-          .upsert(
-            {
-              user_id: user.id,
-              plano,
-              status: "aguardando_pagamento",
-            },
-            { onConflict: "user_id" },
-          );
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (existingPlan) {
+          await supabaseAdmin
+            .from("user_plans")
+            .update({ plano, status: "aguardando_pagamento" })
+            .eq("user_id", user.id);
+        } else {
+          await supabaseAdmin
+            .from("user_plans")
+            .insert({ user_id: user.id, plano, status: "aguardando_pagamento" });
+        }
 
         const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
         if (!accessToken) {
