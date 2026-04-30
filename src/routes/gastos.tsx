@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
@@ -39,6 +39,7 @@ import {
   getCategoriaById,
   getCategorias,
   getGastos,
+  refreshGastos,
   useBootstrap,
   useStore,
 } from "@/lib/store";
@@ -176,6 +177,12 @@ function GastosPage() {
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
+
+  // Refetch gastos ao entrar na página: pega registros criados fora do
+  // cliente (ex: webhook do WhatsApp) que não passaram pelo cache local.
+  useEffect(() => {
+    if (ready) void refreshGastos();
+  }, [ready]);
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");

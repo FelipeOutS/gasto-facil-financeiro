@@ -1521,7 +1521,7 @@ function categoriaUuidFor(key: string): string | null {
   return categoriaKeyToUuid.get(key) ?? null;
 }
 
-async function refreshGastos() {
+export async function refreshGastos() {
   if (!activeUserId) return;
   const { data } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
   if (!data) return;

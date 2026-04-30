@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { refreshGastos } from "@/lib/store";
+import { ExternalLink } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
@@ -217,8 +219,14 @@ function WhatsAppPage() {
       const out = await res.json();
       if (!res.ok) throw new Error(out?.error ?? "Falha no teste");
       const first = out.results?.[0];
-      toast.success(`Status: ${first?.status ?? "ok"}`);
-      await refresh();
+      const status = first?.status ?? "ok";
+      if (status === "salva" && first?.gasto_id) {
+        toast.success(`Gasto salvo (id ${String(first.gasto_id).slice(0, 8)})`);
+      } else {
+        toast.success(`Status: ${status}`);
+      }
+      // Invalida cache de gastos para que /gastos e dashboard reflitam o novo registro.
+      await Promise.all([refresh(), refreshGastos()]);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -415,6 +423,19 @@ function WhatsAppPage() {
                   <p className="text-[11px] text-rose-400 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" /> {m.erro}
                   </p>
+                )}
+                {m.gasto_id && (
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      ID: {m.gasto_id.slice(0, 8)}
+                    </span>
+                    <Link
+                      to="/gastos"
+                      className="text-[11px] text-emerald-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      Ver em Gastos <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </div>
                 )}
               </li>
             ))}
