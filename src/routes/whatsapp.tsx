@@ -240,6 +240,60 @@ function WhatsAppPage() {
     setTimeout(() => setCopiado(false), 1500);
   }
 
+  const [limpando, setLimpando] = useState(false);
+  async function limparDuplicados() {
+    if (!confirm("Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?")) return;
+    setLimpando(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão expirada");
+      const { data, error } = await supabase
+        .from("gastos")
+        .select("id, descricao, valor, data, cartao_id, created_at")
+        .eq("user_id", user.id)
+        .eq("origem", "whatsapp")
+        .order("created_at", { ascending: true });
+      if (error) throw new Error(error.message);
+      const buckets = new Map<string, string[]>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const g of (data as any[]) ?? []) {
+        const key = [
+          (g.descricao ?? "").toLowerCase().trim(),
+          Number(g.valor).toFixed(2),
+          g.data,
+          g.cartao_id ?? "",
+        ].join("|");
+        const arr = buckets.get(key) ?? [];
+        arr.push(g.id);
+        buckets.set(key, arr);
+      }
+      const idsParaApagar: string[] = [];
+      for (const ids of buckets.values()) {
+        if (ids.length > 1) idsParaApagar.push(...ids.slice(1)); // mantém o 1º (mais antigo)
+      }
+      if (idsParaApagar.length === 0) {
+        toast.info("Nenhum duplicado encontrado.");
+        return;
+      }
+      // Desvincular as whatsapp_messages que apontavam para os ids apagados
+      await supabase
+        .from("whatsapp_messages")
+        .update({ gasto_id: null })
+        .in("gasto_id", idsParaApagar);
+      const { error: delErr } = await supabase
+        .from("gastos")
+        .delete()
+        .in("id", idsParaApagar);
+      if (delErr) throw new Error(delErr.message);
+      toast.success(`${idsParaApagar.length} duplicado(s) removido(s).`);
+      await Promise.all([refresh(), refreshGastos()]);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLimpando(false);
+    }
+  }
+
   // Status global da integração
   const ultimaMsg = msgs[0];
   const integracaoStatus = links.length === 0
@@ -386,13 +440,24 @@ function WhatsAppPage() {
             onChange={(e) => setTestTexto(e.target.value)}
             className="min-h-[72px] bg-card-elevated text-sm"
           />
-          <Button
-            onClick={testarWebhook}
-            disabled={testando || links.length === 0}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            {testando ? "Testando..." : "Disparar teste"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={testarWebhook}
+              disabled={testando || links.length === 0}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              {testando ? "Testando..." : "Disparar teste"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={limparDuplicados}
+              disabled={limpando}
+              className="border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {limpando ? "Limpando..." : "Limpar duplicados"}
+            </Button>
+          </div>
         </section>
 
         {/* Histórico */}
