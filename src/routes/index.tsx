@@ -101,6 +101,24 @@ function Index() {
   );
 
   const total = useMemo(() => doMes.reduce((s, g) => s + g.valor, 0), [doMes]);
+
+  // Total de despesas do mês anterior (para comparação no insight).
+  const totalMesAnterior = useMemo(() => {
+    const ref = new Date(ym.ano, ym.mes - 2, 1);
+    const m = ref.getMonth() + 1;
+    const a = ref.getFullYear();
+    return gastosConfirmados
+      .filter((g) => {
+        const d = parseDateLocal(g.data);
+        return !!d && d.getMonth() + 1 === m && d.getFullYear() === a;
+      })
+      .reduce((s, g) => s + g.valor, 0);
+  }, [gastosConfirmados, ym]);
+
+  const navigateRoot = useNavigate();
+  const abrirFatura = (cartaoId: string) => {
+    navigateRoot({ to: "/cartoes", search: { abrir: cartaoId } });
+  };
   useEffect(() => {
     if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1") return;
     const importados = gastosConfirmados.filter((g) => String(g.origem ?? "").includes("fatura"));
