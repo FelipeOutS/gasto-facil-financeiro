@@ -201,7 +201,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           ) : (
             <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
               <p className="text-xs text-muted-foreground">Você ainda não tem cartões cadastrados.</p>
-              <Link to="/cartoes" search={{}} className="text-xs font-semibold text-brand hover:underline">
+              <Link to="/cartoes" search={{ abrir: undefined }} className="text-xs font-semibold text-brand hover:underline">
                 Cadastrar cartão
               </Link>
             </div>

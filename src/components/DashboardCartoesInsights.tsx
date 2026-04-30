@@ -258,7 +258,7 @@ export function DashboardCartoesInsights({
             </div>
             <Link
               to="/cartoes"
-              search={{}}
+              search={{ abrir: undefined }}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Ver todos →
@@ -346,6 +346,7 @@ export function DashboardCartoesInsights({
             </div>
             <Link
               to="/cartoes"
+              search={{ abrir: undefined }}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Ir para cartões →
