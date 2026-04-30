@@ -189,12 +189,34 @@ export async function processarMensagemWhatsApp(
     };
   }
 
+  // Auto-save quando há valor + nome + forma de pagamento válida.
+  // Crédito é válido se: cartão cadastrado encontrado OU banco conhecido citado.
+  const formaValida =
+    parsed.formaPagamento !== "credito" ||
+    !!parsed.cartaoId ||
+    !!parsed.cartaoNomeDetectado;
   const altaConfianca =
     parsed.confianca >= 0.7 &&
-    (parsed.formaPagamento !== "credito" || !!parsed.cartaoId);
+    parsed.valor > 0 &&
+    parsed.nome.length >= 3 &&
+    formaValida;
 
   if (!altaConfianca) {
-    const motivo = parsed.notas[0] ?? "informações insuficientes";
+    // Motivo prioritário: cartão citado mas não cadastrado
+    let motivo: string;
+    if (
+      parsed.formaPagamento === "credito" &&
+      parsed.cartaoNomeDetectado &&
+      !parsed.cartaoId
+    ) {
+      motivo = `Cartão "${parsed.cartaoNomeDetectado}" não encontrado. Escolha um cartão para salvar.`;
+    } else if (parsed.valor <= 0) {
+      motivo = "valor não identificado";
+    } else if (parsed.nome.length < 3) {
+      motivo = "nome do gasto não identificado";
+    } else {
+      motivo = "informações insuficientes";
+    }
     const resposta = `⚠️ Recebi "${parsed.nome}" — ${formatBRL(parsed.valor)}, mas precisa de revisão (${motivo}). Ajuste no app.`;
     await supabaseAdmin
       .from("whatsapp_messages")
