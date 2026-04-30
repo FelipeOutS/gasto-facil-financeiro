@@ -57,6 +57,8 @@ async function carregarCartoes(userId: string): Promise<Cartao[]> {
       diaVencimento: c.dia_vencimento ?? 10,
       cor: c.cor ?? "#8b5cf6",
       observacao: c.observacao ?? undefined,
+      criadoEm: c.created_at ?? new Date().toISOString(),
+      atualizadoEm: c.updated_at ?? new Date().toISOString(),
     }),
   );
 }
