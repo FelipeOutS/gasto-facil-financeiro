@@ -246,7 +246,9 @@ export async function processarMensagemWhatsApp(
   const cartaoNome = parsed.cartaoId
     ? cartoes.find((c) => c.id === parsed.cartaoId)?.nome
     : undefined;
-  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.`;
+  const dataMatched = !parsed.notas.some((n) => /data/i.test(n));
+  const sufixoData = dataMatched ? "" : " Gasto registrado usando a data de hoje.";
+  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.${sufixoData}`;
 
   await supabaseAdmin
     .from("whatsapp_messages")
