@@ -141,6 +141,11 @@ function AssinaturasPage() {
     "todas",
   );
 
+  const categoriaNomePorId = useMemo(() => {
+    const map = new Map(categorias.map((c) => [c.id, c.nome]));
+    return (id: string | null | undefined) => (id ? map.get(id) ?? null : null);
+  }, [categorias]);
+
   // Hidrata + sincroniza detecções na entrada da página.
   useEffect(() => {
     if (!userId) return;
@@ -148,7 +153,9 @@ function AssinaturasPage() {
     (async () => {
       await hydrateRecorrencias(userId);
       if (cancelado) return;
-      const r = await sincronizarDeteccoes(userId, getGastos());
+      const r = await sincronizarDeteccoes(userId, getGastos(), {
+        categoriaNomePorId,
+      });
       if (cancelado) return;
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
@@ -246,7 +253,9 @@ function AssinaturasPage() {
     if (!userId) return;
     setSyncing(true);
     try {
-      const r = await sincronizarDeteccoes(userId, gastos);
+      const r = await sincronizarDeteccoes(userId, gastos, {
+        categoriaNomePorId,
+      });
       toast.success(
         `Análise concluída: ${r.criadas} novas, ${r.suspeitas} suspeitas`,
       );
@@ -353,8 +362,14 @@ function AssinaturasPage() {
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Recorrências ativas"
-          value={`${totais.ativas}`}
+          label={
+            suspeitas.length > 0 ? "Possíveis recorrências" : "Recorrências ativas"
+          }
+          value={
+            suspeitas.length > 0
+              ? formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))
+              : `${totais.ativas}`
+          }
         />
       </section>
 
