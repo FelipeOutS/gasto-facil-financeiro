@@ -174,6 +174,7 @@ export async function hydrateRecorrencias(userId: string | null): Promise<void> 
   if (hydratedUserId === userId || hydrating) return;
   hydrating = true;
   try {
+    await syncCategoriaMaps(userId);
     const { data, error } = await (supabase as any)
       .from("recorrencias")
       .select("*")
@@ -315,6 +316,49 @@ const RECURRENCE_KEYWORDS = [
   "dropbox",
 ];
 
+const ASSINATURA_KEYWORDS = [
+  "spotify",
+  "netflix",
+  "totalpass",
+  "total pass",
+  "gympass",
+  "meli+",
+  "meli +",
+  "melimais",
+  "apple",
+  "disney",
+  "amazon prime",
+  "prime video",
+  "assinatura",
+  "streaming",
+  "software",
+  "adobe",
+  "microsoft",
+  "google one",
+  "icloud",
+  "youtube premium",
+  "hbo",
+  "max",
+  "deezer",
+  "tidal",
+  "dropbox",
+];
+
+const RECORRENCIA_FIXA_KEYWORDS = [
+  "aluguel",
+  "condominio",
+  "internet",
+  "seguro",
+  "celular",
+  "telefone",
+  "mensalidade",
+  "plano",
+  "academia",
+  "curso",
+  "faculdade",
+  "escola",
+];
+
 /** Categorias cujos gastos têm forte indício de serem recorrentes. */
 const RECURRENCE_CATEGORY_KEYS = [
   "assinatura",
@@ -346,6 +390,39 @@ function textoSugereRecorrencia(
   if (catNorm && RECURRENCE_CATEGORY_KEYS.some((k) => catNorm.includes(k)))
     return true;
   return false;
+}
+
+function normalizeText(text: string): string {
+  return (text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function classificarTipoRecorrencia(
+  estabelecimento: string,
+  descricao: string,
+  categoriaNome: string | null | undefined,
+): TipoRecorrencia {
+  const haystack = normalizeText(`${estabelecimento} ${descricao} ${categoriaNome ?? ""}`);
+  const assinatura = ASSINATURA_KEYWORDS.some((k) => haystack.includes(normalizeText(k)));
+  const fixa = RECORRENCIA_FIXA_KEYWORDS.some((k) => haystack.includes(normalizeText(k)));
+  if (fixa && !assinatura) return "recorrencia_fixa";
+  return "assinatura";
+}
+
+function categoriaSugeridaParaRecorrencia(
+  tipo: TipoRecorrencia,
+  nome: string,
+  categoriaId?: string | null,
+): string | null | undefined {
+  const t = normalizeText(nome);
+  if (tipo === "assinatura") return "assinaturas";
+  if (t.includes("aluguel")) return "aluguel";
+  if (categoriaId && categoriaId !== "outros" && categoriaId !== "assinaturas") return categoriaId;
+  const sugerida = suggestCategoryFromText(nome);
+  if (sugerida && sugerida !== "outros" && sugerida !== "assinaturas") return sugerida;
+  return "moradia";
 }
 
 /** Agrupa gastos e identifica candidatos a recorrência. */
