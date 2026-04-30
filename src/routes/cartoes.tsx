@@ -319,6 +319,7 @@ function CartoesPage() {
               <CartaoCard
                 key={c.id}
                 cartao={c}
+                resumo={resumosPorCartao.get(c.id)}
                 onOpen={() => setOpenDetail(c)}
                 onEdit={() => handleEdit(c)}
                 onImport={() => handleOpenImport(c.id)}
