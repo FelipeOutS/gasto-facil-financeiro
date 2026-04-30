@@ -118,6 +118,12 @@ function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" }
 function CartoesPage() {
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
+
+  // Preload every bank logo on mount so card swaps are instant — no delay
+  // between color change and logo render, no fallback flash.
+  useEffect(() => {
+    preloadAllBankLogos();
+  }, []);
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Cartao | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Cartao | null>(null);
