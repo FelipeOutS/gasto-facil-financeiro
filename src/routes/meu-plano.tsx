@@ -57,18 +57,29 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function MeuPlanoPage() {
-  const { profile } = useAuth();
-  const { plan, storedPlan, status, trialEndsAt, loading, isAdminMaster, refresh } =
-    usePlan();
+  const { profile, user } = useAuth();
+  const {
+    plan,
+    storedPlan,
+    status,
+    trialEndsAt,
+    loading,
+    isAdminMaster,
+    isTrialActive,
+    trialDaysLeft,
+    trialUsed,
+    refresh,
+  } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
   const semAssinatura =
     !isAdminMaster &&
+    !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago =
-    !isAdminMaster && status === "ativo" && !semAssinatura;
+    !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [pixCharge, setPixCharge] = useState<{
@@ -81,49 +92,38 @@ function MeuPlanoPage() {
     if (isAdminMaster) return;
     setSubmitting(tier);
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) {
-        toast.error("Faça login para assinar um plano.");
-        return;
-      }
-      const res = await fetch("/api/checkout/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plano: tier, method: "pix" }),
-      });
-      const data = (await res.json()) as {
-        pendingIntegration?: boolean;
-        message?: string;
-        payment?: {
-          qr_code?: string | null;
-          qr_code_base64?: string | null;
-          ticket_url?: string | null;
-        };
-        error?: string;
-      };
+      // Pagamento real ainda não está integrado nesta versão.
+      toast.info(
+        "Assinatura em breve. Esta versão ainda não possui pagamento integrado.",
+      );
+      setPixCharge(null);
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
+  async function iniciarTeste(tier: PlanTier) {
+    if (isAdminMaster) return;
+    if (!user?.id) {
+      toast.error("Faça login para iniciar o teste.");
+      return;
+    }
+    if (trialUsed) {
+      toast.error("Você já utilizou o teste gratuito.");
+      return;
+    }
+    setSubmitting(tier);
+    try {
+      const { startTrial } = await import("@/lib/use-plan");
+      const res = await startTrial(user.id, tier);
       if (!res.ok) {
-        toast.error(data.error ?? "Não foi possível iniciar o pagamento.");
+        toast.error(res.reason);
         return;
       }
-      if (data.pendingIntegration) {
-        toast.info(
-          "Plano selecionado. Pagamento será liberado em breve assim que a integração for concluída.",
-        );
-        setPixCharge(null);
-      } else if (data.payment) {
-        setPixCharge(data.payment);
-        toast.success("Cobrança Pix gerada! Use o QR Code abaixo para pagar.");
-        if (data.payment.ticket_url) {
-          window.open(data.payment.ticket_url, "_blank", "noopener");
-        }
-      }
+      toast.success(`Teste grátis ativado! ${PLAN_LABEL[tier]} liberado por 10 dias.`);
       await refresh();
     } catch {
-      toast.error("Erro inesperado ao iniciar pagamento.");
+      toast.error("Erro ao iniciar o teste.");
     } finally {
       setSubmitting(null);
     }
@@ -222,10 +222,24 @@ function MeuPlanoPage() {
           </span>
         </div>
 
-        {!isAdminMaster && trialEndsAt && status === "teste" && (
-          <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-xs text-primary">
-            Período de teste até{" "}
-            <strong>{new Date(trialEndsAt).toLocaleDateString("pt-BR")}</strong>.
+        {!isAdminMaster && isTrialActive && (
+          <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+            <p>
+              <strong>Teste grátis ativo</strong> — {PLAN_LABEL[plan]} liberado por 10 dias.
+            </p>
+            <p className="mt-0.5 text-primary/80">
+              Faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"} para o fim do teste.
+            </p>
+            {trialEndsAt && (
+              <p className="mt-0.5 text-[10px] text-primary/70">
+                Termina em {new Date(trialEndsAt).toLocaleDateString("pt-BR")}.
+              </p>
+            )}
+          </div>
+        )}
+        {!isAdminMaster && trialEndsAt && status !== "teste" && trialUsed && !isTrialActive && (
+          <p className="mt-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Seu teste gratuito de 10 dias já foi utilizado.
           </p>
         )}
 
@@ -411,7 +425,7 @@ function MeuPlanoPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
                 <Button
                   size="sm"
                   className="w-full rounded-xl"
@@ -426,9 +440,21 @@ function MeuPlanoPage() {
                       : isPending
                         ? "Gerar nova cobrança"
                         : submitting === p.tier
-                          ? "Gerando…"
+                          ? "Processando…"
                           : "Assinar agora"}
                 </Button>
+                {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full rounded-xl border-primary/40 text-primary hover:bg-primary/5"
+                    disabled={submitting !== null}
+                    onClick={() => iniciarTeste(p.tier)}
+                  >
+                    <Sparkles className="mr-2 h-3.5 w-3.5" />
+                    Testar por 10 dias
+                  </Button>
+                )}
               </div>
             </div>
           );

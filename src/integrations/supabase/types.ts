@@ -261,6 +261,66 @@ export type Database = {
           },
         ]
       }
+      contas_a_receber: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_prevista: string
+          data_recebimento: string | null
+          forma_recebimento: string | null
+          id: string
+          observacao: string | null
+          origem: string | null
+          pagador_nome: string | null
+          status: string
+          tipo_recebimento: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          valor_recebido: number
+          valor_restante: number
+          valor_total: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_prevista: string
+          data_recebimento?: string | null
+          forma_recebimento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          pagador_nome?: string | null
+          status?: string
+          tipo_recebimento?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+          valor_recebido?: number
+          valor_restante?: number
+          valor_total?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_prevista?: string
+          data_recebimento?: string | null
+          forma_recebimento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string | null
+          pagador_nome?: string | null
+          status?: string
+          tipo_recebimento?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+          valor_recebido?: number
+          valor_restante?: number
+          valor_total?: number
+        }
+        Relationships: []
+      }
       dinheiro_guardado: {
         Row: {
           banco_id: string | null
@@ -1185,6 +1245,9 @@ export type Database = {
           plano: Database["public"]["Enums"]["plan_tier"]
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
+          trial_plan_type: string | null
+          trial_started_at: string | null
+          trial_used: boolean
           updated_at: string
           user_id: string
         }
@@ -1193,6 +1256,9 @@ export type Database = {
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_plan_type?: string | null
+          trial_started_at?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id: string
         }
@@ -1201,6 +1267,9 @@ export type Database = {
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_plan_type?: string | null
+          trial_started_at?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id?: string
         }

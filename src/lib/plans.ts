@@ -33,15 +33,23 @@ export type FeatureKey =
   | "importar_extrato"
   | "importar_fatura"
   | "importar_conta"
+  | "importacoes"
   | "relatorios_avancados"
   | "contas_a_pagar"
+  | "contas_a_receber"
+  | "contas_a_receber_avancado"
   | "cartoes"
   | "metas_visuais"
   | "orcamento"
   | "perfil_empresarial"
+  | "perfil_cnpj"
+  | "centro_de_custo"
   | "recursos_mei"
   | "recursos_empresa"
+  | "investimentos"
   | "investimentos_futuro"
+  | "assinaturas_recorrencias"
+  | "whatsapp"
   | "lancamentos_ilimitados";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
@@ -70,6 +78,7 @@ export const PLAN_ORDER: Record<PlanTier, number> = {
 const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   // Recursos básicos -> a partir do Pessoa Física Manual
   contas_a_pagar: "pessoal_manual",
+  contas_a_receber: "pessoal_manual",
   cartoes: "pessoal_manual",
   orcamento: "pessoal_manual",
   lancamentos_ilimitados: "pessoal_manual",
@@ -77,23 +86,65 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   importar_extrato: "pessoal_premium",
   importar_fatura: "pessoal_premium",
   importar_conta: "pessoal_premium",
+  importacoes: "pessoal_premium",
   relatorios_avancados: "pessoal_premium",
   metas_visuais: "pessoal_premium",
+  investimentos: "pessoal_premium",
+  investimentos_futuro: "pessoal_premium",
+  assinaturas_recorrencias: "pessoal_premium",
+  contas_a_receber_avancado: "pessoal_premium",
+  whatsapp: "pessoal_premium",
   // Recursos por tipo
   recursos_mei: "mei_essencial",
   perfil_empresarial: "empresa",
+  perfil_cnpj: "empresa",
   recursos_empresa: "empresa",
-  investimentos_futuro: "empresa",
+  centro_de_custo: "empresa",
+};
+
+/**
+ * Whitelist explícita de planos por feature, quando a regra não é uma
+ * escala linear. Se a feature está aqui, só os planos listados liberam.
+ */
+const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
+  // Investimentos: somente planos premium específicos
+  investimentos: ["pessoal_premium", "mei_inteligente", "empresa"],
+  investimentos_futuro: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Importações automáticas: só nos premium e MEI Inteligente / Empresa
+  importacoes: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_extrato: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_fatura: ["pessoal_premium", "mei_inteligente", "empresa"],
+  importar_conta: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Centro de custo e CNPJ: só Empresa
+  centro_de_custo: ["empresa"],
+  perfil_cnpj: ["empresa"],
+  perfil_empresarial: ["empresa"],
+  recursos_empresa: ["empresa"],
+  // MEI: somente planos MEI
+  recursos_mei: ["mei_essencial", "mei_inteligente"],
+  // Contas a receber avançado: premium e MEI Inteligente / Empresa
+  contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
   if (plan === "admin_master") return true;
+  const whitelist = FEATURE_PLAN_WHITELIST[feature];
+  if (whitelist) return whitelist.includes(plan);
   const min = FEATURE_MIN_PLAN[feature];
   return PLAN_ORDER[plan] >= PLAN_ORDER[min];
 }
 
 export function minPlanFor(feature: FeatureKey): PlanTier {
   return FEATURE_MIN_PLAN[feature];
+}
+
+export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
+  const whitelist = FEATURE_PLAN_WHITELIST[feature];
+  if (whitelist) return whitelist;
+  const min = FEATURE_MIN_PLAN[feature];
+  return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
+    (p) => p !== "free" && p !== "sem_assinatura" && PLAN_ORDER[p] >= PLAN_ORDER[min],
+  );
 }
 
 /* ===========================================================
@@ -193,6 +244,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Lançamentos manuais ilimitados",
       "Gastos, receitas e contas a pagar",
+      "Contas a receber simples",
       "Metas, guardado e orçamento",
       "Relatórios básicos",
       "Sem importações automáticas",
@@ -207,9 +259,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Tudo do Pessoa Física Manual",
       "Importar extrato, fatura e boleto/Pix",
+      "Contas a receber completas",
       "Metas com imagens",
       "Relatórios avançados e insights",
-      "Investimentos em breve",
+      "Investimentos liberados",
+      "Assinaturas e recorrências",
+      "Histórico de importações",
     ],
   },
   {
@@ -222,6 +277,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Tudo do Pessoa Física Manual",
       "Linguagem e visão para MEI",
       "Contas e relatórios do negócio",
+      "Contas a receber para clientes",
       "Separação pessoal × negócio",
       "Sem importações automáticas",
     ],
@@ -235,9 +291,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     highlights: [
       "Tudo do MEI Essencial",
       "Importar extrato, fatura e boleto/Pix",
+      "Contas a receber avançadas",
       "Relatórios avançados do negócio",
       "Metas com imagens",
-      "Investimentos em breve",
+      "Investimentos liberados",
+      "Histórico de importações",
+      "Insights do negócio",
     ],
   },
   {
@@ -250,8 +309,13 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Tudo do MEI Inteligente",
       "Perfil empresarial com CNPJ",
       "Controle financeiro empresarial",
+      "Contas a receber avançadas",
+      "Controle por cliente/empresa",
+      "Controle por centro de custo",
       "Relatórios completos",
-      "Investimentos em breve",
+      "Fluxo de caixa empresarial",
+      "Investimentos liberados",
+      "Exportação de relatórios",
     ],
   },
 ];

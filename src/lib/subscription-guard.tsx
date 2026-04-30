@@ -91,16 +91,17 @@ const Ctx = createContext<GuardCtx | null>(null);
 
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { isAdminMaster, status, storedPlan } = usePlan();
+  const { isAdminMaster, status, storedPlan, isTrialActive } = usePlan();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const canWrite = useMemo(() => {
     if (isAdminMaster) return true;
     if (!user) return false;
+    if (isTrialActive) return true;
     if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
     return isStatusActive(status);
-  }, [isAdminMaster, user, storedPlan, status]);
+  }, [isAdminMaster, user, storedPlan, status, isTrialActive]);
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {

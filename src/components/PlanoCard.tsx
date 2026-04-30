@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
  * - Sem assinatura / aguardando: chamada para ver planos.
  */
 export function PlanoCard({ className }: { className?: string }) {
-  const { plan, status, storedPlan, isAdminMaster, loading } = usePlan();
+  const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } = usePlan();
 
   if (loading) return null;
 
   const semAssinatura =
     !isAdminMaster &&
+    !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago = !isAdminMaster && status === "ativo" && !semAssinatura;
@@ -42,6 +43,34 @@ export function PlanoCard({ className }: { className?: string }) {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Trial ativo
+  if (!isAdminMaster && isTrialActive) {
+    return (
+      <Link
+        to="/meu-plano"
+        className={cn(
+          "flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-amber-500/10 p-3.5 shadow-card transition-colors hover:border-primary/50",
+          className,
+        )}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Teste grátis ativo</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {PLAN_LABEL[plan]} liberado — faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"}.
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
+          Ver planos <ArrowRight className="h-3 w-3" />
+        </span>
+      </Link>
     );
   }
 
