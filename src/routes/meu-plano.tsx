@@ -222,10 +222,24 @@ function MeuPlanoPage() {
           </span>
         </div>
 
-        {!isAdminMaster && trialEndsAt && status === "teste" && (
-          <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-xs text-primary">
-            Período de teste até{" "}
-            <strong>{new Date(trialEndsAt).toLocaleDateString("pt-BR")}</strong>.
+        {!isAdminMaster && isTrialActive && (
+          <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+            <p>
+              <strong>Teste grátis ativo</strong> — {PLAN_LABEL[plan]} liberado por 10 dias.
+            </p>
+            <p className="mt-0.5 text-primary/80">
+              Faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"} para o fim do teste.
+            </p>
+            {trialEndsAt && (
+              <p className="mt-0.5 text-[10px] text-primary/70">
+                Termina em {new Date(trialEndsAt).toLocaleDateString("pt-BR")}.
+              </p>
+            )}
+          </div>
+        )}
+        {!isAdminMaster && trialEndsAt && status !== "teste" && trialUsed && !isTrialActive && (
+          <p className="mt-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Seu teste gratuito de 10 dias já foi utilizado.
           </p>
         )}
 
