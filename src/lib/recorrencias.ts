@@ -153,7 +153,12 @@ export function getRecorrencias(): Recorrencia[] {
 
 export function useRecorrencias(): Recorrencia[] {
   const [, setTick] = useState(0);
-  useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
+  useEffect(() => {
+    const unsub = subscribe(() => setTick((t) => t + 1));
+    return () => {
+      unsub;
+    };
+  }, []);
   return memRec;
 }
 
@@ -513,15 +518,16 @@ export async function gerarGastoDoMes(
     origem: "recorrencia",
   } as any;
 
-  const created = await addGasto(input);
-  if (!created) return { ok: false };
+  const created = addGasto(input);
+  const novo = Array.isArray(created) ? created[0] : null;
+  if (!novo) return { ok: false };
 
   // Avança a próxima cobrança
   await atualizarRecorrencia(rec.id, {
     proximaCobranca: proximaDataApartirDe(data, rec.frequencia),
   });
 
-  return { ok: true, gastoId: created.id };
+  return { ok: true, gastoId: novo.id };
 }
 
 /** Histórico de gastos vinculados (por nome+valor próximo). */
