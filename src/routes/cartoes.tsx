@@ -507,8 +507,7 @@ function CartaoCard({
             name={cartao.banco}
             variant="bank"
             onDark
-            className="h-12 w-12 shrink-0"
-            imgClassName="p-1"
+            className="h-10 w-auto max-w-[60%] shrink-0"
           />
         </div>
         <DropdownMenu>
