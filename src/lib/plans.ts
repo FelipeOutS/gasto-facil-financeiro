@@ -78,6 +78,7 @@ export const PLAN_ORDER: Record<PlanTier, number> = {
 const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   // Recursos básicos -> a partir do Pessoa Física Manual
   contas_a_pagar: "pessoal_manual",
+  contas_a_receber: "pessoal_manual",
   cartoes: "pessoal_manual",
   orcamento: "pessoal_manual",
   lancamentos_ilimitados: "pessoal_manual",
@@ -85,13 +86,20 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   importar_extrato: "pessoal_premium",
   importar_fatura: "pessoal_premium",
   importar_conta: "pessoal_premium",
+  importacoes: "pessoal_premium",
   relatorios_avancados: "pessoal_premium",
   metas_visuais: "pessoal_premium",
+  investimentos: "pessoal_premium",
+  investimentos_futuro: "pessoal_premium",
+  assinaturas_recorrencias: "pessoal_premium",
+  contas_a_receber_avancado: "pessoal_premium",
+  whatsapp: "pessoal_premium",
   // Recursos por tipo
   recursos_mei: "mei_essencial",
   perfil_empresarial: "empresa",
+  perfil_cnpj: "empresa",
   recursos_empresa: "empresa",
-  investimentos_futuro: "empresa",
+  centro_de_custo: "empresa",
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
