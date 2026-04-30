@@ -130,7 +130,7 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
     categoryId: "moradia",
   },
   {
-    keywords: ["mercado", "supermerc", "atacad", "hortifrut", "açougue", "acougue", "padaria", "mercear", "assaí", "assai", "carrefour", "extra", "pão de açúcar", "dia "],
+    keywords: ["mercado", "mercearia", "mercear", "supermercado", "supermerc", "atacad", "hortifrut", "açougue", "acougue", "padaria", "assaí", "assai", "carrefour", "extra", "pão de açúcar", "dia "],
     categoryId: "mercado",
   },
   {
@@ -154,7 +154,7 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
     categoryId: "farmacia",
   },
   {
-    keywords: ["uber", "99 ", "99pop", "posto", "combustível", "combustivel", "gasolina", "metrô", "metro", "ônibus", "onibus", "estaciona", "pedágio", "pedagio", "blablacar"],
+    keywords: ["uber", "99", "99 ", "99pop", "posto", "combustível", "combustivel", "gasolina", "metrô", "metro", "ônibus", "onibus", "estaciona", "pedágio", "pedagio", "blablacar"],
     categoryId: "transporte",
   },
   {
@@ -172,10 +172,25 @@ export const KEYWORD_MAP: Array<{ keywords: string[]; categoryId: string }> = [
   },
 ];
 
+function normalizeCategoryText(text: string): string {
+  return (text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function textHasKeyword(text: string, keyword: string): boolean {
+  const normalizedKeyword = normalizeCategoryText(keyword);
+  if (/^\d+$/.test(normalizedKeyword.trim())) {
+    return new RegExp(`(^|\\D)${normalizedKeyword.trim()}(\\D|$)`).test(text);
+  }
+  return text.includes(normalizedKeyword);
+}
+
 export function suggestCategoryFromText(text: string): string {
-  const t = (text || "").toLowerCase();
+  const t = normalizeCategoryText(text);
   for (const { keywords, categoryId } of KEYWORD_MAP) {
-    if (keywords.some((k) => t.includes(k))) return categoryId;
+    if (keywords.some((k) => textHasKeyword(t, k))) return categoryId;
   }
   return "outros";
 }
