@@ -983,10 +983,10 @@ function FaturaSheet({
                       key={g.id}
                       className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5"
                     >
-                      <span
-                        className="h-9 w-9 shrink-0 rounded-lg shadow-card"
-                        style={{ background: theme.background }}
-                        aria-hidden
+                      <BrandLogo
+                        name={g.estabelecimento || g.descricao}
+                        variant="merchant"
+                        className="h-9 w-9 shrink-0"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">
