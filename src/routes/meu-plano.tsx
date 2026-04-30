@@ -425,7 +425,7 @@ function MeuPlanoPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
                 <Button
                   size="sm"
                   className="w-full rounded-xl"
@@ -440,9 +440,21 @@ function MeuPlanoPage() {
                       : isPending
                         ? "Gerar nova cobrança"
                         : submitting === p.tier
-                          ? "Gerando…"
+                          ? "Processando…"
                           : "Assinar agora"}
                 </Button>
+                {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full rounded-xl border-primary/40 text-primary hover:bg-primary/5"
+                    disabled={submitting !== null}
+                    onClick={() => iniciarTeste(p.tier)}
+                  >
+                    <Sparkles className="mr-2 h-3.5 w-3.5" />
+                    Testar por 10 dias
+                  </Button>
+                )}
               </div>
             </div>
           );
