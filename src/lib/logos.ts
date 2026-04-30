@@ -9,7 +9,7 @@
 
 /* -------------------- Static imports (banks) -------------------- */
 import bradescoUrl from "/public/logos/bancos/Banco_Bradesco.svg?url";
-import bbUrl from "/public/logos/bancos/banco-do-brasil.svg?url";
+import bbUrl from "/public/logos/bancos/banco-do-brasil-novo.svg?url";
 import interUrl from "/public/logos/bancos/banco-inter.svg?url";
 import itauUrl from "/public/logos/bancos/banco-itau.svg?url";
 import c6Url from "/public/logos/bancos/Logo_C6_Bank.svg?url";
