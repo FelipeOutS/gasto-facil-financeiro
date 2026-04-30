@@ -242,10 +242,11 @@ function WhatsAppPage() {
 
   const [limpando, setLimpando] = useState(false);
   async function limparDuplicados() {
-    if (!user) return;
     if (!confirm("Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?")) return;
     setLimpando(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão expirada");
       const { data, error } = await supabase
         .from("gastos")
         .select("id, descricao, valor, data, cartao_id, created_at")
