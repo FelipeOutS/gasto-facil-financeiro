@@ -924,6 +924,87 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_links: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          telefone: string
+          ultimo_uso: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          telefone: string
+          ultimo_uso?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          telefone?: string
+          ultimo_uso?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          confianca: number | null
+          created_at: string
+          erro: string | null
+          external_id: string | null
+          gasto_id: string | null
+          id: string
+          parsed: Json | null
+          recebida_em: string
+          resposta_sugerida: string | null
+          status: string
+          telefone: string
+          texto: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          confianca?: number | null
+          created_at?: string
+          erro?: string | null
+          external_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          parsed?: Json | null
+          recebida_em?: string
+          resposta_sugerida?: string | null
+          status?: string
+          telefone: string
+          texto: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          confianca?: number | null
+          created_at?: string
+          erro?: string | null
+          external_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          parsed?: Json | null
+          recebida_em?: string
+          resposta_sugerida?: string | null
+          status?: string
+          telefone?: string
+          texto?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
