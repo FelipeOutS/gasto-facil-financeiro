@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
@@ -29,6 +29,7 @@ import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
+import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import {
   getCategoriaById,
   getCategorias,
