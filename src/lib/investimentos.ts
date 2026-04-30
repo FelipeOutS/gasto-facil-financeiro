@@ -74,6 +74,18 @@ export const TIPOS_RENDIMENTO: Array<{ id: TipoRendimento; label: string }> = [
   { id: "outro", label: "Outro" },
 ];
 
+export type Importacao = {
+  id: string;
+  user_id: string;
+  tipo: string; // 'b3' | 'corretora' | 'csv' | 'pdf' | 'manual'
+  arquivo_nome: string | null;
+  status: string; // 'pendente' | 'concluida' | 'erro' | 'parcial' | 'excluida'
+  dados_extraidos: unknown;
+  erros: string | null;
+  resumo: { ativos?: number; movimentacoes?: number; rendimentos?: number } | null;
+  created_at: string;
+};
+
 export type Ativo = {
   id: string;
   nome: string;
@@ -82,6 +94,7 @@ export type Ativo = {
   instituicao: string | null;
   quantidade: number | null;
   preco_medio: number | null;
+  importacao_id?: string | null;
   preco_atual: number | null;
   valor_aplicado: number;
   valor_atual: number;
@@ -108,6 +121,7 @@ export type Movimentacao = {
   observacao: string | null;
   origem: string | null;
   created_at: string;
+  importacao_id?: string | null;
 };
 
 export type Rendimento = {
@@ -120,6 +134,7 @@ export type Rendimento = {
   observacao: string | null;
   origem: string | null;
   created_at: string;
+  importacao_id?: string | null;
 };
 
 export function tipoLabel(t: string): string {
@@ -239,5 +254,132 @@ export function distribuicaoPorTipo(ativos: Ativo[]): Array<{ tipo: string; labe
       valor,
       pct: total > 0 ? (valor / total) * 100 : 0,
     }))
-    .sort((a, b) => b.valor - a.valor);
 }
+
+// ===== Importações =====
+
+export async function listarImportacoes(userId: string): Promise<Importacao[]> {
+  const { data, error } = await supabase
+    .from("investimentos_importacoes" as never)
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Importacao[];
+}
+
+export async function criarImportacao(
+  userId: string,
+  payload: { tipo: string; arquivo_nome?: string | null; status?: string; dados_extraidos?: unknown },
+): Promise<Importacao> {
+  const { data, error } = await supabase
+    .from("investimentos_importacoes" as never)
+    .insert({
+      user_id: userId,
+      tipo: payload.tipo,
+      arquivo_nome: payload.arquivo_nome ?? null,
+      status: payload.status ?? "concluida",
+      dados_extraidos: payload.dados_extraidos ?? null,
+      resumo: { ativos: 0, movimentacoes: 0, rendimentos: 0 },
+    } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as Importacao;
+}
+
+export async function atualizarResumoImportacao(
+  importacaoId: string,
+  resumo: { ativos: number; movimentacoes: number; rendimentos: number },
+): Promise<void> {
+  const { error } = await supabase
+    .from("investimentos_importacoes" as never)
+    .update({ resumo, status: "concluida" } as never)
+    .eq("id", importacaoId);
+  if (error) throw error;
+}
+
+export type ItensImportacao = {
+  ativos: Ativo[];
+  movimentacoes: Movimentacao[];
+  rendimentos: Rendimento[];
+};
+
+export async function listarItensImportacao(
+  userId: string,
+  importacaoId: string,
+): Promise<ItensImportacao> {
+  const [ativosRes, movsRes, rendsRes] = await Promise.all([
+    supabase
+      .from("investimentos_ativos" as never)
+      .select("*")
+      .eq("user_id", userId)
+      .eq("importacao_id", importacaoId),
+    supabase
+      .from("investimentos_movimentacoes" as never)
+      .select("*")
+      .eq("user_id", userId)
+      .eq("importacao_id", importacaoId),
+    supabase
+      .from("investimentos_rendimentos" as never)
+      .select("*")
+      .eq("user_id", userId)
+      .eq("importacao_id", importacaoId),
+  ]);
+  if (ativosRes.error) throw ativosRes.error;
+  if (movsRes.error) throw movsRes.error;
+  if (rendsRes.error) throw rendsRes.error;
+  return {
+    ativos: (ativosRes.data ?? []) as unknown as Ativo[],
+    movimentacoes: (movsRes.data ?? []) as unknown as Movimentacao[],
+    rendimentos: (rendsRes.data ?? []) as unknown as Rendimento[],
+  };
+}
+
+/** Exclui apenas o registro de histórico (mantém ativos/movs/rends). */
+export async function excluirImportacaoSomenteHistorico(importacaoId: string): Promise<void> {
+  const { error } = await supabase
+    .from("investimentos_importacoes" as never)
+    .delete()
+    .eq("id", importacaoId);
+  if (error) throw error;
+}
+
+/** Exclui o histórico e todos os ativos/movs/rends vinculados. */
+export async function excluirImportacaoComDados(
+  userId: string,
+  importacaoId: string,
+): Promise<void> {
+  // movimentações e rendimentos primeiro (referenciam ativos)
+  const m = await supabase
+    .from("investimentos_movimentacoes" as never)
+    .delete()
+    .eq("user_id", userId)
+    .eq("importacao_id", importacaoId);
+  if (m.error) throw m.error;
+  const r = await supabase
+    .from("investimentos_rendimentos" as never)
+    .delete()
+    .eq("user_id", userId)
+    .eq("importacao_id", importacaoId);
+  if (r.error) throw r.error;
+  const a = await supabase
+    .from("investimentos_ativos" as never)
+    .delete()
+    .eq("user_id", userId)
+    .eq("importacao_id", importacaoId);
+  if (a.error) throw a.error;
+  const i = await supabase
+    .from("investimentos_importacoes" as never)
+    .delete()
+    .eq("id", importacaoId);
+  if (i.error) throw i.error;
+}
+
+export const TIPO_IMPORTACAO_LABEL: Record<string, string> = {
+  b3: "B3",
+  corretora: "Corretora",
+  csv: "CSV",
+  pdf: "PDF",
+  manual: "Manual",
+};
