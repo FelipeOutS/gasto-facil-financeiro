@@ -427,7 +427,7 @@ function MeuPlanoPage() {
                         ? "Gerar nova cobrança"
                         : submitting === p.tier
                           ? "Gerando…"
-                          : "Escolher plano"}
+                          : "Assinar agora"}
                 </Button>
               </div>
             </div>
