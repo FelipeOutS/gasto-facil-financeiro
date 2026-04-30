@@ -296,7 +296,7 @@ function GastosPage() {
         </Link>
         <div className="flex-1 min-w-0">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Histórico</p>
-          <h1 className="text-2xl font-bold tracking-tight">Gastos</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{vocab.gastosTitle}</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Encontre rapidinho para onde seu dinheiro foi.
           </p>

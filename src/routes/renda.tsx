@@ -271,7 +271,7 @@ function RendaPage() {
         </Link>
         <div className="flex-1">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Entradas</p>
-          <h1 className="text-2xl font-bold tracking-tight">Minha renda</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
         </div>
       </header>
 

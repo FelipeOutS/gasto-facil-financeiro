@@ -263,7 +263,7 @@ function ContasAPagarPage() {
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Contas a pagar
+            {vocab.contasAPagarTitle}
           </p>
           <h1 className="truncate text-xl font-bold tracking-tight capitalize">
             {formatMonthYear(ym.ano, ym.mes)}

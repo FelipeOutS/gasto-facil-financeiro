@@ -209,13 +209,13 @@ function RelatoriosPage() {
       <header className="flex items-start justify-between gap-3 pt-2 animate-rise">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Relatórios
+            {vocab.relatoriosTitle}
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            Entenda para onde seu dinheiro foi e como melhorar no próximo mês.
+            {vocab.relatoriosSubtitle}
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0 rounded-full border border-border bg-card p-1">

@@ -174,11 +174,14 @@ function OrcamentoPage() {
         </Link>
         <div className="flex-1">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Orçamento
+            {vocab.orcamentoTitle}
           </p>
           <h1 className="mt-0.5 text-2xl font-bold capitalize tracking-tight lg:text-[26px]">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
+          <p className="mt-1 hidden text-xs text-muted-foreground lg:block">
+            {vocab.orcamentoSubtitle}
+          </p>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
           <button
