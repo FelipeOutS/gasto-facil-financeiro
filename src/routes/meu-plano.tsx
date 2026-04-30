@@ -10,6 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
