@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 
 export const Route = createFileRoute("/adicionar")({
   head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
@@ -11,9 +12,20 @@ export const Route = createFileRoute("/adicionar")({
 
 function Adicionar() {
   const navigate = useNavigate();
+  const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+    }
+  }, [canWrite, requireSubscription]);
+
   function pickImage(camera: boolean) {
+    if (!canWrite) {
+      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      return;
+    }
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
