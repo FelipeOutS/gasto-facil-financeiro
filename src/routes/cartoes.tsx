@@ -1312,16 +1312,14 @@ function CartaoFormDialog({
                       className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
                     />
                     <div className="relative flex h-full flex-col justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center">
                         <BrandLogo
                           name={banco}
                           variant="bank"
                           onDark
-                          className="h-8 w-8 shrink-0"
+                          className="h-12 w-12 shrink-0"
+                          imgClassName="p-1"
                         />
-                        <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-white/85">
-                          {banco || "Banco"}
-                        </p>
                       </div>
                       <div>
                         <p className="truncate text-lg font-bold leading-tight">
