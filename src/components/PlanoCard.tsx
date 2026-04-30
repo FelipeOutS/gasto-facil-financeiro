@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
  * - Sem assinatura / aguardando: chamada para ver planos.
  */
 export function PlanoCard({ className }: { className?: string }) {
-  const { plan, status, storedPlan, isAdminMaster, loading } = usePlan();
+  const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } = usePlan();
 
   if (loading) return null;
 
   const semAssinatura =
     !isAdminMaster &&
+    !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago = !isAdminMaster && status === "ativo" && !semAssinatura;
