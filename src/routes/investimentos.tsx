@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Sparkles,
   Info,
+  History,
+  AlertTriangle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
