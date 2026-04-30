@@ -18,6 +18,9 @@ import {
   AlertTriangle,
   RefreshCw,
   Clock,
+  ArrowRightLeft,
+  HandCoins,
+  Eye,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
@@ -44,6 +47,8 @@ import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import {
   TIPOS_INVESTIMENTO,
+  TIPOS_MOVIMENTACAO,
+  TIPOS_RENDIMENTO,
   TIPO_IMPORTACAO_LABEL,
   type Ativo,
   type Movimentacao,
@@ -51,6 +56,8 @@ import {
   type Importacao,
   type ItensImportacao,
   type TipoInvestimento,
+  type TipoMovimentacao,
+  type TipoRendimento,
   listarAtivos,
   listarMovimentacoes,
   listarRendimentos,
@@ -62,6 +69,14 @@ import {
   atualizarAtivo,
   excluirAtivo,
   atualizarValorAtivo,
+  criarMovimentacao,
+  atualizarMovimentacao,
+  excluirMovimentacao,
+  criarRendimento,
+  atualizarRendimento,
+  excluirRendimento,
+  recalcularAtivoPorMovimentacoes,
+  isRendaVariavel,
   descreverUltimaAtualizacao,
   formatarDataHora,
   calcularTotais,
@@ -96,6 +111,9 @@ function InvestimentosPage() {
   const [openAtualizarLote, setOpenAtualizarLote] = useState(false);
   const [atualizandoAtivo, setAtualizandoAtivo] = useState<Ativo | null>(null);
   const [editing, setEditing] = useState<Ativo | null>(null);
+  const [movDialog, setMovDialog] = useState<{ open: boolean; mov: Movimentacao | null; ativoId?: string | null }>({ open: false, mov: null });
+  const [rendDialog, setRendDialog] = useState<{ open: boolean; rend: Rendimento | null; ativoId?: string | null }>({ open: false, rend: null });
+  const [detalheAtivo, setDetalheAtivo] = useState<Ativo | null>(null);
 
   async function reload() {
     if (!userId) return;
@@ -169,6 +187,22 @@ function InvestimentosPage() {
               disabled={ativos.length === 0}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar valores
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMovDialog({ open: true, mov: null })}
+              disabled={ativos.length === 0}
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Movimentação
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRendDialog({ open: true, rend: null })}
+              disabled={ativos.length === 0}
+            >
+              <HandCoins className="h-4 w-4 mr-1.5" /> Rendimento
             </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> Importar
@@ -285,19 +319,29 @@ function InvestimentosPage() {
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-8 w-8"
+                        title="Ver detalhes"
+                        onClick={() => setDetalheAtivo(a)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
                         className="h-8 w-8 text-brand"
                         title="Atualizar valor"
                         onClick={() => setAtualizandoAtivo(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(a); setOpenAdd(true); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar" onClick={() => { setEditing(a); setOpenAdd(true); }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
                         onClick={async () => {
                           if (!confirm(`Excluir ${a.nome}?`)) return;
                           await excluirAtivo(a.id);
@@ -380,24 +424,72 @@ function InvestimentosPage() {
       {/* Movimentações + Rendimentos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
-          <h2 className="font-semibold mb-3">Movimentações</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Movimentações</h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => setMovDialog({ open: true, mov: null })}
+              disabled={ativos.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Nova
+            </Button>
+          </div>
           {movs.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sem movimentações ainda.</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
-              {movs.slice(0, 8).map((m) => {
+              {movs.slice(0, 10).map((m) => {
                 const ativo = ativos.find((a) => a.id === m.ativo_id);
                 return (
-                  <li key={m.id} className="py-2 flex justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium capitalize">{m.tipo}</div>
+                  <li key={m.id} className="py-2 flex justify-between gap-2 items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium capitalize">{m.tipo}</span>
+                        {m.instituicao && (
+                          <span className="text-[10px] text-muted-foreground">· {m.instituicao}</span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {ativo?.nome ?? "—"} · {m.data}
+                        {ativo?.nome ?? "—"} · {formatDataBR(m.data)}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="font-semibold">{formatBRL(Number(m.valor_total || 0))}</div>
-                      {m.quantidade ? <div className="text-xs text-muted-foreground">{m.quantidade}</div> : null}
+                      {m.quantidade ? <div className="text-[11px] text-muted-foreground">{m.quantidade}</div> : null}
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar"
+                        onClick={() => setMovDialog({ open: true, mov: m })}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
+                        onClick={async () => {
+                          if (!confirm("Excluir movimentação? Os totais do investimento serão recalculados.")) return;
+                          try {
+                            const aId = m.ativo_id;
+                            await excluirMovimentacao(m.id);
+                            if (aId && userId) await recalcularAtivoPorMovimentacoes(userId, aId);
+                            toast.success("Movimentação excluída.");
+                            reload();
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Não foi possível excluir.");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </li>
                 );
@@ -407,24 +499,65 @@ function InvestimentosPage() {
         </section>
 
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
-          <h2 className="font-semibold mb-3">Rendimentos</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Rendimentos</h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => setRendDialog({ open: true, rend: null })}
+              disabled={ativos.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Novo
+            </Button>
+          </div>
           {rends.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sem rendimentos cadastrados.</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
-              {rends.slice(0, 8).map((r) => {
+              {rends.slice(0, 10).map((r) => {
                 const ativo = ativos.find((a) => a.id === r.ativo_id);
                 return (
-                  <li key={r.id} className="py-2 flex justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium capitalize">{r.tipo.replace("_", " ")}</div>
+                  <li key={r.id} className="py-2 flex justify-between gap-2 items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium capitalize">{r.tipo.replace(/_/g, " ")}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {ativo?.nome ?? "—"} · {r.data_pagamento}
+                        {ativo?.nome ?? "—"} · {formatDataBR(r.data_pagamento)}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
                       <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar"
+                        onClick={() => setRendDialog({ open: true, rend: r })}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
+                        onClick={async () => {
+                          if (!confirm("Excluir rendimento?")) return;
+                          try {
+                            await excluirRendimento(r.id);
+                            toast.success("Rendimento excluído.");
+                            reload();
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Não foi possível excluir.");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </li>
                 );
@@ -494,8 +627,55 @@ function InvestimentosPage() {
         userId={userId}
         onSaved={() => { setOpenAtualizarLote(false); reload(); }}
       />
+
+      <MovimentacaoDialog
+        state={movDialog}
+        ativos={ativos}
+        userId={userId}
+        onClose={() => setMovDialog({ open: false, mov: null })}
+        onSaved={() => { setMovDialog({ open: false, mov: null }); reload(); }}
+      />
+
+      <RendimentoDialog
+        state={rendDialog}
+        ativos={ativos}
+        userId={userId}
+        onClose={() => setRendDialog({ open: false, rend: null })}
+        onSaved={() => { setRendDialog({ open: false, rend: null }); reload(); }}
+      />
+
+      <DetalheAtivoDialog
+        ativo={detalheAtivo}
+        movimentacoes={movs}
+        rendimentos={rends}
+        onClose={() => setDetalheAtivo(null)}
+        onEditar={(a) => { setDetalheAtivo(null); setEditing(a); setOpenAdd(true); }}
+        onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
+        onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
+        onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
+        onExcluirAtivo={async (a) => {
+          if (!confirm(`Excluir ${a.nome}? Movimentações e rendimentos relacionados também serão removidos.`)) return;
+          try {
+            await excluirAtivo(a.id);
+            toast.success("Investimento excluído.");
+            setDetalheAtivo(null);
+            reload();
+          } catch (e) {
+            console.error(e);
+            toast.error("Não foi possível excluir.");
+          }
+        }}
+      />
     </MobileShell>
   );
+}
+
+// Helper local para formatar data ISO (yyyy-mm-dd) em pt-BR
+function formatDataBR(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return iso;
 }
 
 function KpiCard({
@@ -1529,6 +1709,572 @@ function AtualizarLoteDialog({
           <Button onClick={salvarTodos} disabled={salvando || ativos.length === 0}>
             {salvando ? "Salvando…" : "Salvar atualizações"}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===== Modal: Movimentação =====
+const TIPOS_MOV_PRINCIPAIS: TipoMovimentacao[] = [
+  "compra",
+  "venda",
+  "aplicacao",
+  "resgate",
+  "transferencia",
+  "rendimento",
+  "dividendo",
+  "jcp",
+  "amortizacao",
+  "bonificacao",
+];
+
+function MovimentacaoDialog({
+  state,
+  ativos,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  state: { open: boolean; mov: Movimentacao | null; ativoId?: string | null };
+  ativos: Ativo[];
+  userId: string | undefined;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const editing = state.mov;
+  const [ativoId, setAtivoId] = useState<string>("");
+  const [tipo, setTipo] = useState<TipoMovimentacao>("compra");
+  const [data, setData] = useState(todayISO());
+  const [quantidade, setQuantidade] = useState("");
+  const [valorUnitario, setValorUnitario] = useState("");
+  const [valorTotal, setValorTotal] = useState("");
+  const [instituicao, setInstituicao] = useState("");
+  const [observacao, setObservacao] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  const ativoSelecionado = useMemo(() => ativos.find((a) => a.id === ativoId) ?? null, [ativos, ativoId]);
+  const variavel = ativoSelecionado ? isRendaVariavel(ativoSelecionado.tipo) : false;
+
+  useEffect(() => {
+    if (!state.open) return;
+    if (editing) {
+      setAtivoId(editing.ativo_id ?? "");
+      setTipo(editing.tipo);
+      setData(editing.data ?? todayISO());
+      setQuantidade(editing.quantidade != null ? String(editing.quantidade).replace(".", ",") : "");
+      setValorUnitario(editing.valor_unitario != null ? String(editing.valor_unitario).replace(".", ",") : "");
+      setValorTotal(editing.valor_total != null ? String(editing.valor_total).replace(".", ",") : "");
+      setInstituicao(editing.instituicao ?? "");
+      setObservacao(editing.observacao ?? "");
+    } else {
+      setAtivoId(state.ativoId ?? (ativos[0]?.id ?? ""));
+      setTipo("compra");
+      setData(todayISO());
+      setQuantidade("");
+      setValorUnitario("");
+      setValorTotal("");
+      setInstituicao("");
+      setObservacao("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.open, state.mov, state.ativoId]);
+
+  // Auto-cálculo: quantidade × valor unitário => total (renda variável)
+  useEffect(() => {
+    if (!variavel) return;
+    const q = Number(quantidade.replace(",", "."));
+    const vu = Number(valorUnitario.replace(",", "."));
+    if (q > 0 && vu > 0) {
+      setValorTotal((q * vu).toFixed(2).replace(".", ","));
+    }
+  }, [quantidade, valorUnitario, variavel]);
+
+  async function salvar() {
+    if (!userId) return;
+    if (!ativoId) {
+      toast.error("Selecione um investimento.");
+      return;
+    }
+    const vt = parseBRLInput(valorTotal);
+    if (!Number.isFinite(vt) || vt < 0) {
+      toast.error("Informe um valor total válido.");
+      return;
+    }
+    const payload: Partial<Movimentacao> = {
+      ativo_id: ativoId,
+      tipo,
+      data,
+      quantidade: quantidade ? Number(quantidade.replace(",", ".")) : null,
+      valor_unitario: valorUnitario ? parseBRLInput(valorUnitario) : null,
+      valor_total: vt,
+      instituicao: instituicao || null,
+      observacao: observacao || null,
+      origem: "manual",
+    };
+    setSalvando(true);
+    try {
+      if (editing) {
+        await atualizarMovimentacao(editing.id, payload);
+        // se trocou de ativo, recalcular ambos
+        const oldAtivo = editing.ativo_id;
+        if (oldAtivo && oldAtivo !== ativoId) {
+          await recalcularAtivoPorMovimentacoes(userId, oldAtivo);
+        }
+      } else {
+        await criarMovimentacao(userId, payload);
+      }
+      await recalcularAtivoPorMovimentacoes(userId, ativoId);
+      toast.success(editing ? "Movimentação atualizada." : "Movimentação adicionada.");
+      onSaved();
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível salvar a movimentação.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Dialog open={state.open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ArrowRightLeft className="h-4 w-4" />
+            {editing ? "Editar movimentação" : "Nova movimentação"}
+          </DialogTitle>
+          <DialogDescription>Registro manual · não realiza compra ou venda real.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Investimento</label>
+            <Select value={ativoId} onValueChange={setAtivoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {ativos.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.nome} ({tipoLabel(a.tipo)})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground">Tipo</label>
+              <Select value={tipo} onValueChange={(v) => setTipo(v as TipoMovimentacao)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_MOVIMENTACAO.filter((t) => TIPOS_MOV_PRINCIPAIS.includes(t.id) || t.id === tipo).map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Data</label>
+              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            </div>
+          </div>
+
+          {variavel && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Quantidade</label>
+                <Input
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Valor unitário</label>
+                <Input
+                  value={valorUnitario}
+                  onChange={(e) => setValorUnitario(e.target.value)}
+                  placeholder="0,00"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs text-muted-foreground">
+              Valor total{variavel ? " (calculado)" : ""}
+            </label>
+            <Input
+              value={valorTotal}
+              onChange={(e) => setValorTotal(e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Instituição / corretora</label>
+            <Input
+              value={instituicao}
+              onChange={(e) => setInstituicao(e.target.value)}
+              placeholder="Ex.: NuInvest, XP, Banco Inter"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Observação</label>
+            <Textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              rows={2}
+              placeholder="opcional"
+            />
+          </div>
+
+          {ativoSelecionado && !variavel && (
+            <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
+              <Info className="h-3 w-3 mt-0.5 shrink-0" />
+              Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button onClick={salvar} disabled={salvando}>
+            {salvando ? "Salvando…" : editing ? "Salvar" : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===== Modal: Rendimento =====
+function RendimentoDialog({
+  state,
+  ativos,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  state: { open: boolean; rend: Rendimento | null; ativoId?: string | null };
+  ativos: Ativo[];
+  userId: string | undefined;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const editing = state.rend;
+  const [ativoId, setAtivoId] = useState<string>("");
+  const [tipo, setTipo] = useState<TipoRendimento>("dividendo");
+  const [dataPag, setDataPag] = useState(todayISO());
+  const [valor, setValor] = useState("");
+  const [status, setStatus] = useState<"recebido" | "previsto">("recebido");
+  const [observacao, setObservacao] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!state.open) return;
+    if (editing) {
+      setAtivoId(editing.ativo_id ?? "");
+      setTipo(editing.tipo);
+      setDataPag(editing.data_pagamento ?? todayISO());
+      setValor(editing.valor != null ? String(editing.valor).replace(".", ",") : "");
+      setStatus(editing.status);
+      setObservacao(editing.observacao ?? "");
+    } else {
+      setAtivoId(state.ativoId ?? (ativos[0]?.id ?? ""));
+      setTipo("dividendo");
+      setDataPag(todayISO());
+      setValor("");
+      setStatus("recebido");
+      setObservacao("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.open, state.rend, state.ativoId]);
+
+  async function salvar() {
+    if (!userId) return;
+    if (!ativoId) {
+      toast.error("Selecione um investimento.");
+      return;
+    }
+    const v = parseBRLInput(valor);
+    if (!Number.isFinite(v) || v <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
+    const payload: Partial<Rendimento> = {
+      ativo_id: ativoId,
+      tipo,
+      data_pagamento: dataPag,
+      valor: v,
+      status,
+      observacao: observacao || null,
+      origem: "manual",
+    };
+    setSalvando(true);
+    try {
+      if (editing) await atualizarRendimento(editing.id, payload);
+      else await criarRendimento(userId, payload);
+      toast.success(editing ? "Rendimento atualizado." : "Rendimento adicionado.");
+      onSaved();
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível salvar o rendimento.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Dialog open={state.open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <HandCoins className="h-4 w-4" />
+            {editing ? "Editar rendimento" : "Novo rendimento"}
+          </DialogTitle>
+          <DialogDescription>Registro manual · valor informado pelo usuário.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Investimento</label>
+            <Select value={ativoId} onValueChange={setAtivoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {ativos.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.nome} ({tipoLabel(a.tipo)})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground">Tipo</label>
+              <Select value={tipo} onValueChange={(v) => setTipo(v as TipoRendimento)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_RENDIMENTO.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Status</label>
+              <Select value={status} onValueChange={(v) => setStatus(v as "recebido" | "previsto")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recebido">Recebido</SelectItem>
+                  <SelectItem value="previsto">Previsto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground">Data de pagamento</label>
+              <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Valor recebido</label>
+              <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Observação</label>
+            <Textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              rows={2}
+              placeholder="opcional"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button onClick={salvar} disabled={salvando}>
+            {salvando ? "Salvando…" : editing ? "Salvar" : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===== Modal: Detalhe do investimento =====
+function DetalheAtivoDialog({
+  ativo,
+  movimentacoes,
+  rendimentos,
+  onClose,
+  onEditar,
+  onAtualizarValor,
+  onAddMovimentacao,
+  onAddRendimento,
+  onExcluirAtivo,
+}: {
+  ativo: Ativo | null;
+  movimentacoes: Movimentacao[];
+  rendimentos: Rendimento[];
+  onClose: () => void;
+  onEditar: (a: Ativo) => void;
+  onAtualizarValor: (a: Ativo) => void;
+  onAddMovimentacao: (a: Ativo) => void;
+  onAddRendimento: (a: Ativo) => void;
+  onExcluirAtivo: (a: Ativo) => void;
+}) {
+  if (!ativo) return null;
+
+  const movs = movimentacoes.filter((m) => m.ativo_id === ativo.id);
+  const rends = rendimentos.filter((r) => r.ativo_id === ativo.id);
+  const lucro = Number(ativo.valor_atual || 0) - Number(ativo.valor_aplicado || 0);
+  const rent = Number(ativo.valor_aplicado || 0) > 0 ? (lucro / Number(ativo.valor_aplicado)) * 100 : 0;
+  const ult = descreverUltimaAtualizacao(ativo.ultima_atualizacao);
+  const totalRends = rends.filter((r) => r.status === "recebido").reduce((s, r) => s + Number(r.valor || 0), 0);
+
+  return (
+    <Dialog open={!!ativo} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="truncate">{ativo.nome}</span>
+            <Badge variant="secondary" className="text-[10px]">{tipoLabel(ativo.tipo)}</Badge>
+          </DialogTitle>
+          <DialogDescription>
+            {ativo.instituicao ?? "—"} · {classeAtivo(ativo.tipo)}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+          <MiniStat label="Aplicado" value={formatBRL(Number(ativo.valor_aplicado || 0))} />
+          <MiniStat label="Atual" value={formatBRL(Number(ativo.valor_atual || 0))} />
+          <MiniStat
+            label="Lucro / Prejuízo"
+            value={`${lucro >= 0 ? "+" : ""}${formatBRL(lucro)}`}
+          />
+          <MiniStat
+            label="Rentabilidade"
+            value={`${rent >= 0 ? "+" : ""}${rent.toFixed(2)}%`}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-xs text-muted-foreground">
+          {ativo.quantidade != null && (
+            <div><span className="block uppercase tracking-wide text-[10px]">Quantidade</span>{ativo.quantidade}</div>
+          )}
+          {ativo.preco_medio != null && (
+            <div><span className="block uppercase tracking-wide text-[10px]">Preço médio</span>{formatBRL(Number(ativo.preco_medio))}</div>
+          )}
+          <div className="col-span-2 md:col-span-2 flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
+            <span>
+              Última atualização:{" "}
+              {ativo.ultima_atualizacao ? formatarDataHora(ativo.ultima_atualizacao) : "valor informado no cadastro"}
+            </span>
+            {ult.desatualizado && ativo.ultima_atualizacao && (
+              <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">desatualizado</Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <Button size="sm" variant="outline" onClick={() => onEditar(ativo)}>
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onAtualizarValor(ativo)}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Atualizar valor
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onAddMovimentacao(ativo)}>
+            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> Movimentação
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onAddRendimento(ativo)}>
+            <HandCoins className="h-3.5 w-3.5 mr-1.5" /> Rendimento
+          </Button>
+          <Button size="sm" variant="outline" className="text-rose-500 hover:text-rose-500" onClick={() => onExcluirAtivo(ativo)}>
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <section className="rounded-xl border border-border/40 p-3">
+            <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
+              <span>Movimentações</span>
+              <span className="text-[10px] text-muted-foreground">{movs.length}</span>
+            </h3>
+            {movs.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sem movimentações.</p>
+            ) : (
+              <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
+                {movs.map((m) => (
+                  <li key={m.id} className="py-1.5 flex justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium capitalize">{m.tipo}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {formatDataBR(m.data)}{m.instituicao ? ` · ${m.instituicao}` : ""}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{formatBRL(Number(m.valor_total || 0))}</div>
+                      {m.quantidade ? <div className="text-[10px] text-muted-foreground">{m.quantidade}</div> : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-border/40 p-3">
+            <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
+              <span>Rendimentos</span>
+              <span className="text-[10px] text-muted-foreground">
+                {totalRends > 0 ? `+${formatBRL(totalRends)}` : "0"}
+              </span>
+            </h3>
+            {rends.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sem rendimentos.</p>
+            ) : (
+              <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
+                {rends.map((r) => (
+                  <li key={r.id} className="py-1.5 flex justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium capitalize">{r.tipo.replace(/_/g, " ")}</div>
+                      <div className="text-[10px] text-muted-foreground">{formatDataBR(r.data_pagamento)}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
+                      <Badge variant="secondary" className="text-[9px]">{r.status}</Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

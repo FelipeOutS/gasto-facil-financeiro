@@ -212,18 +212,149 @@ export async function excluirAtivo(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function criarMovimentacao(userId: string, payload: Partial<Movimentacao>): Promise<void> {
+export async function criarMovimentacao(userId: string, payload: Partial<Movimentacao>): Promise<Movimentacao> {
+  const { data, error } = await supabase
+    .from("investimentos_movimentacoes" as never)
+    .insert({ ...payload, user_id: userId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as Movimentacao;
+}
+
+export async function atualizarMovimentacao(id: string, patch: Partial<Movimentacao>): Promise<void> {
   const { error } = await supabase
     .from("investimentos_movimentacoes" as never)
-    .insert({ ...payload, user_id: userId } as never);
+    .update(patch as never)
+    .eq("id", id);
   if (error) throw error;
 }
 
-export async function criarRendimento(userId: string, payload: Partial<Rendimento>): Promise<void> {
+export async function excluirMovimentacao(id: string): Promise<void> {
+  const { error } = await supabase.from("investimentos_movimentacoes" as never).delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function criarRendimento(userId: string, payload: Partial<Rendimento>): Promise<Rendimento> {
+  const { data, error } = await supabase
+    .from("investimentos_rendimentos" as never)
+    .insert({ ...payload, user_id: userId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as Rendimento;
+}
+
+export async function atualizarRendimento(id: string, patch: Partial<Rendimento>): Promise<void> {
   const { error } = await supabase
     .from("investimentos_rendimentos" as never)
-    .insert({ ...payload, user_id: userId } as never);
+    .update(patch as never)
+    .eq("id", id);
   if (error) throw error;
+}
+
+export async function excluirRendimento(id: string): Promise<void> {
+  const { error } = await supabase.from("investimentos_rendimentos" as never).delete().eq("id", id);
+  if (error) throw error;
+}
+
+export const TIPOS_RENDA_VARIAVEL: TipoInvestimento[] = ["acoes", "fii", "etf", "bdr", "cripto"];
+
+export function isRendaVariavel(tipo: string): boolean {
+  return (TIPOS_RENDA_VARIAVEL as string[]).includes(tipo);
+}
+
+/**
+ * Recalcula valor_aplicado, quantidade, preço médio e valor_atual de um ativo
+ * a partir de TODAS as suas movimentações. É a maneira mais segura — funciona
+ * tanto após criar quanto após editar/excluir movimentações.
+ */
+export async function recalcularAtivoPorMovimentacoes(
+  userId: string,
+  ativoId: string,
+): Promise<void> {
+  const { data: ativoData, error: aErr } = await supabase
+    .from("investimentos_ativos" as never)
+    .select("*")
+    .eq("id", ativoId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (aErr) throw aErr;
+  if (!ativoData) return;
+  const ativo = ativoData as unknown as Ativo;
+
+  const { data: movs, error: mErr } = await supabase
+    .from("investimentos_movimentacoes" as never)
+    .select("*")
+    .eq("ativo_id", ativoId)
+    .eq("user_id", userId)
+    .order("data", { ascending: true });
+  if (mErr) throw mErr;
+  const movimentacoes = (movs ?? []) as unknown as Movimentacao[];
+
+  const variavel = isRendaVariavel(ativo.tipo);
+
+  let qtd = 0;
+  let aplicadoCompras = 0; // soma dos valores de compras (para preço médio)
+  let qtdComprada = 0;
+  let aplicadoLiquido = 0; // entradas - saídas (renda fixa)
+
+  const ENTRADAS: TipoMovimentacao[] = ["compra", "aplicacao"];
+  const SAIDAS: TipoMovimentacao[] = ["venda", "resgate"];
+
+  for (const m of movimentacoes) {
+    const v = Number(m.valor_total || 0);
+    const q = Number(m.quantidade || 0);
+    if (ENTRADAS.includes(m.tipo)) {
+      aplicadoLiquido += v;
+      if (variavel && q > 0) {
+        qtd += q;
+        qtdComprada += q;
+        aplicadoCompras += v;
+      }
+    } else if (SAIDAS.includes(m.tipo)) {
+      aplicadoLiquido -= v;
+      if (variavel && q > 0) qtd -= q;
+    }
+    // Outros tipos (rendimento/dividendo/jcp/transferencia/bonificacao/desdobramento/grupamento/amortizacao)
+    // não alteram valor aplicado nem preço médio.
+  }
+
+  const patch: Partial<Ativo> = {};
+  if (variavel) {
+    patch.quantidade = qtd > 0 ? qtd : 0;
+    if (qtdComprada > 0) {
+      patch.preco_medio = aplicadoCompras / qtdComprada;
+    }
+    // valor aplicado = preço médio × quantidade restante (segura)
+    if (patch.preco_medio != null && qtd > 0) {
+      patch.valor_aplicado = patch.preco_medio * qtd;
+    } else {
+      patch.valor_aplicado = Math.max(0, aplicadoLiquido);
+    }
+    // Se houver preço atual conhecido, atualizar valor_atual = preço atual × qtd
+    if (ativo.preco_atual != null && qtd > 0) {
+      patch.valor_atual = Number(ativo.preco_atual) * qtd;
+    } else if (qtd === 0) {
+      patch.valor_atual = 0;
+    }
+  } else {
+    patch.valor_aplicado = Math.max(0, aplicadoLiquido);
+    // Em renda fixa, se nunca houve atualização manual de valor_atual,
+    // assume valor_atual = aplicado líquido. Se o usuário já atualizou
+    // manualmente, mantemos (ultima_atualizacao indica intervenção).
+    if (!ativo.ultima_atualizacao) {
+      patch.valor_atual = Math.max(0, aplicadoLiquido);
+    }
+  }
+
+  if (Object.keys(patch).length > 0) {
+    const { error } = await supabase
+      .from("investimentos_ativos" as never)
+      .update(patch as never)
+      .eq("id", ativoId);
+    if (error) throw error;
+  }
 }
 
 export type TotaisCarteira = {
