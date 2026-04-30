@@ -1535,13 +1535,13 @@ function categoriaKeyFromUuid(uuid: string | null | undefined): string {
   return categoria?.id ?? uuid;
 }
 
-function categoriaAtualEhOutros(g: Gasto): boolean {
-  const cat = getCategoriaById(g.categoriaId);
-  return !cat || normalizeCategoriaNome(cat.nome) === "outros" || g.categoriaId === "outros";
-}
-
 function inferCategoriaForGasto(g: Pick<Gasto, "descricao" | "estabelecimento" | "observacao">): string {
   return suggestCategoryFromText(`${g.estabelecimento ?? ""} ${g.descricao ?? ""} ${g.observacao ?? ""}`.trim());
+}
+
+function applyCategoriaInferida(g: Gasto): Gasto {
+  const categoriaId = inferCategoriaForGasto(g);
+  return categoriaId && categoriaId !== "outros" && categoriaId !== g.categoriaId ? { ...g, categoriaId } : g;
 }
 
 export async function reclassificarCategoriasExistentes(): Promise<number> {
@@ -1554,10 +1554,6 @@ export async function reclassificarCategoriasExistentes(): Promise<number> {
   }
 
   const updates = (data as GastoRow[]).flatMap((row) => {
-    const atualKey = categoriaKeyFromUuid(row.categoria_id);
-    const atualCat = getCategoriaById(atualKey);
-    const isOutros = !atualCat || normalizeCategoriaNome(atualCat.nome) === "outros" || atualKey === "outros";
-    if (!isOutros) return [];
     const categoriaKey = suggestCategoryFromText(
       `${row.estabelecimento ?? ""} ${row.descricao ?? ""} ${row.observacao ?? ""}`.trim(),
     );
