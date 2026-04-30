@@ -469,24 +469,42 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function CartaoCard({
+const CartaoCard = memo(function CartaoCard({
   cartao,
+  resumo,
   onOpen,
   onEdit,
   onImport,
   onDelete,
 }: {
   cartao: Cartao;
+  resumo?: { usadoMes: number; limite: number; disponivel: number; pct: number };
   onOpen: () => void;
   onEdit: () => void;
   onImport: () => void;
   onDelete: () => void;
 }) {
-  const r = resumoFaturaCartao(cartao.id);
-  const status = statusFatura(cartao);
+  // Usa o resumo pré-calculado quando disponível para evitar recomputar
+  // ao tocar/abrir o cartão.
+  const r = resumo ?? resumoFaturaCartao(cartao.id);
+  const status = useMemo(() => statusFatura(cartao), [cartao.diaFechamento, cartao.diaVencimento]);
   const cor = cartao.cor || "#8b5cf6";
-  const theme = getCardTheme(cor, cartao.banco);
+  const theme = useMemo(() => getCardTheme(cor, cartao.banco), [cor, cartao.banco]);
   const semCompras = r.usadoMes === 0;
+
+  // Próxima data de vencimento formatada (dd/mm) — preenche o footer e
+  // evita a sensação de espaço vazio na parte inferior do card.
+  const vencStr = useMemo(() => {
+    if (!cartao.diaVencimento) return null;
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const proxVenc =
+      cartao.diaVencimento >= hoje.getDate()
+        ? new Date(ano, mes, cartao.diaVencimento)
+        : new Date(ano, mes + 1, cartao.diaVencimento);
+    return `${String(proxVenc.getDate()).padStart(2, "0")}/${String(proxVenc.getMonth() + 1).padStart(2, "0")}`;
+  }, [cartao.diaVencimento]);
 
   return (
     <article
@@ -499,7 +517,7 @@ function CartaoCard({
           onOpen();
         }
       }}
-      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-6 text-white shadow-elevated transition-all duration-300 sm:p-7"
+      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-6"
       style={{ background: theme.background }}
     >
       <div
@@ -514,11 +532,7 @@ function CartaoCard({
       {/* Header — banco + ações */}
       <div className="relative flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center">
-          <BrandLogo
-            name={cartao.banco}
-            variant="bank"
-            onDark
-          />
+          <BrandLogo name={cartao.banco} variant="bank" onDark />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -561,7 +575,7 @@ function CartaoCard({
       </h3>
 
       {/* Bloco principal — usado / limite */}
-      <div className="relative mt-5">
+      <div className="relative mt-4">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
@@ -593,36 +607,46 @@ function CartaoCard({
         </div>
       </div>
 
-      {/* Footer — fechamento, vencimento, status */}
-      <div className="relative mt-5 flex flex-wrap items-center gap-2 border-t border-white/15 pt-3">
-        <div className="flex items-center gap-1.5 text-[11px] text-white/85">
-          <CalendarDays className="h-3.5 w-3.5 opacity-80" />
-          <span>
-            Fecha <strong className="num font-semibold">{cartao.diaFechamento || "—"}</strong>
-            {" · "}
-            Vence <strong className="num font-semibold">{cartao.diaVencimento || "—"}</strong>
+      {/* Footer — datas detalhadas + status, ocupando bem o espaço inferior */}
+      <div className="relative mt-4 grid grid-cols-3 gap-2 border-t border-white/15 pt-3">
+        <div>
+          <p className="text-[9px] uppercase tracking-widest text-white/60">
+            Fecha
+          </p>
+          <p className="num mt-0.5 text-xs font-semibold text-white/95">
+            Dia {cartao.diaFechamento || "—"}
+          </p>
+        </div>
+        <div>
+          <p className="text-[9px] uppercase tracking-widest text-white/60">
+            Vence
+          </p>
+          <p className="num mt-0.5 text-xs font-semibold text-white/95">
+            {vencStr ? vencStr : `Dia ${cartao.diaVencimento || "—"}`}
+          </p>
+        </div>
+        <div className="flex items-start justify-end">
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 text-[10px] font-semibold leading-none",
+              status.tone === "due"
+                ? "bg-white/95 text-destructive animate-pulse-soft"
+                : status.tone === "soon"
+                  ? "bg-white/90 text-orange-700"
+                  : "bg-white/15 text-white",
+            )}
+          >
+            {semCompras && status.tone === "ok" ? "Sem compras" : status.label}
           </span>
         </div>
-        <span
-          className={cn(
-            "ml-auto rounded-full px-2.5 py-1 text-[10px] font-semibold",
-            status.tone === "due"
-              ? "bg-white/95 text-destructive animate-pulse-soft"
-              : status.tone === "soon"
-                ? "bg-white/90 text-orange-700"
-                : "bg-white/15 text-white",
-          )}
-        >
-          {semCompras && status.tone === "ok" ? "Sem compras ainda" : status.label}
-        </span>
       </div>
 
-      <span className="pointer-events-none absolute bottom-3 right-5 text-[9px] uppercase tracking-[0.2em] text-white/55">
+      <span className="pointer-events-none absolute bottom-2.5 right-5 text-[9px] uppercase tracking-[0.2em] text-white/45">
         Crédito
       </span>
     </article>
   );
-}
+});
 
 /* =============== Próxima fatura (resumo topo) =============== */
 
