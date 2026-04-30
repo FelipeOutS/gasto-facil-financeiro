@@ -102,6 +102,11 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     return isStatusActive(status);
   }, [isAdminMaster, user, storedPlan, status]);
 
+  // Sincroniza a flag central usada pelo store (defesa contra burla do front).
+  useEffect(() => {
+    setStoreCanWrite(canWrite);
+  }, [canWrite]);
+
   const requireSubscription = useCallback((msg?: string) => {
     setMessage(msg ?? "Para adicionar gastos, escolha um plano ativo.");
     setOpen(true);
