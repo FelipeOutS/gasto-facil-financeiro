@@ -33,15 +33,23 @@ export type FeatureKey =
   | "importar_extrato"
   | "importar_fatura"
   | "importar_conta"
+  | "importacoes"
   | "relatorios_avancados"
   | "contas_a_pagar"
+  | "contas_a_receber"
+  | "contas_a_receber_avancado"
   | "cartoes"
   | "metas_visuais"
   | "orcamento"
   | "perfil_empresarial"
+  | "perfil_cnpj"
+  | "centro_de_custo"
   | "recursos_mei"
   | "recursos_empresa"
+  | "investimentos"
   | "investimentos_futuro"
+  | "assinaturas_recorrencias"
+  | "whatsapp"
   | "lancamentos_ilimitados";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
