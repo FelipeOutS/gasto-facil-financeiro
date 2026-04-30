@@ -1683,3 +1683,128 @@ function ResumoMesCard({
 }
 
 
+
+function ContasAReceberCard() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [resumo, setResumo] = useState<{
+    totalAberto: number;
+    totalAtrasado: number;
+    countAbertas: number;
+    countAtrasadas: number;
+    proxima: { titulo: string; valor: number; data: string } | null;
+    diasParaProxima: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const { listarContasReceber, calcularResumo } = await import("@/lib/contas-receber");
+      try {
+        const lista = await listarContasReceber(userId);
+        if (cancelled) return;
+        const r = calcularResumo(lista);
+        setResumo({
+          totalAberto: r.totalPendente + r.totalAtrasado,
+          totalAtrasado: r.totalAtrasado,
+          countAbertas: r.countPendentes + r.countAtrasadas,
+          countAtrasadas: r.countAtrasadas,
+          proxima: r.proxima
+            ? {
+                titulo: r.proxima.titulo,
+                valor: Number(r.proxima.valor_restante) || Number(r.proxima.valor_total),
+                data: r.proxima.data_prevista,
+              }
+            : null,
+          diasParaProxima: r.diasParaProxima,
+        });
+      } catch (e) {
+        console.warn("[dashboard] contas a receber load", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  if (!resumo || resumo.countAbertas === 0) return null;
+
+  const dias = resumo.diasParaProxima;
+  const venceLabel =
+    dias === null
+      ? ""
+      : dias < 0
+        ? `${Math.abs(dias)} dia(s) atrasado`
+        : dias === 0
+          ? "vence hoje"
+          : dias === 1
+            ? "vence amanhã"
+            : `vence em ${dias} dia(s)`;
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-success/15 text-success">
+            <HandCoins className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              A receber
+            </p>
+            <h2 className="text-sm font-semibold">
+              {formatBRL(resumo.totalAberto)} em aberto
+            </h2>
+          </div>
+        </div>
+        <Link
+          to="/contas-a-receber"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Ver →
+        </Link>
+      </div>
+
+      {resumo.proxima && (
+        <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Próxima entrada
+          </p>
+          <div className="mt-1 flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{resumo.proxima.titulo}</p>
+            <p className="num shrink-0 text-sm font-semibold">
+              {formatBRL(resumo.proxima.valor)}
+            </p>
+          </div>
+          <p
+            className={cn(
+              "mt-0.5 text-[11px]",
+              dias !== null && dias < 0
+                ? "text-destructive"
+                : dias !== null && dias <= 1
+                  ? "text-warning"
+                  : "text-muted-foreground",
+            )}
+          >
+            {venceLabel}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <span className="num">
+          {resumo.countAbertas} aberta(s)
+        </span>
+        {resumo.countAtrasadas > 0 && (
+          <>
+            <span>·</span>
+            <span className="num text-destructive font-medium">
+              {resumo.countAtrasadas} atrasada(s)
+            </span>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
