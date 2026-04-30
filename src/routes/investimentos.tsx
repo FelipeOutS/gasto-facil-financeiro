@@ -627,8 +627,55 @@ function InvestimentosPage() {
         userId={userId}
         onSaved={() => { setOpenAtualizarLote(false); reload(); }}
       />
+
+      <MovimentacaoDialog
+        state={movDialog}
+        ativos={ativos}
+        userId={userId}
+        onClose={() => setMovDialog({ open: false, mov: null })}
+        onSaved={() => { setMovDialog({ open: false, mov: null }); reload(); }}
+      />
+
+      <RendimentoDialog
+        state={rendDialog}
+        ativos={ativos}
+        userId={userId}
+        onClose={() => setRendDialog({ open: false, rend: null })}
+        onSaved={() => { setRendDialog({ open: false, rend: null }); reload(); }}
+      />
+
+      <DetalheAtivoDialog
+        ativo={detalheAtivo}
+        movimentacoes={movs}
+        rendimentos={rends}
+        onClose={() => setDetalheAtivo(null)}
+        onEditar={(a) => { setDetalheAtivo(null); setEditing(a); setOpenAdd(true); }}
+        onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
+        onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
+        onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
+        onExcluirAtivo={async (a) => {
+          if (!confirm(`Excluir ${a.nome}? Movimentações e rendimentos relacionados também serão removidos.`)) return;
+          try {
+            await excluirAtivo(a.id);
+            toast.success("Investimento excluído.");
+            setDetalheAtivo(null);
+            reload();
+          } catch (e) {
+            console.error(e);
+            toast.error("Não foi possível excluir.");
+          }
+        }}
+      />
     </MobileShell>
   );
+}
+
+// Helper local para formatar data ISO (yyyy-mm-dd) em pt-BR
+function formatDataBR(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return iso;
 }
 
 function KpiCard({
