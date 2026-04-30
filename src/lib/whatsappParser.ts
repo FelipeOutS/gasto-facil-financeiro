@@ -289,13 +289,18 @@ export function parseWhatsAppExpenseMessage(
   // se não vier data, usamos hoje silenciosamente.
 
   const fp = parseFormaPagamento(original);
-  if (!fp.matched) notas.push("Forma de pagamento inferida (crédito)");
-
   const card = detectCartao(original, cartoes);
-  if (fp.forma === "credito" && !card.cartaoId) {
-    notas.push(card.nomeDetectado
-      ? `Cartão "${card.nomeDetectado}" não cadastrado`
-      : "Cartão não identificado");
+
+  // Se a mensagem citou um banco/cartão conhecido, isso valida a forma
+  // como crédito — não é mais "inferência ambígua".
+  const formaConfirmada = fp.matched || !!card.nomeDetectado;
+  if (!formaConfirmada) notas.push("Forma de pagamento não identificada");
+
+  if (fp.forma === "credito" && card.nomeDetectado && !card.cartaoId) {
+    notas.push(`Cartão "${card.nomeDetectado}" não encontrado no cadastro`);
+  } else if (fp.forma === "credito" && !card.nomeDetectado && !card.cartaoId) {
+    // Crédito explícito ("cartão") mas sem banco citado nem cartão cadastrado
+    if (fp.matched) notas.push("Cartão não identificado");
   }
 
   const parcelas = parseParcelas(original);
@@ -307,9 +312,12 @@ export function parseWhatsAppExpenseMessage(
   let confianca = 0;
   if (valor && valor > 0) confianca += 0.5;
   if (nome && nome.length >= 3) confianca += 0.25;
-  if (fp.matched) confianca += 0.1;
-  if (fp.forma !== "credito" || card.cartaoId) confianca += 0.15;
-  // Pequeno bônus quando a data foi explicitamente citada (não obrigatório)
+  if (formaConfirmada) confianca += 0.1;
+  // Crédito OK quando temos cartão cadastrado OU banco conhecido citado;
+  // formas não-crédito (pix, débito, etc.) já são suficientes por si só.
+  if (fp.forma !== "credito" || card.cartaoId || card.nomeDetectado) {
+    confianca += 0.15;
+  }
   if (dataMatched) confianca += 0.05;
   confianca = Math.min(1, confianca);
 
