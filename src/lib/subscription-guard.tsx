@@ -4,7 +4,7 @@
  * Regra: usuários sem assinatura ativa NÃO podem criar/editar/excluir/importar
  * dados financeiros. Admin Master tem sempre acesso total.
  */
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
