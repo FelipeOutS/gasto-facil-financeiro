@@ -179,6 +179,7 @@ export function setActiveUserId(uid: string | null) {
   memContas = EMPTY_CONTAS;
   memTransferencias = EMPTY_TRANSFERENCIAS;
   memExtratos = EMPTY_EXTRATOS;
+  memFaturas = [];
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
