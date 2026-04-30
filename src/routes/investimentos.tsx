@@ -319,19 +319,29 @@ function InvestimentosPage() {
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-8 w-8"
+                        title="Ver detalhes"
+                        onClick={() => setDetalheAtivo(a)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
                         className="h-8 w-8 text-brand"
                         title="Atualizar valor"
                         onClick={() => setAtualizandoAtivo(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(a); setOpenAdd(true); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar" onClick={() => { setEditing(a); setOpenAdd(true); }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-rose-500 hover:text-rose-500"
+                        title="Excluir"
                         onClick={async () => {
                           if (!confirm(`Excluir ${a.nome}?`)) return;
                           await excluirAtivo(a.id);
