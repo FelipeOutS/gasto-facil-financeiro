@@ -4,7 +4,8 @@ import { MobileShell } from "@/components/MobileShell";
 import { GastoForm } from "@/components/GastoForm";
 import { addGasto, findPossibleDuplicate } from "@/lib/store";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   AlertDialog,
   AlertDialogAction,
