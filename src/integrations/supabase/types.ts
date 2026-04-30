@@ -762,6 +762,63 @@ export type Database = {
         }
         Relationships: []
       }
+      recorrencias: {
+        Row: {
+          cartao_id: string | null
+          categoria_id: string | null
+          created_at: string
+          detection_key: string | null
+          forma_pagamento: string | null
+          frequencia: string
+          id: string
+          nome: string
+          observacao: string | null
+          origem: string
+          proxima_cobranca: string | null
+          status: string
+          ultimo_valor: number | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cartao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          detection_key?: string | null
+          forma_pagamento?: string | null
+          frequencia?: string
+          id?: string
+          nome: string
+          observacao?: string | null
+          origem?: string
+          proxima_cobranca?: string | null
+          status?: string
+          ultimo_valor?: number | null
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          cartao_id?: string | null
+          categoria_id?: string | null
+          created_at?: string
+          detection_key?: string | null
+          forma_pagamento?: string | null
+          frequencia?: string
+          id?: string
+          nome?: string
+          observacao?: string | null
+          origem?: string
+          proxima_cobranca?: string | null
+          status?: string
+          ultimo_valor?: number | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       subscription_payments: {
         Row: {
           amount_cents: number
