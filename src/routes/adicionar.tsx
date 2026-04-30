@@ -148,6 +148,8 @@ function Adicionar() {
           <Link to="/">Cancelar</Link>
         </Button>
       </div>
+
+      <WhatsAppExpenseDialog open={waOpen} onOpenChange={setWaOpen} />
     </MobileShell>
   );
 }
