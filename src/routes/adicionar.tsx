@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight } from "lucide-react";
+import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
+import { WhatsAppExpenseDialog } from "@/components/WhatsAppExpenseDialog";
 
 export const Route = createFileRoute("/adicionar")({
   head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
