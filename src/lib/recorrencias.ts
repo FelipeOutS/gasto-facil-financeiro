@@ -700,29 +700,32 @@ export async function sincronizarDeteccoes(
   userId: string,
   gastos: Gasto[],
   opts?: { categoriaNomePorId?: (id: string | null | undefined) => string | null },
-): Promise<{ criadas: number; suspeitas: number }> {
+): Promise<{ criadas: number; suspeitas: number; analisados: number; encontradas: number; assinaturas: number; fixas: number }> {
+  await hydrateRecorrencias(userId);
+  await syncCategoriaMaps(userId);
   const sugeridas = detectarRecorrencias(gastos, opts);
   let criadas = 0;
   let suspeitas = 0;
+  let assinaturas = 0;
+  let fixas = 0;
   for (const s of sugeridas) {
+    if (s.tipoRecorrencia === "recorrencia_fixa") fixas++;
+    else assinaturas++;
     const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
     if (existente) {
       // Atualiza valor/próxima cobrança se houver mudança
-      if (
-        existente.status === "ativa" &&
-        Math.abs(existente.valor - s.valor) > 0.01
-      ) {
-        await atualizarRecorrencia(existente.id, {
-          valor: s.valor,
-          ultimoValor: existente.valor,
-          proximaCobranca: s.proximaCobranca,
-        });
-      }
+      await atualizarRecorrencia(existente.id, {
+        valor: s.valor,
+        ultimoValor:
+          Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
+        categoriaId: s.categoriaId,
+        tipoRecorrencia: s.tipoRecorrencia,
+        proximaCobranca: s.proximaCobranca,
+      });
       continue;
     }
     const status: StatusRecorrencia = s.ocorrencias >= 3 ? "ativa" : "suspeita";
-    const categoriaId =
-      s.categoriaId || suggestCategoryFromText(s.nome) || undefined;
+    const categoriaId = s.categoriaId || suggestCategoryFromText(s.nome) || undefined;
     const created = await criarRecorrencia(userId, {
       nome: s.nome,
       valor: s.valor,
@@ -732,6 +735,7 @@ export async function sincronizarDeteccoes(
       formaPagamento: s.formaPagamento,
       cartaoId: s.cartaoId,
       status,
+      tipoRecorrencia: s.tipoRecorrencia,
       origem: "detectada",
       ultimoValor: s.ultimoValor,
       detectionKey: s.detectionKey,
@@ -741,7 +745,14 @@ export async function sincronizarDeteccoes(
       else suspeitas++;
     }
   }
-  return { criadas, suspeitas };
+  return {
+    criadas,
+    suspeitas,
+    analisados: gastos.filter((g) => g.confirmado && (g.estabelecimento || g.descricao)).length,
+    encontradas: sugeridas.length,
+    assinaturas,
+    fixas,
+  };
 }
 
 // ============================================================
