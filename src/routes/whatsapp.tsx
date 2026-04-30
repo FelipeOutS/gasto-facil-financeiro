@@ -83,12 +83,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function normTel(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
+
 function WhatsAppPage() {
-  const list = useServerFn(listWhatsAppLinks);
-  const upsert = useServerFn(upsertWhatsAppLink);
-  const remove = useServerFn(deleteWhatsAppLink);
-  const listMsgs = useServerFn(listWhatsAppMessages);
-  const testar = useServerFn(testarWebhookWhatsApp);
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
