@@ -193,3 +193,8 @@ export function getBankLogo(name: string | undefined | null): BrandResolved {
 export function getMerchantLogo(name: string | undefined | null): BrandResolved {
   return resolve(name, MERCHANT_ALIASES, MERCHANT_COLOR, "empresas");
 }
+
+/** True when the name maps to a known merchant slug (logo file should exist). */
+export function hasMerchantLogo(name: string | undefined | null): boolean {
+  return getMerchantLogo(name).slug !== null;
+}
