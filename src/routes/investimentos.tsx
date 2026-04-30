@@ -97,6 +97,32 @@ function InvestimentosGate() {
   return <InvestimentosPage />;
 }
 
+function InvestimentosBloqueado() {
+  return (
+    <MobileShell wide>
+      <div className="mx-auto mt-10 max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-card">
+        <h1 className="text-xl font-bold">Seus investimentos estão salvos</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Seu teste gratuito terminou. Seus investimentos continuam armazenados,
+          mas para visualizar e continuar acompanhando sua carteira, assine um
+          plano com acesso a Investimentos.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <Button asChild className="rounded-2xl">
+            <Link to="/meu-plano">Ver planos</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-2xl">
+            <Link to="/meu-plano">Assinar agora</Link>
+          </Button>
+          <Button asChild variant="ghost" className="rounded-2xl">
+            <Link to="/">Voltar ao início</Link>
+          </Button>
+        </div>
+      </div>
+    </MobileShell>
+  );
+}
+
 const RENT_TIPOS = [
   { id: "cdi", label: "% do CDI" },
   { id: "ipca", label: "IPCA +" },
