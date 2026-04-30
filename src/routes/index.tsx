@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
@@ -29,6 +29,7 @@ import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
+import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import {
   getCategoriaById,
   getCategorias,
@@ -100,6 +101,24 @@ function Index() {
   );
 
   const total = useMemo(() => doMes.reduce((s, g) => s + g.valor, 0), [doMes]);
+
+  // Total de despesas do mês anterior (para comparação no insight).
+  const totalMesAnterior = useMemo(() => {
+    const ref = new Date(ym.ano, ym.mes - 2, 1);
+    const m = ref.getMonth() + 1;
+    const a = ref.getFullYear();
+    return gastosConfirmados
+      .filter((g) => {
+        const d = parseDateLocal(g.data);
+        return !!d && d.getMonth() + 1 === m && d.getFullYear() === a;
+      })
+      .reduce((s, g) => s + g.valor, 0);
+  }, [gastosConfirmados, ym]);
+
+  const navigateRoot = useNavigate();
+  const abrirFatura = (cartaoId: string) => {
+    navigateRoot({ to: "/cartoes", search: { abrir: cartaoId } });
+  };
   useEffect(() => {
     if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1") return;
     const importados = gastosConfirmados.filter((g) => String(g.origem ?? "").includes("fatura"));
@@ -641,6 +660,18 @@ function Index() {
           </section>
         </>
       )}
+
+      {/* ===== Cartões, faturas e insights ===== */}
+      <SectionLabel>Cartões e insights</SectionLabel>
+      <DashboardCartoesInsights
+        mes={ym.mes}
+        ano={ym.ano}
+        gastosMes={doMes}
+        totalMes={total}
+        totalMesAnterior={totalMesAnterior}
+        maiorCategoria={maior ?? null}
+        onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+      />
 
       {/* ===== 4. METAS ===== */}
       {(metaProxima || metasAndamento.length > 0) && (
