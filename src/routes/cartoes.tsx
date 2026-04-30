@@ -1016,10 +1016,10 @@ function FaturaSheet({
                       key={g.id}
                       className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5"
                     >
-                      <BrandLogo
-                        name={g.estabelecimento || g.descricao}
-                        variant="merchant"
-                        className="h-9 w-9 shrink-0"
+                      <TransactionAvatar
+                        estabelecimento={g.estabelecimento || g.descricao}
+                        categoria={cat}
+                        size="md"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">
