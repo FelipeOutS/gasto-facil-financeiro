@@ -884,7 +884,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     });
 
     // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes] = await Promise.all([
+    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes, faturasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
       supabase.from("receitas").select("*").eq("user_id", userId),
       supabase.from("limites").select("*").eq("user_id", userId),
@@ -895,6 +895,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
       sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
       sbAny.from("extratos_importados").select("*").eq("user_id", userId).order("data_importacao", { ascending: false }),
+      sbAny.from("faturas_cartao").select("*").eq("user_id", userId),
     ]);
 
     if (gastosRes.error) throw gastosRes.error;
