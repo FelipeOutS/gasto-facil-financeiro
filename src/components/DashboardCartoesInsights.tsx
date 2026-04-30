@@ -258,6 +258,7 @@ export function DashboardCartoesInsights({
             </div>
             <Link
               to="/cartoes"
+              search={{}}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Ver todos →
