@@ -16,9 +16,13 @@ import {
   BarChart3,
   Crown,
   TrendingUp,
+  Lock,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
+import { usePlan } from "@/lib/use-plan";
+import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
 
 type NavItem = {
   to: string;
