@@ -9,6 +9,7 @@ import {
   Phone,
   Building2,
   Briefcase,
+  Sparkles,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
@@ -183,11 +184,17 @@ function ContaPage() {
         )}
       </section>
 
-      <div className="mt-4">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
         <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
           <Link to="/perfil">
             <Pencil className="mr-2 h-4 w-4" />
             Editar perfil
+          </Link>
+        </Button>
+        <Button asChild size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/meu-plano">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Meu plano
           </Link>
         </Button>
       </div>
