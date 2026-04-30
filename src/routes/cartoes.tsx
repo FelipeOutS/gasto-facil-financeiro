@@ -102,6 +102,9 @@ import {
 } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/cartoes")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    abrir: typeof search.abrir === "string" ? search.abrir : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Cartões — Gasto Inteligente" },
