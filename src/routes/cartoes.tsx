@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, memo } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import {
   Plus,
   CreditCard,
