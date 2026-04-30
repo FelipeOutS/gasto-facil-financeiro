@@ -57,18 +57,29 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function MeuPlanoPage() {
-  const { profile } = useAuth();
-  const { plan, storedPlan, status, trialEndsAt, loading, isAdminMaster, refresh } =
-    usePlan();
+  const { profile, user } = useAuth();
+  const {
+    plan,
+    storedPlan,
+    status,
+    trialEndsAt,
+    loading,
+    isAdminMaster,
+    isTrialActive,
+    trialDaysLeft,
+    trialUsed,
+    refresh,
+  } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
   const semAssinatura =
     !isAdminMaster &&
+    !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago =
-    !isAdminMaster && status === "ativo" && !semAssinatura;
+    !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [pixCharge, setPixCharge] = useState<{
