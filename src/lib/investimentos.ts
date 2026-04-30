@@ -74,6 +74,18 @@ export const TIPOS_RENDIMENTO: Array<{ id: TipoRendimento; label: string }> = [
   { id: "outro", label: "Outro" },
 ];
 
+export type Importacao = {
+  id: string;
+  user_id: string;
+  tipo: string; // 'b3' | 'corretora' | 'csv' | 'pdf' | 'manual'
+  arquivo_nome: string | null;
+  status: string; // 'pendente' | 'concluida' | 'erro' | 'parcial' | 'excluida'
+  dados_extraidos: unknown;
+  erros: string | null;
+  resumo: { ativos?: number; movimentacoes?: number; rendimentos?: number } | null;
+  created_at: string;
+};
+
 export type Ativo = {
   id: string;
   nome: string;
@@ -82,6 +94,7 @@ export type Ativo = {
   instituicao: string | null;
   quantidade: number | null;
   preco_medio: number | null;
+  importacao_id?: string | null;
   preco_atual: number | null;
   valor_aplicado: number;
   valor_atual: number;
