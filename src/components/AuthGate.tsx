@@ -1,8 +1,9 @@
-import { useNavigate, Link } from "@tanstack/react-router";
+import { useNavigate, Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { Wallet } from "lucide-react";
+import { fetchOnboarding } from "@/lib/onboarding/service";
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -11,6 +12,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useRoles();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
@@ -18,6 +21,33 @@ export function AuthGate({ children }: { children: ReactNode }) {
       void navigate({ to: "/login" });
     }
   }, [loading, session, redirecting, navigate]);
+
+  // Redireciona para onboarding na primeira entrada
+  useEffect(() => {
+    if (loading || !session) return;
+    if (onboardingChecked) return;
+    // Não redirecionar se já estiver no onboarding ou em rotas auxiliares
+    const skip = ["/onboarding", "/login", "/cadastro", "/recuperar-senha", "/reset-password", "/confirmar"];
+    if (skip.includes(pathname)) {
+      setOnboardingChecked(true);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ob = await fetchOnboarding(session.user.id);
+        if (cancelled) return;
+        if (!ob.onboarding_completed) {
+          void navigate({ to: "/onboarding" });
+        }
+      } finally {
+        if (!cancelled) setOnboardingChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, session, pathname, navigate, onboardingChecked]);
 
   if (loading || !session) {
     return (
