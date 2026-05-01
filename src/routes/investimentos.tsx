@@ -1085,44 +1085,100 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function ImportDialog({
+  open,
+  onOpenChange,
+  userId,
+  ativos,
+  onImported,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  userId: string | undefined;
+  ativos: Ativo[];
+  onImported: () => void;
+}) {
+  const [origem, setOrigem] = useState<"b3" | "corretora" | "csv" | "pdf" | null>(null);
+
+  const opcoes: Array<{
+    id: "b3" | "corretora" | "csv" | "pdf";
+    label: string;
+    desc: string;
+  }> = [
+    {
+      id: "b3",
+      label: "Importar extrato da B3",
+      desc: "Arquivo exportado da Área do Investidor (PDF, CSV ou XLSX).",
+    },
+    {
+      id: "corretora",
+      label: "Importar extrato da corretora",
+      desc: "Relatório oficial da sua corretora (PDF, CSV ou XLSX).",
+    },
+    {
+      id: "csv",
+      label: "Importar CSV / planilha",
+      desc: "Modelo livre com seus ativos. Aceita CSV, XLSX e XLS.",
+    },
+    {
+      id: "pdf",
+      label: "Importar PDF",
+      desc: "Extrato em PDF com prévia antes de salvar.",
+    },
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Importar investimentos</DialogTitle>
-          <DialogDescription>Escolha de onde quer trazer seus dados.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-2">
-          {[
-            { label: "Importar extrato da B3", desc: "Arquivo exportado da Área do Investidor (CSV/PDF)." },
-            { label: "Importar extrato da corretora", desc: "Relatório oficial da sua corretora." },
-            { label: "Importar CSV / planilha", desc: "Modelo livre com seus ativos." },
-            { label: "Importar PDF", desc: "Extrato em PDF com prévia antes de salvar." },
-          ].map((opt) => (
-            <button
-              key={opt.label}
-              type="button"
-              className="w-full text-left rounded-xl border border-border/60 bg-card/40 hover:bg-accent/40 p-3 transition-colors"
-              onClick={() => toast.info("Importação será habilitada em breve. Por enquanto, cadastre manualmente.")}
-            >
-              <div className="font-medium text-sm">{opt.label}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{opt.desc}</div>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground mt-1">
-          <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>
-            Não pedimos senha da B3, senha da corretora, CPF ou token bancário. Use apenas arquivos exportados
-            oficialmente ou cadastre os dados manualmente.
-          </span>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open && !origem} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Importar investimentos</DialogTitle>
+            <DialogDescription>Escolha de onde quer trazer seus dados.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            {opcoes.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className="w-full text-left rounded-xl border border-border/60 bg-card/40 hover:bg-accent/40 p-3 transition-colors"
+                onClick={() => setOrigem(opt.id)}
+              >
+                <div className="font-medium text-sm">{opt.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground mt-1">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação
+              usa apenas arquivos enviados por você.
+            </span>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ImportInvestimentosFlow
+        open={open && !!origem}
+        origem={origem}
+        userId={userId}
+        ativosExistentes={ativos}
+        onOpenChange={(v) => {
+          if (!v) {
+            setOrigem(null);
+            onOpenChange(false);
+          }
+        }}
+        onImported={() => {
+          onImported();
+        }}
+      />
+    </>
   );
 }
 
