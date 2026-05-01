@@ -51,6 +51,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
+import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
   buildLinhasOrcamento,
@@ -345,21 +346,15 @@ function Index() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
           <div className="lg:hidden">{monthSwitcher}</div>
-          <NotificationBell
-            contas={contas}
-            orcamento={{
-              categorias,
-              gastos: gastosConfirmados,
-              mes: ym.mes,
-              ano: ym.ano,
-              getLimite: (catId) => getLimite(catId, ym.mes, ym.ano),
-            }}
-          />
+          <NotificationBell />
         </div>
       </header>
 
       {/* Card de assinatura/plano */}
       <PlanoCard className="mt-4" />
+
+      {/* Bloco da Central de Alertas */}
+      <DashboardAlertasBloco className="mt-4" />
 
       {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
       {profile && !profile.tipo_cadastro && (

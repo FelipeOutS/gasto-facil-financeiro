@@ -13,6 +13,7 @@ import {
   Settings2,
   Lock,
   Sparkles,
+  Bell,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ type MoreItem = {
 };
 
 export const MORE_ITEMS: MoreItem[] = [
+  { to: "/alertas", label: "Alertas", description: "Avisos importantes do seu financeiro", icon: Bell },
   { to: "/renda", label: "Minha renda", description: "Receitas e fontes de renda", icon: ArrowUp },
   { to: "/contas-a-pagar", label: "Contas a pagar", description: "Despesas e vencimentos", icon: CalendarClock },
   { to: "/contas-a-receber", label: "Contas a receber", description: "Valores que você tem para receber", icon: HandCoins },

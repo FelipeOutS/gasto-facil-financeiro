@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Lock,
   HandCoins,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
@@ -34,6 +35,7 @@ type NavItem = {
 const ITEMS: NavItem[] = [
   { to: "/", label: "Início", icon: Home, exact: true },
   { to: "/gastos", label: "Gastos", icon: List },
+  { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/assinaturas", label: "Assinaturas", icon: Repeat },
   { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
