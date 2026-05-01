@@ -460,6 +460,16 @@ function MeuPlanoPage() {
               Abrir página de pagamento Mercado Pago
             </a>
           )}
+          {pixCharge.paymentId && (
+            <Button
+              size="sm"
+              className="mt-3 w-full rounded-xl"
+              onClick={checarPagamento}
+              disabled={verifying}
+            >
+              {verifying ? "Verificando…" : "Já paguei, verificar pagamento"}
+            </Button>
+          )}
           <p className="mt-3 text-[11px] text-muted-foreground">
             Após o pagamento ser aprovado, seu plano é ativado automaticamente.
           </p>
