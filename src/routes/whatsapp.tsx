@@ -103,10 +103,29 @@ function WhatsAppPage() {
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
+  // URL pública estável usada na configuração do painel da Meta.
+  // Sempre o domínio publicado, nunca preview/localhost.
+  const PUBLIC_WEBHOOK_URL =
+    "https://gastointeligente.com.br/api/public/whatsapp/expense";
+  const VERIFY_TOKEN = "gasto_inteligente_whatsapp_2026";
+
   const webhookUrl = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return `${window.location.origin}/api/public/whatsapp/expense`;
+    // Em ambiente de preview, usamos a origem atual para teste local;
+    // mas a URL exibida para colar na Meta é sempre a pública.
+    if (typeof window === "undefined") return PUBLIC_WEBHOOK_URL;
+    const origin = window.location.origin;
+    if (origin.includes("lovable.app") && origin.includes("preview")) {
+      return PUBLIC_WEBHOOK_URL;
+    }
+    return `${origin}/api/public/whatsapp/expense`;
   }, []);
+
+  const [copiadoToken, setCopiadoToken] = useState(false);
+  function copiarToken() {
+    navigator.clipboard.writeText(VERIFY_TOKEN);
+    setCopiadoToken(true);
+    setTimeout(() => setCopiadoToken(false), 1500);
+  }
 
   async function refresh() {
     setLoading(true);
