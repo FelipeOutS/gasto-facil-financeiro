@@ -352,6 +352,9 @@ function Index() {
       {/* Card de assinatura/plano */}
       <PlanoCard className="mt-4" />
 
+      {/* Bloco da Central de Alertas */}
+      <DashboardAlertasBloco className="mt-4" />
+
       {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
       {profile && !profile.tipo_cadastro && (
         <Link
