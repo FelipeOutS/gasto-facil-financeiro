@@ -112,6 +112,16 @@ function MeuPlanoPage() {
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
 
+  // Sinaliza "pagamento recusado" se o último pagamento foi rejeitado
+  // e não há período pago vigente (não há plano ativo no momento).
+  const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
+  const recusado =
+    !isAdminMaster &&
+    !ativoPago &&
+    !aguardando &&
+    !isTrialActive &&
+    ["rejected", "cancelled", "refunded", "charged_back"].includes(ultimoStatus);
+
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
     if (!user?.id) {
