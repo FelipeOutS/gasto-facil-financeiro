@@ -8,6 +8,11 @@ import { extractText, getDocumentProxy } from "unpdf";
  *  - Planilha (CSV/XLSX) — recebe linhas já parseadas no cliente.
  *
  * NUNCA persiste — apenas devolve sugestões para revisão manual.
+ *
+ * Retorna DOIS conjuntos:
+ *  - posicoes: ativos atuais da carteira
+ *  - movimentacoes: aplicação, resgate, compra, venda, transferência,
+ *    rendimento, juros, dividendos, amortização etc.
  */
 
 const TIPOS_VALIDOS = [
@@ -28,47 +33,85 @@ const TIPOS_VALIDOS = [
 
 const RENT_VALIDAS = ["cdi", "ipca", "prefixado", "selic", "outro"] as const;
 
+const TIPOS_MOV = [
+  "compra",
+  "venda",
+  "aplicacao",
+  "resgate",
+  "transferencia",
+  "rendimento",
+  "dividendo",
+  "jcp",
+  "amortizacao",
+  "bonificacao",
+  "desdobramento",
+  "grupamento",
+] as const;
+
 const SYSTEM_PROMPT = `Você analisa documentos brasileiros (PDF ou planilhas) de extratos de investimentos: B3 (Área do Investidor), corretoras (XP, Rico, Clear, Inter, Nubank, BTG, Itaú, etc.), bancos e listas pessoais.
 
-OBJETIVO: extrair UMA LISTA de investimentos encontrados (1 ou vários). Cada ativo é um item separado.
+OBJETIVO: extrair DOIS CONJUNTOS de dados do documento:
+1) "posicoes" — ativos atualmente na carteira (saldo/posição consolidada).
+2) "movimentacoes" — eventos individuais como aplicação, resgate, compra, venda, transferência, rendimento, juros, dividendos, amortização etc.
 
-PARA CADA ATIVO, EXTRAIA:
-- nome (string): nome ou descrição do ativo. Ex.: "PETR4", "Tesouro IPCA+ 2029", "CDB Banco Inter 110% CDI", "ITSA4 - Itaúsa", "Fundo XP Top FIA".
-- ticker (string|null): código de negociação quando houver. Ex.: "PETR4", "HGLG11", "BOVA11". Para renda fixa pode ser null.
+IMPORTANTE: o arquivo pode conter SOMENTE posições, SOMENTE movimentações ou os DOIS. Extraia tudo que conseguir identificar — nunca devolva listas vazias só porque um dos lados não existe. Se só houver movimentações, retorne posicoes=[] e preencha movimentacoes.
+
+================== POSIÇÕES ==================
+Para cada ativo em posição, extraia:
+- nome (string): nome ou descrição do ativo. Ex.: "PETR4", "Tesouro IPCA+ 2029", "CDB Banco Inter 110% CDI".
+- ticker (string|null): código de negociação quando houver. Para renda fixa pode ser null.
 - tipo: um destes ids: ${TIPOS_VALIDOS.join(", ")}.
   Heurística:
     Tickers terminados em 3/4 (PETR4, ITUB3) → "acoes"
     Tickers terminados em 11 com nome de fundo imobiliário → "fii"
-    BOVA11/IVVB11/SMAL11/QBTC11 e similares com "ETF" no nome → "etf"
-    Nome com "BDR" ou "DR" e ticker terminado em 32/33/34/35 → "bdr"
+    BOVA11/IVVB11/SMAL11 e similares com "ETF" no nome → "etf"
+    Nome com "BDR" e ticker terminado em 32/33/34/35 → "bdr"
     "Tesouro Selic/IPCA/Prefixado/Renda+" → "tesouro"
-    "CDB" → "cdb", "LCI" → "lci", "LCA" → "lca", "LC" e "Letra de Câmbio" → "lc"
-    "Fundo" / "FIM" / "FIA" / "FIRF" / "FIC" → "fundo"
-    "Previdência", "PGBL", "VGBL" → "previdencia"
-    Bitcoin, Ethereum, BTC, ETH, USDT, ADA → "cripto"
+    "CDB" → "cdb", "LCI" → "lci", "LCA" → "lca", "LC"/"Letra de Câmbio" → "lc"
+    "Fundo"/"FIM"/"FIA"/"FIRF"/"FIC" → "fundo"
+    "Previdência"/"PGBL"/"VGBL" → "previdencia"
+    Bitcoin/Ethereum/BTC/ETH/USDT → "cripto"
     Caso contrário → "outros".
-- quantidade (number|null): quantidade de cotas/títulos quando aplicável. Para renda fixa muitas vezes é null.
-- precoMedio (number|null): preço médio unitário em reais.
-- valorAplicado (number|null): valor investido total em reais.
-- valorAtual (number|null): valor de mercado/saldo atual em reais.
-- instituicao (string|null): banco ou corretora. Ex.: "XP Investimentos", "Banco Inter", "Nubank", "B3".
-- dataInicio (string|null, ISO YYYY-MM-DD): data de aplicação ou posição. Aceita "01/05/2026", "2026-05-01", "maio/2026".
-- dataVencimento (string|null, ISO YYYY-MM-DD): vencimento da renda fixa quando houver.
-- rentabilidadeTipo: ${RENT_VALIDAS.join(", ")} ou null. "110% do CDI" → "cdi"; "IPCA+ 6%" → "ipca"; "Prefixado 12% a.a." → "prefixado"; "Selic +" → "selic".
-- rentabilidadePercentual (string|null): texto curto da rentabilidade. Ex.: "110%", "6,5%", "12,3% a.a.".
-- liquidez (string|null): "Diária", "No vencimento", "D+1", etc., quando explícito.
-- observacao (string|null): detalhes extras (ex.: indexador, número de parcelas, observações).
+- quantidade (number|null), precoMedio (number|null), valorAplicado (number|null), valorAtual (number|null).
+- instituicao (string|null), dataInicio (string|null, ISO YYYY-MM-DD), dataVencimento (string|null, ISO).
+- rentabilidadeTipo: ${RENT_VALIDAS.join(", ")} ou null.
+- rentabilidadePercentual (string|null), liquidez (string|null), observacao (string|null).
 - confianca: "alta" | "media" | "baixa".
 
-REGRAS DE VALORES:
+NÃO inclua em "posicoes" linhas de movimentação isolada (compra avulsa, dividendo recebido, resgate). Essas vão em "movimentacoes".
+Ignore totais agregados ("Total da carteira", "Patrimônio total", "Saldo bruto consolidado").
+
+================== MOVIMENTAÇÕES ==================
+Para cada movimentação, extraia:
+- data (string ISO YYYY-MM-DD): data do evento. OBRIGATÓRIO. Se ausente, deixe null e marque confianca "baixa".
+- tipo: um destes ids: ${TIPOS_MOV.join(", ")}.
+  Mapeamento:
+    "Aplicação"/"Investimento" → "aplicacao"
+    "Resgate"/"Saída"/"Devolução" → "resgate"
+    "Compra"/"C" (em corretagem) → "compra"
+    "Venda"/"V" → "venda"
+    "Transferência"/"TED"/"PIX" entre contas → "transferencia"
+    "Rendimento"/"Juros" de renda fixa → "rendimento"
+    "Dividendo" → "dividendo"
+    "JCP"/"Juros sobre Capital" → "jcp"
+    "Amortização" → "amortizacao"
+    "Bonificação" → "bonificacao"
+    "Desdobramento"/"Split" → "desdobramento"
+    "Grupamento"/"Inplit" → "grupamento".
+- nome (string|null): nome do ativo envolvido. Use o nome do ativo quando não houver ticker.
+- ticker (string|null): código de negociação se identificável.
+- tipoAtivo: um dos ids de ${TIPOS_VALIDOS.join(", ")} (chute pela mesma heurística das posições). Use "outros" se não souber.
+- quantidade (number|null): quantidade quando aplicável.
+- valorUnitario (number|null), valorTotal (number|null): valor da operação em reais.
+- instituicao (string|null), observacao (string|null), confianca: "alta"|"media"|"baixa".
+
+REGRAS DE VALORES (para os dois conjuntos):
 - Padrão brasileiro: vírgula é decimal, ponto é milhar. "1.234,56" = 1234.56.
 - Remova R$, %, espaços extras. Para campos numéricos retorne NUMBER, não string.
-- Ignore totais agregados ("Total da carteira", "Patrimônio total", "Saldo bruto consolidado").
-- Ignore linhas de movimentação isolada (compra/venda/dividendo) — foque em POSIÇÃO.
 - Nunca inclua valor 0 ou negativo. Se não souber, use null.
-- Não retorne dados sensíveis (CPF, número de conta, senha).
+- Não retorne dados sensíveis (CPF, número de conta, senha, token).
 
-Se não conseguir identificar nenhum investimento legível, retorne itens=[] com observacao explicando.`;
+Se o arquivo for ilegível, retorne posicoes=[] e movimentacoes=[] com observacao explicando.`;
 
 type AtivoBruto = {
   nome?: unknown;
@@ -88,15 +131,30 @@ type AtivoBruto = {
   confianca?: unknown;
 };
 
+type MovBruta = {
+  data?: unknown;
+  tipo?: unknown;
+  nome?: unknown;
+  ticker?: unknown;
+  tipoAtivo?: unknown;
+  quantidade?: unknown;
+  valorUnitario?: unknown;
+  valorTotal?: unknown;
+  instituicao?: unknown;
+  observacao?: unknown;
+  confianca?: unknown;
+};
+
 const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
     name: "registrar_investimentos",
-    description: "Estrutura a lista de investimentos encontrados no documento.",
+    description:
+      "Estrutura posições e movimentações de investimentos encontradas no documento.",
     parameters: {
       type: "object",
       properties: {
-        itens: {
+        posicoes: {
           type: "array",
           items: {
             type: "object",
@@ -124,9 +182,30 @@ const TOOL_SCHEMA = {
             additionalProperties: false,
           },
         },
+        movimentacoes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              data: { type: ["string", "null"] },
+              tipo: { type: "string", enum: [...TIPOS_MOV] },
+              nome: { type: ["string", "null"] },
+              ticker: { type: ["string", "null"] },
+              tipoAtivo: { type: "string", enum: [...TIPOS_VALIDOS] },
+              quantidade: { type: ["number", "null"] },
+              valorUnitario: { type: ["number", "null"] },
+              valorTotal: { type: ["number", "null"] },
+              instituicao: { type: ["string", "null"] },
+              observacao: { type: ["string", "null"] },
+              confianca: { type: "string", enum: ["alta", "media", "baixa"] },
+            },
+            required: ["tipo", "confianca"],
+            additionalProperties: false,
+          },
+        },
         observacao: { type: ["string", "null"] },
       },
-      required: ["itens"],
+      required: ["posicoes", "movimentacoes"],
       additionalProperties: false,
     },
   },
@@ -191,7 +270,7 @@ async function callAIWithPdf(apiKey: string, pdfDataUri: string, origem: string)
           content: [
             {
               type: "text",
-              text: `Origem informada pelo usuário: ${origem}. PDF possivelmente escaneado/imagem — extraia os investimentos.`,
+              text: `Origem informada pelo usuário: ${origem}. PDF possivelmente escaneado/imagem — extraia posições e movimentações.`,
             },
             { type: "image_url", image_url: { url: pdfDataUri } },
           ],
@@ -207,17 +286,15 @@ function num(x: unknown): number | null {
   if (typeof x === "number" && isFinite(x) && x > 0) return Number(x.toFixed(8));
   return null;
 }
-
 function str(x: unknown, max = 200): string | null {
   return typeof x === "string" && x.trim() ? x.trim().slice(0, max) : null;
 }
-
 function isoDate(x: unknown): string | null {
   if (typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x)) return x;
   return null;
 }
 
-function normalizeAtivos(raw: AtivoBruto[]) {
+function normalizePosicoes(raw: AtivoBruto[]) {
   return raw
     .map((a) => {
       const tipo =
@@ -254,6 +331,40 @@ function normalizeAtivos(raw: AtivoBruto[]) {
     .filter((a) => a.valorAplicado || a.valorAtual || a.quantidade);
 }
 
+function normalizeMovimentacoes(raw: MovBruta[]) {
+  return raw
+    .map((m) => {
+      const tipo =
+        typeof m.tipo === "string" && (TIPOS_MOV as readonly string[]).includes(m.tipo)
+          ? m.tipo
+          : null;
+      const tipoAtivo =
+        typeof m.tipoAtivo === "string" &&
+        (TIPOS_VALIDOS as readonly string[]).includes(m.tipoAtivo)
+          ? m.tipoAtivo
+          : "outros";
+      return {
+        data: isoDate(m.data),
+        tipo,
+        nome: str(m.nome, 120),
+        ticker: str(m.ticker, 20)?.toUpperCase() ?? null,
+        tipoAtivo,
+        quantidade: num(m.quantidade),
+        valorUnitario: num(m.valorUnitario),
+        valorTotal: num(m.valorTotal),
+        instituicao: str(m.instituicao, 80),
+        observacao: str(m.observacao, 300),
+        confianca:
+          m.confianca === "alta" || m.confianca === "media" || m.confianca === "baixa"
+            ? m.confianca
+            : "baixa",
+      };
+    })
+    .filter((m) => m.tipo)
+    .filter((m) => m.nome || m.ticker || m.valorTotal)
+    .filter((m) => m.valorTotal || m.quantidade);
+}
+
 export const Route = createFileRoute("/api/import-investimentos")({
   server: {
     handlers: {
@@ -276,7 +387,6 @@ export const Route = createFileRoute("/api/import-investimentos")({
 
           const origem = typeof body.origem === "string" ? body.origem : "outro";
 
-          // Caminho 1: planilha (linhas/colunas)
           if (Array.isArray(body.linhas) && body.linhas.length > 0) {
             const colunas = Array.isArray(body.colunas) ? body.colunas : [];
             const header = colunas.length ? colunas.join(" | ") : "";
@@ -291,14 +401,11 @@ export const Route = createFileRoute("/api/import-investimentos")({
                 { status: 400 },
               );
             }
-            const text = sanitizeText(
-              `Cabeçalho: ${header}\n\nLinhas:\n${linhasTxt}`,
-            );
+            const text = sanitizeText(`Cabeçalho: ${header}\n\nLinhas:\n${linhasTxt}`);
             const aiResp = await callAIWithText(apiKey, text, origem);
             return await handleAiResponse(aiResp, "texto");
           }
 
-          // Caminho 2: PDF
           if (typeof body.pdf === "string" && body.pdf) {
             const bytes = decodeBase64Pdf(body.pdf);
             if (!bytes || bytes.length === 0) {
@@ -342,7 +449,6 @@ export const Route = createFileRoute("/api/import-investimentos")({
             const hasUsefulText = cleanText.length > 80;
 
             if (!hasUsefulText) {
-              // Tenta vision; se vier vazio, devolvemos mensagem de PDF escaneado.
               const aiResp = await callAIWithPdf(
                 apiKey,
                 body.pdf.startsWith("data:")
@@ -412,7 +518,8 @@ async function handleAiResponse(
     if (pdfEscaneado) {
       return Response.json(
         {
-          itens: [],
+          posicoes: [],
+          movimentacoes: [],
           modo,
           paginas,
           observacao:
@@ -426,15 +533,28 @@ async function handleAiResponse(
       { status: 502 },
     );
   }
-  let parsed: { itens?: AtivoBruto[]; observacao?: unknown };
+  let parsed: {
+    posicoes?: AtivoBruto[];
+    movimentacoes?: MovBruta[];
+    itens?: AtivoBruto[]; // back-compat caso o modelo use o campo antigo
+    observacao?: unknown;
+  };
   try {
     parsed = JSON.parse(argsStr);
   } catch {
     return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
   }
-  const itens = normalizeAtivos(Array.isArray(parsed.itens) ? parsed.itens : []);
+  const posicoesRaw = Array.isArray(parsed.posicoes)
+    ? parsed.posicoes
+    : Array.isArray(parsed.itens)
+    ? parsed.itens
+    : [];
+  const movsRaw = Array.isArray(parsed.movimentacoes) ? parsed.movimentacoes : [];
+  const posicoes = normalizePosicoes(posicoesRaw);
+  const movimentacoes = normalizeMovimentacoes(movsRaw);
   return Response.json({
-    itens,
+    posicoes,
+    movimentacoes,
     modo,
     paginas,
     observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
