@@ -103,10 +103,29 @@ function WhatsAppPage() {
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
+  // URL pública estável usada na configuração do painel da Meta.
+  // Sempre o domínio publicado, nunca preview/localhost.
+  const PUBLIC_WEBHOOK_URL =
+    "https://gastointeligente.com.br/api/public/whatsapp/expense";
+  const VERIFY_TOKEN = "gasto_inteligente_whatsapp_2026";
+
   const webhookUrl = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return `${window.location.origin}/api/public/whatsapp/expense`;
+    // Em ambiente de preview, usamos a origem atual para teste local;
+    // mas a URL exibida para colar na Meta é sempre a pública.
+    if (typeof window === "undefined") return PUBLIC_WEBHOOK_URL;
+    const origin = window.location.origin;
+    if (origin.includes("lovable.app") && origin.includes("preview")) {
+      return PUBLIC_WEBHOOK_URL;
+    }
+    return `${origin}/api/public/whatsapp/expense`;
   }, []);
+
+  const [copiadoToken, setCopiadoToken] = useState(false);
+  function copiarToken() {
+    navigator.clipboard.writeText(VERIFY_TOKEN);
+    setCopiadoToken(true);
+    setTimeout(() => setCopiadoToken(false), 1500);
+  }
 
   async function refresh() {
     setLoading(true);
@@ -357,27 +376,66 @@ function WhatsAppPage() {
           </div>
         </section>
 
-        {/* Webhook URL */}
-        <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold">URL do webhook</h2>
-          <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
-            <span className="flex-1">{webhookUrl}</span>
-            <button
-              type="button"
-              onClick={copiarUrl}
-              className="shrink-0 rounded-md p-1.5 hover:bg-border"
-              aria-label="Copiar URL"
-            >
-              {copiado ? (
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-            </button>
+        {/* Webhook URL + Verify Token (para colar no painel da Meta) */}
+        <section className="rounded-2xl border border-border bg-card p-4 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              No painel da Meta, abra seu app de WhatsApp → Configuration → Webhook → Edit. Cole os dois campos abaixo.
+            </p>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            No painel da Meta (WhatsApp Business), configure essa URL como Callback URL e use o seu Verify Token. O endpoint aceita GET (verificação) e POST (mensagens).
-          </p>
+
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Callback URL
+            </p>
+            <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
+              <span className="flex-1">{webhookUrl}</span>
+              <button
+                type="button"
+                onClick={copiarUrl}
+                className="shrink-0 rounded-md p-1.5 hover:bg-border"
+                aria-label="Copiar URL"
+              >
+                {copiado ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Verify Token
+            </p>
+            <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
+              <span className="flex-1">{VERIFY_TOKEN}</span>
+              <button
+                type="button"
+                onClick={copiarToken}
+                className="shrink-0 rounded-md p-1.5 hover:bg-border"
+                aria-label="Copiar token"
+              >
+                {copiadoToken ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 space-y-1.5 text-[11px] text-muted-foreground">
+            <p className="font-medium text-emerald-400">Passo a passo</p>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da Meta.</li>
+              <li>Cole o Verify Token no campo <span className="font-mono">Verify token</span>.</li>
+              <li>Clique em <span className="font-medium">Verify and save</span>. A Meta fará um GET e o app responderá com o desafio.</li>
+              <li>Em <span className="font-medium">Webhook fields</span>, assine <span className="font-mono">messages</span>.</li>
+            </ol>
+          </div>
         </section>
 
         {/* Vincular números */}
