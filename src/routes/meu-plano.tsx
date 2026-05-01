@@ -281,6 +281,17 @@ function MeuPlanoPage() {
             Seu teste gratuito de 10 dias já foi utilizado.
           </p>
         )}
+        {!isAdminMaster && isCancelled && accessUntil && (
+          <div className="mt-3 rounded-xl border border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <p>
+              <strong>Assinatura cancelada.</strong> Seu acesso premium continua até{" "}
+              {new Date(accessUntil).toLocaleDateString("pt-BR")}.
+            </p>
+            <p className="mt-0.5">
+              Depois disso, os recursos premium serão bloqueados — seus dados continuam salvos.
+            </p>
+          </div>
+        )}
 
         {isAdminMaster ? (
           <div className="mt-5">
@@ -302,12 +313,31 @@ function MeuPlanoPage() {
           </div>
         ) : ativoPago ? (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+            <Button
+              variant="outline"
+              className="rounded-2xl sm:flex-1"
+              onClick={() => {
+                document
+                  .getElementById("planos-disponiveis")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
               Trocar plano
             </Button>
-            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
-              Cancelar assinatura
-            </Button>
+            {!isCancelled ? (
+              <Button
+                variant="outline"
+                className="rounded-2xl sm:flex-1 text-destructive hover:text-destructive"
+                onClick={() => setCancelOpen(true)}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancelar assinatura
+              </Button>
+            ) : (
+              <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+                Já cancelada
+              </Button>
+            )}
           </div>
         ) : (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
