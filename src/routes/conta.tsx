@@ -10,6 +10,7 @@ import {
   Building2,
   Briefcase,
   Sparkles,
+  Settings2,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
