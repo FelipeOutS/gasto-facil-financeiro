@@ -1239,6 +1239,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_alerts: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          created_at: string
+          dedupe_key: string
+          description: string | null
+          id: string
+          ignored_at: string | null
+          metadata: Json
+          period_key: string
+          priority: string
+          read_at: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string
+          dedupe_key: string
+          description?: string | null
+          id?: string
+          ignored_at?: string | null
+          metadata?: Json
+          period_key?: string
+          priority?: string
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string
+          dedupe_key?: string
+          description?: string | null
+          id?: string
+          ignored_at?: string | null
+          metadata?: Json
+          period_key?: string
+          priority?: string
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_plans: {
         Row: {
           access_until: string | null
