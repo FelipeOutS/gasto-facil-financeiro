@@ -63,7 +63,7 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     // Resumo de fatura corrente
     try {
       const resumo = resumoFaturaCartao(cartao.id);
-      const totalFatura = resumo.totalFatura ?? 0;
+      const totalFatura = resumo.usadoMes ?? 0;
       const limite = cartao.limiteTotal ?? 0;
       const usoPct = limite > 0 ? (totalFatura / limite) * 100 : 0;
 
