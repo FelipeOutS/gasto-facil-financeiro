@@ -13,6 +13,7 @@ import {
   Settings2,
   Lock,
   Sparkles,
+  Bell,
   X,
   type LucideIcon,
 } from "lucide-react";
