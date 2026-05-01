@@ -1305,6 +1305,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding: {
+        Row: {
+          account_type: string | null
+          created_at: string
+          enabled_modules: string[]
+          goals: string[]
+          onboarding_completed: boolean
+          onboarding_completed_at: string | null
+          recommended_plan: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string | null
+          created_at?: string
+          enabled_modules?: string[]
+          goals?: string[]
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          recommended_plan?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string | null
+          created_at?: string
+          enabled_modules?: string[]
+          goals?: string[]
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          recommended_plan?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_plans: {
         Row: {
           access_until: string | null

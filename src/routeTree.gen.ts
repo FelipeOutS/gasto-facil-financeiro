@@ -17,6 +17,7 @@ import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
@@ -84,6 +85,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const OrcamentoRoute = OrcamentoRouteImport.update({
   id: '/orcamento',
   path: '/orcamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeuPlanoRoute = MeuPlanoRouteImport.update({
@@ -248,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
+  '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
+  '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
+  '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/manual'
     | '/metas'
     | '/meu-plano'
+    | '/onboarding'
     | '/orcamento'
     | '/perfil'
     | '/recuperar-senha'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/manual'
     | '/metas'
     | '/meu-plano'
+    | '/onboarding'
     | '/orcamento'
     | '/perfil'
     | '/recuperar-senha'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/manual'
     | '/metas'
     | '/meu-plano'
+    | '/onboarding'
     | '/orcamento'
     | '/perfil'
     | '/recuperar-senha'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   ManualRoute: typeof ManualRoute
   MetasRoute: typeof MetasRoute
   MeuPlanoRoute: typeof MeuPlanoRoute
+  OnboardingRoute: typeof OnboardingRoute
   OrcamentoRoute: typeof OrcamentoRoute
   PerfilRoute: typeof PerfilRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
@@ -556,6 +569,13 @@ declare module '@tanstack/react-router' {
       path: '/orcamento'
       fullPath: '/orcamento'
       preLoaderRoute: typeof OrcamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meu-plano': {
@@ -776,6 +796,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManualRoute: ManualRoute,
   MetasRoute: MetasRoute,
   MeuPlanoRoute: MeuPlanoRoute,
+  OnboardingRoute: OnboardingRoute,
   OrcamentoRoute: OrcamentoRoute,
   PerfilRoute: PerfilRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
