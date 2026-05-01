@@ -447,7 +447,10 @@ function MeuPlanoPage() {
       </section>
 
       {/* Tabela de planos comerciais (sem Free) */}
-      <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+      <h3
+        id="planos-disponiveis"
+        className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         Planos disponíveis
       </h3>
       <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
