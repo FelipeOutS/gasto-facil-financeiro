@@ -30,27 +30,42 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
 
       // ---- Verification (Meta calls GET when you save the webhook URL) ----
+      // A Meta envia: ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...
+      // Devemos responder com o conteúdo PURO de hub.challenge (text/plain),
+      // status 200. Caso o token esteja errado, retornar 403.
       GET: async ({ request }) => {
-        const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
-        if (!verifyToken) {
-          return new Response("Webhook not configured", {
-            status: 503,
-            headers: corsHeaders,
-          });
-        }
+        // Token oficial do projeto. Aceita também o valor da env var
+        // (WHATSAPP_VERIFY_TOKEN) caso seja alterado no futuro.
+        const FIXED_TOKEN = "gasto_inteligente_whatsapp_2026";
+        const envToken = process.env.WHATSAPP_VERIFY_TOKEN;
+        const validTokens = new Set(
+          [FIXED_TOKEN, envToken].filter((v): v is string => !!v && v.length > 0),
+        );
+
         const url = new URL(request.url);
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
-        const challenge = url.searchParams.get("hub.challenge") ?? "";
+        const challenge = url.searchParams.get("hub.challenge");
 
-        if (mode === "subscribe" && token === verifyToken) {
-          return new Response(challenge, {
+        if (mode === "subscribe" && token && validTokens.has(token)) {
+          return new Response(challenge ?? "", {
             status: 200,
-            headers: { "Content-Type": "text/plain", ...corsHeaders },
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-store",
+              "Access-Control-Allow-Origin": "*",
+            },
           });
         }
-        return new Response("Forbidden", { status: 403, headers: corsHeaders });
+        return new Response("Invalid verify token", {
+          status: 403,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
       },
+
 
       // ---- Receiving messages ----
       POST: async ({ request }) => {
