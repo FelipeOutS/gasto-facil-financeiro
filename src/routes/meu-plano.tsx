@@ -282,11 +282,29 @@ function MeuPlanoPage() {
             )}
             {aguardando && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Finalize o pagamento para liberar os recursos do plano{" "}
+                Pagamento aguardando confirmação. Finalize o Pix para liberar{" "}
                 <strong>{PLAN_LABEL[plan]}</strong>.
               </p>
             )}
-            {!isAdminMaster && semAssinatura && (
+            {ativoPago && currentPeriodStart && currentPeriodEnd && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Plano ativo. Período:{" "}
+                {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} →{" "}
+                {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}.
+              </p>
+            )}
+            {expirado && (
+              <p className="mt-2 text-xs text-destructive">
+                Plano expirado. Regularize para voltar a usar os recursos
+                premium.
+              </p>
+            )}
+            {recusado && (
+              <p className="mt-2 text-xs text-destructive">
+                Pagamento recusado. Tente novamente.
+              </p>
+            )}
+            {!isAdminMaster && semAssinatura && !recusado && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Escolha um dos planos abaixo para liberar todos os recursos.
               </p>
