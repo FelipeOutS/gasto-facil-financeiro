@@ -100,10 +100,10 @@ function OnboardingPage() {
   }
 
   function next() {
-    setStep((s) => Math.min(5, (s + 1) as Step));
+    setStep((s) => Math.min(5, s + 1) as Step);
   }
   function back() {
-    setStep((s) => Math.max(0, (s - 1) as Step));
+    setStep((s) => Math.max(0, s - 1) as Step);
   }
 
   if (authLoading || loading) {
