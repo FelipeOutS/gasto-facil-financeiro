@@ -36,6 +36,7 @@ import {
   criarCheckoutPix,
   listarPagamentos,
   statusLabelMP,
+  verificarPagamento,
   type PaymentHistoryRow,
 } from "@/lib/payments-mp";
 import { toast } from "sonner";
@@ -79,6 +80,8 @@ function MeuPlanoPage() {
     trialUsed,
     isCancelled,
     accessUntil,
+    currentPeriodStart,
+    currentPeriodEnd,
     refresh,
   } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
@@ -89,15 +92,18 @@ function MeuPlanoPage() {
     !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
+  const expirado = !isAdminMaster && status === "expirado";
   const ativoPago =
     !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [pixCharge, setPixCharge] = useState<{
+    paymentId?: string;
     qr_code?: string | null;
     qr_code_base64?: string | null;
     ticket_url?: string | null;
   } | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
 
@@ -105,6 +111,16 @@ function MeuPlanoPage() {
     if (!user?.id) return;
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
+
+  // Sinaliza "pagamento recusado" se o último pagamento foi rejeitado
+  // e não há período pago vigente (não há plano ativo no momento).
+  const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
+  const recusado =
+    !isAdminMaster &&
+    !ativoPago &&
+    !aguardando &&
+    !isTrialActive &&
+    ["rejected", "cancelled", "refunded", "charged_back"].includes(ultimoStatus);
 
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
@@ -126,6 +142,7 @@ function MeuPlanoPage() {
         return;
       }
       setPixCharge({
+        paymentId: res.payment.id,
         qr_code: res.payment.qr_code,
         qr_code_base64: res.payment.qr_code_base64,
         ticket_url: res.payment.ticket_url,
@@ -138,6 +155,30 @@ function MeuPlanoPage() {
       toast.error("Erro ao iniciar pagamento.");
     } finally {
       setSubmitting(null);
+    }
+  }
+
+  async function checarPagamento() {
+    if (!pixCharge?.paymentId || !user?.id) return;
+    setVerifying(true);
+    try {
+      const r = await verificarPagamento(pixCharge.paymentId);
+      if (!r.ok) {
+        toast.error(r.reason);
+        return;
+      }
+      if (r.status === "approved") {
+        toast.success("Pagamento aprovado! Plano ativado.");
+        setPixCharge(null);
+      } else if (["rejected", "cancelled", "expired"].includes(r.status)) {
+        toast.error("Pagamento recusado. Tente novamente.");
+      } else {
+        toast.info("Pagamento ainda em análise. Tente novamente em instantes.");
+      }
+      await refresh();
+      void listarPagamentos(user.id).then(setHistorico);
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -241,11 +282,29 @@ function MeuPlanoPage() {
             )}
             {aguardando && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Finalize o pagamento para liberar os recursos do plano{" "}
+                Pagamento aguardando confirmação. Finalize o Pix para liberar{" "}
                 <strong>{PLAN_LABEL[plan]}</strong>.
               </p>
             )}
-            {!isAdminMaster && semAssinatura && (
+            {ativoPago && currentPeriodStart && currentPeriodEnd && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Plano ativo. Período:{" "}
+                {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} →{" "}
+                {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}.
+              </p>
+            )}
+            {expirado && (
+              <p className="mt-2 text-xs text-destructive">
+                Plano expirado. Regularize para voltar a usar os recursos
+                premium.
+              </p>
+            )}
+            {recusado && (
+              <p className="mt-2 text-xs text-destructive">
+                Pagamento recusado. Tente novamente.
+              </p>
+            )}
+            {!isAdminMaster && semAssinatura && !recusado && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Escolha um dos planos abaixo para liberar todos os recursos.
               </p>
@@ -347,7 +406,9 @@ function MeuPlanoPage() {
               disabled={submitting !== null}
             >
               <Zap className="mr-2 h-4 w-4" />
-              Assinar agora — {PLAN_LABEL[recommended]}
+              {expirado || recusado
+                ? `Regularizar pagamento — ${PLAN_LABEL[recommended]}`
+                : `Assinar agora — ${PLAN_LABEL[recommended]}`}
             </Button>
           </div>
         )}
@@ -400,6 +461,16 @@ function MeuPlanoPage() {
             >
               Abrir página de pagamento Mercado Pago
             </a>
+          )}
+          {pixCharge.paymentId && (
+            <Button
+              size="sm"
+              className="mt-3 w-full rounded-xl"
+              onClick={checarPagamento}
+              disabled={verifying}
+            >
+              {verifying ? "Verificando…" : "Já paguei, verificar pagamento"}
+            </Button>
           )}
           <p className="mt-3 text-[11px] text-muted-foreground">
             Após o pagamento ser aprovado, seu plano é ativado automaticamente.
@@ -552,54 +623,60 @@ function MeuPlanoPage() {
       </p>
 
       {/* ===== Histórico de pagamentos ===== */}
-      {!isAdminMaster && historico.length > 0 && (
+      {!isAdminMaster && (
         <section className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Histórico de pagamentos
           </h3>
-          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
-            <ul className="divide-y divide-border">
-              {historico.map((h) => {
-                const s = statusLabelMP(h.status);
-                const tone =
-                  s.tone === "ok"
-                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                    : s.tone === "warn"
-                      ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
-                      : s.tone === "danger"
-                        ? "bg-destructive/10 text-destructive border-destructive/30"
-                        : "bg-muted text-muted-foreground border-border";
-                const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
-                const dt = h.paid_at ?? h.created_at;
-                return (
-                  <li key={h.id} className="flex items-center gap-3 p-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
-                      <Receipt className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{label}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
-                        {h.method.toUpperCase()} ·{" "}
-                        {(h.amount_cents / 100).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        tone,
-                      )}
-                    >
-                      {s.label}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          {historico.length === 0 ? (
+            <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
+              Nenhum pagamento encontrado ainda.
+            </div>
+          ) : (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
+              <ul className="divide-y divide-border">
+                {historico.map((h) => {
+                  const s = statusLabelMP(h.status);
+                  const tone =
+                    s.tone === "ok"
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                      : s.tone === "warn"
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                        : s.tone === "danger"
+                          ? "bg-destructive/10 text-destructive border-destructive/30"
+                          : "bg-muted text-muted-foreground border-border";
+                  const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
+                  const dt = h.paid_at ?? h.created_at;
+                  return (
+                    <li key={h.id} className="flex items-center gap-3 p-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+                        <Receipt className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
+                          {h.method.toUpperCase()} ·{" "}
+                          {(h.amount_cents / 100).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          tone,
+                        )}
+                      >
+                        {s.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 

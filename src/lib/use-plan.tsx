@@ -36,6 +36,10 @@ type PlanState = UserPlan & {
   accessUntil: string | null;
   /** Assinatura cancelada porém ainda dentro do período pago. */
   isCancelled: boolean;
+  /** Início do período pago atual. */
+  currentPeriodStart: string | null;
+  /** Fim do período pago atual (próxima renovação manual). */
+  currentPeriodEnd: string | null;
   /** Recarrega plano e status do banco (após escolher plano, etc.). */
   refresh: () => Promise<void>;
   /** Pode acessar o recurso? Considera Admin Master, plano e teste. */
@@ -71,6 +75,8 @@ export function usePlan(): PlanState {
   const [trialUsed, setTrialUsed] = useState(false);
   const [cancelledAt, setCancelledAt] = useState<string | null>(null);
   const [accessUntil, setAccessUntil] = useState<string | null>(null);
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
@@ -86,13 +92,17 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setCurrentPeriodStart(null);
+      setCurrentPeriodEnd(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     const { data } = await supabase
       .from("user_plans")
-      .select("plano, status, trial_ends_at, trial_started_at, trial_plan_type, trial_used, cancelled_at, access_until")
+      .select(
+        "plano, status, trial_ends_at, trial_started_at, trial_plan_type, trial_used, cancelled_at, access_until, current_period_start, current_period_end",
+      )
       .eq("user_id", user.id)
       .maybeSingle();
     if (data) {
@@ -104,6 +114,12 @@ export function usePlan(): PlanState {
       setTrialUsed(Boolean((data as { trial_used?: boolean }).trial_used));
       setCancelledAt((data as { cancelled_at?: string | null }).cancelled_at ?? null);
       setAccessUntil((data as { access_until?: string | null }).access_until ?? null);
+      setCurrentPeriodStart(
+        (data as { current_period_start?: string | null }).current_period_start ?? null,
+      );
+      setCurrentPeriodEnd(
+        (data as { current_period_end?: string | null }).current_period_end ?? null,
+      );
     } else {
       setStoredRaw(null);
       setStatus("sem_assinatura");
@@ -113,6 +129,8 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setCurrentPeriodStart(null);
+      setCurrentPeriodEnd(null);
     }
     setLoading(false);
   }, [user, authLoading]);
@@ -138,8 +156,12 @@ export function usePlan(): PlanState {
   const cancelledStillActive = isCancelled && accessUntilMs > now;
   const cancelledExpired = isCancelled && accessUntilMs > 0 && accessUntilMs <= now;
 
+  // Período pago (30 dias após aprovação). Se estourou, vira expirado.
+  const periodEndMs = currentPeriodEnd ? new Date(currentPeriodEnd).getTime() : 0;
+  const periodExpired =
+    !!currentPeriodEnd && periodEndMs > 0 && periodEndMs <= now && status === "ativo";
+
   const storedPlan: PlanTier = getEffectiveUserPlan({ email: null }, storedRaw);
-  // Plano efetivo: se estiver em teste ativo, usar o trialPlan; senão plano salvo (com override admin).
   let plan: PlanTier;
   if (isAdminMaster) plan = "admin_master";
   else if (isTrialActive && trialPlan) plan = trialPlan;
@@ -152,11 +174,12 @@ export function usePlan(): PlanState {
   else if (isTrialActive) effectiveStatus = "teste";
   else if (cancelledExpired) effectiveStatus = "expirado";
   else if (cancelledStillActive) effectiveStatus = "cancelado";
+  else if (periodExpired) effectiveStatus = "expirado";
   else if (storedPlan === "sem_assinatura") effectiveStatus = "sem_assinatura";
 
   const hasActiveAccess =
     isAdminMaster ||
-    effectiveStatus === "ativo" ||
+    (effectiveStatus === "ativo" && !periodExpired) ||
     effectiveStatus === "teste" ||
     cancelledStillActive;
 
@@ -173,6 +196,8 @@ export function usePlan(): PlanState {
     cancelledAt: isAdminMaster ? null : cancelledAt,
     accessUntil: isAdminMaster ? null : accessUntil,
     isCancelled: !isAdminMaster && cancelledStillActive,
+    currentPeriodStart: isAdminMaster ? null : currentPeriodStart,
+    currentPeriodEnd: isAdminMaster ? null : currentPeriodEnd,
     loading,
     isAdminMaster,
     refresh: load,

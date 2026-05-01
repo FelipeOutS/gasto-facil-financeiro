@@ -104,6 +104,20 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
 
         if (userId && plano) {
           if (APPROVED.has(status)) {
+            const startISO = new Date().toISOString();
+            const endISO = new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000,
+            ).toISOString();
+            const update = {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              plano: plano as any,
+              status: "ativo",
+              cancelled_at: null,
+              access_until: null,
+              current_period_start: startISO,
+              current_period_end: endISO,
+              last_payment_id: String(payment.id ?? paymentId),
+            };
             const { data: existing } = await supabaseAdmin
               .from("user_plans")
               .select("user_id")
@@ -113,24 +127,22 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
               await supabaseAdmin
                 .from("user_plans")
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .update({
-                  plano: plano as any,
-                  status: "ativo",
-                  cancelled_at: null,
-                  access_until: null,
-                } as any)
+                .update(update as any)
                 .eq("user_id", userId);
             } else {
               await supabaseAdmin
                 .from("user_plans")
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .insert({ user_id: userId, plano: plano as any, status: "ativo" });
+                .insert({ user_id: userId, ...update } as any);
             }
           } else if (FAILED.has(status)) {
+            // Não bloqueia premium se ainda há período pago anterior válido —
+            // só marca o pagamento como falho. user_plans permanece como está.
             await supabaseAdmin
-              .from("user_plans")
-              .update({ status: "cancelado" })
-              .eq("user_id", userId);
+              .from("subscription_payments")
+              .update({ status })
+              .eq("provider", "mercadopago")
+              .eq("provider_payment_id", String(payment.id ?? paymentId));
           }
         }
 

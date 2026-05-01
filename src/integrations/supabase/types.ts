@@ -1244,6 +1244,9 @@ export type Database = {
           access_until: string | null
           cancelled_at: string | null
           created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          last_payment_id: string | null
           plano: Database["public"]["Enums"]["plan_tier"]
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
@@ -1257,6 +1260,9 @@ export type Database = {
           access_until?: string | null
           cancelled_at?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          last_payment_id?: string | null
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
@@ -1270,6 +1276,9 @@ export type Database = {
           access_until?: string | null
           cancelled_at?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          last_payment_id?: string | null
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null

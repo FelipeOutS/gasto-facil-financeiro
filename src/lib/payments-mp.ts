@@ -143,3 +143,36 @@ export function statusLabelMP(status: string): { label: string; tone: "ok" | "wa
     return { label: status === "rejected" ? "Recusado" : status === "expired" ? "Vencido" : "Cancelado", tone: "danger" };
   return { label: status, tone: "muted" };
 }
+
+/* ===========================================================
+ * Verificar pagamento manualmente (botão "Já paguei")
+ * =========================================================== */
+export type VerifyResult =
+  | { ok: true; status: "approved"; plano: string }
+  | { ok: true; status: "pending" | "rejected" | "cancelled" | "expired" | string }
+  | { ok: false; reason: string };
+
+export async function verificarPagamento(paymentId: string): Promise<VerifyResult> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) return { ok: false, reason: "Faça login novamente." };
+  try {
+    const res = await fetch("/api/checkout/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ paymentId }),
+    });
+    const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) return { ok: false, reason: (json.error as string) ?? "Falha ao verificar." };
+    const status = String(json.status ?? "pending");
+    if (status === "approved") {
+      return { ok: true, status: "approved", plano: String(json.plano ?? "") };
+    }
+    return { ok: true, status };
+  } catch {
+    return { ok: false, reason: "Erro de conexão." };
+  }
+}
