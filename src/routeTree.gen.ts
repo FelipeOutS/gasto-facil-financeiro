@@ -37,6 +37,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
+import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
 import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
@@ -187,6 +188,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   path: '/api/ocr-gasto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiImportInvestimentosRoute = ApiImportInvestimentosRouteImport.update({
+  id: '/api/import-investimentos',
+  path: '/api/import-investimentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiImportFaturaPdfRoute = ApiImportFaturaPdfRouteImport.update({
   id: '/api/import-fatura-pdf',
   path: '/api/import-fatura-pdf',
@@ -268,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
+  '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
+  '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/api/import-extrato': typeof ApiImportExtratoRoute
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
+  '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
+    | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/checkout/verify'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
+    | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/checkout/verify'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/api/import-extrato'
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
+    | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
     | '/api/checkout/verify'
@@ -506,6 +518,7 @@ export interface RootRouteChildren {
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
+  ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
@@ -711,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOcrGastoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/import-investimentos': {
+      id: '/api/import-investimentos'
+      path: '/api/import-investimentos'
+      fullPath: '/api/import-investimentos'
+      preLoaderRoute: typeof ApiImportInvestimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/import-fatura-pdf': {
       id: '/api/import-fatura-pdf'
       path: '/api/import-fatura-pdf'
@@ -810,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportExtratoRoute: ApiImportExtratoRoute,
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
+  ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
@@ -819,12 +840,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
