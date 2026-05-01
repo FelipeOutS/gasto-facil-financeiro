@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -8,9 +8,12 @@ import {
   Lock,
   Sparkles,
   Zap,
+  Receipt,
+  XCircle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
+import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
@@ -29,7 +32,12 @@ import {
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  criarCheckoutPix,
+  listarPagamentos,
+  statusLabelMP,
+  type PaymentHistoryRow,
+} from "@/lib/payments-mp";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/meu-plano")({
@@ -69,6 +77,8 @@ function MeuPlanoPage() {
     isTrialActive,
     trialDaysLeft,
     trialUsed,
+    isCancelled,
+    accessUntil,
     refresh,
   } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
@@ -88,16 +98,44 @@ function MeuPlanoPage() {
     qr_code_base64?: string | null;
     ticket_url?: string | null;
   } | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void listarPagamentos(user.id).then(setHistorico);
+  }, [user?.id]);
 
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
+    if (!user?.id) {
+      toast.error("Faça login para assinar.");
+      return;
+    }
     setSubmitting(tier);
     try {
-      // Pagamento real ainda não está integrado nesta versão.
-      toast.info(
-        "Assinatura em breve. Esta versão ainda não possui pagamento integrado.",
-      );
-      setPixCharge(null);
+      const res = await criarCheckoutPix(tier);
+      if (!res.ok) {
+        toast.error(res.reason);
+        setPixCharge(null);
+        return;
+      }
+      if (res.pendingIntegration) {
+        toast.info(res.message);
+        setPixCharge(null);
+        return;
+      }
+      setPixCharge({
+        qr_code: res.payment.qr_code,
+        qr_code_base64: res.payment.qr_code_base64,
+        ticket_url: res.payment.ticket_url,
+      });
+      toast.success("Cobrança Pix gerada. Pague para ativar o plano.");
+      // Atualiza estado (status → aguardando_pagamento) e histórico.
+      await refresh();
+      void listarPagamentos(user.id).then(setHistorico);
+    } catch {
+      toast.error("Erro ao iniciar pagamento.");
     } finally {
       setSubmitting(null);
     }
@@ -243,6 +281,17 @@ function MeuPlanoPage() {
             Seu teste gratuito de 10 dias já foi utilizado.
           </p>
         )}
+        {!isAdminMaster && isCancelled && accessUntil && (
+          <div className="mt-3 rounded-xl border border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <p>
+              <strong>Assinatura cancelada.</strong> Seu acesso premium continua até{" "}
+              {new Date(accessUntil).toLocaleDateString("pt-BR")}.
+            </p>
+            <p className="mt-0.5">
+              Depois disso, os recursos premium serão bloqueados — seus dados continuam salvos.
+            </p>
+          </div>
+        )}
 
         {isAdminMaster ? (
           <div className="mt-5">
@@ -264,12 +313,31 @@ function MeuPlanoPage() {
           </div>
         ) : ativoPago ? (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+            <Button
+              variant="outline"
+              className="rounded-2xl sm:flex-1"
+              onClick={() => {
+                document
+                  .getElementById("planos-disponiveis")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
               Trocar plano
             </Button>
-            <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
-              Cancelar assinatura
-            </Button>
+            {!isCancelled ? (
+              <Button
+                variant="outline"
+                className="rounded-2xl sm:flex-1 text-destructive hover:text-destructive"
+                onClick={() => setCancelOpen(true)}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancelar assinatura
+              </Button>
+            ) : (
+              <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
+                Já cancelada
+              </Button>
+            )}
           </div>
         ) : (
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -379,7 +447,10 @@ function MeuPlanoPage() {
       </section>
 
       {/* Tabela de planos comerciais (sem Free) */}
-      <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+      <h3
+        id="planos-disponiveis"
+        className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         Planos disponíveis
       </h3>
       <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -476,9 +547,61 @@ function MeuPlanoPage() {
       </section>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
-        Pagamentos via Pix e cartão pelo Mercado Pago. A cobrança real é
-        liberada assim que a integração de pagamento estiver configurada.
+        Pagamentos via Pix pelo Mercado Pago. Seu plano é ativado automaticamente
+        após a confirmação do pagamento.
       </p>
+
+      {/* ===== Histórico de pagamentos ===== */}
+      {!isAdminMaster && historico.length > 0 && (
+        <section className="mt-8">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Histórico de pagamentos
+          </h3>
+          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
+            <ul className="divide-y divide-border">
+              {historico.map((h) => {
+                const s = statusLabelMP(h.status);
+                const tone =
+                  s.tone === "ok"
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                    : s.tone === "warn"
+                      ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                      : s.tone === "danger"
+                        ? "bg-destructive/10 text-destructive border-destructive/30"
+                        : "bg-muted text-muted-foreground border-border";
+                const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
+                const dt = h.paid_at ?? h.created_at;
+                return (
+                  <li key={h.id} className="flex items-center gap-3 p-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+                      <Receipt className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{label}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
+                        {h.method.toUpperCase()} ·{" "}
+                        {(h.amount_cents / 100).toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        tone,
+                      )}
+                    >
+                      {s.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* ===== Conta e privacidade ===== */}
       <section className="mt-8">
@@ -487,6 +610,17 @@ function MeuPlanoPage() {
         </p>
         <ZonaDeRiscoCard />
       </section>
+
+      {user?.id && (
+        <CancelarAssinaturaDialog
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          userId={user.id}
+          onCancelled={() => {
+            void refresh();
+          }}
+        />
+      )}
     </MobileShell>
   );
 }

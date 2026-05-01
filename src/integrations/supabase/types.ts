@@ -1241,6 +1241,8 @@ export type Database = {
       }
       user_plans: {
         Row: {
+          access_until: string | null
+          cancelled_at: string | null
           created_at: string
           plano: Database["public"]["Enums"]["plan_tier"]
           status: Database["public"]["Enums"]["subscription_status"]
@@ -1252,6 +1254,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_until?: string | null
+          cancelled_at?: string | null
           created_at?: string
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -1263,6 +1267,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_until?: string | null
+          cancelled_at?: string | null
           created_at?: string
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
