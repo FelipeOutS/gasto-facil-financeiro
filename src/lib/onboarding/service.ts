@@ -47,7 +47,7 @@ function toState(row: Row | null, userId: string): OnboardingState {
 export async function fetchOnboarding(
   userId: string,
 ): Promise<OnboardingState> {
-  const { data } = await supabase
+  const { data } = await sb
     .from("user_onboarding" as never)
     .select(
       "user_id, account_type, goals, enabled_modules, recommended_plan, onboarding_completed, onboarding_completed_at",
@@ -78,7 +78,7 @@ export async function saveOnboarding(
       onboarding_completed_at: patch.onboarding_completed_at,
     }),
   };
-  const { data } = await supabase
+  const { data } = await sb
     .from("user_onboarding" as never)
     .upsert(payload, { onConflict: "user_id" })
     .select(
@@ -89,7 +89,7 @@ export async function saveOnboarding(
 }
 
 export async function resetOnboarding(userId: string): Promise<void> {
-  await supabase
+  await sb
     .from("user_onboarding" as never)
     .upsert(
       {
