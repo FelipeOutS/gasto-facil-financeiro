@@ -123,11 +123,60 @@ function WhatsAppPage() {
   }, []);
 
   const [copiadoToken, setCopiadoToken] = useState(false);
-  function copiarToken() {
-    navigator.clipboard.writeText(VERIFY_TOKEN);
-    setCopiadoToken(true);
-    setTimeout(() => setCopiadoToken(false), 1500);
+  async function copyToClipboardSafe(value: string): Promise<boolean> {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch {
+      // fallthrough to legacy method
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
   }
+  async function copiarToken() {
+    const ok = await copyToClipboardSafe(VERIFY_TOKEN);
+    if (ok) {
+      setCopiadoToken(true);
+      setTimeout(() => setCopiadoToken(false), 1500);
+    } else {
+      toast.error("Não foi possível copiar. Selecione manualmente.");
+    }
+  }
+
+  // Status dos secrets do WhatsApp (apenas booleans, nunca os valores).
+  const fetchConfigStatus = useServerFn(getWhatsAppConfigStatus);
+  const [configStatus, setConfigStatus] = useState<{
+    access_token: boolean;
+    phone_number_id: boolean;
+    business_account_id: boolean;
+    verify_token: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchConfigStatus()
+      .then((s) => {
+        if (alive) setConfigStatus(s);
+      })
+      .catch(() => {
+        if (alive) setConfigStatus(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [fetchConfigStatus]);
 
   async function refresh() {
     setLoading(true);
