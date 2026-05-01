@@ -113,7 +113,12 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
               await supabaseAdmin
                 .from("user_plans")
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .update({ plano: plano as any, status: "ativo" })
+                .update({
+                  plano: plano as any,
+                  status: "ativo",
+                  cancelled_at: null,
+                  access_until: null,
+                } as any)
                 .eq("user_id", userId);
             } else {
               await supabaseAdmin
