@@ -29,21 +29,28 @@ import {
   X,
   Pencil,
   Download,
+  ArrowDownUp,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   TIPOS_INVESTIMENTO,
+  TIPOS_MOVIMENTACAO,
   type TipoInvestimento,
+  type TipoMovimentacao,
   criarAtivo,
+  atualizarAtivo,
+  criarMovimentacao,
   criarImportacao,
   atualizarResumoImportacao,
+  recalcularAtivoPorMovimentacoes,
   type Ativo,
 } from "@/lib/investimentos";
 import { formatBRL } from "@/lib/format";
 
 type Origem = "b3" | "corretora" | "csv" | "pdf";
 
-type ItemBruto = {
+type PosicaoBruta = {
   nome: string | null;
   ticker: string | null;
   tipo: TipoInvestimento;
@@ -61,7 +68,27 @@ type ItemBruto = {
   confianca: "alta" | "media" | "baixa";
 };
 
-type ItemEdit = ItemBruto & {
+type MovimentacaoBruta = {
+  data: string | null;
+  tipo: TipoMovimentacao;
+  nome: string | null;
+  ticker: string | null;
+  tipoAtivo: TipoInvestimento;
+  quantidade: number | null;
+  valorUnitario: number | null;
+  valorTotal: number | null;
+  instituicao: string | null;
+  observacao: string | null;
+  confianca: "alta" | "media" | "baixa";
+};
+
+type PosicaoEdit = PosicaoBruta & {
+  _id: string;
+  _ignorado: boolean;
+  _duplicado: boolean;
+};
+
+type MovimentacaoEdit = MovimentacaoBruta & {
   _id: string;
   _ignorado: boolean;
   _duplicado: boolean;
@@ -74,28 +101,28 @@ const ORIGEM_INFO: Record<
   b3: {
     titulo: "Importar extrato da B3",
     descricao:
-      "Envie um arquivo exportado da Área do Investidor da B3. O sistema tentará identificar seus investimentos automaticamente e você poderá revisar tudo antes de salvar.",
+      "Envie um arquivo exportado da Área do Investidor da B3. Vamos identificar posições e movimentações automaticamente para você revisar antes de salvar.",
     aceita: ".pdf,.csv,.xlsx,.xls",
     tipoLog: "b3",
   },
   corretora: {
     titulo: "Importar extrato da corretora",
     descricao:
-      "Envie um extrato exportado pela sua corretora. O sistema tentará identificar ativos, valores e quantidades automaticamente.",
+      "Envie um extrato exportado pela sua corretora. Vamos identificar posições e movimentações automaticamente.",
     aceita: ".pdf,.csv,.xlsx,.xls",
     tipoLog: "corretora",
   },
   csv: {
     titulo: "Importar CSV / planilha",
     descricao:
-      "Envie um CSV ou XLSX com seus ativos. Aceitamos colunas como Ativo, Ticker, Tipo, Quantidade, Preço médio, Valor aplicado, Valor atual, Instituição e Data.",
+      "Envie um CSV ou XLSX com seus ativos ou movimentações. Vamos identificar tudo que conseguirmos para você revisar.",
     aceita: ".csv,.xlsx,.xls",
     tipoLog: "csv",
   },
   pdf: {
     titulo: "Importar PDF",
     descricao:
-      "Envie um extrato em PDF da sua corretora ou da B3. O sistema tentará identificar seus investimentos automaticamente e você poderá revisar tudo antes de salvar.",
+      "Envie um extrato em PDF da sua corretora ou da B3. Vamos identificar posições e movimentações para você revisar antes de salvar.",
     aceita: ".pdf",
     tipoLog: "pdf",
   },
@@ -136,12 +163,23 @@ async function parsePlanilha(file: File): Promise<{ colunas: string[]; linhas: s
   return { colunas, linhas };
 }
 
-function dedupKey(it: ItemBruto): string {
+function dedupKeyPosicao(it: PosicaoBruta): string {
   return [
     (it.ticker || it.nome || "").toLowerCase().trim(),
     it.tipo,
     Math.round((it.valorAplicado ?? 0) * 100),
     Math.round((it.valorAtual ?? 0) * 100),
+  ].join("|");
+}
+
+function dedupKeyMov(it: MovimentacaoBruta): string {
+  return [
+    it.data || "",
+    it.tipo,
+    (it.ticker || it.nome || "").toLowerCase().trim(),
+    Math.round((it.valorTotal ?? 0) * 100),
+    Math.round((it.quantidade ?? 0) * 100),
+    (it.instituicao || "").toLowerCase().trim(),
   ].join("|");
 }
 
@@ -166,9 +204,11 @@ export function ImportInvestimentosFlow({
   const [file, setFile] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [itens, setItens] = useState<ItemEdit[]>([]);
+  const [posicoes, setPosicoes] = useState<PosicaoEdit[]>([]);
+  const [movs, setMovs] = useState<MovimentacaoEdit[]>([]);
   const [resumo, setResumo] = useState<{
-    importados: number;
+    posImportadas: number;
+    movImportadas: number;
     ignorados: number;
     erros: number;
   } | null>(null);
@@ -180,7 +220,8 @@ export function ImportInvestimentosFlow({
       setFile(null);
       setErro(null);
       setAviso(null);
-      setItens([]);
+      setPosicoes([]);
+      setMovs([]);
       setResumo(null);
     }
   }, [open]);
@@ -194,13 +235,12 @@ export function ImportInvestimentosFlow({
     return set;
   }, [ativosExistentes]);
 
-  if (!origem) return null;
-  const info = ORIGEM_INFO[origem];
+  const info = origem ? ORIGEM_INFO[origem] : null;
 
-  function marcarDuplicados(lista: ItemBruto[]): ItemEdit[] {
+  function marcarPosicoes(lista: PosicaoBruta[]): PosicaoEdit[] {
     const seen = new Set<string>();
     return lista.map((b) => {
-      const k = dedupKey(b);
+      const k = dedupKeyPosicao(b);
       const tickerKey = `${(b.ticker || b.nome || "").toLowerCase().trim()}|${b.tipo}`;
       const dup = seen.has(k) || existentesKeys.has(tickerKey);
       seen.add(k);
@@ -208,13 +248,24 @@ export function ImportInvestimentosFlow({
     });
   }
 
+  function marcarMovs(lista: MovimentacaoBruta[]): MovimentacaoEdit[] {
+    const seen = new Set<string>();
+    return lista.map((b) => {
+      const k = dedupKeyMov(b);
+      const dup = seen.has(k);
+      seen.add(k);
+      return { ...b, _id: makeId(), _ignorado: false, _duplicado: dup };
+    });
+  }
+
   async function processar(arquivo: File) {
+    if (!origem) return;
     setErro(null);
     setAviso(null);
     setStep("processando");
     try {
       const ext = arquivo.name.split(".").pop()?.toLowerCase() || "";
-      let payload: Record<string, unknown> = { origem };
+      const payload: Record<string, unknown> = { origem };
 
       if (ext === "pdf") {
         const b64 = await fileToBase64(arquivo);
@@ -245,24 +296,42 @@ export function ImportInvestimentosFlow({
         setStep("upload");
         return;
       }
-      const brutos: ItemBruto[] = Array.isArray(data?.itens) ? data.itens : [];
-      if (brutos.length === 0) {
+      const posBrutas: PosicaoBruta[] = Array.isArray(data?.posicoes)
+        ? data.posicoes
+        : Array.isArray(data?.itens)
+        ? data.itens
+        : [];
+      const movBrutas: MovimentacaoBruta[] = Array.isArray(data?.movimentacoes)
+        ? data.movimentacoes
+        : [];
+
+      if (posBrutas.length === 0 && movBrutas.length === 0) {
         setErro(
           data?.observacao ||
-            "Não conseguimos identificar investimentos neste arquivo. Tente outro arquivo ou cadastre manualmente.",
+            "Conseguimos abrir o arquivo, mas não identificamos investimentos nem movimentações automaticamente. Você pode tentar outro arquivo ou cadastrar manualmente.",
         );
         setStep("upload");
         return;
       }
-      const marcados = marcarDuplicados(brutos);
-      setItens(marcados);
-      const naoProntos = marcados.filter(
-        (i) => i.confianca === "baixa" || (!i.valorAplicado && !i.valorAtual),
-      );
-      if (naoProntos.length > 0) {
-        setAviso(
-          "O arquivo foi lido, mas alguns dados precisam de revisão antes de importar.",
-        );
+
+      const posEdit = marcarPosicoes(posBrutas);
+      const movEdit = marcarMovs(movBrutas);
+      setPosicoes(posEdit);
+      setMovs(movEdit);
+
+      if (posBrutas.length === 0 && movBrutas.length > 0) {
+        setAviso("Encontramos movimentações no arquivo. Revise os dados antes de salvar.");
+      } else {
+        const naoProntos =
+          posEdit.filter(
+            (i) => i.confianca === "baixa" || (!i.valorAplicado && !i.valorAtual),
+          ).length +
+          movEdit.filter((m) => m.confianca === "baixa" || !m.data || !m.valorTotal).length;
+        if (naoProntos > 0) {
+          setAviso(
+            "O arquivo foi lido, mas alguns dados precisam de revisão antes de importar.",
+          );
+        }
       }
       setStep("preview");
     } catch (e) {
@@ -281,33 +350,72 @@ export function ImportInvestimentosFlow({
     }
   }
 
+  /** Encontra um ativo já existente por ticker+tipo ou nome+tipo. */
+  function encontrarAtivo(
+    poolNovos: Map<string, string>, // chave -> ativoId recém-criado
+    ticker: string | null,
+    nome: string | null,
+    tipo: TipoInvestimento,
+  ): { id: string; existente: Ativo | null } | null {
+    const tk = (ticker || "").toLowerCase().trim();
+    const nm = (nome || "").toLowerCase().trim();
+    if (tk) {
+      const poolId = poolNovos.get(`${tk}|${tipo}`);
+      if (poolId) return { id: poolId, existente: null };
+      const existente = ativosExistentes.find(
+        (a) => (a.ticker || "").toLowerCase().trim() === tk && a.tipo === tipo,
+      );
+      if (existente) return { id: existente.id, existente };
+    }
+    if (nm) {
+      const poolId = poolNovos.get(`nome:${nm}|${tipo}`);
+      if (poolId) return { id: poolId, existente: null };
+      const existente = ativosExistentes.find(
+        (a) => !a.ticker && (a.nome || "").toLowerCase().trim() === nm && a.tipo === tipo,
+      );
+      if (existente) return { id: existente.id, existente };
+    }
+    return null;
+  }
+
   async function confirmar() {
-    if (!userId) return;
-    const ativosParaSalvar = itens.filter((i) => !i._ignorado);
-    if (ativosParaSalvar.length === 0) {
+    if (!userId || !info) return;
+    const posSalvar = posicoes.filter((i) => !i._ignorado);
+    const movSalvar = movs.filter((m) => !m._ignorado && m.data && m.valorTotal);
+
+    if (posSalvar.length === 0 && movSalvar.length === 0) {
       toast.error("Nenhum item selecionado para importar.");
       return;
     }
     setStep("salvando");
-    let ok = 0;
+
+    let posOk = 0;
+    let movOk = 0;
     let falhas = 0;
     let importacaoId: string | null = null;
+
     try {
       const imp = await criarImportacao(userId, {
         tipo: info.tipoLog,
         arquivo_nome: file?.name ?? null,
         status: "concluida",
-        dados_extraidos: { total: itens.length },
+        dados_extraidos: { posicoes: posicoes.length, movimentacoes: movs.length },
       });
       importacaoId = imp.id;
     } catch (e) {
       console.error(e);
     }
-    for (const it of ativosParaSalvar) {
+
+    // mapa: chave (ticker|tipo ou nome:nome|tipo) -> ativoId
+    const novosCriados = new Map<string, string>();
+    const ativosImpactados = new Set<string>();
+
+    // 1) Salvar posições — cria ativos
+    for (const it of posSalvar) {
       try {
         const valorAplicado = Number(it.valorAplicado ?? it.valorAtual ?? 0);
         const valorAtual = Number(it.valorAtual ?? it.valorAplicado ?? 0);
-        await criarAtivo(userId, {
+        const novo = await criarAtivo(userId, {
           nome: it.nome || it.ticker || "Ativo importado",
           ticker: it.ticker,
           tipo: it.tipo,
@@ -327,27 +435,122 @@ export function ImportInvestimentosFlow({
           importacao_id: importacaoId,
           ultima_atualizacao: new Date().toISOString(),
         });
-        ok++;
+        const tk = (it.ticker || "").toLowerCase().trim();
+        const nm = (it.nome || "").toLowerCase().trim();
+        if (tk) novosCriados.set(`${tk}|${it.tipo}`, novo.id);
+        else if (nm) novosCriados.set(`nome:${nm}|${it.tipo}`, novo.id);
+        posOk++;
       } catch (e) {
         console.error(e);
         falhas++;
       }
     }
+
+    // 2) Salvar movimentações — vincula a ativo existente; se não houver, cria um esqueleto
+    for (const m of movSalvar) {
+      try {
+        let ativoId: string | null = null;
+        const found = encontrarAtivo(novosCriados, m.ticker, m.nome, m.tipoAtivo);
+        if (found) {
+          ativoId = found.id;
+        } else if (m.nome || m.ticker) {
+          // cria ativo esqueleto a partir da movimentação (ex: PDF só de movs)
+          const ehEntrada =
+            m.tipo === "compra" || m.tipo === "aplicacao";
+          const valorRef = ehEntrada ? Number(m.valorTotal || 0) : 0;
+          const novo = await criarAtivo(userId, {
+            nome: m.nome || m.ticker || "Ativo importado",
+            ticker: m.ticker,
+            tipo: m.tipoAtivo,
+            instituicao: m.instituicao,
+            quantidade: ehEntrada ? m.quantidade : null,
+            preco_medio: m.valorUnitario,
+            preco_atual: m.valorUnitario,
+            valor_aplicado: valorRef,
+            valor_atual: valorRef,
+            rentabilidade_tipo: null,
+            rentabilidade_percentual: null,
+            data_inicio: m.data,
+            data_vencimento: null,
+            liquidez: null,
+            observacao: null,
+            origem: `import_${info.tipoLog}`,
+            importacao_id: importacaoId,
+            ultima_atualizacao: new Date().toISOString(),
+          });
+          ativoId = novo.id;
+          const tk = (m.ticker || "").toLowerCase().trim();
+          const nm = (m.nome || "").toLowerCase().trim();
+          if (tk) novosCriados.set(`${tk}|${m.tipoAtivo}`, novo.id);
+          else if (nm) novosCriados.set(`nome:${nm}|${m.tipoAtivo}`, novo.id);
+        }
+
+        if (!ativoId) {
+          falhas++;
+          continue;
+        }
+
+        await criarMovimentacao(userId, {
+          ativo_id: ativoId,
+          tipo: m.tipo,
+          data: m.data!,
+          quantidade: m.quantidade,
+          valor_unitario: m.valorUnitario,
+          valor_total: Number(m.valorTotal || 0),
+          instituicao: m.instituicao,
+          observacao: m.observacao,
+          origem: `import_${info.tipoLog}`,
+          importacao_id: importacaoId ?? undefined,
+        });
+        ativosImpactados.add(ativoId);
+        movOk++;
+      } catch (e) {
+        console.error(e);
+        falhas++;
+      }
+    }
+
+    // 3) Recalcular ativos afetados por movimentações
+    for (const ativoId of ativosImpactados) {
+      try {
+        await recalcularAtivoPorMovimentacoes(userId, ativoId);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 4) Atualizar resumo da importação
     if (importacaoId) {
       try {
         await atualizarResumoImportacao(importacaoId, {
-          ativos: ok,
-          movimentacoes: 0,
+          ativos: posOk,
+          movimentacoes: movOk,
           rendimentos: 0,
         });
       } catch (e) {
         console.error(e);
       }
     }
-    const ignorados = itens.length - ativosParaSalvar.length;
-    setResumo({ importados: ok, ignorados, erros: falhas });
+
+    // marca data/última atualização para refletir no totalizador
+    if (posOk > 0) {
+      try {
+        // já feito no criarAtivo; nada a fazer
+        void atualizarAtivo;
+      } catch {
+        /* noop */
+      }
+    }
+
+    const ignorados =
+      posicoes.length + movs.length - posSalvar.length - movSalvar.length;
+    setResumo({ posImportadas: posOk, movImportadas: movOk, ignorados, erros: falhas });
     setStep("feito");
-    if (ok > 0) toast.success(`${ok} investimento(s) importado(s).`);
+    if (posOk + movOk > 0) {
+      toast.success(
+        `${posOk} posição(ões) e ${movOk} movimentação(ões) importadas.`,
+      );
+    }
     if (falhas > 0) toast.error(`${falhas} item(ns) não puderam ser salvos.`);
     onImported();
   }
@@ -374,14 +577,30 @@ export function ImportInvestimentosFlow({
     XLSX.writeFile(wb, "modelo-investimentos.xlsx");
   }
 
-  const prontos = itens.filter(
+  const posProntos = posicoes.filter(
     (i) => !i._ignorado && i.confianca !== "baixa" && (i.valorAplicado || i.valorAtual),
   ).length;
-  const revisar = itens.filter(
+  const posRevisar = posicoes.filter(
     (i) => !i._ignorado && (i.confianca === "baixa" || (!i.valorAplicado && !i.valorAtual)),
   ).length;
-  const duplicados = itens.filter((i) => !i._ignorado && i._duplicado).length;
-  const ignorados = itens.filter((i) => i._ignorado).length;
+  const posDup = posicoes.filter((i) => !i._ignorado && i._duplicado).length;
+  const movProntas = movs.filter(
+    (m) => !m._ignorado && m.data && m.valorTotal && m.confianca !== "baixa",
+  ).length;
+  const movRevisar = movs.filter(
+    (m) => !m._ignorado && (m.confianca === "baixa" || !m.data || !m.valorTotal),
+  ).length;
+  const movDup = movs.filter((m) => !m._ignorado && m._duplicado).length;
+  const totalIgnorados =
+    posicoes.filter((i) => i._ignorado).length + movs.filter((m) => m._ignorado).length;
+
+  if (!info) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md" />
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -430,12 +649,7 @@ export function ImportInvestimentosFlow({
             </div>
 
             {origem === "csv" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={baixarModelo}
-                className="w-full"
-              >
+              <Button variant="outline" size="sm" onClick={baixarModelo} className="w-full">
                 <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar modelo de planilha
               </Button>
             )}
@@ -468,23 +682,29 @@ export function ImportInvestimentosFlow({
         )}
 
         {step === "preview" && (
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-2 text-xs">
-              <Badge variant="secondary">Total: {itens.length}</Badge>
-              <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
-                Prontos: {prontos}
+              <Badge variant="secondary">
+                Posições: {posicoes.length} · Movimentações: {movs.length}
               </Badge>
-              {revisar > 0 && (
+              {posProntos + movProntas > 0 && (
+                <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
+                  Prontos: {posProntos + movProntas}
+                </Badge>
+              )}
+              {posRevisar + movRevisar > 0 && (
                 <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/15">
-                  Revisar: {revisar}
+                  Revisar: {posRevisar + movRevisar}
                 </Badge>
               )}
-              {duplicados > 0 && (
+              {posDup + movDup > 0 && (
                 <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-400 hover:bg-orange-500/15">
-                  Duplicados: {duplicados}
+                  Duplicados: {posDup + movDup}
                 </Badge>
               )}
-              {ignorados > 0 && <Badge variant="outline">Ignorados: {ignorados}</Badge>}
+              {totalIgnorados > 0 && (
+                <Badge variant="outline">Ignorados: {totalIgnorados}</Badge>
+              )}
             </div>
 
             {aviso && (
@@ -494,19 +714,55 @@ export function ImportInvestimentosFlow({
               </div>
             )}
 
-            <div className="space-y-2">
-              {itens.map((it) => (
-                <ItemCard
-                  key={it._id}
-                  item={it}
-                  onChange={(patch) =>
-                    setItens((prev) =>
-                      prev.map((p) => (p._id === it._id ? { ...p, ...patch } : p)),
-                    )
-                  }
-                />
-              ))}
-            </div>
+            {posicoes.length > 0 && (
+              <section className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  Investimentos encontrados
+                  <span className="text-xs text-muted-foreground font-normal">
+                    ({posicoes.length})
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {posicoes.map((it) => (
+                    <PosicaoCard
+                      key={it._id}
+                      item={it}
+                      onChange={(patch) =>
+                        setPosicoes((prev) =>
+                          prev.map((p) => (p._id === it._id ? { ...p, ...patch } : p)),
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {movs.length > 0 && (
+              <section className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <ArrowDownUp className="h-4 w-4 text-primary" />
+                  Movimentações encontradas
+                  <span className="text-xs text-muted-foreground font-normal">
+                    ({movs.length})
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {movs.map((m) => (
+                    <MovimentacaoCard
+                      key={m._id}
+                      item={m}
+                      onChange={(patch) =>
+                        setMovs((prev) =>
+                          prev.map((p) => (p._id === m._id ? { ...p, ...patch } : p)),
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
 
@@ -524,7 +780,8 @@ export function ImportInvestimentosFlow({
             </div>
             <div className="text-base font-semibold">Importação concluída</div>
             <div className="text-sm text-muted-foreground">
-              {resumo.importados} importado(s), {resumo.ignorados} ignorado(s)
+              {resumo.posImportadas} posição(ões), {resumo.movImportadas} movimentação(ões),{" "}
+              {resumo.ignorados} ignorado(s)
               {resumo.erros > 0 ? `, ${resumo.erros} com erro` : ""}.
             </div>
           </div>
@@ -539,14 +796,18 @@ export function ImportInvestimentosFlow({
               <Button
                 variant="outline"
                 onClick={() => {
-                  setItens([]);
+                  setPosicoes([]);
+                  setMovs([]);
                   setFile(null);
                   setStep("upload");
                 }}
               >
                 Importar outro arquivo
               </Button>
-              <Button onClick={confirmar} disabled={prontos + duplicados === 0}>
+              <Button
+                onClick={confirmar}
+                disabled={posProntos + posDup + movProntas + movDup === 0}
+              >
                 Confirmar importação
               </Button>
             </>
@@ -556,7 +817,8 @@ export function ImportInvestimentosFlow({
               <Button
                 variant="outline"
                 onClick={() => {
-                  setItens([]);
+                  setPosicoes([]);
+                  setMovs([]);
                   setFile(null);
                   setResumo(null);
                   setStep("upload");
@@ -578,12 +840,12 @@ export function ImportInvestimentosFlow({
   );
 }
 
-function ItemCard({
+function PosicaoCard({
   item,
   onChange,
 }: {
-  item: ItemEdit;
-  onChange: (patch: Partial<ItemEdit>) => void;
+  item: PosicaoEdit;
+  onChange: (patch: Partial<PosicaoEdit>) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const status = item._ignorado
@@ -749,6 +1011,191 @@ function ItemCard({
               type="date"
               value={item.dataVencimento ?? ""}
               onChange={(e) => onChange({ dataVencimento: e.target.value || null })}
+            />
+          </Field>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MovimentacaoCard({
+  item,
+  onChange,
+}: {
+  item: MovimentacaoEdit;
+  onChange: (patch: Partial<MovimentacaoEdit>) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  const precisaRevisar = item.confianca === "baixa" || !item.data || !item.valorTotal;
+  const status = item._ignorado
+    ? { label: "Ignorado", cls: "bg-muted text-muted-foreground" }
+    : item._duplicado
+    ? {
+        label: "Possível duplicado",
+        cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+      }
+    : precisaRevisar
+    ? {
+        label: "Precisa revisar",
+        cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+      }
+    : {
+        label: "Pronto",
+        cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+      };
+
+  const tipoLabel =
+    TIPOS_MOVIMENTACAO.find((t) => t.id === item.tipo)?.label || item.tipo;
+
+  return (
+    <div
+      className={`rounded-xl border border-border/60 p-3 ${
+        item._ignorado ? "opacity-50" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="text-[10px]">
+              {tipoLabel}
+            </Badge>
+            <div className="font-medium text-sm truncate">
+              {item.nome || item.ticker || "—"}
+            </div>
+            {item.ticker && (
+              <Badge variant="outline" className="text-[10px]">
+                {item.ticker}
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-[10px]">
+              {TIPOS_INVESTIMENTO.find((t) => t.id === item.tipoAtivo)?.label ||
+                item.tipoAtivo}
+            </Badge>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${status.cls}`}>
+              {status.label}
+            </span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+            {item.data && <span>{item.data}</span>}
+            {item.quantidade != null && <span>Qtd: {item.quantidade}</span>}
+            {item.valorUnitario != null && (
+              <span>Unit.: {formatBRL(item.valorUnitario)}</span>
+            )}
+            {item.valorTotal != null && (
+              <span>Total: {formatBRL(item.valorTotal)}</span>
+            )}
+            {item.instituicao && <span>{item.instituicao}</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setEditando((v) => !v)}
+            title="Editar"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onChange({ _ignorado: !item._ignorado })}
+            title={item._ignorado ? "Restaurar" : "Ignorar"}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {editando && (
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <Field label="Tipo da movimentação">
+            <Select
+              value={item.tipo}
+              onValueChange={(v) => onChange({ tipo: v as TipoMovimentacao })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS_MOVIMENTACAO.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Data">
+            <Input
+              type="date"
+              value={item.data ?? ""}
+              onChange={(e) => onChange({ data: e.target.value || null })}
+            />
+          </Field>
+          <Field label="Nome do ativo">
+            <Input
+              value={item.nome ?? ""}
+              onChange={(e) => onChange({ nome: e.target.value })}
+            />
+          </Field>
+          <Field label="Ticker">
+            <Input
+              value={item.ticker ?? ""}
+              onChange={(e) => onChange({ ticker: e.target.value.toUpperCase() })}
+            />
+          </Field>
+          <Field label="Tipo do ativo">
+            <Select
+              value={item.tipoAtivo}
+              onValueChange={(v) => onChange({ tipoAtivo: v as TipoInvestimento })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS_INVESTIMENTO.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Instituição">
+            <Input
+              value={item.instituicao ?? ""}
+              onChange={(e) => onChange({ instituicao: e.target.value })}
+            />
+          </Field>
+          <Field label="Quantidade">
+            <Input
+              type="number"
+              value={item.quantidade ?? ""}
+              onChange={(e) =>
+                onChange({ quantidade: e.target.value ? Number(e.target.value) : null })
+              }
+            />
+          </Field>
+          <Field label="Valor unitário">
+            <Input
+              type="number"
+              value={item.valorUnitario ?? ""}
+              onChange={(e) =>
+                onChange({ valorUnitario: e.target.value ? Number(e.target.value) : null })
+              }
+            />
+          </Field>
+          <Field label="Valor total">
+            <Input
+              type="number"
+              value={item.valorTotal ?? ""}
+              onChange={(e) =>
+                onChange({ valorTotal: e.target.value ? Number(e.target.value) : null })
+              }
             />
           </Field>
         </div>
