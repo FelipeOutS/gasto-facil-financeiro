@@ -406,7 +406,9 @@ function MeuPlanoPage() {
               disabled={submitting !== null}
             >
               <Zap className="mr-2 h-4 w-4" />
-              Assinar agora — {PLAN_LABEL[recommended]}
+              {expirado || recusado
+                ? `Regularizar pagamento — ${PLAN_LABEL[recommended]}`
+                : `Assinar agora — ${PLAN_LABEL[recommended]}`}
             </Button>
           </div>
         )}
