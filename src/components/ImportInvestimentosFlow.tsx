@@ -185,9 +185,6 @@ export function ImportInvestimentosFlow({
     }
   }, [open]);
 
-  if (!origem) return null;
-  const info = ORIGEM_INFO[origem];
-
   const existentesKeys = useMemo(() => {
     const set = new Set<string>();
     for (const a of ativosExistentes) {
@@ -196,6 +193,9 @@ export function ImportInvestimentosFlow({
     }
     return set;
   }, [ativosExistentes]);
+
+  if (!origem) return null;
+  const info = ORIGEM_INFO[origem];
 
   function marcarDuplicados(lista: ItemBruto[]): ItemEdit[] {
     const seen = new Set<string>();
