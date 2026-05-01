@@ -305,10 +305,14 @@ function WhatsAppPage() {
     }
   }
 
-  function copiarUrl() {
-    navigator.clipboard.writeText(webhookUrl);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 1500);
+  async function copiarUrl() {
+    const ok = await copyToClipboardSafe(webhookUrl);
+    if (ok) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1500);
+    } else {
+      toast.error("Não foi possível copiar. Selecione manualmente.");
+    }
   }
 
   const [limpando, setLimpando] = useState(false);
