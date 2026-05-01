@@ -36,6 +36,7 @@ import {
   criarCheckoutPix,
   listarPagamentos,
   statusLabelMP,
+  verificarPagamento,
   type PaymentHistoryRow,
 } from "@/lib/payments-mp";
 import { toast } from "sonner";
