@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -8,9 +8,12 @@ import {
   Lock,
   Sparkles,
   Zap,
+  Receipt,
+  XCircle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
+import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
@@ -29,7 +32,12 @@ import {
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  criarCheckoutPix,
+  listarPagamentos,
+  statusLabelMP,
+  type PaymentHistoryRow,
+} from "@/lib/payments-mp";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/meu-plano")({
