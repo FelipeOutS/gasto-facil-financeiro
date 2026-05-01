@@ -36,6 +36,10 @@ type PlanState = UserPlan & {
   accessUntil: string | null;
   /** Assinatura cancelada porém ainda dentro do período pago. */
   isCancelled: boolean;
+  /** Início do período pago atual. */
+  currentPeriodStart: string | null;
+  /** Fim do período pago atual (próxima renovação manual). */
+  currentPeriodEnd: string | null;
   /** Recarrega plano e status do banco (após escolher plano, etc.). */
   refresh: () => Promise<void>;
   /** Pode acessar o recurso? Considera Admin Master, plano e teste. */
