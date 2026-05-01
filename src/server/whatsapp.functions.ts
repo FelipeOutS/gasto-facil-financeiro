@@ -14,7 +14,6 @@ function normTel(raw: string): string {
  * "Configurado" / "Não configurado".
  */
 export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const has = (v: string | undefined | null) =>
       typeof v === "string" && v.trim().length > 0;
