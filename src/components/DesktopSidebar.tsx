@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Lock,
   HandCoins,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
