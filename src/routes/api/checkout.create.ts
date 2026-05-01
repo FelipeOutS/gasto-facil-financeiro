@@ -133,7 +133,14 @@ export const Route = createFileRoute("/api/checkout/create")({
             description: `Assinatura — ${info.name}`,
             payment_method_id: method === "pix" ? "pix" : undefined,
             payer: { email: user.email ?? `user-${user.id}@example.com` },
-            metadata: { user_id: user.id, plano },
+            metadata: {
+              user_id: user.id,
+              plano,
+              plan_type: plano,
+              plan_name: info.name,
+              amount: info.cents / 100,
+              source: "gasto_inteligente",
+            },
           }),
         });
 
