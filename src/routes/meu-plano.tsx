@@ -623,54 +623,60 @@ function MeuPlanoPage() {
       </p>
 
       {/* ===== Histórico de pagamentos ===== */}
-      {!isAdminMaster && historico.length > 0 && (
+      {!isAdminMaster && (
         <section className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Histórico de pagamentos
           </h3>
-          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
-            <ul className="divide-y divide-border">
-              {historico.map((h) => {
-                const s = statusLabelMP(h.status);
-                const tone =
-                  s.tone === "ok"
-                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                    : s.tone === "warn"
-                      ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
-                      : s.tone === "danger"
-                        ? "bg-destructive/10 text-destructive border-destructive/30"
-                        : "bg-muted text-muted-foreground border-border";
-                const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
-                const dt = h.paid_at ?? h.created_at;
-                return (
-                  <li key={h.id} className="flex items-center gap-3 p-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
-                      <Receipt className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{label}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
-                        {h.method.toUpperCase()} ·{" "}
-                        {(h.amount_cents / 100).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        tone,
-                      )}
-                    >
-                      {s.label}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          {historico.length === 0 ? (
+            <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
+              Nenhum pagamento encontrado ainda.
+            </div>
+          ) : (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
+              <ul className="divide-y divide-border">
+                {historico.map((h) => {
+                  const s = statusLabelMP(h.status);
+                  const tone =
+                    s.tone === "ok"
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                      : s.tone === "warn"
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                        : s.tone === "danger"
+                          ? "bg-destructive/10 text-destructive border-destructive/30"
+                          : "bg-muted text-muted-foreground border-border";
+                  const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
+                  const dt = h.paid_at ?? h.created_at;
+                  return (
+                    <li key={h.id} className="flex items-center gap-3 p-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+                        <Receipt className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
+                          {h.method.toUpperCase()} ·{" "}
+                          {(h.amount_cents / 100).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          tone,
+                        )}
+                      >
+                        {s.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 
