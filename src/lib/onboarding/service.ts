@@ -48,7 +48,7 @@ export async function fetchOnboarding(
   userId: string,
 ): Promise<OnboardingState> {
   const { data } = await sb
-    .from("user_onboarding" as never)
+    .from("user_onboarding")
     .select(
       "user_id, account_type, goals, enabled_modules, recommended_plan, onboarding_completed, onboarding_completed_at",
     )
@@ -79,7 +79,7 @@ export async function saveOnboarding(
     }),
   };
   const { data } = await sb
-    .from("user_onboarding" as never)
+    .from("user_onboarding")
     .upsert(payload, { onConflict: "user_id" })
     .select(
       "user_id, account_type, goals, enabled_modules, recommended_plan, onboarding_completed, onboarding_completed_at",
@@ -90,7 +90,7 @@ export async function saveOnboarding(
 
 export async function resetOnboarding(userId: string): Promise<void> {
   await sb
-    .from("user_onboarding" as never)
+    .from("user_onboarding")
     .upsert(
       {
         user_id: userId,
