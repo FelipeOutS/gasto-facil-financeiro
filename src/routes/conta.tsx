@@ -200,6 +200,15 @@ function ContaPage() {
         </Button>
       </div>
 
+      <div className="mt-3">
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/onboarding">
+            <Settings2 className="mr-2 h-4 w-4" />
+            Refazer configuração inicial
+          </Link>
+        </Button>
+      </div>
+
       <div className="mt-auto pt-8">
         <Button
           variant="outline"
