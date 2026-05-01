@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { getWhatsAppConfigStatus } from "@/server/whatsapp.functions";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
@@ -121,11 +123,60 @@ function WhatsAppPage() {
   }, []);
 
   const [copiadoToken, setCopiadoToken] = useState(false);
-  function copiarToken() {
-    navigator.clipboard.writeText(VERIFY_TOKEN);
-    setCopiadoToken(true);
-    setTimeout(() => setCopiadoToken(false), 1500);
+  async function copyToClipboardSafe(value: string): Promise<boolean> {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch {
+      // fallthrough to legacy method
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
   }
+  async function copiarToken() {
+    const ok = await copyToClipboardSafe(VERIFY_TOKEN);
+    if (ok) {
+      setCopiadoToken(true);
+      setTimeout(() => setCopiadoToken(false), 1500);
+    } else {
+      toast.error("Não foi possível copiar. Selecione manualmente.");
+    }
+  }
+
+  // Status dos secrets do WhatsApp (apenas booleans, nunca os valores).
+  const fetchConfigStatus = useServerFn(getWhatsAppConfigStatus);
+  const [configStatus, setConfigStatus] = useState<{
+    access_token: boolean;
+    phone_number_id: boolean;
+    business_account_id: boolean;
+    verify_token: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchConfigStatus()
+      .then((s) => {
+        if (alive) setConfigStatus(s);
+      })
+      .catch(() => {
+        if (alive) setConfigStatus(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [fetchConfigStatus]);
 
   async function refresh() {
     setLoading(true);
@@ -254,10 +305,14 @@ function WhatsAppPage() {
     }
   }
 
-  function copiarUrl() {
-    navigator.clipboard.writeText(webhookUrl);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 1500);
+  async function copiarUrl() {
+    const ok = await copyToClipboardSafe(webhookUrl);
+    if (ok) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1500);
+    } else {
+      toast.error("Não foi possível copiar. Selecione manualmente.");
+    }
   }
 
   const [limpando, setLimpando] = useState(false);
@@ -362,10 +417,6 @@ function WhatsAppPage() {
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-card-elevated p-2.5">
-              <p className="text-muted-foreground">Verify token</p>
-              <p className="mt-0.5 font-medium">Configurado no servidor ✓</p>
-            </div>
-            <div className="rounded-lg bg-card-elevated p-2.5">
               <p className="text-muted-foreground">Última mensagem</p>
               <p className="mt-0.5 font-medium num">
                 {ultimaMsg
@@ -373,6 +424,75 @@ function WhatsAppPage() {
                   : "—"}
               </p>
             </div>
+            <div className="rounded-lg bg-card-elevated p-2.5">
+              <p className="text-muted-foreground">Números vinculados</p>
+              <p className="mt-0.5 font-medium num">{links.length}</p>
+            </div>
+          </div>
+
+          {/* Status dos secrets do WhatsApp (apenas presença, nunca o valor). */}
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Secrets do servidor
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+              {[
+                { key: "access_token", label: "WHATSAPP_ACCESS_TOKEN" },
+                { key: "phone_number_id", label: "WHATSAPP_PHONE_NUMBER_ID" },
+                {
+                  key: "business_account_id",
+                  label: "WHATSAPP_BUSINESS_ACCOUNT_ID",
+                },
+                { key: "verify_token", label: "WHATSAPP_VERIFY_TOKEN" },
+              ].map((row) => {
+                const ok = configStatus
+                  ? configStatus[row.key as keyof typeof configStatus]
+                  : null;
+                return (
+                  <li
+                    key={row.key}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2"
+                  >
+                    <span className="font-mono text-[11px] truncate">
+                      {row.label}
+                    </span>
+                    {ok === null ? (
+                      <Badge
+                        variant="outline"
+                        className="border-border text-muted-foreground text-[10px]"
+                      >
+                        verificando…
+                      </Badge>
+                    ) : ok ? (
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500/40 text-emerald-400 text-[10px]"
+                      >
+                        Token configurado
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="border-rose-500/40 text-rose-400 text-[10px]"
+                      >
+                        Token não configurado
+                      </Badge>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {configStatus && !configStatus.access_token && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <p>
+                  Configure o secret{" "}
+                  <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> no
+                  Lovable/Supabase para ativar o envio de mensagens pelo
+                  WhatsApp.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
