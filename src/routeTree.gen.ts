@@ -40,6 +40,7 @@ import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-f
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
+import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
@@ -199,6 +200,11 @@ const ApiImportContaRoute = ApiImportContaRouteImport.update({
   path: '/api/import-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
+  id: '/api/checkout/verify',
+  path: '/api/checkout/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCheckoutCreateRoute = ApiCheckoutCreateRouteImport.update({
   id: '/api/checkout/create',
   path: '/api/checkout/create',
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
+  '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
 }
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
+    | '/api/checkout/verify'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
   fileRoutesByTo: FileRoutesByTo
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
+    | '/api/checkout/verify'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
   id:
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/ocr-gasto'
     | '/api/checkout/create'
+    | '/api/checkout/verify'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
   fileRoutesById: FileRoutesById
@@ -470,6 +482,7 @@ export interface RootRouteChildren {
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
+  ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
 }
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/checkout/verify': {
+      id: '/api/checkout/verify'
+      path: '/api/checkout/verify'
+      fullPath: '/api/checkout/verify'
+      preLoaderRoute: typeof ApiCheckoutVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/checkout/create': {
       id: '/api/checkout/create'
       path: '/api/checkout/create'
@@ -750,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
+  ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
 }
