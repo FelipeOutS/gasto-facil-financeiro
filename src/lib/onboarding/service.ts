@@ -6,6 +6,11 @@ import type {
   OnboardingState,
 } from "./types";
 
+// `user_onboarding` ainda não está nos types gerados — usamos cast para
+// liberar acesso até o regen automático.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
+
 type Row = {
   user_id: string;
   account_type: string | null;
