@@ -637,7 +637,13 @@ function InvestimentosPage() {
         onSaved={() => { setOpenAdd(false); setEditing(null); reload(); }}
       />
 
-      <ImportDialog open={openImport} onOpenChange={setOpenImport} />
+      <ImportDialog
+        open={openImport}
+        onOpenChange={setOpenImport}
+        userId={userId}
+        ativos={ativos}
+        onImported={reload}
+      />
 
       <HistoricoImportacoesDialog
         open={openHistorico}
