@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { getWhatsAppConfigStatus } from "@/server/whatsapp.functions";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
