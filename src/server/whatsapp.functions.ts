@@ -8,6 +8,24 @@ function normTel(raw: string): string {
   return raw.replace(/\D/g, "");
 }
 
+/**
+ * Retorna apenas o status (boolean) dos secrets do WhatsApp.
+ * NUNCA retorna os valores. Usado no painel admin para mostrar
+ * "Configurado" / "Não configurado".
+ */
+export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const has = (v: string | undefined | null) =>
+      typeof v === "string" && v.trim().length > 0;
+    return {
+      access_token: has(process.env.WHATSAPP_ACCESS_TOKEN),
+      phone_number_id: has(process.env.WHATSAPP_PHONE_NUMBER_ID),
+      business_account_id: has(process.env.WHATSAPP_BUSINESS_ACCOUNT_ID),
+      verify_token: has(process.env.WHATSAPP_VERIFY_TOKEN),
+    };
+  });
+
 export const listWhatsAppLinks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -215,4 +233,66 @@ export const deleteWhatsAppMessageLog = createServerFn({ method: "POST" })
       .eq("id", data.messageId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Envia uma mensagem de teste real pelo WhatsApp Cloud API usando os
+ * secrets do servidor. Falha cedo (e claramente) se faltar configuração.
+ * O token NUNCA é retornado ao cliente — apenas status do envio.
+ */
+export const enviarMensagemTesteWhatsApp = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        telefone: z.string().min(8).max(20),
+        texto: z.string().min(1).max(1000),
+      })
+      .parse(d),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data }) => {
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    if (!token) {
+      throw new Error(
+        "Configure o secret WHATSAPP_ACCESS_TOKEN no Lovable/Supabase para ativar o envio de mensagens pelo WhatsApp.",
+      );
+    }
+    if (!phoneId) {
+      throw new Error(
+        "Configure o secret WHATSAPP_PHONE_NUMBER_ID para enviar mensagens.",
+      );
+    }
+    const to = normTel(data.telefone);
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/${phoneId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to,
+          type: "text",
+          text: { body: data.texto },
+        }),
+      },
+    );
+    const ok = res.ok;
+    let detail: unknown = null;
+    try {
+      detail = await res.json();
+    } catch {
+      // ignore
+    }
+    // Não logar nem retornar o token. Retornar apenas status genérico.
+    if (!ok) {
+      const msg =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (detail as any)?.error?.message ?? `HTTP ${res.status}`;
+      return { sent: false, status: res.status, error: msg };
+    }
+    return { sent: true, status: res.status };
   });
