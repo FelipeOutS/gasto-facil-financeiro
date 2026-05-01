@@ -75,6 +75,8 @@ export function usePlan(): PlanState {
   const [trialUsed, setTrialUsed] = useState(false);
   const [cancelledAt, setCancelledAt] = useState<string | null>(null);
   const [accessUntil, setAccessUntil] = useState<string | null>(null);
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
@@ -90,13 +92,17 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setCurrentPeriodStart(null);
+      setCurrentPeriodEnd(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     const { data } = await supabase
       .from("user_plans")
-      .select("plano, status, trial_ends_at, trial_started_at, trial_plan_type, trial_used, cancelled_at, access_until")
+      .select(
+        "plano, status, trial_ends_at, trial_started_at, trial_plan_type, trial_used, cancelled_at, access_until, current_period_start, current_period_end",
+      )
       .eq("user_id", user.id)
       .maybeSingle();
     if (data) {
@@ -108,6 +114,12 @@ export function usePlan(): PlanState {
       setTrialUsed(Boolean((data as { trial_used?: boolean }).trial_used));
       setCancelledAt((data as { cancelled_at?: string | null }).cancelled_at ?? null);
       setAccessUntil((data as { access_until?: string | null }).access_until ?? null);
+      setCurrentPeriodStart(
+        (data as { current_period_start?: string | null }).current_period_start ?? null,
+      );
+      setCurrentPeriodEnd(
+        (data as { current_period_end?: string | null }).current_period_end ?? null,
+      );
     } else {
       setStoredRaw(null);
       setStatus("sem_assinatura");
@@ -117,6 +129,8 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setCurrentPeriodStart(null);
+      setCurrentPeriodEnd(null);
     }
     setLoading(false);
   }, [user, authLoading]);
