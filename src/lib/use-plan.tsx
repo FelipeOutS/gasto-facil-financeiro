@@ -156,8 +156,12 @@ export function usePlan(): PlanState {
   const cancelledStillActive = isCancelled && accessUntilMs > now;
   const cancelledExpired = isCancelled && accessUntilMs > 0 && accessUntilMs <= now;
 
+  // Período pago (30 dias após aprovação). Se estourou, vira expirado.
+  const periodEndMs = currentPeriodEnd ? new Date(currentPeriodEnd).getTime() : 0;
+  const periodExpired =
+    !!currentPeriodEnd && periodEndMs > 0 && periodEndMs <= now && status === "ativo";
+
   const storedPlan: PlanTier = getEffectiveUserPlan({ email: null }, storedRaw);
-  // Plano efetivo: se estiver em teste ativo, usar o trialPlan; senão plano salvo (com override admin).
   let plan: PlanTier;
   if (isAdminMaster) plan = "admin_master";
   else if (isTrialActive && trialPlan) plan = trialPlan;
@@ -170,11 +174,12 @@ export function usePlan(): PlanState {
   else if (isTrialActive) effectiveStatus = "teste";
   else if (cancelledExpired) effectiveStatus = "expirado";
   else if (cancelledStillActive) effectiveStatus = "cancelado";
+  else if (periodExpired) effectiveStatus = "expirado";
   else if (storedPlan === "sem_assinatura") effectiveStatus = "sem_assinatura";
 
   const hasActiveAccess =
     isAdminMaster ||
-    effectiveStatus === "ativo" ||
+    (effectiveStatus === "ativo" && !periodExpired) ||
     effectiveStatus === "teste" ||
     cancelledStillActive;
 
@@ -191,6 +196,8 @@ export function usePlan(): PlanState {
     cancelledAt: isAdminMaster ? null : cancelledAt,
     accessUntil: isAdminMaster ? null : accessUntil,
     isCancelled: !isAdminMaster && cancelledStillActive,
+    currentPeriodStart: isAdminMaster ? null : currentPeriodStart,
+    currentPeriodEnd: isAdminMaster ? null : currentPeriodEnd,
     loading,
     isAdminMaster,
     refresh: load,
