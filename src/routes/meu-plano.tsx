@@ -80,6 +80,8 @@ function MeuPlanoPage() {
     trialUsed,
     isCancelled,
     accessUntil,
+    currentPeriodStart,
+    currentPeriodEnd,
     refresh,
   } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
@@ -90,15 +92,19 @@ function MeuPlanoPage() {
     !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
+  const expirado = !isAdminMaster && status === "expirado";
+  const recusado = !isAdminMaster && status === "rejected";
   const ativoPago =
     !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [pixCharge, setPixCharge] = useState<{
+    paymentId?: string;
     qr_code?: string | null;
     qr_code_base64?: string | null;
     ticket_url?: string | null;
   } | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
 
@@ -127,6 +133,7 @@ function MeuPlanoPage() {
         return;
       }
       setPixCharge({
+        paymentId: res.payment.id,
         qr_code: res.payment.qr_code,
         qr_code_base64: res.payment.qr_code_base64,
         ticket_url: res.payment.ticket_url,
@@ -139,6 +146,30 @@ function MeuPlanoPage() {
       toast.error("Erro ao iniciar pagamento.");
     } finally {
       setSubmitting(null);
+    }
+  }
+
+  async function checarPagamento() {
+    if (!pixCharge?.paymentId || !user?.id) return;
+    setVerifying(true);
+    try {
+      const r = await verificarPagamento(pixCharge.paymentId);
+      if (!r.ok) {
+        toast.error(r.reason);
+        return;
+      }
+      if (r.status === "approved") {
+        toast.success("Pagamento aprovado! Plano ativado.");
+        setPixCharge(null);
+      } else if (["rejected", "cancelled", "expired"].includes(r.status)) {
+        toast.error("Pagamento recusado. Tente novamente.");
+      } else {
+        toast.info("Pagamento ainda em análise. Tente novamente em instantes.");
+      }
+      await refresh();
+      void listarPagamentos(user.id).then(setHistorico);
+    } finally {
+      setVerifying(false);
     }
   }
 
