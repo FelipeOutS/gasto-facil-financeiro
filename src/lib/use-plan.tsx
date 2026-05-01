@@ -63,6 +63,8 @@ export function usePlan(): PlanState {
   const [trialStartedAt, setTrialStartedAt] = useState<string | null>(null);
   const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(null);
   const [trialUsed, setTrialUsed] = useState(false);
+  const [cancelledAt, setCancelledAt] = useState<string | null>(null);
+  const [accessUntil, setAccessUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
