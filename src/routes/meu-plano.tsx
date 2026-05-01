@@ -77,6 +77,8 @@ function MeuPlanoPage() {
     isTrialActive,
     trialDaysLeft,
     trialUsed,
+    isCancelled,
+    accessUntil,
     refresh,
   } = usePlan();
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
@@ -96,16 +98,44 @@ function MeuPlanoPage() {
     qr_code_base64?: string | null;
     ticket_url?: string | null;
   } | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void listarPagamentos(user.id).then(setHistorico);
+  }, [user?.id]);
 
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
+    if (!user?.id) {
+      toast.error("Faça login para assinar.");
+      return;
+    }
     setSubmitting(tier);
     try {
-      // Pagamento real ainda não está integrado nesta versão.
-      toast.info(
-        "Assinatura em breve. Esta versão ainda não possui pagamento integrado.",
-      );
-      setPixCharge(null);
+      const res = await criarCheckoutPix(tier);
+      if (!res.ok) {
+        toast.error(res.reason);
+        setPixCharge(null);
+        return;
+      }
+      if (res.pendingIntegration) {
+        toast.info(res.message);
+        setPixCharge(null);
+        return;
+      }
+      setPixCharge({
+        qr_code: res.payment.qr_code,
+        qr_code_base64: res.payment.qr_code_base64,
+        ticket_url: res.payment.ticket_url,
+      });
+      toast.success("Cobrança Pix gerada. Pague para ativar o plano.");
+      // Atualiza estado (status → aguardando_pagamento) e histórico.
+      await refresh();
+      void listarPagamentos(user.id).then(setHistorico);
+    } catch {
+      toast.error("Erro ao iniciar pagamento.");
     } finally {
       setSubmitting(null);
     }
