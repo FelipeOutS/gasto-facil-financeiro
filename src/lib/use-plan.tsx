@@ -30,6 +30,12 @@ type PlanState = UserPlan & {
   isTrialActive: boolean;
   /** Dias restantes no teste (>=0). */
   trialDaysLeft: number;
+  /** Data ISO em que a assinatura foi cancelada. */
+  cancelledAt: string | null;
+  /** Até quando o acesso premium continua válido após cancelamento. */
+  accessUntil: string | null;
+  /** Assinatura cancelada porém ainda dentro do período pago. */
+  isCancelled: boolean;
   /** Recarrega plano e status do banco (após escolher plano, etc.). */
   refresh: () => Promise<void>;
   /** Pode acessar o recurso? Considera Admin Master, plano e teste. */
