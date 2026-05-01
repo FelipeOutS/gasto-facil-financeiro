@@ -93,7 +93,6 @@ function MeuPlanoPage() {
     (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const expirado = !isAdminMaster && status === "expirado";
-  const recusado = !isAdminMaster && status === "rejected";
   const ativoPago =
     !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
