@@ -406,9 +406,43 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [imagemKey, setImagemKey] = useState<MetaCoverKey>("objetivo");
+  const [imagemKey, setImagemKey] = useState<string>("objetivo");
   /** Indica se o usuário escolheu manualmente — caso contrário, mantemos auto-match. */
   const [imagemManual, setImagemManual] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUploadCover(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 5MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Faça login novamente.");
+        return;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("metas-covers")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) {
+        toast.error("Falha ao enviar a imagem.");
+        return;
+      }
+      setImagemKey(`${CUSTOM_COVER_PREFIX}${path}`);
+      setImagemManual(true);
+      toast.success("Imagem enviada.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   // Reset state when dialog opens
   useEffect(() => {
