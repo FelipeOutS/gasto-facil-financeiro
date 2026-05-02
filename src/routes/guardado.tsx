@@ -137,12 +137,36 @@ function GuardadoPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
-        <p className="text-xs font-medium text-muted-foreground">Total guardado</p>
-        <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"} em {porBanco.size} {porBanco.size === 1 ? "banco" : "bancos"}
-        </p>
+      <section className="relative mt-4 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-card-elevated p-5 shadow-elevated animate-rise">
+        <div
+          className="pointer-events-none absolute -right-6 -top-6 h-48 w-48 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 70%)" }}
+        />
+        <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, #06b6d4aa, transparent 70%)" }}
+        />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+              <ShieldCheck className="h-3 w-3 text-success" />
+              Sua reserva, protegida
+            </div>
+            <p className="mt-3 text-xs font-medium text-muted-foreground">Total guardado</p>
+            <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"} em {porBanco.size} {porBanco.size === 1 ? "banco" : "bancos"}
+            </p>
+          </div>
+          <img
+            src={guardadoHero}
+            alt=""
+            aria-hidden
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="h-24 w-24 shrink-0 select-none object-contain drop-shadow-[0_8px_24px_rgba(139,92,246,0.35)] sm:h-28 sm:w-28"
+          />
+        </div>
       </section>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
