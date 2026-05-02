@@ -16,7 +16,14 @@ import {
   AlertTriangle,
   Target,
   RefreshCw,
+  Download,
+  Printer,
+  CalendarRange,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   PieChart,
   Pie,
@@ -86,7 +93,7 @@ export const Route = createFileRoute("/relatorios")({
   component: RelatoriosPage,
 });
 
-type Periodo = "mes" | "anterior" | "3m" | "6m" | "ano";
+type Periodo = "mes" | "anterior" | "3m" | "6m" | "trimestre" | "semestre" | "ano" | "custom";
 
 function RelatoriosPage() {
   const ready = useBootstrap();
@@ -95,6 +102,7 @@ function RelatoriosPage() {
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
   const [periodo, setPeriodo] = useState<Periodo>("mes");
+  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [showResumo, setShowResumo] = useState(false);
   const [resumoSeed, setResumoSeed] = useState(0);
 
@@ -160,31 +168,97 @@ function RelatoriosPage() {
 
   // Histórico de N meses (para gráfico linha do saldo)
   const historicoMeses = useMemo(() => {
-    const n = periodo === "6m" ? 6 : periodo === "3m" ? 3 : periodo === "ano" ? 12 : 6;
-    const arr: Array<{ label: string; mes: number; ano: number; receitas: number; despesas: number; saldo: number }> = [];
-    let m = ym.mes,
-      a = ym.ano;
-    // construir do passado para o atual
     const stack: Array<{ mes: number; ano: number }> = [];
-    for (let i = 0; i < n; i++) {
-      stack.unshift({ mes: m, ano: a });
-      const p = mesAnterior(m, a);
-      m = p.mes;
-      a = p.ano;
+    if (periodo === "custom" && customRange.from && customRange.to) {
+      const from = customRange.from;
+      const to = customRange.to;
+      let cm = from.getMonth() + 1;
+      let ca = from.getFullYear();
+      const endKey = to.getFullYear() * 12 + to.getMonth();
+      while (ca * 12 + cm - 1 <= endKey) {
+        stack.push({ mes: cm, ano: ca });
+        cm++;
+        if (cm > 12) { cm = 1; ca++; }
+        if (stack.length > 36) break;
+      }
+    } else {
+      const n =
+        periodo === "6m" || periodo === "semestre" ? 6 :
+        periodo === "3m" || periodo === "trimestre" ? 3 :
+        periodo === "ano" ? 12 : 6;
+      let m = ym.mes, a = ym.ano;
+      for (let i = 0; i < n; i++) {
+        stack.unshift({ mes: m, ano: a });
+        const p = mesAnterior(m, a);
+        m = p.mes;
+        a = p.ano;
+      }
     }
-    for (const s of stack) {
+    return stack.map((s) => {
       const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
-      arr.push({
-        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
+      return {
+        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
         mes: s.mes,
         ano: s.ano,
         receitas: r.totalReceitas,
         despesas: r.totalDespesas,
         saldo: r.saldo,
-      });
+      };
+    });
+  }, [ym, periodo, customRange, gastos, receitas, contas, movMetas, categorias, guardado]);
+
+  // Totais agregados do período (multi-mês)
+  const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
+  const totaisPeriodo = useMemo(() => {
+    return historicoMeses.reduce(
+      (acc, m) => ({
+        receitas: acc.receitas + m.receitas,
+        despesas: acc.despesas + m.despesas,
+        saldo: acc.saldo + m.saldo,
+      }),
+      { receitas: 0, despesas: 0, saldo: 0 },
+    );
+  }, [historicoMeses]);
+
+  const periodoLabel = useMemo(() => {
+    if (periodo === "custom" && customRange.from && customRange.to) {
+      return `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`;
     }
-    return arr;
-  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias, guardado]);
+    if (periodo === "trimestre") return "Últimos 3 meses";
+    if (periodo === "semestre") return "Últimos 6 meses";
+    if (periodo === "ano") return "Últimos 12 meses";
+    if (periodo === "3m") return "Últimos 3 meses";
+    if (periodo === "6m") return "Últimos 6 meses";
+    return formatMonthYear(ym.ano, ym.mes);
+  }, [periodo, customRange, ym]);
+
+  function exportCSV() {
+    const rows: string[] = [];
+    rows.push("Período;" + periodoLabel);
+    rows.push("");
+    rows.push("Mês;Receitas;Despesas;Saldo");
+    for (const m of historicoMeses) {
+      rows.push(`${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`);
+    }
+    rows.push("");
+    rows.push("Totais;" + totaisPeriodo.receitas.toFixed(2) + ";" + totaisPeriodo.despesas.toFixed(2) + ";" + totaisPeriodo.saldo.toFixed(2));
+    rows.push("");
+    rows.push("Gastos por categoria (mês de referência)");
+    rows.push("Categoria;Valor;%");
+    for (const c of resumo.porCategoria) {
+      rows.push(`${c.nome};${c.valor.toFixed(2)};${c.pct.toFixed(1)}`);
+    }
+    const csv = "\uFEFF" + rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-${periodoLabel.replace(/[^\w-]+/g, "_")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -240,31 +314,99 @@ function RelatoriosPage() {
         </div>
       </header>
 
-      {/* Filtros de período */}
-      <div className="mt-3 -mx-1 flex gap-2 overflow-x-auto px-1 scrollbar-none">
-        {(
-          [
-            { id: "mes", label: "Mês atual" },
-            { id: "anterior", label: "Mês anterior" },
-            { id: "3m", label: "Últimos 3 meses" },
-            { id: "6m", label: "Últimos 6 meses" },
-            { id: "ano", label: "Ano" },
-          ] as Array<{ id: Periodo; label: string }>
-        ).map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriodo(p.id)}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-              periodo === p.id
-                ? "border-brand bg-brand-soft text-brand-on-soft"
-                : "border-border bg-card text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Filtros de período + Ações */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 print:hidden">
+        <div className="-mx-1 flex flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
+          {(
+            [
+              { id: "mes", label: "Mês atual" },
+              { id: "anterior", label: "Mês anterior" },
+              { id: "trimestre", label: "Trimestre" },
+              { id: "semestre", label: "Semestre" },
+              { id: "ano", label: "Ano" },
+            ] as Array<{ id: Periodo; label: string }>
+          ).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriodo(p.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                periodo === p.id
+                  ? "border-brand bg-brand-soft text-brand-on-soft"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                  periodo === "custom"
+                    ? "border-brand bg-brand-soft text-brand-on-soft"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <CalendarRange className="h-3.5 w-3.5" />
+                {periodo === "custom" && customRange.from && customRange.to
+                  ? `${format(customRange.from, "dd/MM")} – ${format(customRange.to, "dd/MM")}`
+                  : "Personalizado"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                locale={ptBR}
+                selected={customRange as any}
+                onSelect={(r: any) => {
+                  setCustomRange(r ?? {});
+                  if (r?.from && r?.to) setPeriodo("custom");
+                }}
+                numberOfMonths={2}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
+            <Printer className="h-3.5 w-3.5" /> Imprimir
+          </Button>
+        </div>
       </div>
+
+      {/* Totais do período (multi-mês) */}
+      {(isMultiPeriod) && historicoMeses.length > 1 && (
+        <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Totais do período</p>
+              <p className="text-sm font-medium">{periodoLabel} · {historicoMeses.length} meses</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receitas</p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>
+            </div>
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Despesas</p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">{formatBRL(totaisPeriodo.despesas)}</p>
+            </div>
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
+              <p className={cn("mt-0.5 text-lg font-bold tabular-nums", totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand")}>
+                {formatBRL(totaisPeriodo.saldo)}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== KPIs principais ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
