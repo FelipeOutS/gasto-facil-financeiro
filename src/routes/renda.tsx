@@ -854,15 +854,15 @@ function RendaPage() {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="h-40 w-40 shrink-0">
+              <div className="h-32 w-32 shrink-0 sm:h-36 sm:w-36">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={composicao}
                       dataKey="valor"
                       nameKey="label"
-                      innerRadius={42}
-                      outerRadius={68}
+                      innerRadius={36}
+                      outerRadius={58}
                       paddingAngle={2}
                       stroke="none"
                     >
@@ -882,15 +882,15 @@ function RendaPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <ul className="flex-1 space-y-1.5 text-xs">
+              <ul className="min-w-0 flex-1 space-y-1.5 text-xs">
                 {composicao.slice(0, 5).map((c, i) => (
-                  <li key={c.tipo} className="flex items-center gap-2">
+                  <li key={c.tipo} className="flex items-center gap-2 min-w-0">
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ background: c.cor || PIE_FALLBACK[i % PIE_FALLBACK.length] }}
                     />
-                    <span className="flex-1 truncate text-muted-foreground">{c.label}</span>
-                    <span className="num font-semibold">
+                    <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.label}</span>
+                    <span className="num shrink-0 font-semibold tabular-nums">
                       {totalMes > 0 ? `${((c.valor / totalMes) * 100).toFixed(0)}%` : "—"}
                     </span>
                   </li>

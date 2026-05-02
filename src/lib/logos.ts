@@ -15,7 +15,7 @@ import itauUrl from "/public/logos/bancos/banco-itau.svg?url";
 import c6Url from "/public/logos/bancos/Logo_C6_Bank.svg?url";
 import caixaUrl from "/public/logos/bancos/logo-caixa.svg?url";
 import santanderUrl from "/public/logos/bancos/logo-santander.svg?url";
-import mpUrl from "/public/logos/bancos/mercado-pago.svg?url";
+import mpUrl from "/public/logos/bancos/mercadopago-branco.svg?url";
 import nubankUrl from "/public/logos/bancos/nubank.svg?url";
 import picpayUrl from "/public/logos/bancos/picpay.svg?url";
 import willUrl from "/public/logos/bancos/will-bank.svg?url";
