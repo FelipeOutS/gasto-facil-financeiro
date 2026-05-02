@@ -853,16 +853,16 @@ function RendaPage() {
               Sem dados neste mês.
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <div className="h-32 w-32 shrink-0 sm:h-36 sm:w-36">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+              <div className="h-28 w-28 shrink-0 sm:h-32 sm:w-32">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={composicao}
                       dataKey="valor"
                       nameKey="label"
-                      innerRadius={36}
-                      outerRadius={58}
+                      innerRadius={32}
+                      outerRadius={52}
                       paddingAngle={2}
                       stroke="none"
                     >
@@ -882,15 +882,15 @@ function RendaPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <ul className="min-w-0 flex-1 space-y-1.5 text-xs">
+              <ul className="w-full min-w-0 flex-1 space-y-1.5 text-[11px] sm:text-xs">
                 {composicao.slice(0, 5).map((c, i) => (
-                  <li key={c.tipo} className="flex items-center gap-2 min-w-0">
+                  <li key={c.tipo} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ background: c.cor || PIE_FALLBACK[i % PIE_FALLBACK.length] }}
                     />
-                    <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.label}</span>
-                    <span className="num shrink-0 font-semibold tabular-nums">
+                    <span className="text-muted-foreground break-words">{c.label}</span>
+                    <span className="num ml-auto shrink-0 font-semibold tabular-nums">
                       {totalMes > 0 ? `${((c.valor / totalMes) * 100).toFixed(0)}%` : "—"}
                     </span>
                   </li>
