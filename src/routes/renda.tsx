@@ -613,12 +613,14 @@ function RendaPage() {
               value={salarioMes}
               icon={Briefcase}
               accent="text-success"
+              total={totalMes}
             />
             <MiniStat
               label="Renda extra"
               value={extraMes}
               icon={Coins}
               accent="text-[color:var(--cat-pix)]"
+              total={totalMes}
             />
             <MiniStat
               label="Recorrentes"
@@ -632,6 +634,7 @@ function RendaPage() {
               value={outrasMes}
               icon={Wallet}
               accent="text-[color:var(--cat-presentes)]"
+              total={totalMes}
             />
           </div>
         </motion.section>
