@@ -432,6 +432,14 @@ function Index() {
         </Button>
       </Link>
 
+      {/* ===== Calendário financeiro ===== */}
+      <SectionLabel>Calendário financeiro</SectionLabel>
+      <CalendarioFinanceiro
+        ano={ym.ano}
+        mes={ym.mes}
+        onChangeMonth={changeMonth}
+      />
+
       {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
