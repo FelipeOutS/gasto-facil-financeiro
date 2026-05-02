@@ -93,7 +93,7 @@ export const Route = createFileRoute("/relatorios")({
   component: RelatoriosPage,
 });
 
-type Periodo = "mes" | "anterior" | "3m" | "6m" | "ano";
+type Periodo = "mes" | "anterior" | "3m" | "6m" | "trimestre" | "semestre" | "ano" | "custom";
 
 function RelatoriosPage() {
   const ready = useBootstrap();
