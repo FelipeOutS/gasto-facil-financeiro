@@ -818,6 +818,12 @@ function ComparativoCard({
     destructive: "text-destructive bg-destructive/10 border-destructive/30",
     muted: "text-muted-foreground bg-muted border-border",
   }[tone];
+  const pct =
+    Math.abs(anterior) > 0.005
+      ? (delta / Math.abs(anterior)) * 100
+      : atual !== 0
+        ? null
+        : 0;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 animate-rise">
@@ -826,7 +832,9 @@ function ComparativoCard({
       <p className="mt-0.5 text-xs text-muted-foreground">Anterior: {formatBRL(anterior)}</p>
       <div className={cn("mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", toneCls)}>
         <Icon className="h-3.5 w-3.5" />
-        {delta === 0 ? "Sem variação" : `${subiu ? "+" : ""}${formatBRL(delta)}`}
+        {delta === 0
+          ? "Sem variação"
+          : `${subiu ? "+" : ""}${formatBRL(delta)}${pct !== null ? ` · ${subiu ? "+" : ""}${pct.toFixed(1)}%` : ""}`}
       </div>
     </div>
   );
