@@ -26,6 +26,7 @@ import {
   Tooltip as RTooltip,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { CalendarioFinanceiro } from "@/components/CalendarioFinanceiro";
 import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
@@ -64,7 +65,7 @@ import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Gasto Inteligente — Resumo do mês" }],
+    meta: [{ title: "Gasto Inteligente — Dashboard" }],
   }),
   component: Index,
 });
@@ -430,6 +431,14 @@ function Index() {
           Lançar gasto
         </Button>
       </Link>
+
+      {/* ===== Calendário financeiro ===== */}
+      <SectionLabel>Calendário financeiro</SectionLabel>
+      <CalendarioFinanceiro
+        ano={ym.ano}
+        mes={ym.mes}
+        onChangeMonth={changeMonth}
+      />
 
       {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
       <SectionLabel>Visão financeira</SectionLabel>

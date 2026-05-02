@@ -6,7 +6,7 @@ import { useAlertaContas } from "@/lib/contas-alertas";
 import { MoreSheet, MORE_PATHS } from "@/components/MoreSheet";
 
 const TABS = [
-  { to: "/", label: "Início", icon: Home },
+  { to: "/", label: "Dashboard", icon: Home },
   { to: "/gastos", label: "Gastos", icon: List },
   { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/metas", label: "Metas", icon: Target },
