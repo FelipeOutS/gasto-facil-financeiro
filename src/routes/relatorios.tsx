@@ -102,6 +102,7 @@ function RelatoriosPage() {
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
   const [periodo, setPeriodo] = useState<Periodo>("mes");
+  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [showResumo, setShowResumo] = useState(false);
   const [resumoSeed, setResumoSeed] = useState(0);
 
