@@ -432,23 +432,26 @@ function Index() {
         </Button>
       </Link>
 
-      {/* ===== Calendário financeiro ===== */}
-      <SectionLabel>Calendário financeiro</SectionLabel>
-      <CalendarioFinanceiro
-        ano={ym.ano}
-        mes={ym.mes}
-        onChangeMonth={changeMonth}
-      />
-
-      {/* ===== Linha 2: Fluxo de caixa + Transações recentes ===== */}
+      {/* ===== Linha 2: Visão financeira (60%) + Calendário financeiro (40%) ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
-        <div className="flex min-w-0 lg:col-span-7 xl:col-span-8">
+        <div className="flex min-w-0 lg:col-span-7">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
         </div>
-        <div className="flex min-w-0 lg:col-span-5 xl:col-span-4">
-          <RecentTransactionsCard ultimos={ultimos} />
+        <div className="flex min-w-0 lg:col-span-5">
+          <CalendarioFinanceiro
+            ano={ym.ano}
+            mes={ym.mes}
+            onChangeMonth={changeMonth}
+            compact
+          />
         </div>
+      </section>
+
+      {/* ===== Transações recentes (linha cheia) ===== */}
+      <SectionLabel>Transações recentes</SectionLabel>
+      <section className="min-w-0">
+        <RecentTransactionsCard ultimos={ultimos} />
       </section>
 
       {/* ===== Linha 3: Alertas financeiros + (Limite mensal / Minha renda) ===== */}
