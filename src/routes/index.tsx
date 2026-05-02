@@ -26,6 +26,7 @@ import {
   Tooltip as RTooltip,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { CalendarioFinanceiro } from "@/components/CalendarioFinanceiro";
 import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
