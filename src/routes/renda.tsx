@@ -773,14 +773,29 @@ function RendaPage() {
       <section className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-5">
         {/* Evolução 6 meses */}
         <div className="rounded-3xl border border-border bg-card p-4 shadow-sm lg:col-span-3">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Evolução
               </p>
               <h3 className="text-sm font-bold">Últimos 6 meses</h3>
             </div>
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            {(() => {
+              const valores = evolucao6m.map((e) => e.total);
+              const meses = valores.filter((v) => v > 0).length;
+              const media = meses > 0 ? valores.reduce((s, v) => s + v, 0) / meses : 0;
+              const pico = Math.max(0, ...valores);
+              return (
+                <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
+                  <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    Média: <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
+                  </span>
+                  <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    Pico: <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
+                  </span>
+                </div>
+              );
+            })()}
           </div>
           <div className="h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
