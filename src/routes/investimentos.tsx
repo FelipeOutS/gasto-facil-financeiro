@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import {
   TIPOS_INVESTIMENTO,
