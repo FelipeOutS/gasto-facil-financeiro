@@ -188,7 +188,7 @@ export function CalendarioFinanceiro({
 
   const eventosDoDia = diaSelecionado ? (eventosPorDia.get(diaSelecionado) ?? []) : [];
   const dataSelecionadaLabel = diaSelecionado
-    ? parseDateLocal(diaSelecionado).toLocaleDateString("pt-BR", {
+    ? (parseDateLocal(diaSelecionado) ?? new Date()).toLocaleDateString("pt-BR", {
         weekday: "long",
         day: "2-digit",
         month: "long",
@@ -230,13 +230,13 @@ export function CalendarioFinanceiro({
         <div className="rounded-lg border border-border bg-background/40 px-2.5 py-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A pagar</p>
           <p className="mt-0.5 font-semibold text-amber-300">
-            <Money valueNum={resumoMes.pagar} />
+            <Money value={resumoMes.pagar} />
           </p>
         </div>
         <div className="rounded-lg border border-border bg-background/40 px-2.5 py-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A receber</p>
           <p className="mt-0.5 font-semibold text-sky-300">
-            <Money valueNum={resumoMes.receber} />
+            <Money value={resumoMes.receber} />
           </p>
         </div>
         <div className="rounded-lg border border-border bg-background/40 px-2.5 py-2">
@@ -385,7 +385,7 @@ export function CalendarioFinanceiro({
             <ul className="mt-2 space-y-1.5">
               {proximos.map((ev) => {
                 const info = statusInfo(ev.status, ev.tipo);
-                const dataFmt = parseDateLocal(ev.iso).toLocaleDateString("pt-BR", {
+                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString("pt-BR", {
                   day: "2-digit",
                   month: "short",
                 });
