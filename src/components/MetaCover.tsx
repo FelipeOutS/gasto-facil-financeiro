@@ -15,6 +15,35 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Prefixo para chaves customizadas (imagens enviadas pelo usuário ao bucket). */
+export const CUSTOM_COVER_PREFIX = "custom:";
+
+/** Verifica se a chave aponta para upload de usuário. */
+export function isCustomCoverKey(key?: string | null): boolean {
+  return typeof key === "string" && key.startsWith(CUSTOM_COVER_PREFIX);
+}
+
+/** Extrai o path do bucket a partir da chave customizada. */
+export function getCustomCoverPath(key?: string | null): string | null {
+  if (!isCustomCoverKey(key)) return null;
+  return (key as string).slice(CUSTOM_COVER_PREFIX.length);
+}
+
+/** Cache em memória para signed URLs (evita re-fetch a cada render). */
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+async function getCustomCoverSignedUrl(path: string): Promise<string | null> {
+  const cached = signedUrlCache.get(path);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+  const { data, error } = await supabase.storage
+    .from("metas-covers")
+    .createSignedUrl(path, 60 * 60); // 1h
+  if (error || !data?.signedUrl) return null;
+  signedUrlCache.set(path, { url: data.signedUrl, expiresAt: Date.now() + 55 * 60_000 });
+  return data.signedUrl;
+}
 
 export type MetaCoverKey =
   | "viagem_internacional"
