@@ -15,6 +15,35 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Prefixo para chaves customizadas (imagens enviadas pelo usuário ao bucket). */
+export const CUSTOM_COVER_PREFIX = "custom:";
+
+/** Verifica se a chave aponta para upload de usuário. */
+export function isCustomCoverKey(key?: string | null): boolean {
+  return typeof key === "string" && key.startsWith(CUSTOM_COVER_PREFIX);
+}
+
+/** Extrai o path do bucket a partir da chave customizada. */
+export function getCustomCoverPath(key?: string | null): string | null {
+  if (!isCustomCoverKey(key)) return null;
+  return (key as string).slice(CUSTOM_COVER_PREFIX.length);
+}
+
+/** Cache em memória para signed URLs (evita re-fetch a cada render). */
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+async function getCustomCoverSignedUrl(path: string): Promise<string | null> {
+  const cached = signedUrlCache.get(path);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+  const { data, error } = await supabase.storage
+    .from("metas-covers")
+    .createSignedUrl(path, 60 * 60); // 1h
+  if (error || !data?.signedUrl) return null;
+  signedUrlCache.set(path, { url: data.signedUrl, expiresAt: Date.now() + 55 * 60_000 });
+  return data.signedUrl;
+}
 
 export type MetaCoverKey =
   | "viagem_internacional"
@@ -149,23 +178,46 @@ export function MetaCover({
   alt?: string;
   className?: string;
 }) {
-  const url = metaCoverUrl(coverKey);
+  const isCustom = isCustomCoverKey(coverKey);
+  const [customUrl, setCustomUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (isCustom) {
+      const path = getCustomCoverPath(coverKey);
+      if (path) {
+        getCustomCoverSignedUrl(path).then((u) => {
+          if (!cancelled) setCustomUrl(u);
+        });
+      }
+    } else {
+      setCustomUrl(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [coverKey, isCustom]);
+
+  const url = isCustom ? customUrl ?? "" : metaCoverUrl(coverKey);
+
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>
-      <img
-        src={url}
-        alt={alt ?? "Imagem da meta"}
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          // fallback inline para a imagem de objetivo se o id falhar
-          const fb = META_COVER_URL.objetivo;
-          if ((e.currentTarget as HTMLImageElement).src !== fb) {
-            (e.currentTarget as HTMLImageElement).src = fb;
-          }
-        }}
-      />
+      {url && (
+        <img
+          src={url}
+          alt={alt ?? "Imagem da meta"}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            const fb = META_COVER_URL.objetivo;
+            if ((e.currentTarget as HTMLImageElement).src !== fb) {
+              (e.currentTarget as HTMLImageElement).src = fb;
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
+

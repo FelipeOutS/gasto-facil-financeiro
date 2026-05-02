@@ -18,8 +18,12 @@ import {
   MetaCover,
   getMetaCoverKey,
   META_COVER_OPTIONS,
+  CUSTOM_COVER_PREFIX,
+  isCustomCoverKey,
   type MetaCoverKey,
 } from "@/components/MetaCover";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
@@ -402,9 +406,43 @@ function MetaFormDialog({
   const [colorHex, setColorHex] = useState(META_COLORS[0]);
   const [bancoId, setBancoId] = useState<string>("nenhum");
   const [valorStr, setValorStr] = useState("");
-  const [imagemKey, setImagemKey] = useState<MetaCoverKey>("objetivo");
+  const [imagemKey, setImagemKey] = useState<string>("objetivo");
   /** Indica se o usuário escolheu manualmente — caso contrário, mantemos auto-match. */
   const [imagemManual, setImagemManual] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUploadCover(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 5MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Faça login novamente.");
+        return;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("metas-covers")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) {
+        toast.error("Falha ao enviar a imagem.");
+        return;
+      }
+      setImagemKey(`${CUSTOM_COVER_PREFIX}${path}`);
+      setImagemManual(true);
+      toast.success("Imagem enviada.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -427,7 +465,7 @@ function MetaFormDialog({
       setDescricao(baseMeta.descricao ?? "");
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
-      const persistida = baseMeta.imagemKey as MetaCoverKey | undefined;
+      const persistida = baseMeta.imagemKey;
       setImagemKey(persistida ?? getMetaCoverKey(baseMeta.nome, baseMeta.descricao));
       setImagemManual(!!persistida);
     }
@@ -630,6 +668,30 @@ function MetaFormDialog({
               <div className="mt-2 overflow-hidden rounded-2xl border border-border">
                 <MetaCover coverKey={imagemKey} className="h-28 w-full" />
               </div>
+
+              <label
+                className={cn(
+                  "mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card-elevated/40 px-3 py-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground",
+                  uploading && "pointer-events-none opacity-60",
+                )}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {uploading ? "Enviando..." : "Enviar imagem própria (até 5MB)"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUploadCover(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Ou escolha uma sugestão
+              </p>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
                 {META_COVER_OPTIONS.map((opt) => {
                   const active = imagemKey === opt.key;
@@ -661,7 +723,11 @@ function MetaFormDialog({
                 })}
               </div>
               <p className="mt-1.5 text-[11px] text-muted-foreground">
-                {imagemManual ? "Imagem escolhida manualmente." : "Sugerida automaticamente pelo nome da meta."}
+                {isCustomCoverKey(imagemKey)
+                  ? "Imagem própria enviada."
+                  : imagemManual
+                    ? "Imagem escolhida manualmente."
+                    : "Sugerida automaticamente pelo nome da meta."}
               </p>
             </div>
             <div>
