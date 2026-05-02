@@ -18,8 +18,12 @@ import {
   MetaCover,
   getMetaCoverKey,
   META_COVER_OPTIONS,
+  CUSTOM_COVER_PREFIX,
+  isCustomCoverKey,
   type MetaCoverKey,
 } from "@/components/MetaCover";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
