@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import {
   TIPOS_INVESTIMENTO,
@@ -1410,43 +1411,106 @@ function HistoricoImportacoesDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Confirmar exclusão */}
+      {/* Confirmar exclusão — modal premium com 2 caminhos claros */}
       <Dialog open={!!confirmar} onOpenChange={(v) => !v && !excluindo && setConfirmar(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Deseja excluir esta importação?</DialogTitle>
-            <DialogDescription>
-              Você pode excluir apenas o histórico da importação ou excluir também os investimentos,
-              movimentações e rendimentos criados por ela.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 text-amber-500 p-2.5 text-xs">
-            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>
-              Apenas ativos, movimentações e rendimentos vinculados a esta importação serão removidos.
-              Investimentos cadastrados manualmente não são afetados.
-            </span>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
+          {/* Cabeçalho com ícone destaque */}
+          <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-destructive/10 via-transparent to-transparent border-b border-border/60">
+            <div className="flex items-start gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-destructive/15 text-destructive shadow-sm">
+                <Trash2 className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <DialogHeader className="space-y-1 text-left">
+                  <DialogTitle className="text-lg leading-tight">
+                    Excluir esta importação?
+                  </DialogTitle>
+                  <DialogDescription className="text-sm">
+                    Escolha como deseja remover esta importação dos seus registros.
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 flex-col sm:flex-row">
-            <Button variant="outline" onClick={() => setConfirmar(null)} disabled={excluindo}>
+          {/* Opções como cards selecionáveis */}
+          <div className="px-6 py-5 space-y-3">
+            {/* Opção 1: somente histórico */}
+            <button
+              type="button"
+              onClick={() => !excluindo && handleExcluir("historico")}
+              disabled={excluindo}
+              className={cn(
+                "group w-full flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-all",
+                "hover:border-brand/60 hover:bg-card-elevated hover:shadow-md",
+                "disabled:opacity-60 disabled:cursor-not-allowed",
+              )}
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground group-hover:bg-brand-soft group-hover:text-brand-on-soft transition-colors">
+                <History className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm">Excluir apenas histórico</p>
+                <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                  Remove o registro desta importação da lista de histórico.
+                  Os ativos, movimentações e rendimentos criados por ela{" "}
+                  <strong className="text-foreground">permanecem</strong> na sua carteira.
+                </p>
+              </div>
+            </button>
+
+            {/* Opção 2: tudo relacionado — destacada como destrutiva */}
+            <button
+              type="button"
+              onClick={() => !excluindo && handleExcluir("tudo")}
+              disabled={excluindo}
+              className={cn(
+                "group w-full flex items-start gap-3 rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 text-left transition-all",
+                "hover:border-destructive hover:bg-destructive/10 hover:shadow-lg hover:shadow-destructive/10",
+                "disabled:opacity-60 disabled:cursor-not-allowed",
+              )}
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-destructive/15 text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm text-destructive">
+                  Excluir tudo relacionado
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                  Remove o registro <strong className="text-foreground">e</strong> os
+                  ativos, movimentações e rendimentos que esta importação criou.
+                  Esta ação não pode ser desfeita.
+                </p>
+              </div>
+            </button>
+
+            {/* Aviso de segurança */}
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-3">
+              <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+              <p className="text-xs text-amber-200/90 leading-relaxed">
+                <strong className="text-amber-300">Investimentos cadastrados manualmente
+                não são afetados</strong> — apenas itens vinculados a esta importação
+                serão removidos.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30">
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmar(null)}
+              disabled={excluindo}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleExcluir("historico")}
-              disabled={excluindo}
-            >
-              Excluir apenas histórico
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => handleExcluir("tudo")}
-              disabled={excluindo}
-            >
-              {excluindo ? "Excluindo…" : "Excluir tudo relacionado"}
-            </Button>
+            {excluindo && (
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
+                Excluindo…
+              </span>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
