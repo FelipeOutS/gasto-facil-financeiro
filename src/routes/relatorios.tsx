@@ -381,7 +381,7 @@ function RelatoriosPage() {
       </div>
 
       {/* Totais do período (multi-mês) */}
-      {(isMultiPeriod || periodo === "custom") && historicoMeses.length > 1 && (
+      {(isMultiPeriod) && historicoMeses.length > 1 && (
         <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div>
