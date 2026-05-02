@@ -168,31 +168,97 @@ function RelatoriosPage() {
 
   // Histórico de N meses (para gráfico linha do saldo)
   const historicoMeses = useMemo(() => {
-    const n = periodo === "6m" ? 6 : periodo === "3m" ? 3 : periodo === "ano" ? 12 : 6;
-    const arr: Array<{ label: string; mes: number; ano: number; receitas: number; despesas: number; saldo: number }> = [];
-    let m = ym.mes,
-      a = ym.ano;
-    // construir do passado para o atual
     const stack: Array<{ mes: number; ano: number }> = [];
-    for (let i = 0; i < n; i++) {
-      stack.unshift({ mes: m, ano: a });
-      const p = mesAnterior(m, a);
-      m = p.mes;
-      a = p.ano;
+    if (periodo === "custom" && customRange.from && customRange.to) {
+      const from = customRange.from;
+      const to = customRange.to;
+      let cm = from.getMonth() + 1;
+      let ca = from.getFullYear();
+      const endKey = to.getFullYear() * 12 + to.getMonth();
+      while (ca * 12 + cm - 1 <= endKey) {
+        stack.push({ mes: cm, ano: ca });
+        cm++;
+        if (cm > 12) { cm = 1; ca++; }
+        if (stack.length > 36) break;
+      }
+    } else {
+      const n =
+        periodo === "6m" || periodo === "semestre" ? 6 :
+        periodo === "3m" || periodo === "trimestre" ? 3 :
+        periodo === "ano" ? 12 : 6;
+      let m = ym.mes, a = ym.ano;
+      for (let i = 0; i < n; i++) {
+        stack.unshift({ mes: m, ano: a });
+        const p = mesAnterior(m, a);
+        m = p.mes;
+        a = p.ano;
+      }
     }
-    for (const s of stack) {
+    return stack.map((s) => {
       const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
-      arr.push({
-        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
+      return {
+        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
         mes: s.mes,
         ano: s.ano,
         receitas: r.totalReceitas,
         despesas: r.totalDespesas,
         saldo: r.saldo,
-      });
+      };
+    });
+  }, [ym, periodo, customRange, gastos, receitas, contas, movMetas, categorias, guardado]);
+
+  // Totais agregados do período (multi-mês)
+  const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
+  const totaisPeriodo = useMemo(() => {
+    return historicoMeses.reduce(
+      (acc, m) => ({
+        receitas: acc.receitas + m.receitas,
+        despesas: acc.despesas + m.despesas,
+        saldo: acc.saldo + m.saldo,
+      }),
+      { receitas: 0, despesas: 0, saldo: 0 },
+    );
+  }, [historicoMeses]);
+
+  const periodoLabel = useMemo(() => {
+    if (periodo === "custom" && customRange.from && customRange.to) {
+      return `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`;
     }
-    return arr;
-  }, [ym, periodo, gastos, receitas, contas, movMetas, categorias, guardado]);
+    if (periodo === "trimestre") return "Últimos 3 meses";
+    if (periodo === "semestre") return "Últimos 6 meses";
+    if (periodo === "ano") return "Últimos 12 meses";
+    if (periodo === "3m") return "Últimos 3 meses";
+    if (periodo === "6m") return "Últimos 6 meses";
+    return formatMonthYear(ym.ano, ym.mes);
+  }, [periodo, customRange, ym]);
+
+  function exportCSV() {
+    const rows: string[] = [];
+    rows.push("Período;" + periodoLabel);
+    rows.push("");
+    rows.push("Mês;Receitas;Despesas;Saldo");
+    for (const m of historicoMeses) {
+      rows.push(`${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`);
+    }
+    rows.push("");
+    rows.push("Totais;" + totaisPeriodo.receitas.toFixed(2) + ";" + totaisPeriodo.despesas.toFixed(2) + ";" + totaisPeriodo.saldo.toFixed(2));
+    rows.push("");
+    rows.push("Gastos por categoria (mês de referência)");
+    rows.push("Categoria;Valor;%");
+    for (const c of resumo.porCategoria) {
+      rows.push(`${c.nome};${c.valor.toFixed(2)};${c.pct.toFixed(1)}`);
+    }
+    const csv = "\uFEFF" + rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-${periodoLabel.replace(/[^\w-]+/g, "_")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
