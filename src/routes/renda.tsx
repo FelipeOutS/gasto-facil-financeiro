@@ -1235,13 +1235,16 @@ function MiniStat({
   icon: Icon,
   accent,
   footer,
+  total,
 }: {
   label: string;
   value: number;
   icon: typeof Wallet;
   accent: string;
   footer?: string;
+  total?: number;
 }) {
+  const pct = total && total > 0 ? Math.min(100, (value / total) * 100) : null;
   return (
     <div className="group min-w-0 overflow-hidden rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-center justify-between gap-2">
@@ -1252,7 +1255,23 @@ function MiniStat({
         value={value}
         className="num mt-1 block truncate text-sm font-bold tabular-nums sm:text-base lg:text-lg"
       />
-      {footer && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{footer}</p>}
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        {footer ? (
+          <p className="truncate text-[10px] text-muted-foreground">{footer}</p>
+        ) : pct !== null ? (
+          <p className="truncate text-[10px] font-medium text-muted-foreground tabular-nums">
+            {pct.toFixed(0)}% do mês
+          </p>
+        ) : <span />}
+      </div>
+      {pct !== null && (
+        <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted/60">
+          <div
+            className={cn("h-full rounded-full bg-current transition-[width] duration-700", accent)}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
