@@ -314,31 +314,99 @@ function RelatoriosPage() {
         </div>
       </header>
 
-      {/* Filtros de período */}
-      <div className="mt-3 -mx-1 flex gap-2 overflow-x-auto px-1 scrollbar-none">
-        {(
-          [
-            { id: "mes", label: "Mês atual" },
-            { id: "anterior", label: "Mês anterior" },
-            { id: "3m", label: "Últimos 3 meses" },
-            { id: "6m", label: "Últimos 6 meses" },
-            { id: "ano", label: "Ano" },
-          ] as Array<{ id: Periodo; label: string }>
-        ).map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriodo(p.id)}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-              periodo === p.id
-                ? "border-brand bg-brand-soft text-brand-on-soft"
-                : "border-border bg-card text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Filtros de período + Ações */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 print:hidden">
+        <div className="-mx-1 flex flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
+          {(
+            [
+              { id: "mes", label: "Mês atual" },
+              { id: "anterior", label: "Mês anterior" },
+              { id: "trimestre", label: "Trimestre" },
+              { id: "semestre", label: "Semestre" },
+              { id: "ano", label: "Ano" },
+            ] as Array<{ id: Periodo; label: string }>
+          ).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriodo(p.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                periodo === p.id
+                  ? "border-brand bg-brand-soft text-brand-on-soft"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                  periodo === "custom"
+                    ? "border-brand bg-brand-soft text-brand-on-soft"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <CalendarRange className="h-3.5 w-3.5" />
+                {periodo === "custom" && customRange.from && customRange.to
+                  ? `${format(customRange.from, "dd/MM")} – ${format(customRange.to, "dd/MM")}`
+                  : "Personalizado"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                locale={ptBR}
+                selected={customRange as any}
+                onSelect={(r: any) => {
+                  setCustomRange(r ?? {});
+                  if (r?.from && r?.to) setPeriodo("custom");
+                }}
+                numberOfMonths={2}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
+            <Printer className="h-3.5 w-3.5" /> Imprimir
+          </Button>
+        </div>
       </div>
+
+      {/* Totais do período (multi-mês) */}
+      {(isMultiPeriod || periodo === "custom") && historicoMeses.length > 1 && (
+        <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Totais do período</p>
+              <p className="text-sm font-medium">{periodoLabel} · {historicoMeses.length} meses</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receitas</p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>
+            </div>
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Despesas</p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">{formatBRL(totaisPeriodo.despesas)}</p>
+            </div>
+            <div className="rounded-xl bg-card/60 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
+              <p className={cn("mt-0.5 text-lg font-bold tabular-nums", totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand")}>
+                {formatBRL(totaisPeriodo.saldo)}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== KPIs principais ===== */}
       <SectionLabel>Resumo do mês</SectionLabel>
