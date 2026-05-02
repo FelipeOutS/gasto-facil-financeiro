@@ -178,23 +178,46 @@ export function MetaCover({
   alt?: string;
   className?: string;
 }) {
-  const url = metaCoverUrl(coverKey);
+  const isCustom = isCustomCoverKey(coverKey);
+  const [customUrl, setCustomUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (isCustom) {
+      const path = getCustomCoverPath(coverKey);
+      if (path) {
+        getCustomCoverSignedUrl(path).then((u) => {
+          if (!cancelled) setCustomUrl(u);
+        });
+      }
+    } else {
+      setCustomUrl(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [coverKey, isCustom]);
+
+  const url = isCustom ? customUrl ?? "" : metaCoverUrl(coverKey);
+
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>
-      <img
-        src={url}
-        alt={alt ?? "Imagem da meta"}
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          // fallback inline para a imagem de objetivo se o id falhar
-          const fb = META_COVER_URL.objetivo;
-          if ((e.currentTarget as HTMLImageElement).src !== fb) {
-            (e.currentTarget as HTMLImageElement).src = fb;
-          }
-        }}
-      />
+      {url && (
+        <img
+          src={url}
+          alt={alt ?? "Imagem da meta"}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            const fb = META_COVER_URL.objetivo;
+            if ((e.currentTarget as HTMLImageElement).src !== fb) {
+              (e.currentTarget as HTMLImageElement).src = fb;
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
+
