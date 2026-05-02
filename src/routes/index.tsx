@@ -814,6 +814,9 @@ function Index() {
         )}
       </section>
 
+      {/* ===== Aviso: Em breve integração com WhatsApp ===== */}
+      <AvisoWhatsAppBanner />
+
     </MobileShell>
   );
 }
