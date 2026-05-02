@@ -8,7 +8,9 @@ import {
   Building2,
   MoreVertical,
   Pencil,
+  ShieldCheck,
 } from "lucide-react";
+import guardadoHero from "@/assets/guardado-hero.png";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
