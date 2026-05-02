@@ -1,16 +1,44 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Plus,
   Pencil,
   Trash2,
   TrendingUp,
+  TrendingDown,
   Repeat,
   ChevronLeft,
   ChevronRight,
   Search,
+  Sparkles,
+  Wallet,
+  Target,
+  CalendarClock,
+  Filter,
+  ArrowUpRight,
+  Briefcase,
+  Coins,
+  Gift,
+  HandCoins,
+  Receipt,
+  ArrowDownUp,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip as ReTooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Area,
+  AreaChart,
+} from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -66,7 +94,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type RendaSearch = { ano?: number; mes?: number };
 
@@ -74,6 +104,8 @@ const MONTH_NAMES_PT = [
   "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
+
+const MONTH_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 function normalizeDescricao(s: string): string {
   return s
@@ -83,6 +115,40 @@ function normalizeDescricao(s: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+function tipoIcon(tipo: TipoReceita) {
+  switch (tipo) {
+    case "salario":
+      return Briefcase;
+    case "freelance":
+      return Coins;
+    case "comissao":
+      return ArrowUpRight;
+    case "venda":
+      return Receipt;
+    case "reembolso":
+      return ArrowDownUp;
+    case "pix":
+      return HandCoins;
+    case "bonus":
+      return Gift;
+    default:
+      return Wallet;
+  }
+}
+
+const TIPO_COLORS: Record<TipoReceita, string> = {
+  salario: "var(--cat-salario)",
+  freelance: "var(--cat-trabalho)",
+  comissao: "var(--cat-pix)",
+  venda: "var(--cat-mercado)",
+  reembolso: "var(--cat-internet)",
+  pix: "var(--cat-transferencia)",
+  bonus: "var(--cat-presentes)",
+  outros: "var(--cat-outros)",
+};
+
+const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
 
 export const Route = createFileRoute("/renda")({
   head: () => ({ meta: [{ title: "Minha renda — Gasto Inteligente" }] }),
@@ -111,7 +177,6 @@ function RendaPage() {
     mes: search.mes ?? today.getMonth() + 1,
   });
 
-  // Sincroniza URL quando o mês muda (sem disparar loop)
   useEffect(() => {
     void navigate({ search: { ano: ym.ano, mes: ym.mes }, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,6 +187,7 @@ function RendaPage() {
     setYm({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
   }
 
+  // ===================== DERIVED =====================
   const doMes = useMemo(
     () => receitas.filter((r) => r.mes === ym.mes && r.ano === ym.ano),
     [receitas, ym.mes, ym.ano],
@@ -131,9 +197,160 @@ function RendaPage() {
     () => doMes.filter((r) => r.tipo === "salario").reduce((s, r) => s + r.valor, 0),
     [doMes],
   );
+  const recorrentesMes = useMemo(
+    () => doMes.filter((r) => r.recorrente),
+    [doMes],
+  );
+  const recorrentesValor = useMemo(
+    () => recorrentesMes.reduce((s, r) => s + r.valor, 0),
+    [recorrentesMes],
+  );
   const outrasMes = totalMes - salarioMes;
+  const extraMes = useMemo(
+    () =>
+      doMes
+        .filter((r) => r.tipo !== "salario")
+        .reduce((s, r) => s + r.valor, 0),
+    [doMes],
+  );
 
-  // ---------- Histórico (todas, agrupadas por mês desc) ----------
+  // Mês anterior para comparação
+  const mesAnteriorYm = useMemo(() => {
+    const d = new Date(ym.ano, ym.mes - 2, 1);
+    return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
+  }, [ym]);
+  const totalMesAnterior = useMemo(
+    () =>
+      receitas
+        .filter((r) => r.mes === mesAnteriorYm.mes && r.ano === mesAnteriorYm.ano)
+        .reduce((s, r) => s + r.valor, 0),
+    [receitas, mesAnteriorYm],
+  );
+
+  const variacaoPct = useMemo(() => {
+    if (totalMesAnterior <= 0) return null;
+    return ((totalMes - totalMesAnterior) / totalMesAnterior) * 100;
+  }, [totalMes, totalMesAnterior]);
+
+  // Já recebido vs futuro (no mês selecionado)
+  const todayStr = todayISO();
+  const isMesAtual = ym.ano === today.getFullYear() && ym.mes === today.getMonth() + 1;
+  const recebidoMes = useMemo(() => {
+    if (!isMesAtual) return totalMes;
+    return doMes.filter((r) => r.data <= todayStr).reduce((s, r) => s + r.valor, 0);
+  }, [doMes, totalMes, isMesAtual, todayStr]);
+  const aReceberMes = Math.max(0, totalMes - recebidoMes);
+
+  // Evolução últimos 6 meses
+  const evolucao6m = useMemo(() => {
+    const arr: { key: string; label: string; total: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(ym.ano, ym.mes - 1 - i, 1);
+      const m = d.getMonth() + 1;
+      const a = d.getFullYear();
+      const total = receitas
+        .filter((r) => r.mes === m && r.ano === a)
+        .reduce((s, r) => s + r.valor, 0);
+      arr.push({
+        key: `${a}-${m}`,
+        label: MONTH_SHORT[m - 1],
+        total,
+      });
+    }
+    return arr;
+  }, [receitas, ym]);
+
+  // Composição por tipo (mês atual)
+  const composicao = useMemo(() => {
+    const map = new Map<TipoReceita, number>();
+    for (const r of doMes) {
+      map.set(r.tipo, (map.get(r.tipo) ?? 0) + r.valor);
+    }
+    return Array.from(map.entries())
+      .map(([tipo, valor]) => ({
+        tipo,
+        valor,
+        label: TIPOS_RECEITA.find((t) => t.id === tipo)?.label ?? tipo,
+        cor: TIPO_COLORS[tipo],
+      }))
+      .sort((a, b) => b.valor - a.valor);
+  }, [doMes]);
+
+  // Insights
+  const insights = useMemo(() => {
+    const out: { icon: typeof Sparkles; text: string; tone: "good" | "neutral" | "warn" }[] = [];
+    if (totalMes === 0) {
+      out.push({
+        icon: Sparkles,
+        text: "Você ainda não cadastrou entradas neste mês. Que tal começar agora?",
+        tone: "neutral",
+      });
+    }
+    if (variacaoPct !== null) {
+      if (variacaoPct > 1) {
+        out.push({
+          icon: TrendingUp,
+          text: `Sua renda subiu ${variacaoPct.toFixed(1)}% em relação ao mês anterior.`,
+          tone: "good",
+        });
+      } else if (variacaoPct < -1) {
+        out.push({
+          icon: TrendingDown,
+          text: `Sua renda caiu ${Math.abs(variacaoPct).toFixed(1)}% em relação ao mês anterior.`,
+          tone: "warn",
+        });
+      }
+    }
+    if (totalMes > 0 && composicao.length > 0) {
+      const maior = composicao[0];
+      const pct = (maior.valor / totalMes) * 100;
+      out.push({
+        icon: Wallet,
+        text: `${pct.toFixed(0)}% da sua renda vem de ${maior.label.toLowerCase()}.`,
+        tone: "neutral",
+      });
+    }
+    if (recorrentesMes.length > 0) {
+      out.push({
+        icon: Repeat,
+        text: `Você tem ${recorrentesMes.length} entrada${recorrentesMes.length > 1 ? "s" : ""} recorrente${recorrentesMes.length > 1 ? "s" : ""} este mês (${formatBRL(recorrentesValor)}).`,
+        tone: "good",
+      });
+    }
+    if (totalMes > 0 && extraMes > 0) {
+      const pct = (extraMes / totalMes) * 100;
+      out.push({
+        icon: Sparkles,
+        text: `Sua renda extra representa ${pct.toFixed(0)}% do total do mês.`,
+        tone: "neutral",
+      });
+    } else if (totalMes > 0 && extraMes === 0) {
+      out.push({
+        icon: Sparkles,
+        text: "Você ainda não cadastrou renda extra este mês.",
+        tone: "neutral",
+      });
+    }
+    return out.slice(0, 4);
+  }, [totalMes, variacaoPct, composicao, recorrentesMes.length, recorrentesValor, extraMes]);
+
+  // Próximas recorrências (3 meses à frente)
+  const proximasRecorrencias = useMemo(() => {
+    const lista: { receita: Receita; data: string }[] = [];
+    const refDate = new Date();
+    for (const r of receitas) {
+      if (!r.recorrente) continue;
+      const d = new Date(r.data + "T12:00:00");
+      if (d > refDate) {
+        lista.push({ receita: r, data: r.data });
+      }
+    }
+    return lista
+      .sort((a, b) => a.data.localeCompare(b.data))
+      .slice(0, 5);
+  }, [receitas]);
+
+  // Histórico
   const historico = useMemo(() => {
     const groups = new Map<string, { ano: number; mes: number; itens: Receita[] }>();
     for (const r of receitas) {
@@ -147,7 +364,30 @@ function RendaPage() {
     );
   }, [receitas]);
 
-  // ---------- Nova entrada ----------
+  // ===================== FILTROS =====================
+  const [filtroTipo, setFiltroTipo] = useState<"todas" | TipoReceita>("todas");
+  const [filtroRec, setFiltroRec] = useState<"todas" | "recorrente" | "unica">("todas");
+  const [busca, setBusca] = useState("");
+  const [ordem, setOrdem] = useState<"data" | "valor" | "tipo">("data");
+
+  const doMesFiltrado = useMemo(() => {
+    const q = normalizeDescricao(busca);
+    const out = doMes.filter((r) => {
+      if (filtroTipo !== "todas" && r.tipo !== filtroTipo) return false;
+      if (filtroRec === "recorrente" && !r.recorrente) return false;
+      if (filtroRec === "unica" && r.recorrente) return false;
+      if (q && !normalizeDescricao(r.descricao).includes(q)) return false;
+      return true;
+    });
+    out.sort((a, b) => {
+      if (ordem === "valor") return b.valor - a.valor;
+      if (ordem === "tipo") return a.tipo.localeCompare(b.tipo);
+      return b.data.localeCompare(a.data);
+    });
+    return out;
+  }, [doMes, filtroTipo, filtroRec, busca, ordem]);
+
+  // ===================== NOVA ENTRADA =====================
   const [open, setOpen] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [valorStr, setValorStr] = useState("");
@@ -182,6 +422,14 @@ function RendaPage() {
     toast.success("Renda adicionada. Boa! 💸");
     setOpen(false);
     reset();
+  }
+
+  function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
+    reset();
+    setTipo(preset.tipo);
+    setRecorrente(preset.recorrente);
+    if (preset.descricao) setDescricao(preset.descricao);
+    setOpen(true);
   }
 
   function handleSave() {
@@ -222,12 +470,11 @@ function RendaPage() {
     persistNova(payload);
   }
 
-
-  // ---------- Editar / Excluir ----------
+  // Edit / Delete targets
   const [editTarget, setEditTarget] = useState<Receita | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Receita | null>(null);
 
-  // ---------- Histórico: busca + carregar mais ----------
+  // Histórico: busca + paginação
   const [historicoQuery, setHistoricoQuery] = useState("");
   const [historicoLimit, setHistoricoLimit] = useState(3);
 
@@ -265,25 +512,31 @@ function RendaPage() {
 
   return (
     <MobileShell>
+      {/* HEADER */}
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
+          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Entradas</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Suas entradas
+          </p>
           <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
+          <p className="text-xs text-muted-foreground">
+            Visão completa do que entra todo mês.
+          </p>
         </div>
       </header>
 
-      {/* Navegação de mês */}
-      <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-card px-2 py-2">
+      {/* NAV DE MÊS */}
+      <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-card px-2 py-2 shadow-sm">
         <button
           onClick={() => changeMonth(-1)}
-          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
           aria-label="Mês anterior"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -293,35 +546,149 @@ function RendaPage() {
         </p>
         <button
           onClick={() => changeMonth(1)}
-          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
           aria-label="Próximo mês"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
-      <section className="mt-3 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
-        <p className="text-xs font-medium text-muted-foreground">Total de entradas no mês</p>
-        <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
-        <div className="mt-4 grid grid-cols-2 gap-3 stagger">
-          <div className="rounded-2xl bg-card-elevated p-3 hover-lift">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Salário</p>
-            <Money value={salarioMes} className="num mt-1 block text-lg font-semibold" />
+      {/* CARD PRINCIPAL — RESUMO PREMIUM */}
+      <AnimatePresence mode="wait">
+        <motion.section
+          key={`${ym.ano}-${ym.mes}`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="relative mt-3 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-card-elevated p-5 shadow-elevated sm:p-6"
+        >
+          {/* glow decorativo */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-30 blur-3xl"
+            style={{ background: "radial-gradient(circle, var(--success) 0%, transparent 70%)" }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -left-12 h-40 w-40 rounded-full opacity-20 blur-3xl"
+            style={{ background: "radial-gradient(circle, var(--cat-pix) 0%, transparent 70%)" }}
+          />
+
+          <div className="relative flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Total de entradas no mês
+              </p>
+              <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight sm:text-5xl" />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {doMes.length} {doMes.length === 1 ? "entrada" : "entradas"} registrada{doMes.length === 1 ? "" : "s"}
+                </span>
+                {variacaoPct !== null && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                      variacaoPct >= 0
+                        ? "bg-success/15 text-success"
+                        : "bg-destructive/15 text-destructive",
+                    )}
+                  >
+                    {variacaoPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {variacaoPct >= 0 ? "+" : ""}
+                    {variacaoPct.toFixed(1)}% vs mês anterior
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="hidden h-14 w-14 place-items-center rounded-2xl bg-success/15 text-success sm:grid">
+              <TrendingUp className="h-7 w-7" />
+            </div>
           </div>
-          <div className="rounded-2xl bg-card-elevated p-3 hover-lift">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Outras entradas</p>
-            <Money value={outrasMes} className="num mt-1 block text-lg font-semibold" />
+
+          {/* mini barras grid 4 */}
+          <div className="relative mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <MiniStat
+              label="Salário"
+              value={salarioMes}
+              icon={Briefcase}
+              accent="text-success"
+            />
+            <MiniStat
+              label="Renda extra"
+              value={extraMes}
+              icon={Coins}
+              accent="text-[color:var(--cat-pix)]"
+            />
+            <MiniStat
+              label="Recorrentes"
+              value={recorrentesValor}
+              icon={Repeat}
+              accent="text-[color:var(--cat-trabalho)]"
+              footer={`${recorrentesMes.length} entrada${recorrentesMes.length === 1 ? "" : "s"}`}
+            />
+            <MiniStat
+              label="Outras"
+              value={outrasMes}
+              icon={Wallet}
+              accent="text-[color:var(--cat-presentes)]"
+            />
+          </div>
+        </motion.section>
+      </AnimatePresence>
+
+      {/* INSIGHTS */}
+      {insights.length > 0 && (
+        <section className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {insights.map((it, i) => {
+            const Icon = it.icon;
+            const tone =
+              it.tone === "good"
+                ? "border-success/30 bg-success/5 text-success"
+                : it.tone === "warn"
+                  ? "border-warning/30 bg-warning/5 text-warning"
+                  : "border-border bg-card text-muted-foreground";
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.25 }}
+                className={cn(
+                  "flex items-start gap-3 rounded-2xl border p-3.5 backdrop-blur-sm",
+                  tone,
+                )}
+              >
+                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-background/40">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <p className="text-xs leading-snug text-foreground/90 sm:text-sm">{it.text}</p>
+              </motion.div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* CTA NOVA ENTRADA + ATALHOS */}
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
+          <DialogTrigger asChild>
+            <Button
+              size="lg"
+              className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
+            >
+              <Plus className="mr-1 h-5 w-5" />
+              Nova entrada
+            </Button>
+          </DialogTrigger>
+          <div className="flex flex-wrap gap-1.5">
+            <QuickAction icon={Briefcase} label="Salário" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Coins} label="Freela" onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
+            <QuickAction icon={Repeat} label="Recorrente" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Receipt} label="Avulsa" onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
           </div>
         </div>
-      </section>
 
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
-        <DialogTrigger asChild>
-          <Button size="lg" className="card-press mt-4 h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95">
-            <Plus className="mr-1 h-5 w-5" />
-            Nova entrada
-          </Button>
-        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova entrada de dinheiro</DialogTitle>
@@ -399,32 +766,316 @@ function RendaPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Tabs: Este mês / Histórico */}
-      <Tabs defaultValue="mes" className="mt-5">
-        <TabsList className="grid w-full grid-cols-2 bg-card">
-          <TabsTrigger value="mes">Este mês</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="mes" className="mt-3">
-          {doMes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
-              <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
-                <TrendingUp className="h-5 w-5" />
-              </span>
-              <p className="font-semibold text-foreground">Sem rendas neste mês ainda</p>
-              <p className="mt-1 text-xs">
-                Cadastre sua primeira entrada e veja seu mês ficar mais claro.
+      {/* GRÁFICOS */}
+      <section className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-5">
+        {/* Evolução 6 meses */}
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm lg:col-span-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Evolução
               </p>
-              <div className="mt-3">
-                <Button size="sm" onClick={() => setOpen(true)} className="card-press rounded-full">
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar renda
-                </Button>
-              </div>
+              <h3 className="text-sm font-bold">Últimos 6 meses</h3>
+            </div>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="h-44 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={evolucao6m} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="rendaArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.72 0.18 152)" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="oklch(0.72 0.18 152)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.32 0.008 260)" vertical={false} />
+                <XAxis dataKey="label" stroke="oklch(0.78 0.005 260)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis
+                  stroke="oklch(0.78 0.005 260)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)}
+                />
+                <ReTooltip
+                  contentStyle={{
+                    background: "oklch(0.225 0.006 260)",
+                    border: "1px solid oklch(0.32 0.008 260)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                  formatter={(v: number) => [formatBRL(v), "Renda"]}
+                  labelStyle={{ color: "oklch(0.78 0.005 260)" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="oklch(0.72 0.18 152)"
+                  strokeWidth={2.5}
+                  fill="url(#rendaArea)"
+                />
+                <Line type="monotone" dataKey="total" stroke="oklch(0.72 0.18 152)" strokeWidth={2.5} dot={{ r: 3 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Composição */}
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm lg:col-span-2">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Composição
+              </p>
+              <h3 className="text-sm font-bold">Por tipo de renda</h3>
+            </div>
+          </div>
+          {composicao.length === 0 ? (
+            <div className="grid h-44 place-items-center text-xs text-muted-foreground">
+              Sem dados neste mês.
             </div>
           ) : (
-            <ul className="space-y-2 stagger">
-              {doMes.map((r) => (
+            <div className="flex items-center gap-3">
+              <div className="h-40 w-40 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={composicao}
+                      dataKey="valor"
+                      nameKey="label"
+                      innerRadius={42}
+                      outerRadius={68}
+                      paddingAngle={2}
+                      stroke="none"
+                    >
+                      {composicao.map((c, i) => (
+                        <Cell key={c.tipo} fill={c.cor || PIE_FALLBACK[i % PIE_FALLBACK.length]} />
+                      ))}
+                    </Pie>
+                    <ReTooltip
+                      contentStyle={{
+                        background: "oklch(0.225 0.006 260)",
+                        border: "1px solid oklch(0.32 0.008 260)",
+                        borderRadius: 12,
+                        fontSize: 12,
+                      }}
+                      formatter={(v: number, n) => [formatBRL(v), n]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="flex-1 space-y-1.5 text-xs">
+                {composicao.slice(0, 5).map((c, i) => (
+                  <li key={c.tipo} className="flex items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: c.cor || PIE_FALLBACK[i % PIE_FALLBACK.length] }}
+                    />
+                    <span className="flex-1 truncate text-muted-foreground">{c.label}</span>
+                    <span className="num font-semibold">
+                      {totalMes > 0 ? `${((c.valor / totalMes) * 100).toFixed(0)}%` : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* PREVISÃO + RECORRÊNCIAS */}
+      <section className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Previsão
+              </p>
+              <h3 className="text-sm font-bold">
+                {isMesAtual ? "Renda do mês atual" : "Renda do mês selecionado"}
+              </h3>
+            </div>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-end justify-between gap-2">
+              <div>
+                <p className="text-[11px] text-muted-foreground">Já recebido</p>
+                <Money value={recebidoMes} className="num text-2xl font-bold text-success" />
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-muted-foreground">A receber</p>
+                <Money value={aReceberMes} className="num text-base font-semibold text-foreground" />
+              </div>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-success to-emerald-300"
+                initial={{ width: 0 }}
+                animate={{ width: `${totalMes > 0 ? Math.min(100, (recebidoMes / totalMes) * 100) : 0}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>
+                Total previsto: <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
+              </span>
+              <span>
+                {totalMes > 0 ? `${((recebidoMes / totalMes) * 100).toFixed(0)}%` : "0%"} concluído
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Próximas
+              </p>
+              <h3 className="text-sm font-bold">Entradas recorrentes</h3>
+            </div>
+            <Repeat className="h-4 w-4 text-muted-foreground" />
+          </div>
+          {proximasRecorrencias.length === 0 ? (
+            <p className="grid h-24 place-items-center rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
+              Sem recorrências futuras cadastradas.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {proximasRecorrencias.map(({ receita: r }) => {
+                const Icon = tipoIcon(r.tipo);
+                return (
+                  <li
+                    key={r.id}
+                    className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2 transition-colors hover:bg-accent/40"
+                  >
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+                      style={{ background: `${TIPO_COLORS[r.tipo]}25`, color: TIPO_COLORS[r.tipo] }}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.descricao}</p>
+                      <p className="text-[11px] text-muted-foreground">{formatDateBR(r.data)}</p>
+                    </div>
+                    <span className="num text-sm font-semibold text-success">
+                      +{formatBRL(r.valor)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* TABS */}
+      <Tabs defaultValue="mes" className="mt-5">
+        <TabsList className="grid w-full grid-cols-4 bg-card">
+          <TabsTrigger value="mes">Este mês</TabsTrigger>
+          <TabsTrigger value="recorrentes">Recorrentes</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
+          <TabsTrigger value="previsoes">Previsões</TabsTrigger>
+        </TabsList>
+
+        {/* ESTE MÊS */}
+        <TabsContent value="mes" className="mt-3 space-y-3">
+          {/* Filtros */}
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2.5">
+            <div className="relative min-w-[160px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar por descrição"
+                className="h-9 bg-card-elevated pl-9 text-sm"
+              />
+            </div>
+            <Select value={filtroTipo} onValueChange={(v) => setFiltroTipo(v as typeof filtroTipo)}>
+              <SelectTrigger className="h-9 w-auto min-w-[120px] bg-card-elevated text-xs">
+                <Filter className="mr-1 h-3.5 w-3.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todos os tipos</SelectItem>
+                {TIPOS_RECEITA.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtroRec} onValueChange={(v) => setFiltroRec(v as typeof filtroRec)}>
+              <SelectTrigger className="h-9 w-auto min-w-[120px] bg-card-elevated text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="recorrente">Apenas recorrentes</SelectItem>
+                <SelectItem value="unica">Apenas únicas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={ordem} onValueChange={(v) => setOrdem(v as typeof ordem)}>
+              <SelectTrigger className="h-9 w-auto min-w-[110px] bg-card-elevated text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="data">Mais recentes</SelectItem>
+                <SelectItem value="valor">Maior valor</SelectItem>
+                <SelectItem value="tipo">Por tipo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {doMesFiltrado.length === 0 ? (
+            <EmptyRenda
+              title={
+                doMes.length === 0
+                  ? "Sem rendas neste mês ainda"
+                  : "Nenhuma entrada com esses filtros"
+              }
+              subtitle={
+                doMes.length === 0
+                  ? "Cadastre sua primeira entrada e veja seu mês ficar mais claro."
+                  : "Tente limpar a busca ou trocar o filtro."
+              }
+              onAction={doMes.length === 0 ? () => setOpen(true) : undefined}
+            />
+          ) : (
+            <ul className="space-y-2">
+              <AnimatePresence initial={false}>
+                {doMesFiltrado.map((r, i) => (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18, delay: Math.min(i * 0.02, 0.2) }}
+                  >
+                    <ReceitaItem
+                      r={r}
+                      onEdit={() => setEditTarget(r)}
+                      onDelete={() => setDeleteTarget(r)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </ul>
+          )}
+        </TabsContent>
+
+        {/* RECORRENTES */}
+        <TabsContent value="recorrentes" className="mt-3 space-y-2">
+          {recorrentesMes.length === 0 ? (
+            <EmptyRenda
+              title="Você ainda não tem entradas recorrentes neste mês"
+              subtitle="Cadastre uma e ela se repete automaticamente."
+              onAction={() => openWithPreset({ tipo: "salario", recorrente: true })}
+              actionLabel="Adicionar recorrente"
+            />
+          ) : (
+            <ul className="space-y-2">
+              {recorrentesMes.map((r) => (
                 <ReceitaItem
                   key={r.id}
                   r={r}
@@ -436,10 +1087,11 @@ function RendaPage() {
           )}
         </TabsContent>
 
+        {/* HISTÓRICO */}
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Seu histórico ainda tá em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.
+              Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.
             </div>
           ) : (
             <>
@@ -504,6 +1156,34 @@ function RendaPage() {
             </>
           )}
         </TabsContent>
+
+        {/* PREVISÕES */}
+        <TabsContent value="previsoes" className="mt-3 space-y-3">
+          <div className="rounded-3xl border border-border bg-card p-4">
+            <h3 className="text-sm font-bold">Previsão dos próximos meses</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Baseado nas entradas recorrentes ativas.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => {
+                const d = new Date(ym.ano, ym.mes - 1 + i + 1, 1);
+                const m = d.getMonth() + 1;
+                const a = d.getFullYear();
+                const previsto = receitas
+                  .filter((r) => r.recorrente && r.mes === m && r.ano === a)
+                  .reduce((s, r) => s + r.valor, 0);
+                return (
+                  <div key={`${a}-${m}`} className="rounded-2xl bg-card-elevated p-3">
+                    <p className="text-[11px] capitalize text-muted-foreground">
+                      {MONTH_SHORT[m - 1]}/{String(a).slice(-2)}
+                    </p>
+                    <Money value={previsto} className="num mt-0.5 block text-base font-bold text-success" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
 
       <EditReceitaDialog receita={editTarget} onClose={() => setEditTarget(null)} />
@@ -546,6 +1226,92 @@ function RendaPage() {
 }
 
 // =====================================================================
+// Sub-components
+// =====================================================================
+
+function MiniStat({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  footer,
+}: {
+  label: string;
+  value: number;
+  icon: typeof Wallet;
+  accent: string;
+  footer?: string;
+}) {
+  return (
+    <div className="group rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+        <Icon className={cn("h-3.5 w-3.5", accent)} />
+      </div>
+      <Money value={value} className="num mt-1 block text-base font-bold sm:text-lg" />
+      {footer && <p className="mt-0.5 text-[10px] text-muted-foreground">{footer}</p>}
+    </div>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: typeof Wallet;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="card-press inline-flex h-14 items-center gap-1.5 rounded-2xl border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-all hover:border-success/40 hover:bg-card-elevated hover:text-foreground"
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function EmptyRenda({
+  title,
+  subtitle,
+  onAction,
+  actionLabel = "Adicionar renda",
+}: {
+  title: string;
+  subtitle: string;
+  onAction?: () => void;
+  actionLabel?: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
+      <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-success/15 text-success animate-pop">
+        <TrendingUp className="h-6 w-6" />
+      </span>
+      <p className="font-semibold text-foreground">{title}</p>
+      <p className="mx-auto mt-1 max-w-sm text-xs">{subtitle}</p>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+        {["Salário", "Freelance", "Comissão", "Aluguel", "Vendas"].map((s) => (
+          <Badge key={s} variant="outline" className="rounded-full text-[10px] font-normal">
+            {s}
+          </Badge>
+        ))}
+      </div>
+      {onAction && (
+        <div className="mt-4">
+          <Button size="sm" onClick={onAction} className="card-press rounded-full">
+            <Plus className="mr-1 h-4 w-4" /> {actionLabel}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =====================================================================
 // Item de receita
 // =====================================================================
 function ReceitaItem({
@@ -558,33 +1324,49 @@ function ReceitaItem({
   onDelete: () => void;
 }) {
   const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
+  const Icon = tipoIcon(r.tipo);
+  const isFuturo = r.data > todayISO();
   return (
-    <li className="flex items-center gap-2 overflow-hidden rounded-2xl border border-border bg-card px-3 py-3">
+    <li className="group flex items-center gap-2 overflow-hidden rounded-2xl border border-border bg-card px-3 py-3 transition-all hover:border-success/30 hover:bg-card-elevated">
       <button
         type="button"
         onClick={onEdit}
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
         aria-label={`Editar ${r.descricao}`}
       >
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-          {r.recorrente ? <Repeat className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+          style={{ background: `${TIPO_COLORS[r.tipo]}25`, color: TIPO_COLORS[r.tipo] }}
+        >
+          <Icon className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{r.descricao}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-medium">{r.descricao}</p>
+            {r.recorrente && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-[color:var(--cat-trabalho)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--cat-trabalho)]">
+                <Repeat className="h-2.5 w-2.5" /> rec
+              </span>
+            )}
+            {isFuturo && (
+              <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-warning">
+                futuro
+              </span>
+            )}
+          </div>
           <p className="truncate text-xs text-muted-foreground">
             {tipoLabel} · {formatDateBR(r.data)}
-            {r.recorrente ? " · recorrente" : ""}
           </p>
           <p className="num mt-0.5 text-sm font-semibold text-success">
             +{formatBRL(r.valor)}
           </p>
         </div>
       </button>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100">
         <button
           type="button"
           onClick={onEdit}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
           aria-label="Editar"
         >
           <Pencil className="h-4 w-4" />
@@ -592,7 +1374,7 @@ function ReceitaItem({
         <button
           type="button"
           onClick={onDelete}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-destructive"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-destructive active:scale-95"
           aria-label="Excluir"
         >
           <Trash2 className="h-4 w-4" />
