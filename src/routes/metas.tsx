@@ -465,7 +465,7 @@ function MetaFormDialog({
       setDescricao(baseMeta.descricao ?? "");
       setColorHex(baseMeta.colorHex);
       setBancoId(baseMeta.bancoId ?? "nenhum");
-      const persistida = baseMeta.imagemKey as MetaCoverKey | undefined;
+      const persistida = baseMeta.imagemKey;
       setImagemKey(persistida ?? getMetaCoverKey(baseMeta.nome, baseMeta.descricao));
       setImagemManual(!!persistida);
     }
