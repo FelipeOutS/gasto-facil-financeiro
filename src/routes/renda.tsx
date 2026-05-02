@@ -1243,13 +1243,16 @@ function MiniStat({
   footer?: string;
 }) {
   return (
-    <div className="group rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-        <Icon className={cn("h-3.5 w-3.5", accent)} />
+    <div className="group min-w-0 overflow-hidden rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+        <Icon className={cn("h-3.5 w-3.5 shrink-0", accent)} />
       </div>
-      <Money value={value} className="num mt-1 block text-base font-bold sm:text-lg" />
-      {footer && <p className="mt-0.5 text-[10px] text-muted-foreground">{footer}</p>}
+      <Money
+        value={value}
+        className="num mt-1 block truncate text-sm font-bold tabular-nums sm:text-base lg:text-lg"
+      />
+      {footer && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{footer}</p>}
     </div>
   );
 }
