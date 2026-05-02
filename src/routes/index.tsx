@@ -64,7 +64,7 @@ import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Gasto Inteligente — Resumo do mês" }],
+    meta: [{ title: "Gasto Inteligente — Dashboard" }],
   }),
   component: Index,
 });
