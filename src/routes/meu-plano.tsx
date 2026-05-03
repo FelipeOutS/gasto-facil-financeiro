@@ -639,7 +639,26 @@ function MeuPlanoPage() {
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-base font-bold">{p.priceLabel}</p>
+              {(() => {
+                const pr = priceForPeriod(p, periodicidade);
+                return (
+                  <>
+                    <p className="mt-0.5 text-base font-bold">
+                      {formatBRL(pr.totalCents)}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        {periodInfo.suffix}
+                      </span>
+                    </p>
+                    {pr.discountCents > 0 ? (
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                        Você economiza {formatBRL(pr.discountCents)} ({pr.discountPercent}% off)
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">{p.priceLabel}</p>
+                    )}
+                  </>
+                );
+              })()}
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {p.tagline}
               </p>
