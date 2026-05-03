@@ -322,6 +322,8 @@ function MeuPlanoPage() {
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
+                {planoAtualPeriodo ? ` · ${getPeriodicidade(planoAtualPeriodo).label}` : ""}
+                {planoAtualMetodo ? ` · ${planoAtualMetodo.toUpperCase()}` : ""}
               </p>
             )}
             {isAdminMaster && (
