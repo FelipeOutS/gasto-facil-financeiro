@@ -102,6 +102,8 @@ function MeuPlanoPage() {
     !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
+  const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
+  const [metodoPagamento, setMetodoPagamento] = useState<"pix" | "card">("pix");
   const [pixCharge, setPixCharge] = useState<{
     paymentId?: string;
     qr_code?: string | null;
@@ -117,8 +119,6 @@ function MeuPlanoPage() {
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
 
-  // Sinaliza "pagamento recusado" se o último pagamento foi rejeitado
-  // e não há período pago vigente (não há plano ativo no momento).
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
     !isAdminMaster &&
@@ -135,7 +135,7 @@ function MeuPlanoPage() {
     }
     setSubmitting(tier);
     try {
-      const res = await criarCheckoutPix(tier);
+      const res = await criarCheckout(tier, { periodicidade, method: metodoPagamento });
       if (!res.ok) {
         toast.error(res.reason);
         setPixCharge(null);
@@ -146,6 +146,14 @@ function MeuPlanoPage() {
         setPixCharge(null);
         return;
       }
+      if (res.method === "card") {
+        toast.success("Redirecionando para o pagamento seguro do Mercado Pago…");
+        setPixCharge(null);
+        await refresh();
+        void listarPagamentos(user.id).then(setHistorico);
+        window.location.href = res.payment.init_point;
+        return;
+      }
       setPixCharge({
         paymentId: res.payment.id,
         qr_code: res.payment.qr_code,
@@ -153,7 +161,6 @@ function MeuPlanoPage() {
         ticket_url: res.payment.ticket_url,
       });
       toast.success("Cobrança Pix gerada. Pague para ativar o plano.");
-      // Atualiza estado (status → aguardando_pagamento) e histórico.
       await refresh();
       void listarPagamentos(user.id).then(setHistorico);
     } catch {
@@ -162,6 +169,7 @@ function MeuPlanoPage() {
       setSubmitting(null);
     }
   }
+
 
   async function checarPagamento() {
     if (!pixCharge?.paymentId || !user?.id) return;
