@@ -324,6 +324,60 @@ export function commercialPlanByTier(tier: PlanTier): CommercialPlan | undefined
   return COMMERCIAL_PLANS.find((p) => p.tier === tier);
 }
 
+/* ===========================================================
+ * Periodicidade de pagamento (Mensal / Trimestral / Semestral / Anual)
+ * - Pagamento único do período total (sem renovação automática).
+ * - Descontos padrão: 0% / 5% / 10% / 20%.
+ * =========================================================== */
+
+export type Periodicidade = "mensal" | "trimestral" | "semestral" | "anual";
+
+export type PeriodicidadeInfo = {
+  key: Periodicidade;
+  label: string;
+  months: number;
+  discountPercent: number;
+  /** Texto curto exibido em badges/destaques. */
+  badge?: string;
+  /** Sufixo exibido junto ao preço total. */
+  suffix: string;
+};
+
+export const PERIODICIDADES: PeriodicidadeInfo[] = [
+  { key: "mensal", label: "Mensal", months: 1, discountPercent: 0, suffix: "/mês" },
+  { key: "trimestral", label: "Trimestral", months: 3, discountPercent: 5, suffix: "a cada 3 meses" },
+  { key: "semestral", label: "Semestral", months: 6, discountPercent: 10, badge: "Mais economia", suffix: "a cada 6 meses" },
+  { key: "anual", label: "Anual", months: 12, discountPercent: 20, badge: "Melhor custo-benefício", suffix: "por ano" },
+];
+
+export function getPeriodicidade(key: Periodicidade): PeriodicidadeInfo {
+  return PERIODICIDADES.find((p) => p.key === key) ?? PERIODICIDADES[0];
+}
+
+/** Retorna preço total (em centavos) para o plano com o período escolhido. */
+export function priceForPeriod(plan: CommercialPlan, period: Periodicidade): {
+  totalCents: number;
+  baseCents: number;
+  discountCents: number;
+  discountPercent: number;
+  months: number;
+} {
+  const info = getPeriodicidade(period);
+  const baseCents = plan.priceCents * info.months;
+  const totalCents = Math.round(baseCents * (1 - info.discountPercent / 100));
+  return {
+    totalCents,
+    baseCents,
+    discountCents: baseCents - totalCents,
+    discountPercent: info.discountPercent,
+    months: info.months,
+  };
+}
+
+export function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export function planSummary(plan: PlanTier): { highlights: string[] } {
   if (plan === "admin_master") {
     return { highlights: ["Acesso total", "Sem limites", "Todos os recursos atuais e futuros"] };

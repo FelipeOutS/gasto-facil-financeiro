@@ -66,32 +66,69 @@ export const Route = createFileRoute("/api/checkout/verify")({
         // Busca registro local (escopado ao usuário)
         const { data: row, error: readErr } = await supabaseAdmin
           .from("subscription_payments")
-          .select("id, user_id, plano, amount_cents, provider, provider_payment_id, status")
+          .select(
+            "id, user_id, plano, amount_cents, provider, provider_payment_id, status, method, periodicidade, months",
+          )
           .eq("id", paymentRowId)
           .eq("user_id", user.id)
           .maybeSingle();
         if (readErr || !row) return json({ error: "not_found" }, 404);
-        if (!row.provider_payment_id) {
-          return json({ status: row.status ?? "pending" });
-        }
 
         const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
         if (!accessToken) {
           return json({ status: row.status ?? "pending", note: "no_token" });
         }
 
-        // Consulta o pagamento na API do Mercado Pago
-        const res = await fetch(
-          `https://api.mercadopago.com/v1/payments/${row.provider_payment_id}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } },
-        );
-        if (!res.ok) return json({ error: "mp_fetch_failed" }, 502);
-        const payment = (await res.json()) as {
-          id?: number | string;
-          status?: string;
-          metadata?: { user_id?: string; plano?: string };
-        };
-        const status = (payment.status ?? "pending").toLowerCase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const r = row as any;
+        const months = Number(r.months ?? 1) || 1;
+        const periodicidade = String(r.periodicidade ?? "mensal");
+
+        let providerPaymentId: string | null = r.provider_payment_id ?? null;
+        let status: string = (r.status ?? "pending").toLowerCase();
+        let payment: { id?: number | string; status?: string } = {};
+
+        if (r.method === "card") {
+          // Para cartão (Checkout Pro) o provider_payment_id armazenado é a
+          // preference_id. Precisamos consultar merchant_orders para descobrir
+          // o paymentId real e seu status.
+          const moRes = await fetch(
+            `https://api.mercadopago.com/merchant_orders/search?preference_id=${encodeURIComponent(
+              providerPaymentId ?? "",
+            )}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } },
+          );
+          if (moRes.ok) {
+            const moData = (await moRes.json()) as {
+              elements?: Array<{
+                payments?: Array<{ id?: number | string; status?: string }>;
+              }>;
+            };
+            const payments = moData.elements?.[0]?.payments ?? [];
+            const approved = payments.find((p) => (p.status ?? "").toLowerCase() === "approved");
+            const target = approved ?? payments[payments.length - 1];
+            if (target?.id) {
+              const pRes = await fetch(
+                `https://api.mercadopago.com/v1/payments/${target.id}`,
+                { headers: { Authorization: `Bearer ${accessToken}` } },
+              );
+              if (pRes.ok) {
+                payment = (await pRes.json()) as typeof payment;
+                status = (payment.status ?? status).toLowerCase();
+                providerPaymentId = String(payment.id ?? target.id);
+              }
+            }
+          }
+        } else {
+          // Pix — provider_payment_id é o paymentId direto.
+          const res = await fetch(
+            `https://api.mercadopago.com/v1/payments/${providerPaymentId}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } },
+          );
+          if (!res.ok) return json({ error: "mp_fetch_failed" }, 502);
+          payment = (await res.json()) as typeof payment;
+          status = (payment.status ?? "pending").toLowerCase();
+        }
 
         // Atualiza pagamento local
         await supabaseAdmin
@@ -99,13 +136,16 @@ export const Route = createFileRoute("/api/checkout/verify")({
           .update({
             status,
             payload: payment,
+            provider_payment_id: providerPaymentId,
             paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
           })
           .eq("id", row.id);
 
         if (APPROVED.has(status)) {
           const startISO = new Date().toISOString();
-          const endISO = new Date(Date.now() + THIRTY_DAYS_MS).toISOString();
+          const end = new Date();
+          end.setMonth(end.getMonth() + months);
+          const endISO = end.toISOString();
           const { data: existing } = await supabaseAdmin
             .from("user_plans")
             .select("user_id")
@@ -117,9 +157,11 @@ export const Route = createFileRoute("/api/checkout/verify")({
             status: "ativo",
             cancelled_at: null,
             access_until: null,
+            periodicidade,
+            months,
             current_period_start: startISO,
             current_period_end: endISO,
-            last_payment_id: String(payment.id ?? row.provider_payment_id),
+            last_payment_id: String(payment.id ?? providerPaymentId ?? ""),
           };
           if (existing) {
             await supabaseAdmin
@@ -140,6 +182,7 @@ export const Route = createFileRoute("/api/checkout/verify")({
           return json({ status });
         }
         return json({ status: "pending" });
+
       },
     },
   },

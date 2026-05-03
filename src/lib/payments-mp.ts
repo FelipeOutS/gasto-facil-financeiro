@@ -1,16 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { PlanTier } from "@/lib/plans";
+import type { PlanTier, Periodicidade } from "@/lib/plans";
 
 /**
- * Cria uma cobrança Pix no Mercado Pago para o plano informado, chamando a
- * rota interna /api/checkout/create. A liberação efetiva do plano acontece
- * apenas via webhook (/api/public/webhooks/mercadopago) — nunca com base no
- * retorno deste fetch.
+ * Cria uma cobrança no Mercado Pago para o plano + periodicidade escolhidos.
+ * - method "pix": devolve QR Code para pagar dentro do app.
+ * - method "card": devolve `init_point` para redirecionar ao Checkout Pro
+ *   seguro do Mercado Pago (o app não armazena dados do cartão).
+ *
+ * A liberação efetiva acontece via webhook
+ * (/api/public/webhooks/mercadopago) — nunca pelo retorno deste fetch.
  */
 export type CheckoutResult =
   | {
       ok: true;
       pendingIntegration: false;
+      method: "pix";
       payment: {
         id: string;
         qr_code: string | null;
@@ -21,15 +25,22 @@ export type CheckoutResult =
     }
   | {
       ok: true;
-      pendingIntegration: true;
-      message: string;
+      pendingIntegration: false;
+      method: "card";
+      payment: {
+        id: string;
+        status: string;
+        init_point: string;
+        ticket_url: string | null;
+      };
     }
-  | {
-      ok: false;
-      reason: string;
-    };
+  | { ok: true; pendingIntegration: true; message: string }
+  | { ok: false; reason: string };
 
-export async function criarCheckoutPix(plano: PlanTier): Promise<CheckoutResult> {
+export async function criarCheckout(
+  plano: PlanTier,
+  opts: { periodicidade: Periodicidade; method: "pix" | "card" },
+): Promise<CheckoutResult> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) return { ok: false, reason: "Faça login novamente para continuar." };
@@ -37,15 +48,16 @@ export async function criarCheckoutPix(plano: PlanTier): Promise<CheckoutResult>
   try {
     const res = await fetch("/api/checkout/create", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ plano, method: "pix" }),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ plano, method: opts.method, periodicidade: opts.periodicidade }),
     });
     const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (!res.ok) {
-      return { ok: false, reason: (json.detail as string) ?? (json.error as string) ?? "Falha ao gerar cobrança." };
+      return {
+        ok: false,
+        reason:
+          (json.detail as string) ?? (json.error as string) ?? "Falha ao gerar cobrança.",
+      };
     }
     if (json.pendingIntegration) {
       return {
@@ -54,14 +66,22 @@ export async function criarCheckoutPix(plano: PlanTier): Promise<CheckoutResult>
         message: (json.message as string) ?? "Integração de pagamento pendente.",
       };
     }
+    const method = (json.method as "pix" | "card") ?? opts.method;
     return {
       ok: true,
       pendingIntegration: false,
-      payment: json.payment as CheckoutResult extends { payment: infer P } ? P : never,
+      method,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      payment: json.payment as any,
     };
   } catch {
     return { ok: false, reason: "Erro de conexão ao iniciar pagamento." };
   }
+}
+
+/** @deprecated — usar `criarCheckout`. Mantido para compatibilidade. */
+export async function criarCheckoutPix(plano: PlanTier): Promise<CheckoutResult> {
+  return criarCheckout(plano, { periodicidade: "mensal", method: "pix" });
 }
 
 /* ===========================================================
