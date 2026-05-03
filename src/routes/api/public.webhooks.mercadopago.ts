@@ -5,13 +5,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 /**
  * POST /api/public/webhooks/mercadopago
  *
- * Recebe notificações do Mercado Pago (Pix/cartão). Quando o pagamento
- * é aprovado, atualiza `subscription_payments` e ativa o plano em
- * `user_plans` (status = 'ativo'). Em falha, marca como 'expirado'/'cancelado'.
+ * Recebe notificações do Mercado Pago (Pix e Cartão via Checkout Pro).
+ * Quando o pagamento é aprovado, atualiza `subscription_payments` e ativa
+ * o plano em `user_plans` com `current_period_end` calculado a partir
+ * da periodicidade contratada (1, 3, 6 ou 12 meses).
  *
- * A verificação da requisição é feita via `MERCADO_PAGO_WEBHOOK_SECRET`
- * (header `x-signature` no formato "ts=...,v1=..."). Se o secret não
- * estiver configurado, a rota responde 503 — não processa nada às cegas.
+ * Verificação via `MERCADO_PAGO_WEBHOOK_SECRET` (header `x-signature`).
  */
 
 function json(body: unknown, status = 200): Response {
@@ -24,6 +23,43 @@ function json(body: unknown, status = 200): Response {
 const APPROVED = new Set(["approved", "authorized"]);
 const FAILED = new Set(["rejected", "cancelled", "refunded", "charged_back"]);
 
+type MpPayment = {
+  id?: number | string;
+  status?: string;
+  external_reference?: string | null;
+  metadata?: {
+    user_id?: string;
+    plano?: string;
+    periodicidade?: string;
+    months?: number | string;
+  };
+};
+
+async function fetchPayment(accessToken: string, paymentId: string): Promise<MpPayment | null> {
+  const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as MpPayment;
+}
+
+async function fetchMerchantOrder(
+  accessToken: string,
+  orderId: string,
+): Promise<{ paymentId?: string } | null> {
+  const res = await fetch(`https://api.mercadopago.com/merchant_orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    payments?: Array<{ id?: number | string; status?: string }>;
+  };
+  const payments = data.payments ?? [];
+  const approved = payments.find((p) => (p.status ?? "").toLowerCase() === "approved");
+  const target = approved ?? payments[payments.length - 1];
+  return target?.id ? { paymentId: String(target.id) } : null;
+}
+
 export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
   server: {
     handlers: {
@@ -34,12 +70,13 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "webhook_not_configured" }, 503);
         }
 
-        // Lê o corpo bruto para validar a assinatura HMAC do Mercado Pago.
         const rawBody = await request.text();
         let body: {
           type?: string;
+          topic?: string;
           action?: string;
           data?: { id?: string | number };
+          resource?: string;
         } = {};
         try {
           body = JSON.parse(rawBody) as typeof body;
@@ -47,11 +84,10 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "invalid_body" }, 400);
         }
 
-        const paymentId = body.data?.id ? String(body.data.id) : null;
+        const topic = (body.type ?? body.topic ?? "").toLowerCase();
+        const dataId = body.data?.id ? String(body.data.id) : null;
 
-        // Validação de assinatura conforme docs do Mercado Pago:
-        // header `x-signature` traz "ts=<timestamp>,v1=<hash>"; o manifest
-        // a ser assinado é "id:<dataId>;request-id:<x-request-id>;ts:<ts>;".
+        // Validação de assinatura
         const signatureHeader = request.headers.get("x-signature") ?? "";
         const requestId = request.headers.get("x-request-id") ?? "";
         const parts = Object.fromEntries(
@@ -62,58 +98,114 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         ) as Record<string, string>;
         const ts = parts.ts;
         const v1 = parts.v1;
-        if (!ts || !v1 || !paymentId) {
+        if (!ts || !v1 || !dataId) {
           return json({ error: "missing_signature" }, 401);
         }
-        const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
-        const expected = createHmac("sha256", webhookSecret)
-          .update(manifest)
-          .digest("hex");
+        const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
+        const expected = createHmac("sha256", webhookSecret).update(manifest).digest("hex");
         const a = Buffer.from(expected, "hex");
         const b = Buffer.from(v1, "hex");
         if (a.length !== b.length || !timingSafeEqual(a, b)) {
           return json({ error: "invalid_signature" }, 401);
         }
 
-        // Busca status real direto na API do MP
-        const res = await fetch(
-          `https://api.mercadopago.com/v1/payments/${paymentId}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } },
-        );
-        if (!res.ok) return json({ error: "mp_fetch_failed" }, 502);
-        const payment = (await res.json()) as {
-          id?: number | string;
-          status?: string;
-          metadata?: { user_id?: string; plano?: string };
-        };
+        // Resolve paymentId (pode vir direto ou via merchant_order)
+        let paymentId: string | null = null;
+        if (topic.includes("payment")) {
+          paymentId = dataId;
+        } else if (topic.includes("merchant_order")) {
+          const mo = await fetchMerchantOrder(accessToken, dataId);
+          paymentId = mo?.paymentId ?? null;
+        } else {
+          // tipo desconhecido — tenta como payment
+          paymentId = dataId;
+        }
+        if (!paymentId) return json({ ok: true, ignored: true });
 
-        const status = payment.status ?? "pending";
-        const userId = payment.metadata?.user_id;
-        const plano = payment.metadata?.plano;
+        const payment = await fetchPayment(accessToken, paymentId);
+        if (!payment) return json({ error: "mp_fetch_failed" }, 502);
 
-        // Atualiza registro de pagamento
-        await supabaseAdmin
+        const status = (payment.status ?? "pending").toLowerCase();
+        let userId = payment.metadata?.user_id ?? null;
+        let plano = payment.metadata?.plano ?? null;
+        let periodicidade = (payment.metadata?.periodicidade as string | undefined) ?? null;
+        let months = Number(payment.metadata?.months ?? 0) || 0;
+
+        // Fallback via external_reference "userId:plano:periodicidade"
+        if ((!userId || !plano) && payment.external_reference) {
+          const parts2 = payment.external_reference.split(":");
+          userId = userId ?? parts2[0] ?? null;
+          plano = plano ?? parts2[1] ?? null;
+          periodicidade = periodicidade ?? parts2[2] ?? null;
+        }
+
+        // Tenta enriquecer dados a partir de subscription_payments locais.
+        // 1) por provider_payment_id direto (pix), ou 2) onde o ticket_url
+        // contém o paymentId (cartão — preference).
+        const { data: localRows } = await supabaseAdmin
           .from("subscription_payments")
-          .update({
-            status,
-            payload: payment,
-            paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
-          })
+          .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
           .eq("provider", "mercadopago")
-          .eq("provider_payment_id", String(payment.id ?? paymentId));
+          .or(
+            `provider_payment_id.eq.${String(payment.id ?? paymentId)},user_id.eq.${userId ?? "00000000-0000-0000-0000-000000000000"}`,
+          )
+          .order("created_at", { ascending: false })
+          .limit(20);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const localRow = (localRows ?? []).find((r: any) =>
+          r.provider_payment_id === String(payment.id ?? paymentId)
+            ? true
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            : (r as any).method === "card" && r.user_id === userId,
+        );
+        if (localRow) {
+          userId = userId ?? localRow.user_id;
+          plano = plano ?? localRow.plano;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          periodicidade = periodicidade ?? (localRow as any).periodicidade ?? null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          months = months || Number((localRow as any).months ?? 0) || 0;
+        }
+        if (!months) months = 1;
+
+        // Atualiza/insere registro de pagamento (quando ainda não existir,
+        // por exemplo em cenário onde o paymentId real só apareceu agora).
+        if (localRow) {
+          await supabaseAdmin
+            .from("subscription_payments")
+            .update({
+              status,
+              payload: payment,
+              provider_payment_id: String(payment.id ?? paymentId),
+              paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
+            })
+            .eq("id", localRow.id);
+        } else {
+          await supabaseAdmin
+            .from("subscription_payments")
+            .update({
+              status,
+              payload: payment,
+              paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
+            })
+            .eq("provider", "mercadopago")
+            .eq("provider_payment_id", String(payment.id ?? paymentId));
+        }
 
         if (userId && plano) {
           if (APPROVED.has(status)) {
             const startISO = new Date().toISOString();
-            const endISO = new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000,
-            ).toISOString();
+            const end = new Date();
+            end.setMonth(end.getMonth() + months);
+            const endISO = end.toISOString();
             const update = {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               plano: plano as any,
               status: "ativo",
               cancelled_at: null,
               access_until: null,
+              periodicidade,
+              months,
               current_period_start: startISO,
               current_period_end: endISO,
               last_payment_id: String(payment.id ?? paymentId),
@@ -136,13 +228,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                 .insert({ user_id: userId, ...update } as any);
             }
           } else if (FAILED.has(status)) {
-            // Não bloqueia premium se ainda há período pago anterior válido —
-            // só marca o pagamento como falho. user_plans permanece como está.
-            await supabaseAdmin
-              .from("subscription_payments")
-              .update({ status })
-              .eq("provider", "mercadopago")
-              .eq("provider_payment_id", String(payment.id ?? paymentId));
+            // não bloqueia premium se ainda há período pago anterior válido
           }
         }
 
