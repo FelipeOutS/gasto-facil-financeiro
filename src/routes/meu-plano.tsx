@@ -119,6 +119,38 @@ function MeuPlanoPage() {
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
 
+  // Tratamento do retorno do Checkout Pro (?status=success|pending|failure)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const st = params.get("status");
+    if (!st) return;
+    if (st === "success") {
+      toast.success("Pagamento aprovado! Seu plano será liberado em instantes.");
+    } else if (st === "pending") {
+      toast.info("Pagamento em análise. Avisaremos assim que for aprovado.");
+    } else if (st === "failure") {
+      toast.error("Pagamento não concluído. Você pode tentar novamente.");
+    }
+    // limpa a URL para não disparar novamente
+    params.delete("status");
+    params.delete("payment_id");
+    params.delete("collection_id");
+    params.delete("collection_status");
+    params.delete("preference_id");
+    params.delete("external_reference");
+    params.delete("merchant_order_id");
+    params.delete("payment_type");
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? `?${qs}` : "");
+    window.history.replaceState({}, "", newUrl);
+    void refresh();
+    if (user?.id) void listarPagamentos(user.id).then(setHistorico);
+  }, [user?.id, refresh]);
+
+  const periodInfo = getPeriodicidade(periodicidade);
+  const planoAtualInfo = !isAdminMaster ? getPeriodicidade((PERIODICIDADES.find(p => p.key === ((usePlanPeriod(plan) as Periodicidade) ?? "mensal"))?.key ?? "mensal") as Periodicidade) : null;
+
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
     !isAdminMaster &&
