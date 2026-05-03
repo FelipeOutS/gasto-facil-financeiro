@@ -18,11 +18,16 @@ import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
   COMMERCIAL_PLANS,
+  PERIODICIDADES,
   PLAN_FEATURES,
   PLAN_LABEL,
   commercialPlanByTier,
+  formatBRL,
+  getPeriodicidade,
   planAllowsFeature,
+  priceForPeriod,
   suggestedUpgrade,
+  type Periodicidade,
   type PlanTier,
 } from "@/lib/plans";
 import {
@@ -33,7 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  criarCheckoutPix,
+  criarCheckout,
   listarPagamentos,
   statusLabelMP,
   verificarPagamento,
