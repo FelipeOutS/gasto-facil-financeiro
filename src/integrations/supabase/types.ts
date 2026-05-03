@@ -1130,10 +1130,13 @@ export type Database = {
           amount_cents: number
           created_at: string
           currency: string
+          discount_percent: number
           id: string
           method: string
+          months: number
           paid_at: string | null
           payload: Json | null
+          periodicidade: string
           plano: Database["public"]["Enums"]["plan_tier"]
           provider: string
           provider_payment_id: string | null
@@ -1148,10 +1151,13 @@ export type Database = {
           amount_cents: number
           created_at?: string
           currency?: string
+          discount_percent?: number
           id?: string
           method?: string
+          months?: number
           paid_at?: string | null
           payload?: Json | null
+          periodicidade?: string
           plano: Database["public"]["Enums"]["plan_tier"]
           provider?: string
           provider_payment_id?: string | null
@@ -1166,10 +1172,13 @@ export type Database = {
           amount_cents?: number
           created_at?: string
           currency?: string
+          discount_percent?: number
           id?: string
           method?: string
+          months?: number
           paid_at?: string | null
           payload?: Json | null
+          periodicidade?: string
           plano?: Database["public"]["Enums"]["plan_tier"]
           provider?: string
           provider_payment_id?: string | null
@@ -1349,6 +1358,8 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           last_payment_id: string | null
+          months: number | null
+          periodicidade: string | null
           plano: Database["public"]["Enums"]["plan_tier"]
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
@@ -1365,6 +1376,8 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           last_payment_id?: string | null
+          months?: number | null
+          periodicidade?: string | null
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
@@ -1381,6 +1394,8 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           last_payment_id?: string | null
+          months?: number | null
+          periodicidade?: string | null
           plano?: Database["public"]["Enums"]["plan_tier"]
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
