@@ -140,12 +140,15 @@ export type PaymentHistoryRow = {
   status: string;
   paid_at: string | null;
   created_at: string;
+  periodicidade?: string | null;
+  months?: number | null;
+  discount_percent?: number | null;
 };
 
 export async function listarPagamentos(userId: string): Promise<PaymentHistoryRow[]> {
   const { data, error } = await supabase
     .from("subscription_payments")
-    .select("id, plano, amount_cents, method, status, paid_at, created_at")
+    .select("id, plano, amount_cents, method, status, paid_at, created_at, periodicidade, months, discount_percent")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(20);
