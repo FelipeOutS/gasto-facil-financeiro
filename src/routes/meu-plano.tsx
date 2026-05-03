@@ -149,7 +149,12 @@ function MeuPlanoPage() {
   }, [user?.id, refresh]);
 
   const periodInfo = getPeriodicidade(periodicidade);
-  const planoAtualInfo = !isAdminMaster ? getPeriodicidade((PERIODICIDADES.find(p => p.key === ((usePlanPeriod(plan) as Periodicidade) ?? "mensal"))?.key ?? "mensal") as Periodicidade) : null;
+  // Periodicidade do plano atual: último pagamento aprovado, se houver
+  const ultimoAprovado = historico.find((h) =>
+    ["approved", "paid", "authorized"].includes((h.status ?? "").toLowerCase()),
+  );
+  const planoAtualPeriodo = (ultimoAprovado as unknown as { periodicidade?: Periodicidade } | undefined)?.periodicidade ?? null;
+  const planoAtualMetodo = ultimoAprovado?.method ?? null;
 
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
