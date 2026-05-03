@@ -766,6 +766,7 @@ function MeuPlanoPage() {
                             style: "currency",
                             currency: "BRL",
                           })}
+                          {h.periodicidade ? ` · ${getPeriodicidade(h.periodicidade as Periodicidade).label}` : ""}
                         </p>
                       </div>
                       <span
