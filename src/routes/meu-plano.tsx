@@ -119,6 +119,43 @@ function MeuPlanoPage() {
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
 
+  // Tratamento do retorno do Checkout Pro (?status=success|pending|failure)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const st = params.get("status");
+    if (!st) return;
+    if (st === "success") {
+      toast.success("Pagamento aprovado! Seu plano será liberado em instantes.");
+    } else if (st === "pending") {
+      toast.info("Pagamento em análise. Avisaremos assim que for aprovado.");
+    } else if (st === "failure") {
+      toast.error("Pagamento não concluído. Você pode tentar novamente.");
+    }
+    // limpa a URL para não disparar novamente
+    params.delete("status");
+    params.delete("payment_id");
+    params.delete("collection_id");
+    params.delete("collection_status");
+    params.delete("preference_id");
+    params.delete("external_reference");
+    params.delete("merchant_order_id");
+    params.delete("payment_type");
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? `?${qs}` : "");
+    window.history.replaceState({}, "", newUrl);
+    void refresh();
+    if (user?.id) void listarPagamentos(user.id).then(setHistorico);
+  }, [user?.id, refresh]);
+
+  const periodInfo = getPeriodicidade(periodicidade);
+  // Periodicidade do plano atual: último pagamento aprovado, se houver
+  const ultimoAprovado = historico.find((h) =>
+    ["approved", "paid", "authorized"].includes((h.status ?? "").toLowerCase()),
+  );
+  const planoAtualPeriodo = (ultimoAprovado as unknown as { periodicidade?: Periodicidade } | undefined)?.periodicidade ?? null;
+  const planoAtualMetodo = ultimoAprovado?.method ?? null;
+
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
     !isAdminMaster &&
@@ -285,6 +322,8 @@ function MeuPlanoPage() {
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
+                {planoAtualPeriodo ? ` · ${getPeriodicidade(planoAtualPeriodo).label}` : ""}
+                {planoAtualMetodo ? ` · ${planoAtualMetodo.toUpperCase()}` : ""}
               </p>
             )}
             {isAdminMaster && (
@@ -600,7 +639,26 @@ function MeuPlanoPage() {
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-base font-bold">{p.priceLabel}</p>
+              {(() => {
+                const pr = priceForPeriod(p, periodicidade);
+                return (
+                  <>
+                    <p className="mt-0.5 text-base font-bold">
+                      {formatBRL(pr.totalCents)}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        {periodInfo.suffix}
+                      </span>
+                    </p>
+                    {pr.discountCents > 0 ? (
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                        Você economiza {formatBRL(pr.discountCents)} ({pr.discountPercent}% off)
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">{p.priceLabel}</p>
+                    )}
+                  </>
+                );
+              })()}
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {p.tagline}
               </p>
@@ -708,6 +766,7 @@ function MeuPlanoPage() {
                             style: "currency",
                             currency: "BRL",
                           })}
+                          {h.periodicidade ? ` · ${getPeriodicidade(h.periodicidade as Periodicidade).label}` : ""}
                         </p>
                       </div>
                       <span
