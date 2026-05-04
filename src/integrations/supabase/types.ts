@@ -498,6 +498,7 @@ export type Database = {
           id_operacao_banco: string | null
           imagem_url: string | null
           import_batch_id: string | null
+          invoice_month: string | null
           mes: number
           observacao: string | null
           origem: string | null
@@ -527,6 +528,7 @@ export type Database = {
           id_operacao_banco?: string | null
           imagem_url?: string | null
           import_batch_id?: string | null
+          invoice_month?: string | null
           mes: number
           observacao?: string | null
           origem?: string | null
@@ -556,6 +558,7 @@ export type Database = {
           id_operacao_banco?: string | null
           imagem_url?: string | null
           import_batch_id?: string | null
+          invoice_month?: string | null
           mes?: number
           observacao?: string | null
           origem?: string | null
