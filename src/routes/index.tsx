@@ -1564,6 +1564,7 @@ function ResumoMesCard({
     () =>
       buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
         getLimite(catId, mes, ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastosConfirmados, mes, ano],
   );
