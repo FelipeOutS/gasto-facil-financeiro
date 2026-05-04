@@ -1310,6 +1310,35 @@ function FaturaSheet({
             </div>
           )}
 
+          {lotes.length > 0 && (
+            <section className="rounded-2xl border border-border bg-card p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Importações nesta fatura
+              </p>
+              <ul className="space-y-1.5">
+                {lotes.map((l) => (
+                  <li key={l.batchId} className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium">
+                        {l.origem ?? "Importação"} · {l.qtd} {l.qtd === 1 ? "compra" : "compras"}
+                      </p>
+                      <p className="num text-[11px] text-muted-foreground">Total {formatBRL(l.total)}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setConfirmLote(l.batchId)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Excluir lote
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Lista agrupada por data */}
           <section className="rounded-2xl border border-border bg-card p-2 sm:p-3">
             {comprasFiltradas.length === 0 ? (
