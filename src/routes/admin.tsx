@@ -297,6 +297,19 @@ function AdminPage() {
 
   const PIE_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"];
 
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: "hsl(var(--popover))",
+      border: "1px solid hsl(var(--border))",
+      borderRadius: 8,
+      color: "hsl(var(--popover-foreground))",
+      fontSize: 12,
+    },
+    labelStyle: { color: "hsl(var(--popover-foreground))" },
+    itemStyle: { color: "hsl(var(--popover-foreground))" },
+    cursor: { fill: "hsl(var(--muted) / 0.3)", stroke: "hsl(var(--border))" } as any,
+  };
+
   return (
     <MobileShell wide>
       <div className="pt-6">
@@ -345,8 +358,14 @@ function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="mes" fontSize={11} />
                   <YAxis fontSize={11} />
-                  <Tooltip formatter={(v: any) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
-                  <Line type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={2} />
+                  <Tooltip
+                    formatter={(v: any) => `R$ ${Number(v).toLocaleString("pt-BR")}`}
+                    contentStyle={tooltipStyle.contentStyle}
+                    labelStyle={tooltipStyle.labelStyle}
+                    itemStyle={tooltipStyle.itemStyle}
+                    cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
+                  />
+                  <Line type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5, stroke: "hsl(var(--background))", strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -359,7 +378,12 @@ function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="mes" fontSize={11} />
                   <YAxis fontSize={11} />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={tooltipStyle.contentStyle}
+                    labelStyle={tooltipStyle.labelStyle}
+                    itemStyle={tooltipStyle.itemStyle}
+                    cursor={{ fill: "transparent" }}
+                  />
                   <Bar dataKey="total" fill="#3b82f6" />
                 </BarChart>
               </ResponsiveContainer>
@@ -373,7 +397,7 @@ function AdminPage() {
                   <Pie data={planMix} dataKey="value" nameKey="name" outerRadius={80} label>
                     {planMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -386,7 +410,7 @@ function AdminPage() {
                   <Pie data={methodMix} dataKey="value" nameKey="name" outerRadius={60} label>
                     {methodMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
               <ResponsiveContainer width="100%" height="100%">
@@ -394,7 +418,7 @@ function AdminPage() {
                   <Pie data={statusMix} dataKey="value" nameKey="name" outerRadius={60} label>
                     {statusMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
