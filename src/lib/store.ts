@@ -4045,6 +4045,91 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
   return { inicio, fim };
 }
 
+/**
+ * Retorna o "mês efetivo" do gasto para fins de Dashboard/Relatórios/Calendário.
+ * - Crédito com invoice_month definido: usa invoice_month (fonte da verdade).
+ * - Crédito SEM invoice_month: calcula pelo dia de fechamento do cartão.
+ * - Outras formas de pagamento: usa a data da compra.
+ *
+ * Retorna { mes, ano } no formato 1-12 / yyyy.
+ */
+export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
+  if (g.formaPagamento === "credito") {
+    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+      const [a, m] = g.invoiceMonth.split("-").map(Number);
+      return { mes: m, ano: a };
+    }
+    // Fallback pelo dia de fechamento do cartão
+    const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
+    const d = parseDateLocal(g.data);
+    if (d && cartao?.diaFechamento && cartao.diaFechamento > 0) {
+      // Se a compra foi após o fechamento, vai para a fatura do mês seguinte.
+      const ref = d.getDate() > cartao.diaFechamento
+        ? new Date(d.getFullYear(), d.getMonth() + 1, 1)
+        : d;
+      return { mes: ref.getMonth() + 1, ano: ref.getFullYear() };
+    }
+  }
+  // Demais formas de pagamento ou crédito sem cartão: data da compra
+  const d = parseDateLocal(g.data);
+  if (d) return { mes: d.getMonth() + 1, ano: d.getFullYear() };
+  return { mes: g.mes, ano: g.ano };
+}
+
+/** Filtra gastos pertencentes ao mês/ano efetivo (considera invoice_month no crédito). */
+export function gastosNoMesEfetivo(gastos: Gasto[], mes: number, ano: number): Gasto[] {
+  return gastos.filter((g) => {
+    const eff = mesEfetivoGasto(g);
+    return eff.mes === mes && eff.ano === ano;
+  });
+}
+
+/**
+ * Lista os lotes de importação (import_batch_id) de gastos no crédito
+ * pertencentes a uma fatura específica. Útil para "excluir importação".
+ */
+export function lotesImportacaoFatura(
+  cartaoId: string,
+  mes: number,
+  ano: number,
+): Array<{ batchId: string; qtd: number; total: number; primeira: string; origem?: string }> {
+  const compras = gastosDaFatura(cartaoId, mes, ano).filter((g) => g.importBatchId);
+  const map = new Map<string, { batchId: string; qtd: number; total: number; primeira: string; origem?: string }>();
+  for (const g of compras) {
+    const k = g.importBatchId!;
+    const cur = map.get(k) ?? { batchId: k, qtd: 0, total: 0, primeira: g.criadoEm ?? "", origem: g.origem };
+    cur.qtd += 1;
+    cur.total += g.valor;
+    if (g.criadoEm && (!cur.primeira || g.criadoEm < cur.primeira)) cur.primeira = g.criadoEm;
+    map.set(k, cur);
+  }
+  return Array.from(map.values()).sort((a, b) => (a.primeira < b.primeira ? 1 : -1));
+}
+
+/**
+ * Apaga apenas os GASTOS (não toca em receitas/transferências) de um lote
+ * de importação. Usado para desfazer uma importação de fatura sem afetar
+ * gastos manuais da mesma fatura.
+ */
+export async function deleteGastosDoLote(batchId: string): Promise<number> {
+  if (!activeUserId) return 0;
+  const alvo = memGastos.filter((g) => g.importBatchId === batchId);
+  if (alvo.length === 0) return 0;
+  memGastos = memGastos.filter((g) => g.importBatchId !== batchId);
+  emit();
+  const { error } = await sbAny
+    .from("gastos")
+    .delete()
+    .eq("user_id", activeUserId)
+    .eq("import_batch_id", batchId);
+  if (error) {
+    console.error("[store] deleteGastosDoLote failed", error);
+    void refreshGastos();
+    return 0;
+  }
+  return alvo.length;
+}
+
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];

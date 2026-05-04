@@ -4,7 +4,9 @@ import { GastoForm } from "@/components/GastoForm";
 import {
   addGasto,
   deleteGasto,
+  deleteGastosDoLote,
   gastosDaFatura,
+  lotesImportacaoFatura,
   resumoFaturaPorMes,
   statusEfetivoFatura,
   faturaCorrente,
@@ -954,6 +956,7 @@ function FaturaSheet({
   const [editingGasto, setEditingGasto] = useState<Gasto | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Gasto | null>(null);
   const [openAdd, setOpenAdd] = useState(false);
+  const [confirmLote, setConfirmLote] = useState<string | null>(null);
 
   // Subscribe to store updates so list refreshes after add/edit/delete/pay
   useStore(() => 0);
@@ -1073,6 +1076,15 @@ function FaturaSheet({
     deleteGasto(confirmDelete.id);
     toast.success("Compra removida.");
     setConfirmDelete(null);
+  }
+
+  const lotes = lotesImportacaoFatura(cartao.id, ref.mes, ref.ano);
+  async function handleDeleteLote() {
+    if (!confirmLote) return;
+    const n = await deleteGastosDoLote(confirmLote);
+    setConfirmLote(null);
+    if (n > 0) toast.success(`Importação removida (${n} ${n === 1 ? "compra" : "compras"}). Gastos manuais foram preservados.`);
+    else toast.error("Não foi possível remover a importação.");
   }
 
   return (
@@ -1298,6 +1310,35 @@ function FaturaSheet({
             </div>
           )}
 
+          {lotes.length > 0 && (
+            <section className="rounded-2xl border border-border bg-card p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Importações nesta fatura
+              </p>
+              <ul className="space-y-1.5">
+                {lotes.map((l) => (
+                  <li key={l.batchId} className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium">
+                        {l.origem ?? "Importação"} · {l.qtd} {l.qtd === 1 ? "compra" : "compras"}
+                      </p>
+                      <p className="num text-[11px] text-muted-foreground">Total {formatBRL(l.total)}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setConfirmLote(l.batchId)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Excluir lote
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Lista agrupada por data */}
           <section className="rounded-2xl border border-border bg-card p-2 sm:p-3">
             {comprasFiltradas.length === 0 ? (
@@ -1455,6 +1496,28 @@ function FaturaSheet({
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Confirmar exclusão de lote */}
+        <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir esta importação?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Apenas as compras importadas neste lote serão removidas. Gastos manuais da
+                mesma fatura serão preservados. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteLote}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir importação
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

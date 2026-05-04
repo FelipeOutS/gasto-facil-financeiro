@@ -43,6 +43,7 @@ import {
   getLimites,
   getMetas,
   getReceitas,
+  mesEfetivoGasto,
   statusContaEfetivo,
   statusMeta,
   useBootstrap,
@@ -94,8 +95,8 @@ function Index() {
   const doMes = useMemo(
     () =>
       gastosConfirmados.filter((g) => {
-        const d = parseDateLocal(g.data);
-        return !!d && d.getMonth() + 1 === ym.mes && d.getFullYear() === ym.ano;
+        const eff = mesEfetivoGasto(g);
+        return eff.mes === ym.mes && eff.ano === ym.ano;
       }),
     [gastosConfirmados, ym],
   );
@@ -113,8 +114,8 @@ function Index() {
     const a = ref.getFullYear();
     return gastosConfirmados
       .filter((g) => {
-        const d = parseDateLocal(g.data);
-        return !!d && d.getMonth() + 1 === m && d.getFullYear() === a;
+        const eff = mesEfetivoGasto(g);
+        return eff.mes === m && eff.ano === a;
       })
       .reduce((s, g) => s + g.valor, 0);
   }, [gastosConfirmados, ym]);
@@ -196,6 +197,7 @@ function Index() {
   const temOrcamentoMes = useMemo(() => {
     const linhas = buildLinhasOrcamento(categorias, gastosConfirmados, ym.mes, ym.ano, (catId) =>
       getLimite(catId, ym.mes, ym.ano),
+      mesEfetivoGasto,
     );
     return resumirOrcamento(linhas).temOrcamento;
   }, [categorias, gastosConfirmados, ym]);
@@ -1392,6 +1394,7 @@ function OrcamentoCard({
     () =>
       buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
         getLimite(catId, mes, ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastos, mes, ano],
   );
@@ -1561,6 +1564,7 @@ function ResumoMesCard({
     () =>
       buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
         getLimite(catId, mes, ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastosConfirmados, mes, ano],
   );

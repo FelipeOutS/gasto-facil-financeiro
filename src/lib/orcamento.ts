@@ -36,16 +36,23 @@ export function statusOrcamento(realizado: number, planejado: number): StatusOrc
   return "ok";
 }
 
-/** Soma os gastos confirmados do mês por categoriaId. */
+/**
+ * Soma os gastos confirmados do mês por categoriaId.
+ * Quando `getMesAno` é informado, usa o mês "efetivo" do gasto (ex.: para
+ * crédito, considera o invoice_month da fatura). Sem o getter, faz o
+ * fallback histórico que olha apenas g.mes/g.ano.
+ */
 export function realizadoPorCategoria(
   gastos: Gasto[],
   mes: number,
   ano: number,
+  getMesAno?: (g: Gasto) => { mes: number; ano: number },
 ): Map<string, number> {
   const map = new Map<string, number>();
   for (const g of gastos) {
     if (g.confirmado === false) continue;
-    if (g.mes !== mes || g.ano !== ano) continue;
+    const eff = getMesAno ? getMesAno(g) : { mes: g.mes, ano: g.ano };
+    if (eff.mes !== mes || eff.ano !== ano) continue;
     map.set(g.categoriaId, (map.get(g.categoriaId) ?? 0) + (g.valor || 0));
   }
   return map;
@@ -57,8 +64,9 @@ export function buildLinhasOrcamento(
   mes: number,
   ano: number,
   getLimite: (catId: string) => number | undefined,
+  getMesAno?: (g: Gasto) => { mes: number; ano: number },
 ): LinhaOrcamento[] {
-  const realizado = realizadoPorCategoria(gastos, mes, ano);
+  const realizado = realizadoPorCategoria(gastos, mes, ano, getMesAno);
 
   return categorias
     .map<LinhaOrcamento>((c) => {
