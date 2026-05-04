@@ -277,6 +277,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     essencial: r.essencial ?? undefined,
     gastoFixo: r.gasto_fixo ?? undefined,
     cartaoId: r.cartao_id ?? undefined,
+    invoiceMonth: r.invoice_month ?? undefined,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
