@@ -603,7 +603,7 @@ function AdminPage() {
                   <div><p className="text-xs text-muted-foreground">Cadastro</p><p className="font-medium">{fmtDate(selected.created_at)}</p></div>
                   <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-medium">{PLAN_LABEL[selected.plano as keyof typeof PLAN_LABEL] ?? selected.plano}</p></div>
                   <div><p className="text-xs text-muted-foreground">Status do plano</p>
-                    <Badge variant="outline" className={STATUS_COLORS[selected.status] ?? ""}>{selected.status}</Badge>
+                    {(() => { const ds = getDisplayStatus(selected); return (<Badge variant="outline" className={STATUS_COLORS[ds]}>{STATUS_LABEL[ds]}</Badge>); })()}
                   </div>
                   <div><p className="text-xs text-muted-foreground">Ciclo</p><p className="font-medium">{selected.periodicidade ?? "—"}</p></div>
                   <div><p className="text-xs text-muted-foreground">Início</p><p className="font-medium">{fmtDate(selected.current_period_start)}</p></div>
