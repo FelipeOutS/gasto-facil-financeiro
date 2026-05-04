@@ -326,6 +326,68 @@ function GastosPage() {
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
 
+  // Limpa seleção quando filtros mudam (mantém apenas IDs ainda visíveis)
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visiveis = new Set(filtered.map((g) => g.id));
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visiveis.has(id)) next.add(id);
+      });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [filtered]);
+
+  const allSelected = filtered.length > 0 && filtered.every((g) => selected.has(g.id));
+  const someSelected = selected.size > 0 && !allSelected;
+  const valorSelecionado = useMemo(
+    () => filtered.filter((g) => selected.has(g.id)).reduce((s, g) => s + g.valor, 0),
+    [filtered, selected],
+  );
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      if (filtered.every((g) => prev.has(g.id))) {
+        // Desmarca todos visíveis
+        const next = new Set(prev);
+        filtered.forEach((g) => next.delete(g.id));
+        return next;
+      }
+      const next = new Set(prev);
+      filtered.forEach((g) => next.add(g.id));
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelected(new Set());
+  }
+  async function executarBulkDelete() {
+    if (selected.size === 0) return;
+    setExcluindoBulk(true);
+    try {
+      const ids = Array.from(selected);
+      const n = await bulkDeleteGastos(ids);
+      if (n > 0) {
+        toast.success(`${n} ${n === 1 ? "gasto removido" : "gastos removidos"}.`);
+        clearSelection();
+      } else {
+        toast.error("Não foi possível excluir os gastos selecionados.");
+      }
+      setConfirmBulk(false);
+    } finally {
+      setExcluindoBulk(false);
+    }
+  }
+
   const categoriaAtiva = catFilter !== "todas"
     ? categorias.find((c) => c.id === catFilter)
     : undefined;
