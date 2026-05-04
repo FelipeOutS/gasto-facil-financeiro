@@ -150,6 +150,9 @@ function AdminPage() {
   const [filterMethod, setFilterMethod] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [selected, setSelected] = useState<AdminUserRow | null>(null);
+  const [toDelete, setToDelete] = useState<AdminUserRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Guard de acesso
   useEffect(() => {
