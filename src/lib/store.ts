@@ -4042,6 +4042,7 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];
+  const targetYm = `${ano}-${String(mes).padStart(2, "0")}`;
   const { inicio, fim } = cicloFatura(cartao, mes, ano);
   const analisados = normalizeGastosForCalculations(memGastos);
   return analisados
@@ -4052,6 +4053,11 @@ export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gast
         g.confirmado !== false,
     )
     .filter((g) => {
+      // Fonte da verdade: invoice_month (mês da fatura escolhido pelo usuário).
+      if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+        return g.invoiceMonth === targetYm;
+      }
+      // Fallback (gastos antigos sem invoice_month): usa o ciclo de fechamento.
       const d = parseDateLocal(g.data);
       return !!d && d >= inicio && d <= fim;
     })
