@@ -1,12 +1,14 @@
 import logoDark from "@/assets/logo-dark.png";
 import logoLight from "@/assets/logo-light.png";
+import logoSymbol from "@/assets/logo-symbol.png";
 import { cn } from "@/lib/utils";
 
 /**
  * Official Gasto Inteligente logo.
  * - `variant="auto"` (default) shows the dark-bg logo on dark theme
  *   and the light-bg logo on light theme via Tailwind dark: utilities.
- * - `symbolOnly` always uses the symbol (dark version, no wordmark).
+ * - `symbolOnly` always uses the favicon symbol (no wordmark) for
+ *   compact spots where the full lockup wouldn't fit.
  */
 export function BrandMark({
   className,
@@ -20,7 +22,7 @@ export function BrandMark({
   if (symbolOnly) {
     return (
       <img
-        src={logoDark}
+        src={logoSymbol}
         alt={alt}
         className={cn("object-contain", className)}
         draggable={false}
