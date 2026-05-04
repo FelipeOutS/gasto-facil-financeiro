@@ -523,7 +523,7 @@ function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {data.payments.filter((p) => p.user_id === selected.user_id).map((p) => (
+                        {paymentsList.filter((p) => p.user_id === selected.user_id).map((p) => (
                           <TableRow key={p.id}>
                             <TableCell className="text-xs">{fmtDate(p.paid_at ?? p.created_at)}</TableCell>
                             <TableCell className="text-xs">{PLAN_LABEL[p.plano as keyof typeof PLAN_LABEL] ?? p.plano}</TableCell>
@@ -532,7 +532,7 @@ function AdminPage() {
                             <TableCell className="text-right text-xs">{fmtMoney(p.amount_cents)}</TableCell>
                           </TableRow>
                         ))}
-                        {data.payments.filter((p) => p.user_id === selected.user_id).length === 0 && (
+                        {paymentsList.filter((p) => p.user_id === selected.user_id).length === 0 && (
                           <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-3">Sem pagamentos.</TableCell></TableRow>
                         )}
                       </TableBody>
