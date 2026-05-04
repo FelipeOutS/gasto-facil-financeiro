@@ -956,6 +956,7 @@ function FaturaSheet({
   const [editingGasto, setEditingGasto] = useState<Gasto | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Gasto | null>(null);
   const [openAdd, setOpenAdd] = useState(false);
+  const [confirmLote, setConfirmLote] = useState<string | null>(null);
 
   // Subscribe to store updates so list refreshes after add/edit/delete/pay
   useStore(() => 0);
