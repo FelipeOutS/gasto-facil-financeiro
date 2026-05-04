@@ -215,7 +215,12 @@ function AdminPage() {
     return usersList.filter((u) => {
       if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))) return false;
       if (filterPlan !== "all" && u.plano !== filterPlan) return false;
-      if (filterStatus !== "all" && u.status !== filterStatus) return false;
+      if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
+      if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
+      if (sd && new Date(u.created_at) < sd) return false;
+      return true;
+    });
+  }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
       if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
       if (sd && new Date(u.created_at) < sd) return false;
       return true;
