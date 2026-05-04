@@ -1613,6 +1613,11 @@ export type NovoGastoInput = {
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
+  /**
+   * Mês da fatura (YYYY-MM). Usado apenas para gastos no crédito —
+   * determina em qual fatura a compra entra, independente da data real.
+   */
+  invoiceMonth?: string;
   /** Horário opcional (HH:mm). */
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
