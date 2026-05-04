@@ -36,6 +36,7 @@ import { hasMerchantLogo } from "@/lib/logos";
 import { Money, CountNumber } from "@/components/Money";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  bulkDeleteGastos,
   deleteGasto,
   getCategoriaById,
   getCategorias,
@@ -45,6 +46,17 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatBRL, formatDateBR, parseDateLocal, toLocalISODate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -234,6 +246,9 @@ function GastosPage() {
   const [valorMax, setValorMax] = useState<string>("");
   const [advOpen, setAdvOpen] = useState(false);
   const [editing, setEditing] = useState<Gasto | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [excluindoBulk, setExcluindoBulk] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -310,6 +325,68 @@ function GastosPage() {
 
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
+
+  // Limpa seleção quando filtros mudam (mantém apenas IDs ainda visíveis)
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visiveis = new Set(filtered.map((g) => g.id));
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visiveis.has(id)) next.add(id);
+      });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [filtered]);
+
+  const allSelected = filtered.length > 0 && filtered.every((g) => selected.has(g.id));
+  const someSelected = selected.size > 0 && !allSelected;
+  const valorSelecionado = useMemo(
+    () => filtered.filter((g) => selected.has(g.id)).reduce((s, g) => s + g.valor, 0),
+    [filtered, selected],
+  );
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      if (filtered.every((g) => prev.has(g.id))) {
+        // Desmarca todos visíveis
+        const next = new Set(prev);
+        filtered.forEach((g) => next.delete(g.id));
+        return next;
+      }
+      const next = new Set(prev);
+      filtered.forEach((g) => next.add(g.id));
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelected(new Set());
+  }
+  async function executarBulkDelete() {
+    if (selected.size === 0) return;
+    setExcluindoBulk(true);
+    try {
+      const ids = Array.from(selected);
+      const n = await bulkDeleteGastos(ids);
+      if (n > 0) {
+        toast.success(`${n} ${n === 1 ? "gasto removido" : "gastos removidos"}.`);
+        clearSelection();
+      } else {
+        toast.error("Não foi possível excluir os gastos selecionados.");
+      }
+      setConfirmBulk(false);
+    } finally {
+      setExcluindoBulk(false);
+    }
+  }
 
   const categoriaAtiva = catFilter !== "todas"
     ? categorias.find((c) => c.id === catFilter)
@@ -715,6 +792,52 @@ function GastosPage() {
         <SummaryStat label="Média" value={<Money value={media} />} />
       </div>
 
+      {/* Barra de seleção em massa */}
+      {filtered.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card-elevated px-3 py-2">
+          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={() => toggleAllVisible()}
+              aria-label="Selecionar todos"
+            />
+            <span>
+              {allSelected
+                ? `Todos selecionados (${filtered.length})`
+                : selected.size > 0
+                  ? `${selected.size} selecionado${selected.size === 1 ? "" : "s"}`
+                  : hasAnyFilter
+                    ? `Selecionar todos filtrados (${filtered.length})`
+                    : `Selecionar todos (${filtered.length})`}
+            </span>
+          </label>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="num text-xs text-muted-foreground">
+                Total: {formatBRL(valorSelecionado)}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={clearSelection}
+              >
+                Limpar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={() => setConfirmBulk(true)}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Excluir selecionados
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista */}
       {filtered.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
@@ -765,8 +888,15 @@ function GastosPage() {
                   className={cn(
                     "flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift",
                     highlightId === g.id && "ring-2 ring-emerald-500/70 border-emerald-500/40 bg-emerald-500/5",
+                    selected.has(g.id) && "border-primary/50 bg-primary/5",
                   )}
                 >
+                  <Checkbox
+                    checked={selected.has(g.id)}
+                    onCheckedChange={() => toggleOne(g.id)}
+                    aria-label="Selecionar gasto"
+                    className="shrink-0"
+                  />
                   <div className="relative shrink-0">
                     <TransactionAvatar
                       estabelecimento={g.estabelecimento || g.descricao}
@@ -849,6 +979,33 @@ function GastosPage() {
           if (!v) setEditing(null);
         }}
       />
+
+      <AlertDialog open={confirmBulk} onOpenChange={(o) => !o && !excluindoBulk && setConfirmBulk(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir gastos selecionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{selected.size}</strong>{" "}
+              {selected.size === 1 ? "gasto" : "gastos"}, totalizando{" "}
+              <strong>{formatBRL(valorSelecionado)}</strong>. Essa ação não poderá ser desfeita.
+              Apenas gastos serão removidos — receitas, contas e outros dados não serão afetados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoBulk}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void executarBulkDelete();
+              }}
+              disabled={excluindoBulk}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindoBulk ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
