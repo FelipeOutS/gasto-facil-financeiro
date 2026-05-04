@@ -185,7 +185,26 @@ function AdminPage() {
     return () => {
       cancel = true;
     };
-  }, [authorized]);
+  }, [authorized, reloadKey]);
+
+  const ADMIN_LOCK_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
+  const isProtectedAdmin = (email: string) => ADMIN_LOCK_EMAILS.includes((email ?? "").toLowerCase());
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await deleteUserById({ data: { targetUserId: toDelete.user_id } });
+      toast.success("Usuário excluído com sucesso");
+      setToDelete(null);
+      setSelected(null);
+      setReloadKey((k) => k + 1);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao excluir usuário");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const usersList = data?.users ?? [];
   const paymentsList = data?.payments ?? [];
