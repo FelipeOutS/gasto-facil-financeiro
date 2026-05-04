@@ -53,6 +53,7 @@ import {
   getLimites,
   getMovimentacoesMeta,
   getReceitas,
+  mesEfetivoGasto,
   useBootstrap,
   useStore,
 } from "@/lib/store";
