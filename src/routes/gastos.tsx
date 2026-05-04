@@ -787,6 +787,14 @@ function GastosPage() {
                           ? " · recorrente"
                           : ""}
                     </p>
+                    {g.formaPagamento === "credito" && g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) && (
+                      <p className="truncate text-[11px] text-muted-foreground/80">
+                        Fatura: {(() => {
+                          const [a, m] = g.invoiceMonth.split("-");
+                          return `${m}/${a}`;
+                        })()}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
