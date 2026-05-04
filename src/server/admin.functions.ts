@@ -7,23 +7,24 @@ const ADMIN_EMAILS = [
   "michael@medeiroscenografia.com.br",
 ];
 
-async function ensureAdmin(supabase: any, userId: string): Promise<string> {
-  // Pega email pelo admin client (claims já tem userId, mas precisamos do email)
-  const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
-  const email = (u?.user?.email ?? "").toLowerCase();
-  if (!ADMIN_EMAILS.includes(email)) {
-    // Verifica role owner como fallback
+async function ensureAdmin(_supabase: any, userId: string): Promise<string> {
+  try {
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const email = (u?.user?.email ?? "").toLowerCase();
+    if (ADMIN_EMAILS.includes(email)) return email;
     const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
     const isOwner = (roles ?? []).some((r: any) => r.role === "owner");
-    if (!isOwner) {
-      throw new Response("Forbidden", { status: 403 });
-    }
+    if (isOwner) return email;
+    throw new Error("FORBIDDEN");
+  } catch (e: any) {
+    if (e?.message === "FORBIDDEN") throw e;
+    throw new Error("FORBIDDEN");
   }
-  return email;
 }
+
 
 export type AdminUserRow = {
   user_id: string;
