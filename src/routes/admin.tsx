@@ -3,7 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
-import { getAdminDashboard, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { getAdminDashboard, deleteUserById, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,13 +86,33 @@ function fmtDate(s: string | null) {
   }
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ativo: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
-  pendente: "bg-amber-500/15 text-amber-500 border-amber-500/30",
-  cancelado: "bg-red-500/15 text-red-500 border-red-500/30",
-  vencido: "bg-orange-500/15 text-orange-500 border-orange-500/30",
-  sem_assinatura: "bg-muted text-muted-foreground border-border",
+type DisplayStatus = "ativo" | "aguardando" | "cancelado_vencido" | "conta_criada";
+
+const STATUS_LABEL: Record<DisplayStatus, string> = {
+  ativo: "Plano ativo",
+  aguardando: "Aguardando pagamento",
+  cancelado_vencido: "Cancelado/Vencido",
+  conta_criada: "Conta criada",
 };
+
+const STATUS_COLORS: Record<DisplayStatus, string> = {
+  ativo: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+  aguardando: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+  cancelado_vencido: "bg-red-500/15 text-red-500 border-red-500/30",
+  conta_criada: "bg-muted text-muted-foreground border-border",
+};
+
+function getDisplayStatus(u: AdminUserRow): DisplayStatus {
+  const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
+  const hasPlan = u.plano && u.plano !== "free";
+  if (u.status === "cancelado" || u.status === "vencido" || u.last_payment_status === "rejected" || u.last_payment_status === "expired") {
+    return "cancelado_vencido";
+  }
+  if (u.status === "ativo" && paid && hasPlan) return "ativo";
+  if (hasPlan && !paid) return "aguardando";
+  if (u.last_payment_status === "pending") return "aguardando";
+  return "conta_criada";
+}
 
 const PAY_STATUS_COLORS: Record<string, string> = {
   approved: "bg-emerald-500/15 text-emerald-500",
@@ -118,6 +150,9 @@ function AdminPage() {
   const [filterMethod, setFilterMethod] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [selected, setSelected] = useState<AdminUserRow | null>(null);
+  const [toDelete, setToDelete] = useState<AdminUserRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Guard de acesso
   useEffect(() => {
@@ -150,7 +185,26 @@ function AdminPage() {
     return () => {
       cancel = true;
     };
-  }, [authorized]);
+  }, [authorized, reloadKey]);
+
+  const ADMIN_LOCK_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
+  const isProtectedAdmin = (email: string) => ADMIN_LOCK_EMAILS.includes((email ?? "").toLowerCase());
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await deleteUserById({ data: { targetUserId: toDelete.user_id } });
+      toast.success("Usuário excluído com sucesso");
+      setToDelete(null);
+      setSelected(null);
+      setReloadKey((k) => k + 1);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao excluir usuário");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const usersList = data?.users ?? [];
   const paymentsList = data?.payments ?? [];
@@ -161,7 +215,7 @@ function AdminPage() {
     return usersList.filter((u) => {
       if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))) return false;
       if (filterPlan !== "all" && u.plano !== filterPlan) return false;
-      if (filterStatus !== "all" && u.status !== filterStatus) return false;
+      if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
       if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
       if (sd && new Date(u.created_at) < sd) return false;
       return true;
@@ -443,11 +497,10 @@ function AdminPage() {
               <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-                <SelectItem value="vencido">Vencido</SelectItem>
-                <SelectItem value="sem_assinatura">Sem assinatura</SelectItem>
+                <SelectItem value="ativo">Plano ativo</SelectItem>
+                <SelectItem value="aguardando">Aguardando pagamento</SelectItem>
+                <SelectItem value="cancelado_vencido">Cancelado/Vencido</SelectItem>
+                <SelectItem value="conta_criada">Conta criada</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
@@ -489,30 +542,47 @@ function AdminPage() {
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total pago</TableHead>
                   <TableHead>Próx.</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
-                    <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{u.email}</TableCell>
-                    <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
-                    <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
-                    <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
-                    <TableCell className="text-xs">
-                      {u.last_payment_method ? (
-                        <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[u.status] ?? ""}`}>{u.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
-                    <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
-                  </TableRow>
-                ))}
+                {filteredUsers.map((u) => {
+                  const ds = getDisplayStatus(u);
+                  const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
+                  return (
+                    <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
+                      <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
+                      <TableCell className="text-xs">{u.email}</TableCell>
+                      <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
+                      <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
+                      <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {u.last_payment_method ? (
+                          <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
+                      <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                          disabled={protectedRow}
+                          title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                          onClick={() => setToDelete(u)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filteredUsers.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -533,7 +603,7 @@ function AdminPage() {
                   <div><p className="text-xs text-muted-foreground">Cadastro</p><p className="font-medium">{fmtDate(selected.created_at)}</p></div>
                   <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-medium">{PLAN_LABEL[selected.plano as keyof typeof PLAN_LABEL] ?? selected.plano}</p></div>
                   <div><p className="text-xs text-muted-foreground">Status do plano</p>
-                    <Badge variant="outline" className={STATUS_COLORS[selected.status] ?? ""}>{selected.status}</Badge>
+                    {(() => { const ds = getDisplayStatus(selected); return (<Badge variant="outline" className={STATUS_COLORS[ds]}>{STATUS_LABEL[ds]}</Badge>); })()}
                   </div>
                   <div><p className="text-xs text-muted-foreground">Ciclo</p><p className="font-medium">{selected.periodicidade ?? "—"}</p></div>
                   <div><p className="text-xs text-muted-foreground">Início</p><p className="font-medium">{fmtDate(selected.current_period_start)}</p></div>
@@ -575,6 +645,34 @@ function AdminPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && !deleting && setToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  <p>Você está prestes a excluir permanentemente:</p>
+                  <div className="rounded-md border p-3 bg-muted/30">
+                    <p className="font-medium text-foreground">{toDelete?.nome ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground break-all">{toDelete?.email}</p>
+                  </div>
+                  <p className="text-destructive font-medium">Esta ação é irreversível e removerá todos os dados vinculados (perfil, planos, pagamentos e histórico).</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); void confirmDelete(); }}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? "Excluindo…" : "Excluir definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MobileShell>
   );
