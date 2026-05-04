@@ -152,11 +152,13 @@ function AdminPage() {
     };
   }, [authorized]);
 
+  const usersList = data?.users ?? [];
+  const paymentsList = data?.payments ?? [];
+
   const filteredUsers = useMemo(() => {
-    if (!data) return [];
     const sd = periodToDate(filterPeriod);
     const q = search.trim().toLowerCase();
-    return data.users.filter((u) => {
+    return usersList.filter((u) => {
       if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))) return false;
       if (filterPlan !== "all" && u.plano !== filterPlan) return false;
       if (filterStatus !== "all" && u.status !== filterStatus) return false;
@@ -164,60 +166,55 @@ function AdminPage() {
       if (sd && new Date(u.created_at) < sd) return false;
       return true;
     });
-  }, [data, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
+  }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
   const revByMonth = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       const dt = new Date(p.paid_at ?? p.created_at);
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + (p.amount_cents ?? 0));
     }
     return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, valor: v / 100 }));
-  }, [data]);
+  }, [paymentsList]);
 
   const usersByMonth = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const u of data.users) {
+    for (const u of usersList) {
       const dt = new Date(u.created_at);
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, total: v }));
-  }, [data]);
+  }, [usersList]);
 
   const planMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.plano, (map.get(p.plano) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: PLAN_LABEL[k as keyof typeof PLAN_LABEL] ?? k, value: v }));
-  }, [data]);
+  }, [paymentsList]);
 
   const methodMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.method, (map.get(p.method) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: k === "pix" ? "Pix" : k === "card" ? "Cartão" : k, value: v }));
-  }, [data]);
+  }, [paymentsList]);
 
   const statusMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const u of data.users) {
+    for (const u of usersList) {
       map.set(u.status, (map.get(u.status) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: k, value: v }));
-  }, [data]);
+  }, [usersList]);
 
   function exportCsv() {
     const rows = filteredUsers.map((u) => ({
@@ -277,15 +274,16 @@ function AdminPage() {
     );
   }
 
-  if (err || !data) {
-    return (
-      <MobileShell wide>
-        <div className="py-10 text-center text-sm text-destructive">{err ?? "Sem dados"}</div>
-      </MobileShell>
-    );
-  }
-
-  const t = data.totals;
+  const t = data?.totals ?? {
+    totalUsers: 0,
+    activeUsers: 0,
+    noPlanUsers: 0,
+    cancelledOrExpiredUsers: 0,
+    revenueAllCents: 0,
+    revenueMonthCents: 0,
+    mrrCents: 0,
+    topPlan: null as string | null,
+  };
   const cards = [
     { label: "Total cadastrados", value: t.totalUsers, icon: Users, color: "text-blue-500" },
     { label: "Plano ativo", value: t.activeUsers, icon: CheckCircle2, color: "text-emerald-500" },
@@ -311,6 +309,14 @@ function AdminPage() {
             <Download className="h-4 w-4" /> Exportar CSV
           </Button>
         </div>
+
+        {err && (
+          <Card className="mt-4 border-destructive/40 bg-destructive/5">
+            <CardContent className="p-4 text-sm text-destructive">
+              Não foi possível carregar todos os dados administrativos: {err}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -525,7 +531,7 @@ function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {data.payments.filter((p) => p.user_id === selected.user_id).map((p) => (
+                        {paymentsList.filter((p) => p.user_id === selected.user_id).map((p) => (
                           <TableRow key={p.id}>
                             <TableCell className="text-xs">{fmtDate(p.paid_at ?? p.created_at)}</TableCell>
                             <TableCell className="text-xs">{PLAN_LABEL[p.plano as keyof typeof PLAN_LABEL] ?? p.plano}</TableCell>
@@ -534,7 +540,7 @@ function AdminPage() {
                             <TableCell className="text-right text-xs">{fmtMoney(p.amount_cents)}</TableCell>
                           </TableRow>
                         ))}
-                        {data.payments.filter((p) => p.user_id === selected.user_id).length === 0 && (
+                        {paymentsList.filter((p) => p.user_id === selected.user_id).length === 0 && (
                           <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-3">Sem pagamentos.</TableCell></TableRow>
                         )}
                       </TableBody>
