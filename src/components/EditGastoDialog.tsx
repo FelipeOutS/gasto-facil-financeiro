@@ -271,6 +271,21 @@ export function EditGastoDialog({
                   Nenhum cartão cadastrado.
                 </p>
               )}
+              <div className="mt-3">
+                <Label htmlFor="edit-invoice" className="text-xs text-muted-foreground">
+                  Mês da fatura (opcional)
+                </Label>
+                <Input
+                  id="edit-invoice"
+                  type="month"
+                  value={invoiceMonth}
+                  onChange={(e) => setInvoiceMonth(e.target.value)}
+                  className="mt-1 h-11 bg-card-elevated sm:max-w-[220px]"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Use para mover esta compra para outra fatura sem mudar a data real.
+                </p>
+              </div>
             </div>
           )}
 
