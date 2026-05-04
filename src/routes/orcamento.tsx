@@ -24,6 +24,7 @@ import {
   getGastos,
   getLimite,
   getLimites,
+  mesEfetivoGasto,
   setLimite,
   useBootstrap,
   useStore,
