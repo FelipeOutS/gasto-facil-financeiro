@@ -979,6 +979,33 @@ function GastosPage() {
           if (!v) setEditing(null);
         }}
       />
+
+      <AlertDialog open={confirmBulk} onOpenChange={(o) => !o && !excluindoBulk && setConfirmBulk(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir gastos selecionados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{selected.size}</strong>{" "}
+              {selected.size === 1 ? "gasto" : "gastos"}, totalizando{" "}
+              <strong>{formatBRL(valorSelecionado)}</strong>. Essa ação não poderá ser desfeita.
+              Apenas gastos serão removidos — receitas, contas e outros dados não serão afetados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoBulk}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void executarBulkDelete();
+              }}
+              disabled={excluindoBulk}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindoBulk ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
