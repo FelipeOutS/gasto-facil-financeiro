@@ -221,11 +221,6 @@ function AdminPage() {
       return true;
     });
   }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
-      if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
-      if (sd && new Date(u.created_at) < sd) return false;
-      return true;
-    });
-  }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
   const revByMonth = useMemo(() => {
