@@ -1979,6 +1979,9 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
   if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
+  if (patch.invoiceMonth !== undefined)
+    (row as GastoUpdate & { invoice_month?: string | null }).invoice_month =
+      patch.invoiceMonth && /^\d{4}-\d{2}$/.test(patch.invoiceMonth) ? patch.invoiceMonth : null;
   if (patch.horario !== undefined)
     (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
   if (patch.origem !== undefined)
