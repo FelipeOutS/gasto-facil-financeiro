@@ -497,11 +497,10 @@ function AdminPage() {
               <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-                <SelectItem value="vencido">Vencido</SelectItem>
-                <SelectItem value="sem_assinatura">Sem assinatura</SelectItem>
+                <SelectItem value="ativo">Plano ativo</SelectItem>
+                <SelectItem value="aguardando">Aguardando pagamento</SelectItem>
+                <SelectItem value="cancelado_vencido">Cancelado/Vencido</SelectItem>
+                <SelectItem value="conta_criada">Conta criada</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
