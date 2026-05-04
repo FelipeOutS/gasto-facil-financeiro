@@ -90,6 +90,7 @@ function OrcamentoPage() {
     () =>
       buildLinhasOrcamento(categorias, gastos, ym.mes, ym.ano, (catId) =>
         getLimite(catId, ym.mes, ym.ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastos, ym],
   );
