@@ -152,11 +152,13 @@ function AdminPage() {
     };
   }, [authorized]);
 
+  const usersList = data?.users ?? [];
+  const paymentsList = data?.payments ?? [];
+
   const filteredUsers = useMemo(() => {
-    if (!data) return [];
     const sd = periodToDate(filterPeriod);
     const q = search.trim().toLowerCase();
-    return data.users.filter((u) => {
+    return usersList.filter((u) => {
       if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))) return false;
       if (filterPlan !== "all" && u.plano !== filterPlan) return false;
       if (filterStatus !== "all" && u.status !== filterStatus) return false;
@@ -164,60 +166,55 @@ function AdminPage() {
       if (sd && new Date(u.created_at) < sd) return false;
       return true;
     });
-  }, [data, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
+  }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
   const revByMonth = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       const dt = new Date(p.paid_at ?? p.created_at);
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + (p.amount_cents ?? 0));
     }
     return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, valor: v / 100 }));
-  }, [data]);
+  }, [paymentsList]);
 
   const usersByMonth = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const u of data.users) {
+    for (const u of usersList) {
       const dt = new Date(u.created_at);
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, total: v }));
-  }, [data]);
+  }, [usersList]);
 
   const planMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.plano, (map.get(p.plano) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: PLAN_LABEL[k as keyof typeof PLAN_LABEL] ?? k, value: v }));
-  }, [data]);
+  }, [paymentsList]);
 
   const methodMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const p of data.payments) {
+    for (const p of paymentsList) {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.method, (map.get(p.method) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: k === "pix" ? "Pix" : k === "card" ? "Cartão" : k, value: v }));
-  }, [data]);
+  }, [paymentsList]);
 
   const statusMix = useMemo(() => {
-    if (!data) return [];
     const map = new Map<string, number>();
-    for (const u of data.users) {
+    for (const u of usersList) {
       map.set(u.status, (map.get(u.status) ?? 0) + 1);
     }
     return [...map.entries()].map(([k, v]) => ({ name: k, value: v }));
-  }, [data]);
+  }, [usersList]);
 
   function exportCsv() {
     const rows = filteredUsers.map((u) => ({
