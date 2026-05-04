@@ -95,8 +95,8 @@ function Index() {
   const doMes = useMemo(
     () =>
       gastosConfirmados.filter((g) => {
-        const d = parseDateLocal(g.data);
-        return !!d && d.getMonth() + 1 === ym.mes && d.getFullYear() === ym.ano;
+        const eff = mesEfetivoGasto(g);
+        return eff.mes === ym.mes && eff.ano === ym.ano;
       }),
     [gastosConfirmados, ym],
   );
@@ -114,8 +114,8 @@ function Index() {
     const a = ref.getFullYear();
     return gastosConfirmados
       .filter((g) => {
-        const d = parseDateLocal(g.data);
-        return !!d && d.getMonth() + 1 === m && d.getFullYear() === a;
+        const eff = mesEfetivoGasto(g);
+        return eff.mes === m && eff.ano === a;
       })
       .reduce((s, g) => s + g.valor, 0);
   }, [gastosConfirmados, ym]);
