@@ -1078,6 +1078,15 @@ function FaturaSheet({
     setConfirmDelete(null);
   }
 
+  const lotes = lotesImportacaoFatura(cartao.id, ref.mes, ref.ano);
+  async function handleDeleteLote() {
+    if (!confirmLote) return;
+    const n = await deleteGastosDoLote(confirmLote);
+    setConfirmLote(null);
+    if (n > 0) toast.success(`Importação removida (${n} ${n === 1 ? "compra" : "compras"}). Gastos manuais foram preservados.`);
+    else toast.error("Não foi possível remover a importação.");
+  }
+
   return (
     <Sheet open={!!cartao} onOpenChange={onOpenChange}>
       <SheetContent
