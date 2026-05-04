@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -6,6 +7,79 @@ const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
   "michael@medeiroscenografia.com.br",
 ];
+
+const USER_DATA_TABLES = [
+  "aprendizado_categoria",
+  "bancos",
+  "cartoes",
+  "categorias",
+  "contas_a_pagar",
+  "contas_a_receber",
+  "dinheiro_guardado",
+  "extratos_importados",
+  "faturas_cartao",
+  "gastos",
+  "investimentos_ativos",
+  "investimentos_atualizacoes",
+  "investimentos_importacoes",
+  "investimentos_movimentacoes",
+  "investimentos_rendimentos",
+  "limites",
+  "metas_financeiras",
+  "movimentacoes_meta",
+  "receitas",
+  "recorrencias",
+  "subscription_payments",
+  "transferencias_internas",
+  "user_plans",
+  "user_roles",
+  "whatsapp_links",
+  "whatsapp_messages",
+] as const;
+
+export const deleteUserById = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ targetUserId: z.string().uuid() }).parse(input))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await ensureAdmin(context.supabase, userId);
+
+    if (data.targetUserId === userId) {
+      throw new Error("Você não pode excluir a própria conta de administrador.");
+    }
+
+    // Verifica se alvo é admin (allowlist ou owner) — bloqueia
+    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    const targetEmail = (targetUser?.user?.email ?? "").toLowerCase();
+    if (ADMIN_EMAILS.includes(targetEmail)) {
+      throw new Error("Não é permitido excluir outro administrador.");
+    }
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.targetUserId);
+    if ((roles ?? []).some((r: any) => r.role === "owner")) {
+      throw new Error("Não é permitido excluir um usuário com papel de owner.");
+    }
+
+    // Limpa profile
+    await supabaseAdmin.from("profiles").delete().eq("id", data.targetUserId);
+
+    // Limpa tabelas user-scoped
+    for (const table of USER_DATA_TABLES) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabaseAdmin as any).from(table).delete().eq("user_id", data.targetUserId);
+      if (error) console.error(`[deleteUserById] ${table}`, error.message);
+    }
+
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
+    if (authError) {
+      console.error("[deleteUserById] auth.admin.deleteUser", authError);
+      throw new Error("Não foi possível excluir o usuário no provedor de autenticação.");
+    }
+
+    return { ok: true };
+  });
 
 async function ensureAdmin(_supabase: any, userId: string): Promise<string> {
   try {
