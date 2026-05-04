@@ -34,6 +34,7 @@ import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AlertasRouteImport } from './routes/alertas'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
@@ -173,6 +174,11 @@ const AlertasRoute = AlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdicionarRoute = AdicionarRouteImport.update({
   id: '/adicionar',
   path: '/adicionar',
@@ -244,6 +250,7 @@ const ApiPublicWebhooksMercadopagoRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
+  '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/adicionar'
+    | '/admin'
     | '/alertas'
     | '/assinaturas'
     | '/cadastro'
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/adicionar'
+    | '/admin'
     | '/alertas'
     | '/assinaturas'
     | '/cadastro'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/adicionar'
+    | '/admin'
     | '/alertas'
     | '/assinaturas'
     | '/cadastro'
@@ -488,6 +500,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
+  AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
   AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
@@ -703,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlertasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/adicionar': {
       id: '/adicionar'
       path: '/adicionar'
@@ -800,6 +820,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
+  AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
   AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,

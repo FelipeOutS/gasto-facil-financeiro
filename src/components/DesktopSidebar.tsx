@@ -24,6 +24,9 @@ import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
+import { Shield } from "lucide-react";
 
 type NavItem = {
   to: string;
@@ -58,6 +61,9 @@ export function DesktopSidebar() {
   const { can } = usePlan();
   const [investLockOpen, setInvestLockOpen] = useState(false);
   const investBlocked = !can("investimentos");
+  const { user } = useAuth();
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
 
@@ -99,7 +105,7 @@ export function DesktopSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-1">
-          {ITEMS.map(({ to, label, icon: Icon, exact }) => {
+          {items.map(({ to, label, icon: Icon, exact }) => {
             const active = exact
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
