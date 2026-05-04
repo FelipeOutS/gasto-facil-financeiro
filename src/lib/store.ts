@@ -4134,7 +4134,7 @@ export async function deleteGastosDoLote(batchId: string): Promise<number> {
  * Lista TODOS os lotes de importação de gastos de cartão (qualquer fatura).
  * Usado pelo histórico do diálogo "Importar fatura".
  */
-export function lotesImportacaoTodos(): Array<{
+type LoteImportInfo = {
   batchId: string;
   cartaoId?: string;
   invoiceMonth?: string;
@@ -4142,16 +4142,12 @@ export function lotesImportacaoTodos(): Array<{
   total: number;
   primeira: string;
   origem?: string;
-}> {
-  const map = new Map<string, {
-    batchId: string;
-    cartaoId?: string;
-    invoiceMonth?: string;
-    qtd: number;
-    total: number;
-    primeira: string;
-    origem?: string;
-  }>();
+};
+let _lotesCacheSource: Gasto[] | null = null;
+let _lotesCacheResult: LoteImportInfo[] = [];
+export function lotesImportacaoTodos(): LoteImportInfo[] {
+  if (_lotesCacheSource === memGastos) return _lotesCacheResult;
+  const map = new Map<string, LoteImportInfo>();
   for (const g of memGastos) {
     if (g.formaPagamento !== "credito") continue;
     if (!g.importBatchId) continue;
