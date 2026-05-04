@@ -1096,6 +1096,65 @@ function ReviewStep({
   })();
   return (
     <div className="space-y-4">
+      {/* Banner: mês da fatura (fonte da verdade) */}
+      <div className="rounded-2xl border border-brand/30 bg-brand-soft/40 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Esta fatura será importada para
+            </p>
+            <p className="mt-0.5 text-lg font-bold tracking-tight">
+              Fatura de {invoiceLabel}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Todos os lançamentos abaixo entrarão nesta fatura, mesmo que a
+              data da compra seja de outro mês.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, -1))}
+            >
+              ← Mês anterior
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const d = new Date();
+                setInvoiceMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+              }}
+            >
+              Mês atual
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, 1))}
+            >
+              Próximo mês →
+            </Button>
+            <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
+              <SelectTrigger className="h-9 w-[200px]">
+                <SelectValue placeholder="Selecionar outro mês" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[260px]">
+                {monthOptions.map((ym) => {
+                  const [y, m] = ym.split("-").map(Number);
+                  return (
+                    <SelectItem key={ym} value={ym}>
+                      {MES_NOMES[m - 1]}/{y}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-card-elevated p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
