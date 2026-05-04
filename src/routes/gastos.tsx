@@ -792,6 +792,52 @@ function GastosPage() {
         <SummaryStat label="Média" value={<Money value={media} />} />
       </div>
 
+      {/* Barra de seleção em massa */}
+      {filtered.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card-elevated px-3 py-2">
+          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={() => toggleAllVisible()}
+              aria-label="Selecionar todos"
+            />
+            <span>
+              {allSelected
+                ? `Todos selecionados (${filtered.length})`
+                : selected.size > 0
+                  ? `${selected.size} selecionado${selected.size === 1 ? "" : "s"}`
+                  : hasAnyFilter
+                    ? `Selecionar todos filtrados (${filtered.length})`
+                    : `Selecionar todos (${filtered.length})`}
+            </span>
+          </label>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="num text-xs text-muted-foreground">
+                Total: {formatBRL(valorSelecionado)}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={clearSelection}
+              >
+                Limpar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={() => setConfirmBulk(true)}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Excluir selecionados
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista */}
       {filtered.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
