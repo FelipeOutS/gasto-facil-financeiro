@@ -3,7 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
-import { getAdminDashboard, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { getAdminDashboard, deleteUserById, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
