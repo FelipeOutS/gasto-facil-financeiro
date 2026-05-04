@@ -86,13 +86,33 @@ function fmtDate(s: string | null) {
   }
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ativo: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
-  pendente: "bg-amber-500/15 text-amber-500 border-amber-500/30",
-  cancelado: "bg-red-500/15 text-red-500 border-red-500/30",
-  vencido: "bg-orange-500/15 text-orange-500 border-orange-500/30",
-  sem_assinatura: "bg-muted text-muted-foreground border-border",
+type DisplayStatus = "ativo" | "aguardando" | "cancelado_vencido" | "conta_criada";
+
+const STATUS_LABEL: Record<DisplayStatus, string> = {
+  ativo: "Plano ativo",
+  aguardando: "Aguardando pagamento",
+  cancelado_vencido: "Cancelado/Vencido",
+  conta_criada: "Conta criada",
 };
+
+const STATUS_COLORS: Record<DisplayStatus, string> = {
+  ativo: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+  aguardando: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+  cancelado_vencido: "bg-red-500/15 text-red-500 border-red-500/30",
+  conta_criada: "bg-muted text-muted-foreground border-border",
+};
+
+function getDisplayStatus(u: AdminUserRow): DisplayStatus {
+  const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
+  const hasPlan = u.plano && u.plano !== "free";
+  if (u.status === "cancelado" || u.status === "vencido" || u.last_payment_status === "rejected" || u.last_payment_status === "expired") {
+    return "cancelado_vencido";
+  }
+  if (u.status === "ativo" && paid && hasPlan) return "ativo";
+  if (hasPlan && !paid) return "aguardando";
+  if (u.last_payment_status === "pending") return "aguardando";
+  return "conta_criada";
+}
 
 const PAY_STATUS_COLORS: Record<string, string> = {
   approved: "bg-emerald-500/15 text-emerald-500",
