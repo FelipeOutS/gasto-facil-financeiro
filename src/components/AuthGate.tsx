@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { Wallet } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { fetchOnboarding } from "@/lib/onboarding/service";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -100,11 +101,8 @@ export function AuthShell({
   return (
     <div className="min-h-screen bg-background px-5 py-10">
       <div className="mx-auto flex w-full max-w-sm flex-col animate-fade-in">
-        <Link to="/" className="mx-auto flex items-center gap-2">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-card shadow-elevated">
-            <Wallet className="h-5 w-5 text-foreground" />
-          </span>
-          <span className="text-lg font-extrabold tracking-tight">Gasto Inteligente</span>
+        <Link to="/" className="mx-auto flex items-center justify-center" aria-label="Gasto Inteligente">
+          <BrandMark className="h-16 w-auto" />
         </Link>
 
         <div className="mt-8">

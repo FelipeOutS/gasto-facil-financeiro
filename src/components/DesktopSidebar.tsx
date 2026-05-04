@@ -82,10 +82,8 @@ export function DesktopSidebar() {
       aria-label="Navegação lateral"
     >
       <div className="px-5 pt-6 pb-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Gasto Inteligente
-        </p>
-        <h2 className="mt-1 text-lg font-bold tracking-tight">Controle financeiro</h2>
+        <BrandMark className="h-10 w-auto" />
+        <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">Controle financeiro</h2>
       </div>
 
       <button
