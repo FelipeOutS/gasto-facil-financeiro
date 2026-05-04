@@ -489,36 +489,45 @@ function GastosPage() {
       </header>
 
       {/* Botões mobile */}
-      <div className="mt-3 sm:hidden grid grid-cols-3 gap-2">
-        <Button
-          type="button"
-          onClick={handleReclassificar}
-          className="h-11 rounded-2xl px-2"
-          variant="outline"
-          disabled={reclassificando}
-        >
-          <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-          Revisar
-        </Button>
-        <Button
-          type="button"
-          onClick={tryImportar}
-          className="h-11 rounded-2xl"
-          variant="secondary"
-        >
-          <Upload className="h-4 w-4" />
-          Importar
-          {!can("importar_extrato") && <LockChip />}
-        </Button>
-        <Button
-          type="button"
-          onClick={() => setHistoryOpen(true)}
-          className="h-11 rounded-2xl"
-          variant="outline"
-        >
-          <History className="h-4 w-4" />
-          Extratos
-        </Button>
+      <div className="mt-3 sm:hidden -mx-4 px-4 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2 w-max pb-1">
+          <Button
+            type="button"
+            onClick={handleReclassificar}
+            className="h-11 rounded-2xl px-3 shrink-0"
+            variant="outline"
+            disabled={reclassificando}
+          >
+            <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
+            Revisar
+          </Button>
+          <Button
+            type="button"
+            onClick={tryImportar}
+            className="relative h-11 rounded-2xl px-3 shrink-0"
+            variant="secondary"
+          >
+            <Upload className="h-4 w-4" />
+            Importar
+            {!can("importar_extrato") && (
+              <span
+                aria-label="Premium"
+                className="absolute -top-1.5 -right-1.5 grid h-4 w-4 place-items-center rounded-full border border-background bg-amber-500 text-[9px] font-bold text-amber-950"
+              >
+                ★
+              </span>
+            )}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="h-11 rounded-2xl px-3 shrink-0"
+            variant="outline"
+          >
+            <History className="h-4 w-4" />
+            Extratos
+          </Button>
+        </div>
       </div>
 
       <ImportExtratoDialog open={importOpen} onOpenChange={setImportOpen} />

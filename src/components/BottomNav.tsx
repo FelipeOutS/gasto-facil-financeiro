@@ -25,6 +25,11 @@ export function BottomNav() {
 
   function handleNavClick(to: string, event: MouseEvent<HTMLAnchorElement>) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const isActive = to === "/" ? currentPath === "/" : currentPath.startsWith(to);
+    if (isActive) {
+      event.preventDefault();
+      return;
+    }
     setOptimisticPath(to);
   }
 
