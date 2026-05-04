@@ -246,6 +246,9 @@ function GastosPage() {
   const [valorMax, setValorMax] = useState<string>("");
   const [advOpen, setAdvOpen] = useState(false);
   const [editing, setEditing] = useState<Gasto | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [excluindoBulk, setExcluindoBulk] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
