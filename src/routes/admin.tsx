@@ -397,7 +397,7 @@ function AdminPage() {
                   <Pie data={planMix} dataKey="value" nameKey="name" outerRadius={80} label>
                     {planMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -410,7 +410,7 @@ function AdminPage() {
                   <Pie data={methodMix} dataKey="value" nameKey="name" outerRadius={60} label>
                     {methodMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
               <ResponsiveContainer width="100%" height="100%">
@@ -418,7 +418,7 @@ function AdminPage() {
                   <Pie data={statusMix} dataKey="value" nameKey="name" outerRadius={60} label>
                     {statusMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
