@@ -297,6 +297,19 @@ function AdminPage() {
 
   const PIE_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"];
 
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: "hsl(var(--popover))",
+      border: "1px solid hsl(var(--border))",
+      borderRadius: 8,
+      color: "hsl(var(--popover-foreground))",
+      fontSize: 12,
+    },
+    labelStyle: { color: "hsl(var(--popover-foreground))" },
+    itemStyle: { color: "hsl(var(--popover-foreground))" },
+    cursor: { fill: "hsl(var(--muted) / 0.3)", stroke: "hsl(var(--border))" } as any,
+  };
+
   return (
     <MobileShell wide>
       <div className="pt-6">
