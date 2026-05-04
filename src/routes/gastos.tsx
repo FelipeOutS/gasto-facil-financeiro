@@ -888,8 +888,15 @@ function GastosPage() {
                   className={cn(
                     "flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift",
                     highlightId === g.id && "ring-2 ring-emerald-500/70 border-emerald-500/40 bg-emerald-500/5",
+                    selected.has(g.id) && "border-primary/50 bg-primary/5",
                   )}
                 >
+                  <Checkbox
+                    checked={selected.has(g.id)}
+                    onCheckedChange={() => toggleOne(g.id)}
+                    aria-label="Selecionar gasto"
+                    className="shrink-0"
+                  />
                   <div className="relative shrink-0">
                     <TransactionAvatar
                       estabelecimento={g.estabelecimento || g.descricao}
