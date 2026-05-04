@@ -310,6 +310,14 @@ function AdminPage() {
           </Button>
         </div>
 
+        {err && (
+          <Card className="mt-4 border-destructive/40 bg-destructive/5">
+            <CardContent className="p-4 text-sm text-destructive">
+              Não foi possível carregar todos os dados administrativos: {err}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {cards.map((c) => (
