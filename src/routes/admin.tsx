@@ -645,6 +645,34 @@ function AdminPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && !deleting && setToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  <p>Você está prestes a excluir permanentemente:</p>
+                  <div className="rounded-md border p-3 bg-muted/30">
+                    <p className="font-medium text-foreground">{toDelete?.nome ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground break-all">{toDelete?.email}</p>
+                  </div>
+                  <p className="text-destructive font-medium">Esta ação é irreversível e removerá todos os dados vinculados (perfil, planos, pagamentos e histórico).</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); void confirmDelete(); }}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? "Excluindo…" : "Excluir definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MobileShell>
   );
