@@ -135,6 +135,11 @@ export function ImportFaturaDialog({
   const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_pdf" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Mês da fatura (YYYY-MM) — fonte da verdade para "em qual fatura entram esses gastos"
+  const [invoiceMonth, setInvoiceMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
 
   // Reset ao reabrir
   useEffect(() => {
