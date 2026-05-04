@@ -4,7 +4,9 @@ import { GastoForm } from "@/components/GastoForm";
 import {
   addGasto,
   deleteGasto,
+  deleteGastosDoLote,
   gastosDaFatura,
+  lotesImportacaoFatura,
   resumoFaturaPorMes,
   statusEfetivoFatura,
   faturaCorrente,
