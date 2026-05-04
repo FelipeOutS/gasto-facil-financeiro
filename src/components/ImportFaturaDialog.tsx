@@ -489,6 +489,10 @@ export function ImportFaturaDialog({
       toast.error("Selecione o cartão antes de salvar.");
       return;
     }
+    if (!invoiceMonth || !/^\d{4}-\d{2}$/.test(invoiceMonth)) {
+      toast.error("Selecione o mês da fatura antes de salvar.");
+      return;
+    }
     const validos = items.filter(
       (i) =>
         i.selecionado &&
@@ -503,6 +507,10 @@ export function ImportFaturaDialog({
     }
     setSaving(true);
     try {
+      // import_batch_id único para essa fatura — permite excluir depois pelo lote.
+      const batchId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+        ? crypto.randomUUID()
+        : `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const inputs = validos.map((it) => {
         const isParcelado =
           !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
@@ -520,6 +528,8 @@ export function ImportFaturaDialog({
           cartaoId: it.cartaoId || cartaoId,
           horario: it.horario ?? undefined,
           origem: origem ?? "fatura_imagem",
+          invoiceMonth,
+          importBatchId: batchId,
         };
       });
       const salvos = addGastosBulk(inputs);
