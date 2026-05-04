@@ -1854,24 +1854,31 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       },
     });
   }
-  // Stamp horario/origem/importBatch on every produced row + client (fields are optional).
+  // Stamp horario/origem/importBatch/invoiceMonth on every produced row + client (fields are optional).
   const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
   const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
+  const invoiceMonthVal =
+    input.formaPagamento === "credito" && input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
+      ? input.invoiceMonth
+      : null;
   for (const o of out) {
     type ExtraCols = GastoInsert & {
       horario?: string | null;
       origem?: string | null;
       import_batch_id?: string | null;
       id_operacao_banco?: string | null;
+      invoice_month?: string | null;
     };
     (o.row as ExtraCols).horario = horarioVal;
     (o.row as ExtraCols).origem = origemVal;
     (o.row as ExtraCols).import_batch_id = batchId;
     (o.row as ExtraCols).id_operacao_banco = opId;
+    if (invoiceMonthVal) (o.row as ExtraCols).invoice_month = invoiceMonthVal;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
     if (batchId) o.client.importBatchId = batchId;
     if (opId) o.client.idOperacaoBanco = opId;
+    if (invoiceMonthVal) o.client.invoiceMonth = invoiceMonthVal;
   }
   return out;
 }
