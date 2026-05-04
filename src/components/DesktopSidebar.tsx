@@ -24,6 +24,9 @@ import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
+import { Shield } from "lucide-react";
 
 type NavItem = {
   to: string;
