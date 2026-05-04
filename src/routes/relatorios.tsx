@@ -144,6 +144,7 @@ function RelatoriosPage() {
     () =>
       buildLinhasOrcamento(categorias, gastos.filter((g) => g.confirmado !== false), ym.mes, ym.ano, (catId) =>
         getLimite(catId, ym.mes, ym.ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastos, ym],
   );
