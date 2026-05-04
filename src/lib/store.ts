@@ -4166,7 +4166,9 @@ export function lotesImportacaoTodos(): LoteImportInfo[] {
     if (g.criadoEm && (!cur.primeira || g.criadoEm < cur.primeira)) cur.primeira = g.criadoEm;
     map.set(k, cur);
   }
-  return Array.from(map.values()).sort((a, b) => (a.primeira < b.primeira ? 1 : -1));
+  _lotesCacheSource = memGastos;
+  _lotesCacheResult = Array.from(map.values()).sort((a, b) => (a.primeira < b.primeira ? 1 : -1));
+  return _lotesCacheResult;
 }
 
 /**
