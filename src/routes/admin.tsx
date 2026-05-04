@@ -542,30 +542,47 @@ function AdminPage() {
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total pago</TableHead>
                   <TableHead>Próx.</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
-                    <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{u.email}</TableCell>
-                    <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
-                    <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
-                    <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
-                    <TableCell className="text-xs">
-                      {u.last_payment_method ? (
-                        <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[u.status] ?? ""}`}>{u.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
-                    <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
-                  </TableRow>
-                ))}
+                {filteredUsers.map((u) => {
+                  const ds = getDisplayStatus(u);
+                  const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
+                  return (
+                    <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
+                      <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
+                      <TableCell className="text-xs">{u.email}</TableCell>
+                      <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
+                      <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
+                      <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {u.last_payment_method ? (
+                          <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
+                      <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                          disabled={protectedRow}
+                          title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                          onClick={() => setToDelete(u)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filteredUsers.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
