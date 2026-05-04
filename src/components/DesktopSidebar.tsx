@@ -61,6 +61,9 @@ export function DesktopSidebar() {
   const { can } = usePlan();
   const [investLockOpen, setInvestLockOpen] = useState(false);
   const investBlocked = !can("investimentos");
+  const { user } = useAuth();
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
 
