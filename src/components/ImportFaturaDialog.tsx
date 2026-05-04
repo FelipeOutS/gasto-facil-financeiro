@@ -1047,6 +1047,8 @@ function ReviewStep({
   selecionados,
   prontos,
   saving,
+  invoiceMonth,
+  setInvoiceMonth,
   onConfirm,
   onBack,
 }: {
@@ -1064,9 +1066,34 @@ function ReviewStep({
   selecionados: number;
   prontos: number;
   saving: boolean;
+  invoiceMonth: string;
+  setInvoiceMonth: (v: string) => void;
   onConfirm: () => void;
   onBack: () => void;
 }) {
+  const MES_NOMES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  ];
+  function shiftMonth(ym: string, delta: number): string {
+    const [y, m] = ym.split("-").map(Number);
+    const total = y * 12 + (m - 1) + delta;
+    const ny = Math.floor(total / 12);
+    const nm = (total % 12) + 1;
+    return `${ny}-${String(nm).padStart(2, "0")}`;
+  }
+  const [invY, invM] = invoiceMonth.split("-").map(Number);
+  const invoiceLabel = `${MES_NOMES[(invM ?? 1) - 1]}/${invY}`;
+  // Opções dos próximos/anteriores 12 meses para o select
+  const monthOptions: string[] = (() => {
+    const base = new Date();
+    const out: string[] = [];
+    for (let i = -12; i <= 12; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    return out;
+  })();
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-card-elevated p-4">
