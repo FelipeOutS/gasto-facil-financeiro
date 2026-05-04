@@ -36,6 +36,7 @@ import { hasMerchantLogo } from "@/lib/logos";
 import { Money, CountNumber } from "@/components/Money";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  bulkDeleteGastos,
   deleteGasto,
   getCategoriaById,
   getCategorias,
@@ -45,6 +46,17 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatBRL, formatDateBR, parseDateLocal, toLocalISODate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
