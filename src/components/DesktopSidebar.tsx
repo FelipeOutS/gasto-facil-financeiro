@@ -105,7 +105,7 @@ export function DesktopSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-1">
-          {ITEMS.map(({ to, label, icon: Icon, exact }) => {
+          {items.map(({ to, label, icon: Icon, exact }) => {
             const active = exact
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
