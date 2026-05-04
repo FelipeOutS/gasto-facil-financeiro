@@ -1467,7 +1467,13 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
   }
 
+  // Mês corrente em formato YYYY-MM (para gastos com invoice_month explícito).
+  const currentYm = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const considerados = gastosCartao.filter((g) => {
+    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+      // Fonte da verdade: o usuário decidiu o mês da fatura.
+      return g.invoiceMonth === currentYm;
+    }
     const d = parseDateLocal(g.data);
     return !!d && d >= inicio && d <= fim;
   });
