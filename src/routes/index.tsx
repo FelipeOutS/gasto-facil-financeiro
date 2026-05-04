@@ -43,6 +43,7 @@ import {
   getLimites,
   getMetas,
   getReceitas,
+  mesEfetivoGasto,
   statusContaEfetivo,
   statusMeta,
   useBootstrap,
