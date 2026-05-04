@@ -247,6 +247,7 @@ type GastoRow = {
   essencial: boolean | null;
   gasto_fixo: boolean | null;
   cartao_id?: string | null;
+  invoice_month?: string | null;
   horario?: string | null;
   origem?: string | null;
   import_batch_id?: string | null;
@@ -276,6 +277,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     essencial: r.essencial ?? undefined,
     gastoFixo: r.gasto_fixo ?? undefined,
     cartaoId: r.cartao_id ?? undefined,
+    invoiceMonth: r.invoice_month ?? undefined,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
@@ -1465,7 +1467,13 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
   }
 
+  // Mês corrente em formato YYYY-MM (para gastos com invoice_month explícito).
+  const currentYm = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const considerados = gastosCartao.filter((g) => {
+    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+      // Fonte da verdade: o usuário decidiu o mês da fatura.
+      return g.invoiceMonth === currentYm;
+    }
     const d = parseDateLocal(g.data);
     return !!d && d >= inicio && d <= fim;
   });
@@ -1611,6 +1619,11 @@ export type NovoGastoInput = {
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
+  /**
+   * Mês da fatura (YYYY-MM). Usado apenas para gastos no crédito —
+   * determina em qual fatura a compra entra, independente da data real.
+   */
+  invoiceMonth?: string;
   /** Horário opcional (HH:mm). */
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
@@ -1847,24 +1860,31 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       },
     });
   }
-  // Stamp horario/origem/importBatch on every produced row + client (fields are optional).
+  // Stamp horario/origem/importBatch/invoiceMonth on every produced row + client (fields are optional).
   const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
   const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
+  const invoiceMonthVal =
+    input.formaPagamento === "credito" && input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
+      ? input.invoiceMonth
+      : null;
   for (const o of out) {
     type ExtraCols = GastoInsert & {
       horario?: string | null;
       origem?: string | null;
       import_batch_id?: string | null;
       id_operacao_banco?: string | null;
+      invoice_month?: string | null;
     };
     (o.row as ExtraCols).horario = horarioVal;
     (o.row as ExtraCols).origem = origemVal;
     (o.row as ExtraCols).import_batch_id = batchId;
     (o.row as ExtraCols).id_operacao_banco = opId;
+    if (invoiceMonthVal) (o.row as ExtraCols).invoice_month = invoiceMonthVal;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
     if (batchId) o.client.importBatchId = batchId;
     if (opId) o.client.idOperacaoBanco = opId;
+    if (invoiceMonthVal) o.client.invoiceMonth = invoiceMonthVal;
   }
   return out;
 }
@@ -1965,6 +1985,9 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.gastoFixo !== undefined) row.gasto_fixo = patch.gastoFixo ?? null;
   if (patch.confirmado !== undefined) row.confirmado = patch.confirmado;
   if (patch.cartaoId !== undefined) row.cartao_id = patch.cartaoId ?? null;
+  if (patch.invoiceMonth !== undefined)
+    (row as GastoUpdate & { invoice_month?: string | null }).invoice_month =
+      patch.invoiceMonth && /^\d{4}-\d{2}$/.test(patch.invoiceMonth) ? patch.invoiceMonth : null;
   if (patch.horario !== undefined)
     (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
   if (patch.origem !== undefined)
@@ -4025,6 +4048,7 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];
+  const targetYm = `${ano}-${String(mes).padStart(2, "0")}`;
   const { inicio, fim } = cicloFatura(cartao, mes, ano);
   const analisados = normalizeGastosForCalculations(memGastos);
   return analisados
@@ -4035,6 +4059,11 @@ export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gast
         g.confirmado !== false,
     )
     .filter((g) => {
+      // Fonte da verdade: invoice_month (mês da fatura escolhido pelo usuário).
+      if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+        return g.invoiceMonth === targetYm;
+      }
+      // Fallback (gastos antigos sem invoice_month): usa o ciclo de fechamento.
       const d = parseDateLocal(g.data);
       return !!d && d >= inicio && d <= fim;
     })

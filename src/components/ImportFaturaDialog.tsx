@@ -135,6 +135,11 @@ export function ImportFaturaDialog({
   const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_pdf" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Mês da fatura (YYYY-MM) — fonte da verdade para "em qual fatura entram esses gastos"
+  const [invoiceMonth, setInvoiceMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
 
   // Reset ao reabrir
   useEffect(() => {
@@ -484,6 +489,10 @@ export function ImportFaturaDialog({
       toast.error("Selecione o cartão antes de salvar.");
       return;
     }
+    if (!invoiceMonth || !/^\d{4}-\d{2}$/.test(invoiceMonth)) {
+      toast.error("Selecione o mês da fatura antes de salvar.");
+      return;
+    }
     const validos = items.filter(
       (i) =>
         i.selecionado &&
@@ -498,6 +507,10 @@ export function ImportFaturaDialog({
     }
     setSaving(true);
     try {
+      // import_batch_id único para essa fatura — permite excluir depois pelo lote.
+      const batchId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+        ? crypto.randomUUID()
+        : `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const inputs = validos.map((it) => {
         const isParcelado =
           !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
@@ -515,6 +528,8 @@ export function ImportFaturaDialog({
           cartaoId: it.cartaoId || cartaoId,
           horario: it.horario ?? undefined,
           origem: origem ?? "fatura_imagem",
+          invoiceMonth,
+          importBatchId: batchId,
         };
       });
       const salvos = addGastosBulk(inputs);
@@ -647,6 +662,8 @@ export function ImportFaturaDialog({
               selecionados={totalSelecionados}
               prontos={prontos}
               saving={saving}
+              invoiceMonth={invoiceMonth}
+              setInvoiceMonth={setInvoiceMonth}
               onConfirm={() => void confirmarImportacao()}
               onBack={() => setStep("source")}
             />
@@ -1030,6 +1047,8 @@ function ReviewStep({
   selecionados,
   prontos,
   saving,
+  invoiceMonth,
+  setInvoiceMonth,
   onConfirm,
   onBack,
 }: {
@@ -1047,11 +1066,95 @@ function ReviewStep({
   selecionados: number;
   prontos: number;
   saving: boolean;
+  invoiceMonth: string;
+  setInvoiceMonth: (v: string) => void;
   onConfirm: () => void;
   onBack: () => void;
 }) {
+  const MES_NOMES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  ];
+  function shiftMonth(ym: string, delta: number): string {
+    const [y, m] = ym.split("-").map(Number);
+    const total = y * 12 + (m - 1) + delta;
+    const ny = Math.floor(total / 12);
+    const nm = (total % 12) + 1;
+    return `${ny}-${String(nm).padStart(2, "0")}`;
+  }
+  const [invY, invM] = invoiceMonth.split("-").map(Number);
+  const invoiceLabel = `${MES_NOMES[(invM ?? 1) - 1]}/${invY}`;
+  // Opções dos próximos/anteriores 12 meses para o select
+  const monthOptions: string[] = (() => {
+    const base = new Date();
+    const out: string[] = [];
+    for (let i = -12; i <= 12; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    return out;
+  })();
   return (
     <div className="space-y-4">
+      {/* Banner: mês da fatura (fonte da verdade) */}
+      <div className="rounded-2xl border border-brand/30 bg-brand-soft/40 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Esta fatura será importada para
+            </p>
+            <p className="mt-0.5 text-lg font-bold tracking-tight">
+              Fatura de {invoiceLabel}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Todos os lançamentos abaixo entrarão nesta fatura, mesmo que a
+              data da compra seja de outro mês.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, -1))}
+            >
+              ← Mês anterior
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const d = new Date();
+                setInvoiceMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+              }}
+            >
+              Mês atual
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, 1))}
+            >
+              Próximo mês →
+            </Button>
+            <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
+              <SelectTrigger className="h-9 w-[200px]">
+                <SelectValue placeholder="Selecionar outro mês" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[260px]">
+                {monthOptions.map((ym) => {
+                  const [y, m] = ym.split("-").map(Number);
+                  return (
+                    <SelectItem key={ym} value={ym}>
+                      {MES_NOMES[m - 1]}/{y}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-card-elevated p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
