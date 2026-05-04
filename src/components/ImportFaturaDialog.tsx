@@ -41,8 +41,22 @@ import {
   normalizeDescricao,
   getCartoes,
   getCategorias,
+  lotesImportacaoTodos,
+  gastosDoLote,
+  deleteGastosDoLote,
   useStore,
 } from "@/lib/store";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { formatDateBR } from "@/lib/format";
 import type { Cartao } from "@/lib/types";
 import {
   parseCsvFile,
