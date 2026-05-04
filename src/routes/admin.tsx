@@ -358,8 +358,14 @@ function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="mes" fontSize={11} />
                   <YAxis fontSize={11} />
-                  <Tooltip formatter={(v: any) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
-                  <Line type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={2} />
+                  <Tooltip
+                    formatter={(v: any) => `R$ ${Number(v).toLocaleString("pt-BR")}`}
+                    contentStyle={tooltipStyle.contentStyle}
+                    labelStyle={tooltipStyle.labelStyle}
+                    itemStyle={tooltipStyle.itemStyle}
+                    cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
+                  />
+                  <Line type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5, stroke: "hsl(var(--background))", strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -372,7 +378,12 @@ function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="mes" fontSize={11} />
                   <YAxis fontSize={11} />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={tooltipStyle.contentStyle}
+                    labelStyle={tooltipStyle.labelStyle}
+                    itemStyle={tooltipStyle.itemStyle}
+                    cursor={{ fill: "transparent" }}
+                  />
                   <Bar dataKey="total" fill="#3b82f6" />
                 </BarChart>
               </ResponsiveContainer>
