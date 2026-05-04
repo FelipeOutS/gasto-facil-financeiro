@@ -611,6 +611,8 @@ export function ImportFaturaDialog({
             />
           )}
 
+          {step === "source" && <ImportHistorySection cartoes={cartoes} />}
+
           {errorMessage && (
             <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {errorMessage}
