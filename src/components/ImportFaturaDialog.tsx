@@ -1597,3 +1597,182 @@ function Field({
     </div>
   );
 }
+
+/* =================== Histórico de importações =================== */
+
+function fmtInvoiceMonth(ym?: string): string {
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return "—";
+  const [a, m] = ym.split("-");
+  return `${m}/${a}`;
+}
+
+function originLabel(o?: string): string {
+  if (!o) return "Importação";
+  if (o.includes("imagem")) return "Imagem";
+  if (o.includes("pdf")) return "PDF";
+  if (o.includes("csv")) return "CSV";
+  return o;
+}
+
+function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
+  // Reativo: useStore garante refresh ao deletar lote
+  const lotes = useStore(() => lotesImportacaoTodos());
+  const [verLote, setVerLote] = useState<string | null>(null);
+  const [confirmDel, setConfirmDel] = useState<{
+    batchId: string;
+    qtd: number;
+    total: number;
+    invoiceMonth?: string;
+  } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  if (lotes.length === 0) return null;
+
+  const cartoesById = new Map(cartoes.map((c) => [c.id, c] as const));
+  const itensVer = verLote ? gastosDoLote(verLote) : [];
+
+  async function confirmarDelete() {
+    if (!confirmDel) return;
+    setExcluindo(true);
+    try {
+      const n = await deleteGastosDoLote(confirmDel.batchId);
+      if (n > 0) {
+        toast.success(`Importação removida (${n} ${n === 1 ? "lançamento" : "lançamentos"}). Gastos manuais foram preservados.`);
+      } else {
+        toast.error("Não foi possível remover a importação.");
+      }
+      setConfirmDel(null);
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold">Faturas importadas</p>
+          <p className="text-[11px] text-muted-foreground">
+            Histórico de importações. Excluir aqui apaga só os lançamentos do lote — gastos manuais não são afetados.
+          </p>
+        </div>
+      </div>
+
+      <ul className="space-y-2">
+        {lotes.map((l) => {
+          const cartao = l.cartaoId ? cartoesById.get(l.cartaoId) : undefined;
+          const dataImp = l.primeira ? formatDateBR(l.primeira.slice(0, 10)) : "—";
+          return (
+            <li
+              key={l.batchId}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card-elevated px-3 py-2.5"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {cartao?.nome ?? "Cartão removido"}
+                  {cartao?.banco ? ` · ${cartao.banco}` : ""}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  Fatura {fmtInvoiceMonth(l.invoiceMonth)} · {originLabel(l.origem)} · Importado em {dataImp}
+                </p>
+                <p className="num text-[11px] text-muted-foreground">
+                  {l.qtd} {l.qtd === 1 ? "lançamento" : "lançamentos"} · Total {formatBRL(l.total)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full px-3 text-xs"
+                  onClick={() => setVerLote(l.batchId)}
+                >
+                  Ver lançamentos
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 rounded-full px-3 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() =>
+                    setConfirmDel({
+                      batchId: l.batchId,
+                      qtd: l.qtd,
+                      total: l.total,
+                      invoiceMonth: l.invoiceMonth,
+                    })
+                  }
+                >
+                  <Trash2 className="mr-1 h-3.5 w-3.5" />
+                  Excluir
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Ver lançamentos do lote */}
+      <Dialog open={!!verLote} onOpenChange={(o) => !o && setVerLote(null)}>
+        <DialogContent className="max-h-[80vh] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Lançamentos da importação</DialogTitle>
+            <DialogDescription>
+              {itensVer.length} {itensVer.length === 1 ? "compra" : "compras"} neste lote.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2">
+            {itensVer.map((g) => (
+              <li
+                key={g.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card-elevated px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {g.estabelecimento || g.descricao}
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    Compra: {formatDateBR(g.data)}
+                    {g.invoiceMonth ? ` · Fatura: ${fmtInvoiceMonth(g.invoiceMonth)}` : ""}
+                  </p>
+                </div>
+                <p className="num shrink-0 text-sm font-semibold">{formatBRL(g.valor)}</p>
+              </li>
+            ))}
+            {itensVer.length === 0 && (
+              <li className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                Nenhum lançamento.
+              </li>
+            )}
+          </ul>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmar exclusão */}
+      <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir esta fatura importada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir a fatura importada de{" "}
+              <strong>{fmtInvoiceMonth(confirmDel?.invoiceMonth)}</strong>, com{" "}
+              <strong>{confirmDel?.qtd ?? 0}</strong> lançamentos e total de{" "}
+              <strong>{formatBRL(confirmDel?.total ?? 0)}</strong>. Essa ação não apaga gastos manuais.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmarDelete();
+              }}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo…" : "Excluir importação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+}
