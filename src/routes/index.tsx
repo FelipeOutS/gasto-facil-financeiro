@@ -1394,6 +1394,7 @@ function OrcamentoCard({
     () =>
       buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
         getLimite(catId, mes, ano),
+        mesEfetivoGasto,
       ),
     [categorias, gastos, mes, ano],
   );
