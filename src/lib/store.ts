@@ -247,6 +247,7 @@ type GastoRow = {
   essencial: boolean | null;
   gasto_fixo: boolean | null;
   cartao_id?: string | null;
+  invoice_month?: string | null;
   horario?: string | null;
   origem?: string | null;
   import_batch_id?: string | null;
