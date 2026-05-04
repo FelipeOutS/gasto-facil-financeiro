@@ -274,15 +274,16 @@ function AdminPage() {
     );
   }
 
-  if (err || !data) {
-    return (
-      <MobileShell wide>
-        <div className="py-10 text-center text-sm text-destructive">{err ?? "Sem dados"}</div>
-      </MobileShell>
-    );
-  }
-
-  const t = data.totals;
+  const t = data?.totals ?? {
+    totalUsers: 0,
+    activeUsers: 0,
+    noPlanUsers: 0,
+    cancelledOrExpiredUsers: 0,
+    revenueAllCents: 0,
+    revenueMonthCents: 0,
+    mrrCents: 0,
+    topPlan: null as string | null,
+  };
   const cards = [
     { label: "Total cadastrados", value: t.totalUsers, icon: Users, color: "text-blue-500" },
     { label: "Plano ativo", value: t.activeUsers, icon: CheckCircle2, color: "text-emerald-500" },
