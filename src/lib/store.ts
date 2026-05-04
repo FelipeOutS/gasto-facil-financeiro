@@ -4130,6 +4130,104 @@ export async function deleteGastosDoLote(batchId: string): Promise<number> {
   return alvo.length;
 }
 
+/**
+ * Lista TODOS os lotes de importação de gastos de cartão (qualquer fatura).
+ * Usado pelo histórico do diálogo "Importar fatura".
+ */
+export function lotesImportacaoTodos(): Array<{
+  batchId: string;
+  cartaoId?: string;
+  invoiceMonth?: string;
+  qtd: number;
+  total: number;
+  primeira: string;
+  origem?: string;
+}> {
+  const map = new Map<string, {
+    batchId: string;
+    cartaoId?: string;
+    invoiceMonth?: string;
+    qtd: number;
+    total: number;
+    primeira: string;
+    origem?: string;
+  }>();
+  for (const g of memGastos) {
+    if (g.formaPagamento !== "credito") continue;
+    if (!g.importBatchId) continue;
+    const k = g.importBatchId;
+    const cur = map.get(k) ?? {
+      batchId: k,
+      cartaoId: g.cartaoId,
+      invoiceMonth: g.invoiceMonth,
+      qtd: 0,
+      total: 0,
+      primeira: g.criadoEm ?? "",
+      origem: g.origem,
+    };
+    cur.qtd += 1;
+    cur.total += g.valor;
+    if (g.criadoEm && (!cur.primeira || g.criadoEm < cur.primeira)) cur.primeira = g.criadoEm;
+    map.set(k, cur);
+  }
+  return Array.from(map.values()).sort((a, b) => (a.primeira < b.primeira ? 1 : -1));
+}
+
+/**
+ * Retorna os gastos pertencentes a um lote de importação.
+ */
+export function gastosDoLote(batchId: string): Gasto[] {
+  return memGastos.filter((g) => g.importBatchId === batchId);
+}
+
+/**
+ * Exclui em massa uma lista de gastos por id. Limpa também vínculos com
+ * contas a pagar (mesma lógica do deleteGasto individual).
+ */
+export async function bulkDeleteGastos(ids: string[]): Promise<number> {
+  if (!activeUserId || ids.length === 0) return 0;
+  const setIds = new Set(ids);
+  const alvo = memGastos.filter((g) => setIds.has(g.id));
+  if (alvo.length === 0) return 0;
+  memGastos = memGastos.filter((g) => !setIds.has(g.id));
+
+  // Limpa vínculos de contas pagas que apontavam para esses gastos
+  const contasVinculadas = memContas.filter((c) => c.gastoId && setIds.has(c.gastoId));
+  if (contasVinculadas.length > 0) {
+    memContas = memContas.map((c) =>
+      c.gastoId && setIds.has(c.gastoId)
+        ? {
+            ...c,
+            status: "pendente",
+            dataPagamento: undefined,
+            gastoId: undefined,
+            atualizadoEm: new Date().toISOString(),
+          }
+        : c,
+    );
+    void sbAny
+      .from("contas_a_pagar")
+      .update({ status: "pendente", data_pagamento: null, gasto_id: null })
+      .in("id", contasVinculadas.map((c) => c.id))
+      .then(({ error }: { error: { message: string } | null }) => {
+        if (error) console.error("[store] bulkDeleteGastos: cleanup contas failed", error);
+      });
+  }
+
+  emit();
+  const { error } = await sbAny
+    .from("gastos")
+    .delete()
+    .eq("user_id", activeUserId)
+    .in("id", alvo.map((g) => g.id));
+  if (error) {
+    console.error("[store] bulkDeleteGastos failed", error);
+    void refreshGastos();
+    return 0;
+  }
+  return alvo.length;
+}
+
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];
