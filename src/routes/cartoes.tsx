@@ -1500,6 +1500,28 @@ function FaturaSheet({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Confirmar exclusão de lote */}
+        <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir esta importação?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Apenas as compras importadas neste lote serão removidas. Gastos manuais da
+                mesma fatura serão preservados. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteLote}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir importação
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );
