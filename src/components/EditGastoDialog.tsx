@@ -57,6 +57,7 @@ export function EditGastoDialog({
   const [cartaoId, setCartaoId] = useState<string | undefined>(undefined);
   const [observacao, setObservacao] = useState("");
   const [horario, setHorario] = useState("");
+  const [invoiceMonth, setInvoiceMonth] = useState<string>("");
 
   // Initialize fields from snapshot whenever the dialog opens with a new gasto
   useEffect(() => {
@@ -70,6 +71,7 @@ export function EditGastoDialog({
     setCartaoId(snapshot.cartaoId);
     setObservacao(snapshot.observacao ?? "");
     setHorario(snapshot.horario ?? "");
+    setInvoiceMonth(snapshot.invoiceMonth ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.id, open]);
 
