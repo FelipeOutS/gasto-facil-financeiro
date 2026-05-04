@@ -21,6 +21,7 @@ import {
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/BrandMark";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
