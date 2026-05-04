@@ -331,6 +331,7 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     month,
     year,
     (catId) => src.limites.find((l) => l.tipo === catId && l.mes === month && l.ano === year)?.valor,
+    mesEfetivoGasto,
   );
   const alertasOrc = buildAlertasOrcamento(linhasOrc);
   for (const a of alertasOrc) {
