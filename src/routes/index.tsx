@@ -197,6 +197,7 @@ function Index() {
   const temOrcamentoMes = useMemo(() => {
     const linhas = buildLinhasOrcamento(categorias, gastosConfirmados, ym.mes, ym.ano, (catId) =>
       getLimite(catId, ym.mes, ym.ano),
+      mesEfetivoGasto,
     );
     return resumirOrcamento(linhas).temOrcamento;
   }, [categorias, gastosConfirmados, ym]);
