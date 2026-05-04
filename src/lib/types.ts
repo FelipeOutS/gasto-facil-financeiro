@@ -47,6 +47,12 @@ export type Gasto = {
   gastoFixo?: boolean;
   /** ID do cartão de crédito usado (quando formaPagamento === "credito") */
   cartaoId?: string;
+  /**
+   * Mês/competência da fatura no formato `YYYY-MM`.
+   * Usado apenas para gastos no crédito: representa em qual fatura a compra
+   * deve aparecer, independentemente da data real (`data`) da compra.
+   */
+  invoiceMonth?: string;
   /** Horário opcional da compra (HH:mm). */
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
