@@ -85,31 +85,33 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     const { userId } = context;
     await ensureAdmin(context.supabase, userId);
 
-    // 1) Listar todos os usuários auth (paginação)
-    const allAuthUsers: { id: string; email: string | null; phone: string | null; created_at: string }[] = [];
-    let page = 1;
-    while (true) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-      if (error) break;
-      const list = data?.users ?? [];
-      for (const u of list) {
-        allAuthUsers.push({
-          id: u.id,
-          email: u.email ?? null,
-          phone: (u.phone as string | null) ?? null,
-          created_at: u.created_at,
-        });
+    // 1) Listar todos os usuários auth (paginação) — best-effort para obter emails
+    const authMap = new Map<string, { email: string | null; phone: string | null; created_at: string }>();
+    try {
+      let page = 1;
+      while (true) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (error) break;
+        const list = data?.users ?? [];
+        for (const u of list) {
+          authMap.set(u.id, {
+            email: u.email ?? null,
+            phone: (u.phone as string | null) ?? null,
+            created_at: u.created_at,
+          });
+        }
+        if (list.length < 1000) break;
+        page += 1;
+        if (page > 20) break;
       }
-      if (list.length < 1000) break;
-      page += 1;
-      if (page > 20) break; // safety
+    } catch {
+      // ignore — fallback usa profiles
     }
 
-    const userIds = allAuthUsers.map((u) => u.id);
-
+    // 2) Fonte primária = profiles (todo cadastrado tem profile via trigger)
     const [profilesRes, plansRes, paymentsRes] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, nome, telefone, tipo_cadastro").in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]),
-      supabaseAdmin.from("user_plans").select("*").in("user_id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]),
+      supabaseAdmin.from("profiles").select("id, nome, telefone, tipo_cadastro, created_at"),
+      supabaseAdmin.from("user_plans").select("*"),
       supabaseAdmin
         .from("subscription_payments")
         .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at")
@@ -117,6 +119,22 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     ]);
 
     const profiles = profilesRes.data ?? [];
+
+    // União: profiles ∪ authMap (caso algum usuário auth não tenha profile)
+    const allIds = new Set<string>();
+    for (const p of profiles) allIds.add((p as any).id);
+    for (const id of authMap.keys()) allIds.add(id);
+
+    const allAuthUsers = Array.from(allIds).map((id) => {
+      const a = authMap.get(id);
+      const p: any = profiles.find((x: any) => x.id === id);
+      return {
+        id,
+        email: a?.email ?? null,
+        phone: a?.phone ?? null,
+        created_at: a?.created_at ?? p?.created_at ?? new Date().toISOString(),
+      };
+    });
     const plans = plansRes.data ?? [];
     const payments = (paymentsRes.data ?? []) as AdminPaymentRow[];
 
