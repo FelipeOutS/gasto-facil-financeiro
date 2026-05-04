@@ -662,6 +662,8 @@ export function ImportFaturaDialog({
               selecionados={totalSelecionados}
               prontos={prontos}
               saving={saving}
+              invoiceMonth={invoiceMonth}
+              setInvoiceMonth={setInvoiceMonth}
               onConfirm={() => void confirmarImportacao()}
               onBack={() => setStep("source")}
             />
