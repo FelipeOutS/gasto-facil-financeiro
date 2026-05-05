@@ -22,10 +22,50 @@ type RolesState = {
  * Permissões NÃO são derivadas de CPF, e-mail visível ou texto de UI — são
  * lidas da tabela `user_roles` no servidor, com RLS restringindo escrita.
  */
+const ROLES_CACHE_PREFIX = "gf-roles-cache:";
+
+function readRolesCache(userId: string): AppRole[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(ROLES_CACHE_PREFIX + userId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as AppRole[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeRolesCache(userId: string, roles: AppRole[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ROLES_CACHE_PREFIX + userId, JSON.stringify(roles));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function useRoles(): RolesState {
   const { user, loading: authLoading } = useAuth();
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
+
+  // Hidratação síncrona do cache (evita perder permissões durante a navegação).
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setHydratedUserId(null);
+      return;
+    }
+    if (hydratedUserId === user.id) return;
+    const cached = readRolesCache(user.id);
+    if (cached) {
+      setRoles(cached);
+      setLoading(false);
+    }
+    setHydratedUserId(user.id);
+  }, [user, authLoading, hydratedUserId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,16 +76,15 @@ export function useRoles(): RolesState {
         setLoading(false);
         return;
       }
-      setLoading(true);
+      const hasCache = !!readRolesCache(user.id);
+      if (!hasCache) setLoading(true);
 
-      // 1) Tenta auto-claim do primeiro owner. Se já houver um, retorna false (no-op).
       try {
         await supabase.rpc("claim_owner_if_first");
       } catch {
-        // silencioso: se a função não existir ou falhar, ainda lemos as roles abaixo.
+        // silencioso
       }
 
-      // 2) Busca roles do usuário atual
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -53,9 +92,11 @@ export function useRoles(): RolesState {
 
       if (cancelled) return;
       if (error || !data) {
-        setRoles([]);
+        if (!hasCache) setRoles([]);
       } else {
-        setRoles(data.map((r) => r.role as AppRole));
+        const next = data.map((r) => r.role as AppRole);
+        setRoles(next);
+        writeRolesCache(user.id, next);
       }
       setLoading(false);
     }
