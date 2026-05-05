@@ -384,7 +384,8 @@ export const grantPlanManually = createServerFn({ method: "POST" })
       : new Date(start.getTime() + months * 30 * 24 * 60 * 60 * 1000);
 
     // Registro contábil/auditoria do pagamento manual
-    await supabaseAdmin.from("subscription_payments").insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin as any).from("subscription_payments").insert({
       user_id: data.targetUserId,
       plano: data.plano,
       amount_cents: data.amountCents ?? 0,
@@ -400,7 +401,7 @@ export const grantPlanManually = createServerFn({ method: "POST" })
         granted_at: new Date().toISOString(),
         observacao: data.observacao ?? null,
         manual_grant: true,
-      } as unknown as Record<string, unknown>,
+      },
     });
 
     // Ativa o plano no user_plans
