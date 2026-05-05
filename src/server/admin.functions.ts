@@ -332,3 +332,106 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       },
     };
   });
+
+const PLAN_TIERS = [
+  "pessoal_manual",
+  "pessoal_premium",
+  "mei_essencial",
+  "mei_inteligente",
+  "empresa",
+] as const;
+
+const PERIODS = ["mensal", "trimestral", "semestral", "anual"] as const;
+const PERIOD_MONTHS: Record<(typeof PERIODS)[number], number> = {
+  mensal: 1,
+  trimestral: 3,
+  semestral: 6,
+  anual: 12,
+};
+
+/**
+ * Concede manualmente um plano ativo a um usuário. Disponível APENAS para
+ * o Admin Master felipe.out.silva@outlook.com (mesmo se outro admin estiver
+ * cadastrado no allowlist).
+ */
+export const grantPlanManually = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        targetUserId: z.string().uuid(),
+        plano: z.enum(PLAN_TIERS),
+        periodicidade: z.enum(PERIODS).default("mensal"),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        amountCents: z.number().int().nonnegative().optional(),
+        observacao: z.string().max(500).optional(),
+      })
+      .parse(input),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const callerEmail = (u?.user?.email ?? "").toLowerCase();
+    if (callerEmail !== "felipe.out.silva@outlook.com") {
+      throw new Error("Apenas o Admin Master Felipe pode conceder planos manualmente.");
+    }
+
+    const months = PERIOD_MONTHS[data.periodicidade];
+    const start = data.startDate ? new Date(data.startDate) : new Date();
+    const end = data.endDate
+      ? new Date(data.endDate)
+      : new Date(start.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+
+    // Registro contábil/auditoria do pagamento manual
+    await supabaseAdmin.from("subscription_payments").insert({
+      user_id: data.targetUserId,
+      plano: data.plano,
+      amount_cents: data.amountCents ?? 0,
+      method: "manual",
+      periodicidade: data.periodicidade,
+      months,
+      discount_percent: 0,
+      provider: "manual",
+      status: "approved",
+      paid_at: start.toISOString(),
+      payload: {
+        granted_by: callerEmail,
+        granted_at: new Date().toISOString(),
+        observacao: data.observacao ?? null,
+        manual_grant: true,
+      } as unknown as Record<string, unknown>,
+    });
+
+    // Ativa o plano no user_plans
+    const update = {
+      plano: data.plano,
+      status: "ativo",
+      periodicidade: data.periodicidade,
+      months,
+      current_period_start: start.toISOString(),
+      current_period_end: end.toISOString(),
+      cancelled_at: null,
+      access_until: null,
+      last_payment_id: `manual:${callerEmail}:${Date.now()}`,
+    } as const;
+    const { data: existing } = await supabaseAdmin
+      .from("user_plans")
+      .select("user_id")
+      .eq("user_id", data.targetUserId)
+      .maybeSingle();
+    if (existing) {
+      await supabaseAdmin
+        .from("user_plans")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(update as any)
+        .eq("user_id", data.targetUserId);
+    } else {
+      await supabaseAdmin
+        .from("user_plans")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({ user_id: data.targetUserId, ...update } as any);
+    }
+
+    return { ok: true as const };
+  });
