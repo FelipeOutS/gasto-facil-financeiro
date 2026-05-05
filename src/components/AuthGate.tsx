@@ -41,23 +41,31 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
   // Garante carregamento de roles e auto-claim do primeiro owner
   // assim que o usuário entra em qualquer rota protegida.
-  useRoles();
+  const { hasFullAccess, loading: rolesLoading } = useRoles();
   const plan = usePlan();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const isAdmin = plan.isAdminMaster || hasFullAccess;
+  const hasActiveAccess =
+    isAdmin ||
+    plan.status === "ativo" ||
+    plan.status === "teste" ||
+    (plan.status === "cancelado" && !!plan.accessUntil);
+
+  const premiumRule = findPremiumRule(pathname);
+  const featureAllowed = premiumRule
+    ? isAdmin || (hasActiveAccess && planAllowsFeature(plan.plan, premiumRule.feature))
+    : true;
+
   // Bloqueio de acesso por assinatura: usuário logado, sem plano ativo,
   // tentando acessar rota fora da allowlist => manda para /meu-plano.
   useEffect(() => {
     if (loading || !session) return;
-    if (plan.loading) return;
-    if (plan.isAdminMaster) return;
-    const hasActiveAccess =
-      plan.status === "ativo" ||
-      plan.status === "teste" ||
-      (plan.status === "cancelado" && !!plan.accessUntil);
+    if (plan.loading || rolesLoading) return;
+    if (isAdmin) return;
     if (hasActiveAccess) return;
     if (isSubscriptionAllowed(pathname)) return;
     void navigate({ to: "/meu-plano" });
@@ -65,9 +73,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     loading,
     session,
     plan.loading,
-    plan.isAdminMaster,
-    plan.status,
-    plan.accessUntil,
+    rolesLoading,
+    isAdmin,
+    hasActiveAccess,
     pathname,
     navigate,
   ]);
@@ -83,7 +91,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading || !session) return;
     if (onboardingChecked) return;
-    // Não redirecionar se já estiver no onboarding ou em rotas auxiliares
     const skip = ["/onboarding", "/login", "/cadastro", "/recuperar-senha", "/reset-password", "/confirmar"];
     if (skip.includes(pathname)) {
       setOnboardingChecked(true);
@@ -121,12 +128,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
   const subscriptionAllowed = isSubscriptionAllowed(pathname);
-  const hasActiveAccess =
-    plan.isAdminMaster ||
-    plan.status === "ativo" ||
-    plan.status === "teste" ||
-    (plan.status === "cancelado" && !!plan.accessUntil);
-  if (!subscriptionAllowed && !plan.loading && !hasActiveAccess) {
+  if (!subscriptionAllowed && !plan.loading && !rolesLoading && !hasActiveAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="max-w-sm text-center animate-fade-in">
@@ -138,6 +140,35 @@ export function AuthGate({ children }: { children: ReactNode }) {
           </p>
         </div>
       </div>
+    );
+  }
+
+  // Bloqueio por feature: tem assinatura ativa, mas o plano não inclui
+  // este recurso específico. Não renderiza o conteúdo da rota; mostra o
+  // modal padrão de bloqueio premium (mesmo visual de Investimentos).
+  if (premiumRule && !plan.loading && !rolesLoading && !featureAllowed) {
+    return (
+      <>
+        <div className="flex min-h-screen items-center justify-center bg-background px-6">
+          <div className="max-w-sm text-center animate-fade-in opacity-70">
+            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-card">
+              <Wallet className="h-6 w-6 text-foreground" />
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {premiumRule.title}
+            </p>
+          </div>
+        </div>
+        <PremiumLockModal
+          open
+          onOpenChange={(v) => {
+            if (!v) void navigate({ to: "/meu-plano" });
+          }}
+          title={premiumRule.title}
+          description={premiumDescription(premiumRule)}
+          showContinue={false}
+        />
+      </>
     );
   }
 
