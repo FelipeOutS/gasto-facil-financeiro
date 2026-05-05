@@ -35,6 +35,8 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
   { path: "/metas", feature: "metas_visuais", title: "Metas é um recurso premium" },
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
+  { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
+  { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {
