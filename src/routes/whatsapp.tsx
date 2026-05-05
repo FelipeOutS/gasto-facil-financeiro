@@ -33,15 +33,34 @@ export const Route = createFileRoute("/whatsapp")({
   head: () => ({
     meta: [
       { title: "Gastos via WhatsApp — Gasto Inteligente" },
-      {
-        name: "description",
-        content:
-          "Configure a integração real do WhatsApp para registrar gastos por mensagem.",
-      },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: WhatsAppPage,
+  component: WhatsAppPageGuarded,
 });
+
+function WhatsAppPageGuarded() {
+  // Guard de acesso: apenas admin master pode ver a configuração técnica.
+  // Importações dinâmicas locais para não impactar SSR.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useAuth } = require("@/lib/auth-context") as typeof import("@/lib/auth-context");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { isAdminMasterEmail } = require("@/lib/plans") as typeof import("@/lib/plans");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Navigate } = require("@tanstack/react-router") as typeof import("@tanstack/react-router");
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <MobileShell>
+        <div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>
+      </MobileShell>
+    );
+  }
+  if (!user || !isAdminMasterEmail(user.email)) {
+    return <Navigate to="/" replace />;
+  }
+  return <WhatsAppPage />;
+}
 
 type Link = {
   id: string;
