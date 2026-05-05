@@ -22,6 +22,7 @@ import { isAdminMasterEmail } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { setStoreCanWrite } from "@/lib/store";
+import { getCurrentUserSubscription } from "@/server/subscription.functions";
 
 /** Status que liberam ações financeiras. */
 const ACTIVE_STATUSES = new Set(
@@ -51,21 +52,9 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
   if (!user) return { ok: false, reason: "Você precisa estar logado." };
 
   if (isAdminMasterEmail(user.email)) return { ok: true };
-
-  const { data } = await supabase
-    .from("user_plans")
-    .select("plano, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const plano = String(data?.plano ?? "").toLowerCase();
-  const status = String(data?.status ?? "").toLowerCase();
-
-  // Plano "free"/"sem_assinatura" => sem acesso comercial.
-  if (!plano || plano === "free" || plano === "sem_assinatura") {
-    return { ok: false, reason: "Você precisa de uma assinatura ativa para usar este recurso." };
-  }
-  if (!isStatusActive(status)) {
+  const subscription = await getCurrentUserSubscription();
+  if (!subscription.active || subscription.plan === "free" || subscription.plan === "sem_assinatura") {
+    console.info("[ensureCanWriteFinancialData] bloqueado", subscription.debug);
     return { ok: false, reason: "Você precisa de uma assinatura ativa para usar este recurso." };
   }
   return { ok: true };
