@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
+import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
@@ -194,6 +195,27 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false }),
     ]);
 
+    // Reconcilia pagamentos por cartão pendentes (best-effort) para usuários
+    // com tentativas recentes — assim o admin reflete pagamentos aprovados no MP.
+    const pendingCardUsers = new Set<string>();
+    for (const p of (paymentsRes.data ?? []) as Array<{ user_id: string; method: string; status: string; created_at: string }>) {
+      if (p.method !== "card" || p.status !== "pending") continue;
+      const ageMs = Date.now() - new Date(p.created_at).getTime();
+      if (ageMs > 3 * 24 * 60 * 60 * 1000) continue;
+      pendingCardUsers.add(p.user_id);
+    }
+    if (pendingCardUsers.size > 0) {
+      await Promise.allSettled(
+        Array.from(pendingCardUsers).slice(0, 25).map((uid) => reconcilePendingCardPaymentsForUser(uid)),
+      );
+      // Recarrega pagamentos pós-reconciliação
+      const refreshed = await supabaseAdmin
+        .from("subscription_payments")
+        .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at")
+        .order("created_at", { ascending: false });
+      if (refreshed.data) paymentsRes.data = refreshed.data;
+    }
+
     const profiles = profilesRes.data ?? [];
 
     // União: profiles ∪ authMap (caso algum usuário auth não tenha profile)
@@ -309,4 +331,108 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         topPlan,
       },
     };
+  });
+
+const PLAN_TIERS = [
+  "pessoal_manual",
+  "pessoal_premium",
+  "mei_essencial",
+  "mei_inteligente",
+  "empresa",
+] as const;
+
+const PERIODS = ["mensal", "trimestral", "semestral", "anual"] as const;
+const PERIOD_MONTHS: Record<(typeof PERIODS)[number], number> = {
+  mensal: 1,
+  trimestral: 3,
+  semestral: 6,
+  anual: 12,
+};
+
+/**
+ * Concede manualmente um plano ativo a um usuário. Disponível APENAS para
+ * o Admin Master felipe.out.silva@outlook.com (mesmo se outro admin estiver
+ * cadastrado no allowlist).
+ */
+export const grantPlanManually = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        targetUserId: z.string().uuid(),
+        plano: z.enum(PLAN_TIERS),
+        periodicidade: z.enum(PERIODS).default("mensal"),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        amountCents: z.number().int().nonnegative().optional(),
+        observacao: z.string().max(500).optional(),
+      })
+      .parse(input),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const callerEmail = (u?.user?.email ?? "").toLowerCase();
+    if (callerEmail !== "felipe.out.silva@outlook.com") {
+      throw new Error("Apenas o Admin Master Felipe pode conceder planos manualmente.");
+    }
+
+    const months = PERIOD_MONTHS[data.periodicidade];
+    const start = data.startDate ? new Date(data.startDate) : new Date();
+    const end = data.endDate
+      ? new Date(data.endDate)
+      : new Date(start.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+
+    // Registro contábil/auditoria do pagamento manual
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabaseAdmin as any).from("subscription_payments").insert({
+      user_id: data.targetUserId,
+      plano: data.plano,
+      amount_cents: data.amountCents ?? 0,
+      method: "manual",
+      periodicidade: data.periodicidade,
+      months,
+      discount_percent: 0,
+      provider: "manual",
+      status: "approved",
+      paid_at: start.toISOString(),
+      payload: {
+        granted_by: callerEmail,
+        granted_at: new Date().toISOString(),
+        observacao: data.observacao ?? null,
+        manual_grant: true,
+      },
+    });
+
+    // Ativa o plano no user_plans
+    const update = {
+      plano: data.plano,
+      status: "ativo",
+      periodicidade: data.periodicidade,
+      months,
+      current_period_start: start.toISOString(),
+      current_period_end: end.toISOString(),
+      cancelled_at: null,
+      access_until: null,
+      last_payment_id: `manual:${callerEmail}:${Date.now()}`,
+    } as const;
+    const { data: existing } = await supabaseAdmin
+      .from("user_plans")
+      .select("user_id")
+      .eq("user_id", data.targetUserId)
+      .maybeSingle();
+    if (existing) {
+      await supabaseAdmin
+        .from("user_plans")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(update as any)
+        .eq("user_id", data.targetUserId);
+    } else {
+      await supabaseAdmin
+        .from("user_plans")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({ user_id: data.targetUserId, ...update } as any);
+    }
+
+    return { ok: true as const };
   });
