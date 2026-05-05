@@ -2,19 +2,72 @@ import { useNavigate, Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
+import { usePlan } from "@/lib/use-plan";
 import { Wallet } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { fetchOnboarding } from "@/lib/onboarding/service";
+
+/**
+ * Rotas que NÃO exigem assinatura ativa.
+ * Tudo o que não estiver aqui só carrega para usuários com plano ativo
+ * (ou Admin Master).
+ */
+const SUBSCRIPTION_ALLOWLIST = new Set<string>([
+  "/login",
+  "/cadastro",
+  "/recuperar-senha",
+  "/reset-password",
+  "/confirmar",
+  "/onboarding",
+  "/meu-plano",
+  "/conta",
+  "/perfil",
+  "/admin",
+]);
+
+function isSubscriptionAllowed(pathname: string) {
+  if (SUBSCRIPTION_ALLOWLIST.has(pathname)) return true;
+  // Aceita /meu-plano/checkout, /admin/qualquer-coisa, etc.
+  for (const p of SUBSCRIPTION_ALLOWLIST) {
+    if (pathname === p || pathname.startsWith(p + "/")) return true;
+  }
+  return false;
+}
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
   // Garante carregamento de roles e auto-claim do primeiro owner
   // assim que o usuário entra em qualquer rota protegida.
   useRoles();
+  const plan = usePlan();
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Bloqueio de acesso por assinatura: usuário logado, sem plano ativo,
+  // tentando acessar rota fora da allowlist => manda para /meu-plano.
+  useEffect(() => {
+    if (loading || !session) return;
+    if (plan.loading) return;
+    if (plan.isAdminMaster) return;
+    const hasActiveAccess =
+      plan.status === "ativo" ||
+      plan.status === "teste" ||
+      (plan.status === "cancelado" && !!plan.accessUntil);
+    if (hasActiveAccess) return;
+    if (isSubscriptionAllowed(pathname)) return;
+    void navigate({ to: "/meu-plano" });
+  }, [
+    loading,
+    session,
+    plan.loading,
+    plan.isAdminMaster,
+    plan.status,
+    plan.accessUntil,
+    pathname,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
