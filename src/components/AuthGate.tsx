@@ -29,6 +29,10 @@ const SUBSCRIPTION_ALLOWLIST = new Set<string>([
 ]);
 
 function isSubscriptionAllowed(pathname: string) {
+  // Dashboard ("/") é acessível em modo limitado para usuários sem plano:
+  // a página renderiza, mas as ações financeiras ficam bloqueadas via
+  // SubscriptionGuard / canWrite e abrem o modal premium ao serem usadas.
+  if (pathname === "/") return true;
   if (SUBSCRIPTION_ALLOWLIST.has(pathname)) return true;
   // Aceita /meu-plano/checkout, /admin/qualquer-coisa, etc.
   for (const p of SUBSCRIPTION_ALLOWLIST) {
