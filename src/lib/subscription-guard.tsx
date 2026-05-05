@@ -87,8 +87,9 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   const canWrite = useMemo(() => {
     if (isAdminMaster) return true;
     if (!user) return false;
-    // Enquanto a assinatura ainda está carregando, não bloquear.
-    if (planLoading) return true;
+    // Enquanto carrega a assinatura, NÃO liberar — usuário sem plano ativo
+    // não pode escrever durante o flicker inicial.
+    if (planLoading) return false;
     if (isTrialActive) return true;
     if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
     return isStatusActive(status);
