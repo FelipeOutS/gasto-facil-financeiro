@@ -694,3 +694,88 @@ function AdminPage() {
     </MobileShell>
   );
 }
+
+function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: () => void }) {
+  const [plano, setPlano] = useState<string>("pessoal_manual");
+  const [periodicidade, setPeriodicidade] = useState<string>("mensal");
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [obs, setObs] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    setSaving(true);
+    try {
+      await grantPlanManually({
+        data: {
+          targetUserId: target.user_id,
+          plano: plano as "pessoal_manual" | "pessoal_premium" | "mei_essencial" | "mei_inteligente" | "empresa",
+          periodicidade: periodicidade as "mensal" | "trimestral" | "semestral" | "anual",
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          amountCents: amount ? Math.round(Number(amount.replace(",", ".")) * 100) : undefined,
+          observacao: obs || undefined,
+        },
+      });
+      toast.success("Plano concedido manualmente.");
+      onDone();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao conceder plano");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-border/60 p-3 space-y-3">
+      <p className="text-xs font-semibold flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" /> Conceder plano manualmente (Admin Master)</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Plano</p>
+          <Select value={plano} onValueChange={setPlano}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pessoal_manual">Pessoa Física Manual</SelectItem>
+              <SelectItem value="pessoal_premium">Pessoa Física Premium</SelectItem>
+              <SelectItem value="mei_essencial">MEI Essencial</SelectItem>
+              <SelectItem value="mei_inteligente">MEI Inteligente</SelectItem>
+              <SelectItem value="empresa">Empresa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Ciclo</p>
+          <Select value={periodicidade} onValueChange={setPeriodicidade}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mensal">Mensal</SelectItem>
+              <SelectItem value="trimestral">Trimestral</SelectItem>
+              <SelectItem value="semestral">Semestral</SelectItem>
+              <SelectItem value="anual">Anual</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Início</p>
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8 text-xs" />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Vencimento (opcional)</p>
+          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-8 text-xs" />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Valor R$ (opcional)</p>
+          <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="h-8 text-xs" />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Observação</p>
+          <Input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Motivo da concessão" className="h-8 text-xs" />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Button size="sm" onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Conceder plano"}</Button>
+      </div>
+    </div>
+  );
+}
