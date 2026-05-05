@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
 import {
   ArrowLeft,
   Copy,
@@ -33,15 +35,26 @@ export const Route = createFileRoute("/whatsapp")({
   head: () => ({
     meta: [
       { title: "Gastos via WhatsApp — Gasto Inteligente" },
-      {
-        name: "description",
-        content:
-          "Configure a integração real do WhatsApp para registrar gastos por mensagem.",
-      },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: WhatsAppPage,
+  component: WhatsAppPageGuarded,
 });
+
+function WhatsAppPageGuarded() {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <MobileShell>
+        <div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>
+      </MobileShell>
+    );
+  }
+  if (!user || !isAdminMasterEmail(user.email)) {
+    return <Navigate to="/" replace />;
+  }
+  return <WhatsAppPage />;
+}
 
 type Link = {
   id: string;

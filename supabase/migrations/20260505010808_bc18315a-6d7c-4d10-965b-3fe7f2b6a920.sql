@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_user_plan_from_payment() FROM PUBLIC, anon, authenticated;
