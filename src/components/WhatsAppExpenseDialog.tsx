@@ -245,13 +245,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
             )}
           </button>
 
-          <a
-            href="/whatsapp"
-            className="flex w-full items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300 hover:bg-emerald-500/10"
-          >
-            <span>Configurar integração real (webhook)</span>
-            <span aria-hidden>→</span>
-          </a>
+          {/* Configuração técnica do webhook é restrita ao admin master. */}
         </div>
 
         <DialogFooter className="gap-2">

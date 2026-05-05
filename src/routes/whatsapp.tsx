@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
 import {
   ArrowLeft,
   Copy,
@@ -40,14 +42,6 @@ export const Route = createFileRoute("/whatsapp")({
 });
 
 function WhatsAppPageGuarded() {
-  // Guard de acesso: apenas admin master pode ver a configuração técnica.
-  // Importações dinâmicas locais para não impactar SSR.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useAuth } = require("@/lib/auth-context") as typeof import("@/lib/auth-context");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { isAdminMasterEmail } = require("@/lib/plans") as typeof import("@/lib/plans");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Navigate } = require("@tanstack/react-router") as typeof import("@tanstack/react-router");
   const { user, loading } = useAuth();
   if (loading) {
     return (
