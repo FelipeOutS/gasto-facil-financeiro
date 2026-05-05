@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/use-plan";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { isAdminMasterEmail, planAllowsFeature, type FeatureKey } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
+import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
 import { setStoreCanWrite } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/server/subscription.functions";
@@ -67,6 +68,8 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
 type GuardCtx = {
   /** Usuário tem permissão para criar/editar dados financeiros? */
   canWrite: boolean;
+  /** Verifica se o plano atual libera uma feature específica. */
+  canUseFeature: (feature: FeatureKey) => boolean;
   /** Abre o modal "precisa de assinatura". */
   requireSubscription: (msg?: string) => void;
   /**
@@ -80,20 +83,21 @@ const Ctx = createContext<GuardCtx | null>(null);
 
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { isAdminMaster, status, storedPlan, isTrialActive, loading: planLoading } = usePlan();
+  const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
+  const { hasFullAccess, loading: rolesLoading } = useRoles();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const isAdmin = isAdminMaster || hasFullAccess;
+
   const canWrite = useMemo(() => {
-    if (isAdminMaster) return true;
+    if (isAdmin) return true;
     if (!user) return false;
-    // Enquanto carrega a assinatura, NÃO liberar — usuário sem plano ativo
-    // não pode escrever durante o flicker inicial.
-    if (planLoading) return false;
+    if (planLoading || rolesLoading) return false;
     if (isTrialActive) return true;
     if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
     return isStatusActive(status);
-  }, [isAdminMaster, user, storedPlan, status, isTrialActive, planLoading]);
+  }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
@@ -117,8 +121,17 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     [canWrite, requireSubscription],
   );
 
+  const canUseFeature = useCallback(
+    (feature: FeatureKey) => {
+      if (isAdmin) return true;
+      if (!canWrite) return false;
+      return planAllowsFeature(plan, feature);
+    },
+    [isAdmin, canWrite, plan],
+  );
+
   return (
-    <Ctx.Provider value={{ canWrite, requireSubscription, guard }}>
+    <Ctx.Provider value={{ canWrite, canUseFeature, requireSubscription, guard }}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -157,6 +170,7 @@ export function useSubscriptionGuard(): GuardCtx {
     // Fallback seguro para casos isolados (ex: testes). Bloqueia tudo.
     return {
       canWrite: false,
+      canUseFeature: () => false,
       requireSubscription: () => {
         toast.error("Você precisa de uma assinatura ativa para usar este recurso.");
       },
