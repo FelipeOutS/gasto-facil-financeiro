@@ -347,9 +347,9 @@ function MeuPlanoPage() {
             )}
             {ativoPago && currentPeriodStart && currentPeriodEnd && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Plano ativo. Período:{" "}
-                {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} →{" "}
-                {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}.
+                Plano ativo. Início: {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} ·{" "}
+                Vencimento: {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}
+                {planoAtualPagoEm ? ` · Pago em: ${new Date(planoAtualPagoEm).toLocaleDateString("pt-BR")}` : ""}.
               </p>
             )}
             {expirado && (
