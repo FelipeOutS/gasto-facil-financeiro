@@ -67,8 +67,7 @@ export function DesktopSidebar() {
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const { can } = usePlan();
-  const [investLockOpen, setInvestLockOpen] = useState(false);
-  const investBlocked = !can("investimentos");
+  const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const { user } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
