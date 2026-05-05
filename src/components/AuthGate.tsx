@@ -6,6 +6,9 @@ import { usePlan } from "@/lib/use-plan";
 import { Wallet } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { fetchOnboarding } from "@/lib/onboarding/service";
+import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
+import { planAllowsFeature } from "@/lib/plans";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 
 /**
  * Rotas que NÃO exigem assinatura ativa.
