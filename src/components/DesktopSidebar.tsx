@@ -24,17 +24,24 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
-import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
+
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { isAdminMasterEmail, type FeatureKey } from "@/lib/plans";
 import { Shield } from "lucide-react";
+import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof Home;
   exact?: boolean;
+  feature?: FeatureKey;
 };
+
+const ROUTE_FEATURE: Record<string, { feature: FeatureKey; title: string }> = Object.fromEntries(
+  PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
+);
 
 const ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: Home, exact: true },
@@ -60,8 +67,7 @@ export function DesktopSidebar() {
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const { can } = usePlan();
-  const [investLockOpen, setInvestLockOpen] = useState(false);
-  const investBlocked = !can("investimentos");
+  const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const { user } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
@@ -109,7 +115,8 @@ export function DesktopSidebar() {
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
             const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
-            const locked = to === "/investimentos" && investBlocked;
+            const routeRule = ROUTE_FEATURE[to];
+            const locked = !isAdminMaster && !!routeRule && !can(routeRule.feature);
             const linkClasses = cn(
               "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
               active
@@ -151,7 +158,7 @@ export function DesktopSidebar() {
                 <li key={to}>
                   <button
                     type="button"
-                    onClick={() => setInvestLockOpen(true)}
+                    onClick={() => setLockState({ open: true, title: routeRule!.title })}
                     className={cn(linkClasses, "w-full text-left")}
                   >
                     {iconNode}
@@ -187,7 +194,11 @@ export function DesktopSidebar() {
       <div className="px-5 py-4 text-[10px] text-muted-foreground/70">
         © Gasto Inteligente
       </div>
-      <InvestimentosLockModal open={investLockOpen} onOpenChange={setInvestLockOpen} />
+      <PremiumLockModal
+        open={lockState.open}
+        onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
+        title={lockState.title}
+      />
     </aside>
   );
 }
