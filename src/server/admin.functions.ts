@@ -436,3 +436,92 @@ export const grantPlanManually = createServerFn({ method: "POST" })
 
     return { ok: true as const };
   });
+
+const STATUS_VALUES = [
+  "ativo",
+  "aguardando_pagamento",
+  "cancelado",
+  "expirado",
+  "sem_assinatura",
+  "teste",
+] as const;
+
+/**
+ * Permite ao admin alterar manualmente o status do plano de um usuário.
+ * - "ativo": requer pagamento aprovado existente OU forceActivate=true.
+ * - "sem_assinatura": também limpa o plano (plano = sem_assinatura).
+ * - "cancelado" / "expirado": preserva o plano para histórico, marca encerramento.
+ */
+export const setUserStatusManually = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        targetUserId: z.string().uuid(),
+        status: z.enum(STATUS_VALUES),
+        forceActivate: z.boolean().optional(),
+        clearPlan: z.boolean().optional(),
+      })
+      .parse(input),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await ensureAdmin(context.supabase, userId);
+
+    const now = new Date();
+    const { data: existing } = await supabaseAdmin
+      .from("user_plans")
+      .select("user_id, plano, current_period_start, current_period_end")
+      .eq("user_id", data.targetUserId)
+      .maybeSingle();
+
+    // Para "ativo", exige pagamento aprovado, salvo se forceActivate=true.
+    if (data.status === "ativo" && !data.forceActivate) {
+      const { data: paid } = await supabaseAdmin
+        .from("subscription_payments")
+        .select("id")
+        .eq("user_id", data.targetUserId)
+        .in("status", ["approved", "paid"])
+        .limit(1);
+      if (!paid || paid.length === 0) {
+        throw new Error(
+          "Para marcar como Plano ativo é necessário ter pagamento aprovado. Marque 'Confirmar pagamento manualmente' para forçar.",
+        );
+      }
+    }
+
+    let update: Record<string, unknown> = {
+      status: data.status,
+      updated_at: now.toISOString(),
+    };
+
+    if (data.status === "sem_assinatura" || data.clearPlan) {
+      update.plano = "sem_assinatura";
+      update.cancelled_at = null;
+      update.access_until = null;
+      update.current_period_start = null;
+      update.current_period_end = null;
+      update.last_payment_id = null;
+      update.periodicidade = null;
+      update.months = null;
+    } else if (data.status === "cancelado") {
+      update.cancelled_at = now.toISOString();
+    } else if (data.status === "expirado") {
+      update.access_until = now.toISOString();
+    } else if (data.status === "ativo") {
+      update.cancelled_at = null;
+      update.access_until = null;
+    }
+
+    if (existing) {
+      await supabaseAdmin
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("user_plans").update(update as any).eq("user_id", data.targetUserId);
+    } else {
+      await supabaseAdmin
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("user_plans").insert({ user_id: data.targetUserId, plano: "sem_assinatura", ...update } as any);
+    }
+    return { ok: true as const };
+  });
+
