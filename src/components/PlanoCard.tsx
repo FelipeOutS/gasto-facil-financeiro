@@ -13,7 +13,21 @@ import { cn } from "@/lib/utils";
 export function PlanoCard({ className }: { className?: string }) {
   const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } = usePlan();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card animate-pulse",
+          className,
+        )}
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/50" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-muted-foreground">Verificando assinatura…</p>
+        </div>
+      </div>
+    );
+  }
 
   const semAssinatura =
     !isAdminMaster &&
