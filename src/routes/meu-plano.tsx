@@ -97,13 +97,14 @@ function MeuPlanoPage() {
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
   const semAssinatura =
+    !loading &&
     !isAdminMaster &&
     !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
-  const aguardando = !isAdminMaster && status === "aguardando_pagamento";
-  const expirado = !isAdminMaster && status === "expirado";
+  const aguardando = !loading && !isAdminMaster && status === "aguardando_pagamento";
+  const expirado = !loading && !isAdminMaster && status === "expirado";
   const ativoPago =
-    !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
+    !loading && !isAdminMaster && status === "ativo" && storedPlan !== "sem_assinatura" && storedPlan !== "free" && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
@@ -302,7 +303,9 @@ function MeuPlanoPage() {
               {isAdminMaster ? "Acesso" : "Plano atual"}
             </p>
             <div className="mt-1 flex items-center gap-2">
-              {isAdminMaster ? (
+              {loading ? (
+                <Sparkles className="h-5 w-5 text-muted-foreground animate-pulse" />
+              ) : isAdminMaster ? (
                 <Crown className="h-5 w-5 text-amber-500" />
               ) : aguardando ? (
                 <Hourglass className="h-5 w-5 text-amber-500" />
@@ -311,14 +314,16 @@ function MeuPlanoPage() {
               )}
               <h2 className="text-2xl font-bold">
                 {loading
-                  ? "Carregando…"
+                  ? "Verificando assinatura…"
                   : isAdminMaster
                     ? "Acesso total"
                     : aguardando
                       ? "Aguardando pagamento"
-                      : semAssinatura
-                        ? "Sem assinatura ativa"
-                        : PLAN_LABEL[plan]}
+                      : ativoPago
+                        ? PLAN_LABEL[plan]
+                        : semAssinatura
+                          ? "Sem assinatura ativa"
+                          : PLAN_LABEL[plan]}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -369,14 +374,16 @@ function MeuPlanoPage() {
               </p>
             )}
           </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-              STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
-            )}
-          >
-            {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
-          </span>
+          {!loading && (
+            <span
+              className={cn(
+                "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
+              )}
+            >
+              {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
+            </span>
+          )}
         </div>
 
         {!isAdminMaster && isTrialActive && (
