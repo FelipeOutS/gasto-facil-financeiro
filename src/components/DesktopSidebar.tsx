@@ -115,7 +115,8 @@ export function DesktopSidebar() {
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
             const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
-            const locked = to === "/investimentos" && investBlocked;
+            const routeRule = ROUTE_FEATURE[to];
+            const locked = !isAdminMaster && !!routeRule && !can(routeRule.feature);
             const linkClasses = cn(
               "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
               active
