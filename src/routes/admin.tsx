@@ -346,11 +346,22 @@ function AdminPage() {
     mrrCents: 0,
     topPlan: null as string | null,
   };
+
+  // Recalcula contagens excluindo admins e usando o status de exibição,
+  // que reflete corretamente "Plano ativo / Cancelado-Vencido / Conta criada".
+  const commonUsers = usersList.filter((u) => !isProtectedAdmin(u.email));
+  const activeCount = commonUsers.filter((u) => getDisplayStatus(u) === "ativo").length;
+  const cancelledCount = commonUsers.filter((u) => getDisplayStatus(u) === "cancelado_vencido").length;
+  const noPlanCount = commonUsers.filter((u) => {
+    const ds = getDisplayStatus(u);
+    return ds === "conta_criada" || ds === "aguardando";
+  }).length;
+
   const cards = [
     { label: "Total cadastrados", value: t.totalUsers, icon: Users, color: "text-blue-500" },
-    { label: "Plano ativo", value: t.activeUsers, icon: CheckCircle2, color: "text-emerald-500" },
-    { label: "Sem plano", value: t.noPlanUsers, icon: XCircle, color: "text-muted-foreground" },
-    { label: "Cancelados/vencidos", value: t.cancelledOrExpiredUsers, icon: Ban, color: "text-orange-500" },
+    { label: "Plano ativo", value: activeCount, icon: CheckCircle2, color: "text-emerald-500" },
+    { label: "Sem plano", value: noPlanCount, icon: XCircle, color: "text-muted-foreground" },
+    { label: "Cancelados/vencidos", value: cancelledCount, icon: Ban, color: "text-orange-500" },
     { label: "Receita total", value: fmtMoney(t.revenueAllCents), icon: DollarSign, color: "text-emerald-500" },
     { label: "Receita do mês", value: fmtMoney(t.revenueMonthCents), icon: TrendingUp, color: "text-emerald-500" },
     { label: "Recorrente (MRR)", value: fmtMoney(t.mrrCents), icon: Repeat, color: "text-violet-500" },
