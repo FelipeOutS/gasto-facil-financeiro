@@ -374,14 +374,16 @@ function MeuPlanoPage() {
               </p>
             )}
           </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-              STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
-            )}
-          >
-            {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
-          </span>
+          {!loading && (
+            <span
+              className={cn(
+                "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
+              )}
+            >
+              {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
+            </span>
+          )}
         </div>
 
         {!isAdminMaster && isTrialActive && (
