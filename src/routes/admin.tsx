@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
-import { getAdminDashboard, deleteUserById, grantPlanManually, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -160,6 +160,7 @@ function AdminPage() {
   const [selected, setSelected] = useState<AdminUserRow | null>(null);
   const [toDelete, setToDelete] = useState<AdminUserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editStatus, setEditStatus] = useState<AdminUserRow | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   // Guard de acesso
@@ -346,11 +347,22 @@ function AdminPage() {
     mrrCents: 0,
     topPlan: null as string | null,
   };
+
+  // Recalcula contagens excluindo admins e usando o status de exibição,
+  // que reflete corretamente "Plano ativo / Cancelado-Vencido / Conta criada".
+  const commonUsers = usersList.filter((u) => !isProtectedAdmin(u.email));
+  const activeCount = commonUsers.filter((u) => getDisplayStatus(u) === "ativo").length;
+  const cancelledCount = commonUsers.filter((u) => getDisplayStatus(u) === "cancelado_vencido").length;
+  const noPlanCount = commonUsers.filter((u) => {
+    const ds = getDisplayStatus(u);
+    return ds === "conta_criada" || ds === "aguardando";
+  }).length;
+
   const cards = [
     { label: "Total cadastrados", value: t.totalUsers, icon: Users, color: "text-blue-500" },
-    { label: "Plano ativo", value: t.activeUsers, icon: CheckCircle2, color: "text-emerald-500" },
-    { label: "Sem plano", value: t.noPlanUsers, icon: XCircle, color: "text-muted-foreground" },
-    { label: "Cancelados/vencidos", value: t.cancelledOrExpiredUsers, icon: Ban, color: "text-orange-500" },
+    { label: "Plano ativo", value: activeCount, icon: CheckCircle2, color: "text-emerald-500" },
+    { label: "Sem plano", value: noPlanCount, icon: XCircle, color: "text-muted-foreground" },
+    { label: "Cancelados/vencidos", value: cancelledCount, icon: Ban, color: "text-orange-500" },
     { label: "Receita total", value: fmtMoney(t.revenueAllCents), icon: DollarSign, color: "text-emerald-500" },
     { label: "Receita do mês", value: fmtMoney(t.revenueMonthCents), icon: TrendingUp, color: "text-emerald-500" },
     { label: "Recorrente (MRR)", value: fmtMoney(t.mrrCents), icon: Repeat, color: "text-violet-500" },
@@ -575,16 +587,27 @@ function AdminPage() {
                       <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
                       <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
-                          disabled={protectedRow}
-                          title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
-                          onClick={() => setToDelete(u)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Editar status do plano"
+                            onClick={() => setEditStatus(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                            disabled={protectedRow}
+                            title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                            onClick={() => setToDelete(u)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -662,6 +685,15 @@ function AdminPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        <EditStatusDialog
+          target={editStatus}
+          onClose={() => setEditStatus(null)}
+          onDone={() => {
+            setEditStatus(null);
+            setReloadKey((k) => k + 1);
+          }}
+        />
 
         <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && !deleting && setToDelete(null)}>
           <AlertDialogContent>
@@ -777,5 +809,104 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
         <Button size="sm" onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Conceder plano"}</Button>
       </div>
     </div>
+  );
+}
+
+const EDIT_STATUS_OPTIONS: { value: "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura"; label: string }[] = [
+  { value: "sem_assinatura", label: "Sem assinatura / Conta criada" },
+  { value: "aguardando_pagamento", label: "Aguardando pagamento" },
+  { value: "ativo", label: "Plano ativo" },
+  { value: "cancelado", label: "Cancelado" },
+  { value: "expirado", label: "Expirado / Vencido" },
+];
+
+function EditStatusDialog({
+  target,
+  onClose,
+  onDone,
+}: {
+  target: AdminUserRow | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [status, setStatus] = useState<string>("sem_assinatura");
+  const [forceActivate, setForceActivate] = useState(false);
+  const [clearPlan, setClearPlan] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (target) {
+      const s = target.status;
+      const valid = EDIT_STATUS_OPTIONS.some((o) => o.value === s);
+      setStatus(valid ? s : "sem_assinatura");
+      setForceActivate(false);
+      setClearPlan(false);
+    }
+  }, [target]);
+
+  async function submit() {
+    if (!target) return;
+    setSaving(true);
+    try {
+      await setUserStatusManually({
+        data: {
+          targetUserId: target.user_id,
+          status: status as "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura",
+          forceActivate,
+          clearPlan,
+        },
+      });
+      toast.success("Status atualizado.");
+      onDone();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar status");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar status do usuário</DialogTitle>
+        </DialogHeader>
+        {target && (
+          <div className="space-y-3 text-sm">
+            <div className="rounded-md border p-3 bg-muted/30">
+              <p className="font-medium">{target.nome ?? "—"}</p>
+              <p className="text-xs text-muted-foreground break-all">{target.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Novo status</p>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EDIT_STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {status === "ativo" && (
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={forceActivate} onChange={(e) => setForceActivate(e.target.checked)} className="mt-0.5" />
+                <span>Confirmar pagamento manualmente (ativar mesmo sem pagamento aprovado registrado).</span>
+              </label>
+            )}
+            {(status === "sem_assinatura" || status === "cancelado" || status === "expirado") && (
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={clearPlan} onChange={(e) => setClearPlan(e.target.checked)} className="mt-0.5" />
+                <span>Limpar plano vinculado e remover assinatura antiga.</span>
+              </label>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
+              <Button onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Salvar status"}</Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
