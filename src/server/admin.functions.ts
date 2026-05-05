@@ -195,6 +195,27 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false }),
     ]);
 
+    // Reconcilia pagamentos por cartão pendentes (best-effort) para usuários
+    // com tentativas recentes — assim o admin reflete pagamentos aprovados no MP.
+    const pendingCardUsers = new Set<string>();
+    for (const p of (paymentsRes.data ?? []) as Array<{ user_id: string; method: string; status: string; created_at: string }>) {
+      if (p.method !== "card" || p.status !== "pending") continue;
+      const ageMs = Date.now() - new Date(p.created_at).getTime();
+      if (ageMs > 3 * 24 * 60 * 60 * 1000) continue;
+      pendingCardUsers.add(p.user_id);
+    }
+    if (pendingCardUsers.size > 0) {
+      await Promise.allSettled(
+        Array.from(pendingCardUsers).slice(0, 25).map((uid) => reconcilePendingCardPaymentsForUser(uid)),
+      );
+      // Recarrega pagamentos pós-reconciliação
+      const refreshed = await supabaseAdmin
+        .from("subscription_payments")
+        .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at")
+        .order("created_at", { ascending: false });
+      if (refreshed.data) paymentsRes.data = refreshed.data;
+    }
+
     const profiles = profilesRes.data ?? [];
 
     // União: profiles ∪ authMap (caso algum usuário auth não tenha profile)
