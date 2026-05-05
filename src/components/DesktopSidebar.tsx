@@ -26,15 +26,22 @@ import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { isAdminMasterEmail, type FeatureKey } from "@/lib/plans";
 import { Shield } from "lucide-react";
+import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof Home;
   exact?: boolean;
+  feature?: FeatureKey;
 };
+
+const ROUTE_FEATURE: Record<string, { feature: FeatureKey; title: string }> = Object.fromEntries(
+  PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
+);
 
 const ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: Home, exact: true },
