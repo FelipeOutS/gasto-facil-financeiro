@@ -811,3 +811,102 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
     </div>
   );
 }
+
+const EDIT_STATUS_OPTIONS: { value: "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura"; label: string }[] = [
+  { value: "sem_assinatura", label: "Sem assinatura / Conta criada" },
+  { value: "aguardando_pagamento", label: "Aguardando pagamento" },
+  { value: "ativo", label: "Plano ativo" },
+  { value: "cancelado", label: "Cancelado" },
+  { value: "expirado", label: "Expirado / Vencido" },
+];
+
+function EditStatusDialog({
+  target,
+  onClose,
+  onDone,
+}: {
+  target: AdminUserRow | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [status, setStatus] = useState<string>("sem_assinatura");
+  const [forceActivate, setForceActivate] = useState(false);
+  const [clearPlan, setClearPlan] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (target) {
+      const s = target.status;
+      const valid = EDIT_STATUS_OPTIONS.some((o) => o.value === s);
+      setStatus(valid ? s : "sem_assinatura");
+      setForceActivate(false);
+      setClearPlan(false);
+    }
+  }, [target]);
+
+  async function submit() {
+    if (!target) return;
+    setSaving(true);
+    try {
+      await setUserStatusManually({
+        data: {
+          targetUserId: target.user_id,
+          status: status as "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura",
+          forceActivate,
+          clearPlan,
+        },
+      });
+      toast.success("Status atualizado.");
+      onDone();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar status");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar status do usuário</DialogTitle>
+        </DialogHeader>
+        {target && (
+          <div className="space-y-3 text-sm">
+            <div className="rounded-md border p-3 bg-muted/30">
+              <p className="font-medium">{target.nome ?? "—"}</p>
+              <p className="text-xs text-muted-foreground break-all">{target.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Novo status</p>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EDIT_STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {status === "ativo" && (
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={forceActivate} onChange={(e) => setForceActivate(e.target.checked)} className="mt-0.5" />
+                <span>Confirmar pagamento manualmente (ativar mesmo sem pagamento aprovado registrado).</span>
+              </label>
+            )}
+            {(status === "sem_assinatura" || status === "cancelado" || status === "expirado") && (
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={clearPlan} onChange={(e) => setClearPlan(e.target.checked)} className="mt-0.5" />
+                <span>Limpar plano vinculado e remover assinatura antiga.</span>
+              </label>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
+              <Button onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Salvar status"}</Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
