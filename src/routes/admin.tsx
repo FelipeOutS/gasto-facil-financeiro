@@ -686,6 +686,15 @@ function AdminPage() {
           </DialogContent>
         </Dialog>
 
+        <EditStatusDialog
+          target={editStatus}
+          onClose={() => setEditStatus(null)}
+          onDone={() => {
+            setEditStatus(null);
+            setReloadKey((k) => k + 1);
+          }}
+        />
+
         <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && !deleting && setToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
