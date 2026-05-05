@@ -70,14 +70,25 @@ type Props = {
 export function MoreSheet({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
-  const [investLockOpen, setInvestLockOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
+
+  function getRule(item: MoreItem) {
+    return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
+  }
+
+  function isLocked(item: MoreItem) {
+    if (isAdminMaster) return false;
+    const rule = getRule(item);
+    return rule ? !can(rule.feature) : false;
+  }
 
   function handleItem(item: MoreItem) {
-    const locked = item.feature ? !can(item.feature) : false;
-    if (locked) {
+    if (isLocked(item)) {
+      const rule = getRule(item)!;
       onOpenChange(false);
-      // pequeno delay para fechar antes de abrir o modal
-      setTimeout(() => setInvestLockOpen(true), 150);
+      setTimeout(() => setLockState({ open: true, title: rule.title }), 150);
       return;
     }
     onOpenChange(false);
@@ -126,7 +137,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
             <div className="grid grid-cols-2 gap-3">
               {MORE_ITEMS.map((item) => {
-                const locked = item.feature ? !can(item.feature) : false;
+                const locked = isLocked(item);
                 const Icon = item.icon;
                 return (
                   <button
@@ -154,7 +165,11 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           </div>
         </SheetContent>
       </Sheet>
-      <InvestimentosLockModal open={investLockOpen} onOpenChange={setInvestLockOpen} />
+      <PremiumLockModal
+        open={lockState.open}
+        onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
+        title={lockState.title}
+      />
     </>
   );
 }
