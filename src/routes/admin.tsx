@@ -587,16 +587,27 @@ function AdminPage() {
                       <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
                       <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
-                          disabled={protectedRow}
-                          title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
-                          onClick={() => setToDelete(u)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Editar status do plano"
+                            onClick={() => setEditStatus(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                            disabled={protectedRow}
+                            title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                            onClick={() => setToDelete(u)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
