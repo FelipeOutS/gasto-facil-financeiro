@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
+import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
