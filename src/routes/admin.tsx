@@ -104,13 +104,21 @@ const STATUS_COLORS: Record<DisplayStatus, string> = {
 
 function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
-  const hasPlan = u.plano && u.plano !== "free";
-  if (u.status === "cancelado" || u.status === "vencido" || u.last_payment_status === "rejected" || u.last_payment_status === "expired") {
+  const hasPlan = !!u.plano && u.plano !== "free" && u.plano !== "sem_assinatura";
+  if (u.status === "ativo" && paid && hasPlan) return "ativo";
+  if (u.status === "cancelado" || u.status === "vencido" || u.status === "expirado" ||
+      u.last_payment_status === "rejected" || u.last_payment_status === "expired" ||
+      u.last_payment_status === "cancelled") {
     return "cancelado_vencido";
   }
-  if (u.status === "ativo" && paid && hasPlan) return "ativo";
-  if (hasPlan && !paid) return "aguardando";
-  if (u.last_payment_status === "pending") return "aguardando";
+  // "Aguardando pagamento" só vale se o usuário escolheu plano e o pagamento
+  // pendente foi criado nos últimos 3 dias.
+  const lastAt = u.last_payment_at ? new Date(u.last_payment_at).getTime() : 0;
+  const within3d = lastAt > 0 && Date.now() - lastAt <= 3 * 24 * 60 * 60 * 1000;
+  if (u.last_payment_status === "pending" && within3d) return "aguardando";
+  if (hasPlan && !paid && within3d) return "aguardando";
+  // Pendente expirado conta como cancelado/vencido
+  if (u.last_payment_status === "pending" && !within3d) return "cancelado_vencido";
   return "conta_criada";
 }
 
