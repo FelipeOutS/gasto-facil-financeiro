@@ -97,13 +97,14 @@ function MeuPlanoPage() {
   const vocab = getVocab(tipo);
   const recommended = suggestedUpgrade(plan, tipo);
   const semAssinatura =
+    !loading &&
     !isAdminMaster &&
     !isTrialActive &&
     (storedPlan === "sem_assinatura" || storedPlan === "free");
-  const aguardando = !isAdminMaster && status === "aguardando_pagamento";
-  const expirado = !isAdminMaster && status === "expirado";
+  const aguardando = !loading && !isAdminMaster && status === "aguardando_pagamento";
+  const expirado = !loading && !isAdminMaster && status === "expirado";
   const ativoPago =
-    !isAdminMaster && status === "ativo" && !semAssinatura && !isTrialActive;
+    !loading && !isAdminMaster && status === "ativo" && storedPlan !== "sem_assinatura" && storedPlan !== "free" && !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
