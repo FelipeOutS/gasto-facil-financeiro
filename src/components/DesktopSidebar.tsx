@@ -194,7 +194,11 @@ export function DesktopSidebar() {
       <div className="px-5 py-4 text-[10px] text-muted-foreground/70">
         © Gasto Inteligente
       </div>
-      <InvestimentosLockModal open={investLockOpen} onOpenChange={setInvestLockOpen} />
+      <PremiumLockModal
+        open={lockState.open}
+        onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
+        title={lockState.title}
+      />
     </aside>
   );
 }
