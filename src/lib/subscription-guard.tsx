@@ -121,8 +121,17 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     [canWrite, requireSubscription],
   );
 
+  const canUseFeature = useCallback(
+    (feature: FeatureKey) => {
+      if (isAdmin) return true;
+      if (!canWrite) return false;
+      return planAllowsFeature(plan, feature);
+    },
+    [isAdmin, canWrite, plan],
+  );
+
   return (
-    <Ctx.Provider value={{ canWrite, requireSubscription, guard }}>
+    <Ctx.Provider value={{ canWrite, canUseFeature, requireSubscription, guard }}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
