@@ -303,7 +303,9 @@ function MeuPlanoPage() {
               {isAdminMaster ? "Acesso" : "Plano atual"}
             </p>
             <div className="mt-1 flex items-center gap-2">
-              {isAdminMaster ? (
+              {loading ? (
+                <Sparkles className="h-5 w-5 text-muted-foreground animate-pulse" />
+              ) : isAdminMaster ? (
                 <Crown className="h-5 w-5 text-amber-500" />
               ) : aguardando ? (
                 <Hourglass className="h-5 w-5 text-amber-500" />
@@ -312,14 +314,16 @@ function MeuPlanoPage() {
               )}
               <h2 className="text-2xl font-bold">
                 {loading
-                  ? "Carregando…"
+                  ? "Verificando assinatura…"
                   : isAdminMaster
                     ? "Acesso total"
                     : aguardando
                       ? "Aguardando pagamento"
-                      : semAssinatura
-                        ? "Sem assinatura ativa"
-                        : PLAN_LABEL[plan]}
+                      : ativoPago
+                        ? PLAN_LABEL[plan]
+                        : semAssinatura
+                          ? "Sem assinatura ativa"
+                          : PLAN_LABEL[plan]}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
