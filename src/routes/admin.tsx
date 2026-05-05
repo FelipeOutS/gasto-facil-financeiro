@@ -649,6 +649,15 @@ function AdminPage() {
                     </Table>
                   </div>
                 </div>
+                {(user?.email ?? "").toLowerCase() === "felipe.out.silva@outlook.com" && (
+                  <ManualGrantSection
+                    target={selected}
+                    onDone={() => {
+                      setSelected(null);
+                      setReloadKey((k) => k + 1);
+                    }}
+                  />
+                )}
               </div>
             )}
           </DialogContent>
