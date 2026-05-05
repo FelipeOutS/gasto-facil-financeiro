@@ -160,6 +160,7 @@ function AdminPage() {
   const [selected, setSelected] = useState<AdminUserRow | null>(null);
   const [toDelete, setToDelete] = useState<AdminUserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editStatus, setEditStatus] = useState<AdminUserRow | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   // Guard de acesso
