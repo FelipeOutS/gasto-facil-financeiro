@@ -85,6 +85,10 @@ function MeuPlanoPage() {
     trialUsed,
     isCancelled,
     accessUntil,
+    paymentMethod,
+    paymentAmountCents,
+    paidAt,
+    periodicidade: activePeriodicidade,
     currentPeriodStart,
     currentPeriodEnd,
     refresh,
@@ -154,7 +158,9 @@ function MeuPlanoPage() {
     ["approved", "paid", "authorized"].includes((h.status ?? "").toLowerCase()),
   );
   const planoAtualPeriodo = (ultimoAprovado as unknown as { periodicidade?: Periodicidade } | undefined)?.periodicidade ?? null;
-  const planoAtualMetodo = ultimoAprovado?.method ?? null;
+  const planoAtualMetodo = paymentMethod ?? ultimoAprovado?.method ?? null;
+  const planoAtualTotal = paymentAmountCents ?? ultimoAprovado?.amount_cents ?? null;
+  const planoAtualPagoEm = paidAt ?? ultimoAprovado?.paid_at ?? null;
 
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
@@ -322,8 +328,9 @@ function MeuPlanoPage() {
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
-                {planoAtualPeriodo ? ` · ${getPeriodicidade(planoAtualPeriodo).label}` : ""}
-                {planoAtualMetodo ? ` · ${planoAtualMetodo.toUpperCase()}` : ""}
+                {(activePeriodicidade ?? planoAtualPeriodo) ? ` · ${getPeriodicidade((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade).label}` : ""}
+                {planoAtualMetodo ? ` · ${planoAtualMetodo.toLowerCase() === "pix" ? "Pix" : planoAtualMetodo}` : ""}
+                {planoAtualTotal !== null ? ` · Total pago: ${formatBRL(planoAtualTotal)}` : ""}
               </p>
             )}
             {isAdminMaster && (
@@ -340,9 +347,9 @@ function MeuPlanoPage() {
             )}
             {ativoPago && currentPeriodStart && currentPeriodEnd && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Plano ativo. Período:{" "}
-                {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} →{" "}
-                {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}.
+                Plano ativo. Início: {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} ·{" "}
+                Vencimento: {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}
+                {planoAtualPagoEm ? ` · Pago em: ${new Date(planoAtualPagoEm).toLocaleDateString("pt-BR")}` : ""}.
               </p>
             )}
             {expirado && (

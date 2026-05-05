@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getSubscriptionForUserIdentity } from "./subscription.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
@@ -227,9 +228,9 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       }
     }
 
-    const users: AdminUserRow[] = allAuthUsers.map((au) => {
+    const users: AdminUserRow[] = await Promise.all(allAuthUsers.map(async (au) => {
       const prof: any = profileBy.get(au.id);
-      const plan: any = planBy.get(au.id);
+      const sub = await getSubscriptionForUserIdentity({ userId: au.id, email: au.email, repairLink: false });
       const last = lastPaymentByUser.get(au.id);
       const paid = paidPaymentsByUser.get(au.id) ?? [];
       const total = paid.reduce((s, x) => s + (x.amount_cents ?? 0), 0);
@@ -240,24 +241,24 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         telefone: prof?.telefone ?? au.phone ?? null,
         tipo_cadastro: prof?.tipo_cadastro ?? null,
         created_at: au.created_at,
-        plano: plan?.plano ?? "free",
-        status: plan?.status ?? "sem_assinatura",
-        periodicidade: plan?.periodicidade ?? null,
-        months: plan?.months ?? null,
-        current_period_start: plan?.current_period_start ?? null,
-        current_period_end: plan?.current_period_end ?? null,
-        access_until: plan?.access_until ?? null,
-        cancelled_at: plan?.cancelled_at ?? null,
-        last_payment_id: last?.id ?? null,
-        last_payment_amount_cents: last?.amount_cents ?? null,
-        last_payment_method: last?.method ?? null,
-        last_payment_status: last?.status ?? null,
-        last_payment_at: last?.paid_at ?? last?.created_at ?? null,
-        next_payment_at: plan?.current_period_end ?? plan?.access_until ?? null,
+        plano: sub.storedPlan,
+        status: sub.status,
+        periodicidade: sub.periodicidade,
+        months: sub.months,
+        current_period_start: sub.currentPeriodStart,
+        current_period_end: sub.currentPeriodEnd,
+        access_until: sub.accessUntil,
+        cancelled_at: sub.cancelledAt,
+        last_payment_id: sub.lastPaymentId ?? last?.id ?? null,
+        last_payment_amount_cents: sub.paymentAmountCents ?? last?.amount_cents ?? null,
+        last_payment_method: sub.paymentMethod ?? last?.method ?? null,
+        last_payment_status: sub.paymentStatus ?? last?.status ?? null,
+        last_payment_at: sub.paidAt ?? last?.paid_at ?? last?.created_at ?? null,
+        next_payment_at: sub.currentPeriodEnd ?? sub.accessUntil ?? null,
         total_paid_cents: total,
         payments_count: paid.length,
       };
-    });
+    }));
 
     // Totais
     const now = new Date();

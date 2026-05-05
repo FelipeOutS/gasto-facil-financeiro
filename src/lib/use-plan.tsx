@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { getCurrentUserSubscription } from "@/server/subscription.functions";
 import {
   getEffectiveUserPlan,
   isAdminMasterEmail,
@@ -34,6 +35,14 @@ type PlanState = UserPlan & {
   cancelledAt: string | null;
   /** Até quando o acesso premium continua válido após cancelamento. */
   accessUntil: string | null;
+  /** Forma de pagamento da assinatura ativa, quando houver. */
+  paymentMethod: string | null;
+  /** Total pago em centavos da assinatura ativa, quando houver. */
+  paymentAmountCents: number | null;
+  /** Data do pagamento aprovado usado como fonte da assinatura. */
+  paidAt: string | null;
+  /** Periodicidade contratada do período ativo. */
+  periodicidade: string | null;
   /** Assinatura cancelada porém ainda dentro do período pago. */
   isCancelled: boolean;
   /** Início do período pago atual. */
@@ -75,6 +84,10 @@ export function usePlan(): PlanState {
   const [trialUsed, setTrialUsed] = useState(false);
   const [cancelledAt, setCancelledAt] = useState<string | null>(null);
   const [accessUntil, setAccessUntil] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(null);
+  const [paidAt, setPaidAt] = useState<string | null>(null);
+  const [periodicidade, setPeriodicidade] = useState<string | null>(null);
   const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,35 +105,38 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setPaymentMethod(null);
+      setPaymentAmountCents(null);
+      setPaidAt(null);
+      setPeriodicidade(null);
       setCurrentPeriodStart(null);
       setCurrentPeriodEnd(null);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("user_plans")
-      .select(
-        "plano, status, trial_ends_at, trial_started_at, trial_plan_type, trial_used, cancelled_at, access_until, current_period_start, current_period_end",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (data) {
-      setStoredRaw(String(data.plano ?? ""));
-      setStatus((data.status as SubscriptionStatus) ?? "sem_assinatura");
-      setTrialEndsAt(data.trial_ends_at ?? null);
-      setTrialStartedAt((data as { trial_started_at?: string | null }).trial_started_at ?? null);
-      setTrialPlanRaw((data as { trial_plan_type?: string | null }).trial_plan_type ?? null);
-      setTrialUsed(Boolean((data as { trial_used?: boolean }).trial_used));
-      setCancelledAt((data as { cancelled_at?: string | null }).cancelled_at ?? null);
-      setAccessUntil((data as { access_until?: string | null }).access_until ?? null);
-      setCurrentPeriodStart(
-        (data as { current_period_start?: string | null }).current_period_start ?? null,
-      );
-      setCurrentPeriodEnd(
-        (data as { current_period_end?: string | null }).current_period_end ?? null,
-      );
-    } else {
+    try {
+      const data = await getCurrentUserSubscription();
+      setStoredRaw(data.storedPlan);
+      setStatus(data.status);
+      setTrialEndsAt(data.trialEndsAt);
+      setTrialStartedAt(data.trialStartedAt);
+      setTrialPlanRaw(data.trialPlan);
+      setTrialUsed(data.trialUsed);
+      setCancelledAt(data.cancelledAt);
+      setAccessUntil(data.accessUntil);
+      setPaymentMethod(data.paymentMethod);
+      setPaymentAmountCents(data.paymentAmountCents);
+      setPaidAt(data.paidAt);
+      setPeriodicidade(data.periodicidade);
+      setCurrentPeriodStart(data.currentPeriodStart);
+      setCurrentPeriodEnd(data.currentPeriodEnd);
+    } catch (error) {
+      console.info("[usePlan] assinatura não encontrada", {
+        userId: user.id,
+        email: user.email,
+        reason: error instanceof Error ? error.message : String(error),
+      });
       setStoredRaw(null);
       setStatus("sem_assinatura");
       setTrialEndsAt(null);
@@ -129,6 +145,10 @@ export function usePlan(): PlanState {
       setTrialUsed(false);
       setCancelledAt(null);
       setAccessUntil(null);
+      setPaymentMethod(null);
+      setPaymentAmountCents(null);
+      setPaidAt(null);
+      setPeriodicidade(null);
       setCurrentPeriodStart(null);
       setCurrentPeriodEnd(null);
     }
@@ -195,6 +215,10 @@ export function usePlan(): PlanState {
     trialDaysLeft,
     cancelledAt: isAdminMaster ? null : cancelledAt,
     accessUntil: isAdminMaster ? null : accessUntil,
+    paymentMethod: isAdminMaster ? null : paymentMethod,
+    paymentAmountCents: isAdminMaster ? null : paymentAmountCents,
+    paidAt: isAdminMaster ? null : paidAt,
+    periodicidade: isAdminMaster ? null : periodicidade,
     isCancelled: !isAdminMaster && cancelledStillActive,
     currentPeriodStart: isAdminMaster ? null : currentPeriodStart,
     currentPeriodEnd: isAdminMaster ? null : currentPeriodEnd,

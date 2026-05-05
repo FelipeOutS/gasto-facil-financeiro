@@ -1532,6 +1532,15 @@ export type Database = {
       is_admin_email: { Args: { _email: string }; Returns: boolean }
       is_full_access: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      subscription_payment_email: { Args: { _payload: Json }; Returns: string }
+      subscription_status_is_approved: {
+        Args: { _status: string }
+        Returns: boolean
+      }
+      subscription_status_is_failed: {
+        Args: { _status: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
