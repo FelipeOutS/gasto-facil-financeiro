@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { getCurrentUserSubscription } from "@/server/subscription.functions";
 import {
   getEffectiveUserPlan,
   isAdminMasterEmail,
@@ -34,6 +35,14 @@ type PlanState = UserPlan & {
   cancelledAt: string | null;
   /** Até quando o acesso premium continua válido após cancelamento. */
   accessUntil: string | null;
+  /** Forma de pagamento da assinatura ativa, quando houver. */
+  paymentMethod: string | null;
+  /** Total pago em centavos da assinatura ativa, quando houver. */
+  paymentAmountCents: number | null;
+  /** Data do pagamento aprovado usado como fonte da assinatura. */
+  paidAt: string | null;
+  /** Periodicidade contratada do período ativo. */
+  periodicidade: string | null;
   /** Assinatura cancelada porém ainda dentro do período pago. */
   isCancelled: boolean;
   /** Início do período pago atual. */
@@ -75,6 +84,10 @@ export function usePlan(): PlanState {
   const [trialUsed, setTrialUsed] = useState(false);
   const [cancelledAt, setCancelledAt] = useState<string | null>(null);
   const [accessUntil, setAccessUntil] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(null);
+  const [paidAt, setPaidAt] = useState<string | null>(null);
+  const [periodicidade, setPeriodicidade] = useState<string | null>(null);
   const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
