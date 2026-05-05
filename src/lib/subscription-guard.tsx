@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/use-plan";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { isAdminMasterEmail, planAllowsFeature, type FeatureKey } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
+import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
 import { setStoreCanWrite } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/server/subscription.functions";
