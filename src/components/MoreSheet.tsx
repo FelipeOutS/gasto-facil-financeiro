@@ -28,7 +28,14 @@ import {
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
 import { PLAN_LABEL, type FeatureKey } from "@/lib/plans";
-import { InvestimentosLockModal } from "@/components/InvestimentosLockModal";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
+
+const ROUTE_RULE = Object.fromEntries(
+  PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
+);
 
 type MoreItem = {
   to: string;
