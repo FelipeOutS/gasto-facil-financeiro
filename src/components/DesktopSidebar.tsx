@@ -158,7 +158,7 @@ export function DesktopSidebar() {
                 <li key={to}>
                   <button
                     type="button"
-                    onClick={() => setInvestLockOpen(true)}
+                    onClick={() => setLockState({ open: true, title: routeRule!.title })}
                     className={cn(linkClasses, "w-full text-left")}
                   >
                     {iconNode}
