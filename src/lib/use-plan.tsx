@@ -74,6 +74,45 @@ function asTrialPlan(value: string | null | undefined): PlanTier | null {
  * `getEffectiveUserPlan(user, storedPlan)`. Admin Master por e-mail
  * tem precedência absoluta.
  */
+type CachedSubscription = {
+  storedPlan: string | null;
+  status: SubscriptionStatus;
+  trialEndsAt: string | null;
+  trialStartedAt: string | null;
+  trialPlan: string | null;
+  trialUsed: boolean;
+  cancelledAt: string | null;
+  accessUntil: string | null;
+  paymentMethod: string | null;
+  paymentAmountCents: number | null;
+  paidAt: string | null;
+  periodicidade: string | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+};
+
+const CACHE_PREFIX = "gf-plan-cache:";
+
+function readCache(userId: string): CachedSubscription | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_PREFIX + userId);
+    if (!raw) return null;
+    return JSON.parse(raw) as CachedSubscription;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(userId: string, value: CachedSubscription) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CACHE_PREFIX + userId, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
   const [storedRaw, setStoredRaw] = useState<string | null>(null);
@@ -90,9 +129,42 @@ export function usePlan(): PlanState {
   const [periodicidade, setPeriodicidade] = useState<string | null>(null);
   const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  // `loading` é true APENAS na primeiríssima carga (sem cache). Revalidações
+  // ficam em segundo plano e mantêm o último estado válido para evitar
+  // o "piscar" entre liberado/bloqueado durante a navegação.
   const [loading, setLoading] = useState(true);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  // Hidratação síncrona a partir do cache local (evita "Verificando...").
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setHydratedUserId(null);
+      return;
+    }
+    if (hydratedUserId === user.id) return;
+    const cached = readCache(user.id);
+    if (cached) {
+      setStoredRaw(cached.storedPlan);
+      setStatus(cached.status);
+      setTrialEndsAt(cached.trialEndsAt);
+      setTrialStartedAt(cached.trialStartedAt);
+      setTrialPlanRaw(cached.trialPlan);
+      setTrialUsed(cached.trialUsed);
+      setCancelledAt(cached.cancelledAt);
+      setAccessUntil(cached.accessUntil);
+      setPaymentMethod(cached.paymentMethod);
+      setPaymentAmountCents(cached.paymentAmountCents);
+      setPaidAt(cached.paidAt);
+      setPeriodicidade(cached.periodicidade);
+      setCurrentPeriodStart(cached.currentPeriodStart);
+      setCurrentPeriodEnd(cached.currentPeriodEnd);
+      setLoading(false);
+    }
+    setHydratedUserId(user.id);
+  }, [user, authLoading, hydratedUserId]);
 
   const load = useCallback(async () => {
     if (authLoading) return;
@@ -114,7 +186,10 @@ export function usePlan(): PlanState {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    // Não força loading se já temos algum estado hidratado: revalida em
+    // segundo plano mantendo o último resultado válido.
+    const hasCache = !!readCache(user.id);
+    if (!hasCache) setLoading(true);
     try {
       const data = await getCurrentUserSubscription();
       setStoredRaw(data.storedPlan);
@@ -131,26 +206,30 @@ export function usePlan(): PlanState {
       setPeriodicidade(data.periodicidade);
       setCurrentPeriodStart(data.currentPeriodStart);
       setCurrentPeriodEnd(data.currentPeriodEnd);
+      writeCache(user.id, {
+        storedPlan: data.storedPlan,
+        status: data.status,
+        trialEndsAt: data.trialEndsAt,
+        trialStartedAt: data.trialStartedAt,
+        trialPlan: data.trialPlan,
+        trialUsed: data.trialUsed,
+        cancelledAt: data.cancelledAt,
+        accessUntil: data.accessUntil,
+        paymentMethod: data.paymentMethod,
+        paymentAmountCents: data.paymentAmountCents,
+        paidAt: data.paidAt,
+        periodicidade: data.periodicidade,
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+      });
     } catch (error) {
-      console.info("[usePlan] assinatura não encontrada", {
+      // Mantém o último estado válido em caso de erro de rede/refetch:
+      // não voltamos para "sem_assinatura" só porque a revalidação falhou.
+      console.info("[usePlan] revalidação falhou, mantendo último estado", {
         userId: user.id,
         email: user.email,
         reason: error instanceof Error ? error.message : String(error),
       });
-      setStoredRaw(null);
-      setStatus("sem_assinatura");
-      setTrialEndsAt(null);
-      setTrialStartedAt(null);
-      setTrialPlanRaw(null);
-      setTrialUsed(false);
-      setCancelledAt(null);
-      setAccessUntil(null);
-      setPaymentMethod(null);
-      setPaymentAmountCents(null);
-      setPaidAt(null);
-      setPeriodicidade(null);
-      setCurrentPeriodStart(null);
-      setCurrentPeriodEnd(null);
     }
     setLoading(false);
   }, [user, authLoading]);
