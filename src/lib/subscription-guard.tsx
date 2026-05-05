@@ -81,20 +81,21 @@ const Ctx = createContext<GuardCtx | null>(null);
 
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { isAdminMaster, status, storedPlan, isTrialActive, loading: planLoading } = usePlan();
+  const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
+  const { hasFullAccess, loading: rolesLoading } = useRoles();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const isAdmin = isAdminMaster || hasFullAccess;
+
   const canWrite = useMemo(() => {
-    if (isAdminMaster) return true;
+    if (isAdmin) return true;
     if (!user) return false;
-    // Enquanto carrega a assinatura, NÃO liberar — usuário sem plano ativo
-    // não pode escrever durante o flicker inicial.
-    if (planLoading) return false;
+    if (planLoading || rolesLoading) return false;
     if (isTrialActive) return true;
     if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
     return isStatusActive(status);
-  }, [isAdminMaster, user, storedPlan, status, isTrialActive, planLoading]);
+  }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
