@@ -116,6 +116,28 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
+  // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
+  const subscriptionAllowed = isSubscriptionAllowed(pathname);
+  const hasActiveAccess =
+    plan.isAdminMaster ||
+    plan.status === "ativo" ||
+    plan.status === "teste" ||
+    (plan.status === "cancelado" && !!plan.accessUntil);
+  if (!subscriptionAllowed && !plan.loading && !hasActiveAccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="max-w-sm text-center animate-fade-in">
+          <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-card">
+            <Wallet className="h-6 w-6 text-foreground" />
+          </span>
+          <p className="text-sm text-muted-foreground">
+            Você precisa de um plano ativo para usar esta página. Redirecionando para Meu plano…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }
 
