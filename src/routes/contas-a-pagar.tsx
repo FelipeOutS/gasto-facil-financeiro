@@ -1507,7 +1507,7 @@ function PagarDialog({
   const [dataPag, setDataPag] = useState(todayISO());
   const [obs, setObs] = useState(conta.observacao ?? "");
 
-  function handlePagar() {
+  async function handlePagar() {
     const nomeTrim = nome.trim();
     if (!nomeTrim) {
       toast.error("Informe a descrição da conta.");
@@ -1518,21 +1518,25 @@ function PagarDialog({
       toast.error("Informe um valor válido.");
       return;
     }
-    marcarContaComoPago(conta.id, {
-      criarGasto,
-      formaPagamento: forma,
-      dataPagamento: dataPag,
-      observacao: obs.trim() || undefined,
-      nome: nomeTrim,
-      valor: valorNum,
-      categoriaId: categoriaId || undefined,
-    });
-    toast.success(
-      criarGasto
-        ? "Conta paga e gasto registrado."
-        : "Conta marcada como paga.",
-    );
-    onClose();
+    try {
+      await marcarContaComoPago(conta.id, {
+        criarGasto,
+        formaPagamento: forma,
+        dataPagamento: dataPag,
+        observacao: obs.trim() || undefined,
+        nome: nomeTrim,
+        valor: valorNum,
+        categoriaId: categoriaId || undefined,
+      });
+      toast.success(
+        criarGasto
+          ? "Conta paga e gasto registrado."
+          : "Conta marcada como paga.",
+      );
+      onClose();
+    } catch {
+      toast.error("Não foi possível salvar o pagamento. Tente novamente.");
+    }
   }
 
   return (
