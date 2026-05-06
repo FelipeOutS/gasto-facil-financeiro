@@ -707,6 +707,17 @@ export async function sincronizarDeteccoes(
 ): Promise<{ criadas: number; suspeitas: number; analisados: number; encontradas: number; assinaturas: number; fixas: number }> {
   await hydrateRecorrencias(userId);
   await syncCategoriaMaps(userId);
+  // Busca TODAS as detection_keys (incluindo soft-deleted) para evitar recriar
+  // recorrências que o usuário excluiu manualmente.
+  const { data: existentesAll } = await (supabase as any)
+    .from("recorrencias")
+    .select("id, detection_key, status")
+    .eq("user_id", userId);
+  const detectionKeysExistentes = new Set<string>(
+    ((existentesAll ?? []) as Array<{ detection_key: string | null }>)
+      .map((r) => r.detection_key)
+      .filter((k): k is string => !!k),
+  );
   const sugeridas = detectarRecorrencias(gastos, opts);
   let criadas = 0;
   let suspeitas = 0;
@@ -715,8 +726,10 @@ export async function sincronizarDeteccoes(
   for (const s of sugeridas) {
     if (s.tipoRecorrencia === "recorrencia_fixa") fixas++;
     else assinaturas++;
-    const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
-    if (existente) {
+    // Se já existe (mesmo soft-deleted), não recriar.
+    if (detectionKeysExistentes.has(s.detectionKey)) {
+      const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
+      if (existente) {
       // Atualiza valor/próxima cobrança se houver mudança
       await atualizarRecorrencia(existente.id, {
         valor: s.valor,
