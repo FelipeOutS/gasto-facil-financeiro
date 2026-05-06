@@ -178,6 +178,7 @@ export async function hydrateRecorrencias(userId: string | null): Promise<void> 
       .from("recorrencias")
       .select("*")
       .eq("user_id", userId)
+      .neq("status", "excluida")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("[recorrencias] hydrate failed", error);
@@ -677,9 +678,13 @@ export async function atualizarRecorrencia(
 }
 
 export async function excluirRecorrencia(id: string): Promise<void> {
+  // Soft-delete: mantém o registro (preservando detection_key) para que a
+  // detecção automática NÃO recrie a mesma recorrência depois do F5.
+  // A UI filtra registros com status "excluida".
+  const now = new Date().toISOString();
   const { error } = await (supabase as any)
     .from("recorrencias")
-    .delete()
+    .update({ status: "excluida", updated_at: now })
     .eq("id", id);
   if (error) {
     console.error("[recorrencias] excluir failed", error);
@@ -702,6 +707,17 @@ export async function sincronizarDeteccoes(
 ): Promise<{ criadas: number; suspeitas: number; analisados: number; encontradas: number; assinaturas: number; fixas: number }> {
   await hydrateRecorrencias(userId);
   await syncCategoriaMaps(userId);
+  // Busca TODAS as detection_keys (incluindo soft-deleted) para evitar recriar
+  // recorrências que o usuário excluiu manualmente.
+  const { data: existentesAll } = await (supabase as any)
+    .from("recorrencias")
+    .select("id, detection_key, status")
+    .eq("user_id", userId);
+  const detectionKeysExistentes = new Set<string>(
+    ((existentesAll ?? []) as Array<{ detection_key: string | null }>)
+      .map((r) => r.detection_key)
+      .filter((k): k is string => !!k),
+  );
   const sugeridas = detectarRecorrencias(gastos, opts);
   let criadas = 0;
   let suspeitas = 0;
@@ -710,17 +726,20 @@ export async function sincronizarDeteccoes(
   for (const s of sugeridas) {
     if (s.tipoRecorrencia === "recorrencia_fixa") fixas++;
     else assinaturas++;
-    const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
-    if (existente) {
-      // Atualiza valor/próxima cobrança se houver mudança
-      await atualizarRecorrencia(existente.id, {
-        valor: s.valor,
-        ultimoValor:
-          Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
-        categoriaId: s.categoriaId,
-        tipoRecorrencia: s.tipoRecorrencia,
-        proximaCobranca: s.proximaCobranca,
-      });
+    // Se já existe (mesmo soft-deleted), não recriar.
+    if (detectionKeysExistentes.has(s.detectionKey)) {
+      const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
+      if (existente) {
+        // Atualiza valor/próxima cobrança se houver mudança
+        await atualizarRecorrencia(existente.id, {
+          valor: s.valor,
+          ultimoValor:
+            Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
+          categoriaId: s.categoriaId,
+          tipoRecorrencia: s.tipoRecorrencia,
+          proximaCobranca: s.proximaCobranca,
+        });
+      }
       continue;
     }
     const status: StatusRecorrencia = s.ocorrencias >= 3 ? "ativa" : "suspeita";
