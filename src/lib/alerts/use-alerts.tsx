@@ -16,7 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { generateAlertDrafts } from "./generator";
 import {
-  deleteAlert,
+  
   listAlerts,
   markAlertStatus,
   markAllAsRead,
