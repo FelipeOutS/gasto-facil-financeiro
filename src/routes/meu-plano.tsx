@@ -624,87 +624,109 @@ function MeuPlanoPage() {
       <p className="mt-2 text-[11px] text-muted-foreground">
         🔒 Pagamento seguro processado pelo Mercado Pago. O Gasto Inteligente não armazena dados do seu cartão.
       </p>
-      <section className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {COMMERCIAL_PLANS.map((p) => {
           const isCurrent = !isAdminMaster && plan === p.tier && ativoPago;
           const isPending = !isAdminMaster && plan === p.tier && aguardando;
+          const isRecommended = !isCurrent && !isPending && recommended === p.tier;
+          const accessGranted = isAdminMaster || isCurrent;
+          const pr = priceForPeriod(p, periodicidade);
           return (
             <div
               key={p.tier}
               className={cn(
-                "flex flex-col rounded-2xl border p-4 transition-colors",
+                "relative flex flex-col rounded-3xl border p-6 shadow-card transition-all duration-200",
+                "bg-gradient-to-b from-card to-card/60 backdrop-blur-sm",
                 isCurrent
-                  ? "border-primary bg-primary/5"
+                  ? "border-primary/60 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
                   : isPending
-                    ? "border-amber-500/40 bg-amber-500/5"
-                    : "border-border bg-card hover:border-primary/40",
+                    ? "border-amber-500/50 ring-1 ring-amber-500/20"
+                    : isRecommended
+                      ? "border-primary/40 hover:border-primary/60 hover:-translate-y-0.5"
+                      : "border-border/80 hover:border-primary/40 hover:-translate-y-0.5",
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold">{p.name}</p>
-                {isCurrent && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                    Atual
+              {/* Tag superior */}
+              {(isCurrent || isPending || isRecommended) && (
+                <span
+                  className={cn(
+                    "absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-md",
+                    isCurrent
+                      ? "bg-primary text-primary-foreground"
+                      : isPending
+                        ? "bg-amber-500 text-white"
+                        : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
+                  )}
+                >
+                  {isCurrent ? "Plano atual" : isPending ? "Aguardando pagamento" : "Mais escolhido"}
+                </span>
+              )}
+
+              {/* Cabeçalho */}
+              <div>
+                <p className="text-base font-bold tracking-tight">{p.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground min-h-[2rem]">
+                  {p.tagline}
+                </p>
+              </div>
+
+              {/* Preço */}
+              <div className="mt-4 border-t border-border/60 pt-4">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold tracking-tight text-foreground">
+                    {formatBRL(pr.totalCents)}
                   </span>
-                )}
-                {isPending && (
-                  <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                    Aguardando
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {periodInfo.suffix}
                   </span>
+                </div>
+                {pr.discountCents > 0 ? (
+                  <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    Economize {formatBRL(pr.discountCents)} ({pr.discountPercent}% off)
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-muted-foreground">{p.priceLabel}</p>
                 )}
               </div>
-              {(() => {
-                const pr = priceForPeriod(p, periodicidade);
-                return (
-                  <>
-                    <p className="mt-0.5 text-base font-bold">
-                      {formatBRL(pr.totalCents)}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">
-                        {periodInfo.suffix}
-                      </span>
-                    </p>
-                    {pr.discountCents > 0 ? (
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                        Você economiza {formatBRL(pr.discountCents)} ({pr.discountPercent}% off)
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground">{p.priceLabel}</p>
-                    )}
-                  </>
-                );
-              })()}
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {p.tagline}
-              </p>
-              <ul className="mt-3 space-y-1">
+
+              {/* Benefícios */}
+              <ul className="mt-5 flex-1 space-y-2.5">
                 {p.highlights.map((h) => (
                   <li
                     key={h}
-                    className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                    className="flex items-start gap-2 text-xs leading-relaxed text-foreground/85"
                   >
-                    <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-500" />
-                    {h}
+                    <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-500">
+                      <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                    </span>
+                    <span className="break-words">{h}</span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 space-y-2">
-                <Button
-                  size="sm"
-                  className="w-full rounded-xl"
-                  variant={isCurrent ? "outline" : "default"}
-                  disabled={isAdminMaster || isCurrent || submitting !== null}
-                  onClick={() => escolherPlano(p.tier)}
-                >
-                  {isAdminMaster
-                    ? "Acesso total"
-                    : isCurrent
-                      ? "Plano atual"
-                      : isPending
-                        ? "Gerar nova cobrança"
-                        : submitting === p.tier
-                          ? "Processando…"
-                          : "Assinar agora"}
-                </Button>
+
+              {/* Botões */}
+              <div className="mt-6 space-y-2">
+                {accessGranted ? (
+                  <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary">
+                    <Check className="h-4 w-4" />
+                    {isAdminMaster ? "Acesso total" : "Plano atual"}
+                  </div>
+                ) : (
+                  <Button
+                    className={cn(
+                      "w-full rounded-xl font-semibold",
+                      isRecommended && "bg-gradient-to-r from-primary to-primary/85 hover:opacity-90 shadow-md shadow-primary/20",
+                    )}
+                    disabled={submitting !== null}
+                    onClick={() => escolherPlano(p.tier)}
+                  >
+                    {isPending
+                      ? "Gerar nova cobrança"
+                      : submitting === p.tier
+                        ? "Processando…"
+                        : "Assinar plano"}
+                  </Button>
+                )}
                 {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
                   <Button
                     size="sm"
@@ -721,18 +743,23 @@ function MeuPlanoPage() {
             </div>
           );
         })}
-        {/* Investimentos: card "em breve" */}
-        <div className="flex flex-col rounded-2xl border border-dashed border-border bg-card/50 p-4 sm:col-span-2 xl:col-span-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">Investimentos</p>
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-              Em breve
-            </span>
+      </section>
+
+      {/* Investimentos: seção dedicada abaixo dos planos */}
+      <section className="mt-5">
+        <div className="flex flex-col gap-2 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold">Investimentos</p>
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Em breve
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Estrutura preparada para acompanhar investimentos pessoais e
+              empresariais nos planos Premium, MEI e Empresa.
+            </p>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Estrutura preparada para acompanhar investimentos pessoais e
-            empresariais nos planos Premium, MEI e Empresa.
-          </p>
         </div>
       </section>
 
