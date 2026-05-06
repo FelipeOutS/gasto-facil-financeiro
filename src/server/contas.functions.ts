@@ -20,7 +20,10 @@ const paymentInputSchema = z.object({
   id: z.string().uuid(),
   criarGasto: z.boolean().optional(),
   formaPagamento: formaSchema.optional(),
-  dataPagamento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dataPagamento: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   observacao: z.string().optional(),
   nome: z.string().optional(),
   valor: z.number().positive().optional(),
@@ -58,7 +61,8 @@ function monthYear(iso: string) {
 
 async function categoriaUuidFor(sb: any, userId: string, categoriaId?: string | null) {
   if (!categoriaId) return null;
-  const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(categoriaId);
+  const uuidLike =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(categoriaId);
   const query = sb.from("categorias").select("id").eq("user_id", userId).limit(1);
   const { data, error } = uuidLike
     ? await query.eq("id", categoriaId).maybeSingle()
@@ -78,7 +82,14 @@ async function resolveContaAlerts(sb: any, userId: string, contaId: string) {
     .in("status", ["unread", "read"]);
 }
 
-async function findLinkedGastos(sb: any, userId: string, conta: any, nome: string, valor: number, dataPagamento: string) {
+async function findLinkedGastos(
+  sb: any,
+  userId: string,
+  conta: any,
+  nome: string,
+  valor: number,
+  dataPagamento: string,
+) {
   const directIds = [conta.gasto_id].filter(Boolean);
   const { data, error } = await sb
     .from("gastos")
@@ -94,7 +105,9 @@ async function findLinkedGastos(sb: any, userId: string, conta: any, nome: strin
     if (g.origem !== CONTA_GASTO_ORIGEM) return false;
     if (Math.abs(Number(g.valor ?? 0) - valor) > 0.01) return false;
     if (normalizedText(g.descricao || g.estabelecimento) !== targetName) return false;
-    return daysBetween(g.data, dataPagamento) <= 3 || daysBetween(g.data, conta.data_vencimento) <= 3;
+    return (
+      daysBetween(g.data, dataPagamento) <= 3 || daysBetween(g.data, conta.data_vencimento) <= 3
+    );
   });
 }
 
@@ -115,7 +128,8 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
 
     const dataPagamento = data.dataPagamento ?? new Date().toISOString().slice(0, 10);
     const nome = (data.nome ?? conta.nome).trim() || conta.nome;
-    const valor = typeof data.valor === "number" && data.valor > 0 ? data.valor : Number(conta.valor);
+    const valor =
+      typeof data.valor === "number" && data.valor > 0 ? data.valor : Number(conta.valor);
     const formaPagamento = data.formaPagamento ?? conta.forma_pagamento ?? "pix";
     const categoriaId = data.categoriaId ?? conta.categoria_id ?? null;
     const categoriaUuid = await categoriaUuidFor(sb, userId, categoriaId);
@@ -147,16 +161,26 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
         };
 
         if (existing) {
-          const { error } = await sb.from("gastos").update(gastoRow).eq("id", existing.id).eq("user_id", userId);
+          const { error } = await sb
+            .from("gastos")
+            .update(gastoRow)
+            .eq("id", existing.id)
+            .eq("user_id", userId);
           if (error) throw new Error(error.message);
           gastoId = existing.id;
           if (duplicateIds.length > 0) {
-            const { error: dupErr } = await sb.from("gastos").delete().eq("user_id", userId).in("id", duplicateIds);
+            const { error: dupErr } = await sb
+              .from("gastos")
+              .delete()
+              .eq("user_id", userId)
+              .in("id", duplicateIds);
             if (dupErr) throw new Error(dupErr.message);
           }
         } else {
           const newId = crypto.randomUUID();
-          const { error } = await sb.from("gastos").insert({ id: newId, user_id: userId, ...gastoRow, created_at: now });
+          const { error } = await sb
+            .from("gastos")
+            .insert({ id: newId, user_id: userId, ...gastoRow, created_at: now });
           if (error) throw new Error(error.message);
           gastoId = newId;
           createdGastoId = newId;
@@ -186,7 +210,14 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
       throw error;
     }
 
-    return { gastoId: gastoId ?? undefined, dataPagamento, nome, valor, categoriaId: data.categoriaId, formaPagamento };
+    return {
+      gastoId: gastoId ?? undefined,
+      dataPagamento,
+      nome,
+      valor,
+      categoriaId: data.categoriaId,
+      formaPagamento,
+    };
   });
 
 export const unmarkContaAPagarPaid = createServerFn({ method: "POST" })
