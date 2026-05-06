@@ -154,9 +154,18 @@ export function useAlerts() {
 
   const remove = useCallback(
     async (id: string) => {
-      setAlerts((prev) => prev.filter((a) => a.id !== id));
+      // Soft-delete: marca como "ignored" para que o syncDrafts respeite
+      // a deduplicação (user_id, dedupe_key, period_key) e não recrie o alerta
+      // depois do F5. A lista visível esconde alertas ignored/resolved.
+      setAlerts((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, status: "ignored", ignored_at: new Date().toISOString() }
+            : a,
+        ),
+      );
       try {
-        await deleteAlert(id);
+        await markAlertStatus(id, "ignored");
       } catch {
         refresh();
       }
