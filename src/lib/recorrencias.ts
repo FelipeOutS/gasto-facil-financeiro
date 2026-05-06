@@ -677,9 +677,13 @@ export async function atualizarRecorrencia(
 }
 
 export async function excluirRecorrencia(id: string): Promise<void> {
+  // Soft-delete: mantém o registro (preservando detection_key) para que a
+  // detecção automática NÃO recrie a mesma recorrência depois do F5.
+  // A UI filtra registros com status "excluida".
+  const now = new Date().toISOString();
   const { error } = await (supabase as any)
     .from("recorrencias")
-    .delete()
+    .update({ status: "excluida", updated_at: now })
     .eq("id", id);
   if (error) {
     console.error("[recorrencias] excluir failed", error);
