@@ -3490,16 +3490,18 @@ export function marcarContaComoPago(
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
 
+  const categoriaUuid = categoriaEf ? categoriaUuidFor(categoriaEf) ?? null : null;
   void sbAny
     .from("contas_a_pagar")
     .update({
       nome: nomeEf,
       valor: valorEf,
-      categoria_id: categoriaEf ?? null,
+      categoria_id: categoriaUuid,
       forma_pagamento: options?.formaPagamento ?? conta.formaPagamento ?? null,
       status: "pago",
       data_pagamento: dataPag,
       gasto_id: gastoId ?? null,
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id)
     .then(({ error }: { error: { message: string } | null }) => {
