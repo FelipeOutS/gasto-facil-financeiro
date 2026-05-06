@@ -730,15 +730,16 @@ export async function sincronizarDeteccoes(
     if (detectionKeysExistentes.has(s.detectionKey)) {
       const existente = memRec.find((r) => r.detectionKey === s.detectionKey);
       if (existente) {
-      // Atualiza valor/próxima cobrança se houver mudança
-      await atualizarRecorrencia(existente.id, {
-        valor: s.valor,
-        ultimoValor:
-          Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
-        categoriaId: s.categoriaId,
-        tipoRecorrencia: s.tipoRecorrencia,
-        proximaCobranca: s.proximaCobranca,
-      });
+        // Atualiza valor/próxima cobrança se houver mudança
+        await atualizarRecorrencia(existente.id, {
+          valor: s.valor,
+          ultimoValor:
+            Math.abs(existente.valor - s.valor) > 0.01 ? existente.valor : existente.ultimoValor,
+          categoriaId: s.categoriaId,
+          tipoRecorrencia: s.tipoRecorrencia,
+          proximaCobranca: s.proximaCobranca,
+        });
+      }
       continue;
     }
     const status: StatusRecorrencia = s.ocorrencias >= 3 ? "ativa" : "suspeita";
