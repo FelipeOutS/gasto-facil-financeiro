@@ -589,12 +589,16 @@ function ContasAPagarPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
                 if (confirmDesmarcar) {
-                  desmarcarContaComoPago(confirmDesmarcar.id, {
-                    removerGastoVinculado: true,
-                  });
-                  toast.success("Conta voltou para pendente.");
+                  try {
+                    await desmarcarContaComoPago(confirmDesmarcar.id, {
+                      removerGastoVinculado: true,
+                    });
+                    toast.success("Conta voltou para pendente.");
+                  } catch {
+                    toast.error("Não foi possível desfazer o pagamento.");
+                  }
                 }
                 setConfirmDesmarcar(null);
               }}
