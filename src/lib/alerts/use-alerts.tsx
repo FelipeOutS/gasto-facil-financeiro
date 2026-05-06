@@ -167,9 +167,7 @@ export function useAlerts() {
   /** Lista visível no app (esconde resolved/ignored). */
   const visible = useMemo(() => {
     const contasPagas = new Set(
-      contasAPagar
-        .filter((c) => statusContaEfetivo(c) === "pago")
-        .map((c) => c.id),
+      contasAPagar.filter((c) => statusContaEfetivo(c) === "pago").map((c) => c.id),
     );
     return alerts.filter((a) => {
       if (a.status === "resolved" || a.status === "ignored") return false;
@@ -180,10 +178,7 @@ export function useAlerts() {
     });
   }, [alerts, contasAPagar]);
 
-  const unreadCount = useMemo(
-    () => visible.filter((a) => a.status === "unread").length,
-    [visible],
-  );
+  const unreadCount = useMemo(() => visible.filter((a) => a.status === "unread").length, [visible]);
 
   const top = useMemo(() => visible.slice(0, 3), [visible]);
 
