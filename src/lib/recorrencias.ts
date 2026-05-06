@@ -178,6 +178,7 @@ export async function hydrateRecorrencias(userId: string | null): Promise<void> 
       .from("recorrencias")
       .select("*")
       .eq("user_id", userId)
+      .neq("status", "excluida")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("[recorrencias] hydrate failed", error);
