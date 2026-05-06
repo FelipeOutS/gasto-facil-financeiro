@@ -6,6 +6,8 @@ import {
   getContasAPagar,
   getGastos,
   getLimites,
+  statusContaEfetivo,
+  useStore,
 } from "@/lib/store";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { listarContasReceber } from "@/lib/contas-receber";
@@ -27,6 +29,7 @@ export function useAlerts() {
   const { user } = useAuth();
   const plan = usePlan();
   const recorrencias = useRecorrencias();
+  const contasAPagar = useStore(() => getContasAPagar());
   const [alerts, setAlerts] = useState<UserAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -56,7 +59,7 @@ export function useAlerts() {
         gastos: getGastos(),
         categorias: getCategorias(),
         limites: getLimites(),
-        contas: getContasAPagar(),
+        contas: contasAPagar,
         cartoes: getCartoes(),
         recorrencias,
         contasReceber,
@@ -74,7 +77,7 @@ export function useAlerts() {
       setSyncing(false);
       setLoading(false);
     }
-  }, [user?.id, recorrencias, plan.status, plan.trialDaysLeft]);
+  }, [user?.id, recorrencias, plan.status, plan.trialDaysLeft, contasAPagar]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -162,15 +165,20 @@ export function useAlerts() {
   );
 
   /** Lista visível no app (esconde resolved/ignored). */
-  const visible = useMemo(
-    () => alerts.filter((a) => a.status !== "resolved" && a.status !== "ignored"),
-    [alerts],
-  );
+  const visible = useMemo(() => {
+    const contasPagas = new Set(
+      contasAPagar.filter((c) => statusContaEfetivo(c) === "pago").map((c) => c.id),
+    );
+    return alerts.filter((a) => {
+      if (a.status === "resolved" || a.status === "ignored") return false;
+      if (a.related_entity_type === "conta_a_pagar" && a.related_entity_id) {
+        return !contasPagas.has(a.related_entity_id);
+      }
+      return true;
+    });
+  }, [alerts, contasAPagar]);
 
-  const unreadCount = useMemo(
-    () => visible.filter((a) => a.status === "unread").length,
-    [visible],
-  );
+  const unreadCount = useMemo(() => visible.filter((a) => a.status === "unread").length, [visible]);
 
   const top = useMemo(() => visible.slice(0, 3), [visible]);
 

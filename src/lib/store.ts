@@ -29,6 +29,7 @@ import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/server/contas.functions";
 
 /**
  * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
@@ -3619,42 +3620,20 @@ export async function marcarContaComoPago(
   const valorEf = typeof options?.valor === "number" && options.valor > 0 ? options.valor : conta.valor;
   const categoriaEf = options?.categoriaId ?? conta.categoriaId;
 
-  let gastoId: string | undefined = conta.gastoId;
-  let createdGastoId: string | undefined;
-  if (options?.criarGasto) {
-    const result = await upsertGastoVinculadoConta(conta, {
-      nome: nomeEf,
-      valor: valorEf,
+  const saved = await markContaAPagarPaid({
+    data: {
+      id,
+      criarGasto: options?.criarGasto,
+      formaPagamento: options?.formaPagamento,
       dataPagamento: dataPag,
-      categoriaId: categoriaEf || "outros",
-      formaPagamento: options.formaPagamento ?? conta.formaPagamento ?? "pix",
-      observacao: options.observacao,
-    });
-    gastoId = result.gastoId;
-    if (result.created) createdGastoId = result.gastoId;
-  }
-
-  const now = new Date().toISOString();
-  const categoriaUuid = categoriaEf ? categoriaUuidFor(categoriaEf) ?? null : null;
-  const { error } = await sbAny
-    .from("contas_a_pagar")
-    .update({
+      observacao: options?.observacao,
       nome: nomeEf,
       valor: valorEf,
-      categoria_id: categoriaUuid,
-      forma_pagamento: options?.formaPagamento ?? conta.formaPagamento ?? null,
-      status: "pago",
-      data_pagamento: dataPag,
-      gasto_id: gastoId ?? null,
-      updated_at: now,
-    })
-    .eq("id", id)
-    .eq("user_id", activeUserId);
-  if (error) {
-    if (createdGastoId) await deleteGastosPersistidos([createdGastoId]).catch(() => undefined);
-    void refreshGastos();
-    throw error;
-  }
+      categoriaId: categoriaEf,
+    },
+  });
+  const now = new Date().toISOString();
+  const gastoId = saved.gastoId;
 
   const updated: ContaAPagar = {
     ...conta,
@@ -3670,6 +3649,7 @@ export async function marcarContaComoPago(
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
   void resolveAlertasDaConta(id);
+  void refreshGastos();
 
   return { gastoId };
 }
@@ -3688,26 +3668,8 @@ export async function desmarcarContaComoPago(
   const conta = memContas[idx];
   const removerGasto = options?.removerGastoVinculado ?? true;
 
-  if (removerGasto) {
-    const ids = findGastosVinculadosConta(
-      conta,
-      conta.nome,
-      conta.valor,
-      conta.dataPagamento ?? conta.dataVencimento,
-    ).map((g) => g.id);
-    if (ids.length > 0) await deleteGastosPersistidos(ids);
-  }
-
   const now = new Date().toISOString();
-  const { error } = await sbAny
-    .from("contas_a_pagar")
-    .update({ status: "pendente", data_pagamento: null, gasto_id: null, updated_at: now })
-    .eq("id", id)
-    .eq("user_id", activeUserId);
-  if (error) {
-    void refreshGastos();
-    throw error;
-  }
+  await unmarkContaAPagarPaid({ data: { id, removerGastoVinculado: removerGasto } });
 
   const updated: ContaAPagar = {
     ...conta,
@@ -3718,6 +3680,7 @@ export async function desmarcarContaComoPago(
   };
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
+  void refreshGastos();
 }
 
 // ============================================================
