@@ -398,7 +398,7 @@ export function SmartLimiteCard({
 
         {/* Texto explicativo */}
         <p className={cn("mt-3 max-w-xl text-[13px] leading-relaxed", cfg.text)}>
-          {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta)}
+          {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
         </p>
 
         {/* Meta mensal — edição inline */}
