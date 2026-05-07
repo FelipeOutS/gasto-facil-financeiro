@@ -28,6 +28,7 @@ import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/format";
 import { CreditCard } from "lucide-react";
+import { mesReferenciaOpcoes } from "@/lib/mes-referencia";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
