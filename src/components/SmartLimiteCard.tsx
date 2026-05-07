@@ -301,8 +301,59 @@ export function SmartLimiteCard({
               </p>
             </div>
             <p className={cn("mt-2 max-w-md text-xs sm:text-[13px]", cfg.muted)}>
-              Veja quanto você ainda pode gastar por dia sem comprometer o mês.
+              {MODE_LABELS[mode].desc}.
             </p>
+            <div className="relative mt-2 inline-block">
+              <button
+                type="button"
+                onClick={() => setModeOpen((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition-colors",
+                  cfg.btnSecondary,
+                )}
+              >
+                <Sliders className="h-3 w-3" />
+                {MODE_LABELS[mode].label}
+              </button>
+              {modeOpen && (
+                <div
+                  className={cn(
+                    "absolute z-20 mt-1 w-64 rounded-xl border p-1 shadow-lg backdrop-blur-md animate-fade-in",
+                    "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10",
+                  )}
+                >
+                  {(Object.keys(MODE_LABELS) as CalcMode[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setMode(m);
+                        setModeOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+                        mode === m
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-slate-100 dark:hover:bg-white/5 text-foreground",
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "mt-0.5 h-3.5 w-3.5 shrink-0",
+                          mode === m ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-semibold">{MODE_LABELS[m].label}</span>
+                        <span className="block text-[11px] text-muted-foreground">
+                          {MODE_LABELS[m].desc}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <span
             className={cn(
