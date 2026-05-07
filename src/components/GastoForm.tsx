@@ -189,7 +189,35 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         </div>
       </div>
 
-      {formaPagamento === "credito" && (
+      {/* Mês de referência */}
+      <div className="rounded-2xl border border-border bg-card p-3">
+        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <CalendarDays className="h-3.5 w-3.5" />
+          Mês de referência
+        </Label>
+        <Select
+          value={invoiceMonth}
+          onValueChange={(v) => {
+            userPickedMes.current = true;
+            setInvoiceMonth(v);
+          }}
+        >
+          <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {opcoesMes.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
+        </p>
+      </div>
+
         <div className="rounded-2xl border border-border bg-card p-3 animate-fade-in">
           <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5" />
