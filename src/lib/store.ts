@@ -4365,6 +4365,32 @@ export async function bulkDeleteGastos(ids: string[]): Promise<number> {
   return alvo.length;
 }
 
+/**
+ * Atualiza em massa o "Mês de referência" (invoice_month) de vários gastos.
+ * Aceita YYYY-MM. Se vazio, limpa o campo.
+ */
+export async function bulkSetMesReferencia(ids: string[], ym: string | null): Promise<number> {
+  if (!activeUserId || ids.length === 0) return 0;
+  const valid = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : null;
+  const setIds = new Set(ids);
+  const now = new Date().toISOString();
+  memGastos = memGastos.map((g) =>
+    setIds.has(g.id) ? { ...g, invoiceMonth: valid ?? undefined, atualizadoEm: now } : g,
+  );
+  emit();
+  const { error } = await sbAny
+    .from("gastos")
+    .update({ invoice_month: valid })
+    .eq("user_id", activeUserId)
+    .in("id", Array.from(setIds));
+  if (error) {
+    console.error("[store] bulkSetMesReferencia failed", error);
+    void refreshGastos();
+    return 0;
+  }
+  return setIds.size;
+}
+
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];
