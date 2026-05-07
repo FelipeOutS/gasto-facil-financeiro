@@ -105,6 +105,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
           cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
+          invoiceMonth: invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
         });
       }}
       className="space-y-5"
