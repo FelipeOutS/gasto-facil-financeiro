@@ -425,6 +425,16 @@ function Index() {
         </p>
       )}
 
+      {/* ===== Limite inteligente (premium) ===== */}
+      <section className="mt-4">
+        <SmartLimiteCard
+          mes={ym.mes}
+          ano={ym.ano}
+          totalEntradas={totalEntradas}
+          totalGastos={total}
+        />
+      </section>
+
       {/* CTA principal — apenas mobile (sidebar tem o seu) */}
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
