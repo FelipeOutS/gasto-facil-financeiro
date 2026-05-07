@@ -97,43 +97,47 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
         });
       }
 
-      // Vencimento de fatura (dia do mês)
+      // Vencimento de fatura (dia do mês) — usa fatura corrente e checa se já foi paga
       if (cartao.diaVencimento && totalFatura > 0) {
-        const venc = new Date(year, month - 1, cartao.diaVencimento);
-        const isoVenc = `${venc.getFullYear()}-${String(venc.getMonth() + 1).padStart(2, "0")}-${String(venc.getDate()).padStart(2, "0")}`;
-        const dias = diffDaysLocal(isoVenc);
-        if (dias < 0 && dias >= -10) {
-          drafts.push({
-            type: "fatura_vencida",
-            title: `Fatura de ${cartao.nome} vencida`,
-            description: `A fatura venceu há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}.`,
-            priority: "critica",
-            related_entity_type: "cartao",
-            related_entity_id: cartao.id,
-            action_label: "Ver cartão",
-            action_url: "/cartoes",
-            dedupe_key: `fatura_vencida:${cartao.id}`,
-            period_key: period,
-            metadata: { dias, totalFatura },
-          });
-        } else if (dias >= 0 && dias <= 5) {
-          drafts.push({
-            type: "fatura_vencendo",
-            title: `Fatura de ${cartao.nome} vence em breve`,
-            description: dias === 0
-              ? "A fatura vence hoje."
-              : dias === 1
-                ? "A fatura vence amanhã."
-                : `A fatura vence em ${dias} dias.`,
-            priority: dias <= 1 ? "alta" : "media",
-            related_entity_type: "cartao",
-            related_entity_id: cartao.id,
-            action_label: "Ver cartão",
-            action_url: "/cartoes",
-            dedupe_key: `fatura_vencendo:${cartao.id}`,
-            period_key: period,
-            metadata: { dias, totalFatura },
-          });
+        const ref = faturaCorrente(cartao);
+        const statusFat = statusEfetivoFatura(cartao, ref.mes, ref.ano);
+        if (statusFat !== "paga") {
+          const venc = new Date(ref.ano, ref.mes - 1, cartao.diaVencimento);
+          const isoVenc = `${venc.getFullYear()}-${String(venc.getMonth() + 1).padStart(2, "0")}-${String(venc.getDate()).padStart(2, "0")}`;
+          const dias = diffDaysLocal(isoVenc);
+          if (dias < 0 && dias >= -10) {
+            drafts.push({
+              type: "fatura_vencida",
+              title: `Fatura de ${cartao.nome} vencida`,
+              description: `A fatura venceu há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}.`,
+              priority: "critica",
+              related_entity_type: "cartao",
+              related_entity_id: cartao.id,
+              action_label: "Ver cartão",
+              action_url: "/cartoes",
+              dedupe_key: `fatura_vencida:${cartao.id}:${ref.ano}-${String(ref.mes).padStart(2, "0")}`,
+              period_key: period,
+              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano },
+            });
+          } else if (dias >= 0 && dias <= 5) {
+            drafts.push({
+              type: "fatura_vencendo",
+              title: `Fatura de ${cartao.nome} vence em breve`,
+              description: dias === 0
+                ? "A fatura vence hoje."
+                : dias === 1
+                  ? "A fatura vence amanhã."
+                  : `A fatura vence em ${dias} dias.`,
+              priority: dias <= 1 ? "alta" : "media",
+              related_entity_type: "cartao",
+              related_entity_id: cartao.id,
+              action_label: "Ver cartão",
+              action_url: "/cartoes",
+              dedupe_key: `fatura_vencendo:${cartao.id}:${ref.ano}-${String(ref.mes).padStart(2, "0")}`,
+              period_key: period,
+              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano },
+            });
+          }
         }
       }
     } catch {
