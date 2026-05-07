@@ -45,7 +45,9 @@ import {
   refreshGastos,
   useBootstrap,
   useStore,
+  bulkSetMesReferencia,
 } from "@/lib/store";
+import { mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
