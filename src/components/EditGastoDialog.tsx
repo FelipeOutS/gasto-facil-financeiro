@@ -71,7 +71,11 @@ export function EditGastoDialog({
     setCartaoId(snapshot.cartaoId);
     setObservacao(snapshot.observacao ?? "");
     setHorario(snapshot.horario ?? "");
-    setInvoiceMonth(snapshot.invoiceMonth ?? "");
+    setInvoiceMonth(
+      snapshot.invoiceMonth && /^\d{4}-\d{2}$/.test(snapshot.invoiceMonth)
+        ? snapshot.invoiceMonth
+        : (snapshot.data ? snapshot.data.slice(0, 7) : ""),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.id, open]);
 
