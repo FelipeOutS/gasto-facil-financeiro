@@ -58,6 +58,18 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
   const [essencial, setEssencial] = useState<boolean>(initial?.essencial ?? false);
+  const [invoiceMonth, setInvoiceMonth] = useState<string>(
+    initial?.invoiceMonth && /^\d{4}-\d{2}$/.test(initial.invoiceMonth)
+      ? initial.invoiceMonth
+      : ymFromDate(initial?.data ?? todayISO()),
+  );
+  const userPickedMes = useRef(!!initial?.invoiceMonth);
+  // Quando o usuário muda a data, sugerir mês de referência (sem sobrescrever escolha manual)
+  useEffect(() => {
+    if (userPickedMes.current) return;
+    setInvoiceMonth(ymFromDate(data));
+  }, [data]);
+  const opcoesMes = useMemo(() => mesReferenciaOpcoes(data), [data]);
   const [showMore, setShowMore] = useState(false);
 
   // Suggest category when user types in establishment/description (only if not user-picked)
