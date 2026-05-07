@@ -221,6 +221,28 @@ export function EditGastoDialog({
             </div>
           </div>
 
+          {/* Mês de referência */}
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <Label htmlFor="edit-invoice" className="text-xs text-muted-foreground">
+              Mês de referência
+            </Label>
+            <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
+              <SelectTrigger className="mt-1.5 h-11 bg-card-elevated sm:max-w-[260px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mesReferenciaOpcoes(data || undefined).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
+            </p>
+          </div>
+
           {/* Horário (opcional) */}
           <div>
             <Label htmlFor="edit-horario" className="text-xs text-muted-foreground">
