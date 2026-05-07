@@ -4192,11 +4192,12 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
  * Retorna { mes, ano } no formato 1-12 / yyyy.
  */
 export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
+  // Mês de referência manual SEMPRE prevalece (qualquer forma de pagamento).
+  if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+    const [a, m] = g.invoiceMonth.split("-").map(Number);
+    return { mes: m, ano: a };
+  }
   if (g.formaPagamento === "credito") {
-    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
-      const [a, m] = g.invoiceMonth.split("-").map(Number);
-      return { mes: m, ano: a };
-    }
     // Fallback pelo dia de fechamento do cartão
     const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
     const d = parseDateLocal(g.data);
