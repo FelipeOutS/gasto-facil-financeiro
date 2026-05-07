@@ -611,8 +611,8 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label="Já gasto"
-                  value={formatBRL(totalGastos)}
+                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  value={formatBRL(gastosElegiveis)}
                 />
               </>
             )}
