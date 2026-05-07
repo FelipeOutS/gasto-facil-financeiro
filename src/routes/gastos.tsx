@@ -835,6 +835,33 @@ function GastosPage() {
               >
                 Limpar
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-xs">
+                    <CalendarIcon className="mr-1 h-3.5 w-3.5" />
+                    Mover p/ mês
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                  {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
+                    <DropdownMenuItem
+                      key={o.value}
+                      onClick={async () => {
+                        const ids = Array.from(selected);
+                        const n = await bulkSetMesReferencia(ids, o.value);
+                        if (n > 0) {
+                          toast.success(`${n} gasto(s) movido(s) para ${o.label}.`);
+                          clearSelection();
+                        } else {
+                          toast.error("Não foi possível mover os gastos.");
+                        }
+                      }}
+                    >
+                      {o.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 size="sm"
                 variant="destructive"
