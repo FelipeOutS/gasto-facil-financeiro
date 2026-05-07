@@ -21,7 +21,8 @@ import {
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoGasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
-import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard } from "lucide-react";
+import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
+import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
