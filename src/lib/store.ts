@@ -1865,7 +1865,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
   const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
   const invoiceMonthVal =
-    input.formaPagamento === "credito" && input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
+    input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
       ? input.invoiceMonth
       : null;
   for (const o of out) {
