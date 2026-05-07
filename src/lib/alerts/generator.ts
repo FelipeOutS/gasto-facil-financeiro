@@ -11,7 +11,7 @@ import type {
 import type { Recorrencia } from "@/lib/recorrencias";
 import type { ContaReceber } from "@/lib/contas-receber";
 import type { Ativo } from "@/lib/investimentos";
-import { mesEfetivoGasto, resumoFaturaCartao, statusContaEfetivo } from "@/lib/store";
+import { mesEfetivoGasto, resumoFaturaCartao, statusContaEfetivo, statusEfetivoFatura, faturaCorrente } from "@/lib/store";
 import {
   buildLinhasOrcamento,
   buildAlertasOrcamento,
