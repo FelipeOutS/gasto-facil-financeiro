@@ -32,6 +32,7 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
+import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
   getCategoriaById,
@@ -423,6 +424,16 @@ function Index() {
           Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
         </p>
       )}
+
+      {/* ===== Limite inteligente (premium) ===== */}
+      <section className="mt-4">
+        <SmartLimiteCard
+          mes={ym.mes}
+          ano={ym.ano}
+          totalEntradas={totalEntradas}
+          totalGastos={total}
+        />
+      </section>
 
       {/* CTA principal — apenas mobile (sidebar tem o seu) */}
       <Link to="/adicionar" className="mt-3 block lg:hidden">
