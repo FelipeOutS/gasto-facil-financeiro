@@ -1865,7 +1865,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
   const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
   const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
   const invoiceMonthVal =
-    input.formaPagamento === "credito" && input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
+    input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
       ? input.invoiceMonth
       : null;
   for (const o of out) {
@@ -4192,11 +4192,12 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
  * Retorna { mes, ano } no formato 1-12 / yyyy.
  */
 export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
+  // Mês de referência manual SEMPRE prevalece (qualquer forma de pagamento).
+  if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+    const [a, m] = g.invoiceMonth.split("-").map(Number);
+    return { mes: m, ano: a };
+  }
   if (g.formaPagamento === "credito") {
-    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
-      const [a, m] = g.invoiceMonth.split("-").map(Number);
-      return { mes: m, ano: a };
-    }
     // Fallback pelo dia de fechamento do cartão
     const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
     const d = parseDateLocal(g.data);
@@ -4362,6 +4363,32 @@ export async function bulkDeleteGastos(ids: string[]): Promise<number> {
     return 0;
   }
   return alvo.length;
+}
+
+/**
+ * Atualiza em massa o "Mês de referência" (invoice_month) de vários gastos.
+ * Aceita YYYY-MM. Se vazio, limpa o campo.
+ */
+export async function bulkSetMesReferencia(ids: string[], ym: string | null): Promise<number> {
+  if (!activeUserId || ids.length === 0) return 0;
+  const valid = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : null;
+  const setIds = new Set(ids);
+  const now = new Date().toISOString();
+  memGastos = memGastos.map((g) =>
+    setIds.has(g.id) ? { ...g, invoiceMonth: valid ?? undefined, atualizadoEm: now } : g,
+  );
+  emit();
+  const { error } = await sbAny
+    .from("gastos")
+    .update({ invoice_month: valid })
+    .eq("user_id", activeUserId)
+    .in("id", Array.from(setIds));
+  if (error) {
+    console.error("[store] bulkSetMesReferencia failed", error);
+    void refreshGastos();
+    return 0;
+  }
+  return setIds.size;
 }
 
 export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gasto[] {

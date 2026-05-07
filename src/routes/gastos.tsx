@@ -45,7 +45,9 @@ import {
   refreshGastos,
   useBootstrap,
   useStore,
+  bulkSetMesReferencia,
 } from "@/lib/store";
+import { mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -833,6 +835,33 @@ function GastosPage() {
               >
                 Limpar
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-xs">
+                    <CalendarIcon className="mr-1 h-3.5 w-3.5" />
+                    Mover p/ mês
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                  {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
+                    <DropdownMenuItem
+                      key={o.value}
+                      onClick={async () => {
+                        const ids = Array.from(selected);
+                        const n = await bulkSetMesReferencia(ids, o.value);
+                        if (n > 0) {
+                          toast.success(`${n} gasto(s) movido(s) para ${o.label}.`);
+                          clearSelection();
+                        } else {
+                          toast.error("Não foi possível mover os gastos.");
+                        }
+                      }}
+                    >
+                      {o.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 size="sm"
                 variant="destructive"
@@ -926,12 +955,9 @@ function GastosPage() {
                           ? " · recorrente"
                           : ""}
                     </p>
-                    {g.formaPagamento === "credito" && g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) && (
+                    {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) && (
                       <p className="truncate text-[11px] text-muted-foreground/80">
-                        Fatura: {(() => {
-                          const [a, m] = g.invoiceMonth.split("-");
-                          return `${m}/${a}`;
-                        })()}
+                        Mês de referência: {ymToLabel(g.invoiceMonth)}
                       </p>
                     )}
                   </div>

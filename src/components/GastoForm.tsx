@@ -21,7 +21,8 @@ import {
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoGasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
-import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard } from "lucide-react";
+import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
+import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,18 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
   const [essencial, setEssencial] = useState<boolean>(initial?.essencial ?? false);
+  const [invoiceMonth, setInvoiceMonth] = useState<string>(
+    initial?.invoiceMonth && /^\d{4}-\d{2}$/.test(initial.invoiceMonth)
+      ? initial.invoiceMonth
+      : ymFromDate(initial?.data ?? todayISO()),
+  );
+  const userPickedMes = useRef(!!initial?.invoiceMonth);
+  // Quando o usuário muda a data, sugerir mês de referência (sem sobrescrever escolha manual)
+  useEffect(() => {
+    if (userPickedMes.current) return;
+    setInvoiceMonth(ymFromDate(data));
+  }, [data]);
+  const opcoesMes = useMemo(() => mesReferenciaOpcoes(data), [data]);
   const [showMore, setShowMore] = useState(false);
 
   // Suggest category when user types in establishment/description (only if not user-picked)
@@ -92,6 +105,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
           cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
+          invoiceMonth: invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
         });
       }}
       className="space-y-5"
@@ -173,6 +187,35 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Mês de referência */}
+      <div className="rounded-2xl border border-border bg-card p-3">
+        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <CalendarDays className="h-3.5 w-3.5" />
+          Mês de referência
+        </Label>
+        <Select
+          value={invoiceMonth}
+          onValueChange={(v) => {
+            userPickedMes.current = true;
+            setInvoiceMonth(v);
+          }}
+        >
+          <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {opcoesMes.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
+        </p>
       </div>
 
       {formaPagamento === "credito" && (

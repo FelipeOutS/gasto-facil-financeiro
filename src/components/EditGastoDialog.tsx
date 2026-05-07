@@ -28,6 +28,7 @@ import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/format";
 import { CreditCard } from "lucide-react";
+import { mesReferenciaOpcoes } from "@/lib/mes-referencia";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -71,7 +72,11 @@ export function EditGastoDialog({
     setCartaoId(snapshot.cartaoId);
     setObservacao(snapshot.observacao ?? "");
     setHorario(snapshot.horario ?? "");
-    setInvoiceMonth(snapshot.invoiceMonth ?? "");
+    setInvoiceMonth(
+      snapshot.invoiceMonth && /^\d{4}-\d{2}$/.test(snapshot.invoiceMonth)
+        ? snapshot.invoiceMonth
+        : (snapshot.data ? snapshot.data.slice(0, 7) : ""),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.id, open]);
 
@@ -109,9 +114,7 @@ export function EditGastoDialog({
         observacao: observacao.trim() || undefined,
         cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
         horario: horario.trim() || undefined,
-        invoiceMonth: formaPagamento === "credito"
-          ? (invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined)
-          : undefined,
+        invoiceMonth: invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
       });
       toast.success("Gasto atualizado com sucesso.");
       onOpenChange(false);
@@ -219,6 +222,28 @@ export function EditGastoDialog({
             </div>
           </div>
 
+          {/* Mês de referência */}
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <Label htmlFor="edit-invoice" className="text-xs text-muted-foreground">
+              Mês de referência
+            </Label>
+            <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
+              <SelectTrigger className="mt-1.5 h-11 bg-card-elevated sm:max-w-[260px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mesReferenciaOpcoes(data || undefined).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
+            </p>
+          </div>
+
           {/* Horário (opcional) */}
           <div>
             <Label htmlFor="edit-horario" className="text-xs text-muted-foreground">
@@ -271,21 +296,6 @@ export function EditGastoDialog({
                   Nenhum cartão cadastrado.
                 </p>
               )}
-              <div className="mt-3">
-                <Label htmlFor="edit-invoice" className="text-xs text-muted-foreground">
-                  Mês da fatura (opcional)
-                </Label>
-                <Input
-                  id="edit-invoice"
-                  type="month"
-                  value={invoiceMonth}
-                  onChange={(e) => setInvoiceMonth(e.target.value)}
-                  className="mt-1 h-11 bg-card-elevated sm:max-w-[220px]"
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Use para mover esta compra para outra fatura sem mudar a data real.
-                </p>
-              </div>
             </div>
           )}
 
