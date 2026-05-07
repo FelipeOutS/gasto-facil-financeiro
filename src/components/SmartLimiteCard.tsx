@@ -11,6 +11,7 @@ import {
   Check,
   X,
   Target,
+  Sliders,
 } from "lucide-react";
 import { Money } from "@/components/Money";
 import { formatBRL } from "@/lib/format";
@@ -21,12 +22,30 @@ import {
   statusContaEfetivo,
   getLimite,
   setLimite,
+  getGastos,
+  mesEfetivoGasto,
 } from "@/lib/store";
 import { getRecorrencias } from "@/lib/recorrencias";
 
 type Status = "saudavel" | "atencao" | "risco" | "meta_excedida" | "sem_dados";
+type CalcMode = "variaveis" | "hoje" | "mes" | "fluxo";
 
 const META_TIPO = "meta_gasto_mensal";
+const MODE_KEY = "gf:limite-mode";
+
+const MODE_LABELS: Record<CalcMode, { label: string; desc: string }> = {
+  variaveis: { label: "Somente gastos variáveis", desc: "Ignora contas fixas e faturas já pagas" },
+  hoje: { label: "A partir de hoje", desc: "O quanto você ainda pode gastar até o fim do mês" },
+  mes: { label: "Mês inteiro", desc: "Todos os gastos elegíveis do mês" },
+  fluxo: { label: "Fluxo de caixa", desc: "Tudo que entrou e saiu no mês" },
+};
+
+function loadMode(): CalcMode {
+  if (typeof window === "undefined") return "variaveis";
+  const v = window.localStorage.getItem(MODE_KEY);
+  if (v === "variaveis" || v === "hoje" || v === "mes" || v === "fluxo") return v;
+  return "variaveis";
+}
 
 export function SmartLimiteCard({
   mes,
@@ -41,6 +60,7 @@ export function SmartLimiteCard({
 }) {
   const contas = useStore(() => getContasAPagar());
   const recorrencias = useStore(() => getRecorrencias());
+  const gastos = useStore(() => getGastos());
   const metaSalva = useStore(() => getLimite(META_TIPO, mes, ano)) ?? 0;
 
   const [editing, setEditing] = useState(false);
@@ -48,7 +68,13 @@ export function SmartLimiteCard({
     metaSalva > 0 ? String(metaSalva).replace(".", ",") : "",
   );
   const [savedFlash, setSavedFlash] = useState(false);
+  const [mode, setMode] = useState<CalcMode>(() => loadMode());
+  const [modeOpen, setModeOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") window.localStorage.setItem(MODE_KEY, mode);
+  }, [mode]);
 
   useEffect(() => {
     if (!editing) {
@@ -69,19 +95,43 @@ export function SmartLimiteCard({
     const fimMes = new Date(ano, mes, 0);
     const refDay = isCurrentMonth ? today : new Date(ano, mes - 1, 1);
     const refISO = refDay.toISOString().slice(0, 10);
+    const hojeISO = today.toISOString().slice(0, 10);
 
     const diasNoMes = fimMes.getDate();
     const diasRestantes = isCurrentMonth
       ? Math.max(1, diasNoMes - today.getDate() + 1)
       : diasNoMes;
 
-    let contasPendentes = 0;
+    // Gastos vinculados a contas (liquidação de obrigação) — não são "novos".
+    const gastosLigadosAConta = new Set<string>();
+    for (const c of contas) if (c.gastoId) gastosLigadosAConta.add(c.gastoId);
+
+    let totalVariaveis = 0;
+    let totalObrigacoes = 0;
+    const gastosMes = gastos.filter((g) => {
+      if (g.confirmado === false) return false;
+      const eff = mesEfetivoGasto(g);
+      return eff.mes === mes && eff.ano === ano;
+    });
+    for (const g of gastosMes) {
+      const isObrigacao =
+        gastosLigadosAConta.has(g.id) ||
+        g.gastoFixo === true ||
+        g.tipoGasto === "recorrente" ||
+        g.formaPagamento === "credito";
+      if (isObrigacao) totalObrigacoes += g.valor || 0;
+      else totalVariaveis += g.valor || 0;
+    }
+
+    let contasPendentesFuturas = 0;
+    let contasPendentesAposHoje = 0;
     for (const c of contas) {
       if (c.mes !== mes || c.ano !== ano) continue;
       const s = statusContaEfetivo(c, refISO);
       if (s === "pago") continue;
       if (c.gastoId) continue;
-      contasPendentes += c.valor || 0;
+      contasPendentesFuturas += c.valor || 0;
+      if (c.dataVencimento >= hojeISO) contasPendentesAposHoje += c.valor || 0;
     }
 
     const fimMesISO = `${ano}-${String(mes).padStart(2, "0")}-${String(diasNoMes).padStart(2, "0")}`;
@@ -102,18 +152,37 @@ export function SmartLimiteCard({
       recorrenciasPrev += r.valor || 0;
     }
 
-    const temMeta = metaSalva > 0;
-    const restanteMeta = temMeta ? metaSalva - totalGastos : 0;
-    const disponivelMes =
-      totalEntradas - totalGastos - contasPendentes - recorrenciasPrev;
+    let gastosElegiveis: number;
+    switch (mode) {
+      case "variaveis":
+      case "hoje":
+        gastosElegiveis = totalVariaveis;
+        break;
+      case "mes":
+        gastosElegiveis = totalVariaveis + totalObrigacoes;
+        break;
+      case "fluxo":
+        gastosElegiveis = totalGastos;
+        break;
+    }
 
-    // Quando há meta, o "por dia" segue o teto definido (mais conservador)
+    const temMeta = metaSalva > 0;
+    const restanteMeta = temMeta ? metaSalva - gastosElegiveis : 0;
+
+    const disponivelMes =
+      totalEntradas -
+      totalVariaveis -
+      totalObrigacoes -
+      contasPendentesAposHoje -
+      recorrenciasPrev;
+
     const baseDisponivel = temMeta
       ? Math.min(restanteMeta, disponivelMes)
       : disponivelMes;
     const porDia = baseDisponivel / diasRestantes;
 
-    const semDados = totalEntradas <= 0 && totalGastos <= 0 && !temMeta;
+    const semDados =
+      totalEntradas <= 0 && gastosElegiveis <= 0 && !temMeta && contas.length === 0;
 
     let status: Status = "saudavel";
     if (semDados) status = "sem_dados";
@@ -121,29 +190,32 @@ export function SmartLimiteCard({
     else if (disponivelMes < 0) status = "risco";
     else if (temMeta && restanteMeta / Math.max(1, metaSalva) < 0.2)
       status = "atencao";
-    else if (porDia < 20 || disponivelMes < totalEntradas * 0.1)
+    else if (porDia < 20 || (totalEntradas > 0 && disponivelMes < totalEntradas * 0.1))
       status = "atencao";
 
-    const totalCommit = totalGastos + contasPendentes + recorrenciasPrev;
-    const baseRef = temMeta ? metaSalva : totalEntradas;
-    const pctUsado =
-      baseRef > 0
-        ? Math.min(100, Math.max(0, (totalCommit / baseRef) * 100))
-        : 0;
+    const baseRef = temMeta ? metaSalva : Math.max(1, totalEntradas);
+    const totalCommit = temMeta
+      ? gastosElegiveis
+      : totalVariaveis + totalObrigacoes + contasPendentesAposHoje + recorrenciasPrev;
+    const pctUsado = Math.min(100, Math.max(0, (totalCommit / baseRef) * 100));
 
     return {
       disponivelMes,
       porDia,
       diasRestantes,
-      contasPendentes,
+      contasPendentes: contasPendentesAposHoje,
+      contasPendentesFuturas,
       recorrenciasPrev,
       status,
       pctUsado,
       isCurrentMonth,
       temMeta,
       restanteMeta,
+      gastosElegiveis,
+      totalVariaveis,
+      totalObrigacoes,
     };
-  }, [contas, recorrencias, mes, ano, totalEntradas, totalGastos, metaSalva]);
+  }, [contas, recorrencias, gastos, mes, ano, totalEntradas, totalGastos, metaSalva, mode]);
 
   const {
     porDia,
@@ -155,6 +227,8 @@ export function SmartLimiteCard({
     recorrenciasPrev,
     temMeta,
     restanteMeta,
+    gastosElegiveis,
+    totalObrigacoes,
   } = calc;
 
   const cfg = STATUS_CONFIG[status];
@@ -227,8 +301,59 @@ export function SmartLimiteCard({
               </p>
             </div>
             <p className={cn("mt-2 max-w-md text-xs sm:text-[13px]", cfg.muted)}>
-              Veja quanto você ainda pode gastar por dia sem comprometer o mês.
+              {MODE_LABELS[mode].desc}.
             </p>
+            <div className="relative mt-2 inline-block">
+              <button
+                type="button"
+                onClick={() => setModeOpen((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition-colors",
+                  cfg.btnSecondary,
+                )}
+              >
+                <Sliders className="h-3 w-3" />
+                {MODE_LABELS[mode].label}
+              </button>
+              {modeOpen && (
+                <div
+                  className={cn(
+                    "absolute z-20 mt-1 w-64 rounded-xl border p-1 shadow-lg backdrop-blur-md animate-fade-in",
+                    "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10",
+                  )}
+                >
+                  {(Object.keys(MODE_LABELS) as CalcMode[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setMode(m);
+                        setModeOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+                        mode === m
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-slate-100 dark:hover:bg-white/5 text-foreground",
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "mt-0.5 h-3.5 w-3.5 shrink-0",
+                          mode === m ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-semibold">{MODE_LABELS[m].label}</span>
+                        <span className="block text-[11px] text-muted-foreground">
+                          {MODE_LABELS[m].desc}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <span
             className={cn(
@@ -273,7 +398,7 @@ export function SmartLimiteCard({
 
         {/* Texto explicativo */}
         <p className={cn("mt-3 max-w-xl text-[13px] leading-relaxed", cfg.text)}>
-          {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta)}
+          {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
         </p>
 
         {/* Meta mensal — edição inline */}
@@ -445,8 +570,8 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label="Já gasto"
-                  value={formatBRL(totalGastos)}
+                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  value={formatBRL(gastosElegiveis)}
                 />
                 <MiniStat
                   cfg={cfg}
@@ -486,8 +611,8 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label="Já gasto"
-                  value={formatBRL(totalGastos)}
+                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  value={formatBRL(gastosElegiveis)}
                 />
               </>
             )}
@@ -570,21 +695,32 @@ function getMensagem(
   disp: number,
   temMeta: boolean,
   restanteMeta: number,
+  mode: CalcMode,
+  totalObrigacoes: number,
 ): string {
+  const noticeObrigacoes =
+    totalObrigacoes > 0 && (mode === "variaveis" || mode === "hoje")
+      ? ` Pagamentos já quitados (${formatBRL(totalObrigacoes)}) não entram nesta meta.`
+      : "";
   if (status === "sem_dados")
     return "Adicione sua renda, suas contas ou defina uma meta para liberar uma análise inteligente do seu mês.";
-  if (status === "meta_excedida")
-    return `Você já ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos para recuperar o controle.`;
+  if (mode === "fluxo")
+    return "Este valor considera todas as entradas e saídas do mês.";
+  if (status === "meta_excedida") {
+    if (mode === "variaveis")
+      return `Seus gastos variáveis passaram da meta em ${formatBRL(Math.abs(restanteMeta))}.${noticeObrigacoes}`;
+    return `Você ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos.`;
+  }
   if (status === "risco")
-    return "No ritmo atual, seu mês pode terminar no vermelho. É hora de reduzir os gastos para recuperar o controle.";
+    return `No ritmo atual, seu mês pode terminar no vermelho.${noticeObrigacoes}`;
   if (status === "atencao") {
     if (temMeta)
-      return `Você está chegando perto da sua meta mensal. Tente manter os gastos abaixo de ${formatBRL(porDia)} por dia.`;
-    return `Seu limite diário está mais apertado. Tente manter os gastos abaixo de ${formatBRL(porDia)} por dia.`;
+      return `Você está chegando perto da meta. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
+    return `Seu limite diário está mais apertado. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.`;
   }
   if (temMeta)
-    return `Você está dentro da meta. Pode gastar até ${formatBRL(porDia)} por dia e fechar o mês no planejado.`;
-  return `Você pode gastar até ${formatBRL(porDia)} por dia e ainda fechar o mês com tranquilidade.`;
+    return `Seu controle de novos gastos está dentro do planejado — até ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
+  return `Você pode gastar até ${formatBRL(porDia)} por dia e fechar o mês com tranquilidade.${noticeObrigacoes}`;
 }
 
 type StatusCfg = {
