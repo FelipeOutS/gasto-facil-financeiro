@@ -218,6 +218,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         </p>
       </div>
 
+      {formaPagamento === "credito" && (
         <div className="rounded-2xl border border-border bg-card p-3 animate-fade-in">
           <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5" />
