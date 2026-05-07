@@ -695,21 +695,32 @@ function getMensagem(
   disp: number,
   temMeta: boolean,
   restanteMeta: number,
+  mode: CalcMode,
+  totalObrigacoes: number,
 ): string {
+  const noticeObrigacoes =
+    totalObrigacoes > 0 && (mode === "variaveis" || mode === "hoje")
+      ? ` Pagamentos já quitados (${formatBRL(totalObrigacoes)}) não entram nesta meta.`
+      : "";
   if (status === "sem_dados")
     return "Adicione sua renda, suas contas ou defina uma meta para liberar uma análise inteligente do seu mês.";
-  if (status === "meta_excedida")
-    return `Você já ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos para recuperar o controle.`;
+  if (mode === "fluxo")
+    return "Este valor considera todas as entradas e saídas do mês.";
+  if (status === "meta_excedida") {
+    if (mode === "variaveis")
+      return `Seus gastos variáveis passaram da meta em ${formatBRL(Math.abs(restanteMeta))}.${noticeObrigacoes}`;
+    return `Você ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos.`;
+  }
   if (status === "risco")
-    return "No ritmo atual, seu mês pode terminar no vermelho. É hora de reduzir os gastos para recuperar o controle.";
+    return `No ritmo atual, seu mês pode terminar no vermelho.${noticeObrigacoes}`;
   if (status === "atencao") {
     if (temMeta)
-      return `Você está chegando perto da sua meta mensal. Tente manter os gastos abaixo de ${formatBRL(porDia)} por dia.`;
-    return `Seu limite diário está mais apertado. Tente manter os gastos abaixo de ${formatBRL(porDia)} por dia.`;
+      return `Você está chegando perto da meta. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
+    return `Seu limite diário está mais apertado. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.`;
   }
   if (temMeta)
-    return `Você está dentro da meta. Pode gastar até ${formatBRL(porDia)} por dia e fechar o mês no planejado.`;
-  return `Você pode gastar até ${formatBRL(porDia)} por dia e ainda fechar o mês com tranquilidade.`;
+    return `Seu controle de novos gastos está dentro do planejado — até ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
+  return `Você pode gastar até ${formatBRL(porDia)} por dia e fechar o mês com tranquilidade.${noticeObrigacoes}`;
 }
 
 type StatusCfg = {
