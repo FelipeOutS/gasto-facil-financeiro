@@ -1242,6 +1242,61 @@ function Plans() {
   );
 }
 
+/* ============================== BANKS STRIP ============================== */
+
+const BANKS = [
+  { name: "Nubank", src: "/logos/bancos/nubank.svg" },
+  { name: "Itaú", src: "/logos/bancos/itau.svg" },
+  { name: "Inter", src: "/logos/bancos/inter.svg" },
+  { name: "Mercado Pago", src: "/logos/bancos/mercado-pago.svg" },
+  { name: "Caixa", src: "/logos/bancos/caixa.svg" },
+  { name: "Banco do Brasil", src: "/logos/bancos/banco-do-brasil.svg" },
+  { name: "Bradesco", src: "/logos/bancos/bradesco.svg" },
+  { name: "Santander", src: "/logos/bancos/santander.svg" },
+  { name: "PicPay", src: "/logos/bancos/picpay.svg" },
+  { name: "C6 Bank", src: "/logos/bancos/c6-bank.svg" },
+];
+
+function BanksStrip() {
+  return (
+    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-16 sm:py-20">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <Eyebrow>Funciona com qualquer banco</Eyebrow>
+          <h2 className="mx-auto mt-3 max-w-2xl text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            Organize sua vida financeira independentemente do banco que você usa.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500 sm:text-base">
+            Você lança seus gastos, contas e cartões de qualquer banco ou carteira digital.
+            Sem integração obrigatória — você no controle.
+          </p>
+        </div>
+        <div className="mt-10 grid grid-cols-3 items-center gap-x-6 gap-y-8 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10">
+          {BANKS.map((b, i) => (
+            <Reveal key={b.name} delay={i * 0.03}>
+              <div
+                className="group flex h-14 items-center justify-center"
+                title={b.name}
+              >
+                <img
+                  src={b.src}
+                  alt={b.name}
+                  loading="lazy"
+                  draggable={false}
+                  className="max-h-9 w-auto max-w-[110px] object-contain opacity-60 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                />
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        <p className="mt-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
+          Marcas e logos pertencem a seus respectivos donos. Uso meramente ilustrativo.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== TESTIMONIALS ============================== */
 
 const TESTIMONIALS = [
