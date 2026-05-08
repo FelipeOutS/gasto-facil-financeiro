@@ -240,11 +240,31 @@ function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl"
+            className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
           >
             Controle suas finanças com mais{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
+            <span className="relative inline-block bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
               clareza, inteligência
+              <svg
+                aria-hidden
+                viewBox="0 0 300 12"
+                className="absolute -bottom-2 left-0 h-2.5 w-full"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M2,7 Q75,1 150,6 T298,5"
+                  fill="none"
+                  stroke="url(#hero-underline)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="hero-underline" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%" stopColor="#2563eb" />
+                    <stop offset="100%" stopColor="#10b981" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </span>{" "}
             e praticidade.
           </motion.h1>
