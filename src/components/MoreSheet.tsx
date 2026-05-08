@@ -14,6 +14,7 @@ import {
   Lock,
   Sparkles,
   Bell,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -30,6 +31,7 @@ import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
+import { useRoles } from "@/lib/use-roles";
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
@@ -69,36 +71,46 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const { user } = useAuth();
+  const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
+  const showAdmin = isAdminMaster || hasFullAccess;
+  const items: MoreItem[] = showAdmin
+    ? [...MORE_ITEMS, { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield }]
+    : MORE_ITEMS;
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
+  const [navigating, setNavigating] = useState(false);
 
   function getRule(item: MoreItem) {
     return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
   }
 
   function isLocked(item: MoreItem) {
-    if (isAdminMaster) return false;
+    if (isAdminMaster || hasFullAccess) return false;
     const rule = getRule(item);
     return rule ? !can(rule.feature) : false;
   }
 
   function handleItem(item: MoreItem) {
+    if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
       onOpenChange(false);
       setTimeout(() => setLockState({ open: true, title: rule.title }), 150);
       return;
     }
+    setNavigating(true);
     onOpenChange(false);
-    navigate({ to: item.to });
+    // Navega imediatamente; o sheet fecha em paralelo (anim ~150ms)
+    navigate({ to: item.to }).finally(() => setNavigating(false));
   }
+
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden"
+          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-150 data-[state=open]:duration-200"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">Mais opções</SheetTitle>
@@ -126,7 +138,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
 
           <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
             <div className="grid grid-cols-2 gap-3">
-              {MORE_ITEMS.map((item) => {
+              {items.map((item) => {
                 const locked = isLocked(item);
                 const Icon = item.icon;
                 return (
