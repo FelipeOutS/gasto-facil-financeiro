@@ -789,7 +789,12 @@ function FeatureSplit({
   reverse?: boolean;
 }) {
   return (
-    <section className={cn("py-20 sm:py-24", reverse ? "bg-slate-50" : "bg-white")}>
+    <section
+      className={cn(
+        "relative py-20 sm:py-28",
+        reverse ? "bg-gradient-to-b from-slate-50/80 via-white to-slate-50/40" : "bg-white",
+      )}
+    >
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className={cn("lg:col-span-5", reverse && "lg:order-2")}>
           <Eyebrow>{eyebrow}</Eyebrow>
