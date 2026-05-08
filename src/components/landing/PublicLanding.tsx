@@ -1324,7 +1324,6 @@ function Plans() {
 
 const BANKS = [
   { name: "Nubank", src: "/logos/bancos/nubank.svg" },
-  { name: "Itaú", src: "/logos/bancos/itau.svg" },
   { name: "Inter", src: "/logos/bancos/inter.svg" },
   { name: "Mercado Pago", src: "/logos/bancos/mercado-pago.svg" },
   { name: "Caixa", src: "/logos/bancos/caixa.svg" },
@@ -1332,6 +1331,7 @@ const BANKS = [
   { name: "Bradesco", src: "/logos/bancos/bradesco.svg" },
   { name: "Santander", src: "/logos/bancos/santander.svg" },
   { name: "PicPay", src: "/logos/bancos/picpay.svg" },
+  { name: "Will Bank", src: "/logos/bancos/will-bank.svg" },
   { name: "C6 Bank", src: "/logos/bancos/c6-bank.svg" },
 ];
 
