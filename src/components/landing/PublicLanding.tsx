@@ -1597,95 +1597,193 @@ function TrustPoints() {
 const PLAN_DESCRIPTIONS: Record<PlanTier, string> = {
   free: "",
   sem_assinatura: "",
-  pessoal_manual: "Para quem quer organizar tudo manualmente, com controle simples e direto.",
-  pessoal_premium: "Mais automação e recursos completos para sua vida financeira.",
-  mei_essencial: "O essencial para organizar as finanças do seu MEI.",
-  mei_inteligente: "MEI com automação completa para ganhar tempo e clareza.",
+  pessoal_manual: "Para começar a organizar suas finanças pessoais com simplicidade.",
+  pessoal_premium: "Vida financeira pessoal completa, com automação e mais recursos.",
+  mei_essencial: "O essencial para o MEI manter contas, recibos e fluxo organizados.",
+  mei_inteligente: "MEI com automação completa: ganhe tempo e tenha clareza total.",
   empresa: "Visão financeira completa para empresas que precisam de mais controle.",
   admin_master: "",
 };
 
-const HIGHLIGHT: Partial<Record<PlanTier, string>> = {
-  pessoal_premium: "Mais escolhido",
-  mei_inteligente: "Recomendado MEI",
+const PLAN_AUDIENCE: Record<PlanTier, { label: string; tone: string } | null> = {
+  free: null,
+  sem_assinatura: null,
+  pessoal_manual: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
+  pessoal_premium: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
+  mei_essencial: { label: "MEI", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  mei_inteligente: { label: "MEI", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  empresa: { label: "Empresa", tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+  admin_master: null,
+};
+
+const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "emerald" }>> = {
+  pessoal_premium: { label: "Mais escolhido", tone: "primary" },
+  mei_inteligente: { label: "Recomendado MEI", tone: "emerald" },
 };
 
 function Plans() {
   return (
-    <section id="planos" className="bg-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0 opacity-60"
+        style={{
+          backgroundImage:
+            "radial-gradient(50% 40% at 100% 0%, rgba(59,130,246,0.08), transparent 60%), radial-gradient(40% 40% at 0% 100%, rgba(16,185,129,0.08), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Planos"
           title="Escolha o plano ideal para sua rotina financeira."
-          subtitle="Comece com o plano que combina com o seu momento e evolua conforme sua organização financeira crescer."
+          subtitle="Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer."
+          center
         />
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+
+        {/* audience chips (decorative legend) */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Pessoa Física
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> MEI
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> Empresa
+          </span>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {COMMERCIAL_PLANS.map((p, i) => {
             const tag = HIGHLIGHT[p.tier];
             const featured = !!tag;
+            const audience = PLAN_AUDIENCE[p.tier];
+            const [priceMain, pricePer] = p.priceLabel.split("/");
             return (
               <Reveal key={p.tier} delay={i * 0.05}>
                 <div
                   className={cn(
-                    "relative flex h-full flex-col rounded-3xl border p-6 transition-all hover:-translate-y-1",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 transition-all hover:-translate-y-1",
                     featured
-                      ? "border-slate-900 bg-slate-900 text-white shadow-[0_30px_60px_-25px_rgba(15,23,42,0.55)]"
-                      : "border-slate-200 bg-white shadow-[0_14px_36px_-22px_rgba(15,23,42,0.18)]",
+                      ? "ring-2 ring-blue-500 shadow-[0_30px_60px_-25px_rgba(37,99,235,0.45)] xl:scale-[1.02]"
+                      : "border border-slate-200 shadow-[0_14px_36px_-22px_rgba(15,23,42,0.18)] hover:shadow-[0_24px_50px_-22px_rgba(15,23,42,0.25)]",
                   )}
                 >
+                  {/* Featured top accent bar */}
+                  {featured && (
+                    <div
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-x-0 top-0 h-1.5",
+                        tag!.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-500 to-emerald-500"
+                          : "bg-gradient-to-r from-emerald-500 to-blue-500",
+                      )}
+                    />
+                  )}
+
+                  {/* Highlight badge */}
                   {tag && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow">
-                      <Sparkles className="h-3 w-3" /> {tag}
+                    <span
+                      className={cn(
+                        "absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow",
+                        tag.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
+                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
+                      )}
+                    >
+                      <Sparkles className="h-3 w-3" /> {tag.label}
                     </span>
                   )}
-                  <h3 className={cn("text-lg font-bold", featured ? "text-white" : "text-slate-900")}>
-                    {p.name}
-                  </h3>
-                  <p className={cn("mt-1 text-xs leading-relaxed", featured ? "text-slate-300" : "text-slate-500")}>
+
+                  {/* Audience */}
+                  {audience && (
+                    <span
+                      className={cn(
+                        "mb-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
+                        audience.tone,
+                      )}
+                    >
+                      {audience.label}
+                    </span>
+                  )}
+
+                  <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
+                  <p className="mt-1 min-h-[36px] text-xs leading-relaxed text-slate-500">
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
-                  <div className="mt-5">
-                    <p className={cn("text-3xl font-extrabold tabular-nums", featured ? "text-white" : "text-slate-900")}>
-                      {p.priceLabel.split("/")[0]}
-                    </p>
-                    <p className={cn("text-xs", featured ? "text-slate-400" : "text-slate-500")}>/mês</p>
+
+                  {/* Price */}
+                  <div className="mt-5 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold tracking-tight tabular-nums text-slate-900">
+                      {priceMain.trim()}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">/{(pricePer || "mês").trim()}</span>
                   </div>
-                  <ul className="mt-5 flex-1 space-y-2">
+                  <p className="mt-1 text-[11px] text-slate-400">Cancele quando quiser</p>
+
+                  {/* Divider */}
+                  <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
+                  {/* Highlights */}
+                  <ul className="flex-1 space-y-2.5">
                     {p.highlights.map((h) => (
-                      <li
-                        key={h}
-                        className={cn(
-                          "flex items-start gap-2 text-xs leading-relaxed",
-                          featured ? "text-slate-200" : "text-slate-700",
-                        )}
-                      >
-                        <CheckCircle2
+                      <li key={h} className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                        <span
                           className={cn(
-                            "mt-0.5 h-3.5 w-3.5 shrink-0",
-                            featured ? "text-emerald-400" : "text-emerald-600",
+                            "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full",
+                            featured ? "bg-blue-100 text-blue-700" : "bg-emerald-50 text-emerald-700",
                           )}
-                        />
+                        >
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
                         <span>{h}</span>
                       </li>
                     ))}
                   </ul>
+
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "mt-6 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
+                      "mt-6 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
                       featured
-                        ? "bg-white text-slate-900 hover:bg-slate-100"
+                        ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(37,99,235,0.55)] hover:shadow-[0_18px_36px_-12px_rgba(37,99,235,0.65)]"
                         : "bg-slate-900 text-white hover:bg-slate-800",
                     )}
                   >
                     Escolher plano
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               </Reveal>
             );
           })}
         </div>
+
+        {/* Trust microcopy under plans */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Pagamento seguro
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Sem fidelidade
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Zap className="h-4 w-4 text-emerald-600" /> Acesso imediato
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-emerald-600" /> Atualizações inclusas
+          </span>
+        </div>
+
+        {/* Helper note */}
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
+          Não sabe qual escolher?{" "}
+          <a href="#faq" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            Veja as dúvidas frequentes
+          </a>{" "}
+          ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
+        </p>
       </div>
     </section>
   );
@@ -1995,14 +2093,15 @@ function FAQ() {
 function FinalCTA() {
   return (
     <section className="bg-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <div
-          className="relative overflow-hidden rounded-[32px] p-10 text-center text-white sm:p-14"
+          className="relative overflow-hidden rounded-[32px] p-8 text-white sm:p-12 lg:p-14"
           style={{
             background:
               "radial-gradient(80% 120% at 0% 0%, #1e40af 0%, transparent 60%), radial-gradient(60% 90% at 100% 100%, #10b981 0%, transparent 60%), linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
           }}
         >
+          {/* dotted overlay */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-30"
@@ -2012,53 +2111,101 @@ function FinalCTA() {
               backgroundSize: "24px 24px",
             }}
           />
-          {/* floating decorative chips */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-4 top-8 hidden rotate-[-6deg] items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-white backdrop-blur md:flex"
-          >
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-400/30 text-emerald-200">
-              <Target className="h-4 w-4" />
-            </span>
-            <div className="text-left">
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Meta</p>
-              <p className="text-xs font-bold">68% concluída</p>
+          {/* glow blobs */}
+          <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl" />
+
+          <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
+            {/* Copy */}
+            <div className="lg:col-span-7">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur">
+                <Sparkles className="h-3 w-3" /> Comece em minutos
+              </span>
+              <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
+                Pronto para organizar sua vida financeira?
+              </h2>
+              <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
+                Comece hoje e tenha uma visão mais clara do seu dinheiro, dos seus gastos e dos seus objetivos.
+              </p>
+
+              <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                <Link
+                  to="/cadastro"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_18px_36px_-12px_rgba(255,255,255,0.35)] transition-transform hover:-translate-y-0.5"
+                >
+                  Criar minha conta
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="#planos"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+                >
+                  Ver planos
+                </a>
+              </div>
+
+              <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-300">
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Sem fidelidade</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Cancele quando quiser</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Acesso pelo navegador</li>
+              </ul>
             </div>
-          </div>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-4 bottom-8 hidden rotate-[5deg] items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-white backdrop-blur md:flex"
-          >
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-blue-400/30 text-blue-200">
-              <TrendingUp className="h-4 w-4" />
-            </span>
-            <div className="text-left">
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Mês</p>
-              <p className="text-xs font-bold tabular-nums">+12% vs anterior</p>
-            </div>
-          </div>
-          <div className="relative">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Pronto para organizar sua vida financeira?
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-slate-200 sm:text-lg">
-              Comece hoje e tenha uma visão mais clara do seu dinheiro, dos seus gastos e dos seus
-              objetivos.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                to="/cadastro"
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-lg transition-transform hover:-translate-y-0.5"
+
+            {/* Visual side — mini dashboard preview */}
+            <div className="relative hidden lg:col-span-5 lg:block">
+              <motion.div
+                initial={{ opacity: 0, y: 20, rotate: -2 }}
+                whileInView={{ opacity: 1, y: 0, rotate: -2 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="relative rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.5)] backdrop-blur"
               >
-                Criar minha conta
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#planos"
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10"
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Visão geral</p>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    +12% este mês
+                  </span>
+                </div>
+                <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 6.420,00</p>
+                <div className="mt-3 flex h-16 items-end gap-1">
+                  {[40, 55, 35, 70, 50, 78, 60, 88, 46, 72, 84, 58].map((h, i) => (
+                    <div key={i} className="flex-1 overflow-hidden rounded-t-md bg-slate-100">
+                      <div
+                        className="w-full rounded-t-md bg-gradient-to-t from-blue-500 to-emerald-400"
+                        style={{ height: `${h}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta</p>
+                    <p className="text-sm font-bold text-slate-900">68% concluída</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">A pagar</p>
+                    <p className="text-sm font-bold tabular-nums text-slate-900">R$ 980,00</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Floating chip */}
+              <motion.div
+                aria-hidden
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="absolute -bottom-4 -left-4 flex items-center gap-2 rounded-2xl border border-white/15 bg-white/15 px-3 py-2 text-white backdrop-blur"
               >
-                Ver planos
-              </a>
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-400/30 text-emerald-200">
+                  <Target className="h-4 w-4" />
+                </span>
+                <div className="text-left">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Meta</p>
+                  <p className="text-xs font-bold">Apartamento · 11%</p>
+                </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -2071,43 +2218,75 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
-        <div>
-          <BrandMark className="h-8 w-auto" />
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
-            Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li><a href="#recursos" className="hover:text-slate-900">Recursos</a></li>
-            <li><a href="#telas" className="hover:text-slate-900">Como funciona</a></li>
-            <li><a href="#planos" className="hover:text-slate-900">Planos</a></li>
-            <li><a href="#faq" className="hover:text-slate-900">Dúvidas</a></li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Conta</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li><Link to="/login" className="hover:text-slate-900">Entrar</Link></li>
-            <li><Link to="/cadastro" className="hover:text-slate-900">Cadastrar-se</Link></li>
-            <li><Link to="/recuperar-senha" className="hover:text-slate-900">Recuperar senha</Link></li>
-          </ul>
-        </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li><span className="text-slate-400">Termos de uso</span></li>
-            <li><span className="text-slate-400">Política de privacidade</span></li>
-          </ul>
+    <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
+          {/* Brand */}
+          <div className="lg:col-span-4">
+            <BrandMark className="h-8 w-auto" />
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
+              Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Dados protegidos
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
+                <Zap className="h-3.5 w-3.5 text-blue-600" /> Rápido e leve
+              </span>
+            </div>
+          </div>
+
+          {/* Produto */}
+          <div className="lg:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li><a href="#recursos" className="transition-colors hover:text-slate-900">Recursos</a></li>
+              <li><a href="#telas" className="transition-colors hover:text-slate-900">Como funciona</a></li>
+              <li><a href="#planos" className="transition-colors hover:text-slate-900">Planos</a></li>
+              <li><a href="#faq" className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+            </ul>
+          </div>
+
+          {/* Conta */}
+          <div className="lg:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Conta</p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li><Link to="/login" className="transition-colors hover:text-slate-900">Entrar</Link></li>
+              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">Cadastrar-se</Link></li>
+              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">Recuperar senha</Link></li>
+            </ul>
+          </div>
+
+          {/* Suporte */}
+          <div className="lg:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li><a href="#faq" className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
+              <li><span className="text-slate-400">Status do sistema</span></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div className="lg:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li><span className="text-slate-400">Termos de uso</span></li>
+              <li><span className="text-slate-400">Política de privacidade</span></li>
+              <li><span className="text-slate-400">LGPD</span></li>
+            </ul>
+          </div>
         </div>
       </div>
-      <div className="border-t border-slate-200">
+
+      <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} Gasto Inteligente. Todos os direitos reservados.</p>
-          <p>Feito com cuidado para sua vida financeira.</p>
+          <p className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Feito com cuidado para sua vida financeira.
+          </p>
         </div>
       </div>
     </footer>
