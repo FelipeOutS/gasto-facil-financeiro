@@ -57,6 +57,7 @@ export function PublicLanding() {
       <Hero />
       <TrustStrip />
       <WhyUs />
+      <HowItWorks />
       <ScreensTabs />
       <DashboardShowcase />
       <FeatureSplit
@@ -92,6 +93,7 @@ export function PublicLanding() {
       <ForWho />
       <TrustPoints />
       <Plans />
+      <Testimonials />
       <FAQ />
       <FinalCTA />
       <Footer />
