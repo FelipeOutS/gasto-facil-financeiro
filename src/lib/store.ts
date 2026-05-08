@@ -3601,6 +3601,12 @@ async function upsertGastoVinculadoConta(
   const candidates = findGastosVinculadosConta(conta, input.nome, input.valor, input.dataPagamento);
   const existing = candidates[0];
   const duplicates = candidates.slice(1).map((g) => g.id);
+  // Mês de referência (competência) — se a conta tem, propaga para o gasto.
+  // Senão, usa o mês do pagamento (comportamento legado).
+  const invoiceMonth =
+    conta.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)
+      ? conta.mesReferencia
+      : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const row = {
     descricao: input.nome,
     valor: input.valor,
@@ -3615,6 +3621,7 @@ async function upsertGastoVinculadoConta(
     tipo_gasto: "unico",
     origem: CONTA_A_PAGAR_GASTO_ORIGEM,
     id_operacao_banco: contaGastoOperationId(conta.id),
+    invoice_month: invoiceMonth,
     updated_at: now,
   };
 
