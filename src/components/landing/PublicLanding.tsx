@@ -30,6 +30,8 @@ import {
   Quote,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { BrandLogo } from "@/components/BrandLogo";
+import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -1012,9 +1014,7 @@ function GastosMock() {
         {items.map((it) => (
           <li key={it.c} className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
-              <span className={cn("grid h-9 w-9 place-items-center rounded-xl text-xs font-bold", it.color)}>
-                {it.c[0]}
-              </span>
+              <TransactionAvatar estabelecimento={it.c} size="sm" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">{it.c}</p>
                 <p className="text-[11px] text-slate-500">{it.t}</p>
@@ -1106,9 +1106,7 @@ function CartaoMock() {
           {purchases.map((p) => (
             <li key={p.c} className="flex items-center justify-between px-3 py-2">
               <div className="flex items-center gap-2.5">
-                <span className={cn("grid h-7 w-7 place-items-center rounded-lg text-[10px] font-bold", p.color)}>
-                  {p.c[0]}
-                </span>
+                <TransactionAvatar estabelecimento={p.c} size="sm" className="h-7 w-7" />
                 <div>
                   <p className="text-xs font-semibold text-slate-900">{p.c}</p>
                   <p className="text-[10px] text-slate-500">{p.t}</p>
@@ -1511,9 +1509,7 @@ function GuardadoMock() {
         {items.map((it) => (
           <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
             <div className="flex items-center justify-between">
-              <span className={cn("inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold", it.color)}>
-                {it.l[0]}
-              </span>
+              <BrandLogo name={it.l} variant="bank" className="h-8 w-8" />
               <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
             </div>
             <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
