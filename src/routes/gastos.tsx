@@ -1138,10 +1138,16 @@ function GastosPage() {
                           ? " · recorrente"
                           : ""}
                     </p>
-                    {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) && (
-                      <p className="truncate text-[11px] text-muted-foreground/80">
-                        Mês de referência: {ymToLabel(g.invoiceMonth)}
-                      </p>
+                    {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) ? (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft">
+                        <CalendarIcon className="h-3 w-3" />
+                        {ymToLabel(g.invoiceMonth)}
+                      </span>
+                    ) : (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <CalendarIcon className="h-3 w-3" />
+                        {mesAnoToLabel(mesEfetivoGasto(g).mes, mesEfetivoGasto(g).ano)}
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1">
