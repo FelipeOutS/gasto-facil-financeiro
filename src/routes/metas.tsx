@@ -31,6 +31,7 @@ import {
   deleteMeta,
   getBancos,
   getMetas,
+  getMetaProgresso,
   statusMeta,
   updateMeta,
   useBootstrap,
