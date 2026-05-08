@@ -3118,6 +3118,31 @@ export function getContasAPagar(): ContaAPagar[] {
 }
 
 /**
+ * Mês de competência efetivo da conta (1-12, ano).
+ * Usa `mesReferencia` ("YYYY-MM") quando válido; cai pro mes/ano armazenado
+ * (que é derivado do vencimento) como fallback para registros antigos.
+ */
+export function getMesRefConta(c: { mesReferencia?: string; mes: number; ano: number }): {
+  mes: number;
+  ano: number;
+} {
+  if (c.mesReferencia && /^(\d{4})-(\d{2})$/.test(c.mesReferencia)) {
+    const [a, m] = c.mesReferencia.split("-").map(Number);
+    return { mes: m, ano: a };
+  }
+  return { mes: c.mes, ano: c.ano };
+}
+
+export function contaPertenceAoMesRef(
+  c: { mesReferencia?: string; mes: number; ano: number },
+  mes: number,
+  ano: number,
+): boolean {
+  const r = getMesRefConta(c);
+  return r.mes === mes && r.ano === ano;
+}
+
+/**
  * Status efetivo: se a conta está pendente e a data de vencimento já passou,
  * retorna "atrasado" sem alterar o registro persistido.
  */
