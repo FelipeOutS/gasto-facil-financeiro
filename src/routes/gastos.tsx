@@ -509,26 +509,51 @@ function GastosPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Histórico</p>
-          <h1 className="text-2xl font-bold tracking-tight">{vocab.gastosTitle}</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Encontre rapidinho para onde seu dinheiro foi.
-          </p>
+      {/* HERO premium */}
+      <section className="relative mt-1 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card-elevated to-card p-5 sm:p-6 shadow-card animate-rise">
+        {/* Glow decorativo */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full opacity-60 blur-3xl"
+          style={{ background: "radial-gradient(closest-side, var(--brand-soft, oklch(0.7 0.15 260 / 0.25)), transparent 70%)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(closest-side, oklch(0.72 0.18 152 / 0.22), transparent 70%)" }}
+        />
+
+        <div className="relative flex items-start gap-3">
+          <Link
+            to="/"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/70 backdrop-blur text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+              Painel financeiro
+            </p>
+            <h1 className="mt-0.5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              {vocab.gastosTitle}
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
+              Visualize, organize e entenda para onde seu dinheiro está indo.
+            </p>
+          </div>
+          {/* Ilustração animada (SVG leve) — finanças/gráfico */}
+          <div className="hidden sm:flex shrink-0 ml-2">
+            <HeroFinanceArt />
+          </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2">
+
+        {/* Ações desktop */}
+        <div className="relative mt-4 hidden sm:flex items-center gap-2">
           <Button
             type="button"
             onClick={handleReclassificar}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="outline"
             disabled={reclassificando}
             title="Reclassificar categorias"
@@ -539,9 +564,8 @@ function GastosPage() {
           <Button
             type="button"
             onClick={() => setHistoryOpen(true)}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="outline"
-            title="Ver extratos importados"
           >
             <History className="h-4 w-4" />
             Extratos importados
@@ -549,7 +573,7 @@ function GastosPage() {
           <Button
             type="button"
             onClick={tryImportar}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
@@ -557,7 +581,66 @@ function GastosPage() {
             {!can("importar_extrato") && <LockChip />}
           </Button>
         </div>
-      </header>
+      </section>
+
+      {/* SELETOR PRINCIPAL: Mês de referência */}
+      <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand">
+              <CalendarIcon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Mês de referência
+              </p>
+              <p className="text-xs text-muted-foreground/90 hidden sm:block">
+                Mês ao qual o gasto pertence — mesmo que pago em outro mês.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => shiftMes(-1)}
+              disabled={mesRef === "todos" || mesRefIdx <= 0}
+              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <Select value={mesRef} onValueChange={setMesRef}>
+              <SelectTrigger className="h-9 min-w-[180px] rounded-full bg-card-elevated border-border font-semibold text-sm">
+                <SelectValue>
+                  {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="todos">Todos os meses</SelectItem>
+                {mesesDisponiveis.map((ym) => (
+                  <SelectItem key={ym} value={ym}>
+                    {ymToLabel(ym)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button
+              onClick={() => shiftMes(1)}
+              disabled={mesRef === "todos" || mesRefIdx >= mesesDisponiveis.length - 1}
+              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Próximo mês"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        {mesRef !== "todos" && (
+          <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-brand" />
+            Este resumo considera apenas os gastos de{" "}
+            <strong className="text-foreground">{ymToLabel(mesRef)}</strong>.
+          </p>
+        )}
+      </section>
 
       {/* Botões mobile */}
       <div className="mt-3 sm:hidden -mx-4 px-4 overflow-x-auto scrollbar-none">
