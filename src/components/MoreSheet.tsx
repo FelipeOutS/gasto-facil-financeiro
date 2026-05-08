@@ -1,5 +1,6 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { flushSync } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
   ArrowUp,
   CalendarClock,
@@ -32,6 +33,8 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
+
+const ADMIN_ITEM: MoreItem = { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield };
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
