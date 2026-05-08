@@ -654,6 +654,7 @@ type ContaAPagarRow = {
   banco_emissor?: string | null;
   frequencia_recorrencia?: string | null;
   import_batch_id?: string | null;
+  mes_referencia?: string | null;
   mes: number;
   ano: number;
   created_at: string;
