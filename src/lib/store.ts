@@ -4265,17 +4265,17 @@ export function getFatura(cartaoId: string, mes: number, ano: number): FaturaCar
 }
 
 /**
- * Calcula o ciclo da fatura de referência mes/ano (mês de VENCIMENTO).
- * Retorna o intervalo [inicio, fim] de datas dos lançamentos que compõem essa fatura.
+ * Calcula o ciclo da fatura. Convenção: `mes/ano` = MÊS DE REFERÊNCIA (mês
+ * das compras). Para um cartão com diaFechamento=5, a fatura "Maio" abrange
+ * compras feitas de 06/05 até 05/06 (fecha no início do mês seguinte).
  */
 export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio: Date; fim: Date } {
   const diaFech = cartao.diaFechamento && cartao.diaFechamento > 0 ? cartao.diaFechamento : 1;
-  // Convenção: a fatura que vence no mês X foi fechada no mês X (se diaVencimento > diaFech)
-  // ou no mês X-1 (se diaVencimento < diaFech). Para simplificar, considera-se que a fatura
-  // do mês "mes" abrange compras feitas entre o dia seguinte ao fechamento do mês anterior
-  // e o fechamento do próprio mês "mes".
-  const fim = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
-  const inicio = new Date(ano, mes - 2, diaFech + 1, 0, 0, 0, 0);
+  // inicio = dia seguinte ao fechamento do mês anterior (= dia seguinte ao
+  // fechamento que ocorre no início do próprio mês de referência).
+  const inicio = new Date(ano, mes - 1, diaFech + 1, 0, 0, 0, 0);
+  // fim = fechamento do mês seguinte ao mês de referência.
+  const fim = new Date(ano, mes, diaFech, 23, 59, 59, 999);
   return { inicio, fim };
 }
 
