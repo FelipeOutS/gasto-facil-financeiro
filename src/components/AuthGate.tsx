@@ -126,16 +126,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const subscriptionAllowed = isSubscriptionAllowed(pathname);
   if (!subscriptionAllowed && !plan.loading && !rolesLoading && !hasActiveAccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-6">
-        <div className="max-w-sm text-center animate-fade-in">
-          <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-card">
-            <Wallet className="h-6 w-6 text-foreground" />
-          </span>
-          <p className="text-sm text-muted-foreground">
-            Você precisa de um plano ativo para usar esta página. Redirecionando para Meu plano…
-          </p>
-        </div>
-      </div>
+      <BrandLoader message="Você precisa de um plano ativo para usar esta página. Redirecionando para Meu plano…" />
     );
   }
 
