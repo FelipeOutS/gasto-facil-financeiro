@@ -939,7 +939,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
       rowToAprendizado(r, catUuidToKey),
     );
-    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
+    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey, metaUuidToKey));
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
     memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
       (r: CartaoRow) => rowToCartao(r),
