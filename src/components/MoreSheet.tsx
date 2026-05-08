@@ -14,7 +14,6 @@ import {
   Lock,
   Sparkles,
   Bell,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import {
