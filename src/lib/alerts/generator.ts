@@ -101,7 +101,8 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
       if (cartao.diaVencimento && totalFatura > 0) {
         const ref = faturaCorrente(cartao);
         const statusFat = statusEfetivoFatura(cartao, ref.mes, ref.ano);
-        if (statusFat !== "paga") {
+        // Fatura aberta nunca gera alerta de vencimento — só após fechar.
+        if (statusFat !== "paga" && statusFat !== "aberta") {
           const venc = new Date(ref.ano, ref.mes - 1, cartao.diaVencimento);
           const isoVenc = `${venc.getFullYear()}-${String(venc.getMonth() + 1).padStart(2, "0")}-${String(venc.getDate()).padStart(2, "0")}`;
           const dias = diffDaysLocal(isoVenc);
