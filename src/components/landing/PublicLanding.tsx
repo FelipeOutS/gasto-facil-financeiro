@@ -1215,19 +1215,33 @@ function MetaMock() {
 }
 
 function InvestimentosMock() {
+  const classes = [
+    { l: "Renda fixa", v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
+    { l: "Ações", v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
+    { l: "Fundos", v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
+  ];
   return (
     <MockShell>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Carteira</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 48.320,90</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Patrimônio total · 12 meses</p>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-          <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
+          </span>
+          <span className="text-[10px] font-medium text-slate-400">vs. mês anterior</span>
+        </div>
       </div>
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-        <svg viewBox="0 0 300 100" className="h-28 w-full">
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-emerald-50/40 to-white p-3">
+        <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <span>Evolução</span>
+          <span className="text-emerald-600">+R$ 1.940</span>
+        </div>
+        <svg viewBox="0 0 300 100" className="mt-1 h-28 w-full">
           <defs>
             <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
@@ -1238,7 +1252,11 @@ function InvestimentosMock() {
             d="M0,80 L25,72 L50,76 L75,60 L100,64 L125,50 L150,55 L175,40 L200,46 L225,30 L250,36 L275,22 L300,18 L300,100 L0,100 Z"
             fill="url(#lg)"
           />
-          <path
+          <motion.path
+            initial={{ pathLength: 0 }}
+            whileInView={{ pathLength: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.4, ease: "easeOut" }}
             d="M0,80 L25,72 L50,76 L75,60 L100,64 L125,50 L150,55 L175,40 L200,46 L225,30 L250,36 L275,22 L300,18"
             fill="none"
             stroke="#10b981"
@@ -1246,17 +1264,32 @@ function InvestimentosMock() {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          <circle cx="300" cy="18" r="4" fill="#10b981" />
+          <circle cx="300" cy="18" r="8" fill="#10b981" opacity="0.25" />
         </svg>
       </div>
+
+      {/* allocation bar */}
+      <div className="mt-3">
+        <div className="flex h-2 overflow-hidden rounded-full">
+          {classes.map((c) => (
+            <div key={c.l} style={{ width: `${c.pct}%`, background: c.color }} />
+          ))}
+        </div>
+      </div>
+
       <div className="mt-3 grid grid-cols-3 gap-2">
-        {[
-          { l: "Renda fixa", v: "R$ 22.4k" },
-          { l: "Ações", v: "R$ 14.1k" },
-          { l: "Fundos", v: "R$ 11.8k" },
-        ].map((it) => (
-          <div key={it.l} className="rounded-xl bg-slate-50 p-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{it.l}</p>
-            <p className="text-sm font-bold tabular-nums text-slate-900">{it.v}</p>
+        {classes.map((c) => (
+          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+                {c.l}
+              </span>
+              <span className="text-[9px] font-bold text-emerald-600">{c.chip}</span>
+            </div>
+            <p className="mt-1 text-sm font-bold tabular-nums text-slate-900">{c.v}</p>
+            <p className="text-[10px] text-slate-500">{c.pct}% da carteira</p>
           </div>
         ))}
       </div>
@@ -1266,29 +1299,49 @@ function InvestimentosMock() {
 
 function GuardadoMock() {
   const items = [
-    { l: "Nubank", v: "R$ 2.100", color: "bg-violet-100 text-violet-700" },
-    { l: "Inter", v: "R$ 1.480", color: "bg-amber-100 text-amber-700" },
-    { l: "C6 Bank", v: "R$ 980", color: "bg-slate-200 text-slate-800" },
-    { l: "Carteira", v: "R$ 320", color: "bg-emerald-100 text-emerald-700" },
+    { l: "Nubank", v: "R$ 2.100", pct: 43, color: "bg-violet-100 text-violet-700", bar: "bg-violet-500" },
+    { l: "Inter", v: "R$ 1.480", pct: 30, color: "bg-amber-100 text-amber-700", bar: "bg-amber-500" },
+    { l: "C6 Bank", v: "R$ 980", pct: 20, color: "bg-slate-200 text-slate-800", bar: "bg-slate-500" },
+    { l: "Carteira", v: "R$ 320", pct: 7, color: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" },
   ];
   return (
     <MockShell>
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
-        <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
+          <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Reservas em 4 contas</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+          <ShieldCheck className="h-3.5 w-3.5" /> Reserva segura
+        </span>
       </div>
+
+      {/* distribution bar */}
+      <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+        {items.map((it) => (
+          <div key={it.l} className={cn("h-full", it.bar)} style={{ width: `${it.pct}%` }} />
+        ))}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
+        {items.map((it) => (
+          <span key={it.l} className="inline-flex items-center gap-1">
+            <span className={cn("h-1.5 w-1.5 rounded-full", it.bar)} />
+            {it.l} · {it.pct}%
+          </span>
+        ))}
+      </div>
+
       <ul className="mt-4 grid grid-cols-2 gap-2.5">
         {items.map((it) => (
-          <li key={it.l} className="rounded-xl border border-slate-200 p-3">
-            <span
-              className={cn(
-                "mb-2 inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold",
-                it.color,
-              )}
-            >
-              {it.l[0]}
-            </span>
-            <p className="text-xs font-medium text-slate-500">{it.l}</p>
+          <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
+            <div className="flex items-center justify-between">
+              <span className={cn("inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold", it.color)}>
+                {it.l[0]}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
+            </div>
+            <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
             <p className="text-sm font-bold tabular-nums text-slate-900">{it.v}</p>
           </li>
         ))}
