@@ -20,6 +20,7 @@ import {
   HandCoins,
   Bell,
   Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { useAlertaContas } from "@/lib/contas-alertas";
