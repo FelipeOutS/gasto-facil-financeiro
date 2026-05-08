@@ -323,7 +323,7 @@ function MetaCard({
                 <Plus className="mr-2 h-4 w-4" />
                 Atualizar valor
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
+              <DropdownMenuItem onSelect={onRemove} disabled={progresso <= 0}>
                 <Minus className="mr-2 h-4 w-4" />
                 Remover valor
               </DropdownMenuItem>
