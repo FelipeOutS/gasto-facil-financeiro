@@ -83,8 +83,9 @@ export interface RelatorioMes {
 
 function isGastoNoMes(g: Gasto, mes: number, ano: number): boolean {
   if (g.confirmado === false) return false;
-  // Crédito com invoice_month: o mês "real" é o da fatura, não da compra.
-  if (g.formaPagamento === "credito" && g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
+  // Fonte da verdade: invoice_month (mês de referência) — vale para crédito,
+  // contas pagas e qualquer gasto que tenha o campo preenchido.
+  if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
     const [ay, am] = g.invoiceMonth.split("-").map(Number);
     return am === mes && ay === ano;
   }
