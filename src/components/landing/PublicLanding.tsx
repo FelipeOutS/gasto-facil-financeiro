@@ -2310,7 +2310,7 @@ function SectionHeader({
   return (
     <div className={cn(center && "text-center")}>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
+      <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
       {subtitle && (
         <p className={cn("mt-3 text-base text-slate-600", center ? "mx-auto max-w-2xl" : "max-w-2xl")}>
           {subtitle}
