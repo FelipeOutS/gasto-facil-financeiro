@@ -60,9 +60,14 @@ export const getRouter = () => {
     routeTree,
     context: {},
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-    defaultPendingMs: 0,
-    defaultPendingMinMs: 150,
+    // Pré-carrega rotas ao passar o mouse / focar — navegação quase instantânea.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 50,
+    // Mantém rotas pré-carregadas em cache por 30s para evitar refetch ao navegar.
+    defaultPreloadStaleTime: 30_000,
+    // Só mostra o skeleton se a navegação demorar mais de 250ms (evita "piscadas").
+    defaultPendingMs: 250,
+    defaultPendingMinMs: 300,
     defaultPendingComponent: () => <PageSkeleton wide />,
     defaultErrorComponent: DefaultErrorComponent,
   });
