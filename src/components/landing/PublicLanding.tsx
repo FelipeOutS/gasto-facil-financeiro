@@ -1356,17 +1356,17 @@ function MetaMock() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Outras metas</p>
           <span className="text-[10px] font-medium text-slate-400">3 ativas</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {otherGoals.map((g) => (
             <div
               key={g.name}
               className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-transform hover:-translate-y-0.5"
             >
-              <div className="relative h-14 w-full overflow-hidden">
+              <div className="relative h-12 w-full overflow-hidden sm:h-14">
                 <MetaCover kind={g.cover} />
               </div>
-              <div className="p-2">
-                <p className="line-clamp-1 text-[11px] font-semibold text-slate-800">{g.name}</p>
+              <div className="p-1.5 sm:p-2">
+                <p className="line-clamp-1 text-[10px] font-semibold leading-tight text-slate-800 sm:text-[11px]">{g.name}</p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <motion.div
                     initial={{ width: 0 }}
@@ -1376,8 +1376,8 @@ function MetaMock() {
                     className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
                   />
                 </div>
-                <div className="mt-1 flex items-center justify-between text-[9px] text-slate-500">
-                  <span>{g.saved}</span>
+                <div className="mt-1 flex items-center justify-between gap-1 text-[9px] text-slate-500">
+                  <span className="truncate">{g.saved}</span>
                   <span className="font-semibold text-emerald-700">{g.pct}%</span>
                 </div>
               </div>
