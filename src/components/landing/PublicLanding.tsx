@@ -2356,11 +2356,14 @@ function LandingStyles() {
   // Scoped reset to ensure landing always reads as light, even if <html> has .dark
   return (
     <style>{`
-      .gi-landing { color-scheme: light; }
+      .gi-landing { color-scheme: light; overflow-x: clip; }
       .gi-landing, .gi-landing * { border-color: rgb(226 232 240); }
       .gi-landing ::selection { background: rgba(59,130,246,0.18); }
       .gi-landing .no-scrollbar::-webkit-scrollbar { display: none; }
       .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      @media (max-width: 480px) {
+        .gi-landing section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+      }
     `}</style>
   );
 }
