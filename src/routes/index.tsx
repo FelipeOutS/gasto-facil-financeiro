@@ -77,7 +77,10 @@ function Index() {
   const ready = useBootstrap();
   const { profile } = useAuth();
   const today = new Date();
-  const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
+  const [ym, setYm] = useMesReferenciaRef() as unknown as [
+    { mes: number; ano: number },
+    (next: { mes: number; ano: number }) => void,
+  ];
 
   const gastos = useStore(() => getGastos());
   const receitas = useStore(() => getReceitas());
