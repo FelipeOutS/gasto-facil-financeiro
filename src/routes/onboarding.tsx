@@ -15,6 +15,7 @@ import {
 } from "@/lib/onboarding/types";
 import { useOnboarding } from "@/lib/onboarding/use-onboarding";
 import { commercialPlanByTier, PLAN_LABEL, type PlanTier } from "@/lib/plans";
+import { BrandLoader } from "@/components/BrandLoader";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -107,11 +108,7 @@ function OnboardingPage() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando…</p>
-      </div>
-    );
+    return <BrandLoader message="Preparando sua configuração…" />;
   }
 
   return (
