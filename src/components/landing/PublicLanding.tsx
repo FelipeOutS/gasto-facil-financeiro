@@ -240,7 +240,7 @@ function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-5 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 xs:text-4xl sm:text-5xl lg:text-[3.6rem]"
+            className="mt-5 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
           >
             Controle suas finanças com mais{" "}
             <span className="relative inline-block bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
