@@ -1014,9 +1014,7 @@ function GastosMock() {
         {items.map((it) => (
           <li key={it.c} className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
-              <span className={cn("grid h-9 w-9 place-items-center rounded-xl text-xs font-bold", it.color)}>
-                {it.c[0]}
-              </span>
+              <TransactionAvatar estabelecimento={it.c} size="sm" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">{it.c}</p>
                 <p className="text-[11px] text-slate-500">{it.t}</p>
