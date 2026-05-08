@@ -249,6 +249,7 @@ function GastosPage() {
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
+  const [mesRef, setMesRef] = useState<string>("todos"); // "todos" | "YYYY-MM"
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [catFilter, setCatFilter] = useState<string>("todas");
