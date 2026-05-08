@@ -3139,6 +3139,8 @@ export type NovaContaInput = {
   chavePix?: string;
   bancoEmissor?: string;
   importBatchId?: string;
+  /** Mês de referência (competência) `YYYY-MM`. Default = mês do vencimento. */
+  mesReferencia?: string;
 };
 
 export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
