@@ -13,6 +13,9 @@ import {
   Image as ImageIcon,
   Check,
   Flame,
+  PiggyBank,
+  Wallet,
+  Flag,
 } from "lucide-react";
 import {
   MetaCover,
@@ -146,11 +149,16 @@ function MetasPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
-        <p className="text-xs font-medium text-muted-foreground">Progresso total das metas</p>
-        <Money value={totalAcumulado} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"} · soma do progresso de todas as metas (não é saldo em banco)
+      <section className="mt-4 rounded-3xl border border-border bg-gradient-to-br from-card to-card-elevated p-5 shadow-elevated animate-rise">
+        <div className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
+            <Target className="h-3.5 w-3.5" />
+          </span>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Total em progresso nas metas</p>
+        </div>
+        <Money value={totalAcumulado} className="num mt-2 block text-4xl font-extrabold tracking-tight" />
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}. Esse valor representa o progresso acumulado nas metas e <strong className="text-foreground/80">não</strong> o saldo em banco.
         </p>
       </section>
 
@@ -351,48 +359,87 @@ function MetaCard({
       </div>
 
       {/* Corpo */}
-      <div className="p-4">
-        <div className="flex items-baseline justify-between">
-          <Money value={progresso} className="num text-2xl font-extrabold tracking-tight" />
-          <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
+      <div className="space-y-4 p-5">
+        {/* Bloco principal — Progresso da meta */}
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Progresso da meta
+          </p>
+          <div className="mt-1 flex items-baseline justify-between gap-2">
+            <Money value={progresso} className="num text-3xl font-extrabold tracking-tight" />
+            <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-card-elevated">
+              <div
+                className="h-full rounded-full origin-left animate-fill"
+                style={{
+                  width: `${pct}%`,
+                  background: isDone
+                    ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
+                    : meta.colorHex,
+                  transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+                }}
+              />
+            </div>
+            <span className="num text-sm font-bold tabular-nums" style={{ color: meta.colorHex }}>
+              {pct.toFixed(0)}%
+            </span>
+          </div>
         </div>
 
-        <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
+        {/* Bloco explicativo — composição do progresso */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/50 px-3 py-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500">
+                <PiggyBank className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-xs text-muted-foreground truncate">Guardado em reservas</span>
+            </div>
+            <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.guardado)}</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/50 px-3 py-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
+                <Wallet className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-xs text-muted-foreground truncate">Adicionado direto na meta</span>
+            </div>
+            <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
+          </div>
+
           <div
-            className="h-full rounded-full origin-left animate-fill"
+            className="flex items-center justify-between rounded-xl border px-3 py-2.5"
             style={{
-              width: `${pct}%`,
-              background: isDone
-                ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
-                : meta.colorHex,
-              transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+              borderColor: isDone ? `color-mix(in oklab, ${meta.colorHex} 40%, transparent)` : undefined,
+              background: `color-mix(in oklab, ${meta.colorHex} 8%, transparent)`,
             }}
-          />
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
+                style={{
+                  background: `color-mix(in oklab, ${meta.colorHex} 18%, transparent)`,
+                  color: meta.colorHex,
+                }}
+              >
+                {isDone ? <Check className="h-3.5 w-3.5" /> : <Flag className="h-3.5 w-3.5" />}
+              </span>
+              <span className="text-xs font-semibold text-foreground truncate">
+                {isDone ? "Meta concluída" : "Falta para concluir"}
+              </span>
+            </div>
+            <span className="num text-sm font-bold tabular-nums" style={{ color: meta.colorHex }}>
+              {formatBRL(restante)}
+            </span>
+          </div>
         </div>
-        <div className="mt-2 flex items-center justify-between text-xs">
-          <span className="num font-semibold" style={{ color: meta.colorHex }}>{pct.toFixed(0)}%</span>
-          <span className="num text-muted-foreground">faltam {formatBRL(restante)}</span>
-        </div>
-
-        {(breakdown.guardado > 0 || breakdown.direto > 0) && (
-          <ul className="mt-3 space-y-1 rounded-xl bg-card-elevated/60 p-2.5 text-[11px]">
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Guardado em reservas vinculadas</span>
-              <span className="num font-semibold">{formatBRL(breakdown.guardado)}</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Adicionado direto na meta</span>
-              <span className="num font-semibold">{formatBRL(breakdown.direto)}</span>
-            </li>
-            <li className="flex items-center justify-between border-t border-border/60 pt-1">
-              <span className="font-semibold text-foreground">Faltam para o objetivo</span>
-              <span className="num font-bold" style={{ color: meta.colorHex }}>{formatBRL(restante)}</span>
-            </li>
-          </ul>
-        )}
 
         {isDone ? (
-          <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs font-semibold text-success animate-pop">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2.5 text-xs font-semibold text-success animate-pop">
             <Sparkles className="h-3.5 w-3.5" />
             Meta batida! Você chegou lá. 🏆
           </div>
@@ -400,7 +447,7 @@ function MetaCard({
           <Button
             variant="outline"
             size="sm"
-            className="card-press mt-3 h-9 w-full rounded-xl"
+            className="card-press h-10 w-full rounded-xl font-semibold"
             onClick={onAdd}
           >
             <Plus className="mr-1 h-4 w-4" />
