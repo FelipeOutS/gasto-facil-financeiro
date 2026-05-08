@@ -506,21 +506,21 @@ function AdminPage() {
         </div>
 
         {/* Filtros */}
-        <Card className="mt-6">
-          <CardContent className="grid grid-cols-1 gap-3 p-4 md:grid-cols-5">
+        <Card className="mt-4 sm:mt-6">
+          <CardContent className="grid grid-cols-1 gap-2 sm:gap-3 p-3 sm:p-4 md:grid-cols-5">
             <div className="relative md:col-span-2">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-8" placeholder="Buscar nome ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input className="pl-8 w-full" placeholder="Buscar nome ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Select value={filterPlan} onValueChange={setFilterPlan}>
-              <SelectTrigger><SelectValue placeholder="Plano" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Plano" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os planos</SelectItem>
                 {Object.entries(PLAN_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="ativo">Plano ativo</SelectItem>
@@ -530,7 +530,7 @@ function AdminPage() {
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
-              <SelectTrigger><SelectValue placeholder="Pagamento" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Pagamento" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas formas</SelectItem>
                 <SelectItem value="pix">Pix</SelectItem>
@@ -538,7 +538,7 @@ function AdminPage() {
               </SelectContent>
             </Select>
             <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-              <SelectTrigger><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Período" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todo o período</SelectItem>
                 <SelectItem value="today">Hoje</SelectItem>
@@ -552,77 +552,153 @@ function AdminPage() {
           </CardContent>
         </Card>
 
-        {/* Tabela */}
+        {/* Lista de usuários */}
         <Card className="mt-4">
-          <CardHeader><CardTitle className="text-sm">Usuários ({filteredUsers.length})</CardTitle></CardHeader>
-          <CardContent className="overflow-x-auto p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Cadastro</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Ciclo</TableHead>
-                  <TableHead>Pgto.</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total pago</TableHead>
-                  <TableHead>Próx.</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((u) => {
-                  const ds = getDisplayStatus(u);
-                  const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
-                  return (
-                    <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
-                      <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{u.email}</TableCell>
-                      <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
-                      <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
-                      <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {u.last_payment_method ? (
-                          <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
-                        ) : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
-                      <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            title="Editar status do plano"
-                            onClick={() => setEditStatus(u)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
-                            disabled={protectedRow}
-                            title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
-                            onClick={() => setToDelete(u)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {filteredUsers.length === 0 && (
-                  <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm">Usuários ({filteredUsers.length})</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            {/* Mobile: cards */}
+            <div className="md:hidden flex flex-col gap-2 p-3">
+              {filteredUsers.map((u) => {
+                const ds = getDisplayStatus(u);
+                const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
+                return (
+                  <div
+                    key={u.user_id}
+                    className="rounded-lg border border-border bg-card p-3 active:bg-muted/40"
+                    onClick={() => setSelected(u)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{u.nome ?? "—"}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] shrink-0 ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Plano: </span>
+                        <span className="font-medium">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Ciclo: </span>
+                        <span className="font-medium">{u.periodicidade ?? "—"}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Pgto: </span>
+                        <span className="font-medium">
+                          {u.last_payment_method === "pix" ? "Pix" : u.last_payment_method === "card" ? "Cartão" : "—"}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Cadastro: </span>
+                        <span className="font-medium">{fmtDate(u.created_at)}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Total pago: </span>
+                        <span className="font-medium">{fmtMoney(u.total_paid_cents)}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-muted-foreground">Próx.: </span>
+                        <span className="font-medium">{fmtDate(u.next_payment_at)}</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 gap-1 text-xs"
+                        onClick={() => setEditStatus(u)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 gap-1 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                        disabled={protectedRow}
+                        onClick={() => setToDelete(u)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Excluir
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredUsers.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</p>
+              )}
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Ciclo</TableHead>
+                    <TableHead>Pgto.</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Total pago</TableHead>
+                    <TableHead>Próx.</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((u) => {
+                    const ds = getDisplayStatus(u);
+                    const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
+                    return (
+                      <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
+                        <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{u.email}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
+                        <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
+                        <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {u.last_payment_method ? (
+                            <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              title="Editar status do plano"
+                              onClick={() => setEditStatus(u)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                              disabled={protectedRow}
+                              title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                              onClick={() => setToDelete(u)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredUsers.length === 0 && (
+                    <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
