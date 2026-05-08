@@ -523,3 +523,9 @@ body {
 @media (max-width: 640px) {
   .banks-marquee-track { animation-duration: 28s; }
 }
+
+/* Brand loader — subtle premium pulse */
+@keyframes brand-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
