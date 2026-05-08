@@ -3269,6 +3269,8 @@ export type ContaEditableFields = {
   codigoPix?: string | null;
   chavePix?: string | null;
   bancoEmissor?: string | null;
+  /** Mês de referência (competência) `YYYY-MM`. */
+  mesReferencia?: string | null;
   /** Quando atualizando uma conta paga, sincroniza o gasto vinculado */
   atualizarGastoVinculado?: boolean;
 };
