@@ -1128,87 +1128,261 @@ function CartaoMock() {
   );
 }
 
+function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }) {
+  if (kind === "apartment") {
+    return (
+      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        <defs>
+          <linearGradient id="apt-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fde68a" />
+            <stop offset="55%" stopColor="#fda4af" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+          <linearGradient id="apt-b1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1e293b" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id="apt-b2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#334155" />
+            <stop offset="100%" stopColor="#1e293b" />
+          </linearGradient>
+        </defs>
+        <rect width="600" height="220" fill="url(#apt-sky)" />
+        {/* sun */}
+        <circle cx="470" cy="80" r="38" fill="#fff7ed" opacity="0.95" />
+        <circle cx="470" cy="80" r="56" fill="#fef3c7" opacity="0.35" />
+        {/* distant skyline */}
+        <g opacity="0.55" fill="#1e3a8a">
+          <rect x="20" y="130" width="40" height="60" />
+          <rect x="65" y="118" width="30" height="72" />
+          <rect x="100" y="135" width="36" height="55" />
+          <rect x="500" y="125" width="32" height="65" />
+          <rect x="540" y="110" width="40" height="80" />
+        </g>
+        {/* main building */}
+        <rect x="200" y="60" width="120" height="160" fill="url(#apt-b1)" rx="3" />
+        <rect x="195" y="55" width="130" height="10" fill="#0f172a" rx="2" />
+        {/* windows lit */}
+        <g fill="#fbbf24">
+          {Array.from({ length: 6 }).map((_, r) =>
+            Array.from({ length: 4 }).map((_, c) => {
+              const lit = (r + c) % 3 !== 0;
+              return (
+                <rect
+                  key={`${r}-${c}`}
+                  x={210 + c * 26}
+                  y={75 + r * 22}
+                  width="16"
+                  height="13"
+                  rx="1.5"
+                  fill={lit ? "#fde68a" : "#475569"}
+                  opacity={lit ? 0.95 : 0.55}
+                />
+              );
+            }),
+          )}
+        </g>
+        {/* side building */}
+        <rect x="330" y="100" width="90" height="120" fill="url(#apt-b2)" rx="3" />
+        <g fill="#fde68a" opacity="0.85">
+          {Array.from({ length: 5 }).map((_, r) =>
+            Array.from({ length: 3 }).map((_, c) => (
+              <rect key={`s-${r}-${c}`} x={340 + c * 24} y={112 + r * 20} width="14" height="11" rx="1.5" />
+            )),
+          )}
+        </g>
+        {/* small left building */}
+        <rect x="140" y="120" width="55" height="100" fill="#0f172a" rx="3" />
+        <g fill="#fde68a" opacity="0.85">
+          {Array.from({ length: 4 }).map((_, r) =>
+            Array.from({ length: 2 }).map((_, c) => (
+              <rect key={`l-${r}-${c}`} x={150 + c * 20} y={130 + r * 22} width="12" height="11" rx="1.5" />
+            )),
+          )}
+        </g>
+        {/* ground */}
+        <rect x="0" y="200" width="600" height="20" fill="#0f172a" opacity="0.6" />
+      </svg>
+    );
+  }
+  if (kind === "beach") {
+    return (
+      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        <defs>
+          <linearGradient id="b-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fde68a" />
+            <stop offset="100%" stopColor="#a78bfa" />
+          </linearGradient>
+          <linearGradient id="b-sea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0ea5e9" />
+            <stop offset="100%" stopColor="#1e40af" />
+          </linearGradient>
+        </defs>
+        <rect width="600" height="220" fill="url(#b-sky)" />
+        <circle cx="450" cy="80" r="40" fill="#fff7ed" />
+        <path d="M0,140 Q150,118 300,138 T600,134 L600,180 L0,180 Z" fill="url(#b-sea)" />
+        <path d="M0,178 L600,178 L600,220 L0,220 Z" fill="#fde68a" />
+      </svg>
+    );
+  }
+  if (kind === "car") {
+    return (
+      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        <defs>
+          <linearGradient id="c-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fb7185" />
+            <stop offset="100%" stopColor="#f97316" />
+          </linearGradient>
+        </defs>
+        <rect width="600" height="220" fill="url(#c-sky)" />
+        <rect x="0" y="160" width="600" height="60" fill="#1f2937" />
+        <path d="M120 150 L200 110 L380 110 L460 150 L460 175 L120 175 Z" fill="#0f172a" />
+        <rect x="200" y="120" width="170" height="30" rx="6" fill="#3b82f6" opacity="0.85" />
+        <circle cx="180" cy="178" r="22" fill="#0f172a" stroke="#cbd5e1" strokeWidth="3" />
+        <circle cx="400" cy="178" r="22" fill="#0f172a" stroke="#cbd5e1" strokeWidth="3" />
+      </svg>
+    );
+  }
+  // reserve / piggy
+  return (
+    <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <defs>
+        <linearGradient id="r-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" />
+          <stop offset="100%" stopColor="#0e7490" />
+        </linearGradient>
+      </defs>
+      <rect width="600" height="220" fill="url(#r-bg)" />
+      <g opacity="0.18" fill="#fff">
+        <circle cx="80" cy="60" r="40" />
+        <circle cx="520" cy="170" r="60" />
+        <circle cx="300" cy="40" r="20" />
+      </g>
+      <g transform="translate(225,60)">
+        <ellipse cx="75" cy="70" rx="80" ry="55" fill="#fbbf24" />
+        <circle cx="125" cy="55" r="10" fill="#0f172a" />
+        <rect x="20" y="20" width="50" height="14" rx="3" fill="#fbbf24" transform="rotate(-12,45,27)" />
+        <rect x="55" y="25" width="6" height="3" rx="1" fill="#0f172a" transform="rotate(-12,45,27)" />
+        <rect x="45" y="120" width="10" height="20" fill="#f59e0b" />
+        <rect x="95" y="120" width="10" height="20" fill="#f59e0b" />
+        <circle cx="140" cy="48" r="2.5" fill="#0f172a" />
+      </g>
+    </svg>
+  );
+}
+
 function MetaMock() {
+  // Featured goal — emotional, easy to read
+  const guardado = 1050;
+  const objetivo = 10000;
+  const pct = Math.round((guardado / objetivo) * 100);
+  const falta = objetivo - guardado;
+
+  const otherGoals: { name: string; pct: number; saved: string; cover: "beach" | "car" | "reserve" }[] = [
+    { name: "Viagem para a praia", pct: 68, saved: "R$ 3.400", cover: "beach" },
+    { name: "Comprar um carro", pct: 32, saved: "R$ 8.000", cover: "car" },
+    { name: "Reserva de emergência", pct: 84, saved: "R$ 8.400", cover: "reserve" },
+  ];
+
   return (
     <MockShell>
-      <div className="overflow-hidden rounded-2xl border border-slate-200">
-        {/* Visual cover — beach scene */}
-        <div className="relative h-36 w-full overflow-hidden">
-          <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
-            <defs>
-              <linearGradient id="meta-sky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fde68a" />
-                <stop offset="55%" stopColor="#fda4af" />
-                <stop offset="100%" stopColor="#a78bfa" />
-              </linearGradient>
-              <linearGradient id="meta-sea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0ea5e9" />
-                <stop offset="100%" stopColor="#1e40af" />
-              </linearGradient>
-              <linearGradient id="meta-sand" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fde68a" />
-                <stop offset="100%" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
-            <rect width="600" height="220" fill="url(#meta-sky)" />
-            <circle cx="450" cy="80" r="40" fill="#fff7ed" opacity="0.95" />
-            <circle cx="450" cy="80" r="56" fill="#fef3c7" opacity="0.35" />
-            <path d="M0,140 Q150,118 300,138 T600,134 L600,180 L0,180 Z" fill="url(#meta-sea)" opacity="0.95" />
-            <path d="M0,160 Q150,148 300,160 T600,156 L600,180 L0,180 Z" fill="#0c4a6e" opacity="0.55" />
-            <path d="M0,178 L600,178 L600,220 L0,220 Z" fill="url(#meta-sand)" />
-            {/* palm */}
-            <g transform="translate(70,150)">
-              <rect x="-2" y="-50" width="5" height="50" rx="2" fill="#7c2d12" />
-              <path d="M0,-50 C-25,-60 -45,-55 -55,-45 C-40,-52 -20,-52 0,-50 Z" fill="#166534" />
-              <path d="M0,-50 C25,-60 45,-55 55,-45 C40,-52 20,-52 0,-50 Z" fill="#15803d" />
-              <path d="M0,-50 C-10,-75 -5,-90 10,-95 C5,-80 5,-65 0,-50 Z" fill="#16a34a" />
-            </g>
-          </svg>
-          <div className="absolute bottom-2 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
-            <Calendar className="h-3 w-3" /> Jan · 2027
+      {/* Featured goal card */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-26px_rgba(15,23,42,0.30)]">
+        {/* Cover */}
+        <div className="relative h-40 w-full overflow-hidden">
+          <MetaCover kind="apartment" />
+          {/* subtle gradient overlay for legibility */}
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, rgba(15,23,42,0) 50%, rgba(15,23,42,0.45) 100%)" }}
+          />
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-blue-700 backdrop-blur">
+            <Target className="h-3 w-3" /> Meta ativa
           </div>
-          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-emerald-700 backdrop-blur">
-            <TrendingUp className="h-3 w-3" /> 68%
+          <div className="absolute bottom-2 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
+            <Calendar className="h-3 w-3" /> Dez · 2027
+          </div>
+          <div className="absolute bottom-2 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+            <TrendingUp className="h-3 w-3" /> {pct}%
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Viagem</p>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-              Maragogi · AL
-            </span>
-          </div>
-          <p className="mt-1 text-lg font-bold text-slate-900">Viagem para a praia</p>
+        {/* Body */}
+        <div className="p-4 sm:p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Imóvel</p>
+          <h4 className="mt-0.5 text-lg font-bold text-slate-900">Entrada do apartamento</h4>
 
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: "68%" }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.1, ease: "easeOut" }}
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
-            />
-          </div>
-          <div className="mt-2 flex justify-between text-[11px] text-slate-500">
-            <span>R$ 3.400 guardados</span>
-            <span>Faltam R$ 1.600</span>
+          {/* Saved + total */}
+          <div className="mt-3 flex items-end justify-between">
+            <div>
+              <p className="text-[11px] font-medium text-slate-500">Guardado</p>
+              <p className="text-2xl font-extrabold tabular-nums text-slate-900">
+                R$ {guardado.toLocaleString("pt-BR")},00
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] font-medium text-slate-500">Objetivo</p>
+              <p className="text-sm font-bold tabular-nums text-slate-700">
+                R$ {objetivo.toLocaleString("pt-BR")},00
+              </p>
+            </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-emerald-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">Guardado</p>
-              <p className="text-sm font-bold tabular-nums text-emerald-800">R$ 3.400</p>
+          {/* Progress */}
+          <div className="mt-3">
+            <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: `${pct}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+              />
             </div>
-            <div className="rounded-xl bg-amber-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700/80">Falta</p>
-              <p className="text-sm font-bold tabular-nums text-amber-800">R$ 1.600</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total</p>
-              <p className="text-sm font-bold tabular-nums text-slate-900">R$ 5.000</p>
+            <div className="mt-1.5 flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-emerald-700">{pct}% concluído</span>
+              <span className="text-slate-500">
+                Faltam <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
+              </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Other goals — variety */}
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Outras metas</p>
+          <span className="text-[10px] font-medium text-slate-400">3 ativas</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {otherGoals.map((g) => (
+            <div
+              key={g.name}
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-transform hover:-translate-y-0.5"
+            >
+              <div className="relative h-14 w-full overflow-hidden">
+                <MetaCover kind={g.cover} />
+              </div>
+              <div className="p-2">
+                <p className="line-clamp-1 text-[11px] font-semibold text-slate-800">{g.name}</p>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${g.pct}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+                  />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[9px] text-slate-500">
+                  <span>{g.saved}</span>
+                  <span className="font-semibold text-emerald-700">{g.pct}%</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </MockShell>
