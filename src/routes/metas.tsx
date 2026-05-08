@@ -287,14 +287,14 @@ function MetaCard({
         boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
       }}
     >
-      {/* Cover com imagem real */}
-      <div className="relative h-36 w-full overflow-hidden">
-        <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+      {/* Cover com imagem real — área hero ampliada */}
+      <div className="relative h-56 w-full overflow-hidden sm:h-60">
+        <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.05]">
           <MetaCover coverKey={coverKey} alt={meta.nome} className="h-full w-full" />
         </div>
         {/* Overlay para legibilidade do título sobre foto real */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/5" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/55 to-transparent" />
 
         {/* Badges no topo */}
         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
@@ -347,11 +347,11 @@ function MetaCard({
         </div>
 
         {/* Título sobre o cover */}
-        <div className="absolute inset-x-0 bottom-0 px-4 pb-3">
-          <p className="line-clamp-1 text-base font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+        <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
+          <p className="line-clamp-1 text-lg font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
             {meta.nome}
           </p>
-          <p className="line-clamp-1 text-[11px] text-white/85 drop-shadow">
+          <p className="line-clamp-1 text-[12px] text-white/85 drop-shadow">
             {STATUS_LABEL[status]}
             {meta.prazo ? ` · até ${formatDateBR(meta.prazo)}` : ""}
           </p>
@@ -362,30 +362,38 @@ function MetaCard({
       <div className="space-y-4 p-5">
         {/* Bloco principal — Progresso da meta */}
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Progresso da meta
-          </p>
-          <div className="mt-1 flex items-baseline justify-between gap-2">
-            <Money value={progresso} className="num text-3xl font-extrabold tracking-tight" />
-            <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Progresso da meta
+              </p>
+              <Money value={progresso} className="num mt-0.5 block text-3xl font-extrabold tracking-tight leading-none" />
+              <p className="num mt-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                de <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
+              </p>
+            </div>
+            <div
+              className="shrink-0 rounded-xl px-3 py-2 text-right"
+              style={{ background: `color-mix(in oklab, ${meta.colorHex} 12%, transparent)` }}
+            >
+              <p className="num text-2xl font-extrabold leading-none tabular-nums" style={{ color: meta.colorHex }}>
+                {pct.toFixed(0)}%
+              </p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">do objetivo</p>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-3">
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-card-elevated">
-              <div
-                className="h-full rounded-full origin-left animate-fill"
-                style={{
-                  width: `${pct}%`,
-                  background: isDone
-                    ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
-                    : meta.colorHex,
-                  transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-                }}
-              />
-            </div>
-            <span className="num text-sm font-bold tabular-nums" style={{ color: meta.colorHex }}>
-              {pct.toFixed(0)}%
-            </span>
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-card-elevated">
+            <div
+              className="h-full rounded-full origin-left animate-fill"
+              style={{
+                width: `${pct}%`,
+                background: isDone
+                  ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
+                  : meta.colorHex,
+                transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+              }}
+            />
           </div>
         </div>
 
@@ -406,7 +414,7 @@ function MetaCard({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
                 <Wallet className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs text-muted-foreground truncate">Adicionado direto na meta</span>
+              <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
             </div>
             <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
           </div>
