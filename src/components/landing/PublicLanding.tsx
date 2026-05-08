@@ -48,6 +48,30 @@ const NAV = [
   { label: "Dúvidas", href: "#faq" },
 ];
 
+const HEADER_OFFSET = 72;
+
+function smoothScrollTo(href: string) {
+  if (typeof window === "undefined") return;
+  const id = href.replace(/^#/, "");
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+  if (history.replaceState) history.replaceState(null, "", href);
+}
+
+function handleAnchorClick(
+  e: React.MouseEvent<HTMLAnchorElement>,
+  href: string,
+  onAfter?: () => void,
+) {
+  if (!href.startsWith("#")) return;
+  e.preventDefault();
+  smoothScrollTo(href);
+  onAfter?.();
+}
+
 export function PublicLanding() {
   return (
     <div
