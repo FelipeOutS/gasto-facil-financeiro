@@ -1398,7 +1398,8 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
-                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                  style={{ transform: `scale(${b.scale ?? 1})` }}
+                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
             </Reveal>
