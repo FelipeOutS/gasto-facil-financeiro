@@ -1237,24 +1237,129 @@ function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+type StatTone = "neutral" | "brand" | "info" | "success";
+
+const TONE_STYLES: Record<StatTone, { icon: string; ring: string }> = {
+  neutral: { icon: "bg-muted text-muted-foreground", ring: "" },
+  brand: { icon: "bg-brand-soft text-brand", ring: "ring-1 ring-brand/30" },
+  info: { icon: "bg-blue-500/15 text-blue-500 dark:text-blue-300", ring: "" },
+  success: { icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", ring: "" },
+};
+
 function SummaryStat({
   label,
   value,
+  hint,
+  icon,
+  tone = "neutral",
   highlight,
 }: {
   label: string;
   value: React.ReactNode;
+  hint?: React.ReactNode;
+  icon?: React.ReactNode;
+  tone?: StatTone;
   highlight?: boolean;
 }) {
+  const t = TONE_STYLES[tone];
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border p-3 animate-rise",
-        highlight ? "bg-card-elevated" : "bg-card",
+        "group relative overflow-hidden rounded-2xl border border-border p-3 sm:p-4 transition-all hover-lift card-press",
+        highlight
+          ? "bg-gradient-to-br from-card-elevated via-card to-card shadow-card"
+          : "bg-card",
+        t.ring,
       )}
     >
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-0.5 num text-sm font-semibold truncate">{value}</p>
+      <div className="flex items-center gap-2">
+        {icon && (
+          <span className={cn("grid h-7 w-7 place-items-center rounded-lg shrink-0", t.icon)}>
+            {icon}
+          </span>
+        )}
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-muted-foreground font-semibold truncate">
+          {label}
+        </p>
+      </div>
+      <p
+        className={cn(
+          "mt-1.5 num font-extrabold truncate",
+          highlight ? "text-xl sm:text-2xl" : "text-base sm:text-lg",
+        )}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className="mt-0.5 text-[10px] sm:text-[11px] text-muted-foreground/90 truncate">
+          {hint}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** Pequena ilustração SVG animada para o hero — sutil e premium. */
+function HeroFinanceArt() {
+  return (
+    <svg
+      width="120"
+      height="80"
+      viewBox="0 0 120 80"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="opacity-90"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="heroBar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="oklch(0.78 0.16 152)" />
+          <stop offset="100%" stopColor="oklch(0.55 0.16 152)" />
+        </linearGradient>
+        <linearGradient id="heroBar2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="oklch(0.8 0.14 230)" />
+          <stop offset="100%" stopColor="oklch(0.55 0.14 230)" />
+        </linearGradient>
+      </defs>
+      {/* Eixo */}
+      <line x1="6" y1="68" x2="118" y2="68" stroke="currentColor" strokeOpacity="0.18" strokeWidth="1.5" />
+      {/* Barras */}
+      {[
+        { x: 12, h: 22, fill: "url(#heroBar2)", delay: 0 },
+        { x: 32, h: 36, fill: "url(#heroBar)", delay: 0.1 },
+        { x: 52, h: 28, fill: "url(#heroBar2)", delay: 0.2 },
+        { x: 72, h: 48, fill: "url(#heroBar)", delay: 0.3 },
+        { x: 92, h: 40, fill: "url(#heroBar2)", delay: 0.4 },
+      ].map((b, i) => (
+        <motion.rect
+          key={i}
+          x={b.x}
+          width="14"
+          rx="3"
+          fill={b.fill}
+          initial={{ y: 68, height: 0 }}
+          animate={{ y: 68 - b.h, height: b.h }}
+          transition={{ delay: b.delay, duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+        />
+      ))}
+      {/* Linha de tendência */}
+      <motion.path
+        d="M12 46 Q 38 30 60 38 T 110 18"
+        stroke="oklch(0.78 0.16 55)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.9 }}
+      />
+      <motion.circle
+        cx="110" cy="18" r="3.5"
+        fill="oklch(0.78 0.16 55)"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1.2, duration: 0.4, type: "spring" }}
+      />
+    </svg>
   );
 }
