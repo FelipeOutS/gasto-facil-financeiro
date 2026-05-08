@@ -55,10 +55,10 @@ export function PublicLanding() {
     >
       <Header />
       <Hero />
+      <BanksStrip />
       <TrustStrip />
       <WhyUs />
       <HowItWorks />
-      <BanksStrip />
       <ScreensTabs />
       <DashboardShowcase />
       <FeatureSplit
