@@ -1453,18 +1453,18 @@ function InvestimentosMock() {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
         {classes.map((c) => (
-          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
-                {c.l}
+          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2 sm:p-2.5">
+            <div className="flex items-center justify-between gap-1">
+              <span className="flex min-w-0 items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500 sm:text-[10px]">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />
+                <span className="truncate">{c.l}</span>
               </span>
-              <span className="text-[9px] font-bold text-emerald-600">{c.chip}</span>
+              <span className="shrink-0 text-[9px] font-bold text-emerald-600">{c.chip}</span>
             </div>
-            <p className="mt-1 text-sm font-bold tabular-nums text-slate-900">{c.v}</p>
-            <p className="text-[10px] text-slate-500">{c.pct}% da carteira</p>
+            <p className="mt-1 text-xs font-bold tabular-nums text-slate-900 sm:text-sm">{c.v}</p>
+            <p className="text-[9px] text-slate-500 sm:text-[10px]">{c.pct}% da carteira</p>
           </div>
         ))}
       </div>
