@@ -15,6 +15,7 @@ import {
 } from "@/lib/onboarding/types";
 import { useOnboarding } from "@/lib/onboarding/use-onboarding";
 import { commercialPlanByTier, PLAN_LABEL, type PlanTier } from "@/lib/plans";
+import { BrandLoader } from "@/components/BrandLoader";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
