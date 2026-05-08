@@ -692,6 +692,14 @@ export async function excluirRecorrencia(id: string): Promise<void> {
   }
   memRec = memRec.filter((r) => r.id !== id);
   emit();
+  // Resolve alertas órfãos vinculados à recorrência (assinatura em alta,
+  // novo serviço detectado etc.) — após F5 não devem reaparecer.
+  try {
+    const { resolveAlertasDe } = await import("@/lib/store");
+    await resolveAlertasDe("recorrencia", id);
+  } catch (e) {
+    console.error("[recorrencias] resolveAlertasDe failed", e);
+  }
 }
 
 /**
