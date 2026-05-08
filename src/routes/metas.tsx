@@ -13,6 +13,9 @@ import {
   Image as ImageIcon,
   Check,
   Flame,
+  PiggyBank,
+  Wallet,
+  Flag,
 } from "lucide-react";
 import {
   MetaCover,
