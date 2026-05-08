@@ -3536,6 +3536,22 @@ async function resolveAlertasDaConta(contaId: string): Promise<void> {
   await resolveAlertasDe("conta_a_pagar", contaId);
 }
 
+/**
+ * Resolve alertas cuja `dedupe_key` começa com um prefixo. Útil para alertas
+ * que não usam `related_entity_id` (ex: `fatura_vencida:<cartaoId>:<YYYY-MM>`).
+ */
+export async function resolveAlertasPorDedupeKey(prefix: string): Promise<void> {
+  if (!activeUserId || !prefix) return;
+  const now = new Date().toISOString();
+  const { error } = await sbAny
+    .from("user_alerts")
+    .update({ status: "resolved", resolved_at: now, updated_at: now })
+    .eq("user_id", activeUserId)
+    .like("dedupe_key", `${prefix}%`)
+    .in("status", ["unread", "read"]);
+  if (error) console.error("[store] resolveAlertasPorDedupeKey failed", prefix, error);
+}
+
 async function upsertGastoVinculadoConta(
   conta: ContaAPagar,
   input: {
