@@ -404,21 +404,23 @@ function GastosPage() {
     return cat ? { nome: cat.nome, valor: bestVal, cat } : null;
   }, [filtered]);
 
-  // Opções de mês de referência: meses presentes nos gastos + atual + 2 vizinhos.
+  // Opções de mês de referência: ano ativo completo + meses presentes nos gastos.
   const mesesDisponiveis = useMemo(() => {
     const set = new Set<string>();
+    const baseYm = mesRef !== MES_REF_ALL && /^\d{4}-\d{2}$/.test(mesRef) ? mesRef : currentReferenceMonth();
+    const [baseYear] = baseYm.split("-").map(Number);
+    for (let m = 1; m <= 12; m++) set.add(`${baseYear}-${String(m).padStart(2, "0")}`);
     for (const g of gastos) {
       if (g.confirmado === false) continue;
       const eff = mesEfetivoGasto(g);
       set.add(`${eff.ano}-${String(eff.mes).padStart(2, "0")}`);
     }
-    const now = new Date();
-    for (let i = -2; i <= 2; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    }
     return Array.from(set).sort(); // asc YYYY-MM
-  }, [gastos]);
+  }, [gastos, mesRef]);
+
+  const referenceMonthCaption = mesRef === MES_REF_ALL
+    ? "Mostrando todos os gastos cadastrados"
+    : `Mostrando gastos referentes a ${ymToLabel(mesRef)}`;
 
   const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
   function shiftMes(delta: number) {
@@ -427,7 +429,7 @@ function GastosPage() {
       // entra no mês atual ou mais próximo
       const now = new Date();
       const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const ix = Math.max(0, mesesDisponiveis.indexOf(cur));
+      const ix = mesesDisponiveis.indexOf(cur) >= 0 ? mesesDisponiveis.indexOf(cur) : 0;
       setMesRef(mesesDisponiveis[ix] ?? mesesDisponiveis[0]);
       return;
     }
