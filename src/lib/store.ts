@@ -3675,6 +3675,7 @@ async function upsertGastoVinculadoConta(
       tipoGasto: "unico",
       origem: CONTA_A_PAGAR_GASTO_ORIGEM,
       idOperacaoBanco: contaGastoOperationId(conta.id),
+      invoiceMonth,
       criadoEm: now,
       atualizadoEm: now,
     },
