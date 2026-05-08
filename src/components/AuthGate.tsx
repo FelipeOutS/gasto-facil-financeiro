@@ -5,6 +5,7 @@ import { useRoles } from "@/lib/use-roles";
 import { usePlan } from "@/lib/use-plan";
 import { Wallet, ArrowLeft } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { BrandLoader } from "@/components/BrandLoader";
 import { fetchOnboarding } from "@/lib/onboarding/service";
 import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { planAllowsFeature } from "@/lib/plans";
