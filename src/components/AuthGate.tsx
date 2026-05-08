@@ -136,16 +136,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (premiumRule && !plan.loading && !rolesLoading && !featureAllowed) {
     return (
       <>
-        <div className="flex min-h-screen items-center justify-center bg-background px-6">
-          <div className="max-w-sm text-center animate-fade-in opacity-70">
-            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-card">
-              <Wallet className="h-6 w-6 text-foreground" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {premiumRule.title}
-            </p>
-          </div>
-        </div>
+        <BrandLoader message={premiumRule.title} className="opacity-70" />
         <PremiumLockModal
           open
           onOpenChange={(v) => {
