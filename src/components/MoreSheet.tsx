@@ -63,7 +63,7 @@ export const MORE_ITEMS: MoreItem[] = [
 ];
 
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
-export const MORE_PATHS = MORE_ITEMS.map((i) => i.to);
+export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
 type Props = {
   open: boolean;
