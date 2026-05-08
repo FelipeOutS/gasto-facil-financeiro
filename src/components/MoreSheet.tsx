@@ -71,29 +71,39 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const { user } = useAuth();
+  const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
+  const showAdmin = isAdminMaster || hasFullAccess;
+  const items: MoreItem[] = showAdmin
+    ? [...MORE_ITEMS, { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield }]
+    : MORE_ITEMS;
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
+  const [navigating, setNavigating] = useState(false);
 
   function getRule(item: MoreItem) {
     return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
   }
 
   function isLocked(item: MoreItem) {
-    if (isAdminMaster) return false;
+    if (isAdminMaster || hasFullAccess) return false;
     const rule = getRule(item);
     return rule ? !can(rule.feature) : false;
   }
 
   function handleItem(item: MoreItem) {
+    if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
       onOpenChange(false);
       setTimeout(() => setLockState({ open: true, title: rule.title }), 150);
       return;
     }
+    setNavigating(true);
     onOpenChange(false);
-    navigate({ to: item.to });
+    // Navega imediatamente; o sheet fecha em paralelo (anim ~150ms)
+    navigate({ to: item.to }).finally(() => setNavigating(false));
   }
+
 
   return (
     <>
