@@ -211,6 +211,19 @@ function Hero() {
             "radial-gradient(60% 50% at 80% -10%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(50% 40% at 10% 0%, rgba(59,130,246,0.14) 0%, transparent 65%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
         }}
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.045) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage:
+            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
+        }}
+      />
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-12 pb-16 sm:px-6 md:pt-20 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
         <div className="lg:col-span-6">
           <motion.span
