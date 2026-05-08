@@ -272,6 +272,11 @@ function GuardadoPage() {
                     <p className="truncate text-sm font-medium">{banco?.nome ?? "Banco"}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {tipoLabel} · atualizado {formatDateBR(g.dataAtualizacao)}
+                      {g.metaId ? (
+                        <>
+                          {" "}· <span className="font-semibold text-primary">Meta: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
+                        </>
+                      ) : null}
                     </p>
                   </div>
                   <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
