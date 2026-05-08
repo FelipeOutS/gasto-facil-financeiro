@@ -3722,6 +3722,10 @@ export async function marcarContaComoPago(
       nome: nomeEf,
       valor: valorEf,
       categoriaId: categoriaEf,
+      mesReferencia:
+        conta.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)
+          ? conta.mesReferencia
+          : undefined,
     },
   });
   const now = new Date().toISOString();
