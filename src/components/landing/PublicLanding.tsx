@@ -991,17 +991,18 @@ function GastosMock() {
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
-        <div className="flex gap-1.5">
-          {["Mês atual", "Categoria", "Pix", "Cartão"].map((p, i) => (
+        <div className="flex flex-wrap justify-end gap-1.5">
+          {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
             <span
               key={p}
               className={cn(
-                "rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
                 i === 0
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-600",
               )}
             >
+              {i === 0 && <Calendar className="h-3 w-3" />}
               {p}
             </span>
           ))}
