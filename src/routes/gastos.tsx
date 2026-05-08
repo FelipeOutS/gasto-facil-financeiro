@@ -234,12 +234,13 @@ function GastosPage() {
     const alvo = gastos.find((g) => g.id === highlightId);
     if (!alvo) return;
     // Reset suave: remove filtros e período para o item ser visível.
-    setQ("");
-    setPeriodo("todos");
-    setCatFilter("todas");
-    setPagFilter("todas");
-    setValorMin("");
-    setValorMax("");
+      setQ("");
+      setPeriodo("todos");
+      setMesRef("todos");
+      setCatFilter("todas");
+      setPagFilter("todas");
+      setValorMin("");
+      setValorMax("");
     // Scroll até o card depois do render.
     setTimeout(() => {
       const el = document.getElementById(`gasto-${highlightId}`);
