@@ -1710,50 +1710,50 @@ function Plans() {
                     )}
                   </div>
 
-                  <h3 className={cn("relative mt-5 text-xl font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+                  <h3 className={cn("relative mt-4 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
                     {p.name}
                   </h3>
                   <p
                     className={cn(
-                      "relative mt-2 min-h-[44px] text-sm leading-relaxed",
+                      "relative mt-1.5 min-h-[52px] text-xs leading-relaxed",
                       featured ? "text-slate-300" : "text-slate-500",
                     )}
                   >
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
 
-                  <div className="relative mt-6 flex items-baseline gap-1">
+                  <div className="relative mt-5 flex items-baseline gap-1">
                     <span
                       className={cn(
-                        "text-[2.5rem] font-extrabold leading-none tracking-tight tabular-nums",
+                        "text-[2rem] font-extrabold leading-none tracking-tight tabular-nums",
                         featured ? "text-white" : "text-slate-900",
                       )}
                     >
                       {priceMain.trim()}
                     </span>
-                    <span className={cn("text-sm font-medium", featured ? "text-slate-400" : "text-slate-500")}>
+                    <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
                       /{(pricePer || "mês").trim()}
                     </span>
                   </div>
-                  <p className={cn("relative mt-1.5 text-xs", featured ? "text-slate-400" : "text-slate-400")}>
+                  <p className={cn("relative mt-1 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
                     Cancele quando quiser
                   </p>
 
                   <div
                     className={cn(
-                      "relative my-6 h-px w-full",
+                      "relative my-5 h-px w-full",
                       featured
                         ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
                         : "bg-gradient-to-r from-transparent via-slate-200 to-transparent",
                     )}
                   />
 
-                  <ul className="relative flex-1 space-y-3">
+                  <ul className="relative flex-1 space-y-2.5">
                     {p.highlights.map((h) => (
                       <li
                         key={h}
                         className={cn(
-                          "flex items-start gap-2.5 text-sm leading-relaxed",
+                          "flex items-start gap-2 text-[13px] leading-snug",
                           featured ? "text-slate-200" : "text-slate-700",
                         )}
                       >
@@ -1773,7 +1773,7 @@ function Plans() {
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "relative mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
+                      "relative mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
                       featured
                         ? "bg-white text-slate-900 hover:bg-slate-100"
                         : "bg-slate-900 text-white hover:bg-slate-800",
