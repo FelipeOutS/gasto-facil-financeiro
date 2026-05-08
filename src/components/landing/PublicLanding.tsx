@@ -152,7 +152,7 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#top" className="flex items-center gap-2">
+        <a href="#top" onClick={(e) => handleAnchorClick(e, "#top")} className="flex items-center gap-2">
           <BrandMark className="h-8 w-auto" />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
@@ -160,6 +160,7 @@ function Header() {
             <a
               key={n.href}
               href={n.href}
+              onClick={(e) => handleAnchorClick(e, n.href)}
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               {n.label}
