@@ -350,6 +350,13 @@ export type ContaAPagar = {
   importBatchId?: string;
   mes: number;
   ano: number;
+  /**
+   * Mês de referência (competência) no formato `YYYY-MM`. Quando ausente,
+   * trate como o mês do vencimento. Determina onde a conta entra nos
+   * relatórios, orçamento e limite inteligente — independente de quando
+   * foi efetivamente paga.
+   */
+  mesReferencia?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
