@@ -130,7 +130,14 @@ export function DashboardCartoesInsights({
       // vencimento real é da fatura aberta (depois do próximo fechamento).
       if (status === "aberta") continue;
       const diaVenc = c.diaVencimento ?? 10;
-      const dataVenc = new Date(anoCorr, mesCorr - 1, diaVenc);
+      const diaFech = c.diaFechamento ?? 1;
+      // mes/ano = mês de referência (compras). Vencimento ocorre no mês
+      // seguinte (ou no próprio mês de fechamento se diaVenc>=diaFech).
+      let dataVenc = new Date(anoCorr, mesCorr, diaVenc);
+      const dataFech = new Date(anoCorr, mesCorr, diaFech);
+      if (dataVenc.getTime() < dataFech.getTime()) {
+        dataVenc = new Date(anoCorr, mesCorr + 1, diaVenc);
+      }
       const dias = diffDays(dataVenc, hoje);
       // Mostra somente o que vence em <=10 dias OU já está vencida.
       if (dias > 10 && status !== "vencida") continue;

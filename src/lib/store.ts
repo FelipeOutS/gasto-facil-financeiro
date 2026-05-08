@@ -1477,8 +1477,17 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
   }
 
-  // Mês corrente em formato YYYY-MM (para gastos com invoice_month explícito).
-  const currentYm = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+  // Mês de referência (compras) da fatura ABERTA — identifica gastos com
+  // invoice_month explícito. Se hoje já passou do dia de fechamento, o
+  // ciclo aberto começou neste mês; senão, começou no mês anterior.
+  const diaFechRef = diaFech && diaFech > 0 ? diaFech : 0;
+  let refY = hoje.getFullYear();
+  let refM0 = hoje.getMonth();
+  if (diaFechRef && hoje.getDate() <= diaFechRef) {
+    refM0 -= 1;
+    if (refM0 < 0) { refM0 = 11; refY -= 1; }
+  }
+  const currentYm = `${refY}-${String(refM0 + 1).padStart(2, "0")}`;
   const considerados = gastosCartao.filter((g) => {
     if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
       // Fonte da verdade: o usuário decidiu o mês da fatura.
@@ -4265,17 +4274,17 @@ export function getFatura(cartaoId: string, mes: number, ano: number): FaturaCar
 }
 
 /**
- * Calcula o ciclo da fatura de referência mes/ano (mês de VENCIMENTO).
- * Retorna o intervalo [inicio, fim] de datas dos lançamentos que compõem essa fatura.
+ * Calcula o ciclo da fatura. Convenção: `mes/ano` = MÊS DE REFERÊNCIA (mês
+ * das compras). Para um cartão com diaFechamento=5, a fatura "Maio" abrange
+ * compras feitas de 06/05 até 05/06 (fecha no início do mês seguinte).
  */
 export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio: Date; fim: Date } {
   const diaFech = cartao.diaFechamento && cartao.diaFechamento > 0 ? cartao.diaFechamento : 1;
-  // Convenção: a fatura que vence no mês X foi fechada no mês X (se diaVencimento > diaFech)
-  // ou no mês X-1 (se diaVencimento < diaFech). Para simplificar, considera-se que a fatura
-  // do mês "mes" abrange compras feitas entre o dia seguinte ao fechamento do mês anterior
-  // e o fechamento do próprio mês "mes".
-  const fim = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
-  const inicio = new Date(ano, mes - 2, diaFech + 1, 0, 0, 0, 0);
+  // inicio = dia seguinte ao fechamento do mês anterior (= dia seguinte ao
+  // fechamento que ocorre no início do próprio mês de referência).
+  const inicio = new Date(ano, mes - 1, diaFech + 1, 0, 0, 0, 0);
+  // fim = fechamento do mês seguinte ao mês de referência.
+  const fim = new Date(ano, mes, diaFech, 23, 59, 59, 999);
   return { inicio, fim };
 }
 
@@ -4294,14 +4303,16 @@ export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
     return { mes: m, ano: a };
   }
   if (g.formaPagamento === "credito") {
-    // Fallback pelo dia de fechamento do cartão
+    // Convenção: mês de referência da fatura = mês das compras.
+    // Se a compra foi feita ATÉ o dia de fechamento, ainda pertence à fatura
+    // do mês anterior (ciclo que está prestes a fechar). Caso contrário,
+    // pertence à fatura do próprio mês da compra.
     const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
     const d = parseDateLocal(g.data);
     if (d && cartao?.diaFechamento && cartao.diaFechamento > 0) {
-      // Se a compra foi após o fechamento, vai para a fatura do mês seguinte.
       const ref = d.getDate() > cartao.diaFechamento
-        ? new Date(d.getFullYear(), d.getMonth() + 1, 1)
-        : d;
+        ? d
+        : new Date(d.getFullYear(), d.getMonth() - 1, 1);
       return { mes: ref.getMonth() + 1, ano: ref.getFullYear() };
     }
   }
@@ -4528,64 +4539,59 @@ export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
 
 /**
  * Calcula status efetivo da fatura: 'paga' (se marcada), 'vencida', 'fechada' ou 'aberta'.
+ * Convenção: `mes/ano` = MÊS DE REFERÊNCIA das compras. O fechamento ocorre
+ * normalmente no mês seguinte (ex.: fatura "Maio" fech=5 fecha em 05/06).
  */
 export function statusEfetivoFatura(cartao: Cartao, mes: number, ano: number, hoje: Date = new Date()): StatusFatura {
   const registro = getFatura(cartao.id, mes, ano);
   if (registro?.status === "paga") return "paga";
   const diaFech = cartao.diaFechamento ?? 1;
   const diaVenc = cartao.diaVencimento ?? 10;
-  const dataFechamento = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
-  const dataVencimento = new Date(ano, mes - 1, diaVenc, 23, 59, 59, 999);
+  // Fechamento da fatura "mes" ocorre em (ano, mes, diaFech) — mês seguinte.
+  const dataFechamento = new Date(ano, mes, diaFech, 23, 59, 59, 999);
+  // Vencimento: primeira ocorrência de diaVenc em ou após o fechamento.
+  let dataVencimento = new Date(ano, mes, diaVenc, 23, 59, 59, 999);
+  if (dataVencimento.getTime() < dataFechamento.getTime()) {
+    dataVencimento = new Date(ano, mes + 1, diaVenc, 23, 59, 59, 999);
+  }
   if (hoje > dataVencimento) return "vencida";
   if (hoje > dataFechamento) return "fechada";
   return "aberta";
 }
 
 /**
- * Retorna a "fatura corrente" do cartão: o ciclo cuja data de vencimento
- * ainda não passou (próximo vencimento). Se a fatura cujo vencimento já
- * passou ainda não foi paga, ela continua sendo a corrente (vencida).
+ * Retorna a "fatura corrente" do cartão como {mes, ano} = MÊS DE REFERÊNCIA
+ * (mês das compras) do ciclo atualmente aberto, considerando o dia de
+ * fechamento do cartão.
  *
- * Isso evita o bug onde o app marcava como "vencida" a fatura do mês atual
- * apenas porque o dia do vencimento já passou no calendário, mesmo o usuário
- * já estando no ciclo seguinte (que vence no mês que vem).
+ * - Se hoje > diaFechamento: o ciclo aberto começou neste mês → mes_ref = hoje.mes.
+ * - Caso contrário: o ciclo aberto começou no mês anterior → mes_ref = hoje.mes - 1.
  */
 export function faturaCorrente(
   cartao: Cartao,
   hoje: Date = new Date(),
 ): { mes: number; ano: number } {
-  const diaVenc = cartao.diaVencimento ?? 10;
-  const anoBase = hoje.getFullYear();
-  const mesBase = hoje.getMonth(); // 0-indexed
-  // Data de vencimento da fatura do mês corrente (calendário).
-  const vencMesCorrente = new Date(anoBase, mesBase, diaVenc, 23, 59, 59, 999);
-
-  // Se a fatura cujo vencimento já passou neste mês NÃO foi paga,
-  // ela é a "corrente" (vencida) — usuário ainda precisa lidar com ela.
-  if (hoje > vencMesCorrente) {
-    const mes = mesBase + 1;
-    const ano = anoBase;
-    const reg = getFatura(cartao.id, mes, ano);
-    if (reg?.status !== "paga") {
-      return { mes, ano };
+  const diaFech = cartao.diaFechamento ?? 1;
+  const baseDay = hoje.getDate();
+  let y = hoje.getFullYear();
+  let m0 = hoje.getMonth(); // 0-indexed
+  if (baseDay <= diaFech) {
+    // ciclo aberto começou no mês anterior
+    m0 -= 1;
+    if (m0 < 0) {
+      m0 = 11;
+      y -= 1;
     }
-    // Se já foi paga, a próxima é o mês seguinte.
-    const prox = new Date(anoBase, mesBase + 1, 1);
-    return { mes: prox.getMonth() + 1, ano: prox.getFullYear() };
   }
-
-  // Vencimento ainda no futuro neste mês → fatura corrente é a deste mês.
-  return { mes: mesBase + 1, ano: anoBase };
+  return { mes: m0 + 1, ano: y };
 }
 
 /* ====================================================================== *
  * HELPERS DE EXIBIÇÃO DA FATURA — convenção "mês de referência"           *
  * ---------------------------------------------------------------------- *
- * No storage, faturas_cartao.{mes,ano} representam o mês do VENCIMENTO    *
- * (convenção interna). Para exibição financeira, o usuário pensa em       *
- * "fatura de Maio" como o conjunto de COMPRAS feitas em Maio (mês de      *
- * competência), que fecha no início do mês seguinte. Estes helpers fazem  *
- * a tradução para a UI sem alterar a semântica do banco.                  *
+ * Convenção atual: faturas_cartao.{mes,ano} e gastos.invoice_month        *
+ * representam o MÊS DE REFERÊNCIA (mês das compras). O fechamento e o     *
+ * vencimento ocorrem normalmente no mês seguinte.                         *
  * ====================================================================== */
 
 /** Próximo fechamento (futuro mais próximo) considerando hoje. */
@@ -4607,8 +4613,6 @@ export function proximoVencimentoFaturaAberta(
   const fech = proximoFechamentoData(cartao, hoje);
   if (!fech) return null;
   let venc = new Date(fech.getFullYear(), fech.getMonth(), cartao.diaVencimento);
-  // Se o vencimento "cai" antes ou no mesmo dia do fechamento, vai para o
-  // mês seguinte (ex.: fech=25, venc=05 → venc do mês seguinte ao fechamento).
   if (venc.getTime() <= fech.getTime()) {
     venc = new Date(fech.getFullYear(), fech.getMonth() + 1, cartao.diaVencimento);
   }
@@ -4616,26 +4620,22 @@ export function proximoVencimentoFaturaAberta(
 }
 
 /**
- * Mês de referência da fatura (mês de COMPRAS) a partir do storage record.
- * Storage `mes/ano` = mês do vencimento. Mês de referência = mês onde a maior
- * parte do ciclo de compras ocorre, derivado do início do ciclo.
+ * Mês de referência da fatura (identidade — `mes/ano` já são o mês das compras).
  */
 export function mesReferenciaFatura(
-  cartao: Cartao,
-  mesStorage: number,
-  anoStorage: number,
+  _cartao: Cartao,
+  mes: number,
+  ano: number,
 ): { mes: number; ano: number } {
-  const { inicio } = cicloFatura(cartao, mesStorage, anoStorage);
-  return { mes: inicio.getMonth() + 1, ano: inicio.getFullYear() };
+  return { mes, ano };
 }
 
 /** Label "Maio de 2026" do mês de referência da fatura. */
 export function mesReferenciaFaturaLabel(
-  cartao: Cartao,
-  mesStorage: number,
-  anoStorage: number,
+  _cartao: Cartao,
+  mes: number,
+  ano: number,
 ): string {
-  const { mes, ano } = mesReferenciaFatura(cartao, mesStorage, anoStorage);
   const nomes = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",

@@ -1056,8 +1056,16 @@ function FaturaSheet({
     return Array.from(map.entries()).sort(([a], [b]) => (a < b ? 1 : -1));
   })();
 
-  // Vencimento em string e dias até vencer
-  const proxVencDate = new Date(ref.ano, ref.mes - 1, cartao.diaVencimento || 10);
+  // Vencimento em string e dias até vencer.
+  // ref.mes/ano = MÊS DE REFERÊNCIA (compras). Vencimento real ocorre no
+  // mês seguinte (ou no próprio mês de fechamento se diaVenc>=diaFech).
+  const _diaFechRef = cartao.diaFechamento || 1;
+  const _diaVencRef = cartao.diaVencimento || 10;
+  let proxVencDate = new Date(ref.ano, ref.mes, _diaVencRef);
+  const _fechRef = new Date(ref.ano, ref.mes, _diaFechRef);
+  if (proxVencDate.getTime() < _fechRef.getTime()) {
+    proxVencDate = new Date(ref.ano, ref.mes + 1, _diaVencRef);
+  }
   const diasParaVencer = Math.ceil(
     (proxVencDate.getTime() - new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /
       (1000 * 60 * 60 * 24),
@@ -1087,7 +1095,8 @@ function FaturaSheet({
   }
 
   function handleAddCompra(data: NovoGastoInput) {
-    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id });
+    const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
+    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
     toast.success("Compra adicionada à fatura.");
     setOpenAdd(false);
   }
