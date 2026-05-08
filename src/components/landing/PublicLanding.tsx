@@ -30,6 +30,8 @@ import {
   Quote,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { BrandLogo } from "@/components/BrandLogo";
+import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
