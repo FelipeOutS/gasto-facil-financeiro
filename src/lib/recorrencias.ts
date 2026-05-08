@@ -675,6 +675,15 @@ export async function atualizarRecorrencia(
   const rec = rowToRec(data);
   memRec = memRec.map((r) => (r.id === id ? rec : r));
   emit();
+  // Se a recorrência foi cancelada, resolver alertas órfãos.
+  if (patch.status === "cancelada" || patch.status === "excluida") {
+    try {
+      const { resolveAlertasDe } = await import("@/lib/store");
+      await resolveAlertasDe("recorrencia", id);
+    } catch (e) {
+      console.error("[recorrencias] resolveAlertasDe failed", e);
+    }
+  }
 }
 
 export async function excluirRecorrencia(id: string): Promise<void> {
