@@ -1132,6 +1132,7 @@ function ContaFormDialog({
         dataVencimento: dataVenc,
         categoriaId: categoriaId || undefined,
         observacao: observacao.trim() || undefined,
+        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : undefined,
         recorrente,
         frequenciaRecorrencia: recorrente ? frequencia : undefined,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
