@@ -153,8 +153,7 @@ export function SmartLimiteCard({
       const valorR = r.valor || 0;
       const dupConta = contas.some(
         (c) =>
-          c.mes === mes &&
-          c.ano === ano &&
+          contaPertenceAoMesRef(c, mes, ano) &&
           statusContaEfetivo(c, refISO) !== "pago" &&
           norm(c.nome) === nomeR,
       );
