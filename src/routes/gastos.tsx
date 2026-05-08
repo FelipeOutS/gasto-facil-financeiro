@@ -346,6 +346,54 @@ function GastosPage() {
 
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
+  const topCategoria = useMemo(() => {
+    if (!filtered.length) return null;
+    const acc = new Map<string, number>();
+    for (const g of filtered) acc.set(g.categoriaId, (acc.get(g.categoriaId) ?? 0) + g.valor);
+    let bestId = "";
+    let bestVal = -1;
+    acc.forEach((v, k) => {
+      if (v > bestVal) {
+        bestVal = v;
+        bestId = k;
+      }
+    });
+    const cat = getCategoriaById(bestId);
+    return cat ? { nome: cat.nome, valor: bestVal, cat } : null;
+  }, [filtered]);
+
+  // Opções de mês de referência: meses presentes nos gastos + atual + 2 vizinhos.
+  const mesesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    for (const g of gastos) {
+      if (g.confirmado === false) continue;
+      const eff = mesEfetivoGasto(g);
+      set.add(`${eff.ano}-${String(eff.mes).padStart(2, "0")}`);
+    }
+    const now = new Date();
+    for (let i = -2; i <= 2; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    return Array.from(set).sort(); // asc YYYY-MM
+  }, [gastos]);
+
+  const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
+  function shiftMes(delta: number) {
+    if (!mesesDisponiveis.length) return;
+    if (mesRef === "todos") {
+      // entra no mês atual ou mais próximo
+      const now = new Date();
+      const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const ix = Math.max(0, mesesDisponiveis.indexOf(cur));
+      setMesRef(mesesDisponiveis[ix] ?? mesesDisponiveis[0]);
+      return;
+    }
+    const next = mesRefIdx + delta;
+    if (next < 0 || next >= mesesDisponiveis.length) return;
+    setMesRef(mesesDisponiveis[next]);
+  }
+
 
   // Limpa seleção quando filtros mudam (mantém apenas IDs ainda visíveis)
   useEffect(() => {
