@@ -1621,6 +1621,160 @@ const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "em
   mei_inteligente: { label: "Recomendado MEI", tone: "emerald" },
 };
 
+const VISIBLE_HIGHLIGHTS = 5;
+
+function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[number]; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const tag = HIGHLIGHT[p.tier];
+  const featured = !!tag;
+  const audience = PLAN_AUDIENCE[p.tier];
+  const [priceMain, pricePer] = p.priceLabel.split("/");
+  const hasMore = p.highlights.length > VISIBLE_HIGHLIGHTS;
+  const visibleItems = expanded ? p.highlights : p.highlights.slice(0, VISIBLE_HIGHLIGHTS);
+
+  return (
+    <Reveal delay={i * 0.05} className="h-full">
+      <div
+        className={cn(
+          "group relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl px-5 py-6 sm:px-6 sm:py-6 xl:px-5 xl:py-6 transition-all duration-300",
+          featured
+            ? "bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-[0_24px_60px_-22px_rgba(15,23,42,0.55)] ring-1 ring-white/5 hover:-translate-y-1 hover:shadow-[0_32px_70px_-22px_rgba(15,23,42,0.65)]"
+            : "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]",
+        )}
+      >
+        {featured && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-24 h-40 opacity-60"
+            style={{
+              background:
+                tag!.tone === "primary"
+                  ? "radial-gradient(60% 100% at 50% 100%, rgba(59,130,246,0.45), transparent 70%)"
+                  : "radial-gradient(60% 100% at 50% 100%, rgba(16,185,129,0.45), transparent 70%)",
+            }}
+          />
+        )}
+
+        <div className="relative flex items-center justify-between gap-2">
+          {audience ? (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
+                featured ? "bg-white/10 text-white/90 ring-white/20" : audience.tone,
+              )}
+            >
+              {audience.label}
+            </span>
+          ) : (
+            <span />
+          )}
+          {tag && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider",
+                tag.tone === "primary"
+                  ? "bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/40"
+                  : "bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40",
+              )}
+            >
+              <Sparkles className="h-3 w-3" />
+              {tag.label}
+            </span>
+          )}
+        </div>
+
+        <h3 className={cn("relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+          {p.name}
+        </h3>
+        <p
+          className={cn(
+            "relative mt-1 min-h-[34px] text-xs leading-snug",
+            featured ? "text-slate-300" : "text-slate-500",
+          )}
+        >
+          {PLAN_DESCRIPTIONS[p.tier]}
+        </p>
+
+        <div className="relative mt-3 flex items-baseline gap-1">
+          <span
+            className={cn(
+              "text-[1.75rem] font-extrabold leading-none tracking-tight tabular-nums",
+              featured ? "text-white" : "text-slate-900",
+            )}
+          >
+            {priceMain.trim()}
+          </span>
+          <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
+            /{(pricePer || "mês").trim()}
+          </span>
+        </div>
+        <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
+          Cancele quando quiser
+        </p>
+
+        <div
+          className={cn(
+            "relative my-3 h-px w-full",
+            featured
+              ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              : "bg-gradient-to-r from-transparent via-slate-200 to-transparent",
+          )}
+        />
+
+        <ul className="relative space-y-1.5">
+          {visibleItems.map((h) => (
+            <li
+              key={h}
+              className={cn(
+                "flex items-start gap-2 text-[12.5px] leading-snug",
+                featured ? "text-slate-200" : "text-slate-700",
+              )}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full",
+                  featured ? "bg-emerald-400/20 text-emerald-300" : "bg-emerald-50 text-emerald-700",
+                )}
+              >
+                <Check className="h-2.5 w-2.5" strokeWidth={3} />
+              </span>
+              <span>{h}</span>
+            </li>
+          ))}
+        </ul>
+
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className={cn(
+              "relative mt-2 self-start text-[11.5px] font-semibold underline-offset-2 hover:underline",
+              featured ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            {expanded ? "Ver menos" : `Ver todos os ${p.highlights.length} recursos`}
+          </button>
+        )}
+
+        <div className="flex-1" />
+
+        <Link
+          to="/cadastro"
+          className={cn(
+            "relative mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
+            featured
+              ? "bg-white text-slate-900 hover:bg-slate-100"
+              : "bg-slate-900 text-white hover:bg-slate-800",
+          )}
+        >
+          Escolher plano
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </Reveal>
+  );
+}
+
 function Plans() {
   return (
     <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
