@@ -539,7 +539,7 @@ function TrustStrip() {
         {items.map((it) => (
           <div key={it.label} className="flex items-center gap-3">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
-              <it.icon className="h-4.5 w-4.5" />
+              <it.icon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 leading-tight">{it.label}</p>
@@ -986,17 +986,17 @@ function GastosMock() {
   ];
   return (
     <MockShell>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
-        <div className="flex flex-wrap justify-end gap-1.5">
+        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 sm:flex-wrap sm:justify-end sm:overflow-visible">
           {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
             <span
               key={p}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold",
                 i === 0
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-600",
@@ -1084,10 +1084,10 @@ function CartaoMock() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Em aberto · vence 15/12
+          <span className="whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+            Vence 15/12
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
