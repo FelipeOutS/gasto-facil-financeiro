@@ -1663,7 +1663,7 @@ function Plans() {
               <Reveal key={p.tier} delay={i * 0.05} className="h-full">
                 <div
                   className={cn(
-                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 transition-all duration-300",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-5 sm:p-6 lg:p-5 xl:p-6 transition-all duration-300",
                     featured
                       ? "bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-[0_24px_60px_-22px_rgba(15,23,42,0.55)] hover:-translate-y-1 hover:shadow-[0_32px_70px_-22px_rgba(15,23,42,0.65)]"
                       : "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]",
