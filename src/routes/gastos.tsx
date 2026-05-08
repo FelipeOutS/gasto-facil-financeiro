@@ -55,7 +55,7 @@ import {
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
-import { mesAnoToLabel, mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
+import { mesAnoToLabel, mesReferenciaOpcoes, ymFromDate, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -125,6 +125,26 @@ const PERIODO_LABEL: Record<PeriodoId, string> = {
 };
 
 const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
+const MES_REF_ALL = "todos";
+const MES_REF_STORAGE_KEY = "gf:gastos:selectedReferenceMonth:v1";
+
+function isValidReferenceMonth(value: string | null | undefined): value is string {
+  return value === MES_REF_ALL || /^\d{4}-\d{2}$/.test(value ?? "");
+}
+
+function currentReferenceMonth() {
+  return ymFromDate();
+}
+
+function readInitialReferenceMonth() {
+  if (typeof window === "undefined") return currentReferenceMonth();
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("mes");
+  if (isValidReferenceMonth(fromUrl)) return fromUrl;
+  const fromStorage = window.localStorage.getItem(MES_REF_STORAGE_KEY);
+  if (isValidReferenceMonth(fromStorage)) return fromStorage;
+  return currentReferenceMonth();
+}
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -232,9 +252,11 @@ function GastosPage() {
     const alvo = gastos.find((g) => g.id === highlightId);
     if (!alvo) return;
     // Reset suave: remove filtros e período para o item ser visível.
+    const eff = mesEfetivoGasto(alvo);
+    const targetYm = `${eff.ano}-${String(eff.mes).padStart(2, "0")}`;
       setQ("");
       setPeriodo("todos");
-      setMesRef("todos");
+      setMesRef(targetYm);
       setCatFilter("todas");
       setPagFilter("todas");
       setValorMin("");
@@ -248,7 +270,9 @@ function GastosPage() {
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
-  const [mesRef, setMesRef] = useState<string>("todos"); // "todos" | "YYYY-MM"
+  const [selectedReferenceMonth, setSelectedReferenceMonth] = useState<string>(() => readInitialReferenceMonth());
+  const mesRef = selectedReferenceMonth; // "todos" | "YYYY-MM"
+  const setMesRef = setSelectedReferenceMonth;
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -266,6 +290,26 @@ function GastosPage() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [reclassificando, setReclassificando] = useState(false);
   const { can } = usePlan();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isValidReferenceMonth(selectedReferenceMonth)) return;
+    window.localStorage.setItem(MES_REF_STORAGE_KEY, selectedReferenceMonth);
+    const url = new URL(window.location.href);
+    url.searchParams.set("mes", selectedReferenceMonth);
+    window.history.replaceState({}, "", url.toString());
+  }, [selectedReferenceMonth]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const restoreFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get("mes");
+      if (isValidReferenceMonth(fromUrl)) setSelectedReferenceMonth(fromUrl);
+    };
+    window.addEventListener("popstate", restoreFromUrl);
+    return () => window.removeEventListener("popstate", restoreFromUrl);
+  }, []);
+
   const tryImportar = () => {
     if (can("importar_extrato")) setImportOpen(true);
     else setUpgradeOpen(true);
@@ -360,21 +404,23 @@ function GastosPage() {
     return cat ? { nome: cat.nome, valor: bestVal, cat } : null;
   }, [filtered]);
 
-  // Opções de mês de referência: meses presentes nos gastos + atual + 2 vizinhos.
+  // Opções de mês de referência: ano ativo completo + meses presentes nos gastos.
   const mesesDisponiveis = useMemo(() => {
     const set = new Set<string>();
+    const baseYm = mesRef !== MES_REF_ALL && /^\d{4}-\d{2}$/.test(mesRef) ? mesRef : currentReferenceMonth();
+    const [baseYear] = baseYm.split("-").map(Number);
+    for (let m = 1; m <= 12; m++) set.add(`${baseYear}-${String(m).padStart(2, "0")}`);
     for (const g of gastos) {
       if (g.confirmado === false) continue;
       const eff = mesEfetivoGasto(g);
       set.add(`${eff.ano}-${String(eff.mes).padStart(2, "0")}`);
     }
-    const now = new Date();
-    for (let i = -2; i <= 2; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    }
     return Array.from(set).sort(); // asc YYYY-MM
-  }, [gastos]);
+  }, [gastos, mesRef]);
+
+  const referenceMonthCaption = mesRef === MES_REF_ALL
+    ? "Mostrando todos os gastos cadastrados"
+    : `Mostrando gastos referentes a ${ymToLabel(mesRef)}`;
 
   const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
   function shiftMes(delta: number) {
@@ -383,7 +429,7 @@ function GastosPage() {
       // entra no mês atual ou mais próximo
       const now = new Date();
       const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const ix = Math.max(0, mesesDisponiveis.indexOf(cur));
+      const ix = mesesDisponiveis.indexOf(cur) >= 0 ? mesesDisponiveis.indexOf(cur) : 0;
       setMesRef(mesesDisponiveis[ix] ?? mesesDisponiveis[0]);
       return;
     }
@@ -487,13 +533,11 @@ function GastosPage() {
     hasMin ||
     hasMax ||
     !!q.trim() ||
-    mesRef !== "todos" ||
     order !== "recente";
 
   function clearAll() {
     setQ("");
     setPeriodo("todos");
-    setMesRef("todos");
     setCustomFrom(undefined);
     setCustomTo(undefined);
     setCatFilter("todas");
@@ -607,18 +651,18 @@ function GastosPage() {
               <ChevronLeft className="h-4 w-4" />
             </button>
             <Select value={mesRef} onValueChange={setMesRef}>
-              <SelectTrigger className="h-9 min-w-[180px] rounded-full bg-card-elevated border-border font-semibold text-sm">
+              <SelectTrigger className="h-9 min-w-[190px] rounded-full border-brand/30 bg-brand-soft/70 font-semibold text-sm text-foreground shadow-sm ring-1 ring-brand/10">
                 <SelectValue>
                   {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="todos">Todos os meses</SelectItem>
                 {mesesDisponiveis.map((ym) => (
                   <SelectItem key={ym} value={ym}>
                     {ymToLabel(ym)}
                   </SelectItem>
                 ))}
+                <SelectItem value="todos">Todos os meses</SelectItem>
               </SelectContent>
             </Select>
             <button
@@ -631,13 +675,10 @@ function GastosPage() {
             </button>
           </div>
         </div>
-        {mesRef !== "todos" && (
-          <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-brand" />
-            Este resumo considera apenas os gastos de{" "}
-            <strong className="text-foreground">{ymToLabel(mesRef)}</strong>.
-          </p>
-        )}
+        <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-brand" />
+          <span>{referenceMonthCaption}</span>
+        </p>
       </section>
 
       {/* Botões mobile */}
@@ -882,12 +923,6 @@ function GastosPage() {
       {/* Chips de filtros ativos */}
       {hasAnyFilter && (
         <div className="mt-3 flex flex-wrap items-center gap-2 animate-fade-in">
-          {mesRef !== "todos" && (
-            <ActiveChip
-              label={`Mês: ${ymToLabel(mesRef)}`}
-              onRemove={() => setMesRef("todos")}
-            />
-          )}
           {periodoChipLabel && (
             <ActiveChip
               label={periodoChipLabel}
@@ -1068,6 +1103,16 @@ function GastosPage() {
               </p>
               <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
                 Limpar filtros
+              </Button>
+            </>
+          ) : mesRef !== "todos" ? (
+            <>
+              <p className="font-medium text-foreground">Nada por aqui ainda</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Seus gastos de {ymToLabel(mesRef)} aparecerão aqui.
+              </p>
+              <Button asChild size="sm" className="mt-4 rounded-full">
+                <Link to="/adicionar">Adicionar gasto em {ymToLabel(mesRef)}</Link>
               </Button>
             </>
           ) : (

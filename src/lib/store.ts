@@ -396,6 +396,10 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
       row.mes = normalized.mes;
       row.ano = normalized.ano;
     }
+    if (!normalized.invoiceMonth || !/^\d{4}-\d{2}$/.test(normalized.invoiceMonth)) {
+      normalized.invoiceMonth = `${dateForYm.getFullYear()}-${String(dateForYm.getMonth() + 1).padStart(2, "0")}`;
+      row.invoice_month = normalized.invoiceMonth;
+    }
   }
 
   if ((normalized as Partial<Gasto>).confirmado == null) {
@@ -1621,8 +1625,8 @@ export type NovoGastoInput = {
   gastoFixo?: boolean;
   cartaoId?: string;
   /**
-   * Mês da fatura (YYYY-MM). Usado apenas para gastos no crédito —
-   * determina em qual fatura a compra entra, independente da data real.
+   * Mês de referência (YYYY-MM). Define a competência financeira do gasto,
+   * independente da data de lançamento, pagamento ou vencimento.
    */
   invoiceMonth?: string;
   /** Horário opcional (HH:mm). */
@@ -1880,12 +1884,14 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     (o.row as ExtraCols).origem = origemVal;
     (o.row as ExtraCols).import_batch_id = batchId;
     (o.row as ExtraCols).id_operacao_banco = opId;
-    if (invoiceMonthVal) (o.row as ExtraCols).invoice_month = invoiceMonthVal;
+    const fallbackInvoiceMonth = `${o.client.ano}-${String(o.client.mes).padStart(2, "0")}`;
+    const resolvedInvoiceMonth = invoiceMonthVal ?? fallbackInvoiceMonth;
+    (o.row as ExtraCols).invoice_month = resolvedInvoiceMonth;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
     if (batchId) o.client.importBatchId = batchId;
     if (opId) o.client.idOperacaoBanco = opId;
-    if (invoiceMonthVal) o.client.invoiceMonth = invoiceMonthVal;
+    o.client.invoiceMonth = resolvedInvoiceMonth;
   }
   return out;
 }
