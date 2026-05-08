@@ -1597,95 +1597,193 @@ function TrustPoints() {
 const PLAN_DESCRIPTIONS: Record<PlanTier, string> = {
   free: "",
   sem_assinatura: "",
-  pessoal_manual: "Para quem quer organizar tudo manualmente, com controle simples e direto.",
-  pessoal_premium: "Mais automação e recursos completos para sua vida financeira.",
-  mei_essencial: "O essencial para organizar as finanças do seu MEI.",
-  mei_inteligente: "MEI com automação completa para ganhar tempo e clareza.",
+  pessoal_manual: "Para começar a organizar suas finanças pessoais com simplicidade.",
+  pessoal_premium: "Vida financeira pessoal completa, com automação e mais recursos.",
+  mei_essencial: "O essencial para o MEI manter contas, recibos e fluxo organizados.",
+  mei_inteligente: "MEI com automação completa: ganhe tempo e tenha clareza total.",
   empresa: "Visão financeira completa para empresas que precisam de mais controle.",
   admin_master: "",
 };
 
-const HIGHLIGHT: Partial<Record<PlanTier, string>> = {
-  pessoal_premium: "Mais escolhido",
-  mei_inteligente: "Recomendado MEI",
+const PLAN_AUDIENCE: Record<PlanTier, { label: string; tone: string } | null> = {
+  free: null,
+  sem_assinatura: null,
+  pessoal_manual: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
+  pessoal_premium: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
+  mei_essencial: { label: "MEI", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  mei_inteligente: { label: "MEI", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  empresa: { label: "Empresa", tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+  admin_master: null,
+};
+
+const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "emerald" }>> = {
+  pessoal_premium: { label: "Mais escolhido", tone: "primary" },
+  mei_inteligente: { label: "Recomendado MEI", tone: "emerald" },
 };
 
 function Plans() {
   return (
-    <section id="planos" className="bg-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0 opacity-60"
+        style={{
+          backgroundImage:
+            "radial-gradient(50% 40% at 100% 0%, rgba(59,130,246,0.08), transparent 60%), radial-gradient(40% 40% at 0% 100%, rgba(16,185,129,0.08), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Planos"
           title="Escolha o plano ideal para sua rotina financeira."
-          subtitle="Comece com o plano que combina com o seu momento e evolua conforme sua organização financeira crescer."
+          subtitle="Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer."
+          center
         />
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+
+        {/* audience chips (decorative legend) */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Pessoa Física
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> MEI
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> Empresa
+          </span>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {COMMERCIAL_PLANS.map((p, i) => {
             const tag = HIGHLIGHT[p.tier];
             const featured = !!tag;
+            const audience = PLAN_AUDIENCE[p.tier];
+            const [priceMain, pricePer] = p.priceLabel.split("/");
             return (
               <Reveal key={p.tier} delay={i * 0.05}>
                 <div
                   className={cn(
-                    "relative flex h-full flex-col rounded-3xl border p-6 transition-all hover:-translate-y-1",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 transition-all hover:-translate-y-1",
                     featured
-                      ? "border-slate-900 bg-slate-900 text-white shadow-[0_30px_60px_-25px_rgba(15,23,42,0.55)]"
-                      : "border-slate-200 bg-white shadow-[0_14px_36px_-22px_rgba(15,23,42,0.18)]",
+                      ? "ring-2 ring-blue-500 shadow-[0_30px_60px_-25px_rgba(37,99,235,0.45)] xl:scale-[1.02]"
+                      : "border border-slate-200 shadow-[0_14px_36px_-22px_rgba(15,23,42,0.18)] hover:shadow-[0_24px_50px_-22px_rgba(15,23,42,0.25)]",
                   )}
                 >
+                  {/* Featured top accent bar */}
+                  {featured && (
+                    <div
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-x-0 top-0 h-1.5",
+                        tag!.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-500 to-emerald-500"
+                          : "bg-gradient-to-r from-emerald-500 to-blue-500",
+                      )}
+                    />
+                  )}
+
+                  {/* Highlight badge */}
                   {tag && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow">
-                      <Sparkles className="h-3 w-3" /> {tag}
+                    <span
+                      className={cn(
+                        "absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow",
+                        tag.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
+                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
+                      )}
+                    >
+                      <Sparkles className="h-3 w-3" /> {tag.label}
                     </span>
                   )}
-                  <h3 className={cn("text-lg font-bold", featured ? "text-white" : "text-slate-900")}>
-                    {p.name}
-                  </h3>
-                  <p className={cn("mt-1 text-xs leading-relaxed", featured ? "text-slate-300" : "text-slate-500")}>
+
+                  {/* Audience */}
+                  {audience && (
+                    <span
+                      className={cn(
+                        "mb-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
+                        audience.tone,
+                      )}
+                    >
+                      {audience.label}
+                    </span>
+                  )}
+
+                  <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
+                  <p className="mt-1 min-h-[36px] text-xs leading-relaxed text-slate-500">
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
-                  <div className="mt-5">
-                    <p className={cn("text-3xl font-extrabold tabular-nums", featured ? "text-white" : "text-slate-900")}>
-                      {p.priceLabel.split("/")[0]}
-                    </p>
-                    <p className={cn("text-xs", featured ? "text-slate-400" : "text-slate-500")}>/mês</p>
+
+                  {/* Price */}
+                  <div className="mt-5 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold tracking-tight tabular-nums text-slate-900">
+                      {priceMain.trim()}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">/{(pricePer || "mês").trim()}</span>
                   </div>
-                  <ul className="mt-5 flex-1 space-y-2">
+                  <p className="mt-1 text-[11px] text-slate-400">Cancele quando quiser</p>
+
+                  {/* Divider */}
+                  <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
+                  {/* Highlights */}
+                  <ul className="flex-1 space-y-2.5">
                     {p.highlights.map((h) => (
-                      <li
-                        key={h}
-                        className={cn(
-                          "flex items-start gap-2 text-xs leading-relaxed",
-                          featured ? "text-slate-200" : "text-slate-700",
-                        )}
-                      >
-                        <CheckCircle2
+                      <li key={h} className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                        <span
                           className={cn(
-                            "mt-0.5 h-3.5 w-3.5 shrink-0",
-                            featured ? "text-emerald-400" : "text-emerald-600",
+                            "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full",
+                            featured ? "bg-blue-100 text-blue-700" : "bg-emerald-50 text-emerald-700",
                           )}
-                        />
+                        >
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
                         <span>{h}</span>
                       </li>
                     ))}
                   </ul>
+
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "mt-6 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
+                      "mt-6 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
                       featured
-                        ? "bg-white text-slate-900 hover:bg-slate-100"
+                        ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(37,99,235,0.55)] hover:shadow-[0_18px_36px_-12px_rgba(37,99,235,0.65)]"
                         : "bg-slate-900 text-white hover:bg-slate-800",
                     )}
                   >
                     Escolher plano
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               </Reveal>
             );
           })}
         </div>
+
+        {/* Trust microcopy under plans */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Pagamento seguro
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Sem fidelidade
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Zap className="h-4 w-4 text-emerald-600" /> Acesso imediato
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-emerald-600" /> Atualizações inclusas
+          </span>
+        </div>
+
+        {/* Helper note */}
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
+          Não sabe qual escolher?{" "}
+          <a href="#faq" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            Veja as dúvidas frequentes
+          </a>{" "}
+          ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
+        </p>
       </div>
     </section>
   );
