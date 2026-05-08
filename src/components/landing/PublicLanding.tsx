@@ -24,6 +24,10 @@ import {
   ArrowDownRight,
   CheckCircle2,
   Star,
+  UserPlus,
+  Pencil,
+  LineChart,
+  Quote,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
@@ -53,6 +57,7 @@ export function PublicLanding() {
       <Hero />
       <TrustStrip />
       <WhyUs />
+      <HowItWorks />
       <ScreensTabs />
       <DashboardShowcase />
       <FeatureSplit
@@ -88,6 +93,7 @@ export function PublicLanding() {
       <ForWho />
       <TrustPoints />
       <Plans />
+      <Testimonials />
       <FAQ />
       <FinalCTA />
       <Footer />
@@ -203,6 +209,19 @@ function Hero() {
         style={{
           background:
             "radial-gradient(60% 50% at 80% -10%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(50% 40% at 10% 0%, rgba(59,130,246,0.14) 0%, transparent 65%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.045) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage:
+            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
         }}
       />
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-12 pb-16 sm:px-6 md:pt-20 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
@@ -430,24 +449,94 @@ function KpiMini({
 
 function TrustStrip() {
   const items = [
-    { icon: ShieldCheck, label: "Seus dados protegidos" },
-    { icon: Zap, label: "Rápido e leve" },
-    { icon: Eye, label: "Visão clara do mês" },
-    { icon: Star, label: "Pensado para o dia a dia" },
+    { icon: ShieldCheck, label: "Seus dados protegidos", hint: "Privacidade em primeiro lugar" },
+    { icon: Zap, label: "Rápido e leve", hint: "Pensado para o dia a dia" },
+    { icon: Eye, label: "Visão clara do mês", hint: "Tudo organizado num olhar" },
+    { icon: Star, label: "Feito para sua rotina", hint: "Pessoa física, MEI e mais" },
   ];
   return (
-    <div className="border-y border-slate-100 bg-white">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-6 sm:px-6 md:grid-cols-4 lg:px-8">
+    <div className="relative border-y border-slate-100 bg-gradient-to-b from-white via-slate-50/40 to-white">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 md:grid-cols-4 md:gap-6 lg:px-8">
         {items.map((it) => (
-          <div key={it.label} className="flex items-center gap-2.5 text-slate-600">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700">
-              <it.icon className="h-4 w-4" />
+          <div key={it.label} className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+              <it.icon className="h-4.5 w-4.5" />
             </span>
-            <span className="text-sm font-medium">{it.label}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 leading-tight">{it.label}</p>
+              <p className="truncate text-[11px] text-slate-500">{it.hint}</p>
+            </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+/* ============================== HOW IT WORKS ============================== */
+
+function HowItWorks() {
+  const steps = [
+    {
+      icon: UserPlus,
+      n: "01",
+      title: "Crie sua conta",
+      text: "Cadastre-se em poucos segundos e personalize seu perfil pessoal, MEI ou empresa.",
+    },
+    {
+      icon: Pencil,
+      n: "02",
+      title: "Lance suas finanças",
+      text: "Adicione gastos, receitas, contas e cartões. Tudo organizado por mês de referência.",
+    },
+    {
+      icon: LineChart,
+      n: "03",
+      title: "Acompanhe a evolução",
+      text: "Visualize gráficos, alertas, metas e tenha clareza total sobre o seu dinheiro.",
+    },
+  ];
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/70 py-20 sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Como funciona"
+          title="Em 3 passos simples você assume o controle."
+          subtitle="Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês."
+          center
+        />
+        <div className="relative mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+          {/* connector line on desktop */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent md:block"
+          />
+          {steps.map((s, i) => (
+            <Reveal key={s.n} delay={i * 0.08}>
+              <div className="group relative flex h-full flex-col items-center rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-[0_18px_40px_-26px_rgba(15,23,42,0.25)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.32)]">
+                <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(59,130,246,0.55)] transition-transform group-hover:scale-105">
+                  <s.icon className="h-7 w-7" />
+                  <span className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-white text-[10px] font-extrabold text-slate-700 shadow ring-1 ring-slate-200">
+                    {s.n}
+                  </span>
+                </span>
+                <h3 className="mt-5 text-lg font-bold text-slate-900">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -713,7 +802,12 @@ function FeatureSplit({
   reverse?: boolean;
 }) {
   return (
-    <section className={cn("py-20 sm:py-24", reverse ? "bg-slate-50" : "bg-white")}>
+    <section
+      className={cn(
+        "relative py-20 sm:py-28",
+        reverse ? "bg-gradient-to-b from-slate-50/80 via-white to-slate-50/40" : "bg-white",
+      )}
+    >
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className={cn("lg:col-span-5", reverse && "lg:order-2")}>
           <Eyebrow>{eyebrow}</Eyebrow>
@@ -1141,6 +1235,76 @@ function Plans() {
               </Reveal>
             );
           })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================== TESTIMONIALS ============================== */
+
+const TESTIMONIALS = [
+  {
+    name: "Camila R.",
+    role: "Designer · Pessoa Física",
+    text: "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo.",
+    initials: "CR",
+    color: "from-blue-500 to-sky-500",
+  },
+  {
+    name: "Rafael M.",
+    role: "MEI · Confeitaria",
+    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul sempre.",
+    initials: "RM",
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    name: "Juliana A.",
+    role: "Autônoma",
+    text: "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar.",
+    initials: "JA",
+    color: "from-violet-500 to-fuchsia-500",
+  },
+];
+
+function Testimonials() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white py-20 sm:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Quem já usa"
+          title="Pessoas reais, controle financeiro de verdade."
+          subtitle="Histórias de quem trocou a bagunça por uma rotina financeira leve e clara."
+          center
+        />
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t, i) => (
+            <Reveal key={t.name} delay={i * 0.06}>
+              <div className="group relative h-full rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.30)]">
+                <Quote className="absolute right-5 top-5 h-8 w-8 text-slate-100 transition-colors group-hover:text-blue-100" />
+                <div className="flex items-center gap-1 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, k) => (
+                    <Star key={k} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-slate-700">"{t.text}"</p>
+                <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <span
+                    className={cn(
+                      "grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow",
+                      t.color,
+                    )}
+                  >
+                    {t.initials}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                    <p className="text-[11px] text-slate-500">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
