@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
   ChevronRight,
@@ -77,7 +78,10 @@ function Index() {
   const ready = useBootstrap();
   const { profile } = useAuth();
   const today = new Date();
-  const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
+  const [ym, setYm] = useMesReferenciaRef() as unknown as [
+    { mes: number; ano: number },
+    (next: { mes: number; ano: number }) => void,
+  ];
 
   const gastos = useStore(() => getGastos());
   const receitas = useStore(() => getReceitas());

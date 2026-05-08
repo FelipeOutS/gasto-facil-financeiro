@@ -46,6 +46,7 @@ import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/type
 import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
+import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,10 @@ function ContasAPagarPage() {
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
-  const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
+  const [ym, setYm] = useMesReferenciaRef() as unknown as [
+    { mes: number; ano: number },
+    (next: { mes: number; ano: number }) => void,
+  ];
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
