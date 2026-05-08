@@ -941,18 +941,43 @@ function GastosPage() {
         </div>
       )}
 
-      {/* Resumo */}
-      <div className="mt-4 grid grid-cols-3 gap-2 stagger">
+      {/* Resumo premium */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
         <SummaryStat
+          icon={<Hash className="h-4 w-4" />}
+          tone="neutral"
           label="Encontrados"
           value={<CountNumber value={filtered.length} />}
+          hint={mesRef === "todos" ? "no período" : ymToLabel(mesRef)}
         />
         <SummaryStat
+          icon={<Wallet className="h-4 w-4" />}
+          tone="brand"
           label="Total"
           value={<Money value={total} />}
+          hint="somatório dos itens"
           highlight
         />
-        <SummaryStat label="Média" value={<Money value={media} />} />
+        <SummaryStat
+          icon={<TrendingUp className="h-4 w-4" />}
+          tone="info"
+          label="Média por gasto"
+          value={<Money value={media} />}
+          hint={filtered.length ? `${filtered.length} itens` : "—"}
+        />
+        <SummaryStat
+          icon={<Tag className="h-4 w-4" />}
+          tone="success"
+          label="Top categoria"
+          value={
+            topCategoria ? (
+              <span className="truncate block">{topCategoria.nome}</span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )
+          }
+          hint={topCategoria ? formatBRL(topCategoria.valor) : "sem dados"}
+        />
       </div>
 
       {/* Barra de seleção em massa */}
