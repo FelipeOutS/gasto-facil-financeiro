@@ -533,13 +533,11 @@ function GastosPage() {
     hasMin ||
     hasMax ||
     !!q.trim() ||
-    mesRef !== "todos" ||
     order !== "recente";
 
   function clearAll() {
     setQ("");
     setPeriodo("todos");
-    setMesRef("todos");
     setCustomFrom(undefined);
     setCustomTo(undefined);
     setCatFilter("todas");
