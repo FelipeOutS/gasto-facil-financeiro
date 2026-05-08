@@ -287,14 +287,14 @@ function MetaCard({
         boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
       }}
     >
-      {/* Cover com imagem real */}
-      <div className="relative h-36 w-full overflow-hidden">
-        <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+      {/* Cover com imagem real — área hero ampliada */}
+      <div className="relative h-56 w-full overflow-hidden sm:h-60">
+        <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.05]">
           <MetaCover coverKey={coverKey} alt={meta.nome} className="h-full w-full" />
         </div>
         {/* Overlay para legibilidade do título sobre foto real */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/5" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/55 to-transparent" />
 
         {/* Badges no topo */}
         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
