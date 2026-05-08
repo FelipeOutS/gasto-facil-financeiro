@@ -436,24 +436,94 @@ function KpiMini({
 
 function TrustStrip() {
   const items = [
-    { icon: ShieldCheck, label: "Seus dados protegidos" },
-    { icon: Zap, label: "Rápido e leve" },
-    { icon: Eye, label: "Visão clara do mês" },
-    { icon: Star, label: "Pensado para o dia a dia" },
+    { icon: ShieldCheck, label: "Seus dados protegidos", hint: "Privacidade em primeiro lugar" },
+    { icon: Zap, label: "Rápido e leve", hint: "Pensado para o dia a dia" },
+    { icon: Eye, label: "Visão clara do mês", hint: "Tudo organizado num olhar" },
+    { icon: Star, label: "Feito para sua rotina", hint: "Pessoa física, MEI e mais" },
   ];
   return (
-    <div className="border-y border-slate-100 bg-white">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-6 sm:px-6 md:grid-cols-4 lg:px-8">
+    <div className="relative border-y border-slate-100 bg-gradient-to-b from-white via-slate-50/40 to-white">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 md:grid-cols-4 md:gap-6 lg:px-8">
         {items.map((it) => (
-          <div key={it.label} className="flex items-center gap-2.5 text-slate-600">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700">
-              <it.icon className="h-4 w-4" />
+          <div key={it.label} className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+              <it.icon className="h-4.5 w-4.5" />
             </span>
-            <span className="text-sm font-medium">{it.label}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 leading-tight">{it.label}</p>
+              <p className="truncate text-[11px] text-slate-500">{it.hint}</p>
+            </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+/* ============================== HOW IT WORKS ============================== */
+
+function HowItWorks() {
+  const steps = [
+    {
+      icon: UserPlus,
+      n: "01",
+      title: "Crie sua conta",
+      text: "Cadastre-se em poucos segundos e personalize seu perfil pessoal, MEI ou empresa.",
+    },
+    {
+      icon: Pencil,
+      n: "02",
+      title: "Lance suas finanças",
+      text: "Adicione gastos, receitas, contas e cartões. Tudo organizado por mês de referência.",
+    },
+    {
+      icon: LineChart,
+      n: "03",
+      title: "Acompanhe a evolução",
+      text: "Visualize gráficos, alertas, metas e tenha clareza total sobre o seu dinheiro.",
+    },
+  ];
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/70 py-20 sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Como funciona"
+          title="Em 3 passos simples você assume o controle."
+          subtitle="Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês."
+          center
+        />
+        <div className="relative mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+          {/* connector line on desktop */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent md:block"
+          />
+          {steps.map((s, i) => (
+            <Reveal key={s.n} delay={i * 0.08}>
+              <div className="group relative flex h-full flex-col items-center rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-[0_18px_40px_-26px_rgba(15,23,42,0.25)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.32)]">
+                <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(59,130,246,0.55)] transition-transform group-hover:scale-105">
+                  <s.icon className="h-7 w-7" />
+                  <span className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-white text-[10px] font-extrabold text-slate-700 shadow ring-1 ring-slate-200">
+                    {s.n}
+                  </span>
+                </span>
+                <h3 className="mt-5 text-lg font-bold text-slate-900">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
