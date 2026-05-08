@@ -46,6 +46,7 @@ import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/type
 import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
+import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
