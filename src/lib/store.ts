@@ -530,8 +530,13 @@ type GuardadoRow = {
   created_at: string;
   updated_at: string;
   import_batch_id?: string | null;
+  meta_id?: string | null;
 };
-function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Guardado {
+function rowToGuardado(
+  r: GuardadoRow,
+  bancoUuidToKey: Map<string, string>,
+  metaUuidToKey: Map<string, string>,
+): Guardado {
   return {
     id: r.legacy_id || r.id,
     bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : "",
@@ -542,6 +547,7 @@ function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Gua
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
     importBatchId: r.import_batch_id ?? undefined,
+    metaId: r.meta_id ? metaUuidToKey.get(r.meta_id) ?? r.meta_id : undefined,
   };
 }
 
