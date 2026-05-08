@@ -651,18 +651,18 @@ function GastosPage() {
               <ChevronLeft className="h-4 w-4" />
             </button>
             <Select value={mesRef} onValueChange={setMesRef}>
-              <SelectTrigger className="h-9 min-w-[180px] rounded-full bg-card-elevated border-border font-semibold text-sm">
+              <SelectTrigger className="h-9 min-w-[190px] rounded-full border-brand/30 bg-brand-soft/70 font-semibold text-sm text-foreground shadow-sm ring-1 ring-brand/10">
                 <SelectValue>
                   {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="todos">Todos os meses</SelectItem>
                 {mesesDisponiveis.map((ym) => (
                   <SelectItem key={ym} value={ym}>
                     {ymToLabel(ym)}
                   </SelectItem>
                 ))}
+                <SelectItem value="todos">Todos os meses</SelectItem>
               </SelectContent>
             </Select>
             <button
@@ -675,13 +675,10 @@ function GastosPage() {
             </button>
           </div>
         </div>
-        {mesRef !== "todos" && (
-          <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-brand" />
-            Este resumo considera apenas os gastos de{" "}
-            <strong className="text-foreground">{ymToLabel(mesRef)}</strong>.
-          </p>
-        )}
+        <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-brand" />
+          <span>{referenceMonthCaption}</span>
+        </p>
       </section>
 
       {/* Botões mobile */}
