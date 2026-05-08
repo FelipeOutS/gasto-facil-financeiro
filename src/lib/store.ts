@@ -4294,14 +4294,16 @@ export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
     return { mes: m, ano: a };
   }
   if (g.formaPagamento === "credito") {
-    // Fallback pelo dia de fechamento do cartão
+    // Convenção: mês de referência da fatura = mês das compras.
+    // Se a compra foi feita ATÉ o dia de fechamento, ainda pertence à fatura
+    // do mês anterior (ciclo que está prestes a fechar). Caso contrário,
+    // pertence à fatura do próprio mês da compra.
     const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
     const d = parseDateLocal(g.data);
     if (d && cartao?.diaFechamento && cartao.diaFechamento > 0) {
-      // Se a compra foi após o fechamento, vai para a fatura do mês seguinte.
       const ref = d.getDate() > cartao.diaFechamento
-        ? new Date(d.getFullYear(), d.getMonth() + 1, 1)
-        : d;
+        ? d
+        : new Date(d.getFullYear(), d.getMonth() - 1, 1);
       return { mes: ref.getMonth() + 1, ano: ref.getFullYear() };
     }
   }
