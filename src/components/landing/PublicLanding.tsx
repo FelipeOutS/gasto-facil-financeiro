@@ -1223,6 +1223,76 @@ function Plans() {
   );
 }
 
+/* ============================== TESTIMONIALS ============================== */
+
+const TESTIMONIALS = [
+  {
+    name: "Camila R.",
+    role: "Designer · Pessoa Física",
+    text: "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo.",
+    initials: "CR",
+    color: "from-blue-500 to-sky-500",
+  },
+  {
+    name: "Rafael M.",
+    role: "MEI · Confeitaria",
+    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul sempre.",
+    initials: "RM",
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    name: "Juliana A.",
+    role: "Autônoma",
+    text: "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar.",
+    initials: "JA",
+    color: "from-violet-500 to-fuchsia-500",
+  },
+];
+
+function Testimonials() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white py-20 sm:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Quem já usa"
+          title="Pessoas reais, controle financeiro de verdade."
+          subtitle="Histórias de quem trocou a bagunça por uma rotina financeira leve e clara."
+          center
+        />
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t, i) => (
+            <Reveal key={t.name} delay={i * 0.06}>
+              <div className="group relative h-full rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.30)]">
+                <Quote className="absolute right-5 top-5 h-8 w-8 text-slate-100 transition-colors group-hover:text-blue-100" />
+                <div className="flex items-center gap-1 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, k) => (
+                    <Star key={k} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-slate-700">"{t.text}"</p>
+                <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <span
+                    className={cn(
+                      "grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow",
+                      t.color,
+                    )}
+                  >
+                    {t.initials}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                    <p className="text-[11px] text-slate-500">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== FAQ ============================== */
 
 const FAQS = [
