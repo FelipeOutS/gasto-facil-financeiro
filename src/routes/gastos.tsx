@@ -3,12 +3,21 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Hash,
   RefreshCw,
   MoreVertical,
   Pencil,
+  PiggyBank,
+  Receipt,
   Search,
+  Sparkles,
   SlidersHorizontal,
+  Tag,
+  TrendingUp,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import {
