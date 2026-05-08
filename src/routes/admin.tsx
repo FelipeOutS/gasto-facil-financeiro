@@ -386,13 +386,13 @@ function AdminPage() {
 
   return (
     <MobileShell wide>
-      <div className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Painel Admin</h1>
-            <p className="text-sm text-muted-foreground">Visão geral de usuários, planos e arrecadação.</p>
+      <div className="pt-4 sm:pt-6 overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Painel Admin</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Visão geral de usuários, planos e arrecadação.</p>
           </div>
-          <Button variant="outline" onClick={exportCsv} className="gap-2">
+          <Button variant="outline" onClick={exportCsv} className="gap-2 w-full sm:w-auto">
             <Download className="h-4 w-4" /> Exportar CSV
           </Button>
         </div>
