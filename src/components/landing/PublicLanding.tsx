@@ -1661,6 +1661,20 @@ function Plans() {
             const [priceMain, pricePer] = p.priceLabel.split("/");
             return (
               <Reveal key={p.tier} delay={i * 0.05}>
+                <div className={cn("relative h-full", featured && "pt-3")}>
+                  {/* Highlight badge — outside overflow-hidden card */}
+                  {tag && (
+                    <span
+                      className={cn(
+                        "absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg",
+                        tag.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
+                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
+                      )}
+                    >
+                      <Sparkles className="h-3 w-3" /> {tag.label}
+                    </span>
+                  )}
                 <div
                   className={cn(
                     "group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 transition-all hover:-translate-y-1",
@@ -1680,20 +1694,6 @@ function Plans() {
                           : "bg-gradient-to-r from-emerald-500 to-blue-500",
                       )}
                     />
-                  )}
-
-                  {/* Highlight badge */}
-                  {tag && (
-                    <span
-                      className={cn(
-                        "absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow",
-                        tag.tone === "primary"
-                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
-                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
-                      )}
-                    >
-                      <Sparkles className="h-3 w-3" /> {tag.label}
-                    </span>
                   )}
 
                   {/* Audience */}
