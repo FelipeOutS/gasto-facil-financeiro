@@ -686,6 +686,10 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     importBatchId: r.import_batch_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
+    mesReferencia:
+      r.mes_referencia && /^\d{4}-\d{2}$/.test(r.mes_referencia)
+        ? r.mes_referencia
+        : `${r.ano}-${String(r.mes).padStart(2, "0")}`,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
