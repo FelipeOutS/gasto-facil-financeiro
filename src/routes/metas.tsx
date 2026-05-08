@@ -147,10 +147,10 @@ function MetasPage() {
       </header>
 
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
-        <p className="text-xs font-medium text-muted-foreground">Total acumulado em metas</p>
+        <p className="text-xs font-medium text-muted-foreground">Progresso total das metas</p>
         <Money value={totalAcumulado} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
         <p className="mt-1 text-xs text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}
+          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"} · soma do progresso de todas as metas (não é saldo em banco)
         </p>
       </section>
 
