@@ -2122,7 +2122,7 @@ function FinalCTA() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur">
                 <Sparkles className="h-3 w-3" /> Comece em minutos
               </span>
-              <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
+              <h2 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
                 Pronto para organizar sua vida financeira?
               </h2>
               <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
