@@ -71,17 +71,26 @@ type Props = {
 };
 
 export function MoreSheet({ open, onOpenChange }: Props) {
+  const router = useRouter();
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const { user } = useAuth();
   const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const showAdmin = isAdminMaster || hasFullAccess;
-  const items: MoreItem[] = showAdmin
-    ? [...MORE_ITEMS, { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield }]
-    : MORE_ITEMS;
+  const items: MoreItem[] = useMemo(() => (showAdmin ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS), [showAdmin]);
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const [navigating, setNavigating] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    items.forEach((item) => {
+      if (isLocked(item)) return;
+      router.preloadRoute({ to: item.to }).catch(() => {
+        // Prefetch é uma otimização: falhas não devem bloquear o menu.
+      });
+    });
+  }, [open, items, router, isAdminMaster, hasFullAccess, can]);
 
   function getRule(item: MoreItem) {
     return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
@@ -97,13 +106,12 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
-      onOpenChange(false);
-      setTimeout(() => setLockState({ open: true, title: rule.title }), 150);
+      flushSync(() => onOpenChange(false));
+      setLockState({ open: true, title: rule.title });
       return;
     }
     setNavigating(true);
-    onOpenChange(false);
-    // Navega imediatamente; o sheet fecha em paralelo (anim ~150ms)
+    flushSync(() => onOpenChange(false));
     navigate({ to: item.to }).finally(() => setNavigating(false));
   }
 
