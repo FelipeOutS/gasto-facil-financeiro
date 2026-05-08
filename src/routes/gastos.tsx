@@ -1111,6 +1111,16 @@ function GastosPage() {
                 Limpar filtros
               </Button>
             </>
+          ) : mesRef !== "todos" ? (
+            <>
+              <p className="font-medium text-foreground">Nada por aqui ainda</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Seus gastos de {ymToLabel(mesRef)} aparecerão aqui.
+              </p>
+              <Button asChild size="sm" className="mt-4 rounded-full">
+                <Link to="/adicionar">Adicionar gasto em {ymToLabel(mesRef)}</Link>
+              </Button>
+            </>
           ) : (
             <>
               <p className="font-medium text-foreground">Nenhum gasto por aqui ainda</p>
