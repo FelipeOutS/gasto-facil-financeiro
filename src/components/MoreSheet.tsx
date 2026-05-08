@@ -1,5 +1,5 @@
-import { flushSync } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
   ArrowUp,
@@ -34,8 +34,6 @@ import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
 
-const ADMIN_ITEM: MoreItem = { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield };
-
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
 );
@@ -47,6 +45,8 @@ type MoreItem = {
   icon: LucideIcon;
   feature?: FeatureKey;
 };
+
+const ADMIN_ITEM: MoreItem = { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield };
 
 export const MORE_ITEMS: MoreItem[] = [
   { to: "/alertas", label: "Alertas", description: "Avisos importantes do seu financeiro", icon: Bell },
@@ -121,7 +121,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-150 data-[state=open]:duration-200"
+          overlayClassName="data-[state=closed]:duration-0"
+          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-0 data-[state=open]:duration-150"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">Mais opções</SheetTitle>
