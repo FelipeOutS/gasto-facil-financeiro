@@ -2284,10 +2284,10 @@ function Footer() {
           <div className="lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#recursos" className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#telas" className="transition-colors hover:text-slate-900">Como funciona</a></li>
-              <li><a href="#planos" className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#faq" className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
+              <li><a href="#telas" onClick={(e) => handleAnchorClick(e, "#telas")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
+              <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
+              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
             </ul>
           </div>
 
