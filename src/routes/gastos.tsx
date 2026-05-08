@@ -55,7 +55,7 @@ import {
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
-import { mesAnoToLabel, mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
+import { mesAnoToLabel, mesReferenciaOpcoes, ymFromDate, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -125,6 +125,26 @@ const PERIODO_LABEL: Record<PeriodoId, string> = {
 };
 
 const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
+const MES_REF_ALL = "todos";
+const MES_REF_STORAGE_KEY = "gf:gastos:selectedReferenceMonth:v1";
+
+function isValidReferenceMonth(value: string | null | undefined): value is string {
+  return value === MES_REF_ALL || /^\d{4}-\d{2}$/.test(value ?? "");
+}
+
+function currentReferenceMonth() {
+  return ymFromDate();
+}
+
+function readInitialReferenceMonth() {
+  if (typeof window === "undefined") return currentReferenceMonth();
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("mes");
+  if (isValidReferenceMonth(fromUrl)) return fromUrl;
+  const fromStorage = window.localStorage.getItem(MES_REF_STORAGE_KEY);
+  if (isValidReferenceMonth(fromStorage)) return fromStorage;
+  return currentReferenceMonth();
+}
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
