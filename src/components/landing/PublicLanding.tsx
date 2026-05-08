@@ -240,7 +240,7 @@ function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
+            className="mt-5 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
           >
             Controle suas finanças com mais{" "}
             <span className="relative inline-block bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
@@ -539,7 +539,7 @@ function TrustStrip() {
         {items.map((it) => (
           <div key={it.label} className="flex items-center gap-3">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
-              <it.icon className="h-4.5 w-4.5" />
+              <it.icon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 leading-tight">{it.label}</p>
@@ -986,17 +986,17 @@ function GastosMock() {
   ];
   return (
     <MockShell>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
-        <div className="flex flex-wrap justify-end gap-1.5">
+        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 sm:flex-wrap sm:justify-end sm:overflow-visible">
           {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
             <span
               key={p}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold",
                 i === 0
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-600",
@@ -1084,10 +1084,10 @@ function CartaoMock() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Em aberto · vence 15/12
+          <span className="whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+            Vence 15/12
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
@@ -1356,17 +1356,17 @@ function MetaMock() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Outras metas</p>
           <span className="text-[10px] font-medium text-slate-400">3 ativas</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {otherGoals.map((g) => (
             <div
               key={g.name}
               className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-transform hover:-translate-y-0.5"
             >
-              <div className="relative h-14 w-full overflow-hidden">
+              <div className="relative h-12 w-full overflow-hidden sm:h-14">
                 <MetaCover kind={g.cover} />
               </div>
-              <div className="p-2">
-                <p className="line-clamp-1 text-[11px] font-semibold text-slate-800">{g.name}</p>
+              <div className="p-1.5 sm:p-2">
+                <p className="line-clamp-1 text-[10px] font-semibold leading-tight text-slate-800 sm:text-[11px]">{g.name}</p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <motion.div
                     initial={{ width: 0 }}
@@ -1376,8 +1376,8 @@ function MetaMock() {
                     className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
                   />
                 </div>
-                <div className="mt-1 flex items-center justify-between text-[9px] text-slate-500">
-                  <span>{g.saved}</span>
+                <div className="mt-1 flex items-center justify-between gap-1 text-[9px] text-slate-500">
+                  <span className="truncate">{g.saved}</span>
                   <span className="font-semibold text-emerald-700">{g.pct}%</span>
                 </div>
               </div>
@@ -1453,18 +1453,18 @@ function InvestimentosMock() {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
         {classes.map((c) => (
-          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
-                {c.l}
+          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2 sm:p-2.5">
+            <div className="flex items-center justify-between gap-1">
+              <span className="flex min-w-0 items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500 sm:text-[10px]">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />
+                <span className="truncate">{c.l}</span>
               </span>
-              <span className="text-[9px] font-bold text-emerald-600">{c.chip}</span>
+              <span className="shrink-0 text-[9px] font-bold text-emerald-600">{c.chip}</span>
             </div>
-            <p className="mt-1 text-sm font-bold tabular-nums text-slate-900">{c.v}</p>
-            <p className="text-[10px] text-slate-500">{c.pct}% da carteira</p>
+            <p className="mt-1 text-xs font-bold tabular-nums text-slate-900 sm:text-sm">{c.v}</p>
+            <p className="text-[9px] text-slate-500 sm:text-[10px]">{c.pct}% da carteira</p>
           </div>
         ))}
       </div>
@@ -1661,6 +1661,20 @@ function Plans() {
             const [priceMain, pricePer] = p.priceLabel.split("/");
             return (
               <Reveal key={p.tier} delay={i * 0.05}>
+                <div className={cn("relative h-full", featured && "pt-3")}>
+                  {/* Highlight badge — outside overflow-hidden card */}
+                  {tag && (
+                    <span
+                      className={cn(
+                        "absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg",
+                        tag.tone === "primary"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
+                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
+                      )}
+                    >
+                      <Sparkles className="h-3 w-3" /> {tag.label}
+                    </span>
+                  )}
                 <div
                   className={cn(
                     "group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 transition-all hover:-translate-y-1",
@@ -1680,20 +1694,6 @@ function Plans() {
                           : "bg-gradient-to-r from-emerald-500 to-blue-500",
                       )}
                     />
-                  )}
-
-                  {/* Highlight badge */}
-                  {tag && (
-                    <span
-                      className={cn(
-                        "absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow",
-                        tag.tone === "primary"
-                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
-                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
-                      )}
-                    >
-                      <Sparkles className="h-3 w-3" /> {tag.label}
-                    </span>
                   )}
 
                   {/* Audience */}
@@ -1754,6 +1754,7 @@ function Plans() {
                     Escolher plano
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
+                </div>
                 </div>
               </Reveal>
             );
@@ -2121,7 +2122,7 @@ function FinalCTA() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur">
                 <Sparkles className="h-3 w-3" /> Comece em minutos
               </span>
-              <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
+              <h2 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
                 Pronto para organizar sua vida financeira?
               </h2>
               <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
@@ -2309,7 +2310,7 @@ function SectionHeader({
   return (
     <div className={cn(center && "text-center")}>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
+      <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
       {subtitle && (
         <p className={cn("mt-3 text-base text-slate-600", center ? "mx-auto max-w-2xl" : "max-w-2xl")}>
           {subtitle}
@@ -2355,11 +2356,14 @@ function LandingStyles() {
   // Scoped reset to ensure landing always reads as light, even if <html> has .dark
   return (
     <style>{`
-      .gi-landing { color-scheme: light; }
+      .gi-landing { color-scheme: light; overflow-x: clip; }
       .gi-landing, .gi-landing * { border-color: rgb(226 232 240); }
       .gi-landing ::selection { background: rgba(59,130,246,0.18); }
       .gi-landing .no-scrollbar::-webkit-scrollbar { display: none; }
       .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      @media (max-width: 480px) {
+        .gi-landing section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+      }
     `}</style>
   );
 }
