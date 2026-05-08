@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Wallet,
   CreditCard,
@@ -744,67 +744,125 @@ const SCREENS: { key: ScreenKey; label: string; icon: typeof LayoutDashboard; de
   },
 ];
 
+const SCREEN_HIGHLIGHTS: Record<ScreenKey, string[]> = {
+  dashboard: ["Saldo, receitas e despesas", "Fluxo do mês em gráfico", "Limite inteligente", "Alertas e calendário"],
+  gastos: ["Filtro por mês de referência", "Categorias e formas de pagamento", "Total e média do mês", "Lista clara e organizada"],
+  cartoes: ["Cartão visual com limite", "Fatura aberta e vencimento", "Compras e parcelas", "Marcar fatura como paga"],
+  metas: ["Capa visual da meta", "Progresso animado", "Quanto falta para concluir", "Histórico de aportes"],
+  investimentos: ["Carteira total e variação", "Gráfico de crescimento", "Distribuição por classe", "Resumo visual rápido"],
+  guardado: ["Total reservado", "Valor por banco e carteira", "Visual seguro e limpo", "Acompanhamento mensal"],
+};
+
 function ScreensTabs() {
   const [active, setActive] = useState<ScreenKey>("dashboard");
   const current = SCREENS.find((s) => s.key === active)!;
+  const highlights = SCREEN_HIGHLIGHTS[active];
+
   return (
-    <section id="telas" className="bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="telas" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
+      {/* soft background accents */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0 opacity-60"
+        style={{
+          backgroundImage:
+            "radial-gradient(60% 50% at 80% 0%, rgba(16,185,129,0.08), transparent 60%), radial-gradient(50% 50% at 10% 100%, rgba(59,130,246,0.08), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Veja por dentro"
           title="As telas que organizam toda a sua rotina financeira."
-          subtitle="Navegue pelas principais áreas do Gasto Inteligente."
+          subtitle="Navegue pelas principais áreas do Gasto Inteligente e veja como cada parte trabalha pra você."
         />
-        {/* tabs */}
-        <div className="mt-10 flex snap-x gap-2 overflow-x-auto pb-2 md:flex-wrap md:justify-center md:overflow-visible">
-          {SCREENS.map((s) => {
-            const Icon = s.icon;
-            const isActive = s.key === active;
-            return (
-              <button
-                key={s.key}
-                onClick={() => setActive(s.key)}
-                className={cn(
-                  "snap-start inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
-                  isActive
-                    ? "border-slate-900 bg-slate-900 text-white shadow-[0_10px_22px_-12px_rgba(15,23,42,0.55)]"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {s.label}
-              </button>
-            );
-          })}
+
+        {/* tabs — pill rail with sliding indicator */}
+        <div className="mt-10 flex justify-center">
+          <div className="no-scrollbar flex w-full max-w-3xl snap-x snap-mandatory gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white/80 p-1 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.25)] backdrop-blur md:w-auto">
+            {SCREENS.map((s) => {
+              const Icon = s.icon;
+              const isActive = s.key === active;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setActive(s.key)}
+                  className={cn(
+                    "snap-start relative inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                    isActive ? "text-white" : "text-slate-600 hover:text-slate-900",
+                  )}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="screen-tab-pill"
+                      className="absolute inset-0 -z-0 rounded-full bg-gradient-to-r from-slate-900 to-slate-700 shadow-[0_10px_22px_-12px_rgba(15,23,42,0.55)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <Icon className="relative z-10 h-4 w-4" />
+                  <span className="relative z-10">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
         {/* preview */}
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
-          <motion.div
-            key={active + "-text"}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="lg:col-span-5"
-          >
-            <h3 className="text-2xl font-bold text-slate-900 sm:text-3xl">{current.label}</h3>
-            <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
-            <Link
-              to="/cadastro"
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
+        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active + "-text"}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.35 }}
+              className="lg:col-span-5"
             >
-              Conhecer o sistema
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </motion.div>
-          <motion.div
-            key={active + "-mock"}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-7"
-          >
-            <ScreenMock keyName={active} />
-          </motion.div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <current.icon className="h-3.5 w-3.5 text-slate-700" />
+                {current.label}
+              </span>
+              <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                {current.label}
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
+              <ul className="mt-5 space-y-2">
+                {highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                      <Check className="h-3 w-3" />
+                    </span>
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/cadastro"
+                className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                Conhecer o sistema
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="relative lg:col-span-7">
+            {/* decorative blob */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-blue-100/60 via-white to-emerald-100/60 blur-2xl"
+            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active + "-mock"}
+                initial={{ opacity: 0, y: 18, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.99 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <ScreenMock keyName={active} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>
@@ -826,7 +884,7 @@ function ScreenMock({ keyName }: { keyName: ScreenKey }) {
     ) : (
       <GuardadoMock />
     );
-  return <div className="mx-auto w-full max-w-[600px]">{inner}</div>;
+  return <div className="mx-auto w-full max-w-[620px]">{inner}</div>;
 }
 
 /* ============================== DASHBOARD SHOWCASE ============================== */
@@ -933,17 +991,18 @@ function GastosMock() {
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
-        <div className="flex gap-1.5">
-          {["Mês atual", "Categoria", "Pix", "Cartão"].map((p, i) => (
+        <div className="flex flex-wrap justify-end gap-1.5">
+          {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
             <span
               key={p}
               className={cn(
-                "rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
                 i === 0
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-600",
               )}
             >
+              {i === 0 && <Calendar className="h-3 w-3" />}
               {p}
             </span>
           ))}
@@ -980,42 +1039,88 @@ function GastosMock() {
 }
 
 function CartaoMock() {
+  const purchases = [
+    { c: "Spotify", v: "R$ 21,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
+    { c: "iFood", v: "R$ 64,80", t: "Ontem · 3x", color: "bg-rose-100 text-rose-700" },
+    { c: "Posto Shell", v: "R$ 180,00", t: "2 dias", color: "bg-amber-100 text-amber-700" },
+  ];
   return (
     <MockShell>
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-5 text-white shadow-lg">
         <div
           aria-hidden
           className="absolute -right-10 -top-10 h-40 w-40 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.4), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.45), transparent 70%)" }}
         />
-        <div className="flex items-center justify-between">
+        <div
+          aria-hidden
+          className="absolute -bottom-12 -left-10 h-36 w-36 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(16,185,129,0.30), transparent 70%)" }}
+        />
+        <div className="relative flex items-center justify-between">
           <p className="text-xs font-semibold opacity-80">Inteligente Black</p>
           <CreditCard className="h-5 w-5 opacity-80" />
         </div>
-        <p className="mt-6 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
-        <div className="mt-4 flex items-end justify-between">
+        {/* chip */}
+        <div className="relative mt-5 flex items-center gap-3">
+          <div className="h-7 w-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner ring-1 ring-amber-100/40" />
+          <div className="flex flex-col">
+            <span className="text-[9px] uppercase tracking-widest opacity-60">Contactless</span>
+          </div>
+        </div>
+        <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
+        <div className="relative mt-4 flex items-end justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wider opacity-70">Limite disponível</p>
             <p className="text-lg font-bold tabular-nums">R$ 4.820,00</p>
+            <p className="mt-0.5 text-[10px] opacity-60">de R$ 8.000,00</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-wider opacity-70">Vence</p>
             <p className="text-sm font-semibold">15/12</p>
+            <p className="text-[10px] opacity-60">VISA</p>
           </div>
         </div>
       </div>
-      <div className="mt-4 rounded-2xl border border-slate-200 p-3">
+
+      <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Em aberto
+            Em aberto · vence 15/12
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-[42%] rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "42%" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+          />
         </div>
-        <button className="mt-3 w-full rounded-full bg-slate-900 py-2 text-xs font-semibold text-white">
+        <p className="mt-1.5 text-[11px] text-slate-500">42% do limite utilizado</p>
+
+        <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
+          {purchases.map((p) => (
+            <li key={p.c} className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2.5">
+                <span className={cn("grid h-7 w-7 place-items-center rounded-lg text-[10px] font-bold", p.color)}>
+                  {p.c[0]}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-slate-900">{p.c}</p>
+                  <p className="text-[10px] text-slate-500">{p.t}</p>
+                </div>
+              </div>
+              <p className="text-xs font-bold tabular-nums text-slate-900">{p.v}</p>
+            </li>
+          ))}
+        </ul>
+
+        <button className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-slate-900 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800">
+          <CheckCircle2 className="h-3.5 w-3.5" />
           Marcar fatura como paga
         </button>
       </div>
@@ -1027,21 +1132,55 @@ function MetaMock() {
   return (
     <MockShell>
       <div className="overflow-hidden rounded-2xl border border-slate-200">
-        <div
-          className="h-32 w-full"
-          style={{
-            background:
-              "linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #ec4899 100%)",
-          }}
-        />
+        {/* Visual cover — beach scene */}
+        <div className="relative h-36 w-full overflow-hidden">
+          <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+            <defs>
+              <linearGradient id="meta-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="55%" stopColor="#fda4af" />
+                <stop offset="100%" stopColor="#a78bfa" />
+              </linearGradient>
+              <linearGradient id="meta-sea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#0ea5e9" />
+                <stop offset="100%" stopColor="#1e40af" />
+              </linearGradient>
+              <linearGradient id="meta-sand" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+            </defs>
+            <rect width="600" height="220" fill="url(#meta-sky)" />
+            <circle cx="450" cy="80" r="40" fill="#fff7ed" opacity="0.95" />
+            <circle cx="450" cy="80" r="56" fill="#fef3c7" opacity="0.35" />
+            <path d="M0,140 Q150,118 300,138 T600,134 L600,180 L0,180 Z" fill="url(#meta-sea)" opacity="0.95" />
+            <path d="M0,160 Q150,148 300,160 T600,156 L600,180 L0,180 Z" fill="#0c4a6e" opacity="0.55" />
+            <path d="M0,178 L600,178 L600,220 L0,220 Z" fill="url(#meta-sand)" />
+            {/* palm */}
+            <g transform="translate(70,150)">
+              <rect x="-2" y="-50" width="5" height="50" rx="2" fill="#7c2d12" />
+              <path d="M0,-50 C-25,-60 -45,-55 -55,-45 C-40,-52 -20,-52 0,-50 Z" fill="#166534" />
+              <path d="M0,-50 C25,-60 45,-55 55,-45 C40,-52 20,-52 0,-50 Z" fill="#15803d" />
+              <path d="M0,-50 C-10,-75 -5,-90 10,-95 C5,-80 5,-65 0,-50 Z" fill="#16a34a" />
+            </g>
+          </svg>
+          <div className="absolute bottom-2 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
+            <Calendar className="h-3 w-3" /> Jan · 2027
+          </div>
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-emerald-700 backdrop-blur">
+            <TrendingUp className="h-3 w-3" /> 68%
+          </div>
+        </div>
+
         <div className="p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Meta</p>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-              68%
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Viagem</p>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              Maragogi · AL
             </span>
           </div>
           <p className="mt-1 text-lg font-bold text-slate-900">Viagem para a praia</p>
+
           <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
             <motion.div
               initial={{ width: 0 }}
@@ -1051,14 +1190,19 @@ function MetaMock() {
               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
             />
           </div>
+          <div className="mt-2 flex justify-between text-[11px] text-slate-500">
+            <span>R$ 3.400 guardados</span>
+            <span>Faltam R$ 1.600</span>
+          </div>
+
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-slate-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Guardado</p>
-              <p className="text-sm font-bold tabular-nums text-slate-900">R$ 3.400</p>
+            <div className="rounded-xl bg-emerald-50 p-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">Guardado</p>
+              <p className="text-sm font-bold tabular-nums text-emerald-800">R$ 3.400</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Falta</p>
-              <p className="text-sm font-bold tabular-nums text-slate-900">R$ 1.600</p>
+            <div className="rounded-xl bg-amber-50 p-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700/80">Falta</p>
+              <p className="text-sm font-bold tabular-nums text-amber-800">R$ 1.600</p>
             </div>
             <div className="rounded-xl bg-slate-50 p-2.5">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total</p>
@@ -1072,19 +1216,33 @@ function MetaMock() {
 }
 
 function InvestimentosMock() {
+  const classes = [
+    { l: "Renda fixa", v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
+    { l: "Ações", v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
+    { l: "Fundos", v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
+  ];
   return (
     <MockShell>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Carteira</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 48.320,90</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Patrimônio total · 12 meses</p>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-          <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
+          </span>
+          <span className="text-[10px] font-medium text-slate-400">vs. mês anterior</span>
+        </div>
       </div>
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-        <svg viewBox="0 0 300 100" className="h-28 w-full">
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-emerald-50/40 to-white p-3">
+        <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <span>Evolução</span>
+          <span className="text-emerald-600">+R$ 1.940</span>
+        </div>
+        <svg viewBox="0 0 300 100" className="mt-1 h-28 w-full">
           <defs>
             <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
@@ -1095,7 +1253,11 @@ function InvestimentosMock() {
             d="M0,80 L25,72 L50,76 L75,60 L100,64 L125,50 L150,55 L175,40 L200,46 L225,30 L250,36 L275,22 L300,18 L300,100 L0,100 Z"
             fill="url(#lg)"
           />
-          <path
+          <motion.path
+            initial={{ pathLength: 0 }}
+            whileInView={{ pathLength: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.4, ease: "easeOut" }}
             d="M0,80 L25,72 L50,76 L75,60 L100,64 L125,50 L150,55 L175,40 L200,46 L225,30 L250,36 L275,22 L300,18"
             fill="none"
             stroke="#10b981"
@@ -1103,17 +1265,32 @@ function InvestimentosMock() {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          <circle cx="300" cy="18" r="4" fill="#10b981" />
+          <circle cx="300" cy="18" r="8" fill="#10b981" opacity="0.25" />
         </svg>
       </div>
+
+      {/* allocation bar */}
+      <div className="mt-3">
+        <div className="flex h-2 overflow-hidden rounded-full">
+          {classes.map((c) => (
+            <div key={c.l} style={{ width: `${c.pct}%`, background: c.color }} />
+          ))}
+        </div>
+      </div>
+
       <div className="mt-3 grid grid-cols-3 gap-2">
-        {[
-          { l: "Renda fixa", v: "R$ 22.4k" },
-          { l: "Ações", v: "R$ 14.1k" },
-          { l: "Fundos", v: "R$ 11.8k" },
-        ].map((it) => (
-          <div key={it.l} className="rounded-xl bg-slate-50 p-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{it.l}</p>
-            <p className="text-sm font-bold tabular-nums text-slate-900">{it.v}</p>
+        {classes.map((c) => (
+          <div key={c.l} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+                {c.l}
+              </span>
+              <span className="text-[9px] font-bold text-emerald-600">{c.chip}</span>
+            </div>
+            <p className="mt-1 text-sm font-bold tabular-nums text-slate-900">{c.v}</p>
+            <p className="text-[10px] text-slate-500">{c.pct}% da carteira</p>
           </div>
         ))}
       </div>
@@ -1123,29 +1300,49 @@ function InvestimentosMock() {
 
 function GuardadoMock() {
   const items = [
-    { l: "Nubank", v: "R$ 2.100", color: "bg-violet-100 text-violet-700" },
-    { l: "Inter", v: "R$ 1.480", color: "bg-amber-100 text-amber-700" },
-    { l: "C6 Bank", v: "R$ 980", color: "bg-slate-200 text-slate-800" },
-    { l: "Carteira", v: "R$ 320", color: "bg-emerald-100 text-emerald-700" },
+    { l: "Nubank", v: "R$ 2.100", pct: 43, color: "bg-violet-100 text-violet-700", bar: "bg-violet-500" },
+    { l: "Inter", v: "R$ 1.480", pct: 30, color: "bg-amber-100 text-amber-700", bar: "bg-amber-500" },
+    { l: "C6 Bank", v: "R$ 980", pct: 20, color: "bg-slate-200 text-slate-800", bar: "bg-slate-500" },
+    { l: "Carteira", v: "R$ 320", pct: 7, color: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" },
   ];
   return (
     <MockShell>
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
-        <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
+          <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Reservas em 4 contas</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+          <ShieldCheck className="h-3.5 w-3.5" /> Reserva segura
+        </span>
       </div>
+
+      {/* distribution bar */}
+      <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+        {items.map((it) => (
+          <div key={it.l} className={cn("h-full", it.bar)} style={{ width: `${it.pct}%` }} />
+        ))}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
+        {items.map((it) => (
+          <span key={it.l} className="inline-flex items-center gap-1">
+            <span className={cn("h-1.5 w-1.5 rounded-full", it.bar)} />
+            {it.l} · {it.pct}%
+          </span>
+        ))}
+      </div>
+
       <ul className="mt-4 grid grid-cols-2 gap-2.5">
         {items.map((it) => (
-          <li key={it.l} className="rounded-xl border border-slate-200 p-3">
-            <span
-              className={cn(
-                "mb-2 inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold",
-                it.color,
-              )}
-            >
-              {it.l[0]}
-            </span>
-            <p className="text-xs font-medium text-slate-500">{it.l}</p>
+          <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
+            <div className="flex items-center justify-between">
+              <span className={cn("inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold", it.color)}>
+                {it.l[0]}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
+            </div>
+            <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
             <p className="text-sm font-bold tabular-nums text-slate-900">{it.v}</p>
           </li>
         ))}
