@@ -332,6 +332,7 @@ export type Database = {
           id: string
           import_batch_id: string | null
           legacy_id: string | null
+          meta_id: string | null
           observacao: string | null
           tipo_reserva: string
           updated_at: string
@@ -345,6 +346,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           legacy_id?: string | null
+          meta_id?: string | null
           observacao?: string | null
           tipo_reserva?: string
           updated_at?: string
@@ -358,6 +360,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           legacy_id?: string | null
+          meta_id?: string | null
           observacao?: string | null
           tipo_reserva?: string
           updated_at?: string
