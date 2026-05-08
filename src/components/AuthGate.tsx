@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { usePlan } from "@/lib/use-plan";
-import { Wallet, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLoader } from "@/components/BrandLoader";
 import { fetchOnboarding } from "@/lib/onboarding/service";
