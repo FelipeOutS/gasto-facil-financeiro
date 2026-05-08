@@ -1246,6 +1246,25 @@ function ContaFormDialog({
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="conta-mes-ref">Mês de referência</Label>
+            <Select value={mesReferencia} onValueChange={setMesReferencia}>
+              <SelectTrigger id="conta-mes-ref">
+                <SelectValue placeholder="Mês de competência" />
+              </SelectTrigger>
+              <SelectContent>
+                {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Mês ao qual esta conta pertence (ex.: fatura de Maio paga em Junho → Maio).
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="conta-obs">Observação (opcional)</Label>
             <Textarea
               id="conta-obs"
