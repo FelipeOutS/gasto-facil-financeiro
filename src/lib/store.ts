@@ -3069,14 +3069,31 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
     });
 }
 
+/**
+ * Exclui uma meta sem apagar o dinheiro guardado vinculado a ela.
+ * Reservas em Guardado ficam como "sem meta vinculada".
+ * Movimentações antigas (legado) também são preservadas, ficando órfãs até
+ * serem manualmente limpas pelo usuário.
+ */
 export function deleteMeta(id: string) {
+  // Desvincula reservas locais (preserva o dinheiro em Guardado).
+  memGuardado = memGuardado.map((g) =>
+    g.metaId === id ? { ...g, metaId: undefined } : g,
+  );
   memMetas = memMetas.filter((m) => m.id !== id);
-  memMov = memMov.filter((mv) => mv.metaId !== id);
   emit();
   if (!activeUserId) return;
   const uuid = metaUuidFor(id);
   if (!uuid) return;
   metaKeyToUuid.delete(id);
+  // Desvincula no banco em paralelo, sem bloquear a exclusão.
+  void supabase
+    .from("dinheiro_guardado")
+    .update({ meta_id: null } as GuardadoUpdate)
+    .eq("meta_id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMeta unlink guardados failed", error);
+    });
   void supabase
     .from("metas_financeiras")
     .delete()
