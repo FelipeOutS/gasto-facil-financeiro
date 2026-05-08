@@ -87,6 +87,7 @@ function GuardadoPage() {
   const ready = useBootstrap();
   const bancos = useStore(() => getBancos());
   const guardado = useStore(() => getGuardado());
+  const metas = useStore(() => getMetas());
 
   const total = useMemo(() => guardado.reduce((s, g) => s + g.valor, 0), [guardado]);
   const porBanco = useMemo(() => {
