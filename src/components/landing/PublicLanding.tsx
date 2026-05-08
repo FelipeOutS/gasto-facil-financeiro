@@ -323,6 +323,24 @@ function Hero() {
 
         {/* Visual mockup */}
         <div className="relative lg:col-span-6">
+          {/* decorative blob behind mockup */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-6 -z-10 hidden md:block"
+          >
+            <svg viewBox="0 0 600 600" className="h-full w-full">
+              <defs>
+                <linearGradient id="hero-blob" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.18" />
+                </linearGradient>
+              </defs>
+              <path
+                fill="url(#hero-blob)"
+                d="M431.5,329.5Q403,409,323,440Q243,471,167,427.5Q91,384,84.5,294Q78,204,150.5,148Q223,92,313.5,98Q404,104,438,202Q472,300,431.5,329.5Z"
+              />
+            </svg>
+          </div>
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -334,7 +352,7 @@ function Hero() {
             <motion.div
               animate={reduce ? undefined : { y: [0, -8, 0] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-4 top-12 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] sm:block"
+              className="absolute -left-6 top-10 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] sm:block"
             >
               <div className="flex items-center gap-2">
                 <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
@@ -348,6 +366,25 @@ function Hero() {
                 </div>
               </div>
             </motion.div>
+
+            <motion.div
+              animate={reduce ? undefined : { y: [0, -6, 0] }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+              className="absolute -left-8 bottom-24 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
+            >
+              <div className="flex items-center gap-2">
+                <div className="grid h-8 w-8 place-items-center rounded-lg bg-amber-100 text-amber-700">
+                  <Bell className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                    Alerta
+                  </p>
+                  <p className="text-xs font-bold leading-tight text-slate-900">Conta vence amanhã</p>
+                </div>
+              </div>
+            </motion.div>
+
             <motion.div
               animate={reduce ? undefined : { y: [0, 8, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
@@ -367,6 +404,27 @@ function Hero() {
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
               </div>
+            </motion.div>
+
+            <motion.div
+              animate={reduce ? undefined : { y: [0, 7, 0] }}
+              transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
+              className="absolute -right-6 top-20 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100 text-violet-700">
+                    <CreditCard className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                      Fatura
+                    </p>
+                    <p className="text-xs font-bold text-slate-900">Em aberto</p>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
             </motion.div>
           </motion.div>
         </div>
