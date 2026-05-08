@@ -68,6 +68,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { PublicLanding } from "@/components/landing/PublicLanding";
+import { BrandLoader } from "@/components/BrandLoader";
 
 export const Route = createFileRoute("/")({
   head: () => ({
