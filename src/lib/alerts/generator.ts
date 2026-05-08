@@ -11,7 +11,7 @@ import type {
 import type { Recorrencia } from "@/lib/recorrencias";
 import type { ContaReceber } from "@/lib/contas-receber";
 import type { Ativo } from "@/lib/investimentos";
-import { mesEfetivoGasto, resumoFaturaCartao, statusContaEfetivo, statusEfetivoFatura, faturaCorrente } from "@/lib/store";
+import { mesEfetivoGasto, resumoFaturaCartao, statusContaEfetivo, statusEfetivoFatura, faturaCorrente, mesReferenciaFaturaLabel } from "@/lib/store";
 import {
   buildLinhasOrcamento,
   buildAlertasOrcamento,
@@ -106,11 +106,12 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
           const venc = new Date(ref.ano, ref.mes - 1, cartao.diaVencimento);
           const isoVenc = `${venc.getFullYear()}-${String(venc.getMonth() + 1).padStart(2, "0")}-${String(venc.getDate()).padStart(2, "0")}`;
           const dias = diffDaysLocal(isoVenc);
+          const refLabel = mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano);
           if (dias < 0 && dias >= -10) {
             drafts.push({
               type: "fatura_vencida",
-              title: `Fatura de ${cartao.nome} vencida`,
-              description: `A fatura venceu há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}.`,
+              title: `Fatura de ${refLabel} (${cartao.nome}) vencida`,
+              description: `A fatura de ${refLabel} venceu há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}.`,
               priority: "critica",
               related_entity_type: "cartao",
               related_entity_id: cartao.id,
@@ -118,17 +119,17 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
               action_url: "/cartoes",
               dedupe_key: `fatura_vencida:${cartao.id}:${ref.ano}-${String(ref.mes).padStart(2, "0")}`,
               period_key: period,
-              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano },
+              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano, refLabel },
             });
           } else if (dias >= 0 && dias <= 5) {
             drafts.push({
               type: "fatura_vencendo",
-              title: `Fatura de ${cartao.nome} vence em breve`,
+              title: `Fatura de ${refLabel} (${cartao.nome}) vence em breve`,
               description: dias === 0
-                ? "A fatura vence hoje."
+                ? `A fatura de ${refLabel} vence hoje.`
                 : dias === 1
-                  ? "A fatura vence amanhã."
-                  : `A fatura vence em ${dias} dias.`,
+                  ? `A fatura de ${refLabel} vence amanhã.`
+                  : `A fatura de ${refLabel} vence em ${dias} dias.`,
               priority: dias <= 1 ? "alta" : "media",
               related_entity_type: "cartao",
               related_entity_id: cartao.id,
@@ -136,7 +137,7 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
               action_url: "/cartoes",
               dedupe_key: `fatura_vencendo:${cartao.id}:${ref.ano}-${String(ref.mes).padStart(2, "0")}`,
               period_key: period,
-              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano },
+              metadata: { dias, totalFatura, mes: ref.mes, ano: ref.ano, refLabel },
             });
           }
         }

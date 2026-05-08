@@ -13,6 +13,8 @@ import {
   getFatura,
   marcarFaturaPaga,
   desmarcarFaturaPaga,
+  mesReferenciaFatura,
+  mesReferenciaFaturaLabel,
 } from "@/lib/store";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
@@ -1142,11 +1144,12 @@ function FaturaSheet({
               {cartao.nome}
             </SheetTitle>
             <SheetDescription className="text-white/80">
-              Fatura de {MESES_FULL[ref.mes - 1]} de {ref.ano}.
+              Fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)}
+              {status === "aberta" ? " · em aberto" : ""}.
             </SheetDescription>
           </SheetHeader>
 
-          {/* Navegação de mês */}
+          {/* Navegação de mês (mês de referência das compras) */}
           <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
             <button
               type="button"
@@ -1157,7 +1160,10 @@ function FaturaSheet({
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold tracking-tight">
-              {MESES_ABBR[ref.mes - 1]}/{ref.ano}
+              {(() => {
+                const r = mesReferenciaFatura(cartao, ref.mes, ref.ano);
+                return `${MESES_ABBR[r.mes - 1]}/${r.ano}`;
+              })()}
             </span>
             <button
               type="button"
@@ -1177,7 +1183,7 @@ function FaturaSheet({
             <p className="num mt-1 text-3xl font-bold tracking-tight">
               {formatBRL(resumo.total)}
             </p>
-            {status !== "paga" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
+            {status !== "paga" && status !== "aberta" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
               <p className="mt-1 text-[11px] text-white/80">
                 {diasParaVencer === 0
                   ? "⚠️ Vence hoje"
@@ -1479,7 +1485,7 @@ function FaturaSheet({
                 Nova compra no cartão
               </DialogTitle>
               <DialogDescription>
-                Será adicionada à fatura de {MESES_FULL[ref.mes - 1]}/{ref.ano} no crédito.
+                Será adicionada à fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)} no crédito.
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4">
