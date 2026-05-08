@@ -1663,7 +1663,7 @@ function Plans() {
               <Reveal key={p.tier} delay={i * 0.05} className="h-full">
                 <div
                   className={cn(
-                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-5 sm:p-6 lg:p-5 xl:p-6 transition-all duration-300",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl px-5 py-5 sm:px-6 sm:py-5 lg:px-5 lg:py-5 xl:px-5 xl:py-5 transition-all duration-300",
                     featured
                       ? "bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-[0_24px_60px_-22px_rgba(15,23,42,0.55)] hover:-translate-y-1 hover:shadow-[0_32px_70px_-22px_rgba(15,23,42,0.65)]"
                       : "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]",
@@ -1710,22 +1710,22 @@ function Plans() {
                     )}
                   </div>
 
-                  <h3 className={cn("relative mt-4 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+                  <h3 className={cn("relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
                     {p.name}
                   </h3>
                   <p
                     className={cn(
-                      "relative mt-1.5 min-h-[52px] text-xs leading-relaxed",
+                      "relative mt-1 min-h-[34px] text-xs leading-snug",
                       featured ? "text-slate-300" : "text-slate-500",
                     )}
                   >
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
 
-                  <div className="relative mt-5 flex items-baseline gap-1">
+                  <div className="relative mt-3 flex items-baseline gap-1">
                     <span
                       className={cn(
-                        "text-[2rem] font-extrabold leading-none tracking-tight tabular-nums",
+                        "text-[1.75rem] font-extrabold leading-none tracking-tight tabular-nums",
                         featured ? "text-white" : "text-slate-900",
                       )}
                     >
@@ -1735,25 +1735,25 @@ function Plans() {
                       /{(pricePer || "mês").trim()}
                     </span>
                   </div>
-                  <p className={cn("relative mt-1 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
+                  <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
                     Cancele quando quiser
                   </p>
 
                   <div
                     className={cn(
-                      "relative my-5 h-px w-full",
+                      "relative my-3 h-px w-full",
                       featured
                         ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
                         : "bg-gradient-to-r from-transparent via-slate-200 to-transparent",
                     )}
                   />
 
-                  <ul className="relative flex-1 space-y-2.5">
+                  <ul className="relative flex-1 space-y-1.5">
                     {p.highlights.map((h) => (
                       <li
                         key={h}
                         className={cn(
-                          "flex items-start gap-2 text-[13px] leading-snug",
+                          "flex items-start gap-2 text-[12.5px] leading-snug",
                           featured ? "text-slate-200" : "text-slate-700",
                         )}
                       >
@@ -1773,7 +1773,7 @@ function Plans() {
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "relative mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
+                      "relative mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
                       featured
                         ? "bg-white text-slate-900 hover:bg-slate-100"
                         : "bg-slate-900 text-white hover:bg-slate-800",
