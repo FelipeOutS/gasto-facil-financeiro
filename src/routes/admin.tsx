@@ -406,16 +406,16 @@ function AdminPage() {
         )}
 
         {/* Cards */}
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
           {cards.map((c) => (
             <Card key={c.label}>
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className={`grid h-10 w-10 place-items-center rounded-xl bg-muted ${c.color}`}>
-                  <c.icon className="h-5 w-5" />
+              <CardContent className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
+                <div className={`grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-xl bg-muted ${c.color}`}>
+                  <c.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{c.label}</p>
-                  <p className="text-lg font-bold leading-tight truncate">{c.value}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground leading-tight break-words">{c.label}</p>
+                  <p className="text-sm sm:text-lg font-bold leading-tight truncate">{c.value}</p>
                 </div>
               </CardContent>
             </Card>
