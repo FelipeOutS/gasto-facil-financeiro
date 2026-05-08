@@ -252,9 +252,11 @@ function GastosPage() {
     const alvo = gastos.find((g) => g.id === highlightId);
     if (!alvo) return;
     // Reset suave: remove filtros e período para o item ser visível.
+    const eff = mesEfetivoGasto(alvo);
+    const targetYm = `${eff.ano}-${String(eff.mes).padStart(2, "0")}`;
       setQ("");
       setPeriodo("todos");
-      setMesRef("todos");
+      setMesRef(targetYm);
       setCatFilter("todas");
       setPagFilter("todas");
       setValorMin("");
@@ -268,7 +270,9 @@ function GastosPage() {
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
-  const [mesRef, setMesRef] = useState<string>("todos"); // "todos" | "YYYY-MM"
+  const [selectedReferenceMonth, setSelectedReferenceMonth] = useState<string>(() => readInitialReferenceMonth());
+  const mesRef = selectedReferenceMonth; // "todos" | "YYYY-MM"
+  const setMesRef = setSelectedReferenceMonth;
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -286,6 +290,26 @@ function GastosPage() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [reclassificando, setReclassificando] = useState(false);
   const { can } = usePlan();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isValidReferenceMonth(selectedReferenceMonth)) return;
+    window.localStorage.setItem(MES_REF_STORAGE_KEY, selectedReferenceMonth);
+    const url = new URL(window.location.href);
+    url.searchParams.set("mes", selectedReferenceMonth);
+    window.history.replaceState({}, "", url.toString());
+  }, [selectedReferenceMonth]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const restoreFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get("mes");
+      if (isValidReferenceMonth(fromUrl)) setSelectedReferenceMonth(fromUrl);
+    };
+    window.addEventListener("popstate", restoreFromUrl);
+    return () => window.removeEventListener("popstate", restoreFromUrl);
+  }, []);
+
   const tryImportar = () => {
     if (can("importar_extrato")) setImportOpen(true);
     else setUpgradeOpen(true);
