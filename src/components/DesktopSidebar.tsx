@@ -19,6 +19,7 @@ import {
   Lock,
   HandCoins,
   Bell,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
@@ -59,6 +60,7 @@ const ITEMS: NavItem[] = [
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/meu-plano", label: "Meu plano", icon: Crown },
   { to: "/categorias", label: "Ajustes", icon: Settings2 },
+  { to: "/landing", label: "Conhecer o Gasto Inteligente", icon: Sparkles },
 ];
 
 export function DesktopSidebar() {
