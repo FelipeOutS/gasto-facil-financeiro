@@ -67,13 +67,28 @@ import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { PublicLanding } from "@/components/landing/PublicLanding";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Gasto Inteligente — Dashboard" }],
+    meta: [
+      { title: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
+      {
+        name: "description",
+        content:
+          "Organize gastos, cartões, contas, metas, renda e investimentos em um só lugar. Visão clara do mês, alertas inteligentes e planos para pessoa física, MEI e empresa.",
+      },
+    ],
   }),
-  component: Index,
+  component: IndexGate,
 });
+
+function IndexGate() {
+  const { session, loading } = useAuth();
+  if (loading) return <DashboardSkeleton />;
+  if (!session) return <PublicLanding />;
+  return <Index />;
+}
 
 function Index() {
   const ready = useBootstrap();
