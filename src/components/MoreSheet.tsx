@@ -1,5 +1,6 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
   ArrowUp,
   CalendarClock,
@@ -45,6 +46,8 @@ type MoreItem = {
   feature?: FeatureKey;
 };
 
+const ADMIN_ITEM: MoreItem = { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield };
+
 export const MORE_ITEMS: MoreItem[] = [
   { to: "/alertas", label: "Alertas", description: "Avisos importantes do seu financeiro", icon: Bell },
   { to: "/renda", label: "Minha renda", description: "Receitas e fontes de renda", icon: ArrowUp },
@@ -60,7 +63,7 @@ export const MORE_ITEMS: MoreItem[] = [
 ];
 
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
-export const MORE_PATHS = MORE_ITEMS.map((i) => i.to);
+export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
 type Props = {
   open: boolean;
@@ -68,17 +71,25 @@ type Props = {
 };
 
 export function MoreSheet({ open, onOpenChange }: Props) {
+  const router = useRouter();
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const { user } = useAuth();
   const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
-  const showAdmin = isAdminMaster || hasFullAccess;
-  const items: MoreItem[] = showAdmin
-    ? [...MORE_ITEMS, { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield }]
-    : MORE_ITEMS;
+  const items: MoreItem[] = useMemo(() => (isAdminMaster ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS), [isAdminMaster]);
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const [navigating, setNavigating] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    items.forEach((item) => {
+      if (isLocked(item)) return;
+      router.preloadRoute({ to: item.to }).catch(() => {
+        // Prefetch é uma otimização: falhas não devem bloquear o menu.
+      });
+    });
+  }, [open, items, router, isAdminMaster, hasFullAccess, can]);
 
   function getRule(item: MoreItem) {
     return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
@@ -94,13 +105,12 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
-      onOpenChange(false);
-      setTimeout(() => setLockState({ open: true, title: rule.title }), 150);
+      flushSync(() => onOpenChange(false));
+      setLockState({ open: true, title: rule.title });
       return;
     }
     setNavigating(true);
-    onOpenChange(false);
-    // Navega imediatamente; o sheet fecha em paralelo (anim ~150ms)
+    flushSync(() => onOpenChange(false));
     navigate({ to: item.to }).finally(() => setNavigating(false));
   }
 
@@ -110,7 +120,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-150 data-[state=open]:duration-200"
+          overlayClassName="data-[state=closed]:duration-0"
+          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-0 data-[state=open]:duration-150"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">Mais opções</SheetTitle>
