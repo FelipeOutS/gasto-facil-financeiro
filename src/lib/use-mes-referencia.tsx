@@ -65,3 +65,25 @@ export function useMesReferenciaSelecionado() {
 
   return [value, setValue] as const;
 }
+
+/**
+ * Adaptador: converte o filtro global ("todos" | "YYYY-MM") em {mes, ano}.
+ * - Se "todos", devolve o mês atual.
+ * - setRef({mes, ano}) escreve no global como "YYYY-MM" e sincroniza demais telas.
+ */
+export function useMesReferenciaRef() {
+  const [value, setValue] = useMesReferenciaSelecionado();
+  const today = new Date();
+  let mes = today.getMonth() + 1;
+  let ano = today.getFullYear();
+  if (value !== MES_REF_ALL && /^\d{4}-\d{2}$/.test(value)) {
+    const [a, m] = value.split("-").map(Number);
+    ano = a;
+    mes = m;
+  }
+  const setRef = (next: { mes: number; ano: number }) => {
+    const ym = `${next.ano}-${String(next.mes).padStart(2, "0")}`;
+    setValue(ym);
+  };
+  return [{ mes, ano }, setRef, value, setValue] as const;
+}
