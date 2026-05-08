@@ -110,7 +110,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden"
+          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-150 data-[state=open]:duration-200"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">Mais opções</SheetTitle>
