@@ -32,6 +32,7 @@ import {
   getBancos,
   getMetas,
   getMetaProgresso,
+  getMetaProgressoBreakdown,
   statusMeta,
   updateMeta,
   useBootstrap,
