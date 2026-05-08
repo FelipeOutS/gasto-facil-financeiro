@@ -654,6 +654,7 @@ type ContaAPagarRow = {
   banco_emissor?: string | null;
   frequencia_recorrencia?: string | null;
   import_batch_id?: string | null;
+  mes_referencia?: string | null;
   mes: number;
   ano: number;
   created_at: string;
@@ -685,6 +686,10 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     importBatchId: r.import_batch_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
+    mesReferencia:
+      r.mes_referencia && /^\d{4}-\d{2}$/.test(r.mes_referencia)
+        ? r.mes_referencia
+        : `${r.ano}-${String(r.mes).padStart(2, "0")}`,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -2046,6 +2051,13 @@ export function deleteGasto(id: string) {
   }
 
   emit();
+  // Resolve alertas órfãos vinculados a este gasto (ex: duplicidade).
+  void resolveAlertasDe("gasto", id);
+  // Se este gasto representava a fatura/conta paga, resolve esses alertas
+  // também — a pendência deixou de existir.
+  for (const c of contasVinculadas) {
+    void resolveAlertasDe("conta_a_pagar", c.id);
+  }
   void supabase
     .from("gastos")
     .delete()
@@ -3127,6 +3139,8 @@ export type NovaContaInput = {
   chavePix?: string;
   bancoEmissor?: string;
   importBatchId?: string;
+  /** Mês de referência (competência) `YYYY-MM`. Default = mês do vencimento. */
+  mesReferencia?: string;
 };
 
 export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
@@ -3163,6 +3177,12 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
     const id = crypto.randomUUID();
+    // Mês de referência: usa o informado ou cai pro mês do vencimento desta
+    // ocorrência. Para recorrências, cada ocorrência usa o próprio mês.
+    const mesRef =
+      input.mesReferencia && /^\d{4}-\d{2}$/.test(input.mesReferencia) && !recurringId
+        ? input.mesReferencia
+        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     created.push({
       id,
       nome: input.nome,
@@ -3179,6 +3199,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       ...extras,
       mes: d.getMonth() + 1,
       ano: d.getFullYear(),
+      mesReferencia: mesRef,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -3198,6 +3219,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       status: "pendente",
       mes: d.getMonth() + 1,
       ano: d.getFullYear(),
+      mes_referencia: mesRef,
       ...extrasRow,
     });
   }
@@ -3247,6 +3269,8 @@ export type ContaEditableFields = {
   codigoPix?: string | null;
   chavePix?: string | null;
   bancoEmissor?: string | null;
+  /** Mês de referência (competência) `YYYY-MM`. */
+  mesReferencia?: string | null;
   /** Quando atualizando uma conta paga, sincroniza o gasto vinculado */
   atualizarGastoVinculado?: boolean;
 };
@@ -3286,12 +3310,22 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       fields.bancoEmissor === null
         ? undefined
         : fields.bancoEmissor ?? current.bancoEmissor,
+    mesReferencia:
+      fields.mesReferencia === null
+        ? undefined
+        : fields.mesReferencia ?? current.mesReferencia,
     atualizadoEm: new Date().toISOString(),
   };
   if (fields.dataVencimento) {
     const d = new Date(fields.dataVencimento + "T00:00:00");
     updated.mes = d.getMonth() + 1;
     updated.ano = d.getFullYear();
+    // Se o usuário não está editando explicitamente o mês de referência e
+    // este estava vazio ou apontando para o vencimento antigo, atualiza para
+    // o novo vencimento.
+    if (fields.mesReferencia === undefined && !current.mesReferencia) {
+      updated.mesReferencia = `${updated.ano}-${String(updated.mes).padStart(2, "0")}`;
+    }
   }
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
@@ -3328,6 +3362,9 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
   if (fields.codigoPix !== undefined) row.codigo_pix = fields.codigoPix ?? null;
   if (fields.chavePix !== undefined) row.chave_pix = fields.chavePix ?? null;
   if (fields.bancoEmissor !== undefined) row.banco_emissor = fields.bancoEmissor ?? null;
+  if (fields.mesReferencia !== undefined) row.mes_referencia = fields.mesReferencia ?? null;
+  else if (fields.dataVencimento !== undefined && updated.mesReferencia)
+    row.mes_referencia = updated.mesReferencia;
 
   void sbAny
     .from("contas_a_pagar")
@@ -3375,6 +3412,9 @@ export function deleteContaAPagar(id: string, options?: { excluirGastoVinculado?
   if (options?.excluirGastoVinculado && conta?.gastoId) {
     deleteGasto(conta.gastoId);
   }
+  // Alerta órfão: se a conta foi excluída, qualquer alerta apontando para
+  // ela deixa de fazer sentido.
+  void resolveAlertasDe("conta_a_pagar", id);
   void sbAny
     .from("contas_a_pagar")
     .delete()
@@ -3398,6 +3438,9 @@ export function deleteContaRecorrencia(
   const removedIds = memContas.filter(shouldRemove).map((c) => c.id);
   memContas = memContas.filter((c) => !shouldRemove(c));
   emit();
+  for (const cid of removedIds) {
+    void resolveAlertasDe("conta_a_pagar", cid);
+  }
   if (!activeUserId || removedIds.length === 0) return;
   void sbAny
     .from("contas_a_pagar")
@@ -3494,15 +3537,49 @@ async function deleteGastosPersistidos(ids: string[]): Promise<void> {
   if (error) throw error;
 }
 
-async function resolveAlertasDaConta(contaId: string): Promise<void> {
-  if (!activeUserId) return;
-  await sbAny
+/**
+ * Resolve (marca como `resolved`) todos os alertas no sininho que apontam
+ * para uma entidade específica. Usado quando a entidade é paga, cancelada,
+ * excluída ou deixa de ser uma pendência real.
+ *
+ * Tipos típicos: `conta_a_pagar`, `fatura`, `cartao`, `gasto`, `recorrencia`,
+ * `categoria`, `conta_a_receber`.
+ */
+export async function resolveAlertasDe(
+  entityType: string,
+  entityId: string,
+): Promise<void> {
+  if (!activeUserId || !entityId) return;
+  const now = new Date().toISOString();
+  const { error } = await sbAny
     .from("user_alerts")
-    .update({ status: "resolved", resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ status: "resolved", resolved_at: now, updated_at: now })
     .eq("user_id", activeUserId)
-    .eq("related_entity_type", "conta_a_pagar")
-    .eq("related_entity_id", contaId)
+    .eq("related_entity_type", entityType)
+    .eq("related_entity_id", entityId)
     .in("status", ["unread", "read"]);
+  if (error) console.error("[store] resolveAlertasDe failed", entityType, entityId, error);
+}
+
+// Compat: nome antigo, mantido para não quebrar chamadas existentes.
+async function resolveAlertasDaConta(contaId: string): Promise<void> {
+  await resolveAlertasDe("conta_a_pagar", contaId);
+}
+
+/**
+ * Resolve alertas cuja `dedupe_key` começa com um prefixo. Útil para alertas
+ * que não usam `related_entity_id` (ex: `fatura_vencida:<cartaoId>:<YYYY-MM>`).
+ */
+export async function resolveAlertasPorDedupeKey(prefix: string): Promise<void> {
+  if (!activeUserId || !prefix) return;
+  const now = new Date().toISOString();
+  const { error } = await sbAny
+    .from("user_alerts")
+    .update({ status: "resolved", resolved_at: now, updated_at: now })
+    .eq("user_id", activeUserId)
+    .like("dedupe_key", `${prefix}%`)
+    .in("status", ["unread", "read"]);
+  if (error) console.error("[store] resolveAlertasPorDedupeKey failed", prefix, error);
 }
 
 async function upsertGastoVinculadoConta(
@@ -3524,6 +3601,12 @@ async function upsertGastoVinculadoConta(
   const candidates = findGastosVinculadosConta(conta, input.nome, input.valor, input.dataPagamento);
   const existing = candidates[0];
   const duplicates = candidates.slice(1).map((g) => g.id);
+  // Mês de referência (competência) — se a conta tem, propaga para o gasto.
+  // Senão, usa o mês do pagamento (comportamento legado).
+  const invoiceMonth =
+    conta.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)
+      ? conta.mesReferencia
+      : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const row = {
     descricao: input.nome,
     valor: input.valor,
@@ -3538,6 +3621,7 @@ async function upsertGastoVinculadoConta(
     tipo_gasto: "unico",
     origem: CONTA_A_PAGAR_GASTO_ORIGEM,
     id_operacao_banco: contaGastoOperationId(conta.id),
+    invoice_month: invoiceMonth,
     updated_at: now,
   };
 
@@ -3561,6 +3645,7 @@ async function upsertGastoVinculadoConta(
             tipoGasto: "unico",
             origem: CONTA_A_PAGAR_GASTO_ORIGEM,
             idOperacaoBanco: contaGastoOperationId(conta.id),
+            invoiceMonth,
             atualizadoEm: now,
           }
         : g,
@@ -3590,6 +3675,7 @@ async function upsertGastoVinculadoConta(
       tipoGasto: "unico",
       origem: CONTA_A_PAGAR_GASTO_ORIGEM,
       idOperacaoBanco: contaGastoOperationId(conta.id),
+      invoiceMonth,
       criadoEm: now,
       atualizadoEm: now,
     },
@@ -4561,6 +4647,11 @@ export async function marcarFaturaPaga(
       emit();
     }
   }
+  // Resolve alertas de fatura vencida/vencendo deste cartão+mês — a pendência
+  // foi paga, o sininho não deve mais sinalizar.
+  const ymKey = `${ano}-${String(mes).padStart(2, "0")}`;
+  void resolveAlertasPorDedupeKey(`fatura_vencida:${cartaoId}:${ymKey}`);
+  void resolveAlertasPorDedupeKey(`fatura_vencendo:${cartaoId}:${ymKey}`);
 }
 
 export async function desmarcarFaturaPaga(cartaoId: string, mes: number, ano: number): Promise<void> {

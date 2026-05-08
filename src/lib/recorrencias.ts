@@ -675,6 +675,15 @@ export async function atualizarRecorrencia(
   const rec = rowToRec(data);
   memRec = memRec.map((r) => (r.id === id ? rec : r));
   emit();
+  // Se a recorrência foi cancelada, resolver alertas órfãos.
+  if (patch.status === "cancelada") {
+    try {
+      const { resolveAlertasDe } = await import("@/lib/store");
+      await resolveAlertasDe("recorrencia", id);
+    } catch (e) {
+      console.error("[recorrencias] resolveAlertasDe failed", e);
+    }
+  }
 }
 
 export async function excluirRecorrencia(id: string): Promise<void> {
@@ -692,6 +701,14 @@ export async function excluirRecorrencia(id: string): Promise<void> {
   }
   memRec = memRec.filter((r) => r.id !== id);
   emit();
+  // Resolve alertas órfãos vinculados à recorrência (assinatura em alta,
+  // novo serviço detectado etc.) — após F5 não devem reaparecer.
+  try {
+    const { resolveAlertasDe } = await import("@/lib/store");
+    await resolveAlertasDe("recorrencia", id);
+  } catch (e) {
+    console.error("[recorrencias] resolveAlertasDe failed", e);
+  }
 }
 
 /**

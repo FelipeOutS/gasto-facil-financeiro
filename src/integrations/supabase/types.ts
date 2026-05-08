@@ -186,6 +186,7 @@ export type Database = {
           id: string
           import_batch_id: string | null
           mes: number
+          mes_referencia: string | null
           nome: string
           observacao: string | null
           recorrencia_id: string | null
@@ -214,6 +215,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           mes: number
+          mes_referencia?: string | null
           nome: string
           observacao?: string | null
           recorrencia_id?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           mes?: number
+          mes_referencia?: string | null
           nome?: string
           observacao?: string | null
           recorrencia_id?: string | null
