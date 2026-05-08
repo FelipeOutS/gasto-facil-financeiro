@@ -1105,6 +1105,7 @@ function ContaFormDialog({
         dataVencimento: dataVenc,
         categoriaId: (categoriaId || null) as string | null,
         observacao: observacao.trim() || undefined,
+        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : null,
         beneficiario: beneficiario.trim() || null,
         formaPagamento: (formaPagamento || null) as FormaPagamento | null,
         bancoEmissor: bancoEmissor.trim() || null,
