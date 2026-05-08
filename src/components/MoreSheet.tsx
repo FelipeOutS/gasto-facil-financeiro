@@ -60,6 +60,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/investimentos", label: "Investimentos", description: "Carteira e rendimentos", icon: TrendingUp, feature: "investimentos" },
   { to: "/meu-plano", label: "Meu plano", description: "Assinatura e recursos", icon: Crown },
   { to: "/categorias", label: "Ajustes", description: "Preferências da conta", icon: Settings2 },
+  { to: "/landing", label: "Conhecer o Gasto Inteligente", description: "Ver recursos, planos e novidades", icon: Sparkles },
 ];
 
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
