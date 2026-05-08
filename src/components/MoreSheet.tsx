@@ -138,7 +138,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
 
           <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
             <div className="grid grid-cols-2 gap-3">
-              {MORE_ITEMS.map((item) => {
+              {items.map((item) => {
                 const locked = isLocked(item);
                 const Icon = item.icon;
                 return (
