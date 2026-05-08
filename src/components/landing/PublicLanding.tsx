@@ -1336,9 +1336,44 @@ const BANKS = [
 ];
 
 function BanksStrip() {
+  const explainers = [
+    {
+      icon: CreditCard,
+      tone: "from-blue-500 to-sky-500",
+      title: "Cartões de qualquer banco",
+      text: "Cadastre Visa, Master, Elo ou cartões digitais — controle limite, fatura e parcelas.",
+    },
+    {
+      icon: Receipt,
+      tone: "from-emerald-500 to-teal-500",
+      title: "Contas, Pix e boletos",
+      text: "Lance entradas e saídas de qualquer conta corrente, poupança ou carteira digital.",
+    },
+    {
+      icon: PiggyBank,
+      tone: "from-violet-500 to-fuchsia-500",
+      title: "Reservas e guardado",
+      text: "Acompanhe quanto você guarda em cada banco e veja o total reservado num só lugar.",
+    },
+  ];
+
   return (
-    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-16 sm:py-20">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden border-y border-slate-100 bg-gradient-to-b from-white via-slate-50/40 to-white py-16 sm:py-20">
+      {/* subtle decorative dots */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.05) 1px, transparent 0)",
+          backgroundSize: "26px 26px",
+          maskImage:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
+        }}
+      />
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <Eyebrow>Funciona com qualquer banco</Eyebrow>
           <h2 className="mx-auto mt-3 max-w-2xl text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
@@ -1349,11 +1384,13 @@ function BanksStrip() {
             Sem integração obrigatória — você no controle.
           </p>
         </div>
-        <div className="mt-10 grid grid-cols-3 items-center gap-x-6 gap-y-8 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10">
+
+        {/* Logos grid (desktop) */}
+        <div className="mt-12 hidden grid-cols-5 gap-4 md:grid lg:grid-cols-5 xl:gap-5">
           {BANKS.map((b, i) => (
             <Reveal key={b.name} delay={i * 0.03}>
               <div
-                className="group flex h-14 items-center justify-center"
+                className="group flex h-20 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_36px_-18px_rgba(15,23,42,0.30)]"
                 title={b.name}
               >
                 <img
@@ -1361,12 +1398,56 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
-                  className="max-h-9 w-auto max-w-[110px] object-contain opacity-60 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                  className="max-h-10 w-auto max-w-[130px] object-contain transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
             </Reveal>
           ))}
         </div>
+
+        {/* Logos marquee (mobile) — horizontal scroll, snap, no scrollbar */}
+        <div className="mt-10 -mx-4 md:hidden">
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
+            {BANKS.map((b) => (
+              <div
+                key={b.name}
+                className="flex h-20 w-32 shrink-0 snap-start items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)]"
+                title={b.name}
+              >
+                <img
+                  src={b.src}
+                  alt={b.name}
+                  loading="lazy"
+                  draggable={false}
+                  className="max-h-9 w-auto max-w-[110px] object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Explanatory feature cards */}
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {explainers.map((e, i) => (
+            <Reveal key={e.title} delay={i * 0.05}>
+              <div className="group flex h-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.22)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.28)]">
+                <span
+                  className={cn(
+                    "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white shadow-[0_10px_24px_-12px_rgba(59,130,246,0.45)] transition-transform group-hover:scale-105",
+                    e.tone,
+                  )}
+                >
+                  <e.icon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-900">{e.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{e.text}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
         <p className="mt-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
           Marcas e logos pertencem a seus respectivos donos. Uso meramente ilustrativo.
         </p>
@@ -1725,6 +1806,8 @@ function LandingStyles() {
       .gi-landing { color-scheme: light; }
       .gi-landing, .gi-landing * { border-color: rgb(226 232 240); }
       .gi-landing ::selection { background: rgba(59,130,246,0.18); }
+      .gi-landing .no-scrollbar::-webkit-scrollbar { display: none; }
+      .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     `}</style>
   );
 }
