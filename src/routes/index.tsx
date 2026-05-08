@@ -85,7 +85,7 @@ export const Route = createFileRoute("/")({
 
 function IndexGate() {
   const { session, loading } = useAuth();
-  if (loading) return <DashboardSkeleton />;
+  if (loading) return <BrandLoader message="Carregando sua conta…" />;
   if (!session) return <PublicLanding />;
   return <Index />;
 }
