@@ -41,41 +41,81 @@ import { cn } from "@/lib/utils";
    ────────────────────────────────────────────────────────────── */
 
 const NAV = [
-  { label: "Início", href: "#top" },
-  { label: "Recursos", href: "#recursos" },
-  { label: "Como funciona", href: "#telas" },
-  { label: "Planos", href: "#planos" },
-  { label: "Dúvidas", href: "#faq" },
+  { label: "Início", href: "#inicio", sectionId: "inicio" },
+  { label: "Recursos", href: "#recursos", sectionId: "recursos" },
+  { label: "Como funciona", href: "#como-funciona", sectionId: "como-funciona" },
+  { label: "Planos", href: "#planos", sectionId: "planos" },
+  { label: "Dúvidas", href: "#duvidas", sectionId: "duvidas" },
 ];
 
-const HEADER_OFFSET = 72;
+const SCROLL_DURATION = 800;
+const HEADER_GAP = 20;
+let activeScrollFrame: number | null = null;
 
-function smoothScrollTo(href: string) {
+function getHeaderOffset() {
+  const header = document.querySelector<HTMLElement>("[data-landing-header]");
+  return (header?.offsetHeight ?? 70) + HEADER_GAP;
+}
+
+function smoothScrollToSection(sectionId: string) {
   if (typeof window === "undefined") return;
-  const id = href.replace(/^#/, "");
-  const el = document.getElementById(id);
-  if (!el) return;
+  const element = document.getElementById(sectionId);
+  if (!element) return;
+
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-  window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
-  if (history.replaceState) history.replaceState(null, "", href);
+  const targetPosition = Math.max(0, element.getBoundingClientRect().top + window.scrollY - getHeaderOffset());
+
+  if (activeScrollFrame !== null) {
+    window.cancelAnimationFrame(activeScrollFrame);
+    activeScrollFrame = null;
+  }
+
+  if (reduce) {
+    window.scrollTo(0, targetPosition);
+    if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+    return;
+  }
+
+  const startPosition = window.scrollY;
+  const distance = targetPosition - startPosition;
+  let startTime: number | null = null;
+
+  const easeInOutCubic = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  const animation = (currentTime: number) => {
+    if (startTime === null) startTime = currentTime;
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / SCROLL_DURATION, 1);
+
+    window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
+
+    if (progress < 1) {
+      activeScrollFrame = window.requestAnimationFrame(animation);
+    } else {
+      activeScrollFrame = null;
+      if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+    }
+  };
+
+  activeScrollFrame = window.requestAnimationFrame(animation);
 }
 
 function handleAnchorClick(
   e: React.MouseEvent<HTMLAnchorElement>,
   href: string,
-  onAfter?: () => void,
+  onBeforeScroll?: () => void,
 ) {
   if (!href.startsWith("#")) return;
   e.preventDefault();
-  smoothScrollTo(href);
-  onAfter?.();
+  const sectionId = href.replace(/^#/, "");
+  onBeforeScroll?.();
+  window.requestAnimationFrame(() => smoothScrollToSection(sectionId));
 }
 
 export function PublicLanding() {
   return (
     <div
-      id="top"
       className="gi-landing min-h-screen bg-white text-slate-900 antialiased"
       style={{ colorScheme: "light" }}
     >
