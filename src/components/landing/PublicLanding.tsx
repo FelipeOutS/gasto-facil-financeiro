@@ -48,6 +48,30 @@ const NAV = [
   { label: "Dúvidas", href: "#faq" },
 ];
 
+const HEADER_OFFSET = 72;
+
+function smoothScrollTo(href: string) {
+  if (typeof window === "undefined") return;
+  const id = href.replace(/^#/, "");
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+  if (history.replaceState) history.replaceState(null, "", href);
+}
+
+function handleAnchorClick(
+  e: React.MouseEvent<HTMLAnchorElement>,
+  href: string,
+  onAfter?: () => void,
+) {
+  if (!href.startsWith("#")) return;
+  e.preventDefault();
+  smoothScrollTo(href);
+  onAfter?.();
+}
+
 export function PublicLanding() {
   return (
     <div
@@ -128,7 +152,7 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#top" className="flex items-center gap-2">
+        <a href="#top" onClick={(e) => handleAnchorClick(e, "#top")} className="flex items-center gap-2">
           <BrandMark className="h-8 w-auto" />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
@@ -136,6 +160,7 @@ function Header() {
             <a
               key={n.href}
               href={n.href}
+              onClick={(e) => handleAnchorClick(e, n.href)}
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               {n.label}
@@ -172,7 +197,7 @@ function Header() {
               <a
                 key={n.href}
                 href={n.href}
-                onClick={() => setOpen(false)}
+                onClick={(e) => handleAnchorClick(e, n.href, () => setOpen(false))}
                 className="rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
                 {n.label}
@@ -1808,7 +1833,7 @@ function Plans() {
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
           Não sabe qual escolher?{" "}
-          <a href="#faq" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+          <a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
             Veja as dúvidas frequentes
           </a>{" "}
           ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
@@ -2155,6 +2180,7 @@ function FinalCTA() {
                 </Link>
                 <a
                   href="#planos"
+                  onClick={(e) => handleAnchorClick(e, "#planos")}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
                 >
                   Ver planos
@@ -2258,10 +2284,10 @@ function Footer() {
           <div className="lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#recursos" className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#telas" className="transition-colors hover:text-slate-900">Como funciona</a></li>
-              <li><a href="#planos" className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#faq" className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
+              <li><a href="#telas" onClick={(e) => handleAnchorClick(e, "#telas")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
+              <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
+              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
             </ul>
           </div>
 
@@ -2279,7 +2305,7 @@ function Footer() {
           <div className="lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#faq" className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
               <li><span className="text-slate-400">Status do sistema</span></li>
             </ul>
