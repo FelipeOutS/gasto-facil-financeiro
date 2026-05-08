@@ -1663,7 +1663,7 @@ function Plans() {
               <Reveal key={p.tier} delay={i * 0.05} className="h-full">
                 <div
                   className={cn(
-                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 transition-all duration-300",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-5 sm:p-6 lg:p-5 xl:p-6 transition-all duration-300",
                     featured
                       ? "bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-[0_24px_60px_-22px_rgba(15,23,42,0.55)] hover:-translate-y-1 hover:shadow-[0_32px_70px_-22px_rgba(15,23,42,0.65)]"
                       : "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]",
@@ -1710,50 +1710,50 @@ function Plans() {
                     )}
                   </div>
 
-                  <h3 className={cn("relative mt-5 text-xl font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+                  <h3 className={cn("relative mt-4 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
                     {p.name}
                   </h3>
                   <p
                     className={cn(
-                      "relative mt-2 min-h-[44px] text-sm leading-relaxed",
+                      "relative mt-1.5 min-h-[52px] text-xs leading-relaxed",
                       featured ? "text-slate-300" : "text-slate-500",
                     )}
                   >
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
 
-                  <div className="relative mt-6 flex items-baseline gap-1">
+                  <div className="relative mt-5 flex items-baseline gap-1">
                     <span
                       className={cn(
-                        "text-[2.5rem] font-extrabold leading-none tracking-tight tabular-nums",
+                        "text-[2rem] font-extrabold leading-none tracking-tight tabular-nums",
                         featured ? "text-white" : "text-slate-900",
                       )}
                     >
                       {priceMain.trim()}
                     </span>
-                    <span className={cn("text-sm font-medium", featured ? "text-slate-400" : "text-slate-500")}>
+                    <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
                       /{(pricePer || "mês").trim()}
                     </span>
                   </div>
-                  <p className={cn("relative mt-1.5 text-xs", featured ? "text-slate-400" : "text-slate-400")}>
+                  <p className={cn("relative mt-1 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
                     Cancele quando quiser
                   </p>
 
                   <div
                     className={cn(
-                      "relative my-6 h-px w-full",
+                      "relative my-5 h-px w-full",
                       featured
                         ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
                         : "bg-gradient-to-r from-transparent via-slate-200 to-transparent",
                     )}
                   />
 
-                  <ul className="relative flex-1 space-y-3">
+                  <ul className="relative flex-1 space-y-2.5">
                     {p.highlights.map((h) => (
                       <li
                         key={h}
                         className={cn(
-                          "flex items-start gap-2.5 text-sm leading-relaxed",
+                          "flex items-start gap-2 text-[13px] leading-snug",
                           featured ? "text-slate-200" : "text-slate-700",
                         )}
                       >
@@ -1773,7 +1773,7 @@ function Plans() {
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "relative mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
+                      "relative mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
                       featured
                         ? "bg-white text-slate-900 hover:bg-slate-100"
                         : "bg-slate-900 text-white hover:bg-slate-800",
@@ -1787,18 +1787,9 @@ function Plans() {
             );
           };
 
-          const firstRow = COMMERCIAL_PLANS.slice(0, 3);
-          const secondRow = COMMERCIAL_PLANS.slice(3);
           return (
-            <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-6 sm:gap-7">
-              <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-7">
-                {firstRow.map((p, i) => renderCard(p, i))}
-              </div>
-              {secondRow.length > 0 && (
-                <div className="mx-auto grid w-full max-w-4xl grid-cols-1 items-stretch gap-6 sm:grid-cols-2 sm:gap-7">
-                  {secondRow.map((p, i) => renderCard(p, firstRow.length + i))}
-                </div>
-              )}
+            <div className="mx-auto mt-12 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 sm:gap-6 lg:max-w-5xl lg:grid-cols-3 xl:max-w-[1400px] xl:grid-cols-5 xl:gap-4 2xl:gap-5">
+              {COMMERCIAL_PLANS.map((p, i) => renderCard(p, i))}
             </div>
           );
         })()}
