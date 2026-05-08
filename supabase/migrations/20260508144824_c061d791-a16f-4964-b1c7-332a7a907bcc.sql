@@ -1,0 +1,1 @@
+DELETE FROM public.movimentacoes_meta WHERE id = '5ba05c5c-bfbb-4edb-aa0c-b0d5ffcd5442'; UPDATE public.metas_financeiras SET valor_atual = 0 WHERE id = '8d0f8add-7b1c-4ade-8c3d-28f128915103';
