@@ -1485,7 +1485,7 @@ function FaturaSheet({
                 Nova compra no cartão
               </DialogTitle>
               <DialogDescription>
-                Será adicionada à fatura de {MESES_FULL[ref.mes - 1]}/{ref.ano} no crédito.
+                Será adicionada à fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)} no crédito.
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4">
