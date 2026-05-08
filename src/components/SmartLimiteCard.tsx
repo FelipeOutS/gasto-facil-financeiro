@@ -18,6 +18,7 @@ import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   useStore,
+  contaPertenceAoMesRef,
   getContasAPagar,
   statusContaEfetivo,
   getLimite,
