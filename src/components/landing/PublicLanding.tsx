@@ -1874,7 +1874,7 @@ function Plans() {
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
           Não sabe qual escolher?{" "}
-          <a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+          <a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
             Veja as dúvidas frequentes
           </a>{" "}
           ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
@@ -2326,9 +2326,9 @@ function Footer() {
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#telas" onClick={(e) => handleAnchorClick(e, "#telas")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
+              <li><a href="#como-funciona" onClick={(e) => handleAnchorClick(e, "#como-funciona")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
               <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
             </ul>
           </div>
 
@@ -2346,7 +2346,7 @@ function Footer() {
           <div className="lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
               <li><span className="text-slate-400">Status do sistema</span></li>
             </ul>
