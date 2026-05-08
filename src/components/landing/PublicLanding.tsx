@@ -1806,6 +1806,8 @@ function LandingStyles() {
       .gi-landing { color-scheme: light; }
       .gi-landing, .gi-landing * { border-color: rgb(226 232 240); }
       .gi-landing ::selection { background: rgba(59,130,246,0.18); }
+      .gi-landing .no-scrollbar::-webkit-scrollbar { display: none; }
+      .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     `}</style>
   );
 }
