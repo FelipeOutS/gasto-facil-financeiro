@@ -422,16 +422,15 @@ function AdminPage() {
           ))}
         </div>
 
-        {/* Charts */}
-        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="mt-4 sm:mt-6 grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Receita por mês</CardTitle></CardHeader>
-            <CardContent className="h-64">
+            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Receita por mês</CardTitle></CardHeader>
+            <CardContent className="h-56 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revByMonth}>
+                <LineChart data={revByMonth} margin={{ top: 5, right: 8, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="mes" fontSize={11} />
-                  <YAxis fontSize={11} />
+                  <XAxis dataKey="mes" fontSize={10} />
+                  <YAxis fontSize={10} width={40} />
                   <Tooltip
                     formatter={(v: any) => `R$ ${Number(v).toLocaleString("pt-BR")}`}
                     contentStyle={tooltipStyle.contentStyle}
@@ -445,13 +444,13 @@ function AdminPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Novos usuários por mês</CardTitle></CardHeader>
-            <CardContent className="h-64">
+            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Novos usuários por mês</CardTitle></CardHeader>
+            <CardContent className="h-56 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={usersByMonth}>
+                <BarChart data={usersByMonth} margin={{ top: 5, right: 8, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="mes" fontSize={11} />
-                  <YAxis fontSize={11} />
+                  <XAxis dataKey="mes" fontSize={10} />
+                  <YAxis fontSize={10} width={32} />
                   <Tooltip
                     contentStyle={tooltipStyle.contentStyle}
                     labelStyle={tooltipStyle.labelStyle}
@@ -464,37 +463,44 @@ function AdminPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Planos vendidos</CardTitle></CardHeader>
-            <CardContent className="h-64">
+            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Planos vendidos</CardTitle></CardHeader>
+            <CardContent className="h-60 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={planMix} dataKey="value" nameKey="name" outerRadius={80} label>
+                  <Pie data={planMix} dataKey="value" nameKey="name" outerRadius="65%">
                     {planMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
+                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                  <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Pix vs Cartão / Status</CardTitle></CardHeader>
-            <CardContent className="h-64 grid grid-cols-2 gap-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={methodMix} dataKey="value" nameKey="name" outerRadius={60} label>
-                    {methodMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={statusMix} dataKey="value" nameKey="name" outerRadius={60} label>
-                    {statusMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Pix vs Cartão / Status</CardTitle></CardHeader>
+            <CardContent className="p-2 sm:p-6 sm:pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="h-52 sm:h-60">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={methodMix} dataKey="value" nameKey="name" outerRadius="60%">
+                      {methodMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                    <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="h-52 sm:h-60">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={statusMix} dataKey="value" nameKey="name" outerRadius="60%">
+                      {statusMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                    <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>
