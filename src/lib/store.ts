@@ -396,6 +396,10 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
       row.mes = normalized.mes;
       row.ano = normalized.ano;
     }
+    if (!normalized.invoiceMonth || !/^\d{4}-\d{2}$/.test(normalized.invoiceMonth)) {
+      normalized.invoiceMonth = `${dateForYm.getFullYear()}-${String(dateForYm.getMonth() + 1).padStart(2, "0")}`;
+      row.invoice_month = normalized.invoiceMonth;
+    }
   }
 
   if ((normalized as Partial<Gasto>).confirmado == null) {
@@ -1621,8 +1625,8 @@ export type NovoGastoInput = {
   gastoFixo?: boolean;
   cartaoId?: string;
   /**
-   * Mês da fatura (YYYY-MM). Usado apenas para gastos no crédito —
-   * determina em qual fatura a compra entra, independente da data real.
+   * Mês de referência (YYYY-MM). Define a competência financeira do gasto,
+   * independente da data de lançamento, pagamento ou vencimento.
    */
   invoiceMonth?: string;
   /** Horário opcional (HH:mm). */
