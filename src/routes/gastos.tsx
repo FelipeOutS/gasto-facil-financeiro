@@ -3,12 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Hash,
   RefreshCw,
   MoreVertical,
   Pencil,
   Search,
+  Sparkles,
   SlidersHorizontal,
+  Tag,
+  TrendingUp,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import {
@@ -41,13 +48,14 @@ import {
   getCategoriaById,
   getCategorias,
   getGastos,
+  mesEfetivoGasto,
   reclassificarCategoriasExistentes,
   refreshGastos,
   useBootstrap,
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
-import { mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
+import { mesAnoToLabel, mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -224,12 +232,13 @@ function GastosPage() {
     const alvo = gastos.find((g) => g.id === highlightId);
     if (!alvo) return;
     // Reset suave: remove filtros e período para o item ser visível.
-    setQ("");
-    setPeriodo("todos");
-    setCatFilter("todas");
-    setPagFilter("todas");
-    setValorMin("");
-    setValorMax("");
+      setQ("");
+      setPeriodo("todos");
+      setMesRef("todos");
+      setCatFilter("todas");
+      setPagFilter("todas");
+      setValorMin("");
+      setValorMax("");
     // Scroll até o card depois do render.
     setTimeout(() => {
       const el = document.getElementById(`gasto-${highlightId}`);
@@ -239,6 +248,7 @@ function GastosPage() {
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
+  const [mesRef, setMesRef] = useState<string>("todos"); // "todos" | "YYYY-MM"
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -284,6 +294,13 @@ function GastosPage() {
     // manter o total da tela alinhado com Dashboard e Relatórios, que já
     // ignoram `confirmado === false`.
     let list = gastos.filter((g) => g.confirmado !== false);
+    if (mesRef !== "todos" && /^\d{4}-\d{2}$/.test(mesRef)) {
+      const [ay, am] = mesRef.split("-").map(Number);
+      list = list.filter((g) => {
+        const eff = mesEfetivoGasto(g);
+        return eff.ano === ay && eff.mes === am;
+      });
+    }
     if (range.fromTs != null || range.toTs != null) {
       list = list.filter((g) => {
         const d = parseDateLocal(g.data);
@@ -323,10 +340,58 @@ function GastosPage() {
         sorted.sort((a, b) => (a.data > b.data ? -1 : 1));
     }
     return sorted;
-  }, [gastos, q, range, catFilter, pagFilter, valorMin, valorMax, order]);
+  }, [gastos, q, range, mesRef, catFilter, pagFilter, valorMin, valorMax, order]);
 
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
+  const topCategoria = useMemo(() => {
+    if (!filtered.length) return null;
+    const acc = new Map<string, number>();
+    for (const g of filtered) acc.set(g.categoriaId, (acc.get(g.categoriaId) ?? 0) + g.valor);
+    let bestId = "";
+    let bestVal = -1;
+    acc.forEach((v, k) => {
+      if (v > bestVal) {
+        bestVal = v;
+        bestId = k;
+      }
+    });
+    const cat = getCategoriaById(bestId);
+    return cat ? { nome: cat.nome, valor: bestVal, cat } : null;
+  }, [filtered]);
+
+  // Opções de mês de referência: meses presentes nos gastos + atual + 2 vizinhos.
+  const mesesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    for (const g of gastos) {
+      if (g.confirmado === false) continue;
+      const eff = mesEfetivoGasto(g);
+      set.add(`${eff.ano}-${String(eff.mes).padStart(2, "0")}`);
+    }
+    const now = new Date();
+    for (let i = -2; i <= 2; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    return Array.from(set).sort(); // asc YYYY-MM
+  }, [gastos]);
+
+  const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
+  function shiftMes(delta: number) {
+    if (!mesesDisponiveis.length) return;
+    if (mesRef === "todos") {
+      // entra no mês atual ou mais próximo
+      const now = new Date();
+      const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const ix = Math.max(0, mesesDisponiveis.indexOf(cur));
+      setMesRef(mesesDisponiveis[ix] ?? mesesDisponiveis[0]);
+      return;
+    }
+    const next = mesRefIdx + delta;
+    if (next < 0 || next >= mesesDisponiveis.length) return;
+    setMesRef(mesesDisponiveis[next]);
+  }
+
 
   // Limpa seleção quando filtros mudam (mantém apenas IDs ainda visíveis)
   useEffect(() => {
@@ -422,11 +487,13 @@ function GastosPage() {
     hasMin ||
     hasMax ||
     !!q.trim() ||
+    mesRef !== "todos" ||
     order !== "recente";
 
   function clearAll() {
     setQ("");
     setPeriodo("todos");
+    setMesRef("todos");
     setCustomFrom(undefined);
     setCustomTo(undefined);
     setCatFilter("todas");
@@ -440,26 +507,51 @@ function GastosPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Histórico</p>
-          <h1 className="text-2xl font-bold tracking-tight">{vocab.gastosTitle}</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Encontre rapidinho para onde seu dinheiro foi.
-          </p>
+      {/* HERO premium */}
+      <section className="relative mt-1 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card-elevated to-card p-5 sm:p-6 shadow-card animate-rise">
+        {/* Glow decorativo */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full opacity-60 blur-3xl"
+          style={{ background: "radial-gradient(closest-side, var(--brand-soft, oklch(0.7 0.15 260 / 0.25)), transparent 70%)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(closest-side, oklch(0.72 0.18 152 / 0.22), transparent 70%)" }}
+        />
+
+        <div className="relative flex items-start gap-3">
+          <Link
+            to="/"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/70 backdrop-blur text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+              Painel financeiro
+            </p>
+            <h1 className="mt-0.5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              {vocab.gastosTitle}
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
+              Visualize, organize e entenda para onde seu dinheiro está indo.
+            </p>
+          </div>
+          {/* Ilustração animada (SVG leve) — finanças/gráfico */}
+          <div className="hidden sm:flex shrink-0 ml-2">
+            <HeroFinanceArt />
+          </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2">
+
+        {/* Ações desktop */}
+        <div className="relative mt-4 hidden sm:flex items-center gap-2">
           <Button
             type="button"
             onClick={handleReclassificar}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="outline"
             disabled={reclassificando}
             title="Reclassificar categorias"
@@ -470,9 +562,8 @@ function GastosPage() {
           <Button
             type="button"
             onClick={() => setHistoryOpen(true)}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="outline"
-            title="Ver extratos importados"
           >
             <History className="h-4 w-4" />
             Extratos importados
@@ -480,7 +571,7 @@ function GastosPage() {
           <Button
             type="button"
             onClick={tryImportar}
-            className="h-10 rounded-full"
+            className="h-9 rounded-full"
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
@@ -488,7 +579,66 @@ function GastosPage() {
             {!can("importar_extrato") && <LockChip />}
           </Button>
         </div>
-      </header>
+      </section>
+
+      {/* SELETOR PRINCIPAL: Mês de referência */}
+      <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand">
+              <CalendarIcon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Mês de referência
+              </p>
+              <p className="text-xs text-muted-foreground/90 hidden sm:block">
+                Mês ao qual o gasto pertence — mesmo que pago em outro mês.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => shiftMes(-1)}
+              disabled={mesRef === "todos" || mesRefIdx <= 0}
+              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <Select value={mesRef} onValueChange={setMesRef}>
+              <SelectTrigger className="h-9 min-w-[180px] rounded-full bg-card-elevated border-border font-semibold text-sm">
+                <SelectValue>
+                  {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="todos">Todos os meses</SelectItem>
+                {mesesDisponiveis.map((ym) => (
+                  <SelectItem key={ym} value={ym}>
+                    {ymToLabel(ym)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button
+              onClick={() => shiftMes(1)}
+              disabled={mesRef === "todos" || mesRefIdx >= mesesDisponiveis.length - 1}
+              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label="Próximo mês"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        {mesRef !== "todos" && (
+          <p className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-brand" />
+            Este resumo considera apenas os gastos de{" "}
+            <strong className="text-foreground">{ymToLabel(mesRef)}</strong>.
+          </p>
+        )}
+      </section>
 
       {/* Botões mobile */}
       <div className="mt-3 sm:hidden -mx-4 px-4 overflow-x-auto scrollbar-none">
@@ -732,6 +882,12 @@ function GastosPage() {
       {/* Chips de filtros ativos */}
       {hasAnyFilter && (
         <div className="mt-3 flex flex-wrap items-center gap-2 animate-fade-in">
+          {mesRef !== "todos" && (
+            <ActiveChip
+              label={`Mês: ${ymToLabel(mesRef)}`}
+              onRemove={() => setMesRef("todos")}
+            />
+          )}
           {periodoChipLabel && (
             <ActiveChip
               label={periodoChipLabel}
@@ -789,18 +945,43 @@ function GastosPage() {
         </div>
       )}
 
-      {/* Resumo */}
-      <div className="mt-4 grid grid-cols-3 gap-2 stagger">
+      {/* Resumo premium */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
         <SummaryStat
+          icon={<Hash className="h-4 w-4" />}
+          tone="neutral"
           label="Encontrados"
           value={<CountNumber value={filtered.length} />}
+          hint={mesRef === "todos" ? "no período" : ymToLabel(mesRef)}
         />
         <SummaryStat
+          icon={<Wallet className="h-4 w-4" />}
+          tone="brand"
           label="Total"
           value={<Money value={total} />}
+          hint="somatório dos itens"
           highlight
         />
-        <SummaryStat label="Média" value={<Money value={media} />} />
+        <SummaryStat
+          icon={<TrendingUp className="h-4 w-4" />}
+          tone="info"
+          label="Média por gasto"
+          value={<Money value={media} />}
+          hint={filtered.length ? `${filtered.length} itens` : "—"}
+        />
+        <SummaryStat
+          icon={<Tag className="h-4 w-4" />}
+          tone="success"
+          label="Top categoria"
+          value={
+            topCategoria ? (
+              <span className="truncate block">{topCategoria.nome}</span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )
+          }
+          hint={topCategoria ? formatBRL(topCategoria.valor) : "sem dados"}
+        />
       </div>
 
       {/* Barra de seleção em massa */}
@@ -955,10 +1136,16 @@ function GastosPage() {
                           ? " · recorrente"
                           : ""}
                     </p>
-                    {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) && (
-                      <p className="truncate text-[11px] text-muted-foreground/80">
-                        Mês de referência: {ymToLabel(g.invoiceMonth)}
-                      </p>
+                    {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) ? (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft">
+                        <CalendarIcon className="h-3 w-3" />
+                        {ymToLabel(g.invoiceMonth)}
+                      </span>
+                    ) : (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <CalendarIcon className="h-3 w-3" />
+                        {mesAnoToLabel(mesEfetivoGasto(g).mes, mesEfetivoGasto(g).ano)}
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -1060,24 +1247,129 @@ function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+type StatTone = "neutral" | "brand" | "info" | "success";
+
+const TONE_STYLES: Record<StatTone, { icon: string; ring: string }> = {
+  neutral: { icon: "bg-muted text-muted-foreground", ring: "" },
+  brand: { icon: "bg-brand-soft text-brand", ring: "ring-1 ring-brand/30" },
+  info: { icon: "bg-blue-500/15 text-blue-500 dark:text-blue-300", ring: "" },
+  success: { icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", ring: "" },
+};
+
 function SummaryStat({
   label,
   value,
+  hint,
+  icon,
+  tone = "neutral",
   highlight,
 }: {
   label: string;
   value: React.ReactNode;
+  hint?: React.ReactNode;
+  icon?: React.ReactNode;
+  tone?: StatTone;
   highlight?: boolean;
 }) {
+  const t = TONE_STYLES[tone];
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border p-3 animate-rise",
-        highlight ? "bg-card-elevated" : "bg-card",
+        "group relative overflow-hidden rounded-2xl border border-border p-3 sm:p-4 transition-all hover-lift card-press",
+        highlight
+          ? "bg-gradient-to-br from-card-elevated via-card to-card shadow-card"
+          : "bg-card",
+        t.ring,
       )}
     >
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-0.5 num text-sm font-semibold truncate">{value}</p>
+      <div className="flex items-center gap-2">
+        {icon && (
+          <span className={cn("grid h-7 w-7 place-items-center rounded-lg shrink-0", t.icon)}>
+            {icon}
+          </span>
+        )}
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-muted-foreground font-semibold truncate">
+          {label}
+        </p>
+      </div>
+      <p
+        className={cn(
+          "mt-1.5 num font-extrabold truncate",
+          highlight ? "text-xl sm:text-2xl" : "text-base sm:text-lg",
+        )}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className="mt-0.5 text-[10px] sm:text-[11px] text-muted-foreground/90 truncate">
+          {hint}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** Pequena ilustração SVG animada para o hero — sutil e premium. */
+function HeroFinanceArt() {
+  return (
+    <svg
+      width="120"
+      height="80"
+      viewBox="0 0 120 80"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="opacity-90"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="heroBar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="oklch(0.78 0.16 152)" />
+          <stop offset="100%" stopColor="oklch(0.55 0.16 152)" />
+        </linearGradient>
+        <linearGradient id="heroBar2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="oklch(0.8 0.14 230)" />
+          <stop offset="100%" stopColor="oklch(0.55 0.14 230)" />
+        </linearGradient>
+      </defs>
+      {/* Eixo */}
+      <line x1="6" y1="68" x2="118" y2="68" stroke="currentColor" strokeOpacity="0.18" strokeWidth="1.5" />
+      {/* Barras */}
+      {[
+        { x: 12, h: 22, fill: "url(#heroBar2)", delay: 0 },
+        { x: 32, h: 36, fill: "url(#heroBar)", delay: 0.1 },
+        { x: 52, h: 28, fill: "url(#heroBar2)", delay: 0.2 },
+        { x: 72, h: 48, fill: "url(#heroBar)", delay: 0.3 },
+        { x: 92, h: 40, fill: "url(#heroBar2)", delay: 0.4 },
+      ].map((b, i) => (
+        <motion.rect
+          key={i}
+          x={b.x}
+          width="14"
+          rx="3"
+          fill={b.fill}
+          initial={{ y: 68, height: 0 }}
+          animate={{ y: 68 - b.h, height: b.h }}
+          transition={{ delay: b.delay, duration: 0.6, ease: [0.22, 0.61, 0.36, 1] }}
+        />
+      ))}
+      {/* Linha de tendência */}
+      <motion.path
+        d="M12 46 Q 38 30 60 38 T 110 18"
+        stroke="oklch(0.78 0.16 55)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.9 }}
+      />
+      <motion.circle
+        cx="110" cy="18" r="3.5"
+        fill="oklch(0.78 0.16 55)"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1.2, duration: 0.4, type: "spring" }}
+      />
+    </svg>
   );
 }
