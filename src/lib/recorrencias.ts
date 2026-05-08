@@ -676,7 +676,7 @@ export async function atualizarRecorrencia(
   memRec = memRec.map((r) => (r.id === id ? rec : r));
   emit();
   // Se a recorrência foi cancelada, resolver alertas órfãos.
-  if (patch.status === "cancelada" || patch.status === "excluida") {
+  if (patch.status === "cancelada") {
     try {
       const { resolveAlertasDe } = await import("@/lib/store");
       await resolveAlertasDe("recorrencia", id);
