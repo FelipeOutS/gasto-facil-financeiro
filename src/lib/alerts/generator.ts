@@ -372,17 +372,20 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
   }
 
   // ============= Gastos — média e duplicados =============
-  // Aumento de gastos vs mês anterior
+  // Aumento de gastos vs mês anterior — usa MÊS DE REFERÊNCIA (competência),
+  // não a data civil do lançamento. Sem isso, uma compra de Abril paga em
+  // Maio aparece como "subiu em Maio".
   const gastosConfirmados = src.gastos.filter((g) => g.confirmado !== false);
-  const totalMes = gastosConfirmados
-    .filter((g) => g.mes === month && g.ano === year)
-    .reduce((s, g) => s + g.valor, 0);
   const ref = new Date(year, month - 2, 1);
   const mAnt = ref.getMonth() + 1;
   const aAnt = ref.getFullYear();
-  const totalAnt = gastosConfirmados
-    .filter((g) => g.mes === mAnt && g.ano === aAnt)
-    .reduce((s, g) => s + g.valor, 0);
+  let totalMes = 0;
+  let totalAnt = 0;
+  for (const g of gastosConfirmados) {
+    const ef = mesEfetivoGasto(g);
+    if (ef.mes === month && ef.ano === year) totalMes += g.valor;
+    else if (ef.mes === mAnt && ef.ano === aAnt) totalAnt += g.valor;
+  }
   if (totalAnt > 0 && totalMes > totalAnt * 1.3) {
     drafts.push({
       type: "gastos_aumento",
