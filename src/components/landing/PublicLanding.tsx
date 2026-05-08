@@ -1038,42 +1038,88 @@ function GastosMock() {
 }
 
 function CartaoMock() {
+  const purchases = [
+    { c: "Spotify", v: "R$ 21,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
+    { c: "iFood", v: "R$ 64,80", t: "Ontem · 3x", color: "bg-rose-100 text-rose-700" },
+    { c: "Posto Shell", v: "R$ 180,00", t: "2 dias", color: "bg-amber-100 text-amber-700" },
+  ];
   return (
     <MockShell>
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-5 text-white shadow-lg">
         <div
           aria-hidden
           className="absolute -right-10 -top-10 h-40 w-40 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.4), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.45), transparent 70%)" }}
         />
-        <div className="flex items-center justify-between">
+        <div
+          aria-hidden
+          className="absolute -bottom-12 -left-10 h-36 w-36 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(16,185,129,0.30), transparent 70%)" }}
+        />
+        <div className="relative flex items-center justify-between">
           <p className="text-xs font-semibold opacity-80">Inteligente Black</p>
           <CreditCard className="h-5 w-5 opacity-80" />
         </div>
-        <p className="mt-6 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
-        <div className="mt-4 flex items-end justify-between">
+        {/* chip */}
+        <div className="relative mt-5 flex items-center gap-3">
+          <div className="h-7 w-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner ring-1 ring-amber-100/40" />
+          <div className="flex flex-col">
+            <span className="text-[9px] uppercase tracking-widest opacity-60">Contactless</span>
+          </div>
+        </div>
+        <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
+        <div className="relative mt-4 flex items-end justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wider opacity-70">Limite disponível</p>
             <p className="text-lg font-bold tabular-nums">R$ 4.820,00</p>
+            <p className="mt-0.5 text-[10px] opacity-60">de R$ 8.000,00</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-wider opacity-70">Vence</p>
             <p className="text-sm font-semibold">15/12</p>
+            <p className="text-[10px] opacity-60">VISA</p>
           </div>
         </div>
       </div>
-      <div className="mt-4 rounded-2xl border border-slate-200 p-3">
+
+      <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Em aberto
+            Em aberto · vence 15/12
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-[42%] rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "42%" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+          />
         </div>
-        <button className="mt-3 w-full rounded-full bg-slate-900 py-2 text-xs font-semibold text-white">
+        <p className="mt-1.5 text-[11px] text-slate-500">42% do limite utilizado</p>
+
+        <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
+          {purchases.map((p) => (
+            <li key={p.c} className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2.5">
+                <span className={cn("grid h-7 w-7 place-items-center rounded-lg text-[10px] font-bold", p.color)}>
+                  {p.c[0]}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-slate-900">{p.c}</p>
+                  <p className="text-[10px] text-slate-500">{p.t}</p>
+                </div>
+              </div>
+              <p className="text-xs font-bold tabular-nums text-slate-900">{p.v}</p>
+            </li>
+          ))}
+        </ul>
+
+        <button className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-slate-900 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800">
+          <CheckCircle2 className="h-3.5 w-3.5" />
           Marcar fatura como paga
         </button>
       </div>
@@ -1085,21 +1131,55 @@ function MetaMock() {
   return (
     <MockShell>
       <div className="overflow-hidden rounded-2xl border border-slate-200">
-        <div
-          className="h-32 w-full"
-          style={{
-            background:
-              "linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #ec4899 100%)",
-          }}
-        />
+        {/* Visual cover — beach scene */}
+        <div className="relative h-36 w-full overflow-hidden">
+          <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+            <defs>
+              <linearGradient id="meta-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="55%" stopColor="#fda4af" />
+                <stop offset="100%" stopColor="#a78bfa" />
+              </linearGradient>
+              <linearGradient id="meta-sea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#0ea5e9" />
+                <stop offset="100%" stopColor="#1e40af" />
+              </linearGradient>
+              <linearGradient id="meta-sand" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+            </defs>
+            <rect width="600" height="220" fill="url(#meta-sky)" />
+            <circle cx="450" cy="80" r="40" fill="#fff7ed" opacity="0.95" />
+            <circle cx="450" cy="80" r="56" fill="#fef3c7" opacity="0.35" />
+            <path d="M0,140 Q150,118 300,138 T600,134 L600,180 L0,180 Z" fill="url(#meta-sea)" opacity="0.95" />
+            <path d="M0,160 Q150,148 300,160 T600,156 L600,180 L0,180 Z" fill="#0c4a6e" opacity="0.55" />
+            <path d="M0,178 L600,178 L600,220 L0,220 Z" fill="url(#meta-sand)" />
+            {/* palm */}
+            <g transform="translate(70,150)">
+              <rect x="-2" y="-50" width="5" height="50" rx="2" fill="#7c2d12" />
+              <path d="M0,-50 C-25,-60 -45,-55 -55,-45 C-40,-52 -20,-52 0,-50 Z" fill="#166534" />
+              <path d="M0,-50 C25,-60 45,-55 55,-45 C40,-52 20,-52 0,-50 Z" fill="#15803d" />
+              <path d="M0,-50 C-10,-75 -5,-90 10,-95 C5,-80 5,-65 0,-50 Z" fill="#16a34a" />
+            </g>
+          </svg>
+          <div className="absolute bottom-2 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
+            <Calendar className="h-3 w-3" /> Jan · 2027
+          </div>
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-emerald-700 backdrop-blur">
+            <TrendingUp className="h-3 w-3" /> 68%
+          </div>
+        </div>
+
         <div className="p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Meta</p>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-              68%
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Viagem</p>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              Maragogi · AL
             </span>
           </div>
           <p className="mt-1 text-lg font-bold text-slate-900">Viagem para a praia</p>
+
           <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
             <motion.div
               initial={{ width: 0 }}
@@ -1109,14 +1189,19 @@ function MetaMock() {
               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
             />
           </div>
+          <div className="mt-2 flex justify-between text-[11px] text-slate-500">
+            <span>R$ 3.400 guardados</span>
+            <span>Faltam R$ 1.600</span>
+          </div>
+
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-slate-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Guardado</p>
-              <p className="text-sm font-bold tabular-nums text-slate-900">R$ 3.400</p>
+            <div className="rounded-xl bg-emerald-50 p-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">Guardado</p>
+              <p className="text-sm font-bold tabular-nums text-emerald-800">R$ 3.400</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Falta</p>
-              <p className="text-sm font-bold tabular-nums text-slate-900">R$ 1.600</p>
+            <div className="rounded-xl bg-amber-50 p-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700/80">Falta</p>
+              <p className="text-sm font-bold tabular-nums text-amber-800">R$ 1.600</p>
             </div>
             <div className="rounded-xl bg-slate-50 p-2.5">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total</p>
