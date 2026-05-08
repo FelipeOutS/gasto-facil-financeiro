@@ -58,6 +58,7 @@ export function PublicLanding() {
       <TrustStrip />
       <WhyUs />
       <HowItWorks />
+      <BanksStrip />
       <ScreensTabs />
       <DashboardShowcase />
       <FeatureSplit
