@@ -1653,86 +1653,124 @@ function Plans() {
           </span>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mx-auto mt-12 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 lg:max-w-6xl lg:grid-cols-3 xl:max-w-none xl:grid-cols-5 xl:gap-4">
           {COMMERCIAL_PLANS.map((p, i) => {
             const tag = HIGHLIGHT[p.tier];
             const featured = !!tag;
             const audience = PLAN_AUDIENCE[p.tier];
             const [priceMain, pricePer] = p.priceLabel.split("/");
             return (
-              <Reveal key={p.tier} delay={i * 0.05}>
-                <div className={cn("relative h-full", featured && "pt-3")}>
-                  {/* Highlight badge — outside overflow-hidden card */}
-                  {tag && (
-                    <span
-                      className={cn(
-                        "absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg",
-                        tag.tone === "primary"
-                          ? "bg-gradient-to-r from-blue-600 to-blue-500"
-                          : "bg-gradient-to-r from-emerald-600 to-emerald-500",
-                      )}
-                    >
-                      <Sparkles className="h-3 w-3" /> {tag.label}
-                    </span>
-                  )}
+              <Reveal key={p.tier} delay={i * 0.05} className="h-full">
                 <div
                   className={cn(
-                    "group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 transition-all hover:-translate-y-1",
+                    "group relative flex h-full flex-col overflow-hidden rounded-2xl p-6 transition-all duration-300",
                     featured
-                      ? "ring-2 ring-blue-500 shadow-[0_30px_60px_-25px_rgba(37,99,235,0.45)] xl:scale-[1.02]"
-                      : "border border-slate-200 shadow-[0_14px_36px_-22px_rgba(15,23,42,0.18)] hover:shadow-[0_24px_50px_-22px_rgba(15,23,42,0.25)]",
+                      ? "bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-[0_24px_60px_-22px_rgba(15,23,42,0.55)] hover:-translate-y-1 hover:shadow-[0_32px_70px_-22px_rgba(15,23,42,0.65)]"
+                      : "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]",
                   )}
                 >
-                  {/* Featured top accent bar */}
+                  {/* Soft glow on featured */}
                   {featured && (
                     <div
                       aria-hidden
-                      className={cn(
-                        "absolute inset-x-0 top-0 h-1.5",
-                        tag!.tone === "primary"
-                          ? "bg-gradient-to-r from-blue-500 to-emerald-500"
-                          : "bg-gradient-to-r from-emerald-500 to-blue-500",
-                      )}
+                      className="pointer-events-none absolute inset-x-0 -top-24 h-40 opacity-60"
+                      style={{
+                        background:
+                          tag!.tone === "primary"
+                            ? "radial-gradient(60% 100% at 50% 100%, rgba(59,130,246,0.45), transparent 70%)"
+                            : "radial-gradient(60% 100% at 50% 100%, rgba(16,185,129,0.45), transparent 70%)",
+                      }}
                     />
                   )}
 
-                  {/* Audience */}
-                  {audience && (
-                    <span
-                      className={cn(
-                        "mb-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
-                        audience.tone,
-                      )}
-                    >
-                      {audience.label}
-                    </span>
-                  )}
+                  {/* Header row: audience chip + (featured badge) */}
+                  <div className="relative flex items-center justify-between gap-2">
+                    {audience ? (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
+                          featured
+                            ? "bg-white/10 text-white/90 ring-white/20"
+                            : audience.tone,
+                        )}
+                      >
+                        {audience.label}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    {tag && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+                          tag.tone === "primary"
+                            ? "bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/40"
+                            : "bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40",
+                        )}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {tag.label}
+                      </span>
+                    )}
+                  </div>
 
-                  <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
-                  <p className="mt-1 min-h-[36px] text-xs leading-relaxed text-slate-500">
+                  {/* Plan name */}
+                  <h3 className={cn("relative mt-4 text-lg font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+                    {p.name}
+                  </h3>
+                  <p
+                    className={cn(
+                      "relative mt-1 min-h-[40px] text-xs leading-relaxed",
+                      featured ? "text-slate-300" : "text-slate-500",
+                    )}
+                  >
                     {PLAN_DESCRIPTIONS[p.tier]}
                   </p>
 
                   {/* Price */}
-                  <div className="mt-5 flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold tracking-tight tabular-nums text-slate-900">
+                  <div className="relative mt-5 flex items-baseline gap-1">
+                    <span
+                      className={cn(
+                        "text-[2.25rem] font-extrabold leading-none tracking-tight tabular-nums",
+                        featured ? "text-white" : "text-slate-900",
+                      )}
+                    >
                       {priceMain.trim()}
                     </span>
-                    <span className="text-xs font-medium text-slate-500">/{(pricePer || "mês").trim()}</span>
+                    <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
+                      /{(pricePer || "mês").trim()}
+                    </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400">Cancele quando quiser</p>
+                  <p className={cn("relative mt-1 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
+                    Cancele quando quiser
+                  </p>
 
                   {/* Divider */}
-                  <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                  <div
+                    className={cn(
+                      "relative my-5 h-px w-full",
+                      featured
+                        ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                        : "bg-gradient-to-r from-transparent via-slate-200 to-transparent",
+                    )}
+                  />
 
                   {/* Highlights */}
-                  <ul className="flex-1 space-y-2.5">
+                  <ul className="relative flex-1 space-y-2.5">
                     {p.highlights.map((h) => (
-                      <li key={h} className="flex items-start gap-2 text-xs leading-relaxed text-slate-700">
+                      <li
+                        key={h}
+                        className={cn(
+                          "flex items-start gap-2 text-xs leading-relaxed",
+                          featured ? "text-slate-200" : "text-slate-700",
+                        )}
+                      >
                         <span
                           className={cn(
                             "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full",
-                            featured ? "bg-blue-100 text-blue-700" : "bg-emerald-50 text-emerald-700",
+                            featured
+                              ? "bg-emerald-400/20 text-emerald-300"
+                              : "bg-emerald-50 text-emerald-700",
                           )}
                         >
                           <Check className="h-2.5 w-2.5" strokeWidth={3} />
@@ -1745,16 +1783,15 @@ function Plans() {
                   <Link
                     to="/cadastro"
                     className={cn(
-                      "mt-6 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
+                      "relative mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-semibold transition-all",
                       featured
-                        ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(37,99,235,0.55)] hover:shadow-[0_18px_36px_-12px_rgba(37,99,235,0.65)]"
+                        ? "bg-white text-slate-900 hover:bg-slate-100"
                         : "bg-slate-900 text-white hover:bg-slate-800",
                     )}
                   >
                     Escolher plano
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
-                </div>
                 </div>
               </Reveal>
             );
