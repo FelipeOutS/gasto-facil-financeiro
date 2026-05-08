@@ -1787,18 +1787,9 @@ function Plans() {
             );
           };
 
-          const firstRow = COMMERCIAL_PLANS.slice(0, 3);
-          const secondRow = COMMERCIAL_PLANS.slice(3);
           return (
-            <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-6 sm:gap-7">
-              <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-7">
-                {firstRow.map((p, i) => renderCard(p, i))}
-              </div>
-              {secondRow.length > 0 && (
-                <div className="mx-auto grid w-full max-w-4xl grid-cols-1 items-stretch gap-6 sm:grid-cols-2 sm:gap-7">
-                  {secondRow.map((p, i) => renderCard(p, firstRow.length + i))}
-                </div>
-              )}
+            <div className="mx-auto mt-12 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 sm:gap-6 lg:max-w-5xl lg:grid-cols-3 xl:max-w-[1400px] xl:grid-cols-5 xl:gap-4 2xl:gap-5">
+              {COMMERCIAL_PLANS.map((p, i) => renderCard(p, i))}
             </div>
           );
         })()}
