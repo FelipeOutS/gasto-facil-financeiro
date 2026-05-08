@@ -111,14 +111,16 @@ function MetasPage() {
 
   const ordenadas = useMemo(() => {
     return [...metas].sort((a, b) => {
-      const pa = a.valorObjetivo > 0 ? a.valorAtual / a.valorObjetivo : 0;
-      const pb = b.valorObjetivo > 0 ? b.valorAtual / b.valorObjetivo : 0;
+      const va = getMetaProgresso(a.id);
+      const vb = getMetaProgresso(b.id);
+      const pa = a.valorObjetivo > 0 ? va / a.valorObjetivo : 0;
+      const pb = b.valorObjetivo > 0 ? vb / b.valorObjetivo : 0;
       return pb - pa;
     });
   }, [metas]);
 
   const totalAcumulado = useMemo(
-    () => metas.reduce((s, m) => s + m.valorAtual, 0),
+    () => metas.reduce((s, m) => s + getMetaProgresso(m.id), 0),
     [metas],
   );
 
