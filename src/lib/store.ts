@@ -2046,6 +2046,13 @@ export function deleteGasto(id: string) {
   }
 
   emit();
+  // Resolve alertas órfãos vinculados a este gasto (ex: duplicidade).
+  void resolveAlertasDe("gasto", id);
+  // Se este gasto representava a fatura/conta paga, resolve esses alertas
+  // também — a pendência deixou de existir.
+  for (const c of contasVinculadas) {
+    void resolveAlertasDe("conta_a_pagar", c.id);
+  }
   void supabase
     .from("gastos")
     .delete()
