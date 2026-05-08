@@ -14,7 +14,6 @@ import {
   Lock,
   Sparkles,
   Bell,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -23,7 +22,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
@@ -102,19 +100,11 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           side="bottom"
           className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden"
         >
-          <SheetHeader className="px-5 pt-5 pb-3 text-left">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <SheetTitle className="text-lg">Mais opções</SheetTitle>
-                <SheetDescription className="text-xs">
-                  Acesse as outras áreas do seu controle financeiro.
-                </SheetDescription>
-              </div>
-              <SheetClose className="rounded-full p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Fechar</span>
-              </SheetClose>
-            </div>
+          <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
+            <SheetTitle className="text-lg">Mais opções</SheetTitle>
+            <SheetDescription className="text-xs">
+              Acesse as outras áreas do seu controle financeiro.
+            </SheetDescription>
           </SheetHeader>
 
           <div className="px-5 pb-2">

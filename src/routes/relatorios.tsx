@@ -321,8 +321,8 @@ function RelatoriosPage() {
       </header>
 
       {/* Filtros de período + Ações */}
-      <div className="mt-3 flex flex-wrap items-center gap-2 print:hidden">
-        <div className="-mx-1 flex flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center print:hidden">
+        <div className="-mx-1 flex w-full flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
           {(
             [
               { id: "mes", label: "Mês atual" },
