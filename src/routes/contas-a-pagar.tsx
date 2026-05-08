@@ -29,6 +29,7 @@ import { ImportContaDialog } from "@/components/ImportContaDialog";
 import { Copy, Upload } from "lucide-react";
 import {
   addContaAPagar,
+  contaPertenceAoMesRef,
   deleteContaAPagar,
   deleteContaRecorrencia,
   desmarcarContaComoPago,
