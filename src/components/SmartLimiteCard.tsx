@@ -127,7 +127,7 @@ export function SmartLimiteCard({
     let contasPendentesFuturas = 0;
     let contasPendentesAposHoje = 0;
     for (const c of contas) {
-      if (c.mes !== mes || c.ano !== ano) continue;
+      if (!contaPertenceAoMesRef(c, mes, ano)) continue;
       const s = statusContaEfetivo(c, refISO);
       if (s === "pago") continue;
       if (c.gastoId) continue;
