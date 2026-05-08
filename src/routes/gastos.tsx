@@ -884,6 +884,12 @@ function GastosPage() {
       {/* Chips de filtros ativos */}
       {hasAnyFilter && (
         <div className="mt-3 flex flex-wrap items-center gap-2 animate-fade-in">
+          {mesRef !== "todos" && (
+            <ActiveChip
+              label={`Mês: ${ymToLabel(mesRef)}`}
+              onRemove={() => setMesRef("todos")}
+            />
+          )}
           {periodoChipLabel && (
             <ActiveChip
               label={periodoChipLabel}
