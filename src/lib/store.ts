@@ -4608,6 +4608,11 @@ export async function marcarFaturaPaga(
       emit();
     }
   }
+  // Resolve alertas de fatura vencida/vencendo deste cartão+mês — a pendência
+  // foi paga, o sininho não deve mais sinalizar.
+  const ymKey = `${ano}-${String(mes).padStart(2, "0")}`;
+  void resolveAlertasPorDedupeKey(`fatura_vencida:${cartaoId}:${ymKey}`);
+  void resolveAlertasPorDedupeKey(`fatura_vencendo:${cartaoId}:${ymKey}`);
 }
 
 export async function desmarcarFaturaPaga(cartaoId: string, mes: number, ano: number): Promise<void> {
