@@ -41,41 +41,81 @@ import { cn } from "@/lib/utils";
    ────────────────────────────────────────────────────────────── */
 
 const NAV = [
-  { label: "Início", href: "#top" },
-  { label: "Recursos", href: "#recursos" },
-  { label: "Como funciona", href: "#telas" },
-  { label: "Planos", href: "#planos" },
-  { label: "Dúvidas", href: "#faq" },
+  { label: "Início", href: "#inicio", sectionId: "inicio" },
+  { label: "Recursos", href: "#recursos", sectionId: "recursos" },
+  { label: "Como funciona", href: "#como-funciona", sectionId: "como-funciona" },
+  { label: "Planos", href: "#planos", sectionId: "planos" },
+  { label: "Dúvidas", href: "#duvidas", sectionId: "duvidas" },
 ];
 
-const HEADER_OFFSET = 72;
+const SCROLL_DURATION = 800;
+const HEADER_GAP = 20;
+let activeScrollFrame: number | null = null;
 
-function smoothScrollTo(href: string) {
+function getHeaderOffset() {
+  const header = document.querySelector<HTMLElement>("[data-landing-header]");
+  return (header?.offsetHeight ?? 70) + HEADER_GAP;
+}
+
+function smoothScrollToSection(sectionId: string) {
   if (typeof window === "undefined") return;
-  const id = href.replace(/^#/, "");
-  const el = document.getElementById(id);
-  if (!el) return;
+  const element = document.getElementById(sectionId);
+  if (!element) return;
+
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-  window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
-  if (history.replaceState) history.replaceState(null, "", href);
+  const targetPosition = Math.max(0, element.getBoundingClientRect().top + window.scrollY - getHeaderOffset());
+
+  if (activeScrollFrame !== null) {
+    window.cancelAnimationFrame(activeScrollFrame);
+    activeScrollFrame = null;
+  }
+
+  if (reduce) {
+    window.scrollTo(0, targetPosition);
+    if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+    return;
+  }
+
+  const startPosition = window.scrollY;
+  const distance = targetPosition - startPosition;
+  let startTime: number | null = null;
+
+  const easeInOutCubic = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  const animation = (currentTime: number) => {
+    if (startTime === null) startTime = currentTime;
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / SCROLL_DURATION, 1);
+
+    window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
+
+    if (progress < 1) {
+      activeScrollFrame = window.requestAnimationFrame(animation);
+    } else {
+      activeScrollFrame = null;
+      if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+    }
+  };
+
+  activeScrollFrame = window.requestAnimationFrame(animation);
 }
 
 function handleAnchorClick(
   e: React.MouseEvent<HTMLAnchorElement>,
   href: string,
-  onAfter?: () => void,
+  onBeforeScroll?: () => void,
 ) {
   if (!href.startsWith("#")) return;
   e.preventDefault();
-  smoothScrollTo(href);
-  onAfter?.();
+  const sectionId = href.replace(/^#/, "");
+  onBeforeScroll?.();
+  window.requestAnimationFrame(() => smoothScrollToSection(sectionId));
 }
 
 export function PublicLanding() {
   return (
     <div
-      id="top"
       className="gi-landing min-h-screen bg-white text-slate-900 antialiased"
       style={{ colorScheme: "light" }}
     >
@@ -144,6 +184,7 @@ function Header() {
 
   return (
     <header
+      data-landing-header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
@@ -152,7 +193,7 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#top" onClick={(e) => handleAnchorClick(e, "#top")} className="flex items-center gap-2">
+        <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <BrandMark className="h-8 w-auto" />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
@@ -229,7 +270,7 @@ function Header() {
 function Hero() {
   const reduce = useReducedMotion();
   return (
-    <section className="relative overflow-hidden">
+    <section id="inicio" className="relative overflow-hidden">
       {/* Decorative background */}
       <div
         aria-hidden
@@ -766,7 +807,7 @@ function ScreensTabs() {
   const highlights = SCREEN_HIGHLIGHTS[active];
 
   return (
-    <section id="telas" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
+    <section id="como-funciona" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
       {/* soft background accents */}
       <div
         aria-hidden
@@ -1833,7 +1874,7 @@ function Plans() {
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
           Não sabe qual escolher?{" "}
-          <a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+          <a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
             Veja as dúvidas frequentes
           </a>{" "}
           ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
@@ -2083,7 +2124,7 @@ const FAQS = [
 function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="bg-slate-50 py-20 sm:py-24">
+    <section id="duvidas" className="bg-slate-50 py-20 sm:py-24">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Dúvidas"
@@ -2285,9 +2326,9 @@ function Footer() {
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#telas" onClick={(e) => handleAnchorClick(e, "#telas")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
+              <li><a href="#como-funciona" onClick={(e) => handleAnchorClick(e, "#como-funciona")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
               <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
             </ul>
           </div>
 
@@ -2305,7 +2346,7 @@ function Footer() {
           <div className="lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
               <li><span className="text-slate-400">Status do sistema</span></li>
             </ul>
