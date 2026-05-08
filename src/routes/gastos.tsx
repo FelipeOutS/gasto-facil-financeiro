@@ -649,7 +649,7 @@ function GastosPage() {
 
       {/* SELETOR PRINCIPAL: Mês de referência */}
       <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand">
               <CalendarIcon className="h-4 w-4" />
