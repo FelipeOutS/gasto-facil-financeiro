@@ -744,67 +744,125 @@ const SCREENS: { key: ScreenKey; label: string; icon: typeof LayoutDashboard; de
   },
 ];
 
+const SCREEN_HIGHLIGHTS: Record<ScreenKey, string[]> = {
+  dashboard: ["Saldo, receitas e despesas", "Fluxo do mês em gráfico", "Limite inteligente", "Alertas e calendário"],
+  gastos: ["Filtro por mês de referência", "Categorias e formas de pagamento", "Total e média do mês", "Lista clara e organizada"],
+  cartoes: ["Cartão visual com limite", "Fatura aberta e vencimento", "Compras e parcelas", "Marcar fatura como paga"],
+  metas: ["Capa visual da meta", "Progresso animado", "Quanto falta para concluir", "Histórico de aportes"],
+  investimentos: ["Carteira total e variação", "Gráfico de crescimento", "Distribuição por classe", "Resumo visual rápido"],
+  guardado: ["Total reservado", "Valor por banco e carteira", "Visual seguro e limpo", "Acompanhamento mensal"],
+};
+
 function ScreensTabs() {
   const [active, setActive] = useState<ScreenKey>("dashboard");
   const current = SCREENS.find((s) => s.key === active)!;
+  const highlights = SCREEN_HIGHLIGHTS[active];
+
   return (
-    <section id="telas" className="bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="telas" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
+      {/* soft background accents */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0 opacity-60"
+        style={{
+          backgroundImage:
+            "radial-gradient(60% 50% at 80% 0%, rgba(16,185,129,0.08), transparent 60%), radial-gradient(50% 50% at 10% 100%, rgba(59,130,246,0.08), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Veja por dentro"
           title="As telas que organizam toda a sua rotina financeira."
-          subtitle="Navegue pelas principais áreas do Gasto Inteligente."
+          subtitle="Navegue pelas principais áreas do Gasto Inteligente e veja como cada parte trabalha pra você."
         />
-        {/* tabs */}
-        <div className="mt-10 flex snap-x gap-2 overflow-x-auto pb-2 md:flex-wrap md:justify-center md:overflow-visible">
-          {SCREENS.map((s) => {
-            const Icon = s.icon;
-            const isActive = s.key === active;
-            return (
-              <button
-                key={s.key}
-                onClick={() => setActive(s.key)}
-                className={cn(
-                  "snap-start inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
-                  isActive
-                    ? "border-slate-900 bg-slate-900 text-white shadow-[0_10px_22px_-12px_rgba(15,23,42,0.55)]"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {s.label}
-              </button>
-            );
-          })}
+
+        {/* tabs — pill rail with sliding indicator */}
+        <div className="mt-10 flex justify-center">
+          <div className="no-scrollbar flex w-full max-w-3xl snap-x snap-mandatory gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white/80 p-1 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.25)] backdrop-blur md:w-auto">
+            {SCREENS.map((s) => {
+              const Icon = s.icon;
+              const isActive = s.key === active;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setActive(s.key)}
+                  className={cn(
+                    "snap-start relative inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                    isActive ? "text-white" : "text-slate-600 hover:text-slate-900",
+                  )}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="screen-tab-pill"
+                      className="absolute inset-0 -z-0 rounded-full bg-gradient-to-r from-slate-900 to-slate-700 shadow-[0_10px_22px_-12px_rgba(15,23,42,0.55)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <Icon className="relative z-10 h-4 w-4" />
+                  <span className="relative z-10">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
         {/* preview */}
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
-          <motion.div
-            key={active + "-text"}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="lg:col-span-5"
-          >
-            <h3 className="text-2xl font-bold text-slate-900 sm:text-3xl">{current.label}</h3>
-            <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
-            <Link
-              to="/cadastro"
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
+        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active + "-text"}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.35 }}
+              className="lg:col-span-5"
             >
-              Conhecer o sistema
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </motion.div>
-          <motion.div
-            key={active + "-mock"}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-7"
-          >
-            <ScreenMock keyName={active} />
-          </motion.div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <current.icon className="h-3.5 w-3.5 text-slate-700" />
+                {current.label}
+              </span>
+              <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                {current.label}
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
+              <ul className="mt-5 space-y-2">
+                {highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                      <Check className="h-3 w-3" />
+                    </span>
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/cadastro"
+                className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                Conhecer o sistema
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="relative lg:col-span-7">
+            {/* decorative blob */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-blue-100/60 via-white to-emerald-100/60 blur-2xl"
+            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active + "-mock"}
+                initial={{ opacity: 0, y: 18, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.99 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <ScreenMock keyName={active} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>
@@ -826,7 +884,7 @@ function ScreenMock({ keyName }: { keyName: ScreenKey }) {
     ) : (
       <GuardadoMock />
     );
-  return <div className="mx-auto w-full max-w-[600px]">{inner}</div>;
+  return <div className="mx-auto w-full max-w-[620px]">{inner}</div>;
 }
 
 /* ============================== DASHBOARD SHOWCASE ============================== */
