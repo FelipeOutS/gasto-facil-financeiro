@@ -4530,54 +4530,51 @@ export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
 
 /**
  * Calcula status efetivo da fatura: 'paga' (se marcada), 'vencida', 'fechada' ou 'aberta'.
+ * Convenção: `mes/ano` = MÊS DE REFERÊNCIA das compras. O fechamento ocorre
+ * normalmente no mês seguinte (ex.: fatura "Maio" fech=5 fecha em 05/06).
  */
 export function statusEfetivoFatura(cartao: Cartao, mes: number, ano: number, hoje: Date = new Date()): StatusFatura {
   const registro = getFatura(cartao.id, mes, ano);
   if (registro?.status === "paga") return "paga";
   const diaFech = cartao.diaFechamento ?? 1;
   const diaVenc = cartao.diaVencimento ?? 10;
-  const dataFechamento = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
-  const dataVencimento = new Date(ano, mes - 1, diaVenc, 23, 59, 59, 999);
+  // Fechamento da fatura "mes" ocorre em (ano, mes, diaFech) — mês seguinte.
+  const dataFechamento = new Date(ano, mes, diaFech, 23, 59, 59, 999);
+  // Vencimento: primeira ocorrência de diaVenc em ou após o fechamento.
+  let dataVencimento = new Date(ano, mes, diaVenc, 23, 59, 59, 999);
+  if (dataVencimento.getTime() < dataFechamento.getTime()) {
+    dataVencimento = new Date(ano, mes + 1, diaVenc, 23, 59, 59, 999);
+  }
   if (hoje > dataVencimento) return "vencida";
   if (hoje > dataFechamento) return "fechada";
   return "aberta";
 }
 
 /**
- * Retorna a "fatura corrente" do cartão: o ciclo cuja data de vencimento
- * ainda não passou (próximo vencimento). Se a fatura cujo vencimento já
- * passou ainda não foi paga, ela continua sendo a corrente (vencida).
+ * Retorna a "fatura corrente" do cartão como {mes, ano} = MÊS DE REFERÊNCIA
+ * (mês das compras) do ciclo atualmente aberto, considerando o dia de
+ * fechamento do cartão.
  *
- * Isso evita o bug onde o app marcava como "vencida" a fatura do mês atual
- * apenas porque o dia do vencimento já passou no calendário, mesmo o usuário
- * já estando no ciclo seguinte (que vence no mês que vem).
+ * - Se hoje > diaFechamento: o ciclo aberto começou neste mês → mes_ref = hoje.mes.
+ * - Caso contrário: o ciclo aberto começou no mês anterior → mes_ref = hoje.mes - 1.
  */
 export function faturaCorrente(
   cartao: Cartao,
   hoje: Date = new Date(),
 ): { mes: number; ano: number } {
-  const diaVenc = cartao.diaVencimento ?? 10;
-  const anoBase = hoje.getFullYear();
-  const mesBase = hoje.getMonth(); // 0-indexed
-  // Data de vencimento da fatura do mês corrente (calendário).
-  const vencMesCorrente = new Date(anoBase, mesBase, diaVenc, 23, 59, 59, 999);
-
-  // Se a fatura cujo vencimento já passou neste mês NÃO foi paga,
-  // ela é a "corrente" (vencida) — usuário ainda precisa lidar com ela.
-  if (hoje > vencMesCorrente) {
-    const mes = mesBase + 1;
-    const ano = anoBase;
-    const reg = getFatura(cartao.id, mes, ano);
-    if (reg?.status !== "paga") {
-      return { mes, ano };
+  const diaFech = cartao.diaFechamento ?? 1;
+  const baseDay = hoje.getDate();
+  let y = hoje.getFullYear();
+  let m0 = hoje.getMonth(); // 0-indexed
+  if (baseDay <= diaFech) {
+    // ciclo aberto começou no mês anterior
+    m0 -= 1;
+    if (m0 < 0) {
+      m0 = 11;
+      y -= 1;
     }
-    // Se já foi paga, a próxima é o mês seguinte.
-    const prox = new Date(anoBase, mesBase + 1, 1);
-    return { mes: prox.getMonth() + 1, ano: prox.getFullYear() };
   }
-
-  // Vencimento ainda no futuro neste mês → fatura corrente é a deste mês.
-  return { mes: mesBase + 1, ano: anoBase };
+  return { mes: m0 + 1, ano: y };
 }
 
 /* ====================================================================== *
