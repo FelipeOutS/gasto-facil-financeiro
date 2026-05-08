@@ -50,13 +50,14 @@ import {
   getCategoriaById,
   getCategorias,
   getGastos,
+  mesEfetivoGasto,
   reclassificarCategoriasExistentes,
   refreshGastos,
   useBootstrap,
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
-import { mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
+import { mesAnoToLabel, mesReferenciaOpcoes, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
