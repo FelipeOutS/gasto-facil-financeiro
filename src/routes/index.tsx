@@ -210,7 +210,7 @@ function Index() {
   // Contas a pagar do mês
   const contasResumo = useMemo(() => {
     const hojeISO = new Date().toISOString().slice(0, 10);
-    const doMes = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
+    const doMes = contas.filter((c) => contaPertenceAoMesRef(c, ym.mes, ym.ano));
     let pendente = 0;
     let atrasadasCount = 0;
     let pendentesCount = 0;
