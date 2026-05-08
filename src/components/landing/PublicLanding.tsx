@@ -1480,6 +1480,31 @@ function FinalCTA() {
               backgroundSize: "24px 24px",
             }}
           />
+          {/* floating decorative chips */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-4 top-8 hidden rotate-[-6deg] items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-white backdrop-blur md:flex"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-400/30 text-emerald-200">
+              <Target className="h-4 w-4" />
+            </span>
+            <div className="text-left">
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Meta</p>
+              <p className="text-xs font-bold">68% concluída</p>
+            </div>
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-4 bottom-8 hidden rotate-[5deg] items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-white backdrop-blur md:flex"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-blue-400/30 text-blue-200">
+              <TrendingUp className="h-4 w-4" />
+            </span>
+            <div className="text-left">
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Mês</p>
+              <p className="text-xs font-bold tabular-nums">+12% vs anterior</p>
+            </div>
+          </div>
           <div className="relative">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               Pronto para organizar sua vida financeira?
