@@ -297,6 +297,28 @@ function GastosPage() {
     const url = new URL(window.location.href);
     url.searchParams.set("mes", selectedReferenceMonth);
     window.history.replaceState({}, "", url.toString());
+    // Sincroniza com o hook global useMesReferenciaSelecionado.
+    try {
+      window.dispatchEvent(
+        new CustomEvent("gf:mes-referencia:changed", { detail: selectedReferenceMonth }),
+      );
+    } catch {
+      /* noop */
+    }
+  }, [selectedReferenceMonth]);
+
+  // Recebe mudanças vindas de outras telas (Dashboard, Cartões etc).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onExternal = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (isValidReferenceMonth(detail) && detail !== selectedReferenceMonth) {
+        setSelectedReferenceMonth(detail);
+      }
+    };
+    window.addEventListener("gf:mes-referencia:changed", onExternal as EventListener);
+    return () =>
+      window.removeEventListener("gf:mes-referencia:changed", onExternal as EventListener);
   }, [selectedReferenceMonth]);
 
   useEffect(() => {

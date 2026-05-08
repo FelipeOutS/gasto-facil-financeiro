@@ -29,7 +29,16 @@ const paymentInputSchema = z.object({
   nome: z.string().optional(),
   valor: z.number().positive().optional(),
   categoriaId: z.string().optional(),
+  mesReferencia: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/)
+    .optional(),
 });
+
+function isFaturaName(nome: string): boolean {
+  const n = normalizedText(nome);
+  return /\bfatura\b/.test(n) || /\bcart[aã]o\b/.test(n);
+}
 
 const unpayInputSchema = z.object({
   id: z.string().uuid(),
@@ -139,11 +148,53 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
     let createdGastoId: string | null = null;
 
     try {
-      if (data.criarGasto) {
+      // Mês de referência (competência) — fonte da verdade.
+      const mesRefInput =
+        data.mesReferencia ??
+        (typeof conta.mes_referencia === "string" && /^\d{4}-\d{2}$/.test(conta.mes_referencia)
+          ? conta.mes_referencia
+          : null);
+      const ymPag = monthYear(dataPagamento);
+      const invoiceMonth =
+        mesRefInput ?? `${ymPag.ano}-${String(ymPag.mes).padStart(2, "0")}`;
+      const [refAnoStr, refMesStr] = invoiceMonth.split("-");
+      const refAno = Number(refAnoStr);
+      const refMes = Number(refMesStr);
+
+      // Anti-duplicidade fatura×conta: se a conta parece ser pagamento de
+      // fatura de cartão, tentamos vincular à fatura existente do mês de
+      // referência ao invés de criar um gasto duplicado (a fatura já tem os
+      // gastos do cartão lançados individualmente).
+      let faturaVinculada = false;
+      if (data.criarGasto && isFaturaName(nome)) {
+        const { data: faturas } = await sb
+          .from("faturas_cartao")
+          .select("id, valor_pago, status")
+          .eq("user_id", userId)
+          .eq("mes", refMes)
+          .eq("ano", refAno);
+        const candidata = (faturas ?? []).find(
+          (f: any) => f.status !== "paga",
+        );
+        if (candidata) {
+          await sb
+            .from("faturas_cartao")
+            .update({
+              status: "paga",
+              data_pagamento: dataPagamento,
+              valor_pago: valor,
+              updated_at: now,
+            })
+            .eq("id", candidata.id)
+            .eq("user_id", userId);
+          faturaVinculada = true;
+        }
+      }
+
+      if (data.criarGasto && !faturaVinculada) {
         const linked = await findLinkedGastos(sb, userId, conta, nome, valor, dataPagamento);
         const existing = linked[0];
         const duplicateIds = linked.slice(1).map((g) => g.id);
-        const ym = monthYear(dataPagamento);
         const gastoRow = {
           descricao: nome,
           valor,
@@ -152,12 +203,13 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
           categoria_id: categoriaUuid,
           forma_pagamento: formaPagamento,
           observacao: data.observacao ?? conta.observacao ?? null,
-          mes: ym.mes,
-          ano: ym.ano,
+          mes: ymPag.mes,
+          ano: ymPag.ano,
           confirmado: true,
           tipo_gasto: "unico",
           origem: CONTA_GASTO_ORIGEM,
           id_operacao_banco: opId(conta.id),
+          invoice_month: invoiceMonth,
           updated_at: now,
         };
 

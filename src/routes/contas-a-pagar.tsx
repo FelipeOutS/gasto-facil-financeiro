@@ -45,6 +45,7 @@ import {
 import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/types";
 import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
+import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1047,6 +1048,14 @@ function ContaFormDialog({
   );
   const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
+  const [mesReferencia, setMesReferencia] = useState<string>(() => {
+    if (conta?.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)) {
+      return conta.mesReferencia;
+    }
+    const base = conta?.dataVencimento ?? defaultDate;
+    if (base && /^\d{4}-\d{2}-\d{2}/.test(base)) return base.slice(0, 7);
+    return ymFromDate();
+  });
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
   const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
     conta?.frequenciaRecorrencia ?? "mensal",
@@ -1096,6 +1105,7 @@ function ContaFormDialog({
         dataVencimento: dataVenc,
         categoriaId: (categoriaId || null) as string | null,
         observacao: observacao.trim() || undefined,
+        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : null,
         beneficiario: beneficiario.trim() || null,
         formaPagamento: (formaPagamento || null) as FormaPagamento | null,
         bancoEmissor: bancoEmissor.trim() || null,
@@ -1122,6 +1132,7 @@ function ContaFormDialog({
         dataVencimento: dataVenc,
         categoriaId: categoriaId || undefined,
         observacao: observacao.trim() || undefined,
+        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : undefined,
         recorrente,
         frequenciaRecorrencia: recorrente ? frequencia : undefined,
         recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
@@ -1232,6 +1243,25 @@ function ContaFormDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="conta-mes-ref">Mês de referência</Label>
+            <Select value={mesReferencia} onValueChange={setMesReferencia}>
+              <SelectTrigger id="conta-mes-ref">
+                <SelectValue placeholder="Mês de competência" />
+              </SelectTrigger>
+              <SelectContent>
+                {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Mês ao qual esta conta pertence (ex.: fatura de Maio paga em Junho → Maio).
+            </p>
           </div>
 
           <div className="space-y-1.5">
