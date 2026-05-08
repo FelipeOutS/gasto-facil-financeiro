@@ -36,6 +36,7 @@ import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights"
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
+  contaPertenceAoMesRef,
   getCategoriaById,
   getCategorias,
   getContasAPagar,
