@@ -24,6 +24,10 @@ import {
   ArrowDownRight,
   CheckCircle2,
   Star,
+  UserPlus,
+  Pencil,
+  LineChart,
+  Quote,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
