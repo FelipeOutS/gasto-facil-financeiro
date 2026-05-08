@@ -342,7 +342,7 @@ function GastosPage() {
         sorted.sort((a, b) => (a.data > b.data ? -1 : 1));
     }
     return sorted;
-  }, [gastos, q, range, catFilter, pagFilter, valorMin, valorMax, order]);
+  }, [gastos, q, range, mesRef, catFilter, pagFilter, valorMin, valorMax, order]);
 
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
