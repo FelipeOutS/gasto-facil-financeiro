@@ -77,8 +77,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const { user } = useAuth();
   const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
-  const showAdmin = isAdminMaster || hasFullAccess;
-  const items: MoreItem[] = useMemo(() => (showAdmin ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS), [showAdmin]);
+  const items: MoreItem[] = useMemo(() => (isAdminMaster ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS), [isAdminMaster]);
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const [navigating, setNavigating] = useState(false);
 
