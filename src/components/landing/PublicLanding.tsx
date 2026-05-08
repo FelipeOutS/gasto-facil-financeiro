@@ -1833,7 +1833,7 @@ function Plans() {
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
           Não sabe qual escolher?{" "}
-          <a href="#faq" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+          <a href="#faq" onClick={(e) => handleAnchorClick(e, "#faq")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
             Veja as dúvidas frequentes
           </a>{" "}
           ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
