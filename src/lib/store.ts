@@ -1477,8 +1477,17 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
   }
 
-  // Mês corrente em formato YYYY-MM (para gastos com invoice_month explícito).
-  const currentYm = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+  // Mês de referência (compras) da fatura ABERTA — identifica gastos com
+  // invoice_month explícito. Se hoje já passou do dia de fechamento, o
+  // ciclo aberto começou neste mês; senão, começou no mês anterior.
+  const diaFechRef = diaFech && diaFech > 0 ? diaFech : 0;
+  let refY = hoje.getFullYear();
+  let refM0 = hoje.getMonth();
+  if (diaFechRef && hoje.getDate() <= diaFechRef) {
+    refM0 -= 1;
+    if (refM0 < 0) { refM0 = 11; refY -= 1; }
+  }
+  const currentYm = `${refY}-${String(refM0 + 1).padStart(2, "0")}`;
   const considerados = gastosCartao.filter((g) => {
     if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
       // Fonte da verdade: o usuário decidiu o mês da fatura.
