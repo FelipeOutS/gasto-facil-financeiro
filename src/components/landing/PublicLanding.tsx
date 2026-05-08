@@ -1420,6 +1420,7 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
+                  style={{ transform: `scale(${b.scale ?? 1})` }}
                   className="h-7 w-full object-contain"
                 />
               </div>
