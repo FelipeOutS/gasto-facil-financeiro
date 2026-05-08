@@ -9,7 +9,6 @@ import {
   RefreshCw,
   MoreVertical,
   Pencil,
-  Pencil,
   Search,
   Sparkles,
   SlidersHorizontal,
