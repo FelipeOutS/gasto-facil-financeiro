@@ -222,6 +222,12 @@ export type Guardado = {
   atualizadoEm: string;
   /** Lote de importação ao qual esse registro pertence (extrato bancário). */
   importBatchId?: string;
+  /**
+   * Meta financeira opcionalmente vinculada a esta reserva.
+   * Quando presente, o valor entra no progresso da meta — sem duplicar:
+   * o dinheiro segue contabilizado uma única vez (em Guardado).
+   */
+  metaId?: string;
 };
 
 // ---------- Metas ----------

@@ -31,6 +31,7 @@ import {
   deleteMeta,
   getBancos,
   getMetas,
+  getMetaProgresso,
   statusMeta,
   updateMeta,
   useBootstrap,
@@ -110,14 +111,16 @@ function MetasPage() {
 
   const ordenadas = useMemo(() => {
     return [...metas].sort((a, b) => {
-      const pa = a.valorObjetivo > 0 ? a.valorAtual / a.valorObjetivo : 0;
-      const pb = b.valorObjetivo > 0 ? b.valorAtual / b.valorObjetivo : 0;
+      const va = getMetaProgresso(a.id);
+      const vb = getMetaProgresso(b.id);
+      const pa = a.valorObjetivo > 0 ? va / a.valorObjetivo : 0;
+      const pb = b.valorObjetivo > 0 ? vb / b.valorObjetivo : 0;
       return pb - pa;
     });
   }, [metas]);
 
   const totalAcumulado = useMemo(
-    () => metas.reduce((s, m) => s + m.valorAtual, 0),
+    () => metas.reduce((s, m) => s + getMetaProgresso(m.id), 0),
     [metas],
   );
 
@@ -208,7 +211,7 @@ function MetasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
             <AlertDialogDescription>
-              A meta <strong>{confirmDelete?.nome}</strong> e seu histórico serão removidos. Essa ação não pode ser desfeita.
+              A meta <strong>{confirmDelete?.nome}</strong> será removida. As reservas em Guardado vinculadas a ela <strong>não serão apagadas</strong> — vão continuar em Guardado como "sem meta vinculada".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -246,9 +249,17 @@ function MetaCard({
   onChangeImage: () => void;
   onDelete: () => void;
 }) {
-  const status = statusMeta(meta);
-  const pct = meta.valorObjetivo > 0 ? Math.min(100, (meta.valorAtual / meta.valorObjetivo) * 100) : 0;
-  const restante = Math.max(0, meta.valorObjetivo - meta.valorAtual);
+  const progresso = getMetaProgresso(meta.id);
+  const status: ReturnType<typeof statusMeta> =
+    meta.valorObjetivo > 0 && progresso / meta.valorObjetivo >= 1
+      ? "concluida"
+      : meta.valorObjetivo > 0 && progresso / meta.valorObjetivo >= 0.8
+        ? "quase"
+        : progresso > 0
+          ? "em_andamento"
+          : "nao_iniciada";
+  const pct = meta.valorObjetivo > 0 ? Math.min(100, (progresso / meta.valorObjetivo) * 100) : 0;
+  const restante = Math.max(0, meta.valorObjetivo - progresso);
   const isDone = status === "concluida";
   const isAlmostDone = pct >= 80 && !isDone;
 
@@ -312,7 +323,7 @@ function MetaCard({
                 <Plus className="mr-2 h-4 w-4" />
                 Atualizar valor
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onRemove} disabled={meta.valorAtual <= 0}>
+              <DropdownMenuItem onSelect={onRemove} disabled={progresso <= 0}>
                 <Minus className="mr-2 h-4 w-4" />
                 Remover valor
               </DropdownMenuItem>
@@ -340,7 +351,7 @@ function MetaCard({
       {/* Corpo */}
       <div className="p-4">
         <div className="flex items-baseline justify-between">
-          <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
+          <Money value={progresso} className="num text-2xl font-extrabold tracking-tight" />
           <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
         </div>
 

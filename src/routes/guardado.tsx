@@ -21,6 +21,7 @@ import {
   findReservaSimilar,
   getBancos,
   getGuardado,
+  getMetas,
   updateGuardado,
   useBootstrap,
   useStore,
@@ -86,6 +87,7 @@ function GuardadoPage() {
   const ready = useBootstrap();
   const bancos = useStore(() => getBancos());
   const guardado = useStore(() => getGuardado());
+  const metas = useStore(() => getMetas());
 
   const total = useMemo(() => guardado.reduce((s, g) => s + g.valor, 0), [guardado]);
   const porBanco = useMemo(() => {
@@ -270,6 +272,11 @@ function GuardadoPage() {
                     <p className="truncate text-sm font-medium">{banco?.nome ?? "Banco"}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {tipoLabel} · atualizado {formatDateBR(g.dataAtualizacao)}
+                      {g.metaId ? (
+                        <>
+                          {" "}· <span className="font-semibold text-primary">Meta: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
+                        </>
+                      ) : null}
                     </p>
                   </div>
                   <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
@@ -431,11 +438,13 @@ function ReservaFormDialog({
   const isEdit = mode.kind === "edit";
   const open = isCreate || isEdit;
   const baseReserva = isEdit ? mode.reserva : null;
+  const metas = useStore(() => getMetas());
 
   const [bancoId, setBancoId] = useState<string>("");
   const [valorStr, setValorStr] = useState("");
   const [tipoReserva, setTipoReserva] = useState<TipoReserva>("emergencia");
   const [obs, setObs] = useState("");
+  const [metaId, setMetaId] = useState<string>("nenhuma");
 
   useEffect(() => {
     if (!open) return;
@@ -444,11 +453,13 @@ function ReservaFormDialog({
       setValorStr("");
       setTipoReserva("emergencia");
       setObs("");
+      setMetaId("nenhuma");
     } else if (baseReserva) {
       setBancoId(baseReserva.bancoId);
       setValorStr(formatBRL(baseReserva.valor).replace("R$", "").trim());
       setTipoReserva(baseReserva.tipoReserva);
       setObs(baseReserva.observacao ?? "");
+      setMetaId(baseReserva.metaId ?? "nenhuma");
     }
   }, [open, isCreate, baseReserva, bancos]);
 
@@ -458,14 +469,14 @@ function ReservaFormDialog({
       toast.error("Selecione o banco e informe um valor.");
       return;
     }
+    const metaIdFinal = metaId === "nenhuma" ? undefined : metaId;
     if (isCreate) {
-      // Detecta reserva similar (mesmo banco + mesmo tipo)
       const similar = findReservaSimilar(bancoId, tipoReserva);
       if (similar) {
         onDuplicateDetected(similar, valor);
         return;
       }
-      addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined });
+      addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined, metaId: metaIdFinal });
       toast.success("Valor guardado. Seu futuro agradece. 💚");
       onClose();
       return;
@@ -476,6 +487,7 @@ function ReservaFormDialog({
         valor,
         tipoReserva,
         observacao: obs.trim() || undefined,
+        metaId: metaIdFinal,
       });
       toast.success("Boa, sua reserva foi ajustada.");
       onClose();
@@ -531,6 +543,23 @@ function ReservaFormDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Vincular a uma meta (opcional)</Label>
+            <Select value={metaId} onValueChange={setMetaId}>
+              <SelectTrigger className="mt-1 h-11 bg-card-elevated">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhuma">Nenhuma — só guardar</SelectItem>
+                {metas.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Se vincular, o valor entra no progresso da meta — sem duplicar.
+            </p>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Observação</Label>

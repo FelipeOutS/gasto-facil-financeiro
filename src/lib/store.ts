@@ -530,8 +530,13 @@ type GuardadoRow = {
   created_at: string;
   updated_at: string;
   import_batch_id?: string | null;
+  meta_id?: string | null;
 };
-function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Guardado {
+function rowToGuardado(
+  r: GuardadoRow,
+  bancoUuidToKey: Map<string, string>,
+  metaUuidToKey: Map<string, string>,
+): Guardado {
   return {
     id: r.legacy_id || r.id,
     bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : "",
@@ -542,6 +547,7 @@ function rowToGuardado(r: GuardadoRow, bancoUuidToKey: Map<string, string>): Gua
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
     importBatchId: r.import_batch_id ?? undefined,
+    metaId: r.meta_id ? metaUuidToKey.get(r.meta_id) ?? r.meta_id : undefined,
   };
 }
 
@@ -933,7 +939,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
       rowToAprendizado(r, catUuidToKey),
     );
-    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey));
+    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey, metaUuidToKey));
     memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
     memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
       (r: CartaoRow) => rowToCartao(r),
@@ -2856,6 +2862,8 @@ export type NovoGuardadoInput = {
   valor: number;
   tipoReserva: TipoReserva;
   observacao?: string;
+  /** Meta opcionalmente vinculada (entra no progresso da meta sem duplicar valores). */
+  metaId?: string;
 };
 
 /** Procura uma reserva existente similar (mesmo banco + mesmo tipo). */
@@ -2879,6 +2887,7 @@ export function addGuardado(input: NovoGuardadoInput): Guardado {
     dataAtualizacao: now.slice(0, 10),
     criadoEm: now,
     atualizadoEm: now,
+    metaId: input.metaId || undefined,
   };
   if (!activeUserId) {
     memGuardado = [...memGuardado, novo];
@@ -2899,7 +2908,8 @@ export function addGuardado(input: NovoGuardadoInput): Guardado {
       tipo_reserva: input.tipoReserva,
       observacao: input.observacao ?? null,
       data_atualizacao: now.slice(0, 10),
-    })
+      meta_id: input.metaId ? metaUuidFor(input.metaId) : null,
+    } as GuardadoInsert)
     .then(({ error }) => {
       if (error) console.error("[store] addGuardado failed", error);
     });
@@ -2920,6 +2930,9 @@ export function updateGuardado(id: string, patch: Partial<Guardado>) {
   if (patch.bancoId !== undefined) row.banco_id = bancoUuidFor(patch.bancoId);
   if (patch.tipoReserva !== undefined) row.tipo_reserva = patch.tipoReserva;
   if (patch.observacao !== undefined) row.observacao = patch.observacao ?? null;
+  if (patch.metaId !== undefined) {
+    row.meta_id = patch.metaId ? metaUuidFor(patch.metaId) : null;
+  }
   void supabase
     .from("dinheiro_guardado")
     .update(row)
@@ -2927,6 +2940,11 @@ export function updateGuardado(id: string, patch: Partial<Guardado>) {
     .then(({ error }) => {
       if (error) console.error("[store] updateGuardado failed", error);
     });
+}
+
+/** Vincula ou desvincula uma reserva de Guardado a uma meta. */
+export function setGuardadoMeta(guardadoId: string, metaId: string | null) {
+  updateGuardado(guardadoId, { metaId: metaId ?? undefined });
 }
 
 export function deleteGuardado(id: string) {
@@ -2940,6 +2958,34 @@ export function deleteGuardado(id: string) {
     .then(({ error }) => {
       if (error) console.error("[store] deleteGuardado failed", error);
     });
+}
+
+/** Reservas de Guardado vinculadas a uma meta específica. */
+export function getGuardadosDaMeta(metaId: string): Guardado[] {
+  return memGuardado.filter((g) => g.metaId === metaId);
+}
+
+/**
+ * Progresso efetivo da meta — fonte única de dados.
+ *
+ * = soma das reservas em Guardado vinculadas à meta
+ * + soma de movimentações antigas (compatibilidade com dados anteriores)
+ * + valor manual armazenado em metas_financeiras.valor_atual (legado)
+ *
+ * Quando o usuário começa a vincular reservas, o valor manual continua
+ * existindo (não apagamos dados), mas o usuário pode zerá-lo via
+ * "Atualizar valor" se quiser que o progresso reflita só as reservas.
+ */
+export function getMetaProgresso(metaId: string): number {
+  const meta = memMetas.find((m) => m.id === metaId);
+  const baseline = meta ? Number(meta.valorAtual) || 0 : 0;
+  const guardadoVinculado = memGuardado
+    .filter((g) => g.metaId === metaId)
+    .reduce((s, g) => s + (Number(g.valor) || 0), 0);
+  const movsLegado = memMov
+    .filter((mv) => mv.metaId === metaId)
+    .reduce((s, mv) => s + (Number(mv.valor) || 0), 0);
+  return baseline + guardadoVinculado + movsLegado;
 }
 
 // ---------- Metas ----------
@@ -3023,14 +3069,31 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
     });
 }
 
+/**
+ * Exclui uma meta sem apagar o dinheiro guardado vinculado a ela.
+ * Reservas em Guardado ficam como "sem meta vinculada".
+ * Movimentações antigas (legado) também são preservadas, ficando órfãs até
+ * serem manualmente limpas pelo usuário.
+ */
 export function deleteMeta(id: string) {
+  // Desvincula reservas locais (preserva o dinheiro em Guardado).
+  memGuardado = memGuardado.map((g) =>
+    g.metaId === id ? { ...g, metaId: undefined } : g,
+  );
   memMetas = memMetas.filter((m) => m.id !== id);
-  memMov = memMov.filter((mv) => mv.metaId !== id);
   emit();
   if (!activeUserId) return;
   const uuid = metaUuidFor(id);
   if (!uuid) return;
   metaKeyToUuid.delete(id);
+  // Desvincula no banco em paralelo, sem bloquear a exclusão.
+  void supabase
+    .from("dinheiro_guardado")
+    .update({ meta_id: null } as GuardadoUpdate)
+    .eq("meta_id", uuid)
+    .then(({ error }) => {
+      if (error) console.error("[store] deleteMeta unlink guardados failed", error);
+    });
   void supabase
     .from("metas_financeiras")
     .delete()
