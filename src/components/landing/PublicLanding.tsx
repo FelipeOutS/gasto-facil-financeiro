@@ -1921,7 +1921,7 @@ function BanksStrip() {
             {[...BANKS, ...BANKS].map((b, i) => (
               <div
                 key={`${b.name}-${i}`}
-                className="flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] sm:w-40"
+                className="group flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_32px_-18px_rgba(15,23,42,0.35)] sm:w-40"
                 title={b.name}
                 aria-hidden={i >= BANKS.length}
               >
@@ -1931,7 +1931,7 @@ function BanksStrip() {
                   loading="lazy"
                   draggable={false}
                   style={{ transform: `scale(${b.scale ?? 1})` }}
-                  className="h-8 w-full object-contain"
+                  className="h-8 w-full object-contain opacity-75 grayscale transition-all duration-300 ease-out group-hover:scale-[1.06] group-hover:opacity-100 group-hover:grayscale-0"
                 />
               </div>
             ))}
