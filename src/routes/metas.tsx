@@ -211,7 +211,7 @@ function MetasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
             <AlertDialogDescription>
-              A meta <strong>{confirmDelete?.nome}</strong> e seu histórico serão removidos. Essa ação não pode ser desfeita.
+              A meta <strong>{confirmDelete?.nome}</strong> será removida. As reservas em Guardado vinculadas a ela <strong>não serão apagadas</strong> — vão continuar em Guardado como "sem meta vinculada".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
