@@ -1907,13 +1907,23 @@ function BanksStrip() {
           </p>
         </div>
 
-        {/* Logos grid (desktop) */}
-        <div className="mt-12 hidden grid-cols-5 gap-4 md:grid lg:grid-cols-5 xl:gap-5">
-          {BANKS.map((b, i) => (
-            <Reveal key={b.name} delay={i * 0.03}>
+        {/* Logos marquee — single line, infinite loop */}
+        <div
+          className="banks-marquee relative mt-12 overflow-hidden"
+          style={{
+            maskImage:
+              "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+          }}
+        >
+          <div className="banks-marquee-track flex gap-3 sm:gap-4">
+            {[...BANKS, ...BANKS].map((b, i) => (
               <div
-                className="group flex h-20 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_36px_-18px_rgba(15,23,42,0.30)]"
+                key={`${b.name}-${i}`}
+                className="flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] sm:w-40"
                 title={b.name}
+                aria-hidden={i >= BANKS.length}
               >
                 <img
                   src={b.src}
@@ -1921,29 +1931,7 @@ function BanksStrip() {
                   loading="lazy"
                   draggable={false}
                   style={{ transform: `scale(${b.scale ?? 1})` }}
-                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        {/* Logos marquee (mobile) — horizontal scroll, snap, no scrollbar */}
-        <div className="mt-10 -mx-4 md:hidden">
-          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
-            {BANKS.map((b) => (
-              <div
-                key={b.name}
-                className="flex h-20 w-32 shrink-0 snap-start items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)]"
-                title={b.name}
-              >
-                <img
-                  src={b.src}
-                  alt={b.name}
-                  loading="lazy"
-                  draggable={false}
-                  style={{ transform: `scale(${b.scale ?? 1})` }}
-                  className="h-7 w-full object-contain"
+                  className="h-8 w-full object-contain"
                 />
               </div>
             ))}
