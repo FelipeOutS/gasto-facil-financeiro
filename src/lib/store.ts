@@ -3177,6 +3177,12 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
     const id = crypto.randomUUID();
+    // Mês de referência: usa o informado ou cai pro mês do vencimento desta
+    // ocorrência. Para recorrências, cada ocorrência usa o próprio mês.
+    const mesRef =
+      input.mesReferencia && /^\d{4}-\d{2}$/.test(input.mesReferencia) && !recurringId
+        ? input.mesReferencia
+        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     created.push({
       id,
       nome: input.nome,
@@ -3193,6 +3199,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       ...extras,
       mes: d.getMonth() + 1,
       ano: d.getFullYear(),
+      mesReferencia: mesRef,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -3212,6 +3219,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       status: "pendente",
       mes: d.getMonth() + 1,
       ano: d.getFullYear(),
+      mes_referencia: mesRef,
       ...extrasRow,
     });
   }
