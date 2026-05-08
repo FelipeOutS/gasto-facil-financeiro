@@ -351,7 +351,7 @@ function MetaCard({
       {/* Corpo */}
       <div className="p-4">
         <div className="flex items-baseline justify-between">
-          <Money value={meta.valorAtual} className="num text-2xl font-extrabold tracking-tight" />
+          <Money value={progresso} className="num text-2xl font-extrabold tracking-tight" />
           <p className="num text-xs text-muted-foreground">de {formatBRL(meta.valorObjetivo)}</p>
         </div>
 
