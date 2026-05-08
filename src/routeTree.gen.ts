@@ -22,6 +22,7 @@ import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LandingRouteImport } from './routes/landing'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
@@ -112,6 +113,11 @@ const ManualRoute = ManualRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandingRoute = LandingRouteImport.update({
+  id: '/landing',
+  path: '/landing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvestimentosRoute = InvestimentosRouteImport.update({
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/gastos'
     | '/guardado'
     | '/investimentos'
+    | '/landing'
     | '/login'
     | '/manual'
     | '/metas'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/gastos'
     | '/guardado'
     | '/investimentos'
+    | '/landing'
     | '/login'
     | '/manual'
     | '/metas'
@@ -471,6 +482,7 @@ export interface FileRouteTypes {
     | '/gastos'
     | '/guardado'
     | '/investimentos'
+    | '/landing'
     | '/login'
     | '/manual'
     | '/metas'
@@ -513,6 +525,7 @@ export interface RootRouteChildren {
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
   InvestimentosRoute: typeof InvestimentosRoute
+  LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
   MetasRoute: typeof MetasRoute
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landing': {
+      id: '/landing'
+      path: '/landing'
+      fullPath: '/landing'
+      preLoaderRoute: typeof LandingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/investimentos': {
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
   InvestimentosRoute: InvestimentosRoute,
+  LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
   MetasRoute: MetasRoute,
