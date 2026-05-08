@@ -1398,7 +1398,7 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
-                  className="max-h-10 w-auto max-w-[130px] object-contain transition-transform duration-300 group-hover:scale-105"
+                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
             </Reveal>
