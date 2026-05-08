@@ -1322,16 +1322,16 @@ function Plans() {
 
 /* ============================== BANKS STRIP ============================== */
 
-const BANKS = [
-  { name: "Nubank", src: "/logos/bancos/nubank.svg" },
-  { name: "Inter", src: "/logos/bancos/inter.svg" },
-  { name: "Mercado Pago", src: "/logos/bancos/mercado-pago.svg" },
+const BANKS: { name: string; src: string; scale?: number }[] = [
+  { name: "Nubank", src: "/logos/bancos/nubank.svg", scale: 1.85 },
+  { name: "Inter", src: "/logos/bancos/inter.svg", scale: 1.05 },
+  { name: "Mercado Pago", src: "/logos/bancos/mercado-pago.svg", scale: 1.7 },
   { name: "Caixa", src: "/logos/bancos/caixa.svg" },
   { name: "Banco do Brasil", src: "/logos/bancos/banco-do-brasil.svg" },
   { name: "Bradesco", src: "/logos/bancos/bradesco.svg" },
-  { name: "Santander", src: "/logos/bancos/santander.svg" },
+  { name: "Santander", src: "/logos/bancos/santander.svg", scale: 1.35 },
   { name: "PicPay", src: "/logos/bancos/picpay.svg" },
-  { name: "Will Bank", src: "/logos/bancos/will-bank.svg" },
+  { name: "Will Bank", src: "/logos/bancos/will-bank.svg", scale: 1.25 },
   { name: "C6 Bank", src: "/logos/bancos/c6-bank.svg" },
 ];
 
@@ -1398,7 +1398,8 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
-                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                  style={{ transform: `scale(${b.scale ?? 1})` }}
+                  className="h-8 w-full object-contain transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
             </Reveal>
@@ -1419,6 +1420,7 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
+                  style={{ transform: `scale(${b.scale ?? 1})` }}
                   className="h-7 w-full object-contain"
                 />
               </div>
