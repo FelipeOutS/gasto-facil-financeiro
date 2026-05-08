@@ -47,22 +47,21 @@ function LoginForm() {
       title="Bem-vindo de volta"
       subtitle="Seus gastos, metas e o que você guardou — tudo num lugar só."
       footer={
-        <div className="space-y-2">
-          <Link to="/cadastro" className="block font-medium hover:underline">
-            Criar conta
-          </Link>
-          <Link
-            to="/recuperar-senha"
-            className="block text-muted-foreground hover:text-foreground hover:underline"
-          >
-            Esqueci minha senha
-          </Link>
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-muted-foreground">
+            Ainda não tem conta?{" "}
+            <Link to="/cadastro" className="font-semibold text-primary hover:underline">
+              Criar conta
+            </Link>
+          </span>
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
+      <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
         <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            E-mail
+          </Label>
           <Input
             id="email"
             type="email"
@@ -71,10 +70,21 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="voce@email.com"
+            className="h-12 rounded-xl border-border/70 bg-background px-4 text-base shadow-sm focus-visible:ring-2 focus-visible:ring-primary/40"
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Senha</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Senha
+            </Label>
+            <Link
+              to="/recuperar-senha"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"
@@ -84,12 +94,20 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
+            className="h-12 rounded-xl border-border/70 bg-background px-4 text-base shadow-sm focus-visible:ring-2 focus-visible:ring-primary/40"
           />
         </div>
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground select-none">
+          <Checkbox
+            checked={remember}
+            onCheckedChange={(v) => setRemember(v === true)}
+          />
+          Manter-me conectado
+        </label>
         <Button
           type="submit"
           size="lg"
-          className="h-12 w-full rounded-2xl text-base font-semibold transition-transform active:scale-[0.98]"
+          className="h-12 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/20 transition-transform active:scale-[0.98]"
           disabled={submitting}
         >
           {submitting ? "Entrando…" : "Entrar"}
