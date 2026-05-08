@@ -151,7 +151,10 @@ export function buildResumoMensal(params: {
     pagas = 0,
     atrasadas = 0;
   for (const c of contas) {
-    if (c.mes !== mes || c.ano !== ano) continue;
+    const mref = c.mesReferencia && /^\d{4}-\d{2}$/.test(c.mesReferencia)
+      ? { ano: Number(c.mesReferencia.slice(0, 4)), mes: Number(c.mesReferencia.slice(5, 7)) }
+      : { mes: c.mes, ano: c.ano };
+    if (mref.mes !== mes || mref.ano !== ano) continue;
     if (c.status === "pago") pagas++;
     else if (c.dataVencimento < hojeISO) atrasadas++;
     else pendentes++;

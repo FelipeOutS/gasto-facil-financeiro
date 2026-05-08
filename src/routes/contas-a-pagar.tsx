@@ -29,6 +29,7 @@ import { ImportContaDialog } from "@/components/ImportContaDialog";
 import { Copy, Upload } from "lucide-react";
 import {
   addContaAPagar,
+  contaPertenceAoMesRef,
   deleteContaAPagar,
   deleteContaRecorrencia,
   desmarcarContaComoPago,
@@ -142,7 +143,7 @@ function ContasAPagarPage() {
   }
 
   const doMes = useMemo(() => {
-    const lista = contas.filter((c) => c.mes === ym.mes && c.ano === ym.ano);
+    const lista = contas.filter((c) => contaPertenceAoMesRef(c, ym.mes, ym.ano));
     function prioridade(c: ContaAPagar) {
       const s = statusContaEfetivo(c, hojeISO);
       if (s === "pago") return 4;

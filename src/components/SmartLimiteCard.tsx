@@ -18,6 +18,7 @@ import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   useStore,
+  contaPertenceAoMesRef,
   getContasAPagar,
   statusContaEfetivo,
   getLimite,
@@ -126,7 +127,7 @@ export function SmartLimiteCard({
     let contasPendentesFuturas = 0;
     let contasPendentesAposHoje = 0;
     for (const c of contas) {
-      if (c.mes !== mes || c.ano !== ano) continue;
+      if (!contaPertenceAoMesRef(c, mes, ano)) continue;
       const s = statusContaEfetivo(c, refISO);
       if (s === "pago") continue;
       if (c.gastoId) continue;
@@ -152,8 +153,7 @@ export function SmartLimiteCard({
       const valorR = r.valor || 0;
       const dupConta = contas.some(
         (c) =>
-          c.mes === mes &&
-          c.ano === ano &&
+          contaPertenceAoMesRef(c, mes, ano) &&
           statusContaEfetivo(c, refISO) !== "pago" &&
           norm(c.nome) === nomeR,
       );
