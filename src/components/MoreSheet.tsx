@@ -31,6 +31,7 @@ import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
+import { useRoles } from "@/lib/use-roles";
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
