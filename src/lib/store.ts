@@ -3408,6 +3408,9 @@ export function deleteContaRecorrencia(
   const removedIds = memContas.filter(shouldRemove).map((c) => c.id);
   memContas = memContas.filter((c) => !shouldRemove(c));
   emit();
+  for (const cid of removedIds) {
+    void resolveAlertasDe("conta_a_pagar", cid);
+  }
   if (!activeUserId || removedIds.length === 0) return;
   void sbAny
     .from("contas_a_pagar")
