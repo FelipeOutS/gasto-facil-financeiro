@@ -29,7 +29,16 @@ const paymentInputSchema = z.object({
   nome: z.string().optional(),
   valor: z.number().positive().optional(),
   categoriaId: z.string().optional(),
+  mesReferencia: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/)
+    .optional(),
 });
+
+function isFaturaName(nome: string): boolean {
+  const n = normalizedText(nome);
+  return /\bfatura\b/.test(n) || /\bcart[aã]o\b/.test(n);
+}
 
 const unpayInputSchema = z.object({
   id: z.string().uuid(),
