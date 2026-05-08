@@ -135,20 +135,38 @@ export function SmartLimiteCard({
     }
 
     const fimMesISO = `${ano}-${String(mes).padStart(2, "0")}-${String(diasNoMes).padStart(2, "0")}`;
+    const norm = (s: string) =>
+      (s ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
     let recorrenciasPrev = 0;
     for (const r of recorrencias) {
       if (r.status !== "ativa") continue;
       const prox = r.proximaCobranca;
       if (!prox) continue;
       if (prox < refISO || prox > fimMesISO) continue;
-      const dup = contas.some(
+      const nomeR = norm(r.nome);
+      const valorR = r.valor || 0;
+      const dupConta = contas.some(
         (c) =>
           c.mes === mes &&
           c.ano === ano &&
           statusContaEfetivo(c, refISO) !== "pago" &&
-          c.nome.trim().toLowerCase() === r.nome.trim().toLowerCase(),
+          norm(c.nome) === nomeR,
       );
-      if (dup) continue;
+      // Anti-duplicidade: se já existe gasto da recorrência neste mês de
+      // referência (por id ou por nome+valor ±2%), ignora previsão.
+      const dupGasto = gastosMes.some((g) => {
+        if (g.recorrenciaId && r.id && g.recorrenciaId === r.id) return true;
+        const nomeG = norm(g.descricao || g.estabelecimento || "");
+        if (!nomeG || nomeG !== nomeR) return false;
+        const tol = Math.max(0.01, valorR * 0.02);
+        return Math.abs((g.valor || 0) - valorR) <= tol;
+      });
+      if (dupConta || dupGasto) continue;
       recorrenciasPrev += r.valor || 0;
     }
 
