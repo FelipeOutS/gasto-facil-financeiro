@@ -3362,6 +3362,9 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
   if (fields.codigoPix !== undefined) row.codigo_pix = fields.codigoPix ?? null;
   if (fields.chavePix !== undefined) row.chave_pix = fields.chavePix ?? null;
   if (fields.bancoEmissor !== undefined) row.banco_emissor = fields.bancoEmissor ?? null;
+  if (fields.mesReferencia !== undefined) row.mes_referencia = fields.mesReferencia ?? null;
+  else if (fields.dataVencimento !== undefined && updated.mesReferencia)
+    row.mes_referencia = updated.mesReferencia;
 
   void sbAny
     .from("contas_a_pagar")
