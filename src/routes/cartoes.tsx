@@ -1095,7 +1095,8 @@ function FaturaSheet({
   }
 
   function handleAddCompra(data: NovoGastoInput) {
-    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id });
+    const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
+    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
     toast.success("Compra adicionada à fatura.");
     setOpenAdd(false);
   }
