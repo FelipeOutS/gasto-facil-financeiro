@@ -101,7 +101,10 @@ function RelatoriosPage() {
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
-  const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
+  const [ym, setYm] = useMesReferenciaRef() as unknown as [
+    { mes: number; ano: number },
+    (next: { mes: number; ano: number }) => void,
+  ];
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [showResumo, setShowResumo] = useState(false);
