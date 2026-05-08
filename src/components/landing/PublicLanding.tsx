@@ -184,6 +184,7 @@ function Header() {
 
   return (
     <header
+      data-landing-header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
@@ -192,7 +193,7 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#top" onClick={(e) => handleAnchorClick(e, "#top")} className="flex items-center gap-2">
+        <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <BrandMark className="h-8 w-auto" />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
@@ -269,7 +270,7 @@ function Header() {
 function Hero() {
   const reduce = useReducedMotion();
   return (
-    <section className="relative overflow-hidden">
+    <section id="inicio" className="relative overflow-hidden">
       {/* Decorative background */}
       <div
         aria-hidden
