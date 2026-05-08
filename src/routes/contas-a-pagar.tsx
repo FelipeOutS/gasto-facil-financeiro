@@ -1048,6 +1048,14 @@ function ContaFormDialog({
   );
   const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
+  const [mesReferencia, setMesReferencia] = useState<string>(() => {
+    if (conta?.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)) {
+      return conta.mesReferencia;
+    }
+    const base = conta?.dataVencimento ?? defaultDate;
+    if (base && /^\d{4}-\d{2}-\d{2}/.test(base)) return base.slice(0, 7);
+    return ymFromDate();
+  });
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
   const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
     conta?.frequenciaRecorrencia ?? "mensal",
