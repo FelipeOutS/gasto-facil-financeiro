@@ -296,6 +296,13 @@ function GastosPage() {
     // manter o total da tela alinhado com Dashboard e Relatórios, que já
     // ignoram `confirmado === false`.
     let list = gastos.filter((g) => g.confirmado !== false);
+    if (mesRef !== "todos" && /^\d{4}-\d{2}$/.test(mesRef)) {
+      const [ay, am] = mesRef.split("-").map(Number);
+      list = list.filter((g) => {
+        const eff = mesEfetivoGasto(g);
+        return eff.ano === ay && eff.mes === am;
+      });
+    }
     if (range.fromTs != null || range.toTs != null) {
       list = list.filter((g) => {
         const d = parseDateLocal(g.data);
