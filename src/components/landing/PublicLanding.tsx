@@ -1509,9 +1509,7 @@ function GuardadoMock() {
         {items.map((it) => (
           <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
             <div className="flex items-center justify-between">
-              <span className={cn("inline-grid h-8 w-8 place-items-center rounded-lg text-xs font-bold", it.color)}>
-                {it.l[0]}
-              </span>
+              <BrandLogo name={it.l} variant="bank" className="h-8 w-8" />
               <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
             </div>
             <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
