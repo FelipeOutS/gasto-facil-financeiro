@@ -126,6 +126,9 @@ export function DashboardCartoesInsights({
       const { mes: mesCorr, ano: anoCorr } = faturaCorrente(c, hoje);
       const status = statusEfetivoFatura(c, mesCorr, anoCorr, hoje);
       if (status === "paga") continue;
+      // Não anuncia vencimento enquanto a fatura ainda está ABERTA — o
+      // vencimento real é da fatura aberta (depois do próximo fechamento).
+      if (status === "aberta") continue;
       const diaVenc = c.diaVencimento ?? 10;
       const dataVenc = new Date(anoCorr, mesCorr - 1, diaVenc);
       const dias = diffDays(dataVenc, hoje);
