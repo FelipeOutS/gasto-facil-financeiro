@@ -3382,6 +3382,9 @@ export function deleteContaAPagar(id: string, options?: { excluirGastoVinculado?
   if (options?.excluirGastoVinculado && conta?.gastoId) {
     deleteGasto(conta.gastoId);
   }
+  // Alerta órfão: se a conta foi excluída, qualquer alerta apontando para
+  // ela deixa de fazer sentido.
+  void resolveAlertasDe("conta_a_pagar", id);
   void sbAny
     .from("contas_a_pagar")
     .delete()
