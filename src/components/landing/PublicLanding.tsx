@@ -1106,9 +1106,7 @@ function CartaoMock() {
           {purchases.map((p) => (
             <li key={p.c} className="flex items-center justify-between px-3 py-2">
               <div className="flex items-center gap-2.5">
-                <span className={cn("grid h-7 w-7 place-items-center rounded-lg text-[10px] font-bold", p.color)}>
-                  {p.c[0]}
-                </span>
+                <TransactionAvatar estabelecimento={p.c} size="sm" className="h-7 w-7" />
                 <div>
                   <p className="text-xs font-semibold text-slate-900">{p.c}</p>
                   <p className="text-[10px] text-slate-500">{p.t}</p>
