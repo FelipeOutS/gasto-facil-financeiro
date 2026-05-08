@@ -3494,15 +3494,33 @@ async function deleteGastosPersistidos(ids: string[]): Promise<void> {
   if (error) throw error;
 }
 
-async function resolveAlertasDaConta(contaId: string): Promise<void> {
-  if (!activeUserId) return;
-  await sbAny
+/**
+ * Resolve (marca como `resolved`) todos os alertas no sininho que apontam
+ * para uma entidade específica. Usado quando a entidade é paga, cancelada,
+ * excluída ou deixa de ser uma pendência real.
+ *
+ * Tipos típicos: `conta_a_pagar`, `fatura`, `cartao`, `gasto`, `recorrencia`,
+ * `categoria`, `conta_a_receber`.
+ */
+export async function resolveAlertasDe(
+  entityType: string,
+  entityId: string,
+): Promise<void> {
+  if (!activeUserId || !entityId) return;
+  const now = new Date().toISOString();
+  const { error } = await sbAny
     .from("user_alerts")
-    .update({ status: "resolved", resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ status: "resolved", resolved_at: now, updated_at: now })
     .eq("user_id", activeUserId)
-    .eq("related_entity_type", "conta_a_pagar")
-    .eq("related_entity_id", contaId)
+    .eq("related_entity_type", entityType)
+    .eq("related_entity_id", entityId)
     .in("status", ["unread", "read"]);
+  if (error) console.error("[store] resolveAlertasDe failed", entityType, entityId, error);
+}
+
+// Compat: nome antigo, mantido para não quebrar chamadas existentes.
+async function resolveAlertasDaConta(contaId: string): Promise<void> {
+  await resolveAlertasDe("conta_a_pagar", contaId);
 }
 
 async function upsertGastoVinculadoConta(
