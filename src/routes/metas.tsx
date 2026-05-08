@@ -250,7 +250,8 @@ function MetaCard({
   onChangeImage: () => void;
   onDelete: () => void;
 }) {
-  const progresso = getMetaProgresso(meta.id);
+  const breakdown = getMetaProgressoBreakdown(meta.id);
+  const progresso = breakdown.total;
   const status: ReturnType<typeof statusMeta> =
     meta.valorObjetivo > 0 && progresso / meta.valorObjetivo >= 1
       ? "concluida"
@@ -260,7 +261,7 @@ function MetaCard({
           ? "em_andamento"
           : "nao_iniciada";
   const pct = meta.valorObjetivo > 0 ? Math.min(100, (progresso / meta.valorObjetivo) * 100) : 0;
-  const restante = Math.max(0, meta.valorObjetivo - progresso);
+  const restante = breakdown.restante;
   const isDone = status === "concluida";
   const isAlmostDone = pct >= 80 && !isDone;
 
