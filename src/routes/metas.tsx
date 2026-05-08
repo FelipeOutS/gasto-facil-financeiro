@@ -362,38 +362,38 @@ function MetaCard({
       <div className="space-y-4 p-5">
         {/* Bloco principal — Progresso da meta */}
         <div>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Progresso da meta
-              </p>
-              <Money value={progresso} className="num mt-0.5 block text-3xl font-extrabold tracking-tight leading-none" />
-              <p className="num mt-1.5 text-xs text-muted-foreground whitespace-nowrap">
-                de <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
-              </p>
-            </div>
-            <div
-              className="shrink-0 rounded-xl px-3 py-2 text-right"
-              style={{ background: `color-mix(in oklab, ${meta.colorHex} 12%, transparent)` }}
-            >
-              <p className="num text-2xl font-extrabold leading-none tabular-nums" style={{ color: meta.colorHex }}>
-                {pct.toFixed(0)}%
-              </p>
-              <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">do objetivo</p>
-            </div>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Progresso da meta
+          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <Money
+              value={progresso}
+              className="num text-3xl sm:text-4xl font-extrabold tracking-tight leading-none"
+            />
+            <span className="num text-sm text-muted-foreground whitespace-nowrap">
+              de <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
+            </span>
           </div>
 
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-card-elevated">
-            <div
-              className="h-full rounded-full origin-left animate-fill"
-              style={{
-                width: `${pct}%`,
-                background: isDone
-                  ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
-                  : meta.colorHex,
-                transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-              }}
-            />
+          <div className="mt-3 flex items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-card-elevated">
+              <div
+                className="h-full rounded-full origin-left animate-fill"
+                style={{
+                  width: `${pct}%`,
+                  background: isDone
+                    ? `linear-gradient(90deg, ${meta.colorHex}, color-mix(in oklab, ${meta.colorHex} 60%, white))`
+                    : meta.colorHex,
+                  transition: "width 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+                }}
+              />
+            </div>
+            <span
+              className="num shrink-0 text-xs font-semibold tabular-nums"
+              style={{ color: meta.colorHex }}
+            >
+              {pct.toFixed(0)}%
+            </span>
           </div>
         </div>
 
@@ -409,15 +409,17 @@ function MetaCard({
             <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.guardado)}</span>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/50 px-3 py-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
-                <Wallet className="h-3.5 w-3.5" />
-              </span>
-              <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
+          {breakdown.direto > 0 && (
+            <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/50 px-3 py-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
+                  <Wallet className="h-3.5 w-3.5" />
+                </span>
+                <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
+              </div>
+              <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
             </div>
-            <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
-          </div>
+          )}
 
           <div
             className="flex items-center justify-between rounded-xl border px-3 py-2.5"
