@@ -212,22 +212,39 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background px-5 py-10">
-      <div className="mx-auto flex w-full max-w-sm flex-col animate-fade-in">
-        <Link to="/" className="mx-auto flex items-center justify-center" aria-label="Gasto Inteligente">
-          <BrandMark className="h-16 w-auto" />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/40 px-4 py-8 sm:px-6 sm:py-12 dark:from-slate-950 dark:via-background dark:to-slate-900">
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
+
+      <div className="relative mx-auto flex w-full max-w-md flex-col animate-fade-in">
+        <Link
+          to="/landing"
+          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para o início
         </Link>
 
-        <div className="mt-8">
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {subtitle && (
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        <div className="rounded-3xl border border-border/60 bg-card/95 px-6 py-8 shadow-xl shadow-slate-900/5 backdrop-blur-sm sm:px-9 sm:py-10 dark:shadow-black/30">
+          <Link to="/" className="mx-auto flex items-center justify-center" aria-label="Gasto Inteligente">
+            <BrandMark className="h-14 w-auto" />
+          </Link>
+
+          <div className="mt-6 text-center">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-[1.6rem]">{title}</h1>
+            {subtitle && (
+              <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+
+          <div className="mt-7">{children}</div>
+
+          {footer && (
+            <div className="mt-6 border-t border-border/60 pt-5 text-center text-sm">
+              {footer}
+            </div>
           )}
         </div>
-
-        <div className="mt-6">{children}</div>
-
-        {footer && <div className="mt-6 text-center text-sm">{footer}</div>}
       </div>
     </div>
   );
