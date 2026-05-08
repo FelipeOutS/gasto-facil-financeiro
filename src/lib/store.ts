@@ -3310,12 +3310,22 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       fields.bancoEmissor === null
         ? undefined
         : fields.bancoEmissor ?? current.bancoEmissor,
+    mesReferencia:
+      fields.mesReferencia === null
+        ? undefined
+        : fields.mesReferencia ?? current.mesReferencia,
     atualizadoEm: new Date().toISOString(),
   };
   if (fields.dataVencimento) {
     const d = new Date(fields.dataVencimento + "T00:00:00");
     updated.mes = d.getMonth() + 1;
     updated.ano = d.getFullYear();
+    // Se o usuário não está editando explicitamente o mês de referência e
+    // este estava vazio ou apontando para o vencimento antigo, atualiza para
+    // o novo vencimento.
+    if (fields.mesReferencia === undefined && !current.mesReferencia) {
+      updated.mesReferencia = `${updated.ano}-${String(updated.mes).padStart(2, "0")}`;
+    }
   }
   memContas = [...memContas.slice(0, idx), updated, ...memContas.slice(idx + 1)];
   emit();
