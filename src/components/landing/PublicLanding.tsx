@@ -1419,7 +1419,7 @@ function BanksStrip() {
                   alt={b.name}
                   loading="lazy"
                   draggable={false}
-                  className="max-h-9 w-auto max-w-[110px] object-contain"
+                  className="h-7 w-full object-contain"
                 />
               </div>
             ))}
