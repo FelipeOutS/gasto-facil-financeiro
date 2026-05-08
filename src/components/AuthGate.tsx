@@ -164,11 +164,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   }, [loading, session, navigate]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground animate-fade-in">Só um instante…</p>
-      </div>
-    );
+    return <BrandLoader message="Só um instante…" />;
   }
 
   return <>{children}</>;
