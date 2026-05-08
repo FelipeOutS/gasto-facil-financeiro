@@ -2977,15 +2977,35 @@ export function getGuardadosDaMeta(metaId: string): Guardado[] {
  * "Atualizar valor" se quiser que o progresso reflita só as reservas.
  */
 export function getMetaProgresso(metaId: string): number {
+  return getMetaProgressoBreakdown(metaId).total;
+}
+
+/**
+ * Decomposição do progresso da meta:
+ *  - guardado: valor real reservado em Guardado vinculado a essa meta
+ *  - direto:   valor adicionado diretamente na meta (valorAtual + movs legadas)
+ *  - total:    soma dos dois (sem duplicar)
+ *  - restante: quanto falta para o objetivo
+ */
+export function getMetaProgressoBreakdown(metaId: string): {
+  total: number;
+  guardado: number;
+  direto: number;
+  restante: number;
+} {
   const meta = memMetas.find((m) => m.id === metaId);
   const baseline = meta ? Number(meta.valorAtual) || 0 : 0;
-  const guardadoVinculado = memGuardado
+  const guardado = memGuardado
     .filter((g) => g.metaId === metaId)
     .reduce((s, g) => s + (Number(g.valor) || 0), 0);
   const movsLegado = memMov
     .filter((mv) => mv.metaId === metaId)
     .reduce((s, mv) => s + (Number(mv.valor) || 0), 0);
-  return baseline + guardadoVinculado + movsLegado;
+  const direto = baseline + movsLegado;
+  const total = direto + guardado;
+  const objetivo = meta ? Number(meta.valorObjetivo) || 0 : 0;
+  const restante = Math.max(0, objetivo - total);
+  return { total, guardado, direto, restante };
 }
 
 // ---------- Metas ----------

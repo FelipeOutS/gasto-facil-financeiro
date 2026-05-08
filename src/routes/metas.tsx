@@ -32,6 +32,7 @@ import {
   getBancos,
   getMetas,
   getMetaProgresso,
+  getMetaProgressoBreakdown,
   statusMeta,
   updateMeta,
   useBootstrap,
@@ -146,10 +147,10 @@ function MetasPage() {
       </header>
 
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
-        <p className="text-xs font-medium text-muted-foreground">Total acumulado em metas</p>
+        <p className="text-xs font-medium text-muted-foreground">Progresso total das metas</p>
         <Money value={totalAcumulado} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
         <p className="mt-1 text-xs text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}
+          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"} · soma do progresso de todas as metas (não é saldo em banco)
         </p>
       </section>
 
@@ -249,7 +250,8 @@ function MetaCard({
   onChangeImage: () => void;
   onDelete: () => void;
 }) {
-  const progresso = getMetaProgresso(meta.id);
+  const breakdown = getMetaProgressoBreakdown(meta.id);
+  const progresso = breakdown.total;
   const status: ReturnType<typeof statusMeta> =
     meta.valorObjetivo > 0 && progresso / meta.valorObjetivo >= 1
       ? "concluida"
@@ -259,7 +261,7 @@ function MetaCard({
           ? "em_andamento"
           : "nao_iniciada";
   const pct = meta.valorObjetivo > 0 ? Math.min(100, (progresso / meta.valorObjetivo) * 100) : 0;
-  const restante = Math.max(0, meta.valorObjetivo - progresso);
+  const restante = breakdown.restante;
   const isDone = status === "concluida";
   const isAlmostDone = pct >= 80 && !isDone;
 
@@ -371,6 +373,23 @@ function MetaCard({
           <span className="num font-semibold" style={{ color: meta.colorHex }}>{pct.toFixed(0)}%</span>
           <span className="num text-muted-foreground">faltam {formatBRL(restante)}</span>
         </div>
+
+        {(breakdown.guardado > 0 || breakdown.direto > 0) && (
+          <ul className="mt-3 space-y-1 rounded-xl bg-card-elevated/60 p-2.5 text-[11px]">
+            <li className="flex items-center justify-between">
+              <span className="text-muted-foreground">Guardado em reservas vinculadas</span>
+              <span className="num font-semibold">{formatBRL(breakdown.guardado)}</span>
+            </li>
+            <li className="flex items-center justify-between">
+              <span className="text-muted-foreground">Adicionado direto na meta</span>
+              <span className="num font-semibold">{formatBRL(breakdown.direto)}</span>
+            </li>
+            <li className="flex items-center justify-between border-t border-border/60 pt-1">
+              <span className="font-semibold text-foreground">Faltam para o objetivo</span>
+              <span className="num font-bold" style={{ color: meta.colorHex }}>{formatBRL(restante)}</span>
+            </li>
+          </ul>
+        )}
 
         {isDone ? (
           <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs font-semibold text-success animate-pop">
