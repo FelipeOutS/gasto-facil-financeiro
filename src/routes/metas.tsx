@@ -414,7 +414,7 @@ function MetaCard({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
                 <Wallet className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs text-muted-foreground truncate">Adicionado direto na meta</span>
+              <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
             </div>
             <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
           </div>
