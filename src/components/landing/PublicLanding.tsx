@@ -807,7 +807,7 @@ function ScreensTabs() {
   const highlights = SCREEN_HIGHLIGHTS[active];
 
   return (
-    <section id="telas" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
+    <section id="como-funciona" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
       {/* soft background accents */}
       <div
         aria-hidden
@@ -2124,7 +2124,7 @@ const FAQS = [
 function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="bg-slate-50 py-20 sm:py-24">
+    <section id="duvidas" className="bg-slate-50 py-20 sm:py-24">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Dúvidas"
