@@ -197,7 +197,7 @@ function Header() {
               <a
                 key={n.href}
                 href={n.href}
-                onClick={() => setOpen(false)}
+                onClick={(e) => handleAnchorClick(e, n.href, () => setOpen(false))}
                 className="rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
                 {n.label}
