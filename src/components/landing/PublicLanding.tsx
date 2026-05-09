@@ -732,7 +732,7 @@ function MobileDashboardMock() {
         ))}
       </div>
       <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
-        <p className="text-[8px] font-semibold text-slate-700">Fluxo</p>
+        <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
         <div className="mt-1 flex h-8 items-end gap-0.5">
           {[40, 65, 50, 78, 55, 82, 60, 90, 45].map((h, i) => (
             <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
