@@ -105,7 +105,7 @@ export async function createInvite(params: {
 }
 
 export async function updateAccessLevel(id: string, accessLevel: AccessLevel, nickname?: string | null) {
-  const patch: Record<string, unknown> = { access_level: accessLevel };
+  const patch: { access_level: AccessLevel; nickname?: string | null } = { access_level: accessLevel };
   if (typeof nickname !== "undefined") patch.nickname = nickname?.trim() || null;
   const { error } = await supabase.from("connected_accounts").update(patch).eq("id", id);
   if (error) throw error;
