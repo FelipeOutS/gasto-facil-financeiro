@@ -59,6 +59,7 @@ const ITEMS: NavItem[] = [
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/guardado", label: "Guardado", icon: Wallet },
   { to: "/metas", label: "Metas", icon: Target },
+  { to: "/contas-conectadas", label: "Contas conectadas", icon: Users, feature: "contas_conectadas" },
   { to: "/meu-plano", label: "Meu plano", icon: Crown },
   { to: "/categorias", label: "Ajustes", icon: Settings2 },
   { to: "/landing", label: "Conhecer o Gasto Inteligente", icon: Sparkles },
