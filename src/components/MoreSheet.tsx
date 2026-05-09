@@ -16,6 +16,7 @@ import {
   Sparkles,
   Bell,
   Shield,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import {
