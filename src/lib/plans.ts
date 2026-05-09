@@ -285,6 +285,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Contas e relatórios do negócio",
       "Contas a receber para clientes",
       "Separação pessoal × negócio",
+      "Contas conectadas por convite",
       "Sem importações automáticas",
     ],
   },
