@@ -153,7 +153,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   );
 
   return (
-    <Ctx.Provider value={{ canWrite, canUseFeature, requireSubscription, guard }}>
+    <Ctx.Provider value={{ canWrite, canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin, canUseFeature, requireSubscription, guard }}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
