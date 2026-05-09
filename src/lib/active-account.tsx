@@ -139,8 +139,7 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
     setActiveUserId(ownerId);
     void hydrateUser(ownerId);
     if (persist && viewerId) writeStored(viewerId, ownerId === viewerId ? null : ownerId);
-    // Força todas as queries a recarregarem para o novo contexto
-    queryClient.invalidateQueries();
+    // O store já emite/atualiza componentes via subscribe; hydrateUser repovoa caches.
   }
 
   const switchTo = useCallback(
