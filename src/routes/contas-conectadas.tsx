@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/contas-conectadas")({
@@ -65,7 +66,8 @@ function ContasConectadasPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 lg:py-10">
+    <MobileShell wide>
+    <div className="mx-auto w-full max-w-5xl space-y-8 py-6 lg:py-10">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Contas conectadas</h1>
@@ -134,6 +136,7 @@ function ContasConectadasPage() {
 
       <ShareInviteDialog token={shareToken} onClose={() => setShareToken(null)} />
     </div>
+    </MobileShell>
   );
 }
 
