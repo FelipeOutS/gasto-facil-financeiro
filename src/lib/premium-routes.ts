@@ -37,6 +37,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
   { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
+  { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Pessoa Física Premium, MEI e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {
