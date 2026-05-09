@@ -86,12 +86,13 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   const { user } = useAuth();
   const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
   const { hasFullAccess, loading: rolesLoading } = useRoles();
+  const { isOwnAccount, canCreate: connCanCreate, canAdmin: connCanAdmin, accessLevel } = useActiveAccount();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const isAdmin = isAdminMaster || hasFullAccess;
 
-  const canWrite = useMemo(() => {
+  const subscriptionAllows = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
     if (planLoading || rolesLoading) return false;
@@ -99,6 +100,10 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
     return isStatusActive(status);
   }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
+
+  // Em conta própria: depende só da assinatura.
+  // Em conta conectada: depende do nível de acesso (não da assinatura do viewer).
+  const canWrite = isOwnAccount ? subscriptionAllows : connCanCreate;
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
