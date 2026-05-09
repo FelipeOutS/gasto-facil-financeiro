@@ -646,15 +646,18 @@ function DesktopDashboardMock() {
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           <div className="col-span-2 rounded-lg border border-slate-200 bg-white p-2">
             <div className="flex items-center justify-between">
-              <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
-              <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+              <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
+              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
             </div>
-            <div className="mt-1.5 flex h-12 items-end gap-0.5">
+            <div className="mt-2 flex h-20 items-end gap-1">
               {[45, 60, 38, 72, 55, 80, 64, 90, 48, 70, 84, 58, 66, 50].map((h, i) => (
                 <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
                   <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
                 </div>
               ))}
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-[6.5px] text-slate-400">
+              <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
             </div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-2">
