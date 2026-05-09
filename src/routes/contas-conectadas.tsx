@@ -246,7 +246,12 @@ function InviteDialog({
     setSubmitting(true);
     try {
       const created = await createInvite({ viewerUserId, invitedEmail: email, nickname, accessLevel: level });
-      toast.success("Convite criado! Compartilhe o link com a pessoa.");
+      try {
+        await sendInviteEmail(created.invited_email, created.invite_token, nickname || null, level);
+        toast.success("Convite enviado por e-mail!");
+      } catch {
+        toast.success("Convite criado. Não foi possível enviar o e-mail agora — copie o link manualmente.");
+      }
       reset();
       onCreated(created.invite_token);
     } catch (e) {
