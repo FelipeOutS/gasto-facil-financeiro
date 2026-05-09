@@ -500,6 +500,250 @@ function Hero() {
   );
 }
 
+/* ============================== MULTI-DEVICE SHOWCASE ============================== */
+
+function MultiDeviceShowcase() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-20 sm:py-24">
+      {/* soft brand glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(60% 50% at 50% 0%, rgba(59,130,246,0.10) 0%, transparent 60%), radial-gradient(40% 35% at 90% 80%, rgba(16,185,129,0.10) 0%, transparent 70%)",
+        }}
+      />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            Multiplataforma
+          </span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            Acompanhe suas finanças em qualquer dispositivo
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
+            Use o Gasto Inteligente com praticidade no notebook ou no celular, com uma experiência clara, fluida e intuitiva em qualquer tela.
+          </p>
+        </div>
+
+        <div className="relative mx-auto mt-14 sm:mt-16 max-w-5xl">
+          {/* Notebook */}
+          <NotebookFrame>
+            <DesktopDashboardMock />
+          </NotebookFrame>
+
+          {/* Phone — overlapping on desktop, stacked on mobile */}
+          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-6 md:right-2 lg:-bottom-10 lg:right-6 md:z-10">
+            <PhoneFrame>
+              <MobileDashboardMock />
+            </PhoneFrame>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function NotebookFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative mx-auto w-full max-w-4xl">
+      {/* lid */}
+      <div className="rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
+        <div className="rounded-[16px] bg-slate-900 p-1.5">
+          {/* camera */}
+          <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
+            <span className="h-1 w-1 rounded-full bg-slate-500" />
+          </div>
+          <div className="overflow-hidden rounded-[10px] bg-white aspect-[16/10]">
+            {children}
+          </div>
+        </div>
+      </div>
+      {/* base / hinge */}
+      <div className="relative mx-auto h-3 w-[104%] -translate-y-[1px] rounded-b-2xl bg-gradient-to-b from-slate-200 to-slate-300 shadow-[0_18px_30px_-18px_rgba(15,23,42,0.35)]">
+        <div className="absolute left-1/2 top-0 h-1.5 w-24 -translate-x-1/2 rounded-b-xl bg-slate-300" />
+      </div>
+    </div>
+  );
+}
+
+function PhoneFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative w-[200px] sm:w-[220px] rounded-[34px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
+      <div className="relative overflow-hidden rounded-[28px] bg-slate-900 p-1">
+        {/* notch */}
+        <div className="absolute left-1/2 top-1.5 z-10 h-4 w-20 -translate-x-1/2 rounded-full bg-slate-900" />
+        <div className="overflow-hidden rounded-[24px] bg-white aspect-[9/19]">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DesktopDashboardMock() {
+  return (
+    <div className="flex h-full w-full bg-gradient-to-br from-slate-50 to-white">
+      {/* sidebar */}
+      <div className="hidden sm:flex w-[18%] flex-col gap-1 border-r border-slate-200 bg-white p-2.5">
+        <div className="flex items-center gap-1.5 px-1 pb-2">
+          <div className="h-4 w-4 rounded-md bg-gradient-to-br from-blue-600 to-emerald-500" />
+          <span className="text-[9px] font-bold text-slate-900">Gasto Inteligente</span>
+        </div>
+        {[
+          { i: LayoutDashboard, l: "Resumo", active: true },
+          { i: Receipt, l: "Gastos" },
+          { i: CreditCard, l: "Cartões" },
+          { i: Target, l: "Metas" },
+          { i: TrendingUp, l: "Investir" },
+          { i: PiggyBank, l: "Guardado" },
+          { i: Bell, l: "Alertas" },
+        ].map(({ i: Icon, l, active }) => (
+          <div
+            key={l}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[9px] font-medium",
+              active ? "bg-blue-50 text-blue-700" : "text-slate-500"
+            )}
+          >
+            <Icon className="h-2.5 w-2.5" />
+            <span>{l}</span>
+          </div>
+        ))}
+      </div>
+      {/* main */}
+      <div className="flex-1 p-3 sm:p-4 overflow-hidden">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[8px] font-semibold uppercase tracking-widest text-slate-400">Visão geral</p>
+            <p className="text-xs sm:text-sm font-bold text-slate-900">Novembro · 2026</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500"><Bell className="h-2.5 w-2.5" /></span>
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500"><Calendar className="h-2.5 w-2.5" /></span>
+          </div>
+        </div>
+        <div className="mt-2.5 grid grid-cols-4 gap-1.5">
+          {[
+            { l: "Saldo", v: "R$ 3.142", t: "bg-blue-50 text-blue-700" },
+            { l: "Receitas", v: "R$ 6.420", t: "bg-emerald-50 text-emerald-700" },
+            { l: "Despesas", v: "R$ 3.277", t: "bg-rose-50 text-rose-700" },
+            { l: "A pagar", v: "R$ 980", t: "bg-amber-50 text-amber-700" },
+          ].map((k) => (
+            <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
+              <p className="text-[7px] font-semibold uppercase tracking-wider text-slate-400">{k.l}</p>
+              <p className="mt-0.5 text-[10px] font-bold tabular-nums text-slate-900">{k.v}</p>
+              <div className={cn("mt-1 h-0.5 w-6 rounded-full", k.t)} />
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <div className="col-span-2 rounded-lg border border-slate-200 bg-white p-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
+              <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+            </div>
+            <div className="mt-1.5 flex h-12 items-end gap-0.5">
+              {[45, 60, 38, 72, 55, 80, 64, 90, 48, 70, 84, 58, 66, 50].map((h, i) => (
+                <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
+                  <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-2">
+            <p className="text-[8px] font-semibold text-slate-700">Categorias</p>
+            <div className="mt-1.5 space-y-1">
+              {[
+                { l: "Mercado", v: 70, c: "from-emerald-500 to-emerald-400" },
+                { l: "Transporte", v: 45, c: "from-blue-500 to-blue-400" },
+                { l: "Lazer", v: 30, c: "from-violet-500 to-violet-400" },
+                { l: "Casa", v: 55, c: "from-amber-500 to-amber-400" },
+              ].map((r) => (
+                <div key={r.l}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[7px] text-slate-500">{r.l}</span>
+                  </div>
+                  <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-100">
+                    <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: `${r.v}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
+          <div className="flex items-center justify-between">
+            <p className="text-[8px] font-semibold text-slate-700">Limite inteligente</p>
+            <p className="text-[8px] font-semibold text-slate-500">62%</p>
+          </div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileDashboardMock() {
+  return (
+    <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-50 to-white p-2.5 pt-5">
+      <div>
+        <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Olá</p>
+        <p className="text-[10px] font-bold text-slate-900">Novembro · 2026</p>
+      </div>
+      <div className="mt-2 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 p-2 text-white shadow-md">
+        <p className="text-[7px] font-semibold uppercase tracking-wider opacity-80">Saldo</p>
+        <p className="mt-0.5 text-sm font-bold tabular-nums">R$ 3.142,80</p>
+        <div className="mt-1 flex items-center gap-1 text-[7px] opacity-90">
+          <ArrowUpRight className="h-2 w-2" /> +12% vs out.
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        {[
+          { l: "Receitas", v: "R$ 6.420", c: "text-emerald-700 bg-emerald-50" },
+          { l: "Despesas", v: "R$ 3.277", c: "text-rose-700 bg-rose-50" },
+        ].map((k) => (
+          <div key={k.l} className="rounded-md border border-slate-200 bg-white p-1.5">
+            <p className={cn("inline-block rounded px-1 text-[6px] font-semibold uppercase", k.c)}>{k.l}</p>
+            <p className="mt-0.5 text-[9px] font-bold tabular-nums text-slate-900">{k.v}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
+        <p className="text-[8px] font-semibold text-slate-700">Fluxo</p>
+        <div className="mt-1 flex h-8 items-end gap-0.5">
+          {[40, 65, 50, 78, 55, 82, 60, 90, 45].map((h, i) => (
+            <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
+              <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2 space-y-1">
+        {[
+          { l: "Mercado", v: "R$ 320", c: "bg-emerald-100 text-emerald-700" },
+          { l: "Uber", v: "R$ 48", c: "bg-slate-200 text-slate-700" },
+          { l: "Netflix", v: "R$ 39", c: "bg-rose-100 text-rose-700" },
+        ].map((r) => (
+          <div key={r.l} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-1.5 py-1">
+            <div className="flex items-center gap-1">
+              <span className={cn("grid h-4 w-4 place-items-center rounded-full text-[7px] font-bold", r.c)}>
+                {r.l.charAt(0)}
+              </span>
+              <span className="text-[7px] font-medium text-slate-700">{r.l}</span>
+            </div>
+            <span className="text-[7px] font-bold tabular-nums text-slate-900">{r.v}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HeroDashboardMock() {
   return (
     <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_40px_80px_-30px_rgba(15,23,42,0.35)]">
