@@ -646,17 +646,22 @@ function DesktopDashboardMock() {
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           <div className="col-span-2 rounded-lg border border-slate-200 bg-white p-2">
             <div className="flex items-center justify-between">
-              <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
-              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+              <div>
+                <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
+                <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
+                  <span className="h-1 w-1.5 rounded-full bg-emerald-500" />Receitas
+                </span>
+                <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
+                  <span className="h-1 w-1.5 rounded-full bg-blue-500" />Despesas
+                </span>
+                <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+              </div>
             </div>
-            <div className="mt-2 flex h-20 items-end gap-1">
-              {[45, 60, 38, 72, 55, 80, 64, 90, 48, 70, 84, 58, 66, 50].map((h, i) => (
-                <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
-                  <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
-                </div>
-              ))}
-            </div>
-            <div className="mt-1.5 flex items-center justify-between text-[6.5px] text-slate-400">
+            <FluxoLineChart className="mt-1.5 h-20 w-full" />
+            <div className="mt-1 flex items-center justify-between text-[6.5px] text-slate-400">
               <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
             </div>
           </div>
@@ -692,6 +697,75 @@ function DesktopDashboardMock() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FluxoLineChart({ className, compact = false }: { className?: string; compact?: boolean }) {
+  // Two series over the month: receitas (verde) e despesas (azul)
+  const receitas = [20, 28, 24, 36, 42, 38, 50, 58, 54, 66, 72, 70];
+  const despesas = [14, 22, 20, 30, 26, 38, 34, 44, 40, 52, 48, 58];
+  const w = 200;
+  const h = 80;
+  const pad = { l: 4, r: 4, t: 6, b: 6 };
+  const max = 80;
+  const xStep = (w - pad.l - pad.r) / (receitas.length - 1);
+  const toPath = (arr: number[]) =>
+    arr
+      .map((v, i) => {
+        const x = pad.l + i * xStep;
+        const y = h - pad.b - (v / max) * (h - pad.t - pad.b);
+        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  const areaPath = (arr: number[]) => {
+    const line = toPath(arr);
+    const lastX = pad.l + (arr.length - 1) * xStep;
+    return `${line} L${lastX.toFixed(1)},${(h - pad.b).toFixed(1)} L${pad.l.toFixed(1)},${(h - pad.b).toFixed(1)} Z`;
+  };
+  const gridLines = compact ? 2 : 3;
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      className={cn("block", className)}
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="fluxoReceitas" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="fluxoDespesas" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {Array.from({ length: gridLines }).map((_, i) => {
+        const y = pad.t + ((h - pad.t - pad.b) / gridLines) * (i + 1);
+        return (
+          <line
+            key={i}
+            x1={pad.l}
+            x2={w - pad.r}
+            y1={y}
+            y2={y}
+            stroke="#e2e8f0"
+            strokeWidth={0.5}
+            strokeDasharray="2 2"
+          />
+        );
+      })}
+      <path d={areaPath(despesas)} fill="url(#fluxoDespesas)" />
+      <path d={areaPath(receitas)} fill="url(#fluxoReceitas)" />
+      <path d={toPath(despesas)} fill="none" stroke="#3b82f6" strokeWidth={1.4} strokeLinejoin="round" strokeLinecap="round" />
+      <path d={toPath(receitas)} fill="none" stroke="#10b981" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
+      {!compact &&
+        receitas.map((v, i) => {
+          const x = pad.l + i * xStep;
+          const y = h - pad.b - (v / max) * (h - pad.t - pad.b);
+          return <circle key={i} cx={x} cy={y} r={1} fill="#10b981" />;
+        })}
+    </svg>
   );
 }
 
@@ -732,13 +806,13 @@ function MobileDashboardMock() {
         ))}
       </div>
       <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
-        <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
-        <div className="mt-1 flex h-8 items-end gap-0.5">
-          {[40, 65, 50, 78, 55, 82, 60, 90, 45].map((h, i) => (
-            <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
-              <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
+          <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[6px] font-semibold text-emerald-700">+12%</span>
+        </div>
+        <FluxoLineChart className="mt-1 h-10 w-full" compact />
+        <div className="mt-0.5 flex items-center justify-between text-[6px] text-slate-400">
+          <span>01</span><span>10</span><span>20</span><span>30</span>
         </div>
       </div>
       <div className="mt-2 space-y-1">
