@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
+import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 
