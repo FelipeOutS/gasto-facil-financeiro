@@ -24,8 +24,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { setActiveUserId, hydrateUser } from "@/lib/store";
 import type { AccessLevel } from "@/lib/connected-accounts";
