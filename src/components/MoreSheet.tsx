@@ -16,6 +16,7 @@ import {
   Sparkles,
   Bell,
   Shield,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -58,6 +59,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/guardado", label: "Guardado", description: "Reserva e poupança", icon: Wallet },
   { to: "/assinaturas", label: "Assinaturas", description: "Serviços recorrentes", icon: Repeat },
   { to: "/investimentos", label: "Investimentos", description: "Carteira e rendimentos", icon: TrendingUp, feature: "investimentos" },
+  { to: "/contas-conectadas", label: "Contas conectadas", description: "Acompanhe outra conta com permissão", icon: Users, feature: "contas_conectadas" },
   { to: "/meu-plano", label: "Meu plano", description: "Assinatura e recursos", icon: Crown },
   { to: "/categorias", label: "Ajustes", description: "Preferências da conta", icon: Settings2 },
   { to: "/landing", label: "Conhecer o Gasto Inteligente", description: "Ver recursos, planos e novidades", icon: Sparkles },
