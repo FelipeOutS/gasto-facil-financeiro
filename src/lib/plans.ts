@@ -101,6 +101,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   perfil_cnpj: "empresa",
   recursos_empresa: "empresa",
   centro_de_custo: "empresa",
+  contas_conectadas: "pessoal_premium",
 };
 
 /**
