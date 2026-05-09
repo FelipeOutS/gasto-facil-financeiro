@@ -1446,6 +1446,45 @@ function MetaMock() {
   );
 }
 
+function ContasConectadasMock() {
+  const contas = [
+    { nome: "Maria Silva", email: "maria@exemplo.com", nivel: "Administrador", cor: "#10b981", iniciais: "MS", status: "Aceito" },
+    { nome: "João Pereira", email: "joao@exemplo.com", nivel: "Ver e lançar", cor: "#3b82f6", iniciais: "JP", status: "Aceito" },
+    { nome: "Contador", email: "contador@escritorio.com", nivel: "Somente ver", cor: "#a855f7", iniciais: "CT", status: "Pendente" },
+  ];
+  return (
+    <MockShell>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Contas conectadas</p>
+          <p className="text-2xl font-extrabold tabular-nums text-slate-900">3 pessoas</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">com acesso à sua conta</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          + Convidar
+        </span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {contas.map((c) => (
+          <div key={c.email} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white" style={{ backgroundColor: c.cor }}>
+              {c.iniciais}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-900">{c.nome}</p>
+              <p className="truncate text-[11px] text-slate-500">{c.email}</p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{c.nivel}</span>
+              <span className={cn("text-[10px] font-medium", c.status === "Aceito" ? "text-emerald-600" : "text-amber-600")}>{c.status}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </MockShell>
+  );
+}
+
 function InvestimentosMock() {
   const classes = [
     { l: "Renda fixa", v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
