@@ -504,7 +504,7 @@ function Hero() {
 
 function MultiDeviceShowcase() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-14 sm:py-20">
       {/* soft brand glow */}
       <div
         aria-hidden
@@ -528,7 +528,7 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-14 sm:mt-16 max-w-5xl">
+        <div className="relative mx-auto mt-10 sm:mt-12 max-w-3xl lg:max-w-4xl">
           {/* Notebook */}
           <NotebookFrame>
             <DesktopDashboardMock />
@@ -548,7 +548,7 @@ function MultiDeviceShowcase() {
 
 function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-full max-w-5xl">
+    <div className="relative mx-auto w-full max-w-3xl lg:max-w-4xl">
       {/* lid */}
       <div className="rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
         <div className="rounded-[16px] bg-slate-900 p-1.5">
@@ -985,23 +985,28 @@ function HeroDashboardMock() {
           <KpiMini label="Despesas" value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
           <KpiMini label="A pagar" value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
         </div>
-        {/* Chart bars */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+        {/* Chart */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-              +12%
-            </span>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
+              <p className="text-[10px] text-slate-400">Receitas vs. despesas</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />Receitas
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                <span className="h-1.5 w-2 rounded-full bg-blue-500" />Despesas
+              </span>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                +12%
+              </span>
+            </div>
           </div>
-          <div className="mt-3 flex h-20 items-end gap-1.5">
-            {[45, 60, 38, 72, 55, 80, 64, 90, 48, 70, 84, 58].map((h, i) => (
-              <div key={i} className="flex-1 overflow-hidden rounded-t-md bg-slate-200">
-                <div
-                  className="w-full rounded-t-md bg-gradient-to-t from-blue-500 to-emerald-400"
-                  style={{ height: `${h}%` }}
-                />
-              </div>
-            ))}
+          <FluxoLineChart className="mt-3 h-24 w-full" />
+          <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
+            <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
           </div>
         </div>
         {/* Limite */}
@@ -2033,10 +2038,10 @@ function InvestimentosMock() {
 
 function GuardadoMock() {
   const items = [
-    { l: "Nubank", v: "R$ 2.100", pct: 43, color: "bg-violet-100 text-violet-700", bar: "bg-violet-500" },
-    { l: "Inter", v: "R$ 1.480", pct: 30, color: "bg-amber-100 text-amber-700", bar: "bg-amber-500" },
-    { l: "C6 Bank", v: "R$ 980", pct: 20, color: "bg-slate-200 text-slate-800", bar: "bg-slate-500" },
-    { l: "Carteira", v: "R$ 320", pct: 7, color: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" },
+    { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500" },
+    { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500" },
+    { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700" },
+    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500" },
   ];
   return (
     <MockShell>
@@ -2070,7 +2075,22 @@ function GuardadoMock() {
         {items.map((it) => (
           <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
             <div className="flex items-center justify-between">
-              <BrandLogo name={it.l} variant="bank" className="h-8 w-8" />
+              <span
+                className="grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-1 ring-slate-200"
+                style={{ background: it.logo ? "#fff" : it.brand }}
+                aria-hidden
+              >
+                {it.logo ? (
+                  <img
+                    src={it.logo}
+                    alt={it.l}
+                    draggable={false}
+                    className="h-6 w-6 object-contain"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-white">{it.initial}</span>
+                )}
+              </span>
               <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
             </div>
             <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
