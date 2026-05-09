@@ -2364,7 +2364,12 @@ function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
           {/* Brand */}
           <div className="lg:col-span-4">
-            <BrandMark className="h-9 w-auto sm:h-10" />
+            <img
+              src="/logos/brand/gasto-inteligente-dark.png"
+              alt="Gasto Inteligente"
+              className="h-9 w-auto sm:h-10 object-contain"
+              draggable={false}
+            />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
               Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
             </p>
