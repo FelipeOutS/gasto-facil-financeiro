@@ -141,10 +141,13 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   const canUseFeature = useCallback(
     (feature: FeatureKey) => {
       if (isAdmin) return true;
+      // Em conta conectada, assume que o dono tem acesso à feature
+      // (caso contrário não teria os dados); RLS controla o resto.
+      if (!isOwnAccount) return connCanCreate || connCanAdmin;
       if (!canWrite) return false;
       return planAllowsFeature(plan, feature);
     },
-    [isAdmin, canWrite, plan],
+    [isAdmin, isOwnAccount, connCanCreate, connCanAdmin, canWrite, plan],
   );
 
   return (
