@@ -222,6 +222,7 @@ export const PLAN_FEATURES: PlanFeature[] = [
   { feature: "recursos_mei", label: "Recursos do MEI", description: "Linguagem e visão financeira do MEI." },
   { feature: "recursos_empresa", label: "Recursos empresariais", description: "Visão financeira e relatórios da empresa." },
   { feature: "investimentos_futuro", label: "Investimentos (em breve)", description: "Estrutura preparada para acompanhar investimentos." },
+  { feature: "contas_conectadas", label: "Contas conectadas", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização." },
 ];
 
 /* ===========================================================
