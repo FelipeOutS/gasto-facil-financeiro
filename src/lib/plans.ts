@@ -269,6 +269,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios avançados e insights",
       "Investimentos liberados",
       "Assinaturas e recorrências",
+      "Contas conectadas por convite",
       "Histórico de importações",
     ],
   },
