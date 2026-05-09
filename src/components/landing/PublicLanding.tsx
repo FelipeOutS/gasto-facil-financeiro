@@ -208,7 +208,7 @@ function Header() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <img
-            src="/logos/brand/gasto-inteligente-dark.png"
+            src="/logos/brand/gasto-inteligente-light.png"
             alt="Gasto Inteligente"
             className="h-9 w-auto sm:h-11 object-contain"
             draggable={false}
@@ -2365,7 +2365,7 @@ function Footer() {
           {/* Brand */}
           <div className="lg:col-span-4">
             <img
-              src="/logos/brand/gasto-inteligente-dark.png"
+              src="/logos/brand/gasto-inteligente-light.png"
               alt="Gasto Inteligente"
               className="h-9 w-auto sm:h-10 object-contain"
               draggable={false}
