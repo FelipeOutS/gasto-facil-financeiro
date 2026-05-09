@@ -126,6 +126,8 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   recursos_mei: ["mei_essencial", "mei_inteligente"],
   // Contas a receber avançado: premium e MEI Inteligente / Empresa
   contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Contas conectadas: somente planos premium e MEI / Empresa
+  contas_conectadas: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
