@@ -985,23 +985,28 @@ function HeroDashboardMock() {
           <KpiMini label="Despesas" value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
           <KpiMini label="A pagar" value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
         </div>
-        {/* Chart bars */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+        {/* Chart */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-              +12%
-            </span>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
+              <p className="text-[10px] text-slate-400">Receitas vs. despesas</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />Receitas
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                <span className="h-1.5 w-2 rounded-full bg-blue-500" />Despesas
+              </span>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                +12%
+              </span>
+            </div>
           </div>
-          <div className="mt-3 flex h-20 items-end gap-1.5">
-            {[45, 60, 38, 72, 55, 80, 64, 90, 48, 70, 84, 58].map((h, i) => (
-              <div key={i} className="flex-1 overflow-hidden rounded-t-md bg-slate-200">
-                <div
-                  className="w-full rounded-t-md bg-gradient-to-t from-blue-500 to-emerald-400"
-                  style={{ height: `${h}%` }}
-                />
-              </div>
-            ))}
+          <FluxoLineChart className="mt-3 h-24 w-full" />
+          <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
+            <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
           </div>
         </div>
         {/* Limite */}
