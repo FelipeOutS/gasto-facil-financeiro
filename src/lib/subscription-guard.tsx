@@ -69,6 +69,8 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
 type GuardCtx = {
   /** Usuário tem permissão para criar/editar dados financeiros? */
   canWrite: boolean;
+  /** Pode editar/excluir registros existentes (admin/dono). */
+  canAdmin: boolean;
   /** Verifica se o plano atual libera uma feature específica. */
   canUseFeature: (feature: FeatureKey) => boolean;
   /** Abre o modal "precisa de assinatura". */
