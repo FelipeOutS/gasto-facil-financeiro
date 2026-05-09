@@ -111,9 +111,20 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   }, [canWrite]);
 
   const requireSubscription = useCallback((msg?: string) => {
+    if (!isOwnAccount) {
+      // Em conta conectada o problema não é assinatura, é permissão.
+      const lvlMsg =
+        accessLevel === "view"
+          ? "Esta conta foi compartilhada com você apenas para visualização."
+          : accessLevel === "view_create"
+            ? "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes."
+            : "Sem permissão suficiente para esta ação.";
+      toast.error(lvlMsg);
+      return;
+    }
     setMessage(msg ?? "Para adicionar gastos, escolha um plano ativo.");
     setOpen(true);
-  }, []);
+  }, [isOwnAccount, accessLevel]);
 
   const guard = useCallback(
     <T extends (...args: never[]) => unknown>(fn: T): T => {
