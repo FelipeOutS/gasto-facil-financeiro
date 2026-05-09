@@ -528,7 +528,7 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-14 sm:mt-16 max-w-5xl">
+        <div className="relative mx-auto mt-10 sm:mt-12 max-w-3xl lg:max-w-4xl">
           {/* Notebook */}
           <NotebookFrame>
             <DesktopDashboardMock />
