@@ -504,7 +504,7 @@ function Hero() {
 
 function MultiDeviceShowcase() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-14 sm:py-20">
       {/* soft brand glow */}
       <div
         aria-hidden
