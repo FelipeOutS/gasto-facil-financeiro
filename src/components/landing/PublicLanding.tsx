@@ -700,6 +700,75 @@ function DesktopDashboardMock() {
   );
 }
 
+function FluxoLineChart({ className, compact = false }: { className?: string; compact?: boolean }) {
+  // Two series over the month: receitas (verde) e despesas (azul)
+  const receitas = [20, 28, 24, 36, 42, 38, 50, 58, 54, 66, 72, 70];
+  const despesas = [14, 22, 20, 30, 26, 38, 34, 44, 40, 52, 48, 58];
+  const w = 200;
+  const h = 80;
+  const pad = { l: 4, r: 4, t: 6, b: 6 };
+  const max = 80;
+  const xStep = (w - pad.l - pad.r) / (receitas.length - 1);
+  const toPath = (arr: number[]) =>
+    arr
+      .map((v, i) => {
+        const x = pad.l + i * xStep;
+        const y = h - pad.b - (v / max) * (h - pad.t - pad.b);
+        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  const areaPath = (arr: number[]) => {
+    const line = toPath(arr);
+    const lastX = pad.l + (arr.length - 1) * xStep;
+    return `${line} L${lastX.toFixed(1)},${(h - pad.b).toFixed(1)} L${pad.l.toFixed(1)},${(h - pad.b).toFixed(1)} Z`;
+  };
+  const gridLines = compact ? 2 : 3;
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      className={cn("block", className)}
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="fluxoReceitas" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="fluxoDespesas" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {Array.from({ length: gridLines }).map((_, i) => {
+        const y = pad.t + ((h - pad.t - pad.b) / gridLines) * (i + 1);
+        return (
+          <line
+            key={i}
+            x1={pad.l}
+            x2={w - pad.r}
+            y1={y}
+            y2={y}
+            stroke="#e2e8f0"
+            strokeWidth={0.5}
+            strokeDasharray="2 2"
+          />
+        );
+      })}
+      <path d={areaPath(despesas)} fill="url(#fluxoDespesas)" />
+      <path d={areaPath(receitas)} fill="url(#fluxoReceitas)" />
+      <path d={toPath(despesas)} fill="none" stroke="#3b82f6" strokeWidth={1.4} strokeLinejoin="round" strokeLinecap="round" />
+      <path d={toPath(receitas)} fill="none" stroke="#10b981" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
+      {!compact &&
+        receitas.map((v, i) => {
+          const x = pad.l + i * xStep;
+          const y = h - pad.b - (v / max) * (h - pad.t - pad.b);
+          return <circle key={i} cx={x} cy={y} r={1} fill="#10b981" />;
+        })}
+    </svg>
+  );
+}
+
 function MobileDashboardMock() {
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-50 to-white p-2.5 pt-5">
