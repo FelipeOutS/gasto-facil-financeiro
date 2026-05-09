@@ -24,6 +24,7 @@ import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
 import { setStoreCanWrite } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/server/subscription.functions";
+import { useActiveAccount } from "@/lib/active-account";
 
 /** Status que liberam ações financeiras. */
 const ACTIVE_STATUSES = new Set(
@@ -68,6 +69,8 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
 type GuardCtx = {
   /** Usuário tem permissão para criar/editar dados financeiros? */
   canWrite: boolean;
+  /** Pode editar/excluir registros existentes (admin/dono). */
+  canAdmin: boolean;
   /** Verifica se o plano atual libera uma feature específica. */
   canUseFeature: (feature: FeatureKey) => boolean;
   /** Abre o modal "precisa de assinatura". */
@@ -85,12 +88,13 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   const { user } = useAuth();
   const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
   const { hasFullAccess, loading: rolesLoading } = useRoles();
+  const { isOwnAccount, canCreate: connCanCreate, canAdmin: connCanAdmin, accessLevel } = useActiveAccount();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const isAdmin = isAdminMaster || hasFullAccess;
 
-  const canWrite = useMemo(() => {
+  const subscriptionAllows = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
     if (planLoading || rolesLoading) return false;
@@ -99,15 +103,30 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     return isStatusActive(status);
   }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
 
+  // Em conta própria: depende só da assinatura.
+  // Em conta conectada: depende do nível de acesso (não da assinatura do viewer).
+  const canWrite = isOwnAccount ? subscriptionAllows : connCanCreate;
+
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
     setStoreCanWrite(canWrite);
   }, [canWrite]);
 
   const requireSubscription = useCallback((msg?: string) => {
+    if (!isOwnAccount) {
+      // Em conta conectada o problema não é assinatura, é permissão.
+      const lvlMsg =
+        accessLevel === "view"
+          ? "Esta conta foi compartilhada com você apenas para visualização."
+          : accessLevel === "view_create"
+            ? "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes."
+            : "Sem permissão suficiente para esta ação.";
+      toast.error(lvlMsg);
+      return;
+    }
     setMessage(msg ?? "Para adicionar gastos, escolha um plano ativo.");
     setOpen(true);
-  }, []);
+  }, [isOwnAccount, accessLevel]);
 
   const guard = useCallback(
     <T extends (...args: never[]) => unknown>(fn: T): T => {
@@ -124,14 +143,17 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   const canUseFeature = useCallback(
     (feature: FeatureKey) => {
       if (isAdmin) return true;
+      // Em conta conectada, assume que o dono tem acesso à feature
+      // (caso contrário não teria os dados); RLS controla o resto.
+      if (!isOwnAccount) return connCanCreate || connCanAdmin;
       if (!canWrite) return false;
       return planAllowsFeature(plan, feature);
     },
-    [isAdmin, canWrite, plan],
+    [isAdmin, isOwnAccount, connCanCreate, connCanAdmin, canWrite, plan],
   );
 
   return (
-    <Ctx.Provider value={{ canWrite, canUseFeature, requireSubscription, guard }}>
+    <Ctx.Provider value={{ canWrite, canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin, canUseFeature, requireSubscription, guard }}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -170,6 +192,7 @@ export function useSubscriptionGuard(): GuardCtx {
     // Fallback seguro para casos isolados (ex: testes). Bloqueia tudo.
     return {
       canWrite: false,
+      canAdmin: false,
       canUseFeature: () => false,
       requireSubscription: () => {
         toast.error("Você precisa de uma assinatura ativa para usar este recurso.");

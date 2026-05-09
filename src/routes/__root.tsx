@@ -5,6 +5,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
+import { ActiveAccountProvider } from "@/lib/active-account";
+import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 
 import appCss from "../styles.css?url";
@@ -90,7 +92,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AccentProvider>
             <AuthProvider>
-              <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+              <ActiveAccountProvider>
+                <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+              </ActiveAccountProvider>
             </AuthProvider>
           </AccentProvider>
         </ThemeProvider>
@@ -110,6 +114,7 @@ function RootComponent() {
 
   return (
     <>
+      <ConnectedAccountBanner />
       <Outlet />
       <Toaster position="top-center" />
     </>

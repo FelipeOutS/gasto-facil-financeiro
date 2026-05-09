@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
+import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 
@@ -95,6 +96,10 @@ export function DesktopSidebar() {
       <div className="px-5 pt-6 pb-4">
         <BrandMark className="h-10 w-auto" />
         <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">Controle financeiro</h2>
+      </div>
+
+      <div className="px-4 pb-3">
+        <ConnectedAccountSwitcher />
       </div>
 
       <button

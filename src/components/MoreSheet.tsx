@@ -34,6 +34,7 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
+import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
@@ -134,6 +135,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           </SheetHeader>
 
           <div className="px-5 pb-2">
+            <ConnectedAccountSwitcher className="mb-2" />
             <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Plano atual
