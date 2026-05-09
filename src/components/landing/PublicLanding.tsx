@@ -737,13 +737,13 @@ function MobileDashboardMock() {
         ))}
       </div>
       <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
-        <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
-        <div className="mt-1 flex h-8 items-end gap-0.5">
-          {[40, 65, 50, 78, 55, 82, 60, 90, 45].map((h, i) => (
-            <div key={i} className="flex-1 overflow-hidden rounded-t-sm bg-slate-100">
-              <div className="w-full rounded-t-sm bg-gradient-to-t from-blue-500 to-emerald-400" style={{ height: `${h}%` }} />
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <p className="text-[8px] font-semibold text-slate-700">Fluxo do mês</p>
+          <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[6px] font-semibold text-emerald-700">+12%</span>
+        </div>
+        <FluxoLineChart className="mt-1 h-10 w-full" compact />
+        <div className="mt-0.5 flex items-center justify-between text-[6px] text-slate-400">
+          <span>01</span><span>10</span><span>20</span><span>30</span>
         </div>
       </div>
       <div className="mt-2 space-y-1">
