@@ -548,7 +548,7 @@ function MultiDeviceShowcase() {
 
 function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-full max-w-5xl">
+    <div className="relative mx-auto w-full max-w-3xl lg:max-w-4xl">
       {/* lid */}
       <div className="rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
         <div className="rounded-[16px] bg-slate-900 p-1.5">
