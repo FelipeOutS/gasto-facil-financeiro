@@ -26,6 +26,7 @@ import { Route as LandingRouteImport } from './routes/landing'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
+import { Route as ContasConectadasRouteImport } from './routes/contas-conectadas'
 import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContaRouteImport } from './routes/conta'
@@ -45,6 +46,7 @@ import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-f
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
+import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
@@ -133,6 +135,11 @@ const GuardadoRoute = GuardadoRouteImport.update({
 const GastosRoute = GastosRouteImport.update({
   id: '/gastos',
   path: '/gastos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContasConectadasRoute = ContasConectadasRouteImport.update({
+  id: '/contas-conectadas',
+  path: '/contas-conectadas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberRoute = ContasAReceberRouteImport.update({
@@ -230,6 +237,11 @@ const ApiImportContaRoute = ApiImportContaRouteImport.update({
   path: '/api/import-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
+  id: '/aceitar-convite/$token',
+  path: '/aceitar-convite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -266,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
+  '/contas-conectadas': typeof ContasConectadasRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -283,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -308,6 +322,7 @@ export interface FileRoutesByTo {
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
+  '/contas-conectadas': typeof ContasConectadasRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -325,6 +340,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -351,6 +367,7 @@ export interface FileRoutesById {
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
+  '/contas-conectadas': typeof ContasConectadasRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
@@ -368,6 +385,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -395,6 +413,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/contas-a-pagar'
     | '/contas-a-receber'
+    | '/contas-conectadas'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -412,6 +431,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/whatsapp'
+    | '/aceitar-convite/$token'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -437,6 +457,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/contas-a-pagar'
     | '/contas-a-receber'
+    | '/contas-conectadas'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -454,6 +475,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/whatsapp'
+    | '/aceitar-convite/$token'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -479,6 +501,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/contas-a-pagar'
     | '/contas-a-receber'
+    | '/contas-conectadas'
     | '/gastos'
     | '/guardado'
     | '/investimentos'
@@ -496,6 +519,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/resumo'
     | '/whatsapp'
+    | '/aceitar-convite/$token'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -522,6 +546,7 @@ export interface RootRouteChildren {
   ContaRoute: typeof ContaRoute
   ContasAPagarRoute: typeof ContasAPagarRoute
   ContasAReceberRoute: typeof ContasAReceberRoute
+  ContasConectadasRoute: typeof ContasConectadasRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
   InvestimentosRoute: typeof InvestimentosRoute
@@ -539,6 +564,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   WhatsappRoute: typeof WhatsappRoute
+  AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
@@ -671,6 +697,13 @@ declare module '@tanstack/react-router' {
       path: '/gastos'
       fullPath: '/gastos'
       preLoaderRoute: typeof GastosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contas-conectadas': {
+      id: '/contas-conectadas'
+      path: '/contas-conectadas'
+      fullPath: '/contas-conectadas'
+      preLoaderRoute: typeof ContasConectadasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contas-a-receber': {
@@ -806,6 +839,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aceitar-convite/$token': {
+      id: '/aceitar-convite/$token'
+      path: '/aceitar-convite/$token'
+      fullPath: '/aceitar-convite/$token'
+      preLoaderRoute: typeof AceitarConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -850,6 +890,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContaRoute: ContaRoute,
   ContasAPagarRoute: ContasAPagarRoute,
   ContasAReceberRoute: ContasAReceberRoute,
+  ContasConectadasRoute: ContasConectadasRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
   InvestimentosRoute: InvestimentosRoute,
@@ -867,6 +908,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   WhatsappRoute: WhatsappRoute,
+  AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   ApiImportContaRoute: ApiImportContaRoute,
   ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,

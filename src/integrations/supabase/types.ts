@@ -166,6 +166,63 @@ export type Database = {
         }
         Relationships: []
       }
+      connected_accounts: {
+        Row: {
+          accepted_at: string | null
+          access_level: Database["public"]["Enums"]["connected_account_access"]
+          created_at: string
+          id: string
+          invite_expires_at: string
+          invite_sent_at: string
+          invite_token: string
+          invited_email: string
+          nickname: string | null
+          owner_user_id: string | null
+          refused_at: string | null
+          removed_at: string | null
+          removed_by_user_id: string | null
+          status: Database["public"]["Enums"]["connected_account_status"]
+          updated_at: string
+          viewer_user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          access_level?: Database["public"]["Enums"]["connected_account_access"]
+          created_at?: string
+          id?: string
+          invite_expires_at?: string
+          invite_sent_at?: string
+          invite_token?: string
+          invited_email: string
+          nickname?: string | null
+          owner_user_id?: string | null
+          refused_at?: string | null
+          removed_at?: string | null
+          removed_by_user_id?: string | null
+          status?: Database["public"]["Enums"]["connected_account_status"]
+          updated_at?: string
+          viewer_user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          access_level?: Database["public"]["Enums"]["connected_account_access"]
+          created_at?: string
+          id?: string
+          invite_expires_at?: string
+          invite_sent_at?: string
+          invite_token?: string
+          invited_email?: string
+          nickname?: string | null
+          owner_user_id?: string | null
+          refused_at?: string | null
+          removed_at?: string | null
+          removed_by_user_id?: string | null
+          status?: Database["public"]["Enums"]["connected_account_status"]
+          updated_at?: string
+          viewer_user_id?: string
+        }
+        Relationships: []
+      }
       contas_a_pagar: {
         Row: {
           ano: number
@@ -1528,6 +1585,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
       }
+      current_user_email: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1550,6 +1608,13 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
+      connected_account_access: "view" | "view_create" | "admin"
+      connected_account_status:
+        | "pending"
+        | "accepted"
+        | "refused"
+        | "removed"
+        | "expired"
       plan_tier:
         | "free"
         | "pessoal"
@@ -1696,6 +1761,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "user"],
+      connected_account_access: ["view", "view_create", "admin"],
+      connected_account_status: [
+        "pending",
+        "accepted",
+        "refused",
+        "removed",
+        "expired",
+      ],
       plan_tier: [
         "free",
         "pessoal",

@@ -50,7 +50,8 @@ export type FeatureKey =
   | "investimentos_futuro"
   | "assinaturas_recorrencias"
   | "whatsapp"
-  | "lancamentos_ilimitados";
+  | "lancamentos_ilimitados"
+  | "contas_conectadas";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
@@ -100,6 +101,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   perfil_cnpj: "empresa",
   recursos_empresa: "empresa",
   centro_de_custo: "empresa",
+  contas_conectadas: "pessoal_premium",
 };
 
 /**
@@ -124,6 +126,8 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   recursos_mei: ["mei_essencial", "mei_inteligente"],
   // Contas a receber avançado: premium e MEI Inteligente / Empresa
   contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Contas conectadas: somente planos premium e MEI / Empresa
+  contas_conectadas: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
@@ -218,6 +222,7 @@ export const PLAN_FEATURES: PlanFeature[] = [
   { feature: "recursos_mei", label: "Recursos do MEI", description: "Linguagem e visão financeira do MEI." },
   { feature: "recursos_empresa", label: "Recursos empresariais", description: "Visão financeira e relatórios da empresa." },
   { feature: "investimentos_futuro", label: "Investimentos (em breve)", description: "Estrutura preparada para acompanhar investimentos." },
+  { feature: "contas_conectadas", label: "Contas conectadas", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização." },
 ];
 
 /* ===========================================================
@@ -264,6 +269,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios avançados e insights",
       "Investimentos liberados",
       "Assinaturas e recorrências",
+      "Contas conectadas por convite",
       "Histórico de importações",
     ],
   },
@@ -279,6 +285,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Contas e relatórios do negócio",
       "Contas a receber para clientes",
       "Separação pessoal × negócio",
+      "Contas conectadas por convite",
       "Sem importações automáticas",
     ],
   },
@@ -296,6 +303,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Metas com imagens",
       "Investimentos liberados",
       "Histórico de importações",
+      "Contas conectadas por convite",
       "Insights do negócio",
     ],
   },
@@ -315,6 +323,8 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios completos",
       "Fluxo de caixa empresarial",
       "Investimentos liberados",
+      "Usuários e contas conectadas",
+      "Controle de acessos por permissão",
       "Exportação de relatórios",
     ],
   },
