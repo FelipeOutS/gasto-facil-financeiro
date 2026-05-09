@@ -98,6 +98,10 @@ export function DesktopSidebar() {
         <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">Controle financeiro</h2>
       </div>
 
+      <div className="px-4 pb-3">
+        <ConnectedAccountSwitcher />
+      </div>
+
       <button
         type="button"
         onClick={() => {
