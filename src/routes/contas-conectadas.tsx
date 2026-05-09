@@ -20,6 +20,20 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
+async function sendInviteEmail(to: string, token: string, inviterName: string | null, accessLevel: AccessLevel) {
+  await sendTransactionalEmail({
+    templateName: "connected-account-invite",
+    recipientEmail: to,
+    idempotencyKey: `invite-${token}`,
+    templateData: {
+      inviterName: inviterName || undefined,
+      accessLevel,
+      inviteUrl: buildInviteUrl(token),
+    },
+  });
+}
 
 export const Route = createFileRoute("/contas-conectadas")({
   head: () => ({ meta: [{ title: "Contas conectadas — Gasto Inteligente" }] }),
