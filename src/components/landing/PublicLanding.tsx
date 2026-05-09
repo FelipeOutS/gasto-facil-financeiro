@@ -587,10 +587,14 @@ function DesktopDashboardMock() {
   return (
     <div className="flex h-full w-full bg-gradient-to-br from-slate-50 to-white">
       {/* sidebar */}
-      <div className="hidden sm:flex w-[18%] flex-col gap-1 border-r border-slate-200 bg-white p-2.5">
-        <div className="flex items-center gap-1.5 px-1 pb-2">
-          <div className="h-4 w-4 rounded-md bg-gradient-to-br from-blue-600 to-emerald-500" />
-          <span className="text-[9px] font-bold text-slate-900">Gasto Inteligente</span>
+      <div className="hidden sm:flex w-[20%] flex-col gap-1 border-r border-slate-200 bg-white p-2.5">
+        <div className="flex items-center px-1 pb-2">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-5 w-auto object-contain"
+          />
         </div>
         {[
           { i: LayoutDashboard, l: "Resumo", active: true },
