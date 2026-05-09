@@ -194,7 +194,7 @@ function Header() {
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
-          <BrandMark className="h-8 w-auto" />
+          <BrandMark className="h-9 w-auto sm:h-11" />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
           {NAV.map((n) => (
@@ -2307,7 +2307,7 @@ function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
           {/* Brand */}
           <div className="lg:col-span-4">
-            <BrandMark className="h-8 w-auto" />
+            <BrandMark className="h-9 w-auto sm:h-10" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
               Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
             </p>
