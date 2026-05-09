@@ -1090,59 +1090,144 @@ function HowItWorks() {
       n: "01",
       title: "Crie sua conta",
       text: "Cadastre-se em poucos segundos e personalize seu perfil pessoal, MEI ou empresa.",
+      accent: "from-blue-500 to-sky-500",
+      ring: "ring-blue-100",
+      glow: "shadow-[0_18px_40px_-18px_rgba(59,130,246,0.55)]",
+      tag: "Passo 01",
+      tagBg: "bg-blue-50 text-blue-700 ring-blue-100",
     },
     {
       icon: Pencil,
       n: "02",
       title: "Lance suas finanças",
       text: "Adicione gastos, receitas, contas e cartões. Tudo organizado por mês de referência.",
+      accent: "from-emerald-500 to-teal-500",
+      ring: "ring-emerald-100",
+      glow: "shadow-[0_18px_40px_-18px_rgba(16,185,129,0.55)]",
+      tag: "Passo 02",
+      tagBg: "bg-emerald-50 text-emerald-700 ring-emerald-100",
     },
     {
       icon: LineChart,
       n: "03",
       title: "Acompanhe a evolução",
       text: "Visualize gráficos, alertas, metas e tenha clareza total sobre o seu dinheiro.",
+      accent: "from-violet-500 to-fuchsia-500",
+      ring: "ring-violet-100",
+      glow: "shadow-[0_18px_40px_-18px_rgba(139,92,246,0.55)]",
+      tag: "Passo 03",
+      tagBg: "bg-violet-50 text-violet-700 ring-violet-100",
     },
   ];
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/70 py-20 sm:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white py-24 sm:py-28">
+      {/* Decorative background */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
-          backgroundSize: "22px 22px",
-        }}
-      />
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="Como funciona"
-          title="Em 3 passos simples você assume o controle."
-          subtitle="Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês."
-          center
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="absolute left-1/2 top-10 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-100/40 via-transparent to-violet-100/40 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+          }}
         />
-        <div className="relative mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          {/* connector line on desktop */}
+      </div>
+
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            Como funciona
+          </span>
+          <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
+            Em{" "}
+            <span className="bg-gradient-to-r from-blue-600 via-emerald-600 to-violet-600 bg-clip-text text-transparent">
+              3 passos simples
+            </span>{" "}
+            você assume o controle.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
+            Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês.
+          </p>
+        </div>
+
+        <div className="relative mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-7">
+          {/* Connector line on desktop */}
           <div
             aria-hidden
-            className="pointer-events-none absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent md:block"
-          />
+            className="pointer-events-none absolute left-[12%] right-[12%] top-[68px] hidden md:block"
+          >
+            <div className="relative h-px w-full bg-gradient-to-r from-blue-200 via-emerald-200 to-violet-200">
+              <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-blue-400" />
+              <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400" />
+              <span className="absolute right-0 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-violet-400" />
+            </div>
+          </div>
+
           {steps.map((s, i) => (
-            <Reveal key={s.n} delay={i * 0.08}>
-              <div className="group relative flex h-full flex-col items-center rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-[0_18px_40px_-26px_rgba(15,23,42,0.25)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.32)]">
-                <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-[0_14px_30px_-12px_rgba(59,130,246,0.55)] transition-transform group-hover:scale-105">
-                  <s.icon className="h-7 w-7" />
-                  <span className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-white text-[10px] font-extrabold text-slate-700 shadow ring-1 ring-slate-200">
-                    {s.n}
-                  </span>
+            <Reveal key={s.n} delay={i * 0.1}>
+              <div className="group relative flex h-full flex-col rounded-3xl border border-slate-200/80 bg-white/95 p-7 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-[0_30px_60px_-26px_rgba(15,23,42,0.32)] sm:p-8">
+                {/* Big watermark number */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-5 top-3 select-none text-[72px] font-black leading-none tracking-tight text-slate-100 transition-colors group-hover:text-slate-150"
+                >
+                  {s.n}
                 </span>
-                <h3 className="mt-5 text-lg font-bold text-slate-900">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.text}</p>
+
+                {/* Icon medallion */}
+                <div className="relative">
+                  <span
+                    className={cn(
+                      "relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br text-white ring-4 transition-transform duration-300 group-hover:scale-105",
+                      s.accent,
+                      s.ring,
+                      s.glow,
+                    )}
+                  >
+                    <s.icon className="h-6 w-6" strokeWidth={2.2} />
+                  </span>
+                </div>
+
+                <span
+                  className={cn(
+                    "mt-5 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ring-1",
+                    s.tagBg,
+                  )}
+                >
+                  {s.tag}
+                </span>
+
+                <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-slate-600">{s.text}</p>
+
+                {/* Mobile connector arrow (between cards) */}
+                {i < steps.length - 1 && (
+                  <div
+                    aria-hidden
+                    className="absolute -bottom-7 left-1/2 -translate-x-1/2 md:hidden"
+                  >
+                    <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm">
+                      <ArrowRight className="h-3.5 w-3.5 rotate-90" />
+                    </span>
+                  </div>
+                )}
               </div>
             </Reveal>
           ))}
         </div>
+
+        {/* Footer line */}
+        <p className="mx-auto mt-14 flex max-w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-[12.5px] text-slate-600 shadow-sm backdrop-blur">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          Em menos de 5 minutos você está com tudo no controle.
+        </p>
       </div>
     </section>
   );
