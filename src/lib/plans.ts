@@ -303,6 +303,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Metas com imagens",
       "Investimentos liberados",
       "Histórico de importações",
+      "Contas conectadas por convite",
       "Insights do negócio",
     ],
   },
