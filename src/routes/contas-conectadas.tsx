@@ -66,7 +66,6 @@ function ContasConectadasPage() {
   }
 
   return (
-  return (
     <MobileShell wide>
     <div className="mx-auto w-full max-w-5xl space-y-8 py-6 lg:py-10">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
