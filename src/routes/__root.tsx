@@ -6,8 +6,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 
 import appCss from "../styles.css?url";
