@@ -584,115 +584,175 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 }
 
 function DesktopDashboardMock() {
+  const navItems = [
+    { i: LayoutDashboard, l: "Dashboard", active: true },
+    { i: Receipt, l: "Gastos" },
+    { i: CreditCard, l: "Cartões" },
+    { i: Wallet, l: "Contas" },
+    { i: Target, l: "Metas" },
+    { i: TrendingUp, l: "Investimentos" },
+    { i: PiggyBank, l: "Guardado" },
+    { i: LineChart, l: "Relatórios" },
+    { i: Bell, l: "Alertas" },
+  ];
   return (
-    <div className="flex h-full w-full bg-gradient-to-br from-slate-50 to-white">
+    <div className="flex h-full w-full bg-slate-50">
       {/* sidebar */}
-      <div className="hidden sm:flex w-[20%] flex-col gap-1 border-r border-slate-200 bg-white p-2.5">
-        <div className="flex items-center px-1 pb-2">
+      <div className="flex w-[19%] flex-col gap-0.5 border-r border-slate-200 bg-white p-2">
+        <div className="flex items-center px-1 pb-2 pt-0.5">
           <img
             src="/logos/brand/gasto-inteligente-light.png"
             alt="Gasto Inteligente"
             draggable={false}
-            className="h-5 w-auto object-contain"
+            className="h-4 w-auto object-contain"
           />
         </div>
-        {[
-          { i: LayoutDashboard, l: "Resumo", active: true },
-          { i: Receipt, l: "Gastos" },
-          { i: CreditCard, l: "Cartões" },
-          { i: Target, l: "Metas" },
-          { i: TrendingUp, l: "Investir" },
-          { i: PiggyBank, l: "Guardado" },
-          { i: Bell, l: "Alertas" },
-        ].map(({ i: Icon, l, active }) => (
+        {navItems.map(({ i: Icon, l, active }) => (
           <div
             key={l}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[9px] font-medium",
-              active ? "bg-blue-50 text-blue-700" : "text-slate-500"
+              "relative flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[8.5px] font-medium",
+              active ? "bg-blue-50 text-blue-700" : "text-slate-500",
             )}
           >
-            <Icon className="h-2.5 w-2.5" />
+            {active && (
+              <span className="absolute left-0 top-1/2 h-3 w-0.5 -translate-y-1/2 rounded-r-full bg-blue-600" />
+            )}
+            <Icon className="h-2.5 w-2.5" strokeWidth={active ? 2.4 : 1.8} />
             <span>{l}</span>
           </div>
         ))}
+        <div className="mt-auto rounded-md border border-slate-200 bg-gradient-to-br from-blue-50 to-emerald-50 p-1.5">
+          <p className="text-[7px] font-bold text-slate-700">Plano Premium</p>
+          <p className="text-[6.5px] text-slate-500">Renova em 12/12</p>
+        </div>
       </div>
+
       {/* main */}
-      <div className="flex-1 p-3 sm:p-4 overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[8px] font-semibold uppercase tracking-widest text-slate-400">Visão geral</p>
-            <p className="text-xs sm:text-sm font-bold text-slate-900">Novembro · 2026</p>
+      <div className="flex-1 overflow-hidden">
+        {/* top bar */}
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-md bg-slate-100 px-1.5 py-0.5 text-[7px] text-slate-500">
+            <span className="h-1 w-1 rounded-full bg-slate-400" />
+            Buscar gastos, cartões, metas…
           </div>
-          <div className="flex items-center gap-1">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500"><Bell className="h-2.5 w-2.5" /></span>
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500"><Calendar className="h-2.5 w-2.5" /></span>
+          <div className="flex items-center gap-1.5">
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-slate-100 text-slate-500">
+              <Bell className="h-2 w-2" />
+            </span>
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-slate-100 text-slate-500">
+              <Calendar className="h-2 w-2" />
+            </span>
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-[7px] font-bold text-white">M</span>
           </div>
         </div>
-        <div className="mt-2.5 grid grid-cols-4 gap-1.5">
-          {[
-            { l: "Saldo", v: "R$ 3.142", t: "bg-blue-50 text-blue-700" },
-            { l: "Receitas", v: "R$ 6.420", t: "bg-emerald-50 text-emerald-700" },
-            { l: "Despesas", v: "R$ 3.277", t: "bg-rose-50 text-rose-700" },
-            { l: "A pagar", v: "R$ 980", t: "bg-amber-50 text-amber-700" },
-          ].map((k) => (
-            <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
-              <p className="text-[7px] font-semibold uppercase tracking-wider text-slate-400">{k.l}</p>
-              <p className="mt-0.5 text-[10px] font-bold tabular-nums text-slate-900">{k.v}</p>
-              <div className={cn("mt-1 h-0.5 w-6 rounded-full", k.t)} />
+
+        {/* content */}
+        <div className="p-2.5">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[7.5px] font-semibold uppercase tracking-widest text-slate-400">Olá, Maria</p>
+              <p className="text-[12px] font-bold text-slate-900">Resumo de novembro · 2026</p>
             </div>
-          ))}
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-1.5">
-          <div className="col-span-2 rounded-lg border border-slate-200 bg-white p-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
-                <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
-                  <span className="h-1 w-1.5 rounded-full bg-emerald-500" />Receitas
-                </span>
-                <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
-                  <span className="h-1 w-1.5 rounded-full bg-blue-500" />Despesas
-                </span>
-                <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
-              </div>
-            </div>
-            <FluxoLineChart className="mt-1.5 h-20 w-full" />
-            <div className="mt-1 flex items-center justify-between text-[6.5px] text-slate-400">
-              <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
+            <div className="flex items-center gap-1">
+              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[7px] font-medium text-slate-600">Mês</span>
+              <span className="rounded-md bg-blue-600 px-1.5 py-0.5 text-[7px] font-medium text-white">+ Novo gasto</span>
             </div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-2">
-            <p className="text-[8px] font-semibold text-slate-700">Categorias</p>
-            <div className="mt-1.5 space-y-1">
+
+          {/* KPI grid */}
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {[
+              { l: "Saldo atual", v: "R$ 3.142", d: "+12%", up: true, c: "from-blue-500/15 to-blue-500/0", i: Wallet, t: "text-blue-600" },
+              { l: "Receitas", v: "R$ 6.420", d: "+8%", up: true, c: "from-emerald-500/15 to-emerald-500/0", i: ArrowUpRight, t: "text-emerald-600" },
+              { l: "Despesas", v: "R$ 3.277", d: "-5%", up: false, c: "from-rose-500/15 to-rose-500/0", i: ArrowDownRight, t: "text-rose-600" },
+              { l: "A pagar", v: "R$ 980", d: "3 contas", up: true, c: "from-amber-500/15 to-amber-500/0", i: Receipt, t: "text-amber-600" },
+            ].map((k) => (
+              <div key={k.l} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5">
+                <div className={cn("absolute inset-0 bg-gradient-to-br", k.c)} />
+                <div className="relative flex items-center justify-between">
+                  <p className="text-[6.5px] font-semibold uppercase tracking-wider text-slate-500">{k.l}</p>
+                  <k.i className={cn("h-2.5 w-2.5", k.t)} />
+                </div>
+                <p className="relative mt-0.5 text-[11px] font-bold tabular-nums text-slate-900">{k.v}</p>
+                <p className={cn("relative text-[7px] font-semibold", k.up ? "text-emerald-600" : "text-rose-600")}>{k.d}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Chart + side */}
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
+            <div className="col-span-2 rounded-lg border border-slate-200 bg-white p-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
+                  <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
+                    <span className="h-1 w-1.5 rounded-full bg-emerald-500" />Receitas
+                  </span>
+                  <span className="flex items-center gap-0.5 text-[7px] text-slate-500">
+                    <span className="h-1 w-1.5 rounded-full bg-blue-500" />Despesas
+                  </span>
+                  <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+                </div>
+              </div>
+              <FluxoLineChart className="mt-1.5 h-[72px] w-full" />
+              <div className="mt-1 flex items-center justify-between text-[6.5px] text-slate-400">
+                <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
+              </div>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[8px] font-semibold text-slate-800">Categorias</p>
+                <span className="text-[6.5px] text-slate-400">Top 4</span>
+              </div>
+              <div className="mt-1.5 space-y-1">
+                {[
+                  { l: "Mercado", v: 70, p: "R$ 920", c: "from-emerald-500 to-emerald-400" },
+                  { l: "Transporte", v: 45, p: "R$ 540", c: "from-blue-500 to-blue-400" },
+                  { l: "Lazer", v: 30, p: "R$ 320", c: "from-violet-500 to-violet-400" },
+                  { l: "Casa", v: 55, p: "R$ 680", c: "from-amber-500 to-amber-400" },
+                ].map((r) => (
+                  <div key={r.l}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[7px] font-medium text-slate-600">{r.l}</span>
+                      <span className="text-[6.5px] tabular-nums text-slate-500">{r.p}</span>
+                    </div>
+                    <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-100">
+                      <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: `${r.v}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Transactions table */}
+          <div className="mt-2 rounded-lg border border-slate-200 bg-white">
+            <div className="flex items-center justify-between border-b border-slate-100 px-2 py-1">
+              <p className="text-[8px] font-semibold text-slate-800">Últimas movimentações</p>
+              <span className="text-[6.5px] font-medium text-blue-600">Ver tudo →</span>
+            </div>
+            <div className="divide-y divide-slate-100">
               {[
-                { l: "Mercado", v: 70, c: "from-emerald-500 to-emerald-400" },
-                { l: "Transporte", v: 45, c: "from-blue-500 to-blue-400" },
-                { l: "Lazer", v: 30, c: "from-violet-500 to-violet-400" },
-                { l: "Casa", v: 55, c: "from-amber-500 to-amber-400" },
+                { l: "Mercado Pão de Açúcar", c: "Mercado", v: "- R$ 184,90", d: "Hoje", neg: true, i: "M", t: "bg-emerald-100 text-emerald-700" },
+                { l: "Salário · Empresa", c: "Renda", v: "+ R$ 4.800,00", d: "05/11", neg: false, i: "S", t: "bg-blue-100 text-blue-700" },
+                { l: "Netflix", c: "Assinatura", v: "- R$ 39,90", d: "04/11", neg: true, i: "N", t: "bg-rose-100 text-rose-700" },
               ].map((r) => (
-                <div key={r.l}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[7px] text-slate-500">{r.l}</span>
+                <div key={r.l} className="flex items-center justify-between px-2 py-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("grid h-4 w-4 place-items-center rounded-full text-[7px] font-bold", r.t)}>{r.i}</span>
+                    <div>
+                      <p className="text-[7.5px] font-semibold text-slate-800">{r.l}</p>
+                      <p className="text-[6.5px] text-slate-400">{r.c} · {r.d}</p>
+                    </div>
                   </div>
-                  <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-100">
-                    <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: `${r.v}%` }} />
-                  </div>
+                  <span className={cn("text-[8px] font-bold tabular-nums", r.neg ? "text-rose-600" : "text-emerald-600")}>{r.v}</span>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[8px] font-semibold text-slate-700">Limite inteligente</p>
-            <p className="text-[8px] font-semibold text-slate-500">62%</p>
-          </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" />
           </div>
         </div>
       </div>
