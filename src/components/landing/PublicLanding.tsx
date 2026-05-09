@@ -2554,13 +2554,15 @@ const TESTIMONIALS = [
     text: "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo.",
     initials: "CR",
     color: "from-blue-500 to-sky-500",
+    highlight: false,
   },
   {
     name: "Rafael M.",
     role: "MEI · Confeitaria",
-    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul sempre.",
+    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto.",
     initials: "RM",
     color: "from-emerald-500 to-teal-500",
+    highlight: true,
   },
   {
     name: "Juliana A.",
@@ -2568,47 +2570,167 @@ const TESTIMONIALS = [
     text: "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar.",
     initials: "JA",
     color: "from-violet-500 to-fuchsia-500",
+    highlight: false,
   },
 ];
 
 function Testimonials() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="Quem já usa"
-          title="Pessoas reais, controle financeiro de verdade."
-          subtitle="Histórias de quem trocou a bagunça por uma rotina financeira leve e clara."
-          center
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-24 sm:py-28">
+      {/* Decorative background */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="absolute left-1/2 top-0 h-[480px] w-[920px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-100/50 via-transparent to-emerald-100/40 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgb(15 23 42) 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
         />
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+      </div>
+
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm backdrop-blur">
+            <span className="flex items-center gap-0.5 text-amber-400">
+              {Array.from({ length: 5 }).map((_, k) => (
+                <Star key={k} className="h-3 w-3 fill-current" />
+              ))}
+            </span>
+            <span>4.9/5 · Avaliação dos usuários</span>
+          </span>
+          <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
+            Pessoas reais,{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+              controle de verdade
+            </span>
+            .
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
+            Histórias de quem trocou a bagunça por uma rotina financeira leve, clara e sob controle.
+          </p>
+        </div>
+
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-7">
           {TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.06}>
-              <div className="group relative h-full rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_56px_-26px_rgba(15,23,42,0.30)]">
-                <Quote className="absolute right-5 top-5 h-8 w-8 text-slate-100 transition-colors group-hover:text-blue-100" />
-                <div className="flex items-center gap-1 text-amber-400">
+            <Reveal key={t.name} delay={i * 0.08}>
+              <figure
+                className={cn(
+                  "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 transition-all duration-300",
+                  t.highlight
+                    ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 md:-translate-y-2 hover:-translate-y-3"
+                    : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
+                )}
+              >
+                {t.highlight && (
+                  <>
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
+                    />
+                    <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
+                      <Sparkles className="h-3 w-3" /> Em destaque
+                    </span>
+                  </>
+                )}
+
+                {/* Decorative quote mark */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
+                    t.highlight ? "text-white/10" : "text-slate-100",
+                  )}
+                >
+                  “
+                </span>
+
+                <div
+                  className={cn(
+                    "relative flex items-center gap-1",
+                    t.highlight ? "text-amber-300" : "text-amber-400",
+                  )}
+                >
                   {Array.from({ length: 5 }).map((_, k) => (
-                    <Star key={k} className="h-4 w-4 fill-current" />
+                    <Star key={k} className="h-[18px] w-[18px] fill-current drop-shadow-sm" />
                   ))}
                 </div>
-                <p className="mt-4 text-sm leading-relaxed text-slate-700">"{t.text}"</p>
-                <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4">
+
+                <blockquote
+                  className={cn(
+                    "relative mt-5 flex-1 text-[15px] leading-relaxed sm:text-[15.5px]",
+                    t.highlight ? "text-white/90" : "text-slate-700",
+                  )}
+                >
+                  {t.text}
+                </blockquote>
+
+                <figcaption
+                  className={cn(
+                    "relative mt-7 flex items-center gap-3 border-t pt-5",
+                    t.highlight ? "border-white/10" : "border-slate-100",
+                  )}
+                >
                   <span
                     className={cn(
-                      "grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow",
+                      "relative grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2",
                       t.color,
+                      t.highlight ? "ring-white/20" : "ring-white",
                     )}
                   >
                     {t.initials}
                   </span>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                    <p className="text-[11px] text-slate-500">{t.role}</p>
+                  <div className="min-w-0">
+                    <p
+                      className={cn(
+                        "truncate text-sm font-semibold tracking-tight",
+                        t.highlight ? "text-white" : "text-slate-900",
+                      )}
+                    >
+                      {t.name}
+                    </p>
+                    <p
+                      className={cn(
+                        "truncate text-[12px]",
+                        t.highlight ? "text-white/60" : "text-slate-500",
+                      )}
+                    >
+                      {t.role}
+                    </p>
                   </div>
-                </div>
-              </div>
+                  <ShieldCheck
+                    className={cn(
+                      "ml-auto h-4 w-4 shrink-0",
+                      t.highlight ? "text-emerald-300" : "text-emerald-500",
+                    )}
+                    aria-label="Usuário verificado"
+                  />
+                </figcaption>
+              </figure>
             </Reveal>
           ))}
+        </div>
+
+        {/* Trust footer */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12px] text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            Depoimentos verificados
+          </span>
+          <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-blue-500" />
+            +10 mil pessoas no controle
+          </span>
+          <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
+          <span className="inline-flex items-center gap-1.5 text-amber-500">
+            <Star className="h-4 w-4 fill-current" />
+            <span className="text-slate-600">4.9 de média</span>
+          </span>
         </div>
       </div>
     </section>
