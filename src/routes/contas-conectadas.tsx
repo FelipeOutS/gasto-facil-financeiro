@@ -136,6 +136,7 @@ function ContasConectadasPage() {
 
       <ShareInviteDialog token={shareToken} onClose={() => setShareToken(null)} />
     </div>
+    </MobileShell>
   );
 }
 
