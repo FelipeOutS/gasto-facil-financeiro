@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "gasto-facil-financeiro"
+const SITE_NAME = "Gasto Inteligente"
 const SENDER_DOMAIN = "notify.gastointeligente.com.br"
 const ROOT_DOMAIN = "gastointeligente.com.br"
 const FROM_DOMAIN = "notify.gastointeligente.com.br"
