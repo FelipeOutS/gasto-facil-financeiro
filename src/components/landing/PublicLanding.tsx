@@ -698,8 +698,19 @@ function DesktopDashboardMock() {
 function MobileDashboardMock() {
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-50 to-white p-2.5 pt-5">
-      <div>
-        <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Olá</p>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+        <img
+          src="/logos/brand/gasto-inteligente-light.png"
+          alt="Gasto Inteligente"
+          draggable={false}
+          className="h-3.5 w-auto object-contain"
+        />
+        <span className="grid h-4 w-4 place-items-center rounded-full bg-slate-100 text-slate-500">
+          <Bell className="h-2 w-2" />
+        </span>
+      </div>
+      <div className="mt-2">
+        <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Olá, Maria</p>
         <p className="text-[10px] font-bold text-slate-900">Novembro · 2026</p>
       </div>
       <div className="mt-2 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 p-2 text-white shadow-md">
