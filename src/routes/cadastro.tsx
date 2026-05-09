@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { MailCheck, RefreshCw } from "lucide-react";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +33,8 @@ function CadastroForm() {
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const [reenviando, setReenviando] = useState(false);
 
   const senhaOk = useMemo(() => senhaForte(password), [password]);
   const confereSenha = confirm.length > 0 && password === confirm;
@@ -53,8 +57,74 @@ function CadastroForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Tudo certo! Sua conta foi criada. 🎉");
-    void navigate({ to: "/" });
+    setEnviado(true);
+  }
+
+  async function reenviar() {
+    if (!email) return;
+    setReenviando(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+    setReenviando(false);
+    if (error) {
+      toast.error(traduzirErroAuth(error.message));
+      return;
+    }
+    toast.success("E-mail de confirmação reenviado!");
+  }
+
+  if (enviado) {
+    return (
+      <AuthShell
+        title="Confirme seu e-mail"
+        subtitle="Enviamos um link de confirmação para você."
+        footer={
+          <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
+            Voltar para o login
+          </Link>
+        }
+      >
+        <div className="space-y-5 animate-fade-in">
+          <div className="rounded-2xl border border-border bg-card-elevated p-5 text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-brand">
+              <MailCheck className="h-7 w-7" />
+            </div>
+            <p className="mt-4 text-sm text-foreground">
+              Enviamos um e-mail de confirmação para
+            </p>
+            <p className="mt-1 break-all text-base font-semibold">{email}</p>
+            <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+              Abra a caixa de entrada e clique no link para ativar sua conta.{" "}
+              <strong className="text-foreground">
+                Se não encontrar, confira a pasta de spam ou lixo eletrônico.
+              </strong>
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 w-full rounded-2xl text-base font-semibold"
+            onClick={reenviar}
+            disabled={reenviando}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${reenviando ? "animate-spin" : ""}`} />
+            {reenviando ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+          </Button>
+
+          <Button
+            type="button"
+            className="h-12 w-full rounded-2xl text-base font-semibold"
+            onClick={() => void navigate({ to: "/login" })}
+          >
+            Já confirmei, ir para o login
+          </Button>
+        </div>
+      </AuthShell>
+    );
   }
 
   return (
