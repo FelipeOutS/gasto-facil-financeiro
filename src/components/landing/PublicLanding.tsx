@@ -2038,10 +2038,10 @@ function InvestimentosMock() {
 
 function GuardadoMock() {
   const items = [
-    { l: "Nubank", v: "R$ 2.100", pct: 43, color: "bg-violet-100 text-violet-700", bar: "bg-violet-500" },
-    { l: "Inter", v: "R$ 1.480", pct: 30, color: "bg-amber-100 text-amber-700", bar: "bg-amber-500" },
-    { l: "C6 Bank", v: "R$ 980", pct: 20, color: "bg-slate-200 text-slate-800", bar: "bg-slate-500" },
-    { l: "Carteira", v: "R$ 320", pct: 7, color: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" },
+    { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500" },
+    { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500" },
+    { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700" },
+    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500" },
   ];
   return (
     <MockShell>
@@ -2075,7 +2075,22 @@ function GuardadoMock() {
         {items.map((it) => (
           <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
             <div className="flex items-center justify-between">
-              <BrandLogo name={it.l} variant="bank" className="h-8 w-8" />
+              <span
+                className="grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-1 ring-slate-200"
+                style={{ background: it.logo ? "#fff" : it.brand }}
+                aria-hidden
+              >
+                {it.logo ? (
+                  <img
+                    src={it.logo}
+                    alt={it.l}
+                    draggable={false}
+                    className="h-6 w-6 object-contain"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-white">{it.initial}</span>
+                )}
+              </span>
               <span className="text-[10px] font-semibold text-slate-400">{it.pct}%</span>
             </div>
             <p className="mt-2 text-xs font-medium text-slate-500">{it.l}</p>
