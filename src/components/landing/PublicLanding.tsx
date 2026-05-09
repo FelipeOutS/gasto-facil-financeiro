@@ -207,7 +207,12 @@ function Header() {
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
-          <BrandMark className="h-9 w-auto sm:h-11" />
+          <img
+            src="/logos/brand/gasto-inteligente-dark.png"
+            alt="Gasto Inteligente"
+            className="h-9 w-auto sm:h-11 object-contain"
+            draggable={false}
+          />
         </a>
         <nav className="hidden items-center gap-8 md:flex">
           {NAV.map((n) => (
