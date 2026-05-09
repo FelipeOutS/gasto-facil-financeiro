@@ -50,7 +50,8 @@ export type FeatureKey =
   | "investimentos_futuro"
   | "assinaturas_recorrencias"
   | "whatsapp"
-  | "lancamentos_ilimitados";
+  | "lancamentos_ilimitados"
+  | "contas_conectadas";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
