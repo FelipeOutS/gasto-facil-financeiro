@@ -84,7 +84,6 @@ function writeStored(viewerId: string, ownerId: string | null) {
 
 export function ActiveAccountProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const viewerId = user?.id ?? null;
 
   const [connections, setConnections] = useState<ConnectedAccountAccess[]>([]);
