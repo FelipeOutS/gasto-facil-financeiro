@@ -2038,10 +2038,10 @@ function InvestimentosMock() {
 
 function GuardadoMock() {
   const items = [
-    { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500" },
-    { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500" },
-    { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700" },
-    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500" },
+    { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500", logoBg: "#fff" as string | null },
+    { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500", logoBg: "#ff7a00" as string | null },
+    { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700", logoBg: "#1f1f1f" as string | null },
+    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
   ];
   return (
     <MockShell>
@@ -2077,7 +2077,7 @@ function GuardadoMock() {
             <div className="flex items-center justify-between">
               <span
                 className="grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-1 ring-slate-200"
-                style={{ background: it.logo ? "#fff" : it.brand }}
+                style={{ background: it.logoBg ?? it.brand }}
                 aria-hidden
               >
                 {it.logo ? (
