@@ -34,6 +34,7 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
+import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
