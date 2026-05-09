@@ -24,6 +24,7 @@ import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
 import { setStoreCanWrite } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/server/subscription.functions";
+import { useActiveAccount } from "@/lib/active-account";
 
 /** Status que liberam ações financeiras. */
 const ACTIVE_STATUSES = new Set(
