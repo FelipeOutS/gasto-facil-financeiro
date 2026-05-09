@@ -135,6 +135,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           </SheetHeader>
 
           <div className="px-5 pb-2">
+            <ConnectedAccountSwitcher className="mb-2" />
             <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Plano atual
