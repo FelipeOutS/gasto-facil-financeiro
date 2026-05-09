@@ -5,6 +5,9 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
+import { ActiveAccountProvider } from "@/lib/active-account";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 
 import appCss from "../styles.css?url";
