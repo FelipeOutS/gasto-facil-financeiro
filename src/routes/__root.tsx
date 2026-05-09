@@ -114,6 +114,7 @@ function RootComponent() {
 
   return (
     <>
+      <ConnectedAccountBanner />
       <Outlet />
       <Toaster position="top-center" />
     </>
