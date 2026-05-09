@@ -157,6 +157,19 @@ export function PublicLanding() {
         bullets={["Carteira consolidada", "Evolução mensal", "Resumo por classe", "Visão de longo prazo"]}
         visual={<InvestimentosMock />}
       />
+      <FeatureSplit
+        eyebrow="Contas conectadas"
+        title="Acompanhe outra conta com permissão."
+        text="Convide alguém por e-mail e acompanhe os gastos da pessoa ou da empresa, sempre com aceite e nível de acesso definidos por você. Ideal para famílias, sócios e contadores."
+        bullets={[
+          "Convite por e-mail com link de aceite",
+          "Níveis: somente ver, ver e lançar, administrador",
+          "Cada conta mantém seus dados separados",
+          "Remova o acesso a qualquer momento",
+        ]}
+        visual={<ContasConectadasMock />}
+        reverse
+      />
       <ForWho />
       <TrustPoints />
       <Plans />
