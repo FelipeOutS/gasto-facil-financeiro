@@ -323,6 +323,8 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios completos",
       "Fluxo de caixa empresarial",
       "Investimentos liberados",
+      "Usuários e contas conectadas",
+      "Controle de acessos por permissão",
       "Exportação de relatórios",
     ],
   },
