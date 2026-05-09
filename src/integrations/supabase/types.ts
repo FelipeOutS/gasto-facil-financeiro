@@ -1580,6 +1580,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_access_level: {
+        Args: { _owner: string }
+        Returns: Database["public"]["Enums"]["connected_account_access"]
+      }
+      can_admin_account: { Args: { _owner: string }; Returns: boolean }
+      can_create_in_account: { Args: { _owner: string }; Returns: boolean }
+      can_view_account: { Args: { _owner: string }; Returns: boolean }
       claim_owner_if_first: { Args: never; Returns: boolean }
       current_plan: {
         Args: { _user_id: string }
