@@ -493,11 +493,11 @@ function Index() {
       </section>
 
       {/* ===== 3. Par principal: Resumo inteligente + Limite inteligente ===== */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
-        <div className="flex min-w-0 [&>section]:flex [&>section]:w-full [&>section]:flex-col lg:[&>section]:h-full">
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-5">
+        <div className="flex min-w-0">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} className="w-full" />
         </div>
-        <div className="flex min-w-0 [&>section]:flex [&>section]:w-full [&>section]:flex-col lg:[&>section]:h-full">
+        <div className="flex min-w-0 [&>section]:w-full">
           <SmartLimiteCard
             mes={ym.mes}
             ano={ym.ano}
