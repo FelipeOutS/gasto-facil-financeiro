@@ -528,7 +528,15 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 sm:mt-12 max-w-2xl lg:max-w-3xl">
+        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(15,23,42,0.16) 0%, rgba(15,23,42,0.08) 38%, rgba(15,23,42,0.00) 74%)",
+            }}
+          />
           {/* Notebook */}
           <NotebookFrame>
             <DesktopDashboardMock />
@@ -537,7 +545,7 @@ function MultiDeviceShowcase() {
           {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
           <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0 md:z-10">
             <TabletFrame>
-              <DesktopDashboardMock />
+              <TabletDashboardMock />
             </TabletFrame>
           </div>
 
