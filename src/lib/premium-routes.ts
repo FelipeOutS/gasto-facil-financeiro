@@ -33,6 +33,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/contas-a-receber", feature: "contas_a_receber", title: "Contas a receber é um recurso premium" },
   { path: "/orcamento", feature: "orcamento", title: "Orçamento é um recurso premium" },
   { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
+  { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Pessoa Física Premium, MEI Inteligente e Empresa." },
   { path: "/metas", feature: "metas_visuais", title: "Metas é um recurso premium" },
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
   { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
