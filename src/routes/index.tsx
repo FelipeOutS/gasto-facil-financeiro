@@ -489,10 +489,7 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== 4. Previsão de fechamento do mês (premium) ===== */}
-      <section className="mt-4">
-        <MonthForecastCard mes={ym.mes} ano={ym.ano} />
-      </section>
+
 
       {/* ===== 6. Próximas ações ===== */}
       <SectionLabel>Próximas ações</SectionLabel>
