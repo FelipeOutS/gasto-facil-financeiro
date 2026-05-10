@@ -15,6 +15,8 @@ import {
   desmarcarFaturaPaga,
   mesReferenciaFatura,
   mesReferenciaFaturaLabel,
+  proximoFechamentoData,
+  proximoVencimentoFaturaAberta,
 } from "@/lib/store";
 import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
