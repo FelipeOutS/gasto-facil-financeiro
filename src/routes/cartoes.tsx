@@ -136,36 +136,8 @@ function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
 
-function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" } {
-  if (!c.diaFechamento || !c.diaVencimento)
-    return { label: "Sem vencimento definido", tone: "ok" };
-  const hoje = new Date();
-  const startToday = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
-  // Próximo fechamento (≥ hoje).
-  let fech = new Date(hoje.getFullYear(), hoje.getMonth(), c.diaFechamento);
-  if (fech.getTime() < startToday) {
-    fech = new Date(hoje.getFullYear(), hoje.getMonth() + 1, c.diaFechamento);
-  }
-  // Vencimento da fatura desse fechamento (cai depois do fechamento).
-  let venc = new Date(fech.getFullYear(), fech.getMonth(), c.diaVencimento);
-  if (venc.getTime() <= fech.getTime()) {
-    venc = new Date(fech.getFullYear(), fech.getMonth() + 1, c.diaVencimento);
-  }
-  const oneDay = 1000 * 60 * 60 * 24;
-  const diasFech = Math.round((fech.getTime() - startToday) / oneDay);
-  // Enquanto a fatura ainda não fechou, ela está ABERTA — não mostrar
-  // alerta de vencimento (o vencimento real é da fatura aberta, depois do
-  // fechamento, normalmente em outro mês).
-  if (diasFech > 5) return { label: "Fatura aberta", tone: "ok" };
-  if (diasFech > 0) return { label: `Fecha em ${diasFech} ${diasFech === 1 ? "dia" : "dias"}`, tone: "soon" };
-  if (diasFech === 0) return { label: "Fecha hoje", tone: "soon" };
-  // Fatura fechada — então sim consideramos o vencimento.
-  const diasVenc = Math.round((venc.getTime() - startToday) / oneDay);
-  if (diasVenc < 0) return { label: `Vencida há ${Math.abs(diasVenc)} ${Math.abs(diasVenc) === 1 ? "dia" : "dias"}`, tone: "due" };
-  if (diasVenc === 0) return { label: "Vence hoje", tone: "due" };
-  if (diasVenc <= 3) return { label: `Vence em ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}`, tone: "due" };
-  return { label: `Vence em ${diasVenc} dias`, tone: "soon" };
-}
+
+
 
 /** Formata o % de uso do limite evitando "0%" quando há gasto. */
 function formatPctLimite(usado: number, limite: number): string {
