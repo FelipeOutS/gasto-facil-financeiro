@@ -475,6 +475,8 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
       }
     }
   }
+
+  // Possível duplicado: mesma descrição+valor+data nos últimos 7 dias
   const recentes = gastosConfirmados.filter((g) => {
     const dias = diffDaysLocal(g.data);
     return dias <= 0 && dias >= -7;
