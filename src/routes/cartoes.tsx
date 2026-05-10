@@ -352,6 +352,7 @@ function CartoesPage() {
           dias={resumo.proximaDias}
           data={resumo.proximaData}
           valor={resumo.proximaValor}
+          temCartoes={cartoes.length > 0}
         />
       </section>
 
