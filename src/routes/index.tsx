@@ -447,6 +447,11 @@ function Index() {
         </p>
       )}
 
+      {/* ===== Resumo inteligente do mês (IA premium) ===== */}
+      <section className="mt-4">
+        <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+      </section>
+
       {/* ===== Limite inteligente (premium) ===== */}
       <section className="mt-4">
         <SmartLimiteCard
