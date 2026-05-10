@@ -58,6 +58,7 @@ const ITEMS: NavItem[] = [
   { to: "/contas-a-receber", label: "Contas a receber", icon: HandCoins },
   { to: "/orcamento", label: "Orçamento", icon: PieChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/gasto-ai", label: "Gasto AI", icon: Sparkles, feature: "gasto_ai" },
   { to: "/guardado", label: "Guardado", icon: Wallet },
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/contas-conectadas", label: "Contas conectadas", icon: Users, feature: "contas_conectadas" },

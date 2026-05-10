@@ -57,6 +57,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/contas-a-receber", label: "Contas a receber", description: "Valores que você tem para receber", icon: HandCoins },
   { to: "/orcamento", label: "Orçamento", description: "Limites mensais por categoria", icon: PieChart },
   { to: "/relatorios", label: "Relatórios", description: "Análises e gráficos", icon: BarChart3 },
+  { to: "/gasto-ai", label: "Gasto AI", description: "Assistente financeiro com IA", icon: Sparkles, feature: "gasto_ai" },
   { to: "/guardado", label: "Guardado", description: "Reserva e poupança", icon: Wallet },
   { to: "/assinaturas", label: "Assinaturas", description: "Serviços recorrentes", icon: Repeat },
   { to: "/investimentos", label: "Investimentos", description: "Carteira e rendimentos", icon: TrendingUp, feature: "investimentos" },
