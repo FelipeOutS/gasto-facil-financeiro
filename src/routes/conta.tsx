@@ -13,6 +13,7 @@ import {
   Settings2,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
@@ -63,15 +64,12 @@ function ContaPage() {
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
         <div className="flex items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-card-elevated">
-            {tipo === "empresa" ? (
-              <Building2 className="h-5 w-5 text-foreground" />
-            ) : tipo === "mei" ? (
-              <Briefcase className="h-5 w-5 text-foreground" />
-            ) : (
-              <UserIcon className="h-5 w-5 text-foreground" />
-            )}
-          </span>
+          <UserAvatar
+            url={profile?.avatar_url}
+            name={nomeExibicao}
+            email={user?.email}
+            size={56}
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{nomeExibicao}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>

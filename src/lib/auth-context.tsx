@@ -14,6 +14,7 @@ export type Profile = {
   nome_fantasia: string | null;
   responsavel_nome: string | null;
   telefone: string | null;
+  avatar_url: string | null;
 };
 
 export type ProfileUpdate = Partial<Omit<Profile, "id">>;
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
+      .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url")
       .eq("id", uid)
       .maybeSingle();
     if (data) setProfile(data as Profile);
@@ -136,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: saved, error } = await supabase
         .from("profiles")
         .upsert(payload, { onConflict: "id" })
-        .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone")
+        .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url")
         .maybeSingle();
       if (error) return { error };
       if (saved) setProfile(saved as Profile);

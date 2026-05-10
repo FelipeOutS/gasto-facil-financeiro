@@ -35,6 +35,7 @@ import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
 import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const ROUTE_RULE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, r]),
@@ -79,7 +80,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const router = useRouter();
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: MoreItem[] = useMemo(() => (isAdminMaster ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS), [isAdminMaster]);
@@ -136,6 +137,27 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           </SheetHeader>
 
           <div className="px-5 pb-2">
+            <button
+              type="button"
+              onClick={() => {
+                flushSync(() => onOpenChange(false));
+                navigate({ to: "/conta" });
+              }}
+              className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/60 p-3 text-left transition-colors hover:bg-card/80"
+            >
+              <UserAvatar
+                url={profile?.avatar_url}
+                name={profile?.nome ?? profile?.responsavel_nome}
+                email={user?.email}
+                size={42}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || "Usuário"}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+              </div>
+            </button>
             <ConnectedAccountSwitcher className="mb-2" />
             <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

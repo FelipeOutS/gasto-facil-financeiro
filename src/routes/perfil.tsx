@@ -18,6 +18,7 @@ import {
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { cn } from "@/lib/utils";
+import { AvatarUpload } from "@/components/AvatarUpload";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — Gasto Inteligente" }] }),
@@ -144,6 +145,17 @@ function PerfilPage() {
       </header>
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-5 animate-fade-in">
+        {/* Foto de perfil */}
+        <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
+          <h2 className="text-sm font-semibold">Foto de perfil</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Aparece no menu, na sua conta e nas mensagens do chat.
+          </p>
+          <div className="mt-4">
+            <AvatarUpload />
+          </div>
+        </section>
+
         {/* Tipo de cadastro */}
         <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
           <h2 className="text-sm font-semibold">Tipo de cadastro</h2>
