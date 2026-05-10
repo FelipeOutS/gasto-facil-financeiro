@@ -424,7 +424,11 @@ function CartoesPage() {
           </section>
           <aside className="min-w-0 space-y-4">
             <ProximosVencimentos items={proximosVencimentos} />
-            <UltimasCompras gastos={ultimasCompras} cartoes={cartoes} />
+            <UltimasCompras
+              gastos={ultimasCompras}
+              cartoes={cartoes}
+              hasMore={ultimasComprasAll.length > ultimasCompras.length}
+            />
           </aside>
         </div>
       )}
