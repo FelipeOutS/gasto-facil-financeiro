@@ -65,7 +65,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-amber-100/10 p-4 shadow-card sm:p-5",
+        "relative flex h-full w-full flex-col overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-amber-100/10 p-4 shadow-card sm:p-5",
         className,
       )}
     >
@@ -101,7 +101,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
         )}
       </div>
 
-      <div className="relative mt-3 min-h-[96px]">
+      <div className="relative mt-3 flex-1 min-h-[96px]">
         {!allowed ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4">
             <div className="flex items-start gap-2">
@@ -142,7 +142,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
         )}
       </div>
 
-      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 pt-1">
         <p className="text-[11px] text-muted-foreground">
           Análise gerada com seus dados, em tempo real.
         </p>
