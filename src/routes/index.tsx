@@ -45,6 +45,7 @@ import {
   getGuardado,
   getLimite,
   getLimites,
+  getMetaProgressoBreakdown,
   getMetas,
   getReceitas,
   mesEfetivoGasto,
