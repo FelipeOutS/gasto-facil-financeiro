@@ -201,6 +201,20 @@ function CartoesPage() {
     return map;
   }, [cartoes, gastos]);
 
+  // Status efetivo da fatura corrente por cartão — usado para filtrar
+  // cobranças já pagas dos blocos "Próxima fatura" e "Próximos vencimentos".
+  const faturaCorrentePorCartao = useMemo(() => {
+    const map = new Map<string, { mes: number; ano: number; status: StatusFatura; pendente: number }>();
+    for (const c of cartoes) {
+      const ref = faturaCorrente(c);
+      const status = statusEfetivoFatura(c, ref.mes, ref.ano);
+      const r = resumosPorCartao.get(c.id);
+      const pendente = status === "paga" ? 0 : r?.usadoMes ?? 0;
+      map.set(c.id, { mes: ref.mes, ano: ref.ano, status, pendente });
+    }
+    return map;
+  }, [cartoes, resumosPorCartao]);
+
   const resumo = useMemo(() => {
     const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
     let usado = 0;
@@ -209,7 +223,9 @@ function CartoesPage() {
     for (const c of cartoes) {
       const r = resumosPorCartao.get(c.id);
       if (r) usado += r.usadoMes;
-      if (c.diaVencimento) {
+      const f = faturaCorrentePorCartao.get(c.id);
+      // Só concorre como "próxima fatura" se ainda houver pendência.
+      if (c.diaVencimento && f && f.status !== "paga" && f.pendente > 0) {
         const d = diasAte(c.diaVencimento);
         if (d < proximaDias) {
           proximaDias = d;
@@ -226,7 +242,7 @@ function CartoesPage() {
         proxima.diaVencimento >= hoje.getDate()
           ? alvoEsteMes
           : new Date(hoje.getFullYear(), hoje.getMonth() + 1, proxima.diaVencimento);
-      proximaValor = resumosPorCartao.get(proxima.id)?.usadoMes ?? 0;
+      proximaValor = faturaCorrentePorCartao.get(proxima.id)?.pendente ?? 0;
     }
     return {
       limiteTotal,
@@ -237,16 +253,20 @@ function CartoesPage() {
       proximaData,
       proximaValor,
     };
-  }, [cartoes, resumosPorCartao]);
+  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao]);
 
-  // Próximos vencimentos (todos cartões com dia definido)
+  // Próximos vencimentos — esconde faturas já pagas (sem pendência).
   const proximosVencimentos = useMemo(() => {
     return cartoes
-      .filter((c) => !!c.diaVencimento)
+      .filter((c) => {
+        if (!c.diaVencimento) return false;
+        const f = faturaCorrentePorCartao.get(c.id);
+        return !!f && f.status !== "paga" && f.pendente > 0;
+      })
       .map((c) => ({ cartao: c, dias: diasAte(c.diaVencimento) }))
       .sort((a, b) => a.dias - b.dias)
       .slice(0, 4);
-  }, [cartoes]);
+  }, [cartoes, faturaCorrentePorCartao]);
 
   // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
   const ultimasComprasAll = useMemo(() => {
@@ -332,6 +352,7 @@ function CartoesPage() {
           dias={resumo.proximaDias}
           data={resumo.proximaData}
           valor={resumo.proximaValor}
+          temCartoes={cartoes.length > 0}
         />
       </section>
 
@@ -775,13 +796,35 @@ function ProximaFaturaCard({
   dias,
   data,
   valor,
+  temCartoes,
 }: {
   cartao: Cartao | null;
   dias: number | null;
   data: Date | null;
   valor: number;
+  temCartoes?: boolean;
 }) {
   if (!cartao) {
+    // Quando há cartões cadastrados mas nenhuma fatura pendente: paga/quitada.
+    if (temCartoes) {
+      return (
+        <div className="hover-lift card-press rounded-2xl border border-success/30 bg-success/5 p-3.5 animate-rise">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Próxima fatura
+            </p>
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-success/15 text-success">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+          </div>
+          <p className="mt-2 truncate text-sm font-bold text-success">Fatura paga</p>
+          <p className="num mt-0.5 text-[11px] text-muted-foreground">
+            Nenhuma cobrança pendente
+          </p>
+          <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(0)}</p>
+        </div>
+      );
+    }
     return (
       <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
         <div className="flex items-center justify-between">
@@ -842,7 +885,21 @@ function ProximosVencimentos({
 }: {
   items: Array<{ cartao: Cartao; dias: number }>;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
+        <div className="flex items-center gap-2">
+          <div className="grid h-8 w-8 place-items-center rounded-full bg-success/15 text-success">
+            <CheckCircle2 className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
+            <p className="text-[11px] text-muted-foreground">Nenhuma fatura pendente no momento.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
       <div className="flex items-center gap-2">
