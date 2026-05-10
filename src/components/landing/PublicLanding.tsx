@@ -35,6 +35,11 @@ import {
   SlidersHorizontal,
   Gauge,
   LayoutGrid,
+  Bot,
+  MessageCircle,
+  Send,
+  Calculator,
+  CalendarClock,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -134,6 +139,7 @@ export function PublicLanding() {
       <HowItWorks />
       <ScreensTabs />
       <DashboardShowcase />
+      <GastoAISection />
       <FeatureSplit
         eyebrow="Gastos"
         title="Entenda para onde seu dinheiro está indo."
@@ -143,18 +149,56 @@ export function PublicLanding() {
         reverse
       />
       <FeatureSplit
-        eyebrow="Cartões"
+        eyebrow="Cartões e faturas"
         title="Controle suas faturas sem confusão."
-        text="Acompanhe compras, faturas abertas e fechadas, vencimentos, limite usado e pagamento da fatura em um só lugar."
-        bullets={["Limite disponível em tempo real", "Fechamento e vencimento", "Compras parceladas", "Marcar fatura como paga"]}
+        text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
+        bullets={[
+          "Limite disponível em tempo real",
+          "Fechamento e vencimento",
+          "Status: aberta, paga ou vencida",
+          "Marcar fatura como paga em 1 clique",
+          "Importar fatura por PDF",
+          "Próximos vencimentos no aside",
+        ]}
         visual={<CartaoMock />}
       />
       <FeatureSplit
-        eyebrow="Metas"
+        eyebrow="Orçamento e limite inteligente"
+        title="Saiba quanto pode gastar por dia."
+        text="O limite inteligente calcula quanto ainda sobra no mês depois das contas fixas e faturas já pagas — e divide pelos dias restantes. Defina orçamentos por categoria e veja em tempo real onde você está estourando."
+        bullets={[
+          "Limite diário sugerido",
+          "Orçamento por categoria",
+          "Ignora contas fixas e faturas pagas",
+          "Alertas quando estoura",
+        ]}
+        visual={<OrcamentoMock />}
+        reverse
+      />
+      <FeatureSplit
+        eyebrow="Metas e guardado"
         title="Transforme objetivos em progresso visual."
-        text="Crie metas financeiras e acompanhe quanto já foi reservado, quanto falta e sua evolução até atingir o objetivo."
-        bullets={["Imagem de capa para a meta", "Barra de progresso animada", "Valor guardado e restante", "Percentual concluído"]}
+        text="Crie metas financeiras e vincule o dinheiro guardado em cada banco. O sistema soma reservas e aportes diretos sem contar em dobro — você vê quanto já tem, quanto falta e a evolução até o objetivo."
+        bullets={[
+          "Capa visual da meta",
+          "Guardado vinculado à meta",
+          "Quanto falta para concluir",
+          "Histórico de aportes",
+        ]}
         visual={<MetaMock />}
+      />
+      <FeatureSplit
+        eyebrow="Contas e organização"
+        title="Contas a pagar, a receber e renda no mesmo lugar."
+        text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
+        bullets={[
+          "Contas a pagar com recorrência",
+          "Contas a receber",
+          "Minha renda mensal",
+          "Calendário financeiro",
+          "Alertas de vencimento",
+        ]}
+        visual={<ContasMock />}
         reverse
       />
       <FeatureSplit
@@ -1365,9 +1409,9 @@ function WhyUs() {
       tone: "amber",
     },
     {
-      icon: Sparkles,
-      title: "Interface simples",
-      text: "Um sistema bonito, direto e fácil de usar, mesmo para quem não entende muito de finanças.",
+      icon: Bot,
+      title: "Gasto AI",
+      text: "Pergunte sobre seus gastos, faturas, metas e contas. A IA responde com base nos seus dados — sem chute.",
       tone: "sky",
     },
   ] as const;
@@ -3274,6 +3318,342 @@ function Reveal({
     >
       {children}
     </motion.div>
+  );
+}
+
+/* ============================== GASTO AI SECTION ============================== */
+
+function GastoAISection() {
+  const messages = [
+    { role: "user" as const, text: "Quanto gastei com mercado este mês?" },
+    {
+      role: "ai" as const,
+      text: "Em novembro você gastou R$ 842,30 em mercado — 18% a menos que outubro (R$ 1.027,90). A maior compra foi no dia 14, R$ 312,40.",
+    },
+    { role: "user" as const, text: "E a fatura do Nubank, já está fechada?" },
+    {
+      role: "ai" as const,
+      text: "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
+    },
+  ];
+
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/60 py-20 sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(50% 50% at 20% 0%, rgba(99,102,241,0.10), transparent 60%), radial-gradient(50% 50% at 90% 100%, rgba(16,185,129,0.10), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
+        <Reveal className="lg:col-span-5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+            <Sparkles className="h-3 w-3" /> Gasto AI
+          </span>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            Converse com sua vida financeira.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-slate-600">
+            Pergunte sobre seus gastos, faturas, metas e contas. O Gasto AI analisa apenas os dados
+            que você cadastrou e entrega respostas claras — sem chute, sem estimativa solta.
+          </p>
+          <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {[
+              "Resumo do mês em segundos",
+              "Comparação entre períodos",
+              "Faturas, vencimentos e cartões",
+              "Onde dá pra economizar",
+              "Status das metas",
+              "Contas a pagar e a receber",
+            ].map((b) => (
+              <li key={b} className="flex items-start gap-2 text-sm text-slate-700">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                {b}
+              </li>
+            ))}
+          </ul>
+          <Link
+            to="/cadastro"
+            className="mt-7 inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_-14px_rgba(15,23,42,0.55)] transition-transform hover:-translate-y-0.5"
+          >
+            Experimentar o Gasto AI
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Reveal>
+
+        <Reveal className="lg:col-span-7" delay={0.1}>
+          <div className="relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-indigo-100/70 via-white to-emerald-100/60 blur-2xl"
+            />
+            <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_36px_70px_-30px_rgba(15,23,42,0.32)]">
+              <div className="rounded-[22px] border border-slate-200/70 bg-white p-4 sm:p-5">
+                {/* Chat header */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-500 text-white shadow-[0_8px_18px_-8px_rgba(79,70,229,0.6)]">
+                      <Bot className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Gasto AI</p>
+                      <p className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Conectado aos seus dados
+                      </p>
+                    </div>
+                  </div>
+                  <span className="hidden items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white sm:inline-flex">
+                    <Sparkles className="h-3 w-3" /> AI
+                  </span>
+                </div>
+
+                {/* Messages */}
+                <ul className="mt-4 space-y-3">
+                  {messages.map((m, i) => (
+                    <li key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                      <div
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
+                          m.role === "user"
+                            ? "rounded-br-md bg-slate-900 text-white"
+                            : "rounded-bl-md border border-slate-200 bg-slate-50 text-slate-800",
+                        )}
+                      >
+                        {m.role === "ai" && (
+                          <span className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                            <Sparkles className="h-3 w-3" /> Gasto AI
+                          </span>
+                        )}
+                        {m.text}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Suggested chips */}
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"].map((c) => (
+                    <span
+                      key={c}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Input */}
+                <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-2 pl-4 pr-1">
+                  <MessageCircle className="h-4 w-4 text-slate-400" />
+                  <p className="flex-1 truncate text-sm text-slate-500">Pergunte sobre seus gastos…</p>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-900 text-white">
+                    <Send className="h-4 w-4" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ============================== ORÇAMENTO MOCK ============================== */
+
+function OrcamentoMock() {
+  const categorias = [
+    { c: "Mercado", usado: 520, limite: 800, color: "bg-emerald-500" },
+    { c: "Transporte", usado: 180, limite: 300, color: "bg-blue-500" },
+    { c: "Lazer", usado: 410, limite: 400, color: "bg-rose-500" },
+    { c: "Assinaturas", usado: 89, limite: 150, color: "bg-violet-500" },
+  ];
+  return (
+    <MockShell>
+      {/* Limite inteligente */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 p-5 text-white">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/60">
+              Limite inteligente · hoje
+            </p>
+            <p className="mt-1 text-3xl font-extrabold tabular-nums">R$ 84,20</p>
+            <p className="mt-1 text-[11px] text-white/70">por dia · até o fim do mês</p>
+          </div>
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 text-white backdrop-blur">
+            <Gauge className="h-5 w-5" />
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+          <div className="rounded-lg bg-white/10 p-2.5">
+            <p className="text-white/60">Renda</p>
+            <p className="mt-0.5 font-bold tabular-nums">R$ 6.420</p>
+          </div>
+          <div className="rounded-lg bg-white/10 p-2.5">
+            <p className="text-white/60">Fixas pagas</p>
+            <p className="mt-0.5 font-bold tabular-nums">R$ 2.180</p>
+          </div>
+          <div className="rounded-lg bg-white/10 p-2.5">
+            <p className="text-white/60">Sobra</p>
+            <p className="mt-0.5 font-bold tabular-nums text-emerald-300">R$ 2.105</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Orçamento por categoria */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Orçamento por categoria
+          </p>
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+            <Bell className="h-2.5 w-2.5" /> 1 estouro
+          </span>
+        </div>
+        <ul className="mt-3 space-y-3">
+          {categorias.map((cat) => {
+            const pct = Math.min(100, Math.round((cat.usado / cat.limite) * 100));
+            const estourou = cat.usado > cat.limite;
+            return (
+              <li key={cat.c}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700">{cat.c}</span>
+                  <span
+                    className={cn(
+                      "tabular-nums font-semibold",
+                      estourou ? "text-rose-600" : "text-slate-600",
+                    )}
+                  >
+                    R$ {cat.usado} / R$ {cat.limite}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={cn(
+                      "h-full rounded-full",
+                      estourou ? "bg-rose-500" : cat.color,
+                    )}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </MockShell>
+  );
+}
+
+/* ============================== CONTAS MOCK ============================== */
+
+function ContasMock() {
+  const contas = [
+    { n: "Aluguel", v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: "Pago" },
+    { n: "Internet", v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: "Em 3 dias" },
+    { n: "Energia", v: "R$ 248,30", d: "18/12", tone: "info" as const, label: "Em 9 dias" },
+    { n: "Cliente — projeto", v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: "A receber" },
+  ];
+  return (
+    <MockShell>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Contas · dezembro
+          </p>
+          <p className="text-base font-bold text-slate-900">R$ 1.818,20 em aberto</p>
+        </div>
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 text-amber-700">
+          <CalendarClock className="h-5 w-5" />
+        </span>
+      </div>
+
+      <ul className="mt-4 space-y-2">
+        {contas.map((c) => {
+          const toneCls =
+            c.tone === "ok"
+              ? "border-emerald-200 bg-emerald-50/60"
+              : c.tone === "warn"
+                ? "border-amber-200 bg-amber-50/60"
+                : c.tone === "income"
+                  ? "border-blue-200 bg-blue-50/60"
+                  : "border-slate-200 bg-white";
+          const badgeCls =
+            c.tone === "ok"
+              ? "bg-emerald-100 text-emerald-700"
+              : c.tone === "warn"
+                ? "bg-amber-100 text-amber-800"
+                : c.tone === "income"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-slate-100 text-slate-700";
+          return (
+            <li
+              key={c.n}
+              className={cn(
+                "flex items-center justify-between rounded-xl border px-3 py-2.5",
+                toneCls,
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    "grid h-9 w-9 place-items-center rounded-lg",
+                    c.tone === "ok"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : c.tone === "warn"
+                        ? "bg-amber-100 text-amber-700"
+                        : c.tone === "income"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-slate-100 text-slate-700",
+                  )}
+                >
+                  {c.tone === "income" ? (
+                    <ArrowDownRight className="h-4 w-4" />
+                  ) : c.tone === "ok" ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Calendar className="h-4 w-4" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{c.n}</p>
+                  <p className="text-[11px] text-slate-500">Vence {c.d}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold tabular-nums text-slate-900">{c.v}</p>
+                <span
+                  className={cn(
+                    "mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold",
+                    badgeCls,
+                  )}
+                >
+                  {c.label}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            A pagar
+          </p>
+          <p className="text-sm font-bold tabular-nums text-rose-700">R$ 368,20</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            A receber
+          </p>
+          <p className="text-sm font-bold tabular-nums text-emerald-700">R$ 1.800,00</p>
+        </div>
+      </div>
+    </MockShell>
   );
 }
 
