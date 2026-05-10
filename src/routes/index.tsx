@@ -35,6 +35,7 @@ import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
+import { MonthForecastCard } from "@/components/MonthForecastCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
   contaPertenceAoMesRef,
