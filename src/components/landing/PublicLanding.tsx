@@ -28,6 +28,13 @@ import {
   Pencil,
   LineChart,
   Quote,
+  Crown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  SlidersHorizontal,
+  Gauge,
+  LayoutGrid,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
