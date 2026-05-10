@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { traduzirErroAuth } from "@/lib/auth-messages";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Entrar — Gasto Inteligente" }] }),
@@ -58,6 +59,9 @@ function LoginForm() {
         </div>
       }
     >
+      <div className="mb-5 animate-fade-in">
+        <GoogleAuthButton label="Entrar com Google" separatorText="ou entre com e-mail" />
+      </div>
       <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
