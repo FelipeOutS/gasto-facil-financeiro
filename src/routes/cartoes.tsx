@@ -996,6 +996,17 @@ function UltimasCompras({
           })}
         </ul>
       )}
+      {hasMore && gastos.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <Link
+            to="/gastos"
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-brand-on-soft transition-colors hover:bg-brand-soft"
+          >
+            Ver todas
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
