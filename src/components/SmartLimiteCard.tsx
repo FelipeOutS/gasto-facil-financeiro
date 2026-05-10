@@ -547,7 +547,7 @@ export function SmartLimiteCard({
 
         {/* Barra de progresso */}
         {status !== "sem_dados" && (
-          <div className="mt-4">
+          <div className="mt-3">
             <div
               className={cn(
                 "flex items-center justify-between text-[10px] font-medium uppercase tracking-wider",
