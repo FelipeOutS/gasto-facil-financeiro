@@ -638,7 +638,7 @@ export function SmartLimiteCard({
         )}
 
         {/* CTA */}
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <Link
             to="/gastos"
             className={cn(
