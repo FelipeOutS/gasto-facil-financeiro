@@ -567,6 +567,261 @@ export const getChatHistory = createServerFn({ method: "GET" })
     return { messages: (data ?? []) as any };
   });
 
+// ====================================================================
+// Resumo Inteligente do Mês — análise automática para o Dashboard
+// ====================================================================
+
+const SMART_SUMMARY_PROMPT = `Você é o "Gasto Inteligente AI". Gere um RESUMO INTELIGENTE DO MÊS para exibir num card do Dashboard.
+
+Tom: amigável, descontraído, brasileiro, próximo. Linguagem simples, sem jargão.
+
+FORMATO OBRIGATÓRIO (markdown limpo, curto):
+- Comece com 1 frase resumindo receitas, gastos e saldo do mês (use os valores EXATOS).
+- Em seguida, 1 parágrafo curto destacando a categoria de maior peso e 1-2 categorias relevantes a revisar.
+- Se houver fatura de cartão com valor relevante, inclua um bloco curto:
+  **Ponto de atenção:** descreva fatura(s) com valor, cartão e dia de vencimento (use os dados do bloco CARTÕES E FATURAS).
+- Se houver contas vencidas/próximas, mencione brevemente.
+- Termine com **Sugestão:** uma dica curta, gentil e prática (1-2 linhas).
+
+Regras críticas:
+- Use APENAS os números dos blocos. Nunca invente valores, datas, categorias ou nomes de cartões.
+- Se faltarem dados, escreva: "Ainda não tenho dados suficientes deste mês para uma análise completa."
+- Total máximo: 8 linhas. Sem títulos H1/H2. Sem listas longas. Sem despedidas.
+- Valores em R$ 1.234,56.`;
+
+async function buildMonthFullSummary(
+  supabase: any,
+  userId: string,
+  mes: number,
+  ano: number,
+): Promise<string> {
+  const ym = `${ano}-${String(mes).padStart(2, "0")}`;
+  const monthStart = isoDate(new Date(ano, mes - 1, 1));
+  const nextMonthStart = isoDate(new Date(ano, mes, 1));
+  const winStart = isoDate(new Date(ano, mes - 1 - 2, 1));
+  const winEnd = isoDate(new Date(ano, mes - 1 + 2, 0));
+  const prevMes = mes === 1 ? 12 : mes - 1;
+  const prevAno = mes === 1 ? ano - 1 : ano;
+  const prevYm = `${prevAno}-${String(prevMes).padStart(2, "0")}`;
+
+  const [
+    gastosRes,
+    cartoesRes,
+    categoriasRes,
+    receitasRes,
+    contasPagarRes,
+    metasRes,
+    faturasRes,
+  ] = await Promise.all([
+    supabase
+      .from("gastos")
+      .select("valor, categoria_id, data, descricao, estabelecimento, forma_pagamento, cartao_id, invoice_month, gasto_fixo, tipo_gasto")
+      .eq("user_id", userId)
+      .or(`invoice_month.in.(${ym},${prevYm}),and(data.gte.${winStart},data.lte.${winEnd})`)
+      .limit(5000),
+    supabase.from("cartoes").select("id, nome, banco, limite_total, dia_vencimento, dia_fechamento").eq("user_id", userId).limit(50),
+    supabase.from("categorias").select("id, nome").eq("user_id", userId).limit(200),
+    supabase
+      .from("contas_a_receber")
+      .select("titulo, valor_total, valor_recebido, data_prevista, status")
+      .eq("user_id", userId)
+      .gte("data_prevista", monthStart)
+      .lt("data_prevista", nextMonthStart)
+      .limit(100),
+    supabase
+      .from("contas_a_pagar")
+      .select("nome, valor, data_vencimento, status")
+      .eq("user_id", userId)
+      .gte("data_vencimento", isoDate(new Date(ano, mes - 1 - 1, 1)))
+      .lte("data_vencimento", isoDate(new Date(ano, mes, 0)))
+      .limit(100),
+    supabase.from("metas_financeiras").select("nome, valor_atual, valor_objetivo, prazo").eq("user_id", userId).limit(20),
+    supabase.from("faturas_cartao").select("cartao_id, mes, ano, status, valor_pago, data_pagamento").eq("user_id", userId).eq("mes", mes).eq("ano", ano),
+  ]);
+
+  const cartaoFech = new Map<string, number>();
+  const cartaoMap = new Map<string, { nome: string; banco?: string | null; dia_vencimento: number; limite_total: number }>();
+  for (const c of (cartoesRes.data ?? []) as any[]) {
+    cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
+    cartaoMap.set(c.id, { nome: c.nome, banco: c.banco, dia_vencimento: Number(c.dia_vencimento) || 0, limite_total: Number(c.limite_total) || 0 });
+  }
+  const catMap = new Map<string, string>();
+  for (const c of (categoriasRes.data ?? []) as any[]) catMap.set(c.id, c.nome);
+
+  const allGastos = (gastosRes.data ?? []) as Array<{
+    valor: number; categoria_id: string | null; data: string; descricao?: string;
+    estabelecimento?: string; forma_pagamento?: string; cartao_id?: string | null;
+    invoice_month?: string | null; gasto_fixo?: boolean | null; tipo_gasto?: string | null;
+  }>;
+
+  const doMes = allGastos.filter((g) => efetivoYmFor(g, cartaoFech) === ym);
+  const doMesAnt = allGastos.filter((g) => efetivoYmFor(g, cartaoFech) === prevYm);
+
+  const totalMes = doMes.reduce((s, g) => s + Number(g.valor || 0), 0);
+  const totalMesAnt = doMesAnt.reduce((s, g) => s + Number(g.valor || 0), 0);
+
+  const porCat = new Map<string, number>();
+  for (const g of doMes) {
+    const k = g.categoria_id ? catMap.get(g.categoria_id) ?? "Outros" : "Outros";
+    porCat.set(k, (porCat.get(k) ?? 0) + Number(g.valor || 0));
+  }
+  const topCat = [...porCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const maior = doMes.slice().sort((a, b) => Number(b.valor || 0) - Number(a.valor || 0))[0] ?? null;
+
+  const recorrentes = doMes
+    .filter((g) => g.gasto_fixo || g.tipo_gasto === "recorrente")
+    .reduce((s, g) => s + Number(g.valor || 0), 0);
+
+  const receitas = (receitasRes.data ?? []) as Array<{ valor_total: number; valor_recebido: number; status: string }>;
+  const totalReceitas = receitas.reduce((s, r) => s + Number(r.valor_total || 0), 0);
+  const totalRecebido = receitas.reduce((s, r) => s + Number(r.valor_recebido || 0), 0);
+
+  // Faturas por cartão (mesma lógica do buildCartoesFaturasBlock)
+  const porCartao = new Map<string, { total: number; itens: number }>();
+  for (const g of doMes) {
+    if (g.forma_pagamento !== "credito" || !g.cartao_id) continue;
+    const cur = porCartao.get(g.cartao_id) ?? { total: 0, itens: 0 };
+    cur.total += Number(g.valor || 0);
+    cur.itens += 1;
+    porCartao.set(g.cartao_id, cur);
+  }
+  const faturaInfo = new Map<string, { status: string; valor_pago: number }>();
+  for (const f of (faturasRes.data ?? []) as any[]) {
+    faturaInfo.set(f.cartao_id, { status: f.status ?? "aberta", valor_pago: Number(f.valor_pago || 0) });
+  }
+
+  const contasPagar = (contasPagarRes.data ?? []) as Array<{ nome: string; valor: number; data_vencimento: string; status: string }>;
+  const hojeISO = isoDate(new Date());
+  const vencidas = contasPagar.filter((c) => c.status !== "pago" && c.data_vencimento < hojeISO);
+  const proximas = contasPagar.filter((c) => c.status !== "pago" && c.data_vencimento >= hojeISO);
+  const pagas = contasPagar.filter((c) => c.status === "pago");
+
+  const metas = (metasRes.data ?? []) as Array<{ nome: string; valor_atual: number; valor_objetivo: number; prazo: string | null }>;
+
+  const saldo = totalReceitas - totalMes;
+  const label = `${NOMES_MES_PT[mes - 1]} de ${ano}`;
+
+  const lines: string[] = [];
+  lines.push(`Mês de referência: ${label} (${ym}). Hoje: ${hojeISO}.`);
+  lines.push(`Receitas previstas no mês: ${fmtBRL(totalReceitas)} (recebido até agora: ${fmtBRL(totalRecebido)}).`);
+  lines.push(`Total gasto no mês: ${fmtBRL(totalMes)} (${doMes.length} lançamentos).`);
+  lines.push(`Saldo do mês (receitas - gastos): ${fmtBRL(saldo)}.`);
+  if (totalMesAnt > 0) {
+    const diff = totalMes - totalMesAnt;
+    const pct = totalMesAnt ? Math.round((diff / totalMesAnt) * 100) : 0;
+    lines.push(`Mês anterior gastou: ${fmtBRL(totalMesAnt)} (${diff >= 0 ? "+" : ""}${pct}% vs. mês atual).`);
+  }
+  lines.push(`Gastos recorrentes/fixos do mês: ${fmtBRL(recorrentes)}.`);
+
+  if (topCat.length) {
+    lines.push("Top categorias do mês:");
+    for (const [n, v] of topCat) lines.push(`- ${n}: ${fmtBRL(v)}`);
+  } else {
+    lines.push("Sem gastos cadastrados neste mês.");
+  }
+
+  if (maior) {
+    const desc = (maior.estabelecimento || maior.descricao || "Lançamento").toString().slice(0, 60);
+    lines.push(`Maior gasto individual: ${desc} — ${fmtBRL(Number(maior.valor || 0))} em ${maior.data}.`);
+  }
+
+  if (porCartao.size) {
+    lines.push("Faturas de cartão deste mês:");
+    for (const [cid, info] of porCartao.entries()) {
+      const c = cartaoMap.get(cid);
+      if (!c) continue;
+      const fi = faturaInfo.get(cid);
+      const venc = c.dia_vencimento ? `vence dia ${String(c.dia_vencimento).padStart(2, "0")}` : "vencimento não definido";
+      const pago = fi ? `, status ${fi.status}, pago ${fmtBRL(fi.valor_pago)}` : "";
+      lines.push(`- ${c.nome}${c.banco ? ` (${c.banco})` : ""}: ${fmtBRL(info.total)} em ${info.itens} lançamentos, ${venc}${pago}.`);
+    }
+  } else {
+    lines.push("Sem fatura de cartão de crédito neste mês.");
+  }
+
+  if (vencidas.length) {
+    lines.push(`Contas vencidas: ${vencidas.length} (${fmtBRL(vencidas.reduce((s, c) => s + Number(c.valor || 0), 0))}).`);
+    for (const c of vencidas.slice(0, 3)) lines.push(`- ${c.nome}: ${fmtBRL(Number(c.valor || 0))} venceu em ${c.data_vencimento}.`);
+  }
+  if (proximas.length) {
+    lines.push(`Contas a pagar próximas: ${proximas.length} (${fmtBRL(proximas.reduce((s, c) => s + Number(c.valor || 0), 0))}).`);
+    for (const c of proximas.slice(0, 3)) lines.push(`- ${c.nome}: ${fmtBRL(Number(c.valor || 0))} venc. ${c.data_vencimento}.`);
+  }
+  if (pagas.length) {
+    lines.push(`Contas pagas no mês: ${pagas.length}.`);
+  }
+
+  if (metas.length) {
+    lines.push("Metas em andamento:");
+    for (const m of metas.slice(0, 4)) {
+      const pct = m.valor_objetivo ? Math.round((Number(m.valor_atual) / Number(m.valor_objetivo)) * 100) : 0;
+      lines.push(`- ${m.nome}: ${fmtBRL(Number(m.valor_atual || 0))} de ${fmtBRL(Number(m.valor_objetivo || 0))} (${pct}%)${m.prazo ? `, prazo ${m.prazo}` : ""}.`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export const getMonthlySmartSummary = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        mes: z.number().int().min(1).max(12).optional(),
+        ano: z.number().int().min(2000).max(2100).optional(),
+      })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    const access = await ensureFeatureAccess(userId);
+    if (!access.ok) {
+      throw new Response(access.reason, { status: 403 });
+    }
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      throw new Response("Serviço de IA indisponível.", { status: 500 });
+    }
+
+    const now = new Date();
+    const mes = data.mes ?? now.getMonth() + 1;
+    const ano = data.ano ?? now.getFullYear();
+
+    const block = await buildMonthFullSummary(supabase, userId, mes, ano);
+
+    const messages = [
+      { role: "system", content: SMART_SUMMARY_PROMPT },
+      { role: "system", content: `DADOS DO MÊS\n${block}` },
+      {
+        role: "user",
+        content: `Gere o resumo inteligente do mês ${NOMES_MES_PT[mes - 1]} de ${ano} com base apenas nos dados acima.`,
+      },
+    ];
+
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "google/gemini-2.5-flash", messages }),
+    });
+
+    if (!aiResp.ok) {
+      const text = await aiResp.text().catch(() => "");
+      console.error("[smart-summary] AI gateway error", aiResp.status, text);
+      if (aiResp.status === 429) throw new Response("Muitas requisições. Aguarde alguns instantes.", { status: 429 });
+      if (aiResp.status === 402) throw new Response("Sem créditos da IA no momento.", { status: 402 });
+      throw new Response("Não consegui gerar o resumo agora.", { status: 502 });
+    }
+
+    const json: any = await aiResp.json();
+    const reply: string = json?.choices?.[0]?.message?.content?.trim?.() ?? "";
+    if (!reply) throw new Response("Não consegui gerar o resumo agora.", { status: 502 });
+
+    return { reply, mes, ano, generatedAt: new Date().toISOString() };
+  });
+
 export const clearChatHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
