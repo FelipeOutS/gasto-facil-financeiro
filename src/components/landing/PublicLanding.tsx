@@ -535,7 +535,27 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl">
+        {/* Mobile: três dispositivos em uma única linha horizontal */}
+        <div className="mt-10 flex items-end justify-center gap-2 px-2 md:hidden">
+          <div className="w-[55%]">
+            <NotebookFrame>
+              <DesktopDashboardMock />
+            </NotebookFrame>
+          </div>
+          <div className="w-[24%]">
+            <TabletFrame>
+              <TabletDashboardMock />
+            </TabletFrame>
+          </div>
+          <div className="w-[15%]">
+            <PhoneFrame>
+              <MobileDashboardMock />
+            </PhoneFrame>
+          </div>
+        </div>
+
+        {/* Desktop / tablet+: composição sobreposta original */}
+        <div className="relative mx-auto mt-10 hidden max-w-2xl sm:mt-12 md:block lg:max-w-3xl">
           <div
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
@@ -549,15 +569,15 @@ function MultiDeviceShowcase() {
             <DesktopDashboardMock />
           </NotebookFrame>
 
-          {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
-          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0 md:z-10">
+          {/* Tablet — sobreposto à esquerda */}
+          <div className="md:absolute md:-bottom-10 md:-left-4 md:z-10 md:mt-0 lg:-bottom-14 lg:left-0">
             <TabletFrame>
               <TabletDashboardMock />
             </TabletFrame>
           </div>
 
-          {/* Phone — overlapping on the right on desktop, stacked on mobile */}
-          <div className="mt-6 flex justify-center sm:mt-8 md:mt-0 md:absolute md:-bottom-8 md:-right-2 lg:-bottom-12 lg:-right-2 md:z-20">
+          {/* Celular — sobreposto à direita */}
+          <div className="md:absolute md:-bottom-8 md:-right-2 md:z-20 md:mt-0 lg:-bottom-12 lg:-right-2">
             <PhoneFrame>
               <MobileDashboardMock />
             </PhoneFrame>
@@ -589,7 +609,7 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
 
 function TabletFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[230px] sm:w-[260px] md:w-[230px] lg:w-[260px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
+    <div className="relative w-full md:w-[230px] lg:w-[260px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
       <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1.5">
         {/* front camera */}
         <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
@@ -603,7 +623,7 @@ function TabletFrame({ children }: { children: React.ReactNode }) {
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[120px] sm:w-[135px] md:w-[105px] lg:w-[125px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1 shadow-[0_35px_60px_-20px_rgba(15,23,42,0.45)]">
+    <div className="relative w-full md:w-[105px] lg:w-[125px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1 shadow-[0_35px_60px_-20px_rgba(15,23,42,0.45)]">
       <div className="relative overflow-hidden rounded-[20px] bg-slate-900 p-0.5">
         {/* notch */}
         <div className="absolute left-1/2 top-1 z-10 h-2.5 w-10 -translate-x-1/2 rounded-full bg-slate-900" />
