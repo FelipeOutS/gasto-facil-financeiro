@@ -27,6 +27,9 @@ const SUBSCRIPTION_ALLOWLIST = new Set<string>([
   "/conta",
   "/perfil",
   "/admin",
+  "/categorias",
+  "/landing",
+  "/manual",
 ]);
 
 function isSubscriptionAllowed(pathname: string) {
