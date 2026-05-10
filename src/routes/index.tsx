@@ -34,6 +34,7 @@ import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
+import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
   contaPertenceAoMesRef,
