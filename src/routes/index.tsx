@@ -1086,8 +1086,8 @@ function ContasCard({
   return (
     <section
       className={cn(
-        "rounded-3xl border bg-card p-4 transition-colors",
-        isSide ? "h-auto self-start shadow-elevated" : "mt-2.5",
+        "w-full rounded-3xl border bg-card p-4 transition-colors",
+        isSide ? "flex h-full flex-col shadow-elevated" : "mt-2.5",
         hasAtrasada ? "border-destructive/40" : "border-border",
       )}
     >
