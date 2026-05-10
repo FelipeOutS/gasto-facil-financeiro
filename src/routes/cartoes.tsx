@@ -926,9 +926,11 @@ function ProximosVencimentos({
 function UltimasCompras({
   gastos,
   cartoes,
+  hasMore,
 }: {
   gastos: Gasto[];
   cartoes: Cartao[];
+  hasMore?: boolean;
 }) {
   const cartaoMap = useMemo(() => {
     const m = new Map<string, Cartao>();
