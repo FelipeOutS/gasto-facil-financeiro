@@ -528,7 +528,15 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 sm:mt-12 max-w-2xl lg:max-w-3xl">
+        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(15,23,42,0.16) 0%, rgba(15,23,42,0.08) 38%, rgba(15,23,42,0.00) 74%)",
+            }}
+          />
           {/* Notebook */}
           <NotebookFrame>
             <DesktopDashboardMock />
@@ -537,7 +545,7 @@ function MultiDeviceShowcase() {
           {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
           <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0 md:z-10">
             <TabletFrame>
-              <DesktopDashboardMock />
+              <TabletDashboardMock />
             </TabletFrame>
           </div>
 
@@ -556,13 +564,8 @@ function MultiDeviceShowcase() {
 function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative mx-auto w-full max-w-2xl lg:max-w-3xl">
-      {/* soft ambient floor shadow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-[8%] -bottom-10 h-16 rounded-[50%] bg-slate-900/20 blur-3xl"
-      />
       {/* lid */}
-      <div className="relative rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_60px_120px_-50px_rgba(15,23,42,0.45)]">
+      <div className="relative z-10 rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_60px_120px_-50px_rgba(15,23,42,0.45)]">
         <div className="rounded-[14px] bg-slate-900 p-1.5">
           {/* camera */}
           <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
@@ -579,7 +582,7 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
 
 function TabletFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[230px] sm:w-[260px] md:w-[200px] lg:w-[240px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
+    <div className="relative w-[230px] sm:w-[260px] md:w-[230px] lg:w-[260px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
       <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1.5">
         {/* front camera */}
         <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
@@ -782,6 +785,88 @@ function DesktopDashboardMock() {
   );
 }
 
+function TabletDashboardMock() {
+  const kpis = [
+    { l: "Saldo", v: "R$ 3.142", c: "from-blue-500/15 to-blue-500/0", i: Wallet, t: "text-blue-600" },
+    { l: "Receitas", v: "R$ 6.420", c: "from-emerald-500/15 to-emerald-500/0", i: ArrowUpRight, t: "text-emerald-600" },
+    { l: "Despesas", v: "R$ 3.277", c: "from-rose-500/15 to-rose-500/0", i: ArrowDownRight, t: "text-rose-600" },
+    { l: "A pagar", v: "R$ 980", c: "from-amber-500/15 to-amber-500/0", i: Receipt, t: "text-amber-600" },
+  ];
+
+  return (
+    <div className="flex h-full w-full flex-col bg-slate-50">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 text-[8px] font-bold text-white">M</span>
+          <div>
+            <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Dashboard</p>
+            <p className="text-[10px] font-bold text-slate-900">Novembro · 2026</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500">
+            <Bell className="h-2.5 w-2.5" />
+          </span>
+          <span className="rounded-full bg-blue-50 px-2 py-1 text-[7px] font-semibold text-blue-700">+ Novo</span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden p-3">
+        <div className="overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-3 text-white shadow-[0_18px_35px_-22px_rgba(37,99,235,0.75)]">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[7px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
+              <p className="mt-0.5 text-[18px] font-bold tabular-nums">R$ 3.142,80</p>
+            </div>
+            <span className="rounded-full bg-white/15 px-2 py-1 text-[7px] font-semibold backdrop-blur">+12%</span>
+          </div>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {kpis.map((k) => (
+            <div key={k.l} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-2">
+              <div className={cn("absolute inset-0 bg-gradient-to-br", k.c)} />
+              <div className="relative flex items-center justify-between">
+                <p className="text-[7px] font-semibold uppercase tracking-wider text-slate-500">{k.l}</p>
+                <k.i className={cn("h-3 w-3", k.t)} />
+              </div>
+              <p className="relative mt-1 text-[11px] font-bold tabular-nums text-slate-900">{k.v}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
+              <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
+            </div>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+          </div>
+          <FluxoLineChart className="mt-2 h-[58px] w-full" compact />
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {[
+            { l: "Mercado", v: "R$ 920", p: "70%", c: "from-emerald-500 to-emerald-400" },
+            { l: "Casa", v: "R$ 680", p: "55%", c: "from-amber-500 to-amber-400" },
+          ].map((r) => (
+            <div key={r.l} className="rounded-lg border border-slate-200 bg-white p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[7.5px] font-semibold text-slate-700">{r.l}</span>
+                <span className="text-[7px] tabular-nums text-slate-500">{r.v}</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: r.p }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FluxoLineChart({ className, compact = false }: { className?: string; compact?: boolean }) {
   // Two series over the month: receitas (verde) e despesas (azul)
   const receitas = [20, 28, 24, 36, 42, 38, 50, 58, 54, 66, 72, 70];
@@ -855,7 +940,7 @@ function MobileDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50">
       {/* status bar */}
-      <div className="flex items-center justify-between px-3 pt-4 pb-1 text-[6.5px] font-semibold text-slate-700">
+      <div className="flex items-center justify-between px-3 pt-3.5 pb-1 text-[6px] font-semibold text-slate-700">
         <span>9:41</span>
         <span className="flex items-center gap-0.5">
           <span className="h-1 w-1 rounded-full bg-slate-700" />
@@ -864,57 +949,46 @@ function MobileDashboardMock() {
         </span>
       </div>
       {/* header */}
-      <div className="flex items-center justify-between px-2.5 pt-1">
-        <div className="flex items-center gap-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-[7.5px] font-bold text-white">M</span>
+      <div className="flex items-center justify-between px-2.5 pt-0.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-[7px] font-bold text-white">M</span>
           <div>
-            <p className="text-[6.5px] text-slate-500">Olá, Maria 👋</p>
-            <p className="text-[8px] font-bold text-slate-900">Bem-vinda de volta</p>
+            <p className="text-[6px] text-slate-500">Olá, Maria 👋</p>
+            <p className="text-[7.5px] font-bold text-slate-900">Bem-vinda</p>
           </div>
         </div>
-        <span className="relative grid h-5 w-5 place-items-center rounded-full bg-white shadow-sm">
+        <span className="relative grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white shadow-sm">
           <Bell className="h-2.5 w-2.5 text-slate-600" />
           <span className="absolute right-0 top-0 h-1 w-1 rounded-full bg-rose-500 ring-1 ring-white" />
         </span>
       </div>
 
       {/* scroll content */}
-      <div className="flex-1 overflow-hidden px-2.5 pb-12">
+      <div className="flex-1 overflow-hidden px-2.5 pb-10">
         {/* Saldo hero */}
-        <div className="mt-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-2.5 text-white shadow-lg">
+        <div className="mt-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-2 text-white shadow-lg">
           <div className="flex items-center justify-between">
-            <p className="text-[7px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
+            <p className="text-[6.5px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
             <Eye className="h-2.5 w-2.5 opacity-80" />
           </div>
-          <p className="mt-0.5 text-[14px] font-bold tabular-nums">R$ 3.142,80</p>
-          <div className="mt-1 flex items-center justify-between">
-            <div className="flex items-center gap-0.5 text-[6.5px] opacity-90">
+          <p className="mt-0.5 text-[13px] font-bold tabular-nums">R$ 3.142,80</p>
+          <div className="mt-1 flex items-center justify-between gap-1">
+            <div className="flex items-center gap-0.5 text-[6px] opacity-90">
               <ArrowUpRight className="h-2 w-2" /> +12% vs out.
             </div>
-            <div className="flex items-center gap-1">
-              {[
-                { l: "Receita", v: "R$ 6.420", up: true },
-                { l: "Despesa", v: "R$ 3.277", up: false },
-              ].map((k) => (
-                <div key={k.l} className="rounded-md bg-white/15 px-1 py-0.5 backdrop-blur">
-                  <p className="text-[6px] opacity-80">{k.l}</p>
-                  <p className="text-[7px] font-bold tabular-nums">{k.v}</p>
-                </div>
-              ))}
-            </div>
+            <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[6px] font-semibold backdrop-blur">Meta 62%</span>
           </div>
         </div>
 
         {/* quick actions */}
-        <div className="mt-2 grid grid-cols-4 gap-1.5">
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
           {[
             { l: "Adicionar", i: Receipt, c: "from-blue-500 to-blue-600" },
             { l: "Cartões", i: CreditCard, c: "from-violet-500 to-violet-600" },
             { l: "Metas", i: Target, c: "from-emerald-500 to-emerald-600" },
-            { l: "Investir", i: TrendingUp, c: "from-amber-500 to-amber-600" },
           ].map((a) => (
             <div key={a.l} className="flex flex-col items-center gap-0.5">
-              <span className={cn("grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br text-white shadow-sm", a.c)}>
+              <span className={cn("grid h-5 w-5 place-items-center rounded-lg bg-gradient-to-br text-white shadow-sm", a.c)}>
                 <a.i className="h-2.5 w-2.5" />
               </span>
               <span className="text-[6px] font-medium text-slate-600">{a.l}</span>
@@ -928,7 +1002,7 @@ function MobileDashboardMock() {
             <p className="text-[7.5px] font-semibold text-slate-800">Fluxo do mês</p>
             <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[6px] font-semibold text-emerald-700">+12%</span>
           </div>
-          <FluxoLineChart className="mt-0.5 h-9 w-full" compact />
+          <FluxoLineChart className="mt-1 h-8 w-full" compact />
         </div>
 
         {/* transactions */}
@@ -941,17 +1015,16 @@ function MobileDashboardMock() {
             {[
               { l: "Mercado", s: "Hoje", v: "- R$ 184,90", neg: true, c: "bg-emerald-100 text-emerald-700", i: "M" },
               { l: "Salário", s: "05 nov", v: "+ R$ 4.800", neg: false, c: "bg-blue-100 text-blue-700", i: "S" },
-              { l: "Netflix", s: "04 nov", v: "- R$ 39,90", neg: true, c: "bg-rose-100 text-rose-700", i: "N" },
             ].map((r) => (
-              <div key={r.l} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-1.5 py-1">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("grid h-4 w-4 place-items-center rounded-full text-[7px] font-bold", r.c)}>{r.i}</span>
+              <div key={r.l} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-1.5 py-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={cn("grid h-4 w-4 shrink-0 place-items-center rounded-full text-[7px] font-bold", r.c)}>{r.i}</span>
                   <div>
                     <p className="text-[7px] font-semibold text-slate-800">{r.l}</p>
                     <p className="text-[6px] text-slate-400">{r.s}</p>
                   </div>
                 </div>
-                <span className={cn("text-[7px] font-bold tabular-nums", r.neg ? "text-rose-600" : "text-emerald-600")}>{r.v}</span>
+                <span className={cn("text-[6.5px] font-bold tabular-nums", r.neg ? "text-rose-600" : "text-emerald-600")}>{r.v}</span>
               </div>
             ))}
           </div>
