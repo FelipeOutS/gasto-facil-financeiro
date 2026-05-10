@@ -643,10 +643,22 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const forecast = await computeMonthForecast(supabase, userId, forecastRef.mes, forecastRef.ano);
     const forecastBlock = forecastToText(forecast);
 
+    // Assinaturas/recorrências e investimentos — sempre disponíveis para a IA
+    const [assinaturasBlock, investimentosBlock] = await Promise.all([
+      buildAssinaturasBlock(supabase, userId),
+      buildInvestimentosBlock(supabase, userId),
+    ]);
+
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
       { role: "system" as const, content: `PREVISÃO DE FECHAMENTO DO MÊS\n${forecastBlock}\n\nQuando o usuário perguntar se vai fechar positivo/negativo, quanto deve sobrar, o que falta pagar, qual conta mais pesa, ou previsão do mês — use EXATAMENTE estes valores. Deixe claro o que é confirmado e o que é previsto.` },
+      ...(assinaturasBlock
+        ? [{ role: "system" as const, content: `ASSINATURAS E RECORRÊNCIAS ATIVAS\n${assinaturasBlock}\n\nUse esses números EXATOS quando o usuário perguntar sobre assinaturas, contas fixas, recorrências, "quanto pago por mês em assinaturas", "quais assinaturas pesam mais" etc.` }]
+        : [{ role: "system" as const, content: `ASSINATURAS E RECORRÊNCIAS ATIVAS\nSem assinaturas ou recorrências ativas cadastradas.` }]),
+      ...(investimentosBlock
+        ? [{ role: "system" as const, content: `INVESTIMENTOS DO USUÁRIO\n${investimentosBlock}\n\nUse esses números EXATOS quando o usuário perguntar sobre investimentos, carteira, rentabilidade, vencimento, "como está minha carteira", "tenho investimento parado", "quanto está aplicado" etc. Não dê recomendação de compra/venda; apenas comente os dados.` }]
+        : [{ role: "system" as const, content: `INVESTIMENTOS DO USUÁRIO\nSem investimentos cadastrados.` }]),
       ...(targetBlock
         ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
         : []),
