@@ -716,66 +716,57 @@ function DesktopDashboardMock() {
         </div>
 
         {/* Limite Inteligente */}
-        <div className="mt-2 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50/70 to-white p-2">
+        <div className="mt-2 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50/70 to-white p-1.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-amber-100">
-                <Sparkles className="h-2 w-2 text-amber-600" />
+            <div className="flex items-center gap-1">
+              <span className="grid h-3 w-3 place-items-center rounded-full bg-amber-100">
+                <Sparkles className="h-1.5 w-1.5 text-amber-600" />
               </span>
-              <p className="text-[7px] font-bold uppercase tracking-wider text-amber-700">Seu limite inteligente</p>
+              <p className="text-[6.5px] font-bold uppercase tracking-wider text-amber-700">Seu limite inteligente</p>
             </div>
-            <span className="flex items-center gap-1 rounded-full border border-amber-300 bg-white px-1.5 py-0.5 text-[6.5px] font-semibold text-amber-700">
-              <Gauge className="h-2 w-2" /> ATENÇÃO AO RITMO
+            <span className="flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[5.5px] font-semibold text-amber-700">
+              <Gauge className="h-1.5 w-1.5" /> ATENÇÃO AO RITMO
             </span>
           </div>
-          <p className="mt-1 text-[7px] font-semibold text-amber-800">Ignora contas fixas e faturas já pagas.</p>
-          <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white px-1.5 py-0.5 text-[6.5px] font-semibold text-amber-700">
-            <SlidersHorizontal className="h-2 w-2" /> Somente gastos variáveis
-          </span>
-          <div className="mt-1 flex items-baseline gap-1">
-            <p className="text-[18px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
-            <span className="text-[8px] font-semibold text-amber-600">/ dia</span>
-          </div>
-          <p className="mt-0.5 text-[6.5px] leading-snug text-amber-800/80">
-            Você está chegando perto da meta. Mantenha os gastos abaixo de R$ 13,73 por dia.
-          </p>
 
-          <div className="mt-1.5 flex items-center justify-between rounded-lg border border-amber-200 bg-white px-2 py-1">
-            <div className="flex items-center gap-1.5">
-              <Target className="h-2.5 w-2.5 text-amber-600" />
-              <div>
-                <p className="text-[6px] font-semibold uppercase tracking-wider text-slate-500">Meta mensal de gastos</p>
-                <p className="text-[8px] font-bold tabular-nums text-slate-900">R$ 350,00</p>
+          <div className="mt-1 flex items-end justify-between gap-2">
+            <div>
+              <div className="flex items-baseline gap-1">
+                <p className="text-[14px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
+                <span className="text-[7px] font-semibold text-amber-600">/ dia</span>
               </div>
+              <p className="mt-0.5 text-[5.5px] leading-snug text-amber-800/80">
+                Mantenha os gastos abaixo de R$ 13,73 por dia.
+              </p>
             </div>
-            <span className="flex items-center gap-1 rounded-full border border-slate-200 px-1.5 py-0.5 text-[6.5px] font-medium text-slate-600">
-              <Pencil className="h-2 w-2" /> Editar
-            </span>
+            <div className="text-right">
+              <p className="text-[5.5px] font-semibold uppercase tracking-wider text-slate-500">Meta</p>
+              <p className="text-[8px] font-bold tabular-nums text-slate-900">R$ 350,00</p>
+            </div>
           </div>
 
-          <div className="mt-1.5">
-            <div className="flex items-center justify-between text-[6px] font-semibold uppercase tracking-wider text-amber-700">
+          <div className="mt-1">
+            <div className="flex items-center justify-between text-[5.5px] font-semibold uppercase tracking-wider text-amber-700">
               <span>Da meta usado</span>
               <span>14%</span>
             </div>
-            <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-amber-100">
+            <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-amber-100">
               <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500" style={{ width: "14%" }} />
             </div>
           </div>
 
-          <div className="mt-1.5 grid grid-cols-4 gap-1">
+          <div className="mt-1 grid grid-cols-3 gap-1">
             {[
-              { l: "META", v: "R$ 350,00", i: Target, t: "text-emerald-600" },
               { l: "VARIÁVEIS", v: "R$ 48,00", i: Wallet, t: "text-blue-600" },
               { l: "RESTANTE", v: "R$ 302,00", i: ArrowUpRight, t: "text-emerald-600" },
               { l: "DIAS REST.", v: "22", i: Gauge, t: "text-amber-600" },
             ].map((s) => (
-              <div key={s.l} className="rounded-md border border-amber-200 bg-white px-1.5 py-1">
+              <div key={s.l} className="rounded-md border border-amber-200 bg-white px-1 py-0.5">
                 <div className="flex items-center gap-1">
-                  <s.i className={cn("h-2 w-2", s.t)} />
-                  <p className="text-[5.5px] font-semibold uppercase tracking-wider text-slate-500 truncate">{s.l}</p>
+                  <s.i className={cn("h-1.5 w-1.5", s.t)} />
+                  <p className="text-[5px] font-semibold uppercase tracking-wider text-slate-500 truncate">{s.l}</p>
                 </div>
-                <p className="mt-0.5 text-[8px] font-bold tabular-nums text-slate-900">{s.v}</p>
+                <p className="text-[7px] font-bold tabular-nums text-slate-900">{s.v}</p>
               </div>
             ))}
           </div>
