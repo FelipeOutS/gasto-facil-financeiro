@@ -34,6 +34,7 @@ import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
+import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
   contaPertenceAoMesRef,
@@ -445,6 +446,11 @@ function Index() {
           Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
         </p>
       )}
+
+      {/* ===== Resumo inteligente do mês (IA premium) ===== */}
+      <section className="mt-4">
+        <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+      </section>
 
       {/* ===== Limite inteligente (premium) ===== */}
       <section className="mt-4">

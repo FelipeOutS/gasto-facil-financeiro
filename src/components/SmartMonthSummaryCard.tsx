@@ -1,0 +1,170 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Sparkles, RefreshCw, Lock, ArrowRight, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Button } from "@/components/ui/button";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { usePlan } from "@/lib/use-plan";
+import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
+import { getMonthlySmartSummary } from "@/lib/finance-ai.functions";
+import { cn } from "@/lib/utils";
+
+const SUGGESTION = "Me explique meu resumo financeiro deste mês";
+
+type Props = {
+  mes: number;
+  ano: number;
+  className?: string;
+};
+
+export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
+  const plan = usePlan();
+  const navigate = useNavigate();
+  const fetchSummary = useServerFn(getMonthlySmartSummary);
+  const [reply, setReply] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lockOpen, setLockOpen] = useState(false);
+
+  const allowed = !plan.loading && plan.can("gasto_ai");
+  const rule = findPremiumRule("/gasto-ai");
+
+  async function load() {
+    if (!allowed) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetchSummary({ data: { mes, ano } });
+      setReply(res.reply);
+    } catch (e: any) {
+      const msg = typeof e?.message === "string" && e.message ? e.message : "Não consegui gerar o resumo agora.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Carrega automaticamente ao montar / quando o mês muda
+  useEffect(() => {
+    if (!allowed) return;
+    setReply(null);
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowed, mes, ano]);
+
+  function handlePerguntar() {
+    if (!allowed) {
+      setLockOpen(true);
+      return;
+    }
+    void navigate({ to: "/gasto-ai", search: { q: SUGGESTION } as any });
+  }
+
+  return (
+    <section
+      className={cn(
+        "relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-amber-100/10 p-4 shadow-card sm:p-5",
+        className,
+      )}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-primary/15 blur-3xl"
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/30 to-primary/30 ring-1 ring-primary/20">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">
+              Resumo inteligente
+            </p>
+            <h2 className="mt-0.5 text-base font-bold tracking-tight sm:text-lg">
+              Resumo inteligente do mês
+            </h2>
+          </div>
+        </div>
+        {allowed && (
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+            aria-label="Gerar de novo"
+            title="Gerar de novo"
+          >
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          </button>
+        )}
+      </div>
+
+      <div className="relative mt-3 min-h-[96px]">
+        {!allowed ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4">
+            <div className="flex items-start gap-2">
+              <Lock className="mt-0.5 h-4 w-4 text-primary" />
+              <p className="text-sm text-foreground/80">
+                Análise automática do seu mês com IA. Disponível nos planos
+                <strong> Pessoa Física Premium</strong>, <strong>MEI Inteligente</strong> e{" "}
+                <strong>Empresa</strong>.
+              </p>
+            </div>
+            <Button onClick={() => setLockOpen(true)} className="w-full rounded-2xl bg-brand-grad sm:w-auto">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Desbloquear recurso
+            </Button>
+          </div>
+        ) : loading && !reply ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Analisando seu mês…
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+            {error}
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="ml-2 underline underline-offset-2"
+            >
+              tentar de novo
+            </button>
+          </div>
+        ) : reply ? (
+          <div className="ai-markdown text-sm leading-relaxed text-foreground/90">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{reply}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Sem dados suficientes neste mês.</p>
+        )}
+      </div>
+
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] text-muted-foreground">
+          Análise gerada com seus dados, em tempo real.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePerguntar}
+          className="rounded-full border-primary/30 bg-card/70 text-foreground hover:bg-accent"
+        >
+          Perguntar para a IA
+          <ArrowRight className="ml-1 h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {rule && (
+        <PremiumLockModal
+          open={lockOpen}
+          onOpenChange={setLockOpen}
+          title={rule.title}
+          description={premiumDescription(rule)}
+        />
+      )}
+    </section>
+  );
+}
