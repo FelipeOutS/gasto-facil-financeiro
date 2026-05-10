@@ -18,6 +18,9 @@ import {
 } from "@/lib/finance-ai.functions";
 
 export const Route = createFileRoute("/gasto-ai")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Gasto Inteligente AI — Assistente financeiro com IA" },
