@@ -3046,9 +3046,9 @@ function Footer() {
   return (
     <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-12 md:gap-8">
           {/* Brand */}
-          <div className="lg:col-span-4">
+          <div className="col-span-2 md:col-span-12 lg:col-span-4">
             <img
               src="/logos/brand/gasto-inteligente-light.png"
               alt="Gasto Inteligente"
