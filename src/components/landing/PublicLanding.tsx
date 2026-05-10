@@ -524,18 +524,25 @@ function MultiDeviceShowcase() {
             Acompanhe suas finanças em qualquer dispositivo
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Use o Gasto Inteligente com praticidade no notebook ou no celular, com uma experiência clara, fluida e intuitiva em qualquer tela.
+            Use o Gasto Inteligente com praticidade no notebook, tablet ou celular, com uma experiência clara, fluida e intuitiva em qualquer tela.
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 sm:mt-12 max-w-3xl lg:max-w-4xl">
+        <div className="relative mx-auto mt-10 sm:mt-12 max-w-2xl lg:max-w-3xl">
           {/* Notebook */}
           <NotebookFrame>
             <DesktopDashboardMock />
           </NotebookFrame>
 
-          {/* Phone — overlapping on desktop, stacked on mobile */}
-          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-6 md:right-2 lg:-bottom-10 lg:right-6 md:z-10">
+          {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
+          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-4 md:left-0 lg:-bottom-8 lg:left-2 md:z-10">
+            <TabletFrame>
+              <DesktopDashboardMock />
+            </TabletFrame>
+          </div>
+
+          {/* Phone — overlapping on the right on desktop, stacked on mobile */}
+          <div className="mt-6 flex justify-center sm:mt-8 md:mt-0 md:absolute md:-bottom-6 md:right-2 lg:-bottom-10 lg:right-4 md:z-20">
             <PhoneFrame>
               <MobileDashboardMock />
             </PhoneFrame>
@@ -548,22 +555,36 @@ function MultiDeviceShowcase() {
 
 function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-full max-w-3xl lg:max-w-4xl">
+    <div className="relative mx-auto w-full max-w-2xl lg:max-w-3xl">
       {/* lid */}
-      <div className="rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
-        <div className="rounded-[16px] bg-slate-900 p-1.5">
+      <div className="rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
+        <div className="rounded-[14px] bg-slate-900 p-1.5">
           {/* camera */}
           <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
             <span className="h-1 w-1 rounded-full bg-slate-500" />
           </div>
-          <div className="overflow-hidden rounded-[10px] bg-white aspect-[16/10]">
+          <div className="overflow-hidden rounded-[9px] bg-white aspect-[16/10]">
             {children}
           </div>
         </div>
       </div>
       {/* base / hinge */}
-      <div className="relative mx-auto h-3 w-[104%] -translate-y-[1px] rounded-b-2xl bg-gradient-to-b from-slate-200 to-slate-300 shadow-[0_18px_30px_-18px_rgba(15,23,42,0.35)]">
+      <div className="relative mx-auto h-2.5 w-[104%] -translate-y-[1px] rounded-b-2xl bg-gradient-to-b from-slate-200 to-slate-300 shadow-[0_18px_30px_-18px_rgba(15,23,42,0.35)]">
         <div className="absolute left-1/2 top-0 h-1.5 w-24 -translate-x-1/2 rounded-b-xl bg-slate-300" />
+      </div>
+    </div>
+  );
+}
+
+function TabletFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative w-[200px] sm:w-[220px] md:w-[180px] lg:w-[210px] rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
+      <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1">
+        {/* front camera */}
+        <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
+        <div className="overflow-hidden rounded-[14px] bg-white aspect-[3/4]">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -571,11 +592,11 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[200px] sm:w-[220px] rounded-[34px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
-      <div className="relative overflow-hidden rounded-[28px] bg-slate-900 p-1">
+    <div className="relative w-[170px] sm:w-[190px] md:w-[150px] lg:w-[180px] rounded-[30px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
+      <div className="relative overflow-hidden rounded-[24px] bg-slate-900 p-1">
         {/* notch */}
-        <div className="absolute left-1/2 top-1.5 z-10 h-4 w-20 -translate-x-1/2 rounded-full bg-slate-900" />
-        <div className="overflow-hidden rounded-[24px] bg-white aspect-[9/19]">
+        <div className="absolute left-1/2 top-1.5 z-10 h-3.5 w-16 -translate-x-1/2 rounded-full bg-slate-900" />
+        <div className="overflow-hidden rounded-[20px] bg-white aspect-[9/19]">
           {children}
         </div>
       </div>
