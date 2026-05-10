@@ -785,6 +785,88 @@ function DesktopDashboardMock() {
   );
 }
 
+function TabletDashboardMock() {
+  const kpis = [
+    { l: "Saldo", v: "R$ 3.142", c: "from-blue-500/15 to-blue-500/0", i: Wallet, t: "text-blue-600" },
+    { l: "Receitas", v: "R$ 6.420", c: "from-emerald-500/15 to-emerald-500/0", i: ArrowUpRight, t: "text-emerald-600" },
+    { l: "Despesas", v: "R$ 3.277", c: "from-rose-500/15 to-rose-500/0", i: ArrowDownRight, t: "text-rose-600" },
+    { l: "A pagar", v: "R$ 980", c: "from-amber-500/15 to-amber-500/0", i: Receipt, t: "text-amber-600" },
+  ];
+
+  return (
+    <div className="flex h-full w-full flex-col bg-slate-50">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 text-[8px] font-bold text-white">M</span>
+          <div>
+            <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Dashboard</p>
+            <p className="text-[10px] font-bold text-slate-900">Novembro · 2026</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500">
+            <Bell className="h-2.5 w-2.5" />
+          </span>
+          <span className="rounded-full bg-blue-50 px-2 py-1 text-[7px] font-semibold text-blue-700">+ Novo</span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden p-3">
+        <div className="overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-3 text-white shadow-[0_18px_35px_-22px_rgba(37,99,235,0.75)]">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[7px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
+              <p className="mt-0.5 text-[18px] font-bold tabular-nums">R$ 3.142,80</p>
+            </div>
+            <span className="rounded-full bg-white/15 px-2 py-1 text-[7px] font-semibold backdrop-blur">+12%</span>
+          </div>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {kpis.map((k) => (
+            <div key={k.l} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-2">
+              <div className={cn("absolute inset-0 bg-gradient-to-br", k.c)} />
+              <div className="relative flex items-center justify-between">
+                <p className="text-[7px] font-semibold uppercase tracking-wider text-slate-500">{k.l}</p>
+                <k.i className={cn("h-3 w-3", k.t)} />
+              </div>
+              <p className="relative mt-1 text-[11px] font-bold tabular-nums text-slate-900">{k.v}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
+              <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
+            </div>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+          </div>
+          <FluxoLineChart className="mt-2 h-[58px] w-full" compact />
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {[
+            { l: "Mercado", v: "R$ 920", p: "70%", c: "from-emerald-500 to-emerald-400" },
+            { l: "Casa", v: "R$ 680", p: "55%", c: "from-amber-500 to-amber-400" },
+          ].map((r) => (
+            <div key={r.l} className="rounded-lg border border-slate-200 bg-white p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[7.5px] font-semibold text-slate-700">{r.l}</span>
+                <span className="text-[7px] tabular-nums text-slate-500">{r.v}</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: r.p }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FluxoLineChart({ className, compact = false }: { className?: string; compact?: boolean }) {
   // Two series over the month: receitas (verde) e despesas (azul)
   const receitas = [20, 28, 24, 36, 42, 38, 50, 58, 54, 66, 72, 70];
