@@ -10,25 +10,38 @@ const HISTORY_LIMIT = 30;
 
 const SYSTEM_PROMPT = `Você é o "Gasto Inteligente AI", um assistente financeiro brasileiro do app Gasto Inteligente.
 
-Tom: descontraído, amigável, próximo, brasileiro. Pode usar "bora", "opa", "tranquilo". Nada de tom robótico ou frio.
+Tom: descontraído, amigável, próximo, brasileiro. Pode usar "bora", "opa", "tranquilo". Nada de tom robótico ou frio. Linguagem simples, sem jargão.
 
-ESTILO DA RESPOSTA (MUITO IMPORTANTE):
-- Comece com 1 frase curta de abertura amigável (ex: "Bora lá!" ou "Olha só o que vi:").
-- Use **negrito em markdown** apenas para destacar 2-3 palavras-chave por resposta.
-- Quando listar pontos, use Markdown de lista com hífens ("- item"). Nunca use asteriscos soltos ("*") nem "• ". Nunca use markdown cru visível.
-- No máximo 3 a 5 itens por resposta. Cada item curto, 1-2 linhas.
-- Termine com 1 frase de incentivo curta (opcional).
-- Resposta total: no máximo 8 linhas. Direto ao ponto.
+ESTILO DA RESPOSTA:
+- Comece com 1 frase curta de abertura amigável.
+- Use **negrito em markdown** para destacar palavras-chave (cartão, fatura, categorias) — sem exagero.
+- Listas SEMPRE com hífens ("- item"). Nunca use asteriscos soltos ("*") nem "• ". Nunca deixe markdown cru visível.
+- Para perguntas simples (saldo, valor, "quanto gastei"): resposta curta, no máximo 6 linhas.
+- Para perguntas analíticas ("analise", "detalhe", "explique", "fatura", "como está…", "onde economizar"): resposta MAIS COMPLETA, com:
+  1) Frase de abertura
+  2) Lista de 3-6 pontos com os números EXATOS
+  3) Análise curta (2-4 linhas) com observações úteis
+  4) Resumo rápido em lista no final, quando fizer sentido
+- Mesmo na resposta longa, seja objetivo. Sem enrolar.
 
-REGRAS:
-- Use APENAS dados do "RESUMO FINANCEIRO DO USUÁRIO". Não invente valores, datas, categorias.
-- Se o resumo trouxer um bloco "MÊS SOLICITADO PELO USUÁRIO", **use os valores EXATOS desse bloco** (total, quantidade, categorias). Nunca arredonde, nunca aproxime, nunca substitua por outro período (ex: "2 meses anteriores").
-- Se o bloco do mês solicitado disser "Sem gastos", responda: "Não encontrei nenhum gasto registrado para esse mês."
-- Se faltam dados, diga com gentileza: "Ainda não tenho informações suficientes. Cadastre alguns gastos e receitas para eu te ajudar melhor."
-- Pode dar orientações gerais de organização, economia, planejamento, metas e orçamento.
-- NÃO prometa lucro nem garanta economia. Seja cauteloso com investimentos.
-- Não cite e-mail do usuário, senhas ou tokens.
-- Valores em reais: R$ 1.234,56.`;
+REGRAS DE PRECISÃO (CRÍTICAS):
+- Use APENAS dados dos blocos "RESUMO FINANCEIRO DO USUÁRIO", "MÊS SOLICITADO PELO USUÁRIO" e "CARTÕES E FATURAS". Não invente valores, datas, categorias ou nomes de cartões.
+- Se houver bloco "MÊS SOLICITADO PELO USUÁRIO", responda com os valores EXATOS desse bloco. Nunca arredonde, nunca aproxime, nunca substitua por "meses anteriores" ou período parecido.
+- Se o usuário perguntar sobre fatura/cartão e existir o bloco "CARTÕES E FATURAS", use os valores e nomes EXATOS dele. Se houver mais de um cartão, escolha o que o usuário mencionou; se não mencionou, mostre os principais (top 2-3).
+- Se o bloco do mês ou fatura disser "Sem gastos" / "Sem fatura", responda exatamente: "Não encontrei lançamentos suficientes para esse período." ou "Não encontrei fatura cadastrada para esse cartão nesse mês.".
+- Se faltam dados em geral: "Ainda não tenho informações suficientes. Cadastre alguns gastos e receitas para eu te ajudar melhor."
+
+ANÁLISE ÚTIL (quando fizer sentido, e só com base nos dados):
+- Onde o usuário mais gastou e qual categoria pesou mais.
+- Categorias que parecem recorrentes (assinaturas, contas) e que vale revisar.
+- Qual cartão concentrou mais despesas no mês.
+- Se a fatura está alta em relação ao total de gastos do mês.
+- Contas a pagar vencidas/próximas do vencimento.
+- Sugestões práticas e gentis de economia. Sem prometer lucro nem garantir economia.
+
+SEGURANÇA:
+- Nunca cite e-mail, senha, token, número completo de cartão, CVV ou validade.
+- Valores em reais sempre no formato R$ 1.234,56.`;
 
 function fmtBRL(v: number) {
   if (!Number.isFinite(v)) return "R$ 0,00";
@@ -191,6 +204,32 @@ function detectTargetMonth(message: string, now: Date): { mes: number; ano: numb
  * - Crédito sem invoice_month: usa o ciclo de fechamento do cartão.
  * - Demais casos: usa a data da compra.
  */
+function efetivoYmFor(
+  g: { invoice_month?: string | null; data: string; forma_pagamento?: string | null; cartao_id?: string | null },
+  cartaoFech: Map<string, number>,
+): string | null {
+  if (g.invoice_month && /^\d{4}-\d{2}$/.test(g.invoice_month)) return g.invoice_month;
+  const d = g.data ? new Date(g.data + "T00:00:00") : null;
+  if (!d || isNaN(d.getTime())) return null;
+  if (g.forma_pagamento === "credito" && g.cartao_id) {
+    const fech = cartaoFech.get(g.cartao_id) ?? 0;
+    if (fech > 0) {
+      const ref = d.getDate() > fech ? d : new Date(d.getFullYear(), d.getMonth() - 1, 1);
+      return `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+    }
+  }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+const NOMES_MES_PT = [
+  "janeiro","fevereiro","março","abril","maio","junho",
+  "julho","agosto","setembro","outubro","novembro","dezembro",
+];
+
+/**
+ * Calcula o resumo do mês solicitado usando a MESMA regra da tela /gastos
+ * (invoice_month prevalece; crédito sem invoice_month usa ciclo do cartão).
+ */
 async function buildTargetMonthSummary(
   supabase: any,
   userId: string,
@@ -198,7 +237,6 @@ async function buildTargetMonthSummary(
   ano: number,
 ): Promise<string> {
   const ym = `${ano}-${String(mes).padStart(2, "0")}`;
-  // Janela ampla para capturar gastos de crédito que caem na fatura do mês alvo
   const winStart = isoDate(new Date(ano, mes - 1 - 2, 1));
   const winEnd = isoDate(new Date(ano, mes - 1 + 2, 0));
 
@@ -214,38 +252,16 @@ async function buildTargetMonthSummary(
   ]);
 
   const cartaoFech = new Map<string, number>();
-  for (const c of (cartoesRes.data ?? []) as any[]) {
-    cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
-  }
+  for (const c of (cartoesRes.data ?? []) as any[]) cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
   const catMap = new Map<string, string>();
   for (const c of (categoriasRes.data ?? []) as any[]) catMap.set(c.id, c.nome);
 
   const rows = (gastosRes.data ?? []) as Array<{
-    valor: number;
-    categoria_id: string | null;
-    data: string;
-    descricao?: string;
-    estabelecimento?: string;
-    forma_pagamento?: string;
-    cartao_id?: string | null;
-    invoice_month?: string | null;
+    valor: number; categoria_id: string | null; data: string; descricao?: string;
+    estabelecimento?: string; forma_pagamento?: string; cartao_id?: string | null; invoice_month?: string | null;
   }>;
 
-  function efetivoYm(g: (typeof rows)[number]): string | null {
-    if (g.invoice_month && /^\d{4}-\d{2}$/.test(g.invoice_month)) return g.invoice_month;
-    const d = g.data ? new Date(g.data + "T00:00:00") : null;
-    if (!d || isNaN(d.getTime())) return null;
-    if (g.forma_pagamento === "credito" && g.cartao_id) {
-      const fech = cartaoFech.get(g.cartao_id) ?? 0;
-      if (fech > 0) {
-        const ref = d.getDate() > fech ? d : new Date(d.getFullYear(), d.getMonth() - 1, 1);
-        return `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
-      }
-    }
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-
-  const doMes = rows.filter((g) => efetivoYm(g) === ym);
+  const doMes = rows.filter((g) => efetivoYmFor(g, cartaoFech) === ym);
   const total = doMes.reduce((s, g) => s + Number(g.valor || 0), 0);
   const qtd = doMes.length;
 
@@ -256,12 +272,12 @@ async function buildTargetMonthSummary(
   }
   const top = [...porCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  const nomesMes = [
-    "janeiro","fevereiro","março","abril","maio","junho",
-    "julho","agosto","setembro","outubro","novembro","dezembro",
-  ];
-  const label = `${nomesMes[mes - 1]} de ${ano}`;
+  // Maiores lançamentos do mês
+  const maiores = [...doMes]
+    .sort((a, b) => Number(b.valor || 0) - Number(a.valor || 0))
+    .slice(0, 5);
 
+  const label = `${NOMES_MES_PT[mes - 1]} de ${ano}`;
   const out: string[] = [];
   out.push(`Período exato consultado: ${label} (${ym}).`);
   if (qtd === 0) {
@@ -275,7 +291,144 @@ async function buildTargetMonthSummary(
     out.push("Top categorias do mês (valores exatos):");
     for (const [n, v] of top) out.push(`- ${n}: ${fmtBRL(v)}`);
   }
+  if (maiores.length) {
+    out.push("Maiores lançamentos do mês:");
+    for (const g of maiores) {
+      const desc = (g.estabelecimento || g.descricao || "Lançamento").toString().slice(0, 60);
+      out.push(`- ${desc}: ${fmtBRL(Number(g.valor || 0))} (${g.data})`);
+    }
+  }
   return out.join("\n");
+}
+
+/**
+ * Monta o bloco CARTÕES E FATURAS para um mês de referência.
+ * Para cada cartão do usuário, soma os gastos de crédito que pertencem
+ * à fatura desse mês (invoice_month/ciclo de fechamento) e cruza com
+ * faturas_cartao (status, valor_pago, vencimento).
+ */
+async function buildCartoesFaturasBlock(
+  supabase: any,
+  userId: string,
+  mes: number,
+  ano: number,
+): Promise<string> {
+  const ym = `${ano}-${String(mes).padStart(2, "0")}`;
+  const winStart = isoDate(new Date(ano, mes - 1 - 2, 1));
+  const winEnd = isoDate(new Date(ano, mes - 1 + 2, 0));
+
+  const [cartoesRes, gastosRes, faturasRes, categoriasRes] = await Promise.all([
+    supabase
+      .from("cartoes")
+      .select("id, nome, banco, limite_total, dia_vencimento, dia_fechamento, cor")
+      .eq("user_id", userId)
+      .limit(50),
+    supabase
+      .from("gastos")
+      .select("valor, categoria_id, data, descricao, estabelecimento, forma_pagamento, cartao_id, invoice_month, parcela_atual, total_parcelas")
+      .eq("user_id", userId)
+      .eq("forma_pagamento", "credito")
+      .or(`invoice_month.eq.${ym},and(data.gte.${winStart},data.lte.${winEnd})`)
+      .limit(3000),
+    supabase
+      .from("faturas_cartao")
+      .select("cartao_id, mes, ano, status, valor_pago, data_pagamento")
+      .eq("user_id", userId)
+      .eq("mes", mes)
+      .eq("ano", ano),
+    supabase.from("categorias").select("id, nome").eq("user_id", userId).limit(200),
+  ]);
+
+  const cartoes = (cartoesRes.data ?? []) as Array<{
+    id: string; nome: string; banco?: string | null; limite_total: number;
+    dia_vencimento: number; dia_fechamento: number; cor?: string | null;
+  }>;
+  if (!cartoes.length) {
+    return `Sem cartões cadastrados.`;
+  }
+
+  const cartaoFech = new Map<string, number>();
+  for (const c of cartoes) cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
+  const catMap = new Map<string, string>();
+  for (const c of (categoriasRes.data ?? []) as any[]) catMap.set(c.id, c.nome);
+
+  const gastos = (gastosRes.data ?? []) as Array<{
+    valor: number; categoria_id: string | null; data: string; descricao?: string;
+    estabelecimento?: string; forma_pagamento?: string; cartao_id?: string | null;
+    invoice_month?: string | null; parcela_atual?: number | null; total_parcelas?: number | null;
+  }>;
+
+  // Agrupa por cartao_id apenas os que caem na fatura do (mes, ano)
+  const porCartao = new Map<string, typeof gastos>();
+  for (const g of gastos) {
+    if (!g.cartao_id) continue;
+    if (efetivoYmFor(g, cartaoFech) !== ym) continue;
+    const arr = porCartao.get(g.cartao_id) ?? [];
+    arr.push(g);
+    porCartao.set(g.cartao_id, arr);
+  }
+
+  const faturaInfo = new Map<string, { status: string; valor_pago: number; data_pagamento: string | null }>();
+  for (const f of (faturasRes.data ?? []) as any[]) {
+    faturaInfo.set(f.cartao_id, {
+      status: f.status ?? "aberta",
+      valor_pago: Number(f.valor_pago || 0),
+      data_pagamento: f.data_pagamento ?? null,
+    });
+  }
+
+  const label = `${NOMES_MES_PT[mes - 1]} de ${ano}`;
+  const lines: string[] = [];
+  lines.push(`Mês de referência da fatura: ${label} (${ym}).`);
+
+  let totalGeralFatura = 0;
+  // Ordena cartões por valor da fatura desc
+  const cartoesOrdenados = cartoes.slice().sort((a, b) => {
+    const va = (porCartao.get(a.id) ?? []).reduce((s, g) => s + Number(g.valor || 0), 0);
+    const vb = (porCartao.get(b.id) ?? []).reduce((s, g) => s + Number(g.valor || 0), 0);
+    return vb - va;
+  });
+
+  for (const c of cartoesOrdenados) {
+    const itens = porCartao.get(c.id) ?? [];
+    const total = itens.reduce((s, g) => s + Number(g.valor || 0), 0);
+    totalGeralFatura += total;
+    const f = faturaInfo.get(c.id);
+    const vencimento = c.dia_vencimento ? `dia ${c.dia_vencimento}` : "—";
+    const banco = c.banco ? ` (${c.banco})` : "";
+    lines.push(`Cartão "${c.nome}"${banco}:`);
+    lines.push(`  - Fatura de ${label}: ${fmtBRL(total)} (${itens.length} lançamentos).`);
+    lines.push(`  - Limite total: ${fmtBRL(Number(c.limite_total || 0))}. Vencimento: ${vencimento}.`);
+    if (f) {
+      lines.push(`  - Status na tabela de faturas: ${f.status}. Valor pago: ${fmtBRL(f.valor_pago)}${f.data_pagamento ? ` em ${f.data_pagamento}` : ""}.`);
+      const pend = Math.max(0, total - f.valor_pago);
+      lines.push(`  - Pendente estimado: ${fmtBRL(pend)}.`);
+    } else if (total > 0) {
+      lines.push(`  - Status: fatura ainda não marcada no app (sem registro em faturas_cartao para esse mês).`);
+    }
+    if (itens.length) {
+      const porCat = new Map<string, number>();
+      for (const g of itens) {
+        const k = g.categoria_id ? catMap.get(g.categoria_id) ?? "Outros" : "Outros";
+        porCat.set(k, (porCat.get(k) ?? 0) + Number(g.valor || 0));
+      }
+      const top = [...porCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+      if (top.length) {
+        lines.push(`  - Top categorias da fatura:`);
+        for (const [n, v] of top) lines.push(`    - ${n}: ${fmtBRL(v)}`);
+      }
+      const maiores = itens.slice().sort((a, b) => Number(b.valor || 0) - Number(a.valor || 0)).slice(0, 3);
+      lines.push(`  - Maiores lançamentos:`);
+      for (const g of maiores) {
+        const desc = (g.estabelecimento || g.descricao || "Lançamento").toString().slice(0, 50);
+        const parc = g.parcela_atual && g.total_parcelas ? ` (parc. ${g.parcela_atual}/${g.total_parcelas})` : "";
+        lines.push(`    - ${desc}: ${fmtBRL(Number(g.valor || 0))} em ${g.data}${parc}`);
+      }
+    }
+  }
+
+  lines.push(`Soma de todas as faturas de ${label}: ${fmtBRL(totalGeralFatura)}.`);
+  return lines.join("\n");
 }
 
 async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
@@ -334,9 +487,18 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const summary = await buildFinancialSummary(supabase, userId);
 
-    const target = detectTargetMonth(data.message, new Date());
+    const now = new Date();
+    const target = detectTargetMonth(data.message, now);
     const targetBlock = target
       ? await buildTargetMonthSummary(supabase, userId, target.mes, target.ano)
+      : null;
+
+    // Detecta intenção de fatura/cartão para anexar bloco dedicado
+    const lowerMsg = data.message.toLowerCase();
+    const wantsFatura = /\b(fatura|faturas|cart[ãa]o|cart[õo]es|limite|vencimento da fatura|venceu o cart)\b/i.test(lowerMsg);
+    const faturaRef = target ?? { mes: now.getMonth() + 1, ano: now.getFullYear() };
+    const faturaBlock = wantsFatura
+      ? await buildCartoesFaturasBlock(supabase, userId, faturaRef.mes, faturaRef.ano)
       : null;
 
     const messages = [
@@ -344,6 +506,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
       ...(targetBlock
         ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
+        : []),
+      ...(faturaBlock
+        ? [{ role: "system" as const, content: `CARTÕES E FATURAS\n${faturaBlock}` }]
         : []),
       ...ordered.map((m: any) => ({ role: m.role, content: m.content })),
     ];

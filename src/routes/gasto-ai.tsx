@@ -33,10 +33,13 @@ export const Route = createFileRoute("/gasto-ai")({
 
 const SUGESTOES = [
   "Como estão meus gastos este mês?",
-  "Tenho contas vencidas?",
+  "Qual foi minha maior despesa?",
+  "Como está minha fatura do cartão?",
+  "Quanto veio minha fatura?",
+  "Qual cartão eu mais usei?",
   "Onde posso economizar?",
+  "Tenho contas vencidas?",
   "Minhas metas estão indo bem?",
-  "Resumo da minha vida financeira",
 ];
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string; created_at: string };
