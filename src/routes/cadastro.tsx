@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordChecklist } from "@/components/PasswordChecklist";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/cadastro")({
@@ -137,6 +138,9 @@ function CadastroForm() {
         </Link>
       }
     >
+      <div className="mb-5 animate-fade-in">
+        <GoogleAuthButton label="Continuar com Google" separatorText="ou cadastre-se com e-mail" />
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="nome">Nome</Label>
