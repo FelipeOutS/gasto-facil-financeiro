@@ -402,7 +402,7 @@ function Index() {
         </Link>
       )}
 
-      {/* ===== KPIs ===== */}
+      {/* ===== 1. KPIs — Tá tudo no radar ===== */}
       <SectionLabel>Tá tudo no radar</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
@@ -448,26 +448,6 @@ function Index() {
         </p>
       )}
 
-      {/* ===== Resumo inteligente do mês (IA premium) ===== */}
-      <section className="mt-4">
-        <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
-      </section>
-
-      {/* ===== Previsão de fechamento do mês (premium) ===== */}
-      <section className="mt-4">
-        <MonthForecastCard mes={ym.mes} ano={ym.ano} />
-      </section>
-
-      {/* ===== Limite inteligente (premium) ===== */}
-      <section className="mt-4">
-        <SmartLimiteCard
-          mes={ym.mes}
-          ano={ym.ano}
-          totalEntradas={totalEntradas}
-          totalGastos={total}
-        />
-      </section>
-
       {/* CTA principal — apenas mobile (sidebar tem o seu) */}
       <Link to="/adicionar" className="mt-3 block lg:hidden">
         <Button
@@ -479,7 +459,7 @@ function Index() {
         </Button>
       </Link>
 
-      {/* ===== Linha 2: Visão financeira (60%) + Calendário financeiro (40%) ===== */}
+      {/* ===== 2. Visão financeira + Calendário ===== */}
       <SectionLabel>Visão financeira</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className="flex min-w-0 lg:col-span-7">
@@ -495,158 +475,104 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== Transações recentes (linha cheia) ===== */}
-      <SectionLabel>Transações recentes</SectionLabel>
-      <section className="min-w-0">
-        <RecentTransactionsCard ultimos={ultimos} />
+      {/* ===== 3. Resumo inteligente do mês (IA premium) ===== */}
+      <section className="mt-4">
+        <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
       </section>
 
-      {/* ===== Linha 3: Alertas financeiros + (Limite mensal / Minha renda) ===== */}
-      <SectionLabel>Alertas e limites</SectionLabel>
-      {/* xl (>=1280): Alertas 8col à esquerda, direita 4col empilhada (Limite em cima, Renda embaixo) */}
-      {/* lg (1024-1279): Alertas full-width, abaixo Limite + Renda lado a lado */}
-      {/* < lg: tudo empilhado */}
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
-        {temAlertasDashboard && (
-          <div className="flex min-w-0 xl:col-span-8">
+      {/* ===== 4. Previsão de fechamento do mês (premium) ===== */}
+      <section className="mt-4">
+        <MonthForecastCard mes={ym.mes} ano={ym.ano} />
+      </section>
+
+      {/* ===== 5. Seu limite inteligente (premium) ===== */}
+      <section className="mt-4">
+        <SmartLimiteCard
+          mes={ym.mes}
+          ano={ym.ano}
+          totalEntradas={totalEntradas}
+          totalGastos={total}
+        />
+      </section>
+
+      {/* ===== 6. Próximas ações ===== */}
+      <SectionLabel>Próximas ações</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5">
+        {contasResumo.total > 0 && (
+          <div className="flex min-w-0 lg:col-span-6">
             <div className="flex w-full">
-              <AlertasContasCard contas={contas} />
+              <ContasCard resumo={contasResumo} variant="sideTop" />
             </div>
           </div>
         )}
-        <div
-          className={cn(
-            "grid min-w-0 grid-cols-1 gap-4 lg:gap-5",
-            // Em md/lg sem xl: Limite + Renda lado a lado; no xl com alertas: empilhados na coluna direita
-            "md:grid-cols-2 xl:grid-cols-1",
-            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12 xl:grid-cols-2",
-          )}
-        >
-          {!!limiteTotal && (
-            <LimiteMensalCard
-              total={total}
-              limiteTotal={limiteTotal}
-              usoLimite={usoLimite}
-              passouLimite={!!passouLimite}
-              proximoLimite={!!proximoLimite}
-            />
-          )}
-          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
+        <div className={cn("flex min-w-0", contasResumo.total > 0 ? "lg:col-span-6" : "lg:col-span-12")}>
+          <div className="flex w-full">
+            <RecentTransactionsCard ultimos={ultimos} />
+          </div>
         </div>
       </section>
 
-      {/* ===== Linha 4: Resumo do mês + Orçamento do mês ===== */}
-      <SectionLabel>Resumo e orçamento</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
-        <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
-          <div className="flex w-full">
-            <ResumoMesCard
-              mes={ym.mes}
-              ano={ym.ano}
-              saldo={saldo}
-              totalEntradas={totalEntradas}
-              totalGastos={total}
-              maiorCategoria={maior ?? null}
-              categorias={categorias}
-              gastosConfirmados={gastosConfirmados}
-              contasAtrasadas={contasResumo.atrasadasCount}
-              limiteTotal={limiteTotal}
-            />
-          </div>
-        </div>
-        {temOrcamentoMes && (
-          <div className="flex min-w-0">
-            <div className="flex w-full">
-              <OrcamentoCard
-                categorias={categorias}
-                gastos={gastosConfirmados}
-                mes={ym.mes}
-                ano={ym.ano}
+      {/* Contas a receber + Meta mais próxima */}
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+        <ContasAReceberCard />
+        {metaProxima ? (
+          <section className="rounded-3xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" style={{ color: metaProxima.colorHex }} />
+                <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+              </div>
+              <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+                Ver todas →
+              </Link>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between gap-3">
+              <p className="truncate text-base font-semibold">{metaProxima.nome}</p>
+              <p className="num shrink-0 text-xs text-muted-foreground">
+                {formatBRL(metaProxima.valorAtual)} / {formatBRL(metaProxima.valorObjetivo)}
+              </p>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100)}%`,
+                  background: metaProxima.colorHex,
+                }}
               />
             </div>
-          </div>
+            <div className="mt-2 flex items-center justify-between text-xs">
+              <span className="num font-semibold" style={{ color: metaProxima.colorHex }}>
+                {Math.min(100, Math.round((metaProxima.valorAtual / metaProxima.valorObjetivo) * 100))}%
+              </span>
+              <span className="text-muted-foreground">
+                {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
+              </span>
+            </div>
+          </section>
+        ) : (
+          <Link
+            to="/metas"
+            className="flex items-center gap-3 rounded-3xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+              <Target className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">Metas</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {metasAndamento.length} em andamento
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         )}
       </section>
 
-      {/* ===== Linha 5: Próximas contas ===== */}
-      {contasResumo.total > 0 && (
-        <>
-          <SectionLabel>Próximos passos</SectionLabel>
-          <section className="min-w-0">
-            <ContasCard resumo={contasResumo} variant="sideTop" />
-          </section>
-        </>
-      )}
-
-      {/* ===== Contas a receber ===== */}
-      <ContasAReceberCard />
-
-      {/* ===== Atalhos secundários ===== */}
-      <SectionLabel>Controle financeiro</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <Link
-          to="/orcamento"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Orçamento
-            </p>
-            <PieChartIcon className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <p className="mt-1.5 text-sm font-bold">Por categoria</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
-        </Link>
-        <Link
-          to="/guardado"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Total guardado
-            </p>
-            <Wallet className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
-          </p>
-        </Link>
-        <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Gastos fixos
-            </p>
-            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
-          <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
-          {totalEntradas > 0 ? (
-            <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
-            </p>
-          ) : (
-            <p className="mt-0.5 text-[10px] text-muted-foreground">—</p>
-          )}
-        </div>
-        <Link
-          to="/metas"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Metas
-            </p>
-            <Target className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">em andamento</p>
-        </Link>
-      </section>
-
-
+      {/* ===== 7. Insights secundários: Categorias + Cartões ===== */}
       {porCategoria.length > 0 && (
         <>
-          <SectionLabel>Categorias</SectionLabel>
+          <SectionLabel>Categorias e cartões</SectionLabel>
           <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -719,8 +645,6 @@ function Index() {
         </>
       )}
 
-      {/* ===== Cartões, faturas e insights ===== */}
-      <SectionLabel>Cartões e insights</SectionLabel>
       <DashboardCartoesInsights
         mes={ym.mes}
         ano={ym.ano}
@@ -731,136 +655,131 @@ function Index() {
         onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
       />
 
-      {/* ===== 4. METAS ===== */}
-      {(metaProxima || metasAndamento.length > 0) && (
-        <>
-          <SectionLabel>Metas</SectionLabel>
-          {metaProxima ? (
-            <section className="rounded-3xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles
-                    className="h-3.5 w-3.5"
-                    style={{ color: metaProxima.colorHex }}
-                  />
-                  <h2 className="text-sm font-semibold">Mais próxima de concluir</h2>
-                </div>
-                <Link
-                  to="/metas"
-                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Ver todas →
-                </Link>
-              </div>
-              <div className="mt-3 flex items-baseline justify-between gap-3">
-                <p className="truncate text-base font-semibold">{metaProxima.nome}</p>
-                <p className="num shrink-0 text-xs text-muted-foreground">
-                  {formatBRL(metaProxima.valorAtual)} /{" "}
-                  {formatBRL(metaProxima.valorObjetivo)}
-                </p>
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(100, (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100)}%`,
-                    background: metaProxima.colorHex,
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span
-                  className="num font-semibold"
-                  style={{ color: metaProxima.colorHex }}
-                >
-                  {Math.min(
-                    100,
-                    Math.round(
-                      (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100,
-                    ),
-                  )}
-                  %
-                </span>
-                <span className="text-muted-foreground">
-                  {metasAndamento.length}{" "}
-                  {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
-                </span>
-              </div>
-            </section>
-          ) : (
-            <Link
-              to="/metas"
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
-                <Target className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Metas</p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {metasAndamento.length} em andamento
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          )}
-        </>
-      )}
-
-      {/* ===== 5. ÚLTIMOS LANÇAMENTOS ===== */}
-      <SectionLabel>Últimos lançamentos</SectionLabel>
-      <section>
-        {ultimos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-fade-in">
-            <ReceiptIcon className="h-8 w-8 text-muted-foreground animate-breathe" />
-            <p className="mt-3 text-sm font-medium">Nada por aqui ainda</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Quando você lançar um gasto, ele aparece aqui pra você acompanhar.
-            </p>
-            <Link to="/adicionar" className="mt-3 text-sm font-medium underline hover:text-foreground transition-colors">
-              Lançar meu primeiro gasto
-            </Link>
+      {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
+      <SectionLabel>Resumo e orçamento</SectionLabel>
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
+        <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
+          <div className="flex w-full">
+            <ResumoMesCard
+              mes={ym.mes}
+              ano={ym.ano}
+              saldo={saldo}
+              totalEntradas={totalEntradas}
+              totalGastos={total}
+              maiorCategoria={maior ?? null}
+              categorias={categorias}
+              gastosConfirmados={gastosConfirmados}
+              contasAtrasadas={contasResumo.atrasadasCount}
+              limiteTotal={limiteTotal}
+            />
           </div>
-        ) : (
-          <>
-            <ul className="space-y-2">
-              {ultimos.map((g) => {
-                const cat = getCategoriaById(g.categoriaId);
-                return (
-                  <li
-                    key={g.id}
-                    className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
-                  >
-                    <TransactionAvatar estabelecimento={g.estabelecimento} categoria={cat} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {g.estabelecimento || g.descricao}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {cat?.nome ?? "Outros"} ·{" "}
-                        {new Date(g.data + "T00:00:00").toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-                    <p className="num shrink-0 text-sm font-semibold">
-                      {formatBRL(g.valor)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="mt-2 flex justify-end">
-              <Link
-                to="/gastos"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Ver todos →
-              </Link>
+        </div>
+        {temOrcamentoMes && (
+          <div className="flex min-w-0">
+            <div className="flex w-full">
+              <OrcamentoCard
+                categorias={categorias}
+                gastos={gastosConfirmados}
+                mes={ym.mes}
+                ano={ym.ano}
+              />
             </div>
-          </>
+          </div>
         )}
       </section>
 
-      {/* ===== Aviso: Em breve integração com WhatsApp ===== */}
+      {/* Alertas, limite mensal e renda */}
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
+        {temAlertasDashboard && (
+          <div className="flex min-w-0 xl:col-span-8">
+            <div className="flex w-full">
+              <AlertasContasCard contas={contas} />
+            </div>
+          </div>
+        )}
+        <div
+          className={cn(
+            "grid min-w-0 grid-cols-1 gap-4 lg:gap-5",
+            "md:grid-cols-2 xl:grid-cols-1",
+            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12 xl:grid-cols-2",
+          )}
+        >
+          {!!limiteTotal && (
+            <LimiteMensalCard
+              total={total}
+              limiteTotal={limiteTotal}
+              usoLimite={usoLimite}
+              passouLimite={!!passouLimite}
+              proximoLimite={!!proximoLimite}
+            />
+          )}
+          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
+        </div>
+      </section>
+
+      {/* Atalhos secundários */}
+      <SectionLabel>Controle financeiro</SectionLabel>
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <Link
+          to="/orcamento"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Orçamento
+            </p>
+            <PieChartIcon className="h-3.5 w-3.5 text-brand" />
+          </div>
+          <p className="mt-1.5 text-sm font-bold">Por categoria</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
+        </Link>
+        <Link
+          to="/guardado"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Total guardado
+            </p>
+            <Wallet className="h-3.5 w-3.5 text-brand" />
+          </div>
+          <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
+          </p>
+        </Link>
+        <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Gastos fixos
+            </p>
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
+          {totalEntradas > 0 ? (
+            <p className="num mt-0.5 text-[10px] text-muted-foreground">
+              {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
+            </p>
+          ) : (
+            <p className="mt-0.5 text-[10px] text-muted-foreground">—</p>
+          )}
+        </div>
+        <Link
+          to="/metas"
+          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Metas
+            </p>
+            <Target className="h-3.5 w-3.5 text-brand" />
+          </div>
+          <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">em andamento</p>
+        </Link>
+      </section>
+
+      {/* ===== 9. Banner discreto ao final ===== */}
       <AvisoWhatsAppBanner />
 
     </MobileShell>
