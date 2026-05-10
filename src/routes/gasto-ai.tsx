@@ -217,7 +217,7 @@ function GastoAIPage() {
                       )}
                     >
                       {m.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-headings:mb-1 prose-headings:mt-2 prose-strong:text-foreground prose-strong:font-semibold prose-a:text-primary">
+                        <div className="ai-markdown text-sm leading-relaxed">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {m.content}
                           </ReactMarkdown>
