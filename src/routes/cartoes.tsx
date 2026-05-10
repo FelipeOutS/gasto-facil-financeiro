@@ -276,13 +276,13 @@ function CartoesPage() {
       .slice(0, 4);
   }, [cartoes]);
 
-  // Últimas compras no crédito (todas, top 5)
-  const ultimasCompras = useMemo(() => {
+  // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
+  const ultimasComprasAll = useMemo(() => {
     return gastos
       .filter((g) => g.formaPagamento === "credito" && g.cartaoId)
-      .sort((a, b) => (a.data < b.data ? 1 : -1))
-      .slice(0, 5);
+      .sort((a, b) => (a.data < b.data ? 1 : -1));
   }, [gastos]);
+  const ultimasCompras = useMemo(() => ultimasComprasAll.slice(0, 4), [ultimasComprasAll]);
 
   function handleOpenNew() {
     setEditing(null);
