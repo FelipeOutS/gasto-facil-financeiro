@@ -603,7 +603,7 @@ function TabletFrame({ children }: { children: React.ReactNode }) {
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-full md:w-[105px] lg:w-[125px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1 shadow-[0_35px_60px_-20px_rgba(15,23,42,0.45)]">
+    <div className="relative w-[60px] sm:w-[90px] md:w-[105px] lg:w-[125px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1 shadow-[0_35px_60px_-20px_rgba(15,23,42,0.45)]">
       <div className="relative overflow-hidden rounded-[20px] bg-slate-900 p-0.5">
         {/* notch */}
         <div className="absolute left-1/2 top-1 z-10 h-2.5 w-10 -translate-x-1/2 rounded-full bg-slate-900" />
