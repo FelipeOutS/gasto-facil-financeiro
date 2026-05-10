@@ -501,9 +501,15 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       ? await buildCartoesFaturasBlock(supabase, userId, faturaRef.mes, faturaRef.ano)
       : null;
 
+    // Previsão de fechamento — sempre injetada (dados pequenos, alto valor)
+    const forecastRef = target ?? { mes: now.getMonth() + 1, ano: now.getFullYear() };
+    const forecast = await computeMonthForecast(supabase, userId, forecastRef.mes, forecastRef.ano);
+    const forecastBlock = forecastToText(forecast);
+
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
+      { role: "system" as const, content: `PREVISÃO DE FECHAMENTO DO MÊS\n${forecastBlock}\n\nQuando o usuário perguntar se vai fechar positivo/negativo, quanto deve sobrar, o que falta pagar, qual conta mais pesa, ou previsão do mês — use EXATAMENTE estes valores. Deixe claro o que é confirmado e o que é previsto.` },
       ...(targetBlock
         ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
         : []),
@@ -833,3 +839,294 @@ export const clearChatHistory = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+// ====================================================================
+// Previsão de fechamento do mês
+// ====================================================================
+
+export type ForecastItem = {
+  nome: string;
+  valor: number;
+  tipo: "conta_pagar" | "fatura" | "receber";
+  detalhe?: string;
+};
+
+export type MonthForecast = {
+  mes: number;
+  ano: number;
+  label: string;
+  hoje: string;
+  // Entradas
+  entradasConfirmadas: number;
+  entradasPrevistas: number;
+  // Saídas
+  saidasConfirmadas: number;
+  saidasPendentes: number;
+  // Resultados
+  resultadoAtual: number;
+  resultadoPrevisto: number;
+  status: "positivo" | "atencao" | "negativo";
+  // Quebras
+  gastosMes: number;
+  faturasTotal: number;
+  faturasPagas: number;
+  faturasPendentes: number;
+  contasPagarPendentes: number;
+  contasVencidas: number;
+  contasPagas: number;
+  // Listas para detalhe
+  impactos: ForecastItem[]; // top pendentes que mais impactam
+  receitas: ForecastItem[]; // receber pendente
+  faturasDetalhe: Array<{ cartao: string; total: number; pago: number; pendente: number; venc?: number | null }>;
+  // Diagnóstico
+  temDados: boolean;
+};
+
+function computeStatus(resultado: number, entradas: number): MonthForecast["status"] {
+  const tolerancia = Math.max(100, entradas * 0.03);
+  if (resultado > tolerancia) return "positivo";
+  if (resultado < -tolerancia) return "negativo";
+  return "atencao";
+}
+
+async function computeMonthForecast(
+  supabase: any,
+  userId: string,
+  mes: number,
+  ano: number,
+): Promise<MonthForecast> {
+  const ym = `${ano}-${String(mes).padStart(2, "0")}`;
+  const monthStart = isoDate(new Date(ano, mes - 1, 1));
+  const nextMonthStart = isoDate(new Date(ano, mes, 1));
+  const winStart = isoDate(new Date(ano, mes - 1 - 2, 1));
+  const winEnd = isoDate(new Date(ano, mes - 1 + 2, 0));
+
+  const [gastosRes, cartoesRes, faturasRes, contasPagarRes, contasReceberRes] = await Promise.all([
+    supabase
+      .from("gastos")
+      .select("valor, data, forma_pagamento, cartao_id, invoice_month")
+      .eq("user_id", userId)
+      .or(`invoice_month.eq.${ym},and(data.gte.${winStart},data.lte.${winEnd})`)
+      .limit(5000),
+    supabase.from("cartoes").select("id, nome, banco, dia_vencimento, dia_fechamento").eq("user_id", userId).limit(50),
+    supabase
+      .from("faturas_cartao")
+      .select("cartao_id, mes, ano, status, valor_pago, data_pagamento")
+      .eq("user_id", userId)
+      .eq("mes", mes)
+      .eq("ano", ano),
+    supabase
+      .from("contas_a_pagar")
+      .select("nome, valor, data_vencimento, status, data_pagamento")
+      .eq("user_id", userId)
+      .gte("data_vencimento", monthStart)
+      .lt("data_vencimento", nextMonthStart)
+      .limit(200),
+    supabase
+      .from("contas_a_receber")
+      .select("titulo, valor_total, valor_recebido, data_prevista, status, pagador_nome")
+      .eq("user_id", userId)
+      .gte("data_prevista", monthStart)
+      .lt("data_prevista", nextMonthStart)
+      .limit(200),
+  ]);
+
+  const cartaoFech = new Map<string, number>();
+  const cartaoMap = new Map<string, { nome: string; banco?: string | null; dia_vencimento: number }>();
+  for (const c of (cartoesRes.data ?? []) as any[]) {
+    cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
+    cartaoMap.set(c.id, { nome: c.nome, banco: c.banco, dia_vencimento: Number(c.dia_vencimento) || 0 });
+  }
+
+  const allGastos = (gastosRes.data ?? []) as Array<{
+    valor: number; data: string; forma_pagamento?: string | null;
+    cartao_id?: string | null; invoice_month?: string | null;
+  }>;
+  const doMes = allGastos.filter((g) => efetivoYmFor(g, cartaoFech) === ym);
+
+  // Gastos do mês — separa entre crédito (vai compor fatura) e à vista (já saiu do caixa)
+  let gastosCaixaMes = 0;
+  const faturaPorCartao = new Map<string, number>();
+  for (const g of doMes) {
+    const v = Number(g.valor || 0);
+    if (g.forma_pagamento === "credito" && g.cartao_id) {
+      faturaPorCartao.set(g.cartao_id, (faturaPorCartao.get(g.cartao_id) ?? 0) + v);
+    } else {
+      gastosCaixaMes += v;
+    }
+  }
+
+  const faturaInfo = new Map<string, { valor_pago: number; status: string }>();
+  for (const f of (faturasRes.data ?? []) as any[]) {
+    faturaInfo.set(f.cartao_id, { valor_pago: Number(f.valor_pago || 0), status: f.status ?? "aberta" });
+  }
+
+  let faturasTotal = 0;
+  let faturasPagas = 0;
+  let faturasPendentes = 0;
+  const faturasDetalhe: MonthForecast["faturasDetalhe"] = [];
+  // Cartões podem ter fatura sem gasto agregado (edge), mas a regra principal é via gastos.
+  for (const [cid, totalFat] of faturaPorCartao.entries()) {
+    faturasTotal += totalFat;
+    const info = faturaInfo.get(cid);
+    const pago = Math.min(totalFat, Math.max(0, info?.valor_pago ?? 0));
+    const pendente = Math.max(0, totalFat - pago);
+    faturasPagas += pago;
+    faturasPendentes += pendente;
+    const c = cartaoMap.get(cid);
+    faturasDetalhe.push({
+      cartao: c?.nome ?? "Cartão",
+      total: totalFat,
+      pago,
+      pendente,
+      venc: c?.dia_vencimento ?? null,
+    });
+  }
+  faturasDetalhe.sort((a, b) => b.pendente - a.pendente);
+
+  // Contas a pagar — pendentes vs pagas/vencidas
+  const contasPagar = (contasPagarRes.data ?? []) as Array<{
+    nome: string; valor: number; data_vencimento: string;
+    status: string; data_pagamento?: string | null;
+  }>;
+  const hojeISO = isoDate(new Date());
+  let contasPagarPendentes = 0;
+  let contasVencidas = 0;
+  let contasPagas = 0;
+  const pendentesList: ForecastItem[] = [];
+  for (const c of contasPagar) {
+    const v = Number(c.valor || 0);
+    const paga = c.status === "pago" || !!c.data_pagamento;
+    if (paga) {
+      contasPagas += v;
+      continue;
+    }
+    contasPagarPendentes += v;
+    if (c.data_vencimento < hojeISO) contasVencidas += v;
+    pendentesList.push({
+      nome: c.nome || "Conta a pagar",
+      valor: v,
+      tipo: "conta_pagar",
+      detalhe: `venc. ${c.data_vencimento}${c.data_vencimento < hojeISO ? " (vencida)" : ""}`,
+    });
+  }
+
+  // Receitas — confirmadas e previstas
+  const receber = (contasReceberRes.data ?? []) as Array<{
+    titulo: string; valor_total: number; valor_recebido: number;
+    data_prevista: string; status: string; pagador_nome?: string | null;
+  }>;
+  let entradasConfirmadas = 0;
+  let entradasPrevistas = 0;
+  const receitasList: ForecastItem[] = [];
+  for (const r of receber) {
+    const total = Number(r.valor_total || 0);
+    const recebido = Math.max(0, Number(r.valor_recebido || 0));
+    const restante = Math.max(0, total - recebido);
+    entradasConfirmadas += Math.min(recebido, total);
+    entradasPrevistas += restante;
+    if (restante > 0) {
+      receitasList.push({
+        nome: r.titulo || r.pagador_nome || "Recebimento",
+        valor: restante,
+        tipo: "receber",
+        detalhe: `prev. ${r.data_prevista}`,
+      });
+    }
+  }
+  receitasList.sort((a, b) => b.valor - a.valor);
+
+  const saidasConfirmadas = gastosCaixaMes + faturasPagas;
+  const saidasPendentes = faturasPendentes + contasPagarPendentes;
+  const resultadoAtual = entradasConfirmadas - saidasConfirmadas;
+  const resultadoPrevisto = entradasConfirmadas + entradasPrevistas - saidasConfirmadas - saidasPendentes;
+
+  // Top impactos pendentes (maior valor)
+  const faturaImpactos: ForecastItem[] = faturasDetalhe
+    .filter((f) => f.pendente > 0)
+    .map((f) => ({
+      nome: `Fatura ${f.cartao}`,
+      valor: f.pendente,
+      tipo: "fatura" as const,
+      detalhe: f.venc ? `vence dia ${String(f.venc).padStart(2, "0")}` : "fatura aberta",
+    }));
+  const impactos = [...pendentesList, ...faturaImpactos]
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 5);
+
+  const status = computeStatus(resultadoPrevisto, entradasConfirmadas + entradasPrevistas);
+  const label = `${NOMES_MES_PT[mes - 1]} de ${ano}`;
+  const temDados =
+    doMes.length > 0 ||
+    contasPagar.length > 0 ||
+    receber.length > 0 ||
+    faturaPorCartao.size > 0;
+
+  return {
+    mes, ano, label, hoje: hojeISO,
+    entradasConfirmadas, entradasPrevistas,
+    saidasConfirmadas, saidasPendentes,
+    resultadoAtual, resultadoPrevisto, status,
+    gastosMes: doMes.reduce((s, g) => s + Number(g.valor || 0), 0),
+    faturasTotal, faturasPagas, faturasPendentes,
+    contasPagarPendentes, contasVencidas, contasPagas,
+    impactos, receitas: receitasList.slice(0, 5),
+    faturasDetalhe,
+    temDados,
+  };
+}
+
+function forecastToText(f: MonthForecast): string {
+  const lines: string[] = [];
+  lines.push(`Mês de referência: ${f.label}. Hoje: ${f.hoje}.`);
+  if (!f.temDados) {
+    lines.push("Sem dados suficientes para projetar o fechamento deste mês.");
+    return lines.join("\n");
+  }
+  lines.push(`Entradas confirmadas (já recebidas): ${fmtBRL(f.entradasConfirmadas)}.`);
+  lines.push(`Entradas previstas (a receber): ${fmtBRL(f.entradasPrevistas)}.`);
+  lines.push(`Saídas confirmadas (gastos pagos + parte paga das faturas): ${fmtBRL(f.saidasConfirmadas)}.`);
+  lines.push(`Saídas pendentes (contas a pagar + fatura aberta): ${fmtBRL(f.saidasPendentes)}.`);
+  lines.push(`Resultado atual (confirmadas): ${fmtBRL(f.resultadoAtual)}.`);
+  lines.push(`Resultado PREVISTO de fechamento: ${fmtBRL(f.resultadoPrevisto)} (status: ${f.status}).`);
+  lines.push(`Faturas do mês: total ${fmtBRL(f.faturasTotal)}, pago ${fmtBRL(f.faturasPagas)}, pendente ${fmtBRL(f.faturasPendentes)}.`);
+  lines.push(`Contas a pagar do mês: pendentes ${fmtBRL(f.contasPagarPendentes)} (vencidas ${fmtBRL(f.contasVencidas)}), pagas ${fmtBRL(f.contasPagas)}.`);
+  if (f.impactos.length) {
+    lines.push("Itens pendentes que mais pesam:");
+    for (const i of f.impactos) lines.push(`- ${i.nome}: ${fmtBRL(i.valor)}${i.detalhe ? ` (${i.detalhe})` : ""}`);
+  }
+  if (f.receitas.length) {
+    lines.push("Recebimentos previstos relevantes:");
+    for (const r of f.receitas) lines.push(`- ${r.nome}: ${fmtBRL(r.valor)}${r.detalhe ? ` (${r.detalhe})` : ""}`);
+  }
+  return lines.join("\n");
+}
+
+export const getMonthForecast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        mes: z.number().int().min(1).max(12).optional(),
+        ano: z.number().int().min(2000).max(2100).optional(),
+      })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    const access = await ensureFeatureAccess(userId);
+    if (!access.ok) {
+      throw new Response(access.reason, { status: 403 });
+    }
+
+    const now = new Date();
+    const mes = data.mes ?? now.getMonth() + 1;
+    const ano = data.ano ?? now.getFullYear();
+
+    const forecast = await computeMonthForecast(supabase, userId, mes, ano);
+    return forecast;
+  });
+
+// Exporta para o chat poder usar a mesma função
+export { computeMonthForecast, forecastToText };

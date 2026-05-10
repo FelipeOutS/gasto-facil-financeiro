@@ -35,6 +35,7 @@ import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
 import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights";
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
+import { MonthForecastCard } from "@/components/MonthForecastCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import {
   contaPertenceAoMesRef,
@@ -450,6 +451,11 @@ function Index() {
       {/* ===== Resumo inteligente do mês (IA premium) ===== */}
       <section className="mt-4">
         <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+      </section>
+
+      {/* ===== Previsão de fechamento do mês (premium) ===== */}
+      <section className="mt-4">
+        <MonthForecastCard mes={ym.mes} ano={ym.ano} />
       </section>
 
       {/* ===== Limite inteligente (premium) ===== */}
