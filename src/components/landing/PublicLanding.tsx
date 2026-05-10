@@ -227,7 +227,7 @@ function Header() {
             </a>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Link
             to="/login"
             className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 lg:px-4"
@@ -244,7 +244,7 @@ function Header() {
         </div>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 lg:hidden"
           aria-label="Abrir menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
