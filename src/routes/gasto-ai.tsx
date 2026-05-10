@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Send, Trash2, Bot, User as UserIcon, Loader2 } from "lucide-react";
+import { Sparkles, Send, Trash2, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar } from "@/components/UserAvatar";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import {
   sendChatMessage,
@@ -28,18 +32,17 @@ export const Route = createFileRoute("/gasto-ai")({
 });
 
 const SUGESTOES = [
-  "Como foi meu mês até agora?",
-  "Onde eu mais gastei?",
-  "Tenho alguma conta vencendo?",
-  "Como posso economizar essa semana?",
-  "Me dê um resumo simples das minhas finanças",
-  "Me ajude a organizar minhas metas",
-  "Estou gastando muito em alguma categoria?",
+  "Como estão meus gastos este mês?",
+  "Tenho contas vencidas?",
+  "Onde posso economizar?",
+  "Minhas metas estão indo bem?",
+  "Resumo da minha vida financeira",
 ];
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string; created_at: string };
 
 function GastoAIPage() {
+  const { user, profile } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -128,11 +131,12 @@ function GastoAIPage() {
   }
 
   const empty = !loadingHistory && messages.length === 0;
+  const userName = profile?.nome ?? profile?.responsavel_nome;
 
   return (
     <MobileShell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-4 sm:px-6 lg:pt-8">
-        <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="mx-auto flex w-full max-w-3xl flex-col px-4 pb-6 pt-4 sm:px-6 lg:pt-8">
+        <header className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/30 to-primary/30 ring-1 ring-primary/20">
               <Sparkles className="h-5 w-5 text-primary" />
@@ -140,19 +144,34 @@ function GastoAIPage() {
             <div>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Gasto Inteligente AI</h1>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Pergunte sobre seus gastos, metas, contas e organização financeira.
+                Pergunte sobre seus gastos, metas e organização financeira.
               </p>
             </div>
           </div>
           {messages.length > 0 && (
             <Button variant="ghost" size="sm" onClick={handleClear} className="rounded-full">
               <Trash2 className="mr-2 h-4 w-4" />
-              Limpar conversa
+              Limpar
             </Button>
           )}
         </header>
 
-        <div className="rounded-3xl border border-border/60 bg-card/70 shadow-card backdrop-blur-sm">
+        {/* Sugestões rápidas — sempre visíveis no topo */}
+        <div className="mb-3 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {SUGESTOES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              disabled={sending}
+              onClick={() => void handleSend(s)}
+              className="shrink-0 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all hover:border-primary/40 hover:bg-accent/50 disabled:opacity-50"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/70 shadow-card backdrop-blur-sm">
           <div
             ref={scrollRef}
             className="h-[58vh] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5"
@@ -170,48 +189,59 @@ function GastoAIPage() {
                 <div>
                   <p className="text-sm font-semibold">Bora olhar seu financeiro juntos?</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Escolha uma sugestão abaixo ou escreva sua pergunta.
+                    Escolha uma sugestão acima ou escreva sua pergunta.
                   </p>
                 </div>
               </div>
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {messages.map((m) => (
                   <li
                     key={m.id}
                     className={cn(
-                      "flex gap-2",
+                      "flex items-end gap-2",
                       m.role === "user" ? "justify-end" : "justify-start",
                     )}
                   >
                     {m.role === "assistant" && (
-                      <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
-                        <Bot className="h-3.5 w-3.5" />
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400/30 to-primary/30 ring-1 ring-primary/20">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
                       </span>
                     )}
                     <div
                       className={cn(
-                        "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
+                        "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm",
                         m.role === "user"
-                          ? "bg-brand-grad text-primary-foreground"
-                          : "bg-accent/40 text-foreground",
+                          ? "rounded-br-md bg-brand-grad text-primary-foreground"
+                          : "rounded-bl-md border border-border/40 bg-card text-foreground",
                       )}
                     >
-                      {m.content}
+                      {m.role === "assistant" ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-headings:mb-1 prose-headings:mt-2 prose-strong:text-foreground prose-strong:font-semibold prose-a:text-primary">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {m.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{m.content}</p>
+                      )}
                     </div>
                     {m.role === "user" && (
-                      <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-                        <UserIcon className="h-3.5 w-3.5" />
-                      </span>
+                      <UserAvatar
+                        url={profile?.avatar_url}
+                        name={userName}
+                        email={user?.email}
+                        size={28}
+                      />
                     )}
                   </li>
                 ))}
                 {sending && (
-                  <li className="flex justify-start gap-2">
-                    <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
-                      <Bot className="h-3.5 w-3.5" />
+                  <li className="flex items-end justify-start gap-2">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400/30 to-primary/30 ring-1 ring-primary/20">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
                     </span>
-                    <div className="rounded-2xl bg-accent/40 px-3.5 py-2.5 text-sm text-muted-foreground">
+                    <div className="rounded-2xl rounded-bl-md border border-border/40 bg-card px-3.5 py-2.5 text-sm text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:120ms]" />
@@ -224,22 +254,8 @@ function GastoAIPage() {
             )}
           </div>
 
-          <div className="border-t border-border/60 p-3 sm:p-4">
-            {messages.length === 0 && !loadingHistory && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {SUGESTOES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={sending}
-                    onClick={() => void handleSend(s)}
-                    className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-border hover:bg-accent/40 disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Input fixo na base do bloco do chat */}
+          <div className="sticky bottom-0 border-t border-border/60 bg-card/95 p-3 backdrop-blur-md sm:p-4">
             <form onSubmit={onSubmit} className="flex items-end gap-2">
               <Textarea
                 value={input}
@@ -266,8 +282,8 @@ function GastoAIPage() {
               </Button>
             </form>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              A IA usa apenas seus dados financeiros e nunca compartilha com outros usuários. Respostas
-              são orientações gerais — não constituem recomendação de investimento.
+              A IA usa apenas seus dados financeiros e nunca compartilha com outros usuários. As
+              respostas são orientações gerais — não constituem recomendação de investimento.
             </p>
           </div>
         </div>
