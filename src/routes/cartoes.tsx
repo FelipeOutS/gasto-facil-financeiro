@@ -885,12 +885,24 @@ function ProximosVencimentos({
       <ul className="mt-3 space-y-2">
         {items.map(({ cartao, dias }) => {
           const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
-          const tone =
-            dias <= 3 ? "text-destructive" : dias <= 7 ? "text-warning" : "text-muted-foreground";
+          const urgente = dias <= 1;
+          const proximo = dias <= 3;
+          const tone = proximo
+            ? "text-destructive"
+            : dias <= 7
+              ? "text-warning"
+              : "text-muted-foreground";
+          const label =
+            dias === 0 ? "hoje" : dias === 1 ? "amanhã" : `${dias}d`;
           return (
             <li
               key={cartao.id}
-              className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
+                urgente
+                  ? "border border-destructive/30 bg-destructive/10"
+                  : "bg-card-elevated",
+              )}
             >
               <span
                 className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg shadow-card"
@@ -907,11 +919,18 @@ function ProximosVencimentos({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {cartao.banco || "Cartão"} · vence dia {cartao.diaVencimento}
+                  {formatBanco(cartao.banco) || "Cartão"} · vence dia {cartao.diaVencimento}
                 </p>
               </div>
-              <span className={cn("num shrink-0 text-xs font-semibold", tone)}>
-                {dias === 0 ? "hoje" : `${dias}d`}
+              <span
+                className={cn(
+                  "num shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  urgente
+                    ? "bg-destructive text-destructive-foreground"
+                    : tone,
+                )}
+              >
+                {label}
               </span>
             </li>
           );
