@@ -862,7 +862,21 @@ function ProximosVencimentos({
 }: {
   items: Array<{ cartao: Cartao; dias: number }>;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
+        <div className="flex items-center gap-2">
+          <div className="grid h-8 w-8 place-items-center rounded-full bg-success/15 text-success">
+            <CheckCircle2 className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
+            <p className="text-[11px] text-muted-foreground">Nenhuma fatura pendente no momento.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
       <div className="flex items-center gap-2">
