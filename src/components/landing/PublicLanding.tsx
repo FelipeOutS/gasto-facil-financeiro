@@ -617,10 +617,10 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 
 /* ---- Shared KPI data for the radar block (matches reference screenshots) ---- */
 const RADAR_KPIS = [
-  { l: "SALDO", v: "R$ 3.117,00", s: "no mês atual", icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />, bg: "bg-slate-100" },
-  { l: "RECEITAS", v: "R$ 3.189,00", s: "1 entrada", icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />, bg: "bg-emerald-50" },
-  { l: "DESPESAS", v: "R$ 72,00", s: "2 lançamentos", icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />, bg: "bg-rose-50" },
-  { l: "A PAGAR", v: "R$ 185,00", s: "1 pendente(s)", icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />, bg: "bg-amber-50" },
+  { l: "SALDO", v: "R$ 4.852,30", s: "no mês atual", icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />, bg: "bg-slate-100" },
+  { l: "RECEITAS", v: "R$ 5.420,00", s: "2 entradas", icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />, bg: "bg-emerald-50" },
+  { l: "DESPESAS", v: "R$ 1.248,90", s: "14 lançamentos", icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />, bg: "bg-rose-50" },
+  { l: "A PAGAR", v: "R$ 320,00", s: "2 pendentes", icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />, bg: "bg-amber-50" },
 ];
 
 function DesktopDashboardMock() {
@@ -643,12 +643,13 @@ function DesktopDashboardMock() {
     <div className="flex h-full w-full bg-slate-50/60 text-slate-900">
       {/* Sidebar */}
       <div className="flex w-[22%] flex-col border-r border-slate-200 bg-white p-2">
-        <div className="flex items-center gap-1.5 px-1 pb-1">
-          <span className="grid h-5 w-5 place-items-center rounded-md bg-gradient-to-br from-emerald-500 to-blue-600 text-[7px] font-bold text-white">G</span>
-          <div className="leading-tight">
-            <p className="text-[7.5px] font-bold text-slate-900">Gasto</p>
-            <p className="-mt-0.5 text-[7.5px] font-bold text-slate-900">Inteligente</p>
-          </div>
+        <div className="flex items-center px-1 pb-1">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-4 w-auto object-contain"
+          />
         </div>
         <p className="px-1 text-[6px] text-slate-400">Controle financeiro</p>
         <div className="mt-2 flex items-center justify-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[7.5px] font-semibold text-white">
@@ -683,16 +684,7 @@ function DesktopDashboardMock() {
           </span>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-2.5 py-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-2.5 w-2.5 text-amber-600" />
-          </span>
-          <div>
-            <p className="text-[8px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[6.5px] text-slate-500">Admin Master — todos os recursos liberados.</p>
-          </div>
-        </div>
+
 
         {/* Alertas */}
         <div className="mt-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
@@ -797,13 +789,14 @@ function TabletDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
       <div className="flex-1 overflow-hidden px-3 pt-3 pb-7">
-        {/* header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
-            <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
-            <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
-          </div>
+        {/* logo */}
+        <div className="flex items-center justify-between">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-3 w-auto object-contain"
+          />
           <div className="flex items-center gap-1">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-1 py-0.5">
               <ChevronLeft className="h-2 w-2 text-slate-500" />
@@ -815,15 +808,11 @@ function TabletDashboardMock() {
           </div>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-2 py-1.5">
-          <span className="grid h-4 w-4 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-2 w-2 text-amber-600" />
-          </span>
-          <div>
-            <p className="text-[7px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[5.5px] text-slate-500">Admin Master — todos os recursos liberados.</p>
-          </div>
+        {/* header */}
+        <div className="mt-2">
+          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
+          <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
+          <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
         </div>
 
         {/* Alertas */}
@@ -976,13 +965,14 @@ function MobileDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
       <div className="flex-1 overflow-hidden px-2 pt-2 pb-7">
-        {/* header */}
-        <div className="flex items-start justify-between gap-1">
-          <div className="min-w-0">
-            <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
-            <p className="text-[10px] font-bold leading-tight text-slate-900">Maio De 2026</p>
-            <p className="text-[5px] text-slate-500 truncate">Entenda para onde seu dinheiro foi.</p>
-          </div>
+        {/* logo */}
+        <div className="flex items-center justify-between gap-1">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-2.5 w-auto object-contain"
+          />
           <div className="flex shrink-0 items-center gap-0.5">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-0.5 py-0.5">
               <ChevronLeft className="h-1.5 w-1.5 text-slate-500" />
@@ -994,15 +984,11 @@ function MobileDashboardMock() {
           </div>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-1.5 flex items-center gap-1 rounded-md border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-1.5 py-1">
-          <span className="grid h-3 w-3 shrink-0 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-1.5 w-1.5 text-amber-600" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[5.5px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[4.5px] text-slate-500 truncate">Admin Master — recursos liberados.</p>
-          </div>
+        {/* header */}
+        <div className="mt-1.5 min-w-0">
+          <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
+          <p className="text-[10px] font-bold leading-tight text-slate-900">Maio De 2026</p>
+          <p className="text-[5px] text-slate-500 truncate">Entenda para onde seu dinheiro foi.</p>
         </div>
 
         {/* Alertas */}
