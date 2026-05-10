@@ -431,6 +431,143 @@ async function buildCartoesFaturasBlock(
   return lines.join("\n");
 }
 
+// ====================================================================
+// Blocos: Assinaturas/Recorrências e Investimentos
+// ====================================================================
+
+async function buildAssinaturasBlock(supabase: any, userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("recorrencias")
+    .select("nome, valor, frequencia, proxima_cobranca, forma_pagamento, status, tipo_recorrencia, ultimo_valor")
+    .eq("user_id", userId)
+    .eq("status", "ativa")
+    .limit(200);
+  if (error || !data || data.length === 0) return null;
+
+  type R = { nome: string; valor: number; frequencia: string; proxima_cobranca: string | null; forma_pagamento: string | null; status: string; tipo_recorrencia: string; ultimo_valor: number | null };
+  const rows = data as R[];
+  const assinaturas = rows.filter((r) => (r.tipo_recorrencia ?? "assinatura") === "assinatura");
+  const contasFixas = rows.filter((r) => r.tipo_recorrencia === "conta_fixa" || r.tipo_recorrencia === "fixa");
+
+  // Normaliza para custo mensal
+  const mensal = (r: R) => {
+    const v = Number(r.valor || 0);
+    const f = (r.frequencia || "mensal").toLowerCase();
+    if (f.startsWith("anual") || f.startsWith("anu")) return v / 12;
+    if (f.startsWith("semestr")) return v / 6;
+    if (f.startsWith("trimestr")) return v / 3;
+    if (f.startsWith("bimestr")) return v / 2;
+    if (f.startsWith("quinzen")) return v * 2;
+    if (f.startsWith("seman")) return v * 4;
+    return v;
+  };
+
+  const totalAssinMensal = assinaturas.reduce((s, r) => s + mensal(r), 0);
+  const totalFixasMensal = contasFixas.reduce((s, r) => s + mensal(r), 0);
+  const totalGeralMensal = totalAssinMensal + totalFixasMensal;
+
+  const lines: string[] = [];
+  lines.push(`Total mensal estimado (assinaturas + contas fixas ativas): ${fmtBRL(totalGeralMensal)}.`);
+  lines.push(`- Assinaturas ativas: ${assinaturas.length} · ${fmtBRL(totalAssinMensal)}/mês.`);
+  lines.push(`- Contas fixas recorrentes: ${contasFixas.length} · ${fmtBRL(totalFixasMensal)}/mês.`);
+
+  const ordenadas = rows.slice().sort((a, b) => mensal(b) - mensal(a)).slice(0, 8);
+  if (ordenadas.length) {
+    lines.push("Principais recorrências (peso mensal):");
+    for (const r of ordenadas) {
+      const tipo = r.tipo_recorrencia === "assinatura" ? "Assinatura" : "Conta fixa";
+      const fp = r.forma_pagamento ? ` · ${r.forma_pagamento}` : "";
+      const prox = r.proxima_cobranca ? ` · próx. ${r.proxima_cobranca}` : "";
+      const alerta = r.ultimo_valor && Number(r.ultimo_valor) > 0 && Number(r.valor) > Number(r.ultimo_valor) * 1.05
+        ? ` (subiu de ${fmtBRL(Number(r.ultimo_valor))})`
+        : "";
+      lines.push(`- ${r.nome} · ${tipo} · ${fmtBRL(mensal(r))}/mês (${r.frequencia})${fp}${prox}${alerta}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+async function buildInvestimentosBlock(supabase: any, userId: string): Promise<string | null> {
+  const [ativosRes, rendRes] = await Promise.all([
+    supabase
+      .from("investimentos_ativos")
+      .select("nome, tipo, instituicao, valor_aplicado, valor_atual, data_vencimento, liquidez, ultima_atualizacao")
+      .eq("user_id", userId)
+      .limit(300),
+    supabase
+      .from("investimentos_rendimentos")
+      .select("valor, data_pagamento")
+      .eq("user_id", userId)
+      .gte("data_pagamento", isoDate(new Date(Date.now() - 365 * 86400000)))
+      .limit(500),
+  ]);
+
+  const ativos = (ativosRes.data ?? []) as Array<{ nome: string; tipo: string; instituicao: string | null; valor_aplicado: number; valor_atual: number; data_vencimento: string | null; liquidez: string | null; ultima_atualizacao: string | null }>;
+  if (!ativos.length) return null;
+
+  const aplicado = ativos.reduce((s, a) => s + Number(a.valor_aplicado || 0), 0);
+  const atual = ativos.reduce((s, a) => s + Number(a.valor_atual || 0), 0);
+  const ganho = atual - aplicado;
+  const pct = aplicado > 0 ? (ganho / aplicado) * 100 : 0;
+
+  const porTipo = new Map<string, number>();
+  for (const a of ativos) {
+    const k = a.tipo || "outros";
+    porTipo.set(k, (porTipo.get(k) ?? 0) + Number(a.valor_atual || 0));
+  }
+  const topTipo = [...porTipo.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const hoje = new Date();
+  const vencendo = ativos
+    .filter((a) => {
+      if (!a.data_vencimento) return false;
+      const d = new Date(a.data_vencimento + "T00:00:00");
+      const dias = (d.getTime() - hoje.getTime()) / 86400000;
+      return dias >= 0 && dias <= 60;
+    })
+    .slice(0, 5);
+
+  const seisMeses = isoDate(new Date(Date.now() - 180 * 86400000));
+  const parados = ativos.filter((a) => a.ultima_atualizacao && a.ultima_atualizacao.slice(0, 10) < seisMeses).slice(0, 5);
+
+  const rend12m = ((rendRes.data ?? []) as Array<{ valor: number }>).reduce((s, r) => s + Number(r.valor || 0), 0);
+
+  const lines: string[] = [];
+  lines.push(`Carteira total atual: ${fmtBRL(atual)} (aplicado ${fmtBRL(aplicado)}).`);
+  lines.push(`Variação acumulada: ${ganho >= 0 ? "+" : ""}${fmtBRL(ganho)} (${pct.toFixed(1)}%).`);
+  if (rend12m > 0) lines.push(`Rendimentos/dividendos recebidos nos últimos 12 meses: ${fmtBRL(rend12m)}.`);
+  lines.push(`Total de ativos cadastrados: ${ativos.length}.`);
+
+  if (topTipo.length) {
+    lines.push("Distribuição por tipo (valor atual):");
+    for (const [t, v] of topTipo) {
+      const p = atual > 0 ? (v / atual) * 100 : 0;
+      lines.push(`- ${t}: ${fmtBRL(v)} (${p.toFixed(1)}%)`);
+    }
+  }
+
+  const maiores = ativos.slice().sort((a, b) => Number(b.valor_atual || 0) - Number(a.valor_atual || 0)).slice(0, 5);
+  if (maiores.length) {
+    lines.push("Maiores posições:");
+    for (const a of maiores) {
+      const inst = a.instituicao ? ` · ${a.instituicao}` : "";
+      lines.push(`- ${a.nome} (${a.tipo})${inst}: ${fmtBRL(Number(a.valor_atual || 0))}`);
+    }
+  }
+
+  if (vencendo.length) {
+    lines.push("Vencendo nos próximos 60 dias:");
+    for (const a of vencendo) lines.push(`- ${a.nome} · venc. ${a.data_vencimento} · ${fmtBRL(Number(a.valor_atual || 0))}`);
+  }
+
+  if (parados.length) {
+    lines.push("Ativos sem atualização há mais de 6 meses (podem estar parados):");
+    for (const a of parados) lines.push(`- ${a.nome} · última atualização ${a.ultima_atualizacao?.slice(0, 10) ?? "—"}`);
+  }
+
+  return lines.join("\n");
+}
+
 async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
   const email = data.user?.email ?? null;
