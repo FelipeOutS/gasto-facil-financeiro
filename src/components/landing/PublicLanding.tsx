@@ -593,7 +593,7 @@ function TabletFrame({ children }: { children: React.ReactNode }) {
       <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1.5">
         {/* front camera */}
         <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
-        <div className="overflow-hidden rounded-[12px] bg-white aspect-[3/4]">
+        <div className="overflow-hidden rounded-[12px] bg-white aspect-[3/4] [zoom:0.8] sm:[zoom:1]">
           {children}
         </div>
       </div>
@@ -607,7 +607,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
       <div className="relative overflow-hidden rounded-[20px] bg-slate-900 p-0.5">
         {/* notch */}
         <div className="absolute left-1/2 top-1 z-10 h-2.5 w-10 -translate-x-1/2 rounded-full bg-slate-900" />
-        <div className="overflow-hidden rounded-[16px] bg-white aspect-[9/19]">
+        <div className="overflow-hidden rounded-[16px] bg-white aspect-[9/19] [zoom:0.7] sm:[zoom:1]">
           {children}
         </div>
       </div>
