@@ -492,15 +492,18 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== 3. Bloco IA + Próximas ações (grade integrada) ===== */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:items-start lg:gap-5">
-        {/* Linha 1 — esquerda: Resumo inteligente */}
-        <div className="flex min-w-0 lg:col-span-6">
+      {/* ===== 3. Resumo e próximas ações ===== */}
+      <SectionLabel>Resumo e próximas ações</SectionLabel>
+      <section
+        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5"
+      >
+        {/* Esquerda topo: Resumo inteligente */}
+        <div className="flex min-w-0 lg:col-start-1 lg:row-start-1">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} className="w-full" />
         </div>
 
-        {/* Linha 1 — direita: Limite inteligente */}
-        <div className="flex min-w-0 [&>section]:w-full lg:col-span-6">
+        {/* Direita: Limite inteligente — span nas 2 linhas para casar a altura */}
+        <div className="flex min-w-0 [&>section]:w-full lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:[&>section]:h-full">
           <SmartLimiteCard
             mes={ym.mes}
             ano={ym.ano}
@@ -509,95 +512,92 @@ function Index() {
           />
         </div>
 
-        {/* Linha 2 — esquerda: Próximas contas (abaixo do Resumo) */}
+        {/* Esquerda baixo: Próximas contas — preenche o restante até a base do Limite */}
         {contasResumo.total > 0 && (
-          <div className="flex min-w-0 md:col-span-2 lg:col-span-6">
+          <div className="flex min-w-0 lg:col-start-1 lg:row-start-2 lg:[&>div]:h-full">
             <div className="flex w-full">
               <ContasCard resumo={contasResumo} variant="sideTop" />
             </div>
           </div>
         )}
+      </section>
 
-        {/* Linha 2 — direita: Atividade + Meta lado a lado (abaixo do Limite) */}
-        <div className={cn(
-          "grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:items-stretch lg:gap-5",
-          contasResumo.total > 0 ? "md:col-span-2 lg:col-span-6" : "md:col-span-2 lg:col-span-12",
-        )}>
-          <div className="flex min-w-0">
-            <div className="flex w-full">
-              <RecentTransactionsCard ultimos={ultimos} />
-            </div>
+      {/* ===== 4. Atividade + Meta mais próxima ===== */}
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
+        <div className="flex min-w-0">
+          <div className="flex w-full">
+            <RecentTransactionsCard ultimos={ultimos} />
           </div>
-          {metaProxima ? (() => {
-            const m = metaProxima.meta;
-            const bd = metaProxima.breakdown;
-            const objetivo = Number(m.valorObjetivo) || 0;
-            const acumulado = bd.total;
-            const restante = bd.restante;
-            const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
-            return (
-              <div className="flex min-w-0">
-                <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
-                      <h2 className="text-sm font-semibold">Meta mais próxima</h2>
-                    </div>
-                    <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                      Ver todas →
-                    </Link>
-                  </div>
-                  <div className="mt-3 flex items-baseline justify-between gap-3">
-                    <p className="truncate text-base font-semibold">{m.nome}</p>
-                    <p className="num shrink-0 text-xs text-muted-foreground">
-                      {formatBRL(acumulado)} / {formatBRL(objetivo)}
-                    </p>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: m.colorHex }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs">
-                    <span className="num font-semibold" style={{ color: m.colorHex }}>
-                      {Math.round(pct)}%
-                    </span>
-                    <span className="num text-muted-foreground">
-                      Falta {formatBRL(restante)}
-                    </span>
-                  </div>
-                  {bd.guardado > 0 && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      Inclui <span className="num font-semibold text-foreground">{formatBRL(bd.guardado)}</span> do Guardado vinculado
-                    </p>
-                  )}
-                  <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                    {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
-                  </div>
-                </section>
-              </div>
-            );
-          })() : (
+        </div>
+        {metaProxima ? (() => {
+          const m = metaProxima.meta;
+          const bd = metaProxima.breakdown;
+          const objetivo = Number(m.valorObjetivo) || 0;
+          const acumulado = bd.total;
+          const restante = bd.restante;
+          const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
+          return (
             <div className="flex min-w-0">
-              <Link
-                to="/metas"
-                className="flex h-full w-full items-center gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
-              >
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
-                  <Target className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">Metas</p>
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {metasAndamento.length} em andamento
+              <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
+                    <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+                  </div>
+                  <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+                    Ver todas →
+                  </Link>
+                </div>
+                <div className="mt-3 flex items-baseline justify-between gap-3">
+                  <p className="truncate text-base font-semibold">{m.nome}</p>
+                  <p className="num shrink-0 text-xs text-muted-foreground">
+                    {formatBRL(acumulado)} / {formatBRL(objetivo)}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: m.colorHex }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="num font-semibold" style={{ color: m.colorHex }}>
+                    {Math.round(pct)}%
+                  </span>
+                  <span className="num text-muted-foreground">
+                    Falta {formatBRL(restante)}
+                  </span>
+                </div>
+                {bd.guardado > 0 && (
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Inclui <span className="num font-semibold text-foreground">{formatBRL(bd.guardado)}</span> do Guardado vinculado
+                  </p>
+                )}
+                <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
+                  {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
+                </div>
+              </section>
             </div>
-          )}
-        </div>
+          );
+        })() : (
+          <div className="flex min-w-0">
+            <Link
+              to="/metas"
+              className="flex h-full w-full items-center gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+            >
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
+                <Target className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">Metas</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {metasAndamento.length} em andamento
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* Contas a receber */}
