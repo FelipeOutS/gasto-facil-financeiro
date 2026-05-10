@@ -1409,9 +1409,9 @@ function WhyUs() {
       tone: "amber",
     },
     {
-      icon: Sparkles,
-      title: "Interface simples",
-      text: "Um sistema bonito, direto e fácil de usar, mesmo para quem não entende muito de finanças.",
+      icon: Bot,
+      title: "Gasto AI",
+      text: "Pergunte sobre seus gastos, faturas, metas e contas. A IA responde com base nos seus dados — sem chute.",
       tone: "sky",
     },
   ] as const;
