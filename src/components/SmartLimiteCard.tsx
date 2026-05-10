@@ -387,9 +387,9 @@ export function SmartLimiteCard({
         </div>
 
         {/* Valor principal */}
-        <div className="mt-5 flex items-end gap-3">
+        <div className="mt-3 flex items-end gap-2">
           {status === "sem_dados" ? (
-            <p className={cn("text-3xl font-bold sm:text-4xl", cfg.valueText)}>
+            <p className={cn("text-2xl font-bold sm:text-3xl", cfg.valueText)}>
               —
             </p>
           ) : (
@@ -398,11 +398,11 @@ export function SmartLimiteCard({
                 value={porDia}
                 duration={900}
                 className={cn(
-                  "num text-4xl font-extrabold leading-none tracking-tight sm:text-5xl",
+                  "num text-3xl font-extrabold leading-none tracking-tight sm:text-4xl",
                   cfg.valueText,
                 )}
               />
-              <span className={cn("pb-1 text-sm font-medium", cfg.muted)}>
+              <span className={cn("pb-0.5 text-xs font-medium", cfg.muted)}>
                 / dia
               </span>
               {savedFlash && (
@@ -415,7 +415,7 @@ export function SmartLimiteCard({
         </div>
 
         {/* Texto explicativo */}
-        <p className={cn("mt-3 max-w-xl text-[13px] leading-relaxed", cfg.text)}>
+        <p className={cn("mt-2 max-w-xl text-[12px] leading-relaxed", cfg.text)}>
           {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
         </p>
 
