@@ -940,7 +940,7 @@ function MobileDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50">
       {/* status bar */}
-      <div className="flex items-center justify-between px-3 pt-4 pb-1 text-[6.5px] font-semibold text-slate-700">
+      <div className="flex items-center justify-between px-3 pt-3.5 pb-1 text-[6px] font-semibold text-slate-700">
         <span>9:41</span>
         <span className="flex items-center gap-0.5">
           <span className="h-1 w-1 rounded-full bg-slate-700" />
@@ -949,57 +949,46 @@ function MobileDashboardMock() {
         </span>
       </div>
       {/* header */}
-      <div className="flex items-center justify-between px-2.5 pt-1">
-        <div className="flex items-center gap-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-[7.5px] font-bold text-white">M</span>
+      <div className="flex items-center justify-between px-2.5 pt-0.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-[7px] font-bold text-white">M</span>
           <div>
-            <p className="text-[6.5px] text-slate-500">Olá, Maria 👋</p>
-            <p className="text-[8px] font-bold text-slate-900">Bem-vinda de volta</p>
+            <p className="text-[6px] text-slate-500">Olá, Maria 👋</p>
+            <p className="text-[7.5px] font-bold text-slate-900">Bem-vinda</p>
           </div>
         </div>
-        <span className="relative grid h-5 w-5 place-items-center rounded-full bg-white shadow-sm">
+        <span className="relative grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white shadow-sm">
           <Bell className="h-2.5 w-2.5 text-slate-600" />
           <span className="absolute right-0 top-0 h-1 w-1 rounded-full bg-rose-500 ring-1 ring-white" />
         </span>
       </div>
 
       {/* scroll content */}
-      <div className="flex-1 overflow-hidden px-2.5 pb-12">
+      <div className="flex-1 overflow-hidden px-2.5 pb-10">
         {/* Saldo hero */}
-        <div className="mt-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-2.5 text-white shadow-lg">
+        <div className="mt-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-2 text-white shadow-lg">
           <div className="flex items-center justify-between">
-            <p className="text-[7px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
+            <p className="text-[6.5px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
             <Eye className="h-2.5 w-2.5 opacity-80" />
           </div>
-          <p className="mt-0.5 text-[14px] font-bold tabular-nums">R$ 3.142,80</p>
-          <div className="mt-1 flex items-center justify-between">
-            <div className="flex items-center gap-0.5 text-[6.5px] opacity-90">
+          <p className="mt-0.5 text-[13px] font-bold tabular-nums">R$ 3.142,80</p>
+          <div className="mt-1 flex items-center justify-between gap-1">
+            <div className="flex items-center gap-0.5 text-[6px] opacity-90">
               <ArrowUpRight className="h-2 w-2" /> +12% vs out.
             </div>
-            <div className="flex items-center gap-1">
-              {[
-                { l: "Receita", v: "R$ 6.420", up: true },
-                { l: "Despesa", v: "R$ 3.277", up: false },
-              ].map((k) => (
-                <div key={k.l} className="rounded-md bg-white/15 px-1 py-0.5 backdrop-blur">
-                  <p className="text-[6px] opacity-80">{k.l}</p>
-                  <p className="text-[7px] font-bold tabular-nums">{k.v}</p>
-                </div>
-              ))}
-            </div>
+            <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[6px] font-semibold backdrop-blur">Meta 62%</span>
           </div>
         </div>
 
         {/* quick actions */}
-        <div className="mt-2 grid grid-cols-4 gap-1.5">
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
           {[
             { l: "Adicionar", i: Receipt, c: "from-blue-500 to-blue-600" },
             { l: "Cartões", i: CreditCard, c: "from-violet-500 to-violet-600" },
             { l: "Metas", i: Target, c: "from-emerald-500 to-emerald-600" },
-            { l: "Investir", i: TrendingUp, c: "from-amber-500 to-amber-600" },
           ].map((a) => (
             <div key={a.l} className="flex flex-col items-center gap-0.5">
-              <span className={cn("grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br text-white shadow-sm", a.c)}>
+              <span className={cn("grid h-5 w-5 place-items-center rounded-lg bg-gradient-to-br text-white shadow-sm", a.c)}>
                 <a.i className="h-2.5 w-2.5" />
               </span>
               <span className="text-[6px] font-medium text-slate-600">{a.l}</span>
@@ -1013,7 +1002,7 @@ function MobileDashboardMock() {
             <p className="text-[7.5px] font-semibold text-slate-800">Fluxo do mês</p>
             <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[6px] font-semibold text-emerald-700">+12%</span>
           </div>
-          <FluxoLineChart className="mt-0.5 h-9 w-full" compact />
+          <FluxoLineChart className="mt-1 h-8 w-full" compact />
         </div>
 
         {/* transactions */}
@@ -1026,17 +1015,16 @@ function MobileDashboardMock() {
             {[
               { l: "Mercado", s: "Hoje", v: "- R$ 184,90", neg: true, c: "bg-emerald-100 text-emerald-700", i: "M" },
               { l: "Salário", s: "05 nov", v: "+ R$ 4.800", neg: false, c: "bg-blue-100 text-blue-700", i: "S" },
-              { l: "Netflix", s: "04 nov", v: "- R$ 39,90", neg: true, c: "bg-rose-100 text-rose-700", i: "N" },
             ].map((r) => (
-              <div key={r.l} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-1.5 py-1">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("grid h-4 w-4 place-items-center rounded-full text-[7px] font-bold", r.c)}>{r.i}</span>
+              <div key={r.l} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-1.5 py-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={cn("grid h-4 w-4 shrink-0 place-items-center rounded-full text-[7px] font-bold", r.c)}>{r.i}</span>
                   <div>
                     <p className="text-[7px] font-semibold text-slate-800">{r.l}</p>
                     <p className="text-[6px] text-slate-400">{r.s}</p>
                   </div>
                 </div>
-                <span className={cn("text-[7px] font-bold tabular-nums", r.neg ? "text-rose-600" : "text-emerald-600")}>{r.v}</span>
+                <span className={cn("text-[6.5px] font-bold tabular-nums", r.neg ? "text-rose-600" : "text-emerald-600")}>{r.v}</span>
               </div>
             ))}
           </div>
