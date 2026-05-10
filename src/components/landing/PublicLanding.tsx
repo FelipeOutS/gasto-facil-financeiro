@@ -2700,14 +2700,14 @@ function Testimonials() {
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-7">
+        <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-6 md:max-w-3xl md:gap-7 lg:max-w-none lg:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
             <Reveal key={t.name} delay={i * 0.08}>
               <figure
                 className={cn(
-                  "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 transition-all duration-300",
+                  "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
                   t.highlight
-                    ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 md:-translate-y-2 hover:-translate-y-3"
+                    ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
                     : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
                 )}
               >
@@ -2747,7 +2747,7 @@ function Testimonials() {
 
                 <blockquote
                   className={cn(
-                    "relative mt-5 flex-1 text-[15px] leading-relaxed sm:text-[15.5px]",
+                    "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
                     t.highlight ? "text-white/90" : "text-slate-700",
                   )}
                 >
@@ -2756,23 +2756,23 @@ function Testimonials() {
 
                 <figcaption
                   className={cn(
-                    "relative mt-7 flex items-center gap-3 border-t pt-5",
+                    "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
                     t.highlight ? "border-white/10" : "border-slate-100",
                   )}
                 >
                   <span
                     className={cn(
-                      "relative grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2",
+                      "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
                       t.color,
                       t.highlight ? "ring-white/20" : "ring-white",
                     )}
                   >
                     {t.initials}
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p
                       className={cn(
-                        "truncate text-sm font-semibold tracking-tight",
+                        "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
                         t.highlight ? "text-white" : "text-slate-900",
                       )}
                     >
@@ -2780,7 +2780,7 @@ function Testimonials() {
                     </p>
                     <p
                       className={cn(
-                        "truncate text-[12px]",
+                        "text-[12px] md:text-[13px] lg:truncate",
                         t.highlight ? "text-white/60" : "text-slate-500",
                       )}
                     >
@@ -2789,7 +2789,7 @@ function Testimonials() {
                   </div>
                   <ShieldCheck
                     className={cn(
-                      "ml-auto h-4 w-4 shrink-0",
+                      "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
                       t.highlight ? "text-emerald-300" : "text-emerald-500",
                     )}
                     aria-label="Usuário verificado"
