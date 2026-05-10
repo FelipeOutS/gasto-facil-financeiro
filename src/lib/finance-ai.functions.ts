@@ -487,9 +487,18 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const summary = await buildFinancialSummary(supabase, userId);
 
-    const target = detectTargetMonth(data.message, new Date());
+    const now = new Date();
+    const target = detectTargetMonth(data.message, now);
     const targetBlock = target
       ? await buildTargetMonthSummary(supabase, userId, target.mes, target.ano)
+      : null;
+
+    // Detecta intenção de fatura/cartão para anexar bloco dedicado
+    const lowerMsg = data.message.toLowerCase();
+    const wantsFatura = /\b(fatura|faturas|cart[ãa]o|cart[õo]es|limite|vencimento da fatura|venceu o cart)\b/i.test(lowerMsg);
+    const faturaRef = target ?? { mes: now.getMonth() + 1, ano: now.getFullYear() };
+    const faturaBlock = wantsFatura
+      ? await buildCartoesFaturasBlock(supabase, userId, faturaRef.mes, faturaRef.ano)
       : null;
 
     const messages = [
@@ -497,6 +506,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
       ...(targetBlock
         ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
+        : []),
+      ...(faturaBlock
+        ? [{ role: "system" as const, content: `CARTÕES E FATURAS\n${faturaBlock}` }]
         : []),
       ...ordered.map((m: any) => ({ role: m.role, content: m.content })),
     ];
