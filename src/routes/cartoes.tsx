@@ -16,6 +16,7 @@ import {
   mesReferenciaFatura,
   mesReferenciaFaturaLabel,
 } from "@/lib/store";
+import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
 import {
