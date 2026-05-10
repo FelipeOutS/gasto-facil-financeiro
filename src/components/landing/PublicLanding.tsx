@@ -535,14 +535,14 @@ function MultiDeviceShowcase() {
           </NotebookFrame>
 
           {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
-          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-4 md:left-0 lg:-bottom-8 lg:left-2 md:z-10">
+          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0 md:z-10">
             <TabletFrame>
               <DesktopDashboardMock />
             </TabletFrame>
           </div>
 
           {/* Phone — overlapping on the right on desktop, stacked on mobile */}
-          <div className="mt-6 flex justify-center sm:mt-8 md:mt-0 md:absolute md:-bottom-6 md:right-2 lg:-bottom-10 lg:right-4 md:z-20">
+          <div className="mt-6 flex justify-center sm:mt-8 md:mt-0 md:absolute md:-bottom-8 md:-right-2 lg:-bottom-12 lg:-right-2 md:z-20">
             <PhoneFrame>
               <MobileDashboardMock />
             </PhoneFrame>
@@ -557,7 +557,7 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative mx-auto w-full max-w-2xl lg:max-w-3xl">
       {/* lid */}
-      <div className="rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_50px_100px_-40px_rgba(15,23,42,0.45)]">
+      <div className="rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_60px_120px_-50px_rgba(15,23,42,0.45)]">
         <div className="rounded-[14px] bg-slate-900 p-1.5">
           {/* camera */}
           <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
@@ -568,21 +568,22 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      {/* base / hinge */}
-      <div className="relative mx-auto h-2.5 w-[104%] -translate-y-[1px] rounded-b-2xl bg-gradient-to-b from-slate-200 to-slate-300 shadow-[0_18px_30px_-18px_rgba(15,23,42,0.35)]">
-        <div className="absolute left-1/2 top-0 h-1.5 w-24 -translate-x-1/2 rounded-b-xl bg-slate-300" />
-      </div>
+      {/* soft floor shadow */}
+      <div
+        aria-hidden
+        className="pointer-events-none mx-auto mt-3 h-6 w-[80%] rounded-[50%] bg-slate-900/15 blur-2xl"
+      />
     </div>
   );
 }
 
 function TabletFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[200px] sm:w-[220px] md:w-[180px] lg:w-[210px] rounded-[22px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
-      <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1">
+    <div className="relative w-[260px] sm:w-[300px] md:w-[230px] lg:w-[280px] rounded-[26px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
+      <div className="relative overflow-hidden rounded-[20px] bg-slate-900 p-1.5">
         {/* front camera */}
         <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
-        <div className="overflow-hidden rounded-[14px] bg-white aspect-[3/4]">
+        <div className="overflow-hidden rounded-[14px] bg-white aspect-[4/3]">
           {children}
         </div>
       </div>
@@ -592,11 +593,11 @@ function TabletFrame({ children }: { children: React.ReactNode }) {
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[170px] sm:w-[190px] md:w-[150px] lg:w-[180px] rounded-[30px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_40px_70px_-25px_rgba(15,23,42,0.5)]">
-      <div className="relative overflow-hidden rounded-[24px] bg-slate-900 p-1">
+    <div className="relative w-[140px] sm:w-[155px] md:w-[120px] lg:w-[145px] rounded-[28px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_35px_60px_-20px_rgba(15,23,42,0.45)]">
+      <div className="relative overflow-hidden rounded-[22px] bg-slate-900 p-1">
         {/* notch */}
-        <div className="absolute left-1/2 top-1.5 z-10 h-3.5 w-16 -translate-x-1/2 rounded-full bg-slate-900" />
-        <div className="overflow-hidden rounded-[20px] bg-white aspect-[9/19]">
+        <div className="absolute left-1/2 top-1 z-10 h-3 w-12 -translate-x-1/2 rounded-full bg-slate-900" />
+        <div className="overflow-hidden rounded-[18px] bg-white aspect-[9/19]">
           {children}
         </div>
       </div>
