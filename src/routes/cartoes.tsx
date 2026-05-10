@@ -201,6 +201,20 @@ function CartoesPage() {
     return map;
   }, [cartoes, gastos]);
 
+  // Status efetivo da fatura corrente por cartão — usado para filtrar
+  // cobranças já pagas dos blocos "Próxima fatura" e "Próximos vencimentos".
+  const faturaCorrentePorCartao = useMemo(() => {
+    const map = new Map<string, { mes: number; ano: number; status: StatusFatura; pendente: number }>();
+    for (const c of cartoes) {
+      const ref = faturaCorrente(c);
+      const status = statusEfetivoFatura(c, ref.mes, ref.ano);
+      const r = resumosPorCartao.get(c.id);
+      const pendente = status === "paga" ? 0 : r?.usadoMes ?? 0;
+      map.set(c.id, { mes: ref.mes, ano: ref.ano, status, pendente });
+    }
+    return map;
+  }, [cartoes, resumosPorCartao]);
+
   const resumo = useMemo(() => {
     const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
     let usado = 0;
@@ -209,7 +223,9 @@ function CartoesPage() {
     for (const c of cartoes) {
       const r = resumosPorCartao.get(c.id);
       if (r) usado += r.usadoMes;
-      if (c.diaVencimento) {
+      const f = faturaCorrentePorCartao.get(c.id);
+      // Só concorre como "próxima fatura" se ainda houver pendência.
+      if (c.diaVencimento && f && f.status !== "paga" && f.pendente > 0) {
         const d = diasAte(c.diaVencimento);
         if (d < proximaDias) {
           proximaDias = d;
@@ -226,7 +242,7 @@ function CartoesPage() {
         proxima.diaVencimento >= hoje.getDate()
           ? alvoEsteMes
           : new Date(hoje.getFullYear(), hoje.getMonth() + 1, proxima.diaVencimento);
-      proximaValor = resumosPorCartao.get(proxima.id)?.usadoMes ?? 0;
+      proximaValor = faturaCorrentePorCartao.get(proxima.id)?.pendente ?? 0;
     }
     return {
       limiteTotal,
@@ -237,16 +253,20 @@ function CartoesPage() {
       proximaData,
       proximaValor,
     };
-  }, [cartoes, resumosPorCartao]);
+  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao]);
 
-  // Próximos vencimentos (todos cartões com dia definido)
+  // Próximos vencimentos — esconde faturas já pagas (sem pendência).
   const proximosVencimentos = useMemo(() => {
     return cartoes
-      .filter((c) => !!c.diaVencimento)
+      .filter((c) => {
+        if (!c.diaVencimento) return false;
+        const f = faturaCorrentePorCartao.get(c.id);
+        return !!f && f.status !== "paga" && f.pendente > 0;
+      })
       .map((c) => ({ cartao: c, dias: diasAte(c.diaVencimento) }))
       .sort((a, b) => a.dias - b.dias)
       .slice(0, 4);
-  }, [cartoes]);
+  }, [cartoes, faturaCorrentePorCartao]);
 
   // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
   const ultimasComprasAll = useMemo(() => {
