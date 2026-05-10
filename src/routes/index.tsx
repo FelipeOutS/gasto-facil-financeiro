@@ -453,6 +453,11 @@ function Index() {
         <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
       </section>
 
+      {/* ===== Previsão de fechamento do mês (premium) ===== */}
+      <section className="mt-4">
+        <MonthForecastCard mes={ym.mes} ano={ym.ano} />
+      </section>
+
       {/* ===== Limite inteligente (premium) ===== */}
       <section className="mt-4">
         <SmartLimiteCard
