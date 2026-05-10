@@ -564,13 +564,8 @@ function MultiDeviceShowcase() {
 function NotebookFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative mx-auto w-full max-w-2xl lg:max-w-3xl">
-      {/* soft ambient floor shadow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-[8%] -bottom-10 h-16 rounded-[50%] bg-slate-900/20 blur-3xl"
-      />
       {/* lid */}
-      <div className="relative rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_60px_120px_-50px_rgba(15,23,42,0.45)]">
+      <div className="relative z-10 rounded-[20px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-1.5 shadow-[0_60px_120px_-50px_rgba(15,23,42,0.45)]">
         <div className="rounded-[14px] bg-slate-900 p-1.5">
           {/* camera */}
           <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
