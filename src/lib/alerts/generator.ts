@@ -418,6 +418,64 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     });
   }
 
+  // ---- Gasto fora do padrão POR CATEGORIA ----
+  // Compara o total do mês atual de cada categoria com a média dos 3 meses
+  // anteriores (usando o mesmo mês de competência via mesEfetivoGasto).
+  // Dispara alerta quando a categoria gastou pelo menos 2x a média e tem
+  // pelo menos R$ 50 de excesso — evita falso positivo em categorias minúsculas.
+  {
+    const totaisPorMes = new Map<string, Map<string, number>>(); // ym -> catId -> valor
+    function bump(ym: string, catId: string, v: number) {
+      let m = totaisPorMes.get(ym);
+      if (!m) { m = new Map(); totaisPorMes.set(ym, m); }
+      m.set(catId, (m.get(catId) ?? 0) + v);
+    }
+    for (const g of gastosConfirmados) {
+      const ef = mesEfetivoGasto(g);
+      const ym = `${ef.ano}-${String(ef.mes).padStart(2, "0")}`;
+      const cat = g.categoriaId ?? "_sem";
+      bump(ym, cat, Number(g.valor || 0));
+    }
+    const ymAtual = `${year}-${String(month).padStart(2, "0")}`;
+    const mapAtual = totaisPorMes.get(ymAtual);
+    if (mapAtual) {
+      const meses3: string[] = [];
+      for (let i = 1; i <= 3; i++) {
+        const r = new Date(year, month - 1 - i, 1);
+        meses3.push(`${r.getFullYear()}-${String(r.getMonth() + 1).padStart(2, "0")}`);
+      }
+      const catNomes = new Map(src.categorias.map((c) => [c.id, c.nome]));
+      for (const [catId, atual] of mapAtual) {
+        if (catId === "_sem") continue;
+        if (atual < 50) continue;
+        const valores = meses3.map((ym) => totaisPorMes.get(ym)?.get(catId) ?? 0);
+        const mesesComDados = valores.filter((v) => v > 0).length;
+        if (mesesComDados < 2) continue; // precisa de histórico mínimo
+        const media = valores.reduce((s, v) => s + v, 0) / 3;
+        if (media <= 0) continue;
+        const ratio = atual / media;
+        const excesso = atual - media;
+        if (ratio >= 2 && excesso >= 50) {
+          const nome = catNomes.get(catId) ?? "Outros";
+          const vezes = ratio.toFixed(1).replace(".", ",");
+          drafts.push({
+            type: "gasto_fora_padrao_categoria",
+            title: `Gasto fora do padrão em ${nome}`,
+            description: `Você gastou ${vezes}x a sua média dos últimos 3 meses em ${nome} (R$ ${atual.toFixed(2).replace(".", ",")} vs média R$ ${media.toFixed(2).replace(".", ",")}).`,
+            priority: ratio >= 3 ? "alta" : "media",
+            related_entity_type: "categoria",
+            related_entity_id: catId,
+            action_label: "Ver gastos",
+            action_url: "/gastos",
+            dedupe_key: `gasto_fora_padrao_categoria:${catId}`,
+            period_key: period,
+            metadata: { categoria: nome, atual, media, ratio, mesesComDados },
+          });
+        }
+      }
+    }
+  }
+
   // Possível duplicado: mesma descrição+valor+data nos últimos 7 dias
   const recentes = gastosConfirmados.filter((g) => {
     const dias = diffDaysLocal(g.data);
