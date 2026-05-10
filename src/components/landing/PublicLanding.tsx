@@ -35,6 +35,11 @@ import {
   SlidersHorizontal,
   Gauge,
   LayoutGrid,
+  Bot,
+  MessageCircle,
+  Send,
+  Calculator,
+  CalendarClock,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
