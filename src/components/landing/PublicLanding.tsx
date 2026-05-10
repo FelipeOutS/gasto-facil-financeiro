@@ -794,79 +794,107 @@ function DesktopDashboardMock() {
 }
 
 function TabletDashboardMock() {
-  const kpis = [
-    { l: "Saldo", v: "R$ 3.142", c: "from-blue-500/15 to-blue-500/0", i: Wallet, t: "text-blue-600" },
-    { l: "Receitas", v: "R$ 6.420", c: "from-emerald-500/15 to-emerald-500/0", i: ArrowUpRight, t: "text-emerald-600" },
-    { l: "Despesas", v: "R$ 3.277", c: "from-rose-500/15 to-rose-500/0", i: ArrowDownRight, t: "text-rose-600" },
-    { l: "A pagar", v: "R$ 980", c: "from-amber-500/15 to-amber-500/0", i: Receipt, t: "text-amber-600" },
-  ];
-
   return (
-    <div className="flex h-full w-full flex-col bg-slate-50">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 text-[8px] font-bold text-white">M</span>
+    <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
+      <div className="flex-1 overflow-hidden px-3 pt-3 pb-7">
+        {/* header */}
+        <div className="flex items-start justify-between">
           <div>
-            <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">Dashboard</p>
-            <p className="text-[10px] font-bold text-slate-900">Novembro · 2026</p>
+            <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
+            <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
+            <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="flex items-center rounded-full border border-slate-200 bg-white px-1 py-0.5">
+              <ChevronLeft className="h-2 w-2 text-slate-500" />
+              <ChevronRight className="h-2 w-2 text-slate-500" />
+            </span>
+            <span className="grid h-4 w-4 place-items-center rounded-full border border-slate-200 bg-white">
+              <Bell className="h-2 w-2 text-slate-500" />
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-100 text-slate-500">
-            <Bell className="h-2.5 w-2.5" />
+
+        {/* Acesso total */}
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-2 py-1.5">
+          <span className="grid h-4 w-4 place-items-center rounded-full bg-amber-100">
+            <Crown className="h-2 w-2 text-amber-600" />
           </span>
-          <span className="rounded-full bg-blue-50 px-2 py-1 text-[7px] font-semibold text-blue-700">+ Novo</span>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-hidden p-3">
-        <div className="overflow-hidden rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-emerald-500 p-3 text-white shadow-[0_18px_35px_-22px_rgba(37,99,235,0.75)]">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[7px] font-medium uppercase tracking-wider opacity-80">Saldo total</p>
-              <p className="mt-0.5 text-[18px] font-bold tabular-nums">R$ 3.142,80</p>
-            </div>
-            <span className="rounded-full bg-white/15 px-2 py-1 text-[7px] font-semibold backdrop-blur">+12%</span>
+          <div>
+            <p className="text-[7px] font-bold text-slate-900">Acesso total</p>
+            <p className="text-[5.5px] text-slate-500">Admin Master — todos os recursos liberados.</p>
           </div>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {kpis.map((k) => (
-            <div key={k.l} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-2">
-              <div className={cn("absolute inset-0 bg-gradient-to-br", k.c)} />
-              <div className="relative flex items-center justify-between">
-                <p className="text-[7px] font-semibold uppercase tracking-wider text-slate-500">{k.l}</p>
-                <k.i className={cn("h-3 w-3", k.t)} />
+        {/* Alertas */}
+        <div className="mt-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <Bell className="h-2.5 w-2.5 text-slate-700" />
+            <div>
+              <p className="text-[7px] font-bold text-slate-900">Alertas importantes</p>
+              <p className="text-[5.5px] text-slate-500">Tudo certo por aqui.</p>
+            </div>
+          </div>
+          <div className="mt-1 flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[5.5px] font-medium text-emerald-700">
+            <Sparkles className="h-1.5 w-1.5" /> Nada urgente no radar.
+          </div>
+        </div>
+
+        {/* radar */}
+        <p className="mt-2 text-[5.5px] font-semibold uppercase tracking-widest text-slate-400">Tá tudo no radar</p>
+        <div className="mt-1 grid grid-cols-2 gap-1.5">
+          {RADAR_KPIS.map((k) => (
+            <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-[5.5px] font-semibold tracking-wider text-slate-500">{k.l}</p>
+                <span className={cn("grid h-3 w-3 place-items-center rounded-full", k.bg)}>{k.icon}</span>
               </div>
-              <p className="relative mt-1 text-[11px] font-bold tabular-nums text-slate-900">{k.v}</p>
+              <p className="mt-0.5 text-[9px] font-bold tabular-nums text-slate-900">{k.v}</p>
+              <p className="text-[5.5px] text-slate-400">{k.s}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-semibold text-slate-800">Fluxo do mês</p>
-              <p className="text-[7px] text-slate-400">Receitas vs. despesas</p>
+        {/* Limite */}
+        <div className="mt-2 rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50/70 to-white p-2">
+          <div className="flex items-start justify-between gap-1">
+            <div className="flex items-center gap-1">
+              <span className="grid h-3 w-3 place-items-center rounded-full bg-amber-100">
+                <Sparkles className="h-1.5 w-1.5 text-amber-600" />
+              </span>
+              <p className="text-[6px] font-bold uppercase tracking-wider text-amber-700">Seu limite inteligente</p>
             </div>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[7px] font-semibold text-emerald-700">+12%</span>
+            <span className="flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[5.5px] font-semibold text-amber-700">
+              <Gauge className="h-1.5 w-1.5" /> ATENÇÃO AO RITMO
+            </span>
           </div>
-          <FluxoLineChart className="mt-2 h-[58px] w-full" compact />
+          <p className="mt-1 text-[6px] font-semibold text-amber-800">Ignora contas fixas e faturas já pagas.</p>
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white px-1.5 py-0.5 text-[5.5px] font-semibold text-amber-700">
+            <SlidersHorizontal className="h-1.5 w-1.5" /> Somente gastos variáveis
+          </span>
+          <div className="mt-1 flex items-baseline gap-1">
+            <p className="text-[16px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
+            <span className="text-[7px] font-semibold text-amber-600">/ dia</span>
+          </div>
+          <p className="mt-0.5 text-[5.5px] leading-snug text-amber-800/80">
+            Mantenha os gastos abaixo de R$ 13,73 por dia.
+          </p>
         </div>
+      </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
+      {/* bottom nav */}
+      <div className="absolute inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pt-1 pb-1.5">
+        <div className="flex items-center justify-around">
           {[
-            { l: "Mercado", v: "R$ 920", p: "70%", c: "from-emerald-500 to-emerald-400" },
-            { l: "Casa", v: "R$ 680", p: "55%", c: "from-amber-500 to-amber-400" },
-          ].map((r) => (
-            <div key={r.l} className="rounded-lg border border-slate-200 bg-white p-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[7.5px] font-semibold text-slate-700">{r.l}</span>
-                <span className="text-[7px] tabular-nums text-slate-500">{r.v}</span>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div className={cn("h-full rounded-full bg-gradient-to-r", r.c)} style={{ width: r.p }} />
-              </div>
+            { i: LayoutDashboard, l: "Dashboard", active: true },
+            { i: Receipt, l: "Gastos" },
+            { i: CreditCard, l: "Cartões" },
+            { i: Target, l: "Metas" },
+            { i: LayoutGrid, l: "Mais" },
+          ].map(({ i: Icon, l, active }) => (
+            <div key={l} className="flex flex-col items-center gap-0.5">
+              <Icon className={cn("h-2.5 w-2.5", active ? "text-slate-900" : "text-slate-400")} strokeWidth={active ? 2.4 : 1.8} />
+              <span className={cn("text-[5px] font-semibold", active ? "text-slate-900" : "text-slate-400")}>{l}</span>
             </div>
           ))}
         </div>
