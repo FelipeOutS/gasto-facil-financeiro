@@ -965,13 +965,14 @@ function MobileDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
       <div className="flex-1 overflow-hidden px-2 pt-2 pb-7">
-        {/* header */}
-        <div className="flex items-start justify-between gap-1">
-          <div className="min-w-0">
-            <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
-            <p className="text-[10px] font-bold leading-tight text-slate-900">Maio De 2026</p>
-            <p className="text-[5px] text-slate-500 truncate">Entenda para onde seu dinheiro foi.</p>
-          </div>
+        {/* logo */}
+        <div className="flex items-center justify-between gap-1">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-2.5 w-auto object-contain"
+          />
           <div className="flex shrink-0 items-center gap-0.5">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-0.5 py-0.5">
               <ChevronLeft className="h-1.5 w-1.5 text-slate-500" />
@@ -983,15 +984,11 @@ function MobileDashboardMock() {
           </div>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-1.5 flex items-center gap-1 rounded-md border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-1.5 py-1">
-          <span className="grid h-3 w-3 shrink-0 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-1.5 w-1.5 text-amber-600" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[5.5px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[4.5px] text-slate-500 truncate">Admin Master — recursos liberados.</p>
-          </div>
+        {/* header */}
+        <div className="mt-1.5 min-w-0">
+          <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
+          <p className="text-[10px] font-bold leading-tight text-slate-900">Maio De 2026</p>
+          <p className="text-[5px] text-slate-500 truncate">Entenda para onde seu dinheiro foi.</p>
         </div>
 
         {/* Alertas */}
