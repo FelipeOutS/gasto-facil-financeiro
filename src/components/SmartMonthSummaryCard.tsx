@@ -101,7 +101,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
         )}
       </div>
 
-      <div className="relative mt-3 min-h-[96px]">
+      <div className="relative mt-3 flex-1 min-h-[96px]">
         {!allowed ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/60 p-4">
             <div className="flex items-start gap-2">
