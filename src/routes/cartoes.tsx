@@ -165,6 +165,25 @@ function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" }
   return { label: `Vence em ${diasVenc} dias`, tone: "soon" };
 }
 
+/** Formata o % de uso do limite evitando "0%" quando há gasto. */
+function formatPctLimite(usado: number, limite: number): string {
+  if (!limite || limite <= 0) return "—";
+  if (usado <= 0) return "0%";
+  const pct = (usado / limite) * 100;
+  if (pct >= 100) return "100%";
+  if (pct >= 1) return `${Math.round(pct)}%`;
+  if (pct >= 0.005) return `${pct.toFixed(2).replace(".", ",")}%`;
+  return "menos de 1%";
+}
+
+/** Normaliza nome do banco/emissor para exibição (ex.: Mercado Pago). */
+function formatBanco(banco?: string): string {
+  if (!banco) return "";
+  const s = banco.trim();
+  if (/mercado\s*pago|^mp$/i.test(s)) return "Mercado Pago";
+  return s;
+}
+
 function CartoesPage() {
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
