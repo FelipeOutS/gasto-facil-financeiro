@@ -22,6 +22,8 @@ ESTILO DA RESPOSTA (MUITO IMPORTANTE):
 
 REGRAS:
 - Use APENAS dados do "RESUMO FINANCEIRO DO USUÁRIO". Não invente valores, datas, categorias.
+- Se o resumo trouxer um bloco "MÊS SOLICITADO PELO USUÁRIO", **use os valores EXATOS desse bloco** (total, quantidade, categorias). Nunca arredonde, nunca aproxime, nunca substitua por outro período (ex: "2 meses anteriores").
+- Se o bloco do mês solicitado disser "Sem gastos", responda: "Não encontrei nenhum gasto registrado para esse mês."
 - Se faltam dados, diga com gentileza: "Ainda não tenho informações suficientes. Cadastre alguns gastos e receitas para eu te ajudar melhor."
 - Pode dar orientações gerais de organização, economia, planejamento, metas e orçamento.
 - NÃO prometa lucro nem garanta economia. Seja cauteloso com investimentos.
@@ -142,6 +144,140 @@ async function buildFinancialSummary(supabase: any, userId: string): Promise<str
   return lines.join("\n");
 }
 
+// ----- Detecção do "mês solicitado" na mensagem do usuário -----
+
+const MESES_PT: Record<string, number> = {
+  janeiro: 1, jan: 1,
+  fevereiro: 2, fev: 2,
+  marco: 3, "março": 3, mar: 3,
+  abril: 4, abr: 4,
+  maio: 5, mai: 5,
+  junho: 6, jun: 6,
+  julho: 7, jul: 7,
+  agosto: 8, ago: 8,
+  setembro: 9, set: 9, sept: 9,
+  outubro: 10, out: 10,
+  novembro: 11, nov: 11,
+  dezembro: 12, dez: 12,
+};
+
+function detectTargetMonth(message: string, now: Date): { mes: number; ano: number } | null {
+  const raw = (message || "").toLowerCase();
+  if (!raw) return null;
+
+  // Formato numérico: 04/2026, 4-2026, 2026-04
+  const num1 = raw.match(/\b(0?[1-9]|1[0-2])[\/\-\.](20\d{2})\b/);
+  if (num1) return { mes: Number(num1[1]), ano: Number(num1[2]) };
+  const num2 = raw.match(/\b(20\d{2})[\/\-](0?[1-9]|1[0-2])\b/);
+  if (num2) return { mes: Number(num2[2]), ano: Number(num2[1]) };
+
+  // Nome do mês (com/sem acento). Procura todas as ocorrências e pega a última.
+  const norm = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const re = /\b(janeiro|jan|fevereiro|fev|marco|mar|abril|abr|maio|mai|junho|jun|julho|jul|agosto|ago|setembro|set|outubro|out|novembro|nov|dezembro|dez)\b(?:\s+(?:de\s+)?(20\d{2}))?/gi;
+  let match: RegExpExecArray | null;
+  let last: { mes: number; ano: number } | null = null;
+  while ((match = re.exec(norm)) !== null) {
+    const mes = MESES_PT[match[1].toLowerCase()];
+    if (!mes) continue;
+    const ano = match[2] ? Number(match[2]) : now.getFullYear();
+    last = { mes, ano };
+  }
+  return last;
+}
+
+/**
+ * Calcula o resumo do mês solicitado usando a MESMA regra da tela /gastos:
+ * - Se gasto tem invoice_month (YYYY-MM), ele prevalece (qualquer forma de pgto).
+ * - Crédito sem invoice_month: usa o ciclo de fechamento do cartão.
+ * - Demais casos: usa a data da compra.
+ */
+async function buildTargetMonthSummary(
+  supabase: any,
+  userId: string,
+  mes: number,
+  ano: number,
+): Promise<string> {
+  const ym = `${ano}-${String(mes).padStart(2, "0")}`;
+  // Janela ampla para capturar gastos de crédito que caem na fatura do mês alvo
+  const winStart = isoDate(new Date(ano, mes - 1 - 2, 1));
+  const winEnd = isoDate(new Date(ano, mes - 1 + 2, 0));
+
+  const [gastosRes, cartoesRes, categoriasRes] = await Promise.all([
+    supabase
+      .from("gastos")
+      .select("valor, categoria_id, data, descricao, estabelecimento, forma_pagamento, cartao_id, invoice_month")
+      .eq("user_id", userId)
+      .or(`invoice_month.eq.${ym},and(data.gte.${winStart},data.lte.${winEnd})`)
+      .limit(3000),
+    supabase.from("cartoes").select("id, dia_fechamento").eq("user_id", userId).limit(50),
+    supabase.from("categorias").select("id, nome").eq("user_id", userId).limit(200),
+  ]);
+
+  const cartaoFech = new Map<string, number>();
+  for (const c of (cartoesRes.data ?? []) as any[]) {
+    cartaoFech.set(c.id, Number(c.dia_fechamento) || 0);
+  }
+  const catMap = new Map<string, string>();
+  for (const c of (categoriasRes.data ?? []) as any[]) catMap.set(c.id, c.nome);
+
+  const rows = (gastosRes.data ?? []) as Array<{
+    valor: number;
+    categoria_id: string | null;
+    data: string;
+    descricao?: string;
+    estabelecimento?: string;
+    forma_pagamento?: string;
+    cartao_id?: string | null;
+    invoice_month?: string | null;
+  }>;
+
+  function efetivoYm(g: (typeof rows)[number]): string | null {
+    if (g.invoice_month && /^\d{4}-\d{2}$/.test(g.invoice_month)) return g.invoice_month;
+    const d = g.data ? new Date(g.data + "T00:00:00") : null;
+    if (!d || isNaN(d.getTime())) return null;
+    if (g.forma_pagamento === "credito" && g.cartao_id) {
+      const fech = cartaoFech.get(g.cartao_id) ?? 0;
+      if (fech > 0) {
+        const ref = d.getDate() > fech ? d : new Date(d.getFullYear(), d.getMonth() - 1, 1);
+        return `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+      }
+    }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  const doMes = rows.filter((g) => efetivoYm(g) === ym);
+  const total = doMes.reduce((s, g) => s + Number(g.valor || 0), 0);
+  const qtd = doMes.length;
+
+  const porCat = new Map<string, number>();
+  for (const g of doMes) {
+    const k = g.categoria_id ? catMap.get(g.categoria_id) ?? "Outros" : "Outros";
+    porCat.set(k, (porCat.get(k) ?? 0) + Number(g.valor || 0));
+  }
+  const top = [...porCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const nomesMes = [
+    "janeiro","fevereiro","março","abril","maio","junho",
+    "julho","agosto","setembro","outubro","novembro","dezembro",
+  ];
+  const label = `${nomesMes[mes - 1]} de ${ano}`;
+
+  const out: string[] = [];
+  out.push(`Período exato consultado: ${label} (${ym}).`);
+  if (qtd === 0) {
+    out.push("Sem gastos registrados neste mês.");
+    return out.join("\n");
+  }
+  out.push(`Total gasto em ${label}: ${fmtBRL(total)} (valor exato).`);
+  out.push(`Quantidade de lançamentos: ${qtd}.`);
+  out.push(`Média por lançamento: ${fmtBRL(qtd ? total / qtd : 0)}.`);
+  if (top.length) {
+    out.push("Top categorias do mês (valores exatos):");
+    for (const [n, v] of top) out.push(`- ${n}: ${fmtBRL(v)}`);
+  }
+  return out.join("\n");
+}
+
 async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
   const email = data.user?.email ?? null;
@@ -198,9 +334,17 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const summary = await buildFinancialSummary(supabase, userId);
 
+    const target = detectTargetMonth(data.message, new Date());
+    const targetBlock = target
+      ? await buildTargetMonthSummary(supabase, userId, target.mes, target.ano)
+      : null;
+
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
+      ...(targetBlock
+        ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
+        : []),
       ...ordered.map((m: any) => ({ role: m.role, content: m.content })),
     ];
 
