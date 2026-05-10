@@ -501,9 +501,15 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       ? await buildCartoesFaturasBlock(supabase, userId, faturaRef.mes, faturaRef.ano)
       : null;
 
+    // Previsão de fechamento — sempre injetada (dados pequenos, alto valor)
+    const forecastRef = target ?? { mes: now.getMonth() + 1, ano: now.getFullYear() };
+    const forecast = await computeMonthForecast(supabase, userId, forecastRef.mes, forecastRef.ano);
+    const forecastBlock = forecastToText(forecast);
+
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
+      { role: "system" as const, content: `PREVISÃO DE FECHAMENTO DO MÊS\n${forecastBlock}\n\nQuando o usuário perguntar se vai fechar positivo/negativo, quanto deve sobrar, o que falta pagar, qual conta mais pesa, ou previsão do mês — use EXATAMENTE estes valores. Deixe claro o que é confirmado e o que é previsto.` },
       ...(targetBlock
         ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
         : []),
