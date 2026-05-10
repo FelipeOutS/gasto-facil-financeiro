@@ -535,7 +535,27 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl">
+        {/* Mobile: três dispositivos em uma única linha horizontal */}
+        <div className="mt-10 flex items-end justify-center gap-2 px-2 md:hidden">
+          <div className="w-[55%]">
+            <NotebookFrame>
+              <DesktopDashboardMock />
+            </NotebookFrame>
+          </div>
+          <div className="w-[24%]">
+            <TabletFrame>
+              <TabletDashboardMock />
+            </TabletFrame>
+          </div>
+          <div className="w-[15%]">
+            <PhoneFrame>
+              <MobileDashboardMock />
+            </PhoneFrame>
+          </div>
+        </div>
+
+        {/* Desktop / tablet+: composição sobreposta original */}
+        <div className="relative mx-auto mt-10 hidden max-w-2xl sm:mt-12 md:block lg:max-w-3xl">
           <div
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
@@ -549,15 +569,15 @@ function MultiDeviceShowcase() {
             <DesktopDashboardMock />
           </NotebookFrame>
 
-          {/* Tablet — overlapping on the left on desktop, stacked on mobile */}
-          <div className="mt-8 flex justify-center sm:mt-10 md:mt-0 md:absolute md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0 md:z-10">
+          {/* Tablet — sobreposto à esquerda */}
+          <div className="md:absolute md:-bottom-10 md:-left-4 md:z-10 md:mt-0 lg:-bottom-14 lg:left-0">
             <TabletFrame>
               <TabletDashboardMock />
             </TabletFrame>
           </div>
 
-          {/* Phone — overlapping on the right on desktop, stacked on mobile */}
-          <div className="mt-6 flex justify-center sm:mt-8 md:mt-0 md:absolute md:-bottom-8 md:-right-2 lg:-bottom-12 lg:-right-2 md:z-20">
+          {/* Celular — sobreposto à direita */}
+          <div className="md:absolute md:-bottom-8 md:-right-2 md:z-20 md:mt-0 lg:-bottom-12 lg:-right-2">
             <PhoneFrame>
               <MobileDashboardMock />
             </PhoneFrame>
