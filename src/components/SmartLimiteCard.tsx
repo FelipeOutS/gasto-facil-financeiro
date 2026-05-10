@@ -422,7 +422,7 @@ export function SmartLimiteCard({
         {/* Meta mensal — edição inline */}
         <div
           className={cn(
-            "mt-4 rounded-2xl p-3 ring-1 backdrop-blur-sm transition-all",
+            "mt-3 rounded-2xl p-2.5 ring-1 backdrop-blur-sm transition-all",
             cfg.metaBg,
             cfg.metaRing,
           )}
