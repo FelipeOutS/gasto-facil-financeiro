@@ -643,12 +643,13 @@ function DesktopDashboardMock() {
     <div className="flex h-full w-full bg-slate-50/60 text-slate-900">
       {/* Sidebar */}
       <div className="flex w-[22%] flex-col border-r border-slate-200 bg-white p-2">
-        <div className="flex items-center gap-1.5 px-1 pb-1">
-          <span className="grid h-5 w-5 place-items-center rounded-md bg-gradient-to-br from-emerald-500 to-blue-600 text-[7px] font-bold text-white">G</span>
-          <div className="leading-tight">
-            <p className="text-[7.5px] font-bold text-slate-900">Gasto</p>
-            <p className="-mt-0.5 text-[7.5px] font-bold text-slate-900">Inteligente</p>
-          </div>
+        <div className="flex items-center px-1 pb-1">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-4 w-auto object-contain"
+          />
         </div>
         <p className="px-1 text-[6px] text-slate-400">Controle financeiro</p>
         <div className="mt-2 flex items-center justify-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[7.5px] font-semibold text-white">
