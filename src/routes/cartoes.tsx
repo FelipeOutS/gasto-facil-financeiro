@@ -796,13 +796,35 @@ function ProximaFaturaCard({
   dias,
   data,
   valor,
+  temCartoes,
 }: {
   cartao: Cartao | null;
   dias: number | null;
   data: Date | null;
   valor: number;
+  temCartoes?: boolean;
 }) {
   if (!cartao) {
+    // Quando há cartões cadastrados mas nenhuma fatura pendente: paga/quitada.
+    if (temCartoes) {
+      return (
+        <div className="hover-lift card-press rounded-2xl border border-success/30 bg-success/5 p-3.5 animate-rise">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Próxima fatura
+            </p>
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-success/15 text-success">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+          </div>
+          <p className="mt-2 truncate text-sm font-bold text-success">Fatura paga</p>
+          <p className="num mt-0.5 text-[11px] text-muted-foreground">
+            Nenhuma cobrança pendente
+          </p>
+          <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(0)}</p>
+        </div>
+      );
+    }
     return (
       <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
         <div className="flex items-center justify-between">
