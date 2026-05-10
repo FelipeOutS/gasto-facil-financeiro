@@ -334,9 +334,17 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const summary = await buildFinancialSummary(supabase, userId);
 
+    const target = detectTargetMonth(data.message, new Date());
+    const targetBlock = target
+      ? await buildTargetMonthSummary(supabase, userId, target.mes, target.ano)
+      : null;
+
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: `RESUMO FINANCEIRO DO USUÁRIO\n${summary}` },
+      ...(targetBlock
+        ? [{ role: "system" as const, content: `MÊS SOLICITADO PELO USUÁRIO\n${targetBlock}` }]
+        : []),
       ...ordered.map((m: any) => ({ role: m.role, content: m.content })),
     ];
 
