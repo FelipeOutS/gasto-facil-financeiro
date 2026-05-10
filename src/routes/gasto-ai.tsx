@@ -49,11 +49,18 @@ type ChatMessage = { id: string; role: "user" | "assistant"; content: string; cr
 
 function GastoAIPage() {
   const { user, profile } = useAuth();
+  const { q: seededQ } = Route.useSearch();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Seed input from ?q= (vem do card "Perguntar para a IA" do Dashboard)
+  useEffect(() => {
+    if (seededQ && !input) setInput(seededQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seededQ]);
 
   const sendFn = useServerFn(sendChatMessage);
   const historyFn = useServerFn(getChatHistory);
