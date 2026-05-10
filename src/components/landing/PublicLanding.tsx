@@ -3069,7 +3069,7 @@ function Footer() {
           </div>
 
           {/* Produto */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
@@ -3080,7 +3080,7 @@ function Footer() {
           </div>
 
           {/* Conta */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Conta</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><Link to="/login" className="transition-colors hover:text-slate-900">Entrar</Link></li>
@@ -3090,7 +3090,7 @@ function Footer() {
           </div>
 
           {/* Suporte */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
@@ -3100,7 +3100,7 @@ function Footer() {
           </div>
 
           {/* Legal */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><span className="text-slate-400">Termos de uso</span></li>
