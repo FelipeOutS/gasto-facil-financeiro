@@ -215,13 +215,13 @@ function Header() {
             draggable={false}
           />
         </a>
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-5 lg:flex lg:gap-8">
           {NAV.map((n) => (
             <a
               key={n.href}
               href={n.href}
               onClick={(e) => handleAnchorClick(e, n.href)}
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="whitespace-nowrap text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               {n.label}
             </a>
@@ -230,13 +230,13 @@ function Header() {
         <div className="hidden items-center gap-2 md:flex">
           <Link
             to="/login"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+            className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 lg:px-4"
           >
             Entrar
           </Link>
           <Link
             to="/cadastro"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(15,23,42,0.45)] transition-all hover:bg-slate-800 hover:shadow-[0_12px_28px_-10px_rgba(15,23,42,0.55)]"
+            className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(15,23,42,0.45)] transition-all hover:bg-slate-800 hover:shadow-[0_12px_28px_-10px_rgba(15,23,42,0.55)] lg:px-5"
           >
             Começar agora
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
