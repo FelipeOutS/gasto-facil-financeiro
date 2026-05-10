@@ -270,7 +270,7 @@ export function SmartLimiteCard({
   return (
     <section
       className={cn(
-        "relative w-full overflow-hidden rounded-3xl border p-5 sm:p-6 shadow-card animate-rise transition-colors",
+        "relative w-full overflow-hidden rounded-3xl border p-4 sm:p-5 shadow-card animate-rise transition-colors",
         // dark
         "dark:bg-gradient-to-br",
         cfg.darkGradient,
@@ -387,9 +387,9 @@ export function SmartLimiteCard({
         </div>
 
         {/* Valor principal */}
-        <div className="mt-5 flex items-end gap-3">
+        <div className="mt-3 flex items-end gap-2">
           {status === "sem_dados" ? (
-            <p className={cn("text-3xl font-bold sm:text-4xl", cfg.valueText)}>
+            <p className={cn("text-2xl font-bold sm:text-3xl", cfg.valueText)}>
               —
             </p>
           ) : (
@@ -398,11 +398,11 @@ export function SmartLimiteCard({
                 value={porDia}
                 duration={900}
                 className={cn(
-                  "num text-4xl font-extrabold leading-none tracking-tight sm:text-5xl",
+                  "num text-3xl font-extrabold leading-none tracking-tight sm:text-4xl",
                   cfg.valueText,
                 )}
               />
-              <span className={cn("pb-1 text-sm font-medium", cfg.muted)}>
+              <span className={cn("pb-0.5 text-xs font-medium", cfg.muted)}>
                 / dia
               </span>
               {savedFlash && (
@@ -415,14 +415,14 @@ export function SmartLimiteCard({
         </div>
 
         {/* Texto explicativo */}
-        <p className={cn("mt-3 max-w-xl text-[13px] leading-relaxed", cfg.text)}>
+        <p className={cn("mt-2 max-w-xl text-[12px] leading-relaxed", cfg.text)}>
           {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
         </p>
 
         {/* Meta mensal — edição inline */}
         <div
           className={cn(
-            "mt-4 rounded-2xl p-3 ring-1 backdrop-blur-sm transition-all",
+            "mt-3 rounded-2xl p-2.5 ring-1 backdrop-blur-sm transition-all",
             cfg.metaBg,
             cfg.metaRing,
           )}
@@ -547,7 +547,7 @@ export function SmartLimiteCard({
 
         {/* Barra de progresso */}
         {status !== "sem_dados" && (
-          <div className="mt-4">
+          <div className="mt-3">
             <div
               className={cn(
                 "flex items-center justify-between text-[10px] font-medium uppercase tracking-wider",
@@ -576,7 +576,7 @@ export function SmartLimiteCard({
 
         {/* Mini-stats */}
         {status !== "sem_dados" && (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
             {temMeta ? (
               <>
                 <MiniStat
@@ -638,7 +638,7 @@ export function SmartLimiteCard({
         )}
 
         {/* CTA */}
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <Link
             to="/gastos"
             className={cn(
