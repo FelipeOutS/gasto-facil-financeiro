@@ -96,17 +96,27 @@ export const Route = createFileRoute("/api/checkout/create")({
         const totalCents = priceForPeriod(plano, periodicidade);
         const description = `Assinatura ${info.name} — ${periodInfo.label}`;
 
-        // Atualiza/insere o registro de plano do usuário como aguardando_pagamento
+        // Atualiza/insere o registro de plano do usuário como aguardando_pagamento.
+        // IMPORTANTE: nunca rebaixar um plano que já está ativo dentro do período pago.
+        // Isso evita que abrir um novo checkout (ex.: tentar mudar de plano) marque
+        // o usuário como "aguardando_pagamento" e suma o badge "Plano ativo".
         const { data: existingPlan } = await supabaseAdmin
           .from("user_plans")
-          .select("user_id")
+          .select("user_id, status, current_period_end, plano")
           .eq("user_id", user.id)
           .maybeSingle();
+        const isCurrentlyActive =
+          !!existingPlan &&
+          (existingPlan.status as string) === "ativo" &&
+          (!existingPlan.current_period_end ||
+            new Date(existingPlan.current_period_end as string).getTime() > Date.now());
         const planUpdate = {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           plano: plano as any,
+          // Mantém "ativo" se já estiver ativo no período pago; caso contrário
+          // marca como aguardando_pagamento até o webhook/verify confirmar.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          status: "aguardando_pagamento" as any,
+          status: (isCurrentlyActive ? "ativo" : "aguardando_pagamento") as any,
           periodicidade,
           months: periodInfo.months,
         };
