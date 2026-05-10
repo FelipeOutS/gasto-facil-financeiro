@@ -789,13 +789,14 @@ function TabletDashboardMock() {
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
       <div className="flex-1 overflow-hidden px-3 pt-3 pb-7">
-        {/* header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
-            <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
-            <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
-          </div>
+        {/* logo */}
+        <div className="flex items-center justify-between">
+          <img
+            src="/logos/brand/gasto-inteligente-light.png"
+            alt="Gasto Inteligente"
+            draggable={false}
+            className="h-3 w-auto object-contain"
+          />
           <div className="flex items-center gap-1">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-1 py-0.5">
               <ChevronLeft className="h-2 w-2 text-slate-500" />
@@ -807,15 +808,11 @@ function TabletDashboardMock() {
           </div>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-2 py-1.5">
-          <span className="grid h-4 w-4 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-2 w-2 text-amber-600" />
-          </span>
-          <div>
-            <p className="text-[7px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[5.5px] text-slate-500">Admin Master — todos os recursos liberados.</p>
-          </div>
+        {/* header */}
+        <div className="mt-2">
+          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
+          <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
+          <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
         </div>
 
         {/* Alertas */}
