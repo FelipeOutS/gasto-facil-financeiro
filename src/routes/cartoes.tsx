@@ -15,7 +15,10 @@ import {
   desmarcarFaturaPaga,
   mesReferenciaFatura,
   mesReferenciaFaturaLabel,
+  proximoFechamentoData,
+  proximoVencimentoFaturaAberta,
 } from "@/lib/store";
+import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
 import {
@@ -133,35 +136,26 @@ function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
 
-function statusFatura(c: Cartao): { label: string; tone: "ok" | "soon" | "due" } {
-  if (!c.diaFechamento || !c.diaVencimento)
-    return { label: "Sem vencimento definido", tone: "ok" };
-  const hoje = new Date();
-  const startToday = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime();
-  // Próximo fechamento (≥ hoje).
-  let fech = new Date(hoje.getFullYear(), hoje.getMonth(), c.diaFechamento);
-  if (fech.getTime() < startToday) {
-    fech = new Date(hoje.getFullYear(), hoje.getMonth() + 1, c.diaFechamento);
-  }
-  // Vencimento da fatura desse fechamento (cai depois do fechamento).
-  let venc = new Date(fech.getFullYear(), fech.getMonth(), c.diaVencimento);
-  if (venc.getTime() <= fech.getTime()) {
-    venc = new Date(fech.getFullYear(), fech.getMonth() + 1, c.diaVencimento);
-  }
-  const oneDay = 1000 * 60 * 60 * 24;
-  const diasFech = Math.round((fech.getTime() - startToday) / oneDay);
-  // Enquanto a fatura ainda não fechou, ela está ABERTA — não mostrar
-  // alerta de vencimento (o vencimento real é da fatura aberta, depois do
-  // fechamento, normalmente em outro mês).
-  if (diasFech > 5) return { label: "Fatura aberta", tone: "ok" };
-  if (diasFech > 0) return { label: `Fecha em ${diasFech} ${diasFech === 1 ? "dia" : "dias"}`, tone: "soon" };
-  if (diasFech === 0) return { label: "Fecha hoje", tone: "soon" };
-  // Fatura fechada — então sim consideramos o vencimento.
-  const diasVenc = Math.round((venc.getTime() - startToday) / oneDay);
-  if (diasVenc < 0) return { label: `Vencida há ${Math.abs(diasVenc)} ${Math.abs(diasVenc) === 1 ? "dia" : "dias"}`, tone: "due" };
-  if (diasVenc === 0) return { label: "Vence hoje", tone: "due" };
-  if (diasVenc <= 3) return { label: `Vence em ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}`, tone: "due" };
-  return { label: `Vence em ${diasVenc} dias`, tone: "soon" };
+
+
+
+/** Formata o % de uso do limite evitando "0%" quando há gasto. */
+function formatPctLimite(usado: number, limite: number): string {
+  if (!limite || limite <= 0) return "—";
+  if (usado <= 0) return "0%";
+  const pct = (usado / limite) * 100;
+  if (pct >= 100) return "100%";
+  if (pct >= 1) return `${Math.round(pct)}%`;
+  if (pct >= 0.005) return `${pct.toFixed(2).replace(".", ",")}%`;
+  return "menos de 1%";
+}
+
+/** Normaliza nome do banco/emissor para exibição (ex.: Mercado Pago). */
+function formatBanco(banco?: string): string {
+  if (!banco) return "";
+  const s = banco.trim();
+  if (/mercado\s*pago|^mp$/i.test(s)) return "Mercado Pago";
+  return s;
 }
 
 function CartoesPage() {
@@ -254,13 +248,13 @@ function CartoesPage() {
       .slice(0, 4);
   }, [cartoes]);
 
-  // Últimas compras no crédito (todas, top 5)
-  const ultimasCompras = useMemo(() => {
+  // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
+  const ultimasComprasAll = useMemo(() => {
     return gastos
       .filter((g) => g.formaPagamento === "credito" && g.cartaoId)
-      .sort((a, b) => (a.data < b.data ? 1 : -1))
-      .slice(0, 5);
+      .sort((a, b) => (a.data < b.data ? 1 : -1));
   }, [gastos]);
+  const ultimasCompras = useMemo(() => ultimasComprasAll.slice(0, 4), [ultimasComprasAll]);
 
   function handleOpenNew() {
     setEditing(null);
@@ -302,8 +296,11 @@ function CartoesPage() {
         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
           Cartões
         </p>
-        <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">
-          Seus cartões 💳
+        <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+            <CreditCard className="h-4 w-4" />
+          </span>
+          Seus cartões
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Limites, faturas e gastos no crédito num lugar só.
@@ -399,7 +396,11 @@ function CartoesPage() {
           </section>
           <aside className="min-w-0 space-y-4">
             <ProximosVencimentos items={proximosVencimentos} />
-            <UltimasCompras gastos={ultimasCompras} cartoes={cartoes} />
+            <UltimasCompras
+              gastos={ultimasCompras}
+              cartoes={cartoes}
+              hasMore={ultimasComprasAll.length > ultimasCompras.length}
+            />
           </aside>
         </div>
       )}
@@ -557,24 +558,41 @@ const CartaoCard = memo(function CartaoCard({
   // Usa o resumo pré-calculado quando disponível para evitar recomputar
   // ao tocar/abrir o cartão.
   const r = resumo ?? resumoFaturaCartao(cartao.id);
-  const status = useMemo(() => statusFatura(cartao), [cartao.diaFechamento, cartao.diaVencimento]);
   const cor = cartao.cor || "#8b5cf6";
   const theme = useMemo(() => getCardTheme(cor, cartao.banco), [cor, cartao.banco]);
   const semCompras = r.usadoMes === 0;
+  const bancoLabel = formatBanco(cartao.banco);
 
-  // Próxima data de vencimento formatada (dd/mm) — preenche o footer e
-  // evita a sensação de espaço vazio na parte inferior do card.
-  const vencStr = useMemo(() => {
-    if (!cartao.diaVencimento) return null;
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = hoje.getMonth();
-    const proxVenc =
-      cartao.diaVencimento >= hoje.getDate()
-        ? new Date(ano, mes, cartao.diaVencimento)
-        : new Date(ano, mes + 1, cartao.diaVencimento);
-    return `${String(proxVenc.getDate()).padStart(2, "0")}/${String(proxVenc.getMonth() + 1).padStart(2, "0")}`;
-  }, [cartao.diaVencimento]);
+  // Fatura corrente (mês de referência das compras em aberto)
+  const fatRef = useMemo(() => faturaCorrente(cartao), [cartao.id, cartao.diaFechamento]);
+  const faturaStatus = useMemo(
+    () => statusEfetivoFatura(cartao, fatRef.mes, fatRef.ano),
+    [cartao, fatRef.mes, fatRef.ano],
+  );
+  const faturaResumo = useMemo(
+    () => resumoFaturaPorMes(cartao.id, fatRef.mes, fatRef.ano),
+    [cartao.id, fatRef.mes, fatRef.ano, r.usadoMes],
+  );
+  const badge = statusBadgeStyle(faturaStatus);
+
+  // Datas formatadas (dd/mm) — vencimento real da fatura aberta.
+  const vencDate = useMemo(() => proximoVencimentoFaturaAberta(cartao), [cartao]);
+  const fechDate = useMemo(() => proximoFechamentoData(cartao), [cartao]);
+  const fmtDM = (d: Date | null) =>
+    d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "—";
+
+  async function handleMarcarPaga(e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      await marcarFaturaPaga(cartao.id, fatRef.mes, fatRef.ano, {
+        valorPago: faturaResumo.total,
+      });
+      toast.success("Fatura marcada como paga! ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível atualizar a fatura.");
+    }
+  }
 
   return (
     <article
@@ -587,7 +605,7 @@ const CartaoCard = memo(function CartaoCard({
           onOpen();
         }
       }}
-      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-5 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-6"
+      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5"
       style={{ background: theme.background }}
     >
       <div
@@ -639,13 +657,20 @@ const CartaoCard = memo(function CartaoCard({
         </DropdownMenu>
       </div>
 
-      {/* Nome do cartão */}
-      <h3 className="relative mt-3 truncate text-xl font-bold leading-tight">
-        {cartao.nome}
-      </h3>
+      {/* Nome do cartão + banco */}
+      <div className="relative mt-2.5">
+        <h3 className="truncate text-lg font-bold leading-tight sm:text-xl">
+          {cartao.nome}
+        </h3>
+        {bancoLabel && (
+          <p className="mt-0.5 truncate text-[11px] font-medium text-white/75">
+            {bancoLabel}
+          </p>
+        )}
+      </div>
 
       {/* Bloco principal — usado / limite */}
-      <div className="relative mt-4">
+      <div className="relative mt-3">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
@@ -657,7 +682,7 @@ const CartaoCard = memo(function CartaoCard({
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Limite
+              Limite total
             </p>
             <p className="num mt-0.5 text-sm font-semibold text-white/90">
               {formatBRL(r.limite)}
@@ -665,55 +690,80 @@ const CartaoCard = memo(function CartaoCard({
           </div>
         </div>
 
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/15">
+        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
           <div
             className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
-            style={{ width: `${r.pct}%` }}
+            style={{ width: `${Math.max(r.pct, r.usadoMes > 0 ? 1 : 0)}%` }}
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px] text-white/80">
-          <span className="num">{Math.round(r.pct)}% do limite</span>
+          <span className="num">{formatPctLimite(r.usadoMes, r.limite)} do limite</span>
           <span className="num">{formatBRL(r.disponivel)} disponível</span>
         </div>
       </div>
 
-      {/* Footer — datas detalhadas + status, ocupando bem o espaço inferior */}
-      <div className="relative mt-4 grid grid-cols-3 gap-2 border-t border-white/15 pt-3">
-        <div>
-          <p className="text-[9px] uppercase tracking-widest text-white/60">
-            Fecha
-          </p>
-          <p className="num mt-0.5 text-xs font-semibold text-white/95">
-            Dia {cartao.diaFechamento || "—"}
-          </p>
-        </div>
-        <div>
-          <p className="text-[9px] uppercase tracking-widest text-white/60">
-            Vence
-          </p>
-          <p className="num mt-0.5 text-xs font-semibold text-white/95">
-            {vencStr ? vencStr : `Dia ${cartao.diaVencimento || "—"}`}
-          </p>
-        </div>
-        <div className="flex items-start justify-end">
+      {/* Fatura atual — bloco translúcido com valor, datas, status e ações */}
+      <div className="relative mt-3.5 rounded-2xl bg-white/10 p-3 backdrop-blur-sm">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-white/70">
+              Fatura atual
+            </p>
+            <p className="num mt-0.5 truncate text-base font-bold">
+              {formatBRL(faturaResumo.total)}
+            </p>
+          </div>
           <span
             className={cn(
-              "rounded-full px-2 py-1 text-[10px] font-semibold leading-none",
-              status.tone === "due"
-                ? "bg-white/95 text-destructive animate-pulse-soft"
-                : status.tone === "soon"
-                  ? "bg-white/90 text-orange-700"
-                  : "bg-white/15 text-white",
+              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none",
+              faturaStatus === "paga"
+                ? "border-white/40 bg-white/95 text-emerald-700"
+                : faturaStatus === "vencida"
+                  ? "border-white/40 bg-white/95 text-destructive animate-pulse-soft"
+                  : faturaStatus === "fechada"
+                    ? "border-white/40 bg-white/90 text-orange-700"
+                    : "border-white/30 bg-white/15 text-white",
             )}
           >
-            {semCompras && status.tone === "ok" ? "Sem compras" : status.label}
+            {badge.icon}
+            {semCompras && faturaStatus === "aberta" ? "Sem compras" : badge.label}
           </span>
         </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-white/85">
+          <div>
+            <span className="text-white/60">Fecha </span>
+            <span className="num font-semibold text-white/95">{fmtDM(fechDate)}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-white/60">Vence </span>
+            <span className="num font-semibold text-white/95">{fmtDM(vencDate)}</span>
+          </div>
+        </div>
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+            className="inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-3 text-[11px] font-semibold text-foreground transition-colors hover:bg-white"
+          >
+            <Receipt className="h-3 w-3" />
+            Ver fatura
+          </button>
+          {(faturaStatus === "fechada" || faturaStatus === "vencida") &&
+            faturaResumo.total > 0 && (
+              <button
+                type="button"
+                onClick={handleMarcarPaga}
+                className="inline-flex h-7 items-center gap-1 rounded-full border border-white/40 bg-white/10 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-white/20"
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                Marcar como paga
+              </button>
+            )}
+        </div>
       </div>
-
-      <span className="pointer-events-none absolute bottom-2.5 right-5 text-[9px] uppercase tracking-[0.2em] text-white/45">
-        Crédito
-      </span>
     </article>
   );
 });
@@ -807,12 +857,24 @@ function ProximosVencimentos({
       <ul className="mt-3 space-y-2">
         {items.map(({ cartao, dias }) => {
           const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
-          const tone =
-            dias <= 3 ? "text-destructive" : dias <= 7 ? "text-warning" : "text-muted-foreground";
+          const urgente = dias <= 1;
+          const proximo = dias <= 3;
+          const tone = proximo
+            ? "text-destructive"
+            : dias <= 7
+              ? "text-warning"
+              : "text-muted-foreground";
+          const label =
+            dias === 0 ? "hoje" : dias === 1 ? "amanhã" : `${dias}d`;
           return (
             <li
               key={cartao.id}
-              className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
+                urgente
+                  ? "border border-destructive/30 bg-destructive/10"
+                  : "bg-card-elevated",
+              )}
             >
               <span
                 className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg shadow-card"
@@ -829,11 +891,18 @@ function ProximosVencimentos({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {cartao.banco || "Cartão"} · vence dia {cartao.diaVencimento}
+                  {formatBanco(cartao.banco) || "Cartão"} · vence dia {cartao.diaVencimento}
                 </p>
               </div>
-              <span className={cn("num shrink-0 text-xs font-semibold", tone)}>
-                {dias === 0 ? "hoje" : `${dias}d`}
+              <span
+                className={cn(
+                  "num shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  urgente
+                    ? "bg-destructive text-destructive-foreground"
+                    : tone,
+                )}
+              >
+                {label}
               </span>
             </li>
           );
@@ -848,9 +917,11 @@ function ProximosVencimentos({
 function UltimasCompras({
   gastos,
   cartoes,
+  hasMore,
 }: {
   gastos: Gasto[];
   cartoes: Cartao[];
+  hasMore?: boolean;
 }) {
   const cartaoMap = useMemo(() => {
     const m = new Map<string, Cartao>();
@@ -915,6 +986,17 @@ function UltimasCompras({
             );
           })}
         </ul>
+      )}
+      {hasMore && gastos.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <Link
+            to="/gastos"
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-brand-on-soft transition-colors hover:bg-brand-soft"
+          >
+            Ver todas
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
       )}
     </section>
   );
