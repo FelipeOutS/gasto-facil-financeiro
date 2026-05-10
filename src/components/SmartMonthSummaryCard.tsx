@@ -142,7 +142,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
         )}
       </div>
 
-      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 pt-1">
         <p className="text-[11px] text-muted-foreground">
           Análise gerada com seus dados, em tempo real.
         </p>
