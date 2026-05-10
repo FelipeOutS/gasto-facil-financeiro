@@ -270,7 +270,7 @@ export function SmartLimiteCard({
   return (
     <section
       className={cn(
-        "relative w-full overflow-hidden rounded-3xl border p-5 sm:p-6 shadow-card animate-rise transition-colors",
+        "relative w-full overflow-hidden rounded-3xl border p-4 sm:p-5 shadow-card animate-rise transition-colors",
         // dark
         "dark:bg-gradient-to-br",
         cfg.darkGradient,
