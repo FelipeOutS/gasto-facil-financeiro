@@ -576,7 +576,7 @@ export function SmartLimiteCard({
 
         {/* Mini-stats */}
         {status !== "sem_dados" && (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
             {temMeta ? (
               <>
                 <MiniStat
