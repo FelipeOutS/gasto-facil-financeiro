@@ -582,7 +582,7 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
 
 function TabletFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-[230px] sm:w-[260px] md:w-[200px] lg:w-[240px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
+    <div className="relative w-[230px] sm:w-[260px] md:w-[230px] lg:w-[260px] rounded-[24px] border border-slate-300/80 bg-gradient-to-b from-slate-100 to-slate-200 p-2 shadow-[0_45px_80px_-30px_rgba(15,23,42,0.45)]">
       <div className="relative overflow-hidden rounded-[18px] bg-slate-900 p-1.5">
         {/* front camera */}
         <div className="absolute left-1/2 top-1 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-700" />
