@@ -38,6 +38,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
   { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Pessoa Física Premium, MEI e Empresa." },
+  { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, receitas, metas, contas e organização financeira. Este recurso está disponível nos planos Pessoa Física Premium, MEI Inteligente e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {

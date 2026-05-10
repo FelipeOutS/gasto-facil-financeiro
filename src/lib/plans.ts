@@ -51,7 +51,8 @@ export type FeatureKey =
   | "assinaturas_recorrencias"
   | "whatsapp"
   | "lancamentos_ilimitados"
-  | "contas_conectadas";
+  | "contas_conectadas"
+  | "gasto_ai";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
@@ -102,6 +103,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   recursos_empresa: "empresa",
   centro_de_custo: "empresa",
   contas_conectadas: "pessoal_premium",
+  gasto_ai: "pessoal_premium",
 };
 
 /**
@@ -128,6 +130,7 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
   // Contas conectadas: somente planos premium e MEI / Empresa
   contas_conectadas: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  gasto_ai: ["pessoal_premium", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
