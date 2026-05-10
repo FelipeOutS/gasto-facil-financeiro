@@ -529,3 +529,42 @@ body {
   0%, 100% { opacity: 0.85; transform: scale(1); }
   50%      { opacity: 1;    transform: scale(1.04); }
 }
+
+/* Gasto AI markdown rendering */
+.ai-markdown { color: hsl(var(--foreground) / 1); }
+.ai-markdown > *:first-child { margin-top: 0; }
+.ai-markdown > *:last-child { margin-bottom: 0; }
+.ai-markdown p { margin: 0.35rem 0; line-height: 1.55; }
+.ai-markdown strong { font-weight: 600; color: inherit; }
+.ai-markdown em { font-style: italic; }
+.ai-markdown ul, .ai-markdown ol { margin: 0.4rem 0; padding-left: 1.1rem; }
+.ai-markdown ul { list-style: disc; }
+.ai-markdown ol { list-style: decimal; }
+.ai-markdown li { margin: 0.18rem 0; line-height: 1.5; }
+.ai-markdown li::marker { color: hsl(var(--primary)); }
+.ai-markdown h1, .ai-markdown h2, .ai-markdown h3, .ai-markdown h4 {
+  font-weight: 700; margin: 0.6rem 0 0.3rem; line-height: 1.3;
+}
+.ai-markdown h1 { font-size: 1rem; }
+.ai-markdown h2 { font-size: 0.95rem; }
+.ai-markdown h3, .ai-markdown h4 { font-size: 0.9rem; }
+.ai-markdown a { color: hsl(var(--primary)); text-decoration: underline; }
+.ai-markdown code {
+  background: hsl(var(--muted) / 0.6);
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.3rem;
+  font-size: 0.85em;
+}
+.ai-markdown pre {
+  background: hsl(var(--muted) / 0.6);
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  overflow-x: auto;
+  margin: 0.4rem 0;
+}
+.ai-markdown blockquote {
+  border-left: 3px solid hsl(var(--primary) / 0.4);
+  padding-left: 0.7rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.4rem 0;
+}
