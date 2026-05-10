@@ -535,7 +535,7 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl pb-16 sm:pb-20 md:pb-0">
+        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-3xl pb-6 sm:pb-12 md:pb-0">
           <div
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
@@ -550,14 +550,14 @@ function MultiDeviceShowcase() {
           </NotebookFrame>
 
           {/* Tablet — sobreposto à esquerda em todos os tamanhos */}
-          <div className="absolute -bottom-6 -left-2 z-10 md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0">
+          <div className="absolute -bottom-2 left-1 z-10 md:-bottom-10 md:-left-4 lg:-bottom-14 lg:left-0">
             <TabletFrame>
               <TabletDashboardMock />
             </TabletFrame>
           </div>
 
           {/* Celular — sobreposto à direita em todos os tamanhos */}
-          <div className="absolute -bottom-4 -right-1 z-20 md:-bottom-8 md:-right-2 lg:-bottom-12 lg:-right-2">
+          <div className="absolute -bottom-1 right-1 z-20 md:-bottom-8 md:-right-2 lg:-bottom-12 lg:-right-2">
             <PhoneFrame>
               <MobileDashboardMock />
             </PhoneFrame>
