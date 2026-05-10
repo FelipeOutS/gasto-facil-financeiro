@@ -139,6 +139,7 @@ export function PublicLanding() {
       <HowItWorks />
       <ScreensTabs />
       <DashboardShowcase />
+      <GastoAISection />
       <FeatureSplit
         eyebrow="Gastos"
         title="Entenda para onde seu dinheiro está indo."
@@ -148,18 +149,56 @@ export function PublicLanding() {
         reverse
       />
       <FeatureSplit
-        eyebrow="Cartões"
+        eyebrow="Cartões e faturas"
         title="Controle suas faturas sem confusão."
-        text="Acompanhe compras, faturas abertas e fechadas, vencimentos, limite usado e pagamento da fatura em um só lugar."
-        bullets={["Limite disponível em tempo real", "Fechamento e vencimento", "Compras parceladas", "Marcar fatura como paga"]}
+        text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
+        bullets={[
+          "Limite disponível em tempo real",
+          "Fechamento e vencimento",
+          "Status: aberta, paga ou vencida",
+          "Marcar fatura como paga em 1 clique",
+          "Importar fatura por PDF",
+          "Próximos vencimentos no aside",
+        ]}
         visual={<CartaoMock />}
       />
       <FeatureSplit
-        eyebrow="Metas"
+        eyebrow="Orçamento e limite inteligente"
+        title="Saiba quanto pode gastar por dia."
+        text="O limite inteligente calcula quanto ainda sobra no mês depois das contas fixas e faturas já pagas — e divide pelos dias restantes. Defina orçamentos por categoria e veja em tempo real onde você está estourando."
+        bullets={[
+          "Limite diário sugerido",
+          "Orçamento por categoria",
+          "Ignora contas fixas e faturas pagas",
+          "Alertas quando estoura",
+        ]}
+        visual={<OrcamentoMock />}
+        reverse
+      />
+      <FeatureSplit
+        eyebrow="Metas e guardado"
         title="Transforme objetivos em progresso visual."
-        text="Crie metas financeiras e acompanhe quanto já foi reservado, quanto falta e sua evolução até atingir o objetivo."
-        bullets={["Imagem de capa para a meta", "Barra de progresso animada", "Valor guardado e restante", "Percentual concluído"]}
+        text="Crie metas financeiras e vincule o dinheiro guardado em cada banco. O sistema soma reservas e aportes diretos sem contar em dobro — você vê quanto já tem, quanto falta e a evolução até o objetivo."
+        bullets={[
+          "Capa visual da meta",
+          "Guardado vinculado à meta",
+          "Quanto falta para concluir",
+          "Histórico de aportes",
+        ]}
         visual={<MetaMock />}
+      />
+      <FeatureSplit
+        eyebrow="Contas e organização"
+        title="Contas a pagar, a receber e renda no mesmo lugar."
+        text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
+        bullets={[
+          "Contas a pagar com recorrência",
+          "Contas a receber",
+          "Minha renda mensal",
+          "Calendário financeiro",
+          "Alertas de vencimento",
+        ]}
+        visual={<ContasMock />}
         reverse
       />
       <FeatureSplit
