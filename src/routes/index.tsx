@@ -265,16 +265,33 @@ function Index() {
   );
   const metaProxima = useMemo(() => {
     let alvo: (typeof metas)[number] | null = null;
+    let alvoBreakdown: ReturnType<typeof getMetaProgressoBreakdown> | null = null;
     let melhorPct = -1;
     for (const m of metasAndamento) {
-      const p = m.valorObjetivo > 0 ? m.valorAtual / m.valorObjetivo : 0;
-      if (p > melhorPct) {
+      const bd = getMetaProgressoBreakdown(m.id);
+      const p = m.valorObjetivo > 0 ? bd.total / m.valorObjetivo : 0;
+      if (p > melhorPct && p < 1) {
         melhorPct = p;
         alvo = m;
+        alvoBreakdown = bd;
       }
     }
-    return alvo;
-  }, [metasAndamento]);
+    // Se nenhuma incompleta, pega a de maior progresso geral
+    if (!alvo) {
+      for (const m of metasAndamento) {
+        const bd = getMetaProgressoBreakdown(m.id);
+        const p = m.valorObjetivo > 0 ? bd.total / m.valorObjetivo : 0;
+        if (p > melhorPct) {
+          melhorPct = p;
+          alvo = m;
+          alvoBreakdown = bd;
+        }
+      }
+    }
+    return alvo ? { meta: alvo, breakdown: alvoBreakdown! } : null;
+    // guardado também influencia o cálculo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metasAndamento, guardado]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
