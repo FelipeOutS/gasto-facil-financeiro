@@ -617,10 +617,10 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 
 /* ---- Shared KPI data for the radar block (matches reference screenshots) ---- */
 const RADAR_KPIS = [
-  { l: "SALDO", v: "R$ 3.117,00", s: "no mês atual", icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />, bg: "bg-slate-100" },
-  { l: "RECEITAS", v: "R$ 3.189,00", s: "1 entrada", icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />, bg: "bg-emerald-50" },
-  { l: "DESPESAS", v: "R$ 72,00", s: "2 lançamentos", icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />, bg: "bg-rose-50" },
-  { l: "A PAGAR", v: "R$ 185,00", s: "1 pendente(s)", icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />, bg: "bg-amber-50" },
+  { l: "SALDO", v: "R$ 4.852,30", s: "no mês atual", icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />, bg: "bg-slate-100" },
+  { l: "RECEITAS", v: "R$ 5.420,00", s: "2 entradas", icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />, bg: "bg-emerald-50" },
+  { l: "DESPESAS", v: "R$ 1.248,90", s: "14 lançamentos", icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />, bg: "bg-rose-50" },
+  { l: "A PAGAR", v: "R$ 320,00", s: "2 pendentes", icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />, bg: "bg-amber-50" },
 ];
 
 function DesktopDashboardMock() {
