@@ -251,7 +251,7 @@ function Header() {
         </button>
       </div>
       {open && (
-        <div className="border-t border-slate-200 bg-white md:hidden">
+        <div className="border-t border-slate-200 bg-white lg:hidden">
           <div className="flex flex-col px-4 py-3">
             {NAV.map((n) => (
               <a
