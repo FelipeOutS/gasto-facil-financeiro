@@ -33,6 +33,7 @@ import { isAdminMasterEmail, type FeatureKey } from "@/lib/plans";
 import { Shield } from "lucide-react";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { UserAvatar } from "@/components/UserAvatar";
 
 type NavItem = {
   to: string;
@@ -74,7 +75,7 @@ export function DesktopSidebar() {
   const alerta = useAlertaContas();
   const { can } = usePlan();
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -201,7 +202,24 @@ export function DesktopSidebar() {
         </ul>
       </nav>
 
-      <div className="px-5 py-4 text-[10px] text-muted-foreground/70">
+      <Link
+        to="/conta"
+        className="mx-3 mb-2 mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-3 py-2 text-sm transition-colors hover:bg-accent/40"
+      >
+        <UserAvatar
+          url={profile?.avatar_url}
+          name={profile?.nome ?? profile?.responsavel_nome}
+          email={user?.email}
+          size={36}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">
+            {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || "Usuário"}
+          </p>
+          <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+        </div>
+      </Link>
+      <div className="px-5 pb-4 text-[10px] text-muted-foreground/70">
         © Gasto Inteligente
       </div>
       <PremiumLockModal
