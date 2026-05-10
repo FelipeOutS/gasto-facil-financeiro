@@ -684,16 +684,7 @@ function DesktopDashboardMock() {
           </span>
         </div>
 
-        {/* Acesso total */}
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-2.5 py-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-100">
-            <Crown className="h-2.5 w-2.5 text-amber-600" />
-          </span>
-          <div>
-            <p className="text-[8px] font-bold text-slate-900">Acesso total</p>
-            <p className="text-[6.5px] text-slate-500">Admin Master — todos os recursos liberados.</p>
-          </div>
-        </div>
+
 
         {/* Alertas */}
         <div className="mt-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
