@@ -322,8 +322,11 @@ function CartoesPage() {
         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
           Cartões
         </p>
-        <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">
-          Seus cartões 💳
+        <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+            <CreditCard className="h-4 w-4" />
+          </span>
+          Seus cartões
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Limites, faturas e gastos no crédito num lugar só.
