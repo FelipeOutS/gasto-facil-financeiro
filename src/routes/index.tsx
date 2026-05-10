@@ -527,47 +527,65 @@ function Index() {
       </section>
 
       {/* Contas a receber + Meta mais próxima */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
-        <ContasAReceberCard />
-        {metaProxima ? (
-          <section className="rounded-3xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" style={{ color: metaProxima.colorHex }} />
-                <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
+        <div className="flex min-w-0">
+          <div className="flex w-full">
+            <ContasAReceberCard />
+          </div>
+        </div>
+        {metaProxima ? (() => {
+          const m = metaProxima.meta;
+          const bd = metaProxima.breakdown;
+          const objetivo = Number(m.valorObjetivo) || 0;
+          const acumulado = bd.total;
+          const restante = bd.restante;
+          const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
+          return (
+            <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
+                  <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+                </div>
+                <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+                  Ver todas →
+                </Link>
               </div>
-              <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                Ver todas →
-              </Link>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between gap-3">
-              <p className="truncate text-base font-semibold">{metaProxima.nome}</p>
-              <p className="num shrink-0 text-xs text-muted-foreground">
-                {formatBRL(metaProxima.valorAtual)} / {formatBRL(metaProxima.valorObjetivo)}
-              </p>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${Math.min(100, (metaProxima.valorAtual / metaProxima.valorObjetivo) * 100)}%`,
-                  background: metaProxima.colorHex,
-                }}
-              />
-            </div>
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="num font-semibold" style={{ color: metaProxima.colorHex }}>
-                {Math.min(100, Math.round((metaProxima.valorAtual / metaProxima.valorObjetivo) * 100))}%
-              </span>
-              <span className="text-muted-foreground">
+              <div className="mt-3 flex items-baseline justify-between gap-3">
+                <p className="truncate text-base font-semibold">{m.nome}</p>
+                <p className="num shrink-0 text-xs text-muted-foreground">
+                  {formatBRL(acumulado)} / {formatBRL(objetivo)}
+                </p>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${pct}%`, background: m.colorHex }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="num font-semibold" style={{ color: m.colorHex }}>
+                  {Math.round(pct)}%
+                </span>
+                <span className="num text-muted-foreground">
+                  Falta {formatBRL(restante)}
+                </span>
+              </div>
+              {bd.guardado > 0 && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Inclui <span className="num font-semibold text-foreground">{formatBRL(bd.guardado)}</span> guardado vinculado
+                  {bd.direto > 0 && <> + <span className="num font-semibold text-foreground">{formatBRL(bd.direto)}</span> direto</>}
+                </p>
+              )}
+              <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
                 {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
-              </span>
-            </div>
-          </section>
-        ) : (
+              </div>
+            </section>
+          );
+        })() : (
           <Link
             to="/metas"
-            className="flex items-center gap-3 rounded-3xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+            className="flex h-full items-center gap-3 rounded-3xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
           >
             <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
               <Target className="h-4 w-4" />
