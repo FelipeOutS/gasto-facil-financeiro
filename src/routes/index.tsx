@@ -475,24 +475,24 @@ function Index() {
         </div>
       </section>
 
-      {/* ===== 3. Resumo inteligente do mês (IA premium) ===== */}
-      <section className="mt-4">
-        <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+      {/* ===== 3. Par principal: Resumo inteligente + Limite inteligente ===== */}
+      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
+        <div className="flex min-w-0 [&>section]:flex [&>section]:w-full [&>section]:flex-col lg:[&>section]:h-full">
+          <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} className="w-full" />
+        </div>
+        <div className="flex min-w-0 [&>section]:flex [&>section]:w-full [&>section]:flex-col lg:[&>section]:h-full">
+          <SmartLimiteCard
+            mes={ym.mes}
+            ano={ym.ano}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
+          />
+        </div>
       </section>
 
       {/* ===== 4. Previsão de fechamento do mês (premium) ===== */}
       <section className="mt-4">
         <MonthForecastCard mes={ym.mes} ano={ym.ano} />
-      </section>
-
-      {/* ===== 5. Seu limite inteligente (premium) ===== */}
-      <section className="mt-4">
-        <SmartLimiteCard
-          mes={ym.mes}
-          ano={ym.ano}
-          totalEntradas={totalEntradas}
-          totalGastos={total}
-        />
       </section>
 
       {/* ===== 6. Próximas ações ===== */}
