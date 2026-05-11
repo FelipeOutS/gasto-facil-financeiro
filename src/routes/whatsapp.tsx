@@ -444,20 +444,42 @@ function WhatsAppPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold flex items-center gap-2">
+            <h1 className="text-xl font-semibold flex items-center gap-2 flex-wrap">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
                 <MessageCircle className="h-4 w-4" />
               </span>
               Gastos via WhatsApp
+              {MODO_TESTE && (
+                <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide">
+                  Modo teste
+                </Badge>
+              )}
             </h1>
             <p className="text-xs text-muted-foreground">
-              Registre gastos enviando mensagens. Funciona com simulador local e webhook real.
+              {MODO_TESTE
+                ? "Tela em ambientação. O número oficial do Gasto Inteligente ainda está em configuração."
+                : "Registre gastos enviando mensagens para o WhatsApp oficial do Gasto Inteligente."}
             </p>
           </div>
           <Button variant="outline" size="icon" onClick={refresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </header>
+
+        {MODO_TESTE && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
+            <div className="space-y-1">
+              <p className="font-semibold text-amber-300">Modo teste ativo</p>
+              <p>
+                O número oficial do WhatsApp do Gasto Inteligente ainda está em configuração.
+                Por enquanto, esta tela serve para você cadastrar seu número, conhecer o fluxo
+                e simular lançamentos. Assim que o número oficial for ativado, você receberá
+                instruções para enviar o código de ativação por mensagem.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Como funciona — visível para todos os assinantes */}
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
