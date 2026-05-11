@@ -240,7 +240,7 @@ export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string):
 }
 
 /** Pergunta o que falta. Retorna null se nada falta. */
-function detectarFaltantes(
+export function detectarFaltantes(
   parsed: ParsedExpense,
   cartoes: Cartao[],
 ): string | null {
@@ -251,7 +251,6 @@ function detectarFaltantes(
     return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
   }
   if (parsed.formaPagamento === "credito") {
-    // Foi inferido como crédito sem que o usuário tenha dito explicitamente.
     if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
       return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
     }
