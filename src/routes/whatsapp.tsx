@@ -717,18 +717,25 @@ function WhatsAppPage() {
           </ul>
         </section>
 
-        {/* Testar webhook */}
+        {/* Simulador de lançamento */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Send className="h-4 w-4 text-emerald-400" />
-            Testar webhook
+            Simulador de lançamento
+            {MODO_TESTE && (
+              <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                Modo teste
+              </Badge>
+            )}
           </h2>
           <p className="text-[11px] text-muted-foreground">
-            Roda a mesma lógica do webhook usando o primeiro número vinculado.
+            Digite uma mensagem como se fosse enviada pelo WhatsApp. O sistema vai interpretar
+            e mostrar o resumo do gasto, sempre aguardando sua confirmação antes de salvar.
           </p>
           <Textarea
             value={testTexto}
             onChange={(e) => setTestTexto(e.target.value)}
+            placeholder="Ex.: Gastei R$ 35,90 no mercado hoje no cartão Nubank"
             className="min-h-[72px] bg-card-elevated text-sm"
           />
           <div className="flex flex-wrap gap-2">
@@ -737,7 +744,7 @@ function WhatsAppPage() {
               disabled={testando || links.length === 0}
               className="bg-emerald-500 hover:bg-emerald-600 text-white"
             >
-              {testando ? "Testando..." : "Disparar teste"}
+              {testando ? "Simulando..." : "Testar lançamento"}
             </Button>
             {isAdmin && (
             <Button
