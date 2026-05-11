@@ -766,40 +766,7 @@ function WhatsAppPage() {
           </>
         )}
 
-        {/* Histórico */}
-        <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold">Mensagens recebidas</h2>
-          {msgs.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              Nenhuma mensagem recebida ainda.
-            </p>
-          )}
-          <ul className="space-y-2">
-            {msgs.map((m) => (
-              <li key={m.id} className="rounded-lg bg-card-elevated p-3 space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-muted-foreground num">
-                    {maskTel(m.telefone)} ·{" "}
-                    {new Date(m.recebida_em).toLocaleString("pt-BR")}
-                  </span>
-                  <StatusBadge status={m.status} />
-                </div>
-                <p className="text-xs">{m.texto}</p>
-                {m.resposta_sugerida && (
-                  <p className="text-[11px] text-muted-foreground border-l-2 border-emerald-500/40 pl-2">
-                    {m.resposta_sugerida}
-                  </p>
-                )}
-                {m.erro && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> {m.erro}
-                  </p>
-                )}
-                <MessageActions msg={m} onChanged={refresh} />
-              </li>
-            ))}
-          </ul>
-        </section>
+        {/* Aviso de segurança (substitui o bloco antigo de Histórico já reposicionado) */}
 
         {/* Aviso de segurança */}
         <div className="rounded-xl border border-dashed border-border bg-card/40 p-3 text-[11px] text-muted-foreground flex items-start gap-2">
