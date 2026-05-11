@@ -629,16 +629,25 @@ function WhatsAppPage() {
 
         {/* Vincular números */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold">Números vinculados</h2>
+          <div>
+            <h2 className="text-sm font-semibold">
+              {links.length === 0 ? "Conecte seu WhatsApp ao Gasto Inteligente" : "WhatsApp vinculado"}
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {links.length === 0
+                ? "Cadastre o número que você usa no WhatsApp para lançar gastos por mensagem. Aceitamos formatos como (11) 99999-8888 ou 5511999998888."
+                : "Você pode adicionar outro número, alterar o existente ou remover o vínculo a qualquer momento."}
+            </p>
+          </div>
           <div className="flex gap-2">
             <Input
               value={novoTel}
               onChange={(e) => setNovoTel(e.target.value)}
-              placeholder="Ex.: 5511999998888"
+              placeholder="Ex.: (11) 99999-8888"
               inputMode="tel"
             />
             <Button onClick={adicionar} disabled={adding || !novoTel.trim()}>
-              <Plus className="h-4 w-4 mr-1" /> Vincular
+              <Plus className="h-4 w-4 mr-1" /> Vincular WhatsApp
             </Button>
           </div>
 
@@ -647,30 +656,64 @@ function WhatsAppPage() {
               Nenhum número vinculado. Mensagens recebidas de números não vinculados são rejeitadas.
             </p>
           )}
-          <ul className="space-y-1.5">
-            {links.map((l) => (
-              <li
-                key={l.id}
-                className="flex items-center justify-between rounded-lg bg-card-elevated px-3 py-2 text-xs"
-              >
-                <div>
-                  <p className="font-medium num">{maskTel(l.telefone)}</p>
-                  <p className="text-muted-foreground">
-                    {l.ultimo_uso
-                      ? `Último uso ${new Date(l.ultimo_uso).toLocaleString("pt-BR")}`
-                      : "Sem uso ainda"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => excluir(l.id)}
-                  className="rounded-md p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                  aria-label="Remover"
+          <ul className="space-y-2">
+            {links.map((l) => {
+              const codigo = activationCode(l.id);
+              return (
+                <li
+                  key={l.id}
+                  className="rounded-lg bg-card-elevated px-3 py-2.5 text-xs space-y-2"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium num">{maskTel(l.telefone)}</p>
+                        {MODO_TESTE ? (
+                          <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                            Aguardando ativação
+                          </Badge>
+                        ) : l.ativo ? (
+                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]">
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-zinc-500/40 text-zinc-300 text-[10px]">
+                            Inativo
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground mt-0.5">
+                        Vinculado em {new Date(l.created_at).toLocaleDateString("pt-BR")}
+                        {l.ultimo_uso
+                          ? ` · Último uso ${new Date(l.ultimo_uso).toLocaleString("pt-BR")}`
+                          : " · Sem uso ainda"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => excluir(l.id)}
+                      className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                      aria-label="Remover vínculo"
+                      title="Remover vínculo"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="rounded-md border border-dashed border-emerald-500/30 bg-emerald-500/5 p-2.5 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">
+                      Código de ativação
+                    </p>
+                    <p className="font-mono text-sm text-emerald-300">{codigo}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {MODO_TESTE
+                        ? "Quando o número oficial do Gasto Inteligente entrar em produção, envie esse código por WhatsApp para concluir a ativação."
+                        : `Envie esse código pelo WhatsApp para o número oficial do Gasto Inteligente para concluir a ativação.`}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
