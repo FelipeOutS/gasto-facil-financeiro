@@ -910,3 +910,173 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
     </div>
   );
 }
+
+// =====================================================================
+// Simulador de lançamento — preview local + botão de teste
+// =====================================================================
+const EXEMPLOS_SIMULADOR = [
+  "Gastei R$ 35,90 no mercado hoje no cartão Nubank",
+  "Paguei R$ 18 no Pix ontem com lanche",
+  "Uber R$ 27 no crédito",
+  "Comprei remédio R$ 42,50 no débito",
+];
+
+function SimuladorCard({
+  texto,
+  onTextoChange,
+  onTestar,
+  testando,
+  podeTestar,
+  modoTeste,
+}: {
+  texto: string;
+  onTextoChange: (s: string) => void;
+  onTestar: () => void;
+  testando: boolean;
+  podeTestar: boolean;
+  modoTeste: boolean;
+}) {
+  const preview = useMemo(() => {
+    const t = texto.trim();
+    if (!t) return null;
+    try {
+      return parseWhatsAppExpenseMessage(t, []);
+    } catch {
+      return null;
+    }
+  }, [texto]);
+
+  const categoriaLabel = useMemo(() => {
+    if (!preview) return null;
+    const key =
+      suggestCategoryFromText(preview.categoriaSugestao || preview.nome) || "outros";
+    const cat = DEFAULT_CATEGORIES.find((c) => c.id === key);
+    return cat?.nome ?? "Outros";
+  }, [preview]);
+
+  const formaLabel = useMemo(() => {
+    if (!preview) return null;
+    const f = FORMAS_PAGAMENTO.find((x) => x.id === preview.formaPagamento);
+    return f?.label ?? preview.formaPagamento;
+  }, [preview]);
+
+  const dataLabel = useMemo(() => {
+    if (!preview) return null;
+    const hoje = new Date();
+    const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+    if (preview.data === hojeIso) return "Hoje";
+    return new Date(preview.data + "T00:00:00").toLocaleDateString("pt-BR");
+  }, [preview]);
+
+  const valorOK = !!preview && preview.valor > 0;
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Send className="h-4 w-4 text-emerald-400" />
+            Simulador de lançamento
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Digite uma mensagem como se fosse pelo WhatsApp e veja como o Gasto
+            Inteligente entende o que você escreveu.
+          </p>
+        </div>
+        {modoTeste && (
+          <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+            Apenas simulação
+          </Badge>
+        )}
+      </div>
+
+      <Textarea
+        value={texto}
+        onChange={(e) => onTextoChange(e.target.value)}
+        placeholder="Ex.: Gastei R$ 35,90 no mercado hoje no cartão Nubank"
+        className="min-h-[80px] bg-card-elevated text-sm"
+      />
+
+      <div className="space-y-1.5">
+        <p className="text-[11px] text-muted-foreground">Exemplos para testar:</p>
+        <div className="flex flex-wrap gap-1.5">
+          {EXEMPLOS_SIMULADOR.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => onTextoChange(ex)}
+              className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-card-elevated hover:text-foreground transition-colors"
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {preview && valorOK && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2 animate-fade-in">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-emerald-300 font-medium uppercase tracking-wide flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" /> Resultado da simulação
+            </p>
+            <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+              Aguardando confirmação
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-lg bg-card-elevated px-2.5 py-2">
+              <p className="text-muted-foreground text-[11px]">Valor</p>
+              <p className="mt-0.5 font-semibold num">
+                {preview.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+            </div>
+            <div className="rounded-lg bg-card-elevated px-2.5 py-2">
+              <p className="text-muted-foreground text-[11px]">Categoria</p>
+              <p className="mt-0.5 font-medium">{categoriaLabel}</p>
+            </div>
+            <div className="rounded-lg bg-card-elevated px-2.5 py-2">
+              <p className="text-muted-foreground text-[11px]">Data</p>
+              <p className="mt-0.5 font-medium">{dataLabel}</p>
+            </div>
+            <div className="rounded-lg bg-card-elevated px-2.5 py-2">
+              <p className="text-muted-foreground text-[11px]">Forma de pagamento</p>
+              <p className="mt-0.5 font-medium">{formaLabel}</p>
+            </div>
+            {preview.cartaoNomeDetectado && (
+              <div className="col-span-2 rounded-lg bg-card-elevated px-2.5 py-2">
+                <p className="text-muted-foreground text-[11px]">Cartão</p>
+                <p className="mt-0.5 font-medium">{preview.cartaoNomeDetectado}</p>
+              </div>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground border-t border-border/60 pt-2">
+            Nada foi salvo. {modoTeste
+              ? "Quando o número oficial estiver ativo, você confirmaria com um \"sim\" no WhatsApp."
+              : "Para salvar de verdade, envie a mensagem pelo WhatsApp e responda \"sim\"."}
+          </p>
+        </div>
+      )}
+
+      {preview && !valorOK && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+          Não consegui identificar o valor da mensagem. Tente algo como "R$ 35,90".
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button
+          onClick={onTestar}
+          disabled={testando || !podeTestar || !valorOK}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white flex-1 sm:flex-initial"
+        >
+          {testando ? "Testando..." : "Testar mensagem"}
+        </Button>
+        {!podeTestar && (
+          <p className="text-[11px] text-muted-foreground self-center">
+            Vincule seu WhatsApp acima para usar o teste.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
