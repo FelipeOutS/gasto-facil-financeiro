@@ -107,9 +107,43 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/**
+ * Normaliza telefone brasileiro para o formato E.164 sem o +.
+ * Aceita variações como "(11) 99999-8888", "11999998888", "5511999998888".
+ * - Garante prefixo 55 (Brasil).
+ * - Garante o nono dígito (celular) quando faltar.
+ */
 function normTel(raw: string): string {
-  return raw.replace(/\D/g, "");
+  let d = raw.replace(/\D/g, "");
+  // Remove zeros à esquerda
+  d = d.replace(/^0+/, "");
+  // Já vem com 55
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) {
+    if (d.length === 12) {
+      // 55 + DDD(2) + 8 dígitos -> insere 9
+      d = `${d.slice(0, 4)}9${d.slice(4)}`;
+    }
+    return d;
+  }
+  // 10 dígitos: DDD + 8 -> adiciona 55 e 9
+  if (d.length === 10) return `55${d.slice(0, 2)}9${d.slice(2)}`;
+  // 11 dígitos: DDD + 9 dígitos
+  if (d.length === 11) return `55${d}`;
+  return d;
 }
+
+/** Código de ativação determinístico baseado no id do vínculo. */
+function activationCode(linkId: string): string {
+  let h = 0;
+  for (let i = 0; i < linkId.length; i++) h = (h * 31 + linkId.charCodeAt(i)) >>> 0;
+  const num = (h % 900000) + 100000;
+  return `ATIVAR ${num}`;
+}
+
+// Configuração do número oficial do WhatsApp do Gasto Inteligente.
+// Enquanto WHATSAPP_NUMERO_OFICIAL estiver vazio, a tela opera em "modo teste".
+const WHATSAPP_NUMERO_OFICIAL = ""; // ex.: "5511999998888"
+const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
   const { user } = useAuth();
@@ -410,20 +444,42 @@ function WhatsAppPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold flex items-center gap-2">
+            <h1 className="text-xl font-semibold flex items-center gap-2 flex-wrap">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
                 <MessageCircle className="h-4 w-4" />
               </span>
               Gastos via WhatsApp
+              {MODO_TESTE && (
+                <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide">
+                  Modo teste
+                </Badge>
+              )}
             </h1>
             <p className="text-xs text-muted-foreground">
-              Registre gastos enviando mensagens. Funciona com simulador local e webhook real.
+              {MODO_TESTE
+                ? "Tela em ambientação. O número oficial do Gasto Inteligente ainda está em configuração."
+                : "Registre gastos enviando mensagens para o WhatsApp oficial do Gasto Inteligente."}
             </p>
           </div>
           <Button variant="outline" size="icon" onClick={refresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </header>
+
+        {MODO_TESTE && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
+            <div className="space-y-1">
+              <p className="font-semibold text-amber-300">Modo teste ativo</p>
+              <p>
+                O número oficial do WhatsApp do Gasto Inteligente ainda está em configuração.
+                Por enquanto, esta tela serve para você cadastrar seu número, conhecer o fluxo
+                e simular lançamentos. Assim que o número oficial for ativado, você receberá
+                instruções para enviar o código de ativação por mensagem.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Como funciona — visível para todos os assinantes */}
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
@@ -573,16 +629,25 @@ function WhatsAppPage() {
 
         {/* Vincular números */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold">Números vinculados</h2>
+          <div>
+            <h2 className="text-sm font-semibold">
+              {links.length === 0 ? "Conecte seu WhatsApp ao Gasto Inteligente" : "WhatsApp vinculado"}
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {links.length === 0
+                ? "Cadastre o número que você usa no WhatsApp para lançar gastos por mensagem. Aceitamos formatos como (11) 99999-8888 ou 5511999998888."
+                : "Você pode adicionar outro número, alterar o existente ou remover o vínculo a qualquer momento."}
+            </p>
+          </div>
           <div className="flex gap-2">
             <Input
               value={novoTel}
               onChange={(e) => setNovoTel(e.target.value)}
-              placeholder="Ex.: 5511999998888"
+              placeholder="Ex.: (11) 99999-8888"
               inputMode="tel"
             />
             <Button onClick={adicionar} disabled={adding || !novoTel.trim()}>
-              <Plus className="h-4 w-4 mr-1" /> Vincular
+              <Plus className="h-4 w-4 mr-1" /> Vincular WhatsApp
             </Button>
           </div>
 
@@ -591,45 +656,86 @@ function WhatsAppPage() {
               Nenhum número vinculado. Mensagens recebidas de números não vinculados são rejeitadas.
             </p>
           )}
-          <ul className="space-y-1.5">
-            {links.map((l) => (
-              <li
-                key={l.id}
-                className="flex items-center justify-between rounded-lg bg-card-elevated px-3 py-2 text-xs"
-              >
-                <div>
-                  <p className="font-medium num">{maskTel(l.telefone)}</p>
-                  <p className="text-muted-foreground">
-                    {l.ultimo_uso
-                      ? `Último uso ${new Date(l.ultimo_uso).toLocaleString("pt-BR")}`
-                      : "Sem uso ainda"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => excluir(l.id)}
-                  className="rounded-md p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                  aria-label="Remover"
+          <ul className="space-y-2">
+            {links.map((l) => {
+              const codigo = activationCode(l.id);
+              return (
+                <li
+                  key={l.id}
+                  className="rounded-lg bg-card-elevated px-3 py-2.5 text-xs space-y-2"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium num">{maskTel(l.telefone)}</p>
+                        {MODO_TESTE ? (
+                          <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                            Aguardando ativação
+                          </Badge>
+                        ) : l.ativo ? (
+                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]">
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-zinc-500/40 text-zinc-300 text-[10px]">
+                            Inativo
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground mt-0.5">
+                        Vinculado em {new Date(l.created_at).toLocaleDateString("pt-BR")}
+                        {l.ultimo_uso
+                          ? ` · Último uso ${new Date(l.ultimo_uso).toLocaleString("pt-BR")}`
+                          : " · Sem uso ainda"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => excluir(l.id)}
+                      className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                      aria-label="Remover vínculo"
+                      title="Remover vínculo"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="rounded-md border border-dashed border-emerald-500/30 bg-emerald-500/5 p-2.5 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">
+                      Código de ativação
+                    </p>
+                    <p className="font-mono text-sm text-emerald-300">{codigo}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {MODO_TESTE
+                        ? "Quando o número oficial do Gasto Inteligente entrar em produção, envie esse código por WhatsApp para concluir a ativação."
+                        : `Envie esse código pelo WhatsApp para o número oficial do Gasto Inteligente para concluir a ativação.`}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
-        {/* Testar webhook */}
+        {/* Simulador de lançamento */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Send className="h-4 w-4 text-emerald-400" />
-            Testar webhook
+            Simulador de lançamento
+            {MODO_TESTE && (
+              <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                Modo teste
+              </Badge>
+            )}
           </h2>
           <p className="text-[11px] text-muted-foreground">
-            Roda a mesma lógica do webhook usando o primeiro número vinculado.
+            Digite uma mensagem como se fosse enviada pelo WhatsApp. O sistema vai interpretar
+            e mostrar o resumo do gasto, sempre aguardando sua confirmação antes de salvar.
           </p>
           <Textarea
             value={testTexto}
             onChange={(e) => setTestTexto(e.target.value)}
+            placeholder="Ex.: Gastei R$ 35,90 no mercado hoje no cartão Nubank"
             className="min-h-[72px] bg-card-elevated text-sm"
           />
           <div className="flex flex-wrap gap-2">
@@ -638,7 +744,7 @@ function WhatsAppPage() {
               disabled={testando || links.length === 0}
               className="bg-emerald-500 hover:bg-emerald-600 text-white"
             >
-              {testando ? "Testando..." : "Disparar teste"}
+              {testando ? "Simulando..." : "Testar lançamento"}
             </Button>
             {isAdmin && (
             <Button
