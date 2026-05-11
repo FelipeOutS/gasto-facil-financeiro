@@ -107,9 +107,43 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/**
+ * Normaliza telefone brasileiro para o formato E.164 sem o +.
+ * Aceita variações como "(11) 99999-8888", "11999998888", "5511999998888".
+ * - Garante prefixo 55 (Brasil).
+ * - Garante o nono dígito (celular) quando faltar.
+ */
 function normTel(raw: string): string {
-  return raw.replace(/\D/g, "");
+  let d = raw.replace(/\D/g, "");
+  // Remove zeros à esquerda
+  d = d.replace(/^0+/, "");
+  // Já vem com 55
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) {
+    if (d.length === 12) {
+      // 55 + DDD(2) + 8 dígitos -> insere 9
+      d = `${d.slice(0, 4)}9${d.slice(4)}`;
+    }
+    return d;
+  }
+  // 10 dígitos: DDD + 8 -> adiciona 55 e 9
+  if (d.length === 10) return `55${d.slice(0, 2)}9${d.slice(2)}`;
+  // 11 dígitos: DDD + 9 dígitos
+  if (d.length === 11) return `55${d}`;
+  return d;
 }
+
+/** Código de ativação determinístico baseado no id do vínculo. */
+function activationCode(linkId: string): string {
+  let h = 0;
+  for (let i = 0; i < linkId.length; i++) h = (h * 31 + linkId.charCodeAt(i)) >>> 0;
+  const num = (h % 900000) + 100000;
+  return `ATIVAR ${num}`;
+}
+
+// Configuração do número oficial do WhatsApp do Gasto Inteligente.
+// Enquanto WHATSAPP_NUMERO_OFICIAL estiver vazio, a tela opera em "modo teste".
+const WHATSAPP_NUMERO_OFICIAL = ""; // ex.: "5511999998888"
+const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
   const { user } = useAuth();
