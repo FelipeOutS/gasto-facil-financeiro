@@ -503,7 +503,8 @@ function WhatsAppPage() {
           )}
         </section>
 
-        {/* Webhook URL + Verify Token (para colar no painel da Meta) */}
+        {/* Webhook URL + Verify Token — APENAS Admin Master */}
+        {isAdmin && (
         <section className="rounded-2xl border border-border bg-card p-4 space-y-4">
           <div>
             <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
