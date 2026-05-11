@@ -50,9 +50,11 @@ function WhatsAppPageGuarded() {
       </MobileShell>
     );
   }
-  if (!user || !isAdminMasterEmail(user.email)) {
-    return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
+  // O bloqueio por plano (feature "whatsapp") é feito pelo AuthGate.
+  // Aqui apenas garantimos que o usuário esteja logado.
   return <WhatsAppPage />;
 }
 
