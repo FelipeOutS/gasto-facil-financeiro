@@ -86,6 +86,9 @@ function maskTel(t: string) {
 
 const STATUS_STYLES: Record<string, string> = {
   salva: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
+  aguardando_confirmacao: "border-indigo-500/40 text-indigo-300 bg-indigo-500/10",
+  cancelada: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
+  sem_pendencia: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
   pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
