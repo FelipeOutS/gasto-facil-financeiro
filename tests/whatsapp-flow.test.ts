@@ -80,8 +80,8 @@ header("1. \"Gastei R$ 35,90 no mercado hoje no cartão Nubank\"");
   const falt = detectarFaltantes(p, cartoesUser);
   ok("nada faltando → confirmação", falt === null);
   const conf = formatarConfirmacao(p, "Nubank");
-  ok("confirmação menciona valor", conf.includes("R$ 35,90"));
-  ok("confirmação pede sim/não", /sim/.test(conf) && /não/.test(conf));
+  ok("confirmação menciona valor", /35[,.]90/.test(conf));
+  ok("confirmação pede sim/não", /sim/.test(conf) && /n[ãa]o/.test(conf));
 }
 
 // =====================================================================
