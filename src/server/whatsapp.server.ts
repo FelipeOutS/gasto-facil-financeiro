@@ -207,6 +207,15 @@ export async function processarMensagemWhatsApp(
     };
   }
 
+  // 2b) Plano ativo? Sem plano premium, não cria gasto.
+  const planoOk = await userPodeUsarWhatsApp(userId);
+  if (!planoOk.ok) {
+    return {
+      status: "sem_plano",
+      resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
+    } as ProcessOutcome;
+  }
+
   // 1b) Dedupe forte: mesmo telefone + mesmo texto normalizado + mesmo
   // user, processado nas últimas 2 horas com gasto criado. Evita que clicar
   // em "Disparar teste" várias vezes crie gastos duplicados.
