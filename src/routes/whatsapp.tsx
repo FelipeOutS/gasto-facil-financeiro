@@ -422,6 +422,21 @@ function WhatsAppPage() {
           </Button>
         </header>
 
+        {/* Como funciona — visível para todos os assinantes */}
+        <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
+            <MessageCircle className="h-4 w-4" />
+            Como lançar gastos pelo WhatsApp
+          </h2>
+          <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
+            <li>Vincule abaixo o número de WhatsApp que você usa.</li>
+            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"Spotify 19,90 Nubank"</span>.</li>
+            <li>A IA interpreta valor, data, cartão e categoria automaticamente.</li>
+            <li>Quando os dados estão claros, o gasto é salvo na hora e aparece no dashboard e em Gastos. Se faltar alguma informação, fica como pendente para você revisar aqui.</li>
+            <li>Mensagens de números não vinculados, ou de assinaturas inativas, são rejeitadas com segurança.</li>
+          </ol>
+        </section>
+
         {/* Status */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
