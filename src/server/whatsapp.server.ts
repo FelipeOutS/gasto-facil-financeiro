@@ -178,7 +178,7 @@ const CANCEL_TOKENS = [
   "ignorar", "apaga", "apagar", "errado", "no",
 ];
 
-function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
+export function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
   const t = normalizeText(texto);
   if (!t) return "outro";
   if (CONFIRM_TOKENS.includes(t)) return "confirm";
