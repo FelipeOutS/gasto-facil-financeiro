@@ -133,6 +133,7 @@ export type ProcessOutcome = {
     | "salva"
     | "pendente"
     | "sem_vinculo"
+    | "sem_plano"
     | "erro"
     | "valor_invalido"
     | "gasto_excluido";
