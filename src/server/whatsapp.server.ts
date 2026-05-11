@@ -214,7 +214,7 @@ export async function processarMensagemWhatsApp(
     return {
       status: "sem_plano",
       resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
-    } as ProcessOutcome;
+    };
   }
 
   // 1b) Dedupe forte: mesmo telefone + mesmo texto normalizado + mesmo
