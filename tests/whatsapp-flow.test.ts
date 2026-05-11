@@ -222,13 +222,12 @@ header("13. Cartão ambíguo (mais de um match)");
     "Gastei R$ 50 no mercado hoje no Nubank",
     cartoesAmbig,
   );
-  // Comportamento atual: pega o PRIMEIRO match — não pergunta ambiguidade.
-  // Esse teste serve para EXPOR o gap caso apareça.
-  console.log(`  ℹ cartaoId escolhido: ${p.cartaoId} (esperado: pergunta de desambiguação)`);
-  ok(
-    "ambiguidade: resolveu para algum dos dois",
-    p.cartaoId === "c-nu1" || p.cartaoId === "c-nu2",
-  );
+  // Esperado: parser detecta ambiguidade e detectarFaltantes pede para escolher.
+  ok("sem cartaoId resolvido", !p.cartaoId);
+  ok("ambiguo presente", !!p.cartaoAmbiguo && p.cartaoAmbiguo.ids.length === 2);
+  const falt = detectarFaltantes(p, cartoesAmbig);
+  ok("pergunta qual cartão", !!falt && /mais de um cartão|parecido/i.test(falt));
+  ok("lista os candidatos", !!falt && /Roxinho/.test(falt) && /Ultravioleta/.test(falt));
 }
 
 // =====================================================================
