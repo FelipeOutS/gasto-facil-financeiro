@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
+import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
