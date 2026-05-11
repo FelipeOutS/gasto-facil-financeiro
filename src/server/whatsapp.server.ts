@@ -1,15 +1,19 @@
 /**
  * Helpers server-only para a integração WhatsApp.
  * NÃO importar em código de browser.
+ *
+ * Fluxo (importante!): NUNCA salva gasto automaticamente. O parser identifica
+ * os campos, o servidor responde com uma confirmação clara e só salva o gasto
+ * quando o usuário responder "sim", "salvar", "confirmar" etc.
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// As tabelas whatsapp_links / whatsapp_messages foram criadas após a última
-// regeneração de tipos. Usamos um cast frouxo neste arquivo de servidor para
-// destravar enquanto o types.ts não é regenerado pelo build.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
-import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
+import {
+  parseWhatsAppExpenseMessage,
+  type ParsedExpense,
+} from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
@@ -24,7 +28,6 @@ async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reas
     .maybeSingle();
   let email: string | null = null;
   if (u?.email) email = u.email;
-  // Fallback: usa admin API auth schema via rpc se select direto não funcionar
   if (!email) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +65,6 @@ export function maskTelefone(tel: string): string {
 /** Resolve o user_id dono daquele telefone, considerando variações. */
 async function resolveUserId(telefone: string): Promise<string | null> {
   const digits = telefone.replace(/\D/g, "");
-  // Tenta match exato e variações comuns (com/sem 55 e com/sem nono dígito)
   const candidatos = new Set<string>([telefone, digits]);
   if (digits.startsWith("55")) candidatos.add(digits.slice(2));
   else candidatos.add(`55${digits}`);
@@ -78,7 +80,7 @@ async function resolveUserId(telefone: string): Promise<string | null> {
   return null;
 }
 
-/** Carrega cartões do usuário (necessário para o parser identificar cartão). */
+/** Carrega cartões do usuário. */
 async function carregarCartoes(userId: string): Promise<Cartao[]> {
   const { data } = await supabaseAdmin
     .from("cartoes")
@@ -131,6 +133,9 @@ export type ProcessOutcome = {
   status:
     | "duplicada"
     | "salva"
+    | "aguardando_confirmacao"
+    | "cancelada"
+    | "sem_pendencia"
     | "pendente"
     | "sem_vinculo"
     | "sem_plano"
@@ -142,11 +147,6 @@ export type ProcessOutcome = {
   resposta: string;
 };
 
-/**
- * Processa uma mensagem recebida (do webhook) usando o mesmo parser do
- * simulador. Salva gasto se confiança alta + valor + (cartão ou forma != crédito).
- */
-/** Normaliza texto para comparação de duplicidade. */
 function normalizeText(s: string): string {
   return s
     .normalize("NFD")
@@ -156,7 +156,6 @@ function normalizeText(s: string): string {
     .trim();
 }
 
-/** Confirma que um gasto ainda existe na tabela principal. */
 async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
   if (!gastoId) return false;
   const { data } = await supabaseAdmin
@@ -167,176 +166,111 @@ async function verificarGastoExiste(gastoId: string | null | undefined): Promise
   return !!data;
 }
 
-export async function processarMensagemWhatsApp(
-  msg: WhatsAppMessageRow,
-): Promise<ProcessOutcome> {
-  // 1a) Dedupe por external_id, se houver — só bloqueia se o gasto vinculado
-  // ainda existir. Se o usuário excluiu o gasto, a mesma mensagem pode ser
-  // reprocessada para criar um novo gasto.
-  if (msg.external_id) {
-    const { data: existente } = await supabaseAdmin
-      .from("whatsapp_messages")
-      .select("id, gasto_id, status")
-      .eq("external_id", msg.external_id)
-      .maybeSingle();
-    if (existente) {
-      const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
-      if (gastoAindaExiste) {
-        return {
-          status: "duplicada",
-          gastoId: existente.gasto_id ?? undefined,
-          resposta: "Mensagem já processada anteriormente.",
-        };
-      }
-      // Gasto não existe mais → remove o registro antigo para permitir reprocessar.
-      await supabaseAdmin.from("whatsapp_messages").delete().eq("id", existente.id);
+// ---------- Confirmação / cancelamento ----------
+
+const CONFIRM_TOKENS = [
+  "sim", "s", "ok", "okay", "salvar", "salva", "confirmar", "confirma",
+  "confirmado", "confirmada", "pode salvar", "pode", "isso", "isso mesmo",
+  "correto", "👍", "✅", "yes", "y",
+];
+const CANCEL_TOKENS = [
+  "nao", "não", "n", "cancelar", "cancela", "cancelado", "ignora",
+  "ignorar", "apaga", "apagar", "errado", "no",
+];
+
+function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
+  const t = normalizeText(texto);
+  if (!t) return "outro";
+  if (CONFIRM_TOKENS.includes(t)) return "confirm";
+  if (CANCEL_TOKENS.includes(t)) return "cancel";
+  return "outro";
+}
+
+function formatBRL(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatDataBR(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  const hoje = new Date();
+  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+  if (iso === hojeIso) return "hoje";
+  return `${d}/${m}/${y}`;
+}
+
+function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
+  switch (f) {
+    case "credito":
+      return cartaoNome ? `Cartão ${cartaoNome} (crédito)` : "Cartão de crédito";
+    case "debito":
+      return "Cartão de débito";
+    case "pix":
+      return "Pix";
+    case "dinheiro":
+      return "Dinheiro";
+    case "boleto":
+      return "Boleto";
+    case "transferencia":
+      return "Transferência";
+    case "vale_alimentacao":
+      return "Vale alimentação";
+    case "vale_refeicao":
+      return "Vale refeição";
+    default:
+      return String(f);
+  }
+}
+
+function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+  const linhas = [
+    "🧾 Encontrei este gasto:",
+    `• Valor: ${formatBRL(parsed.valor)}`,
+    `• Descrição: ${parsed.nome}`,
+    `• Categoria: ${parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40 ? parsed.categoriaSugestao : suggestCategoryFromText(parsed.nome) ?? "Outros"}`,
+    `• Data: ${formatDataBR(parsed.data)}`,
+    `• Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
+  ];
+  if (parsed.parcelas && parsed.parcelas > 1) {
+    linhas.push(`• Parcelas: ${parsed.parcelas}x`);
+  }
+  linhas.push("");
+  linhas.push("Deseja salvar esse gasto? Responda *sim* para confirmar ou *não* para cancelar.");
+  return linhas.join("\n");
+}
+
+/** Pergunta o que falta. Retorna null se nada falta. */
+function detectarFaltantes(
+  parsed: ParsedExpense,
+  cartoes: Cartao[],
+): string | null {
+  if (!parsed.valor || parsed.valor <= 0) {
+    return "❓ Não consegui identificar o *valor*. Me diga quanto foi, ex: \"R$ 48,90\".";
+  }
+  if (!parsed.nome || parsed.nome.length < 2) {
+    return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
+  }
+  if (parsed.formaPagamento === "credito") {
+    // Foi inferido como crédito sem que o usuário tenha dito explicitamente.
+    if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
+      return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
+    }
+    if (!parsed.cartaoId && parsed.cartaoNomeDetectado) {
+      const nomes = cartoes.map((c) => c.nome).filter(Boolean);
+      const lista = nomes.length > 0 ? `\nSeus cartões: ${nomes.join(", ")}.` : "";
+      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nResponda com o nome do cartão correto, escolha um da lista ou cadastre um novo no app antes de confirmar.`;
     }
   }
+  return null;
+}
 
-  const texto = (msg.texto ?? "").trim();
-  if (!texto) {
-    return { status: "erro", resposta: "Mensagem vazia." };
-  }
+// ---------- Persistência do gasto ----------
 
-  // 2) Resolver usuário pelo telefone
-  const userId = await resolveUserId(msg.telefone);
-  if (!userId) {
-    return {
-      status: "sem_vinculo",
-      resposta:
-        "Número não vinculado a nenhuma conta. Acesse o app em /whatsapp e vincule seu número.",
-    };
-  }
-
-  // 2b) Plano ativo? Sem plano premium, não cria gasto.
-  const planoOk = await userPodeUsarWhatsApp(userId);
-  if (!planoOk.ok) {
-    return {
-      status: "sem_plano",
-      resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
-    };
-  }
-
-  // 1b) Dedupe forte: mesmo telefone + mesmo texto normalizado + mesmo
-  // user, processado nas últimas 2 horas com gasto criado. Evita que clicar
-  // em "Disparar teste" várias vezes crie gastos duplicados.
-  const textoNorm = normalizeText(texto);
-  const janelaMs = 2 * 60 * 60 * 1000;
-  const desde = new Date(Date.now() - janelaMs).toISOString();
-  const { data: recentes } = await supabaseAdmin
-    .from("whatsapp_messages")
-    .select("id, gasto_id, texto, status, recebida_em")
-    .eq("user_id", userId)
-    .eq("telefone", msg.telefone)
-    .gte("recebida_em", desde)
-    .order("recebida_em", { ascending: false })
-    .limit(20);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dup = (recentes as any[] | null)?.find(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) =>
-      normalizeText(r.texto ?? "") === textoNorm &&
-      r.gasto_id &&
-      r.status === "salva",
-  );
-  if (dup) {
-    // Confirma que o gasto referenciado AINDA existe na tabela principal.
-    // Sem essa checagem, a mensagem ficaria "duplicada" apontando para um
-    // gasto que o usuário já excluiu — link quebrado.
-    const aindaExiste = await verificarGastoExiste(dup.gasto_id);
-    if (aindaExiste) {
-      return {
-        status: "duplicada",
-        gastoId: dup.gasto_id,
-        resposta:
-          "Essa mensagem já foi processada. Nenhum gasto duplicado foi criado.",
-      };
-    }
-    // Gasto foi excluído → arquiva o log antigo e segue criando um novo.
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "gasto_excluido", gasto_id: null })
-      .eq("id", dup.id);
-  }
-
-  // 3) Parser
-  const cartoes = await carregarCartoes(userId);
-  const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
-
-  // 4) Persist log inicial
-  const { data: logRow, error: logErr } = await supabaseAdmin
-    .from("whatsapp_messages")
-    .insert({
-      user_id: userId,
-      external_id: msg.external_id,
-      telefone: msg.telefone,
-      texto,
-      recebida_em: msg.recebida_em ?? new Date().toISOString(),
-      status: "recebida",
-      confianca: parsed.confianca,
-      parsed: parsed as unknown as Record<string, unknown>,
-    })
-    .select("id")
-    .single();
-  if (logErr) {
-    console.error("[whatsapp] log insert failed", logErr);
-    return { status: "erro", resposta: "Erro interno ao registrar mensagem." };
-  }
-
-  // 5) Validações
-  if (parsed.valor <= 0) {
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({
-        status: "pendente",
-        resposta_sugerida:
-          "⚠️ Não consegui identificar o valor. Reenvie informando o valor (ex: R$ 26,00).",
-      })
-      .eq("id", logRow.id);
-    return {
-      status: "valor_invalido",
-      resposta:
-        "⚠️ Não consegui identificar o valor. Reenvie informando o valor (ex: R$ 26,00).",
-    };
-  }
-
-  // Auto-save quando há valor + nome + forma de pagamento válida.
-  // Crédito é válido se: cartão cadastrado encontrado OU banco conhecido citado.
-  const formaValida =
-    parsed.formaPagamento !== "credito" ||
-    !!parsed.cartaoId ||
-    !!parsed.cartaoNomeDetectado;
-  const altaConfianca =
-    parsed.confianca >= 0.7 &&
-    parsed.valor > 0 &&
-    parsed.nome.length >= 3 &&
-    formaValida;
-
-  if (!altaConfianca) {
-    // Motivo prioritário: cartão citado mas não cadastrado
-    let motivo: string;
-    if (
-      parsed.formaPagamento === "credito" &&
-      parsed.cartaoNomeDetectado &&
-      !parsed.cartaoId
-    ) {
-      motivo = `Cartão "${parsed.cartaoNomeDetectado}" não encontrado. Escolha um cartão para salvar.`;
-    } else if (parsed.valor <= 0) {
-      motivo = "valor não identificado";
-    } else if (parsed.nome.length < 3) {
-      motivo = "nome do gasto não identificado";
-    } else {
-      motivo = "informações insuficientes";
-    }
-    const resposta = `⚠️ Recebi "${parsed.nome}" — ${formatBRL(parsed.valor)}, mas precisa de revisão (${motivo}). Ajuste no app.`;
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "pendente", resposta_sugerida: resposta })
-      .eq("id", logRow.id);
-    return { status: "pendente", confianca: parsed.confianca, resposta };
-  }
-
-  // 6) Salvar gasto
+async function persistirGasto(
+  userId: string,
+  parsed: ParsedExpense,
+  cartoes: Cartao[],
+): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
   const categoriaKey =
     suggestCategoryFromText(parsed.categoriaSugestao || parsed.nome) || "outros";
   const categoriaId = await resolveCategoriaId(userId, categoriaKey);
@@ -369,54 +303,248 @@ export async function processarMensagemWhatsApp(
 
   if (gastoErr || !gastoRow) {
     console.error("[whatsapp] gasto insert failed", gastoErr);
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "erro", erro: gastoErr?.message ?? "insert failed" })
-      .eq("id", logRow.id);
-    return { status: "erro", resposta: "Erro ao salvar gasto." };
+    return { ok: false, resposta: "❌ Erro ao salvar o gasto. Tente novamente." };
   }
 
   const cartaoNome = parsed.cartaoId
     ? cartoes.find((c) => c.id === parsed.cartaoId)?.nome
     : undefined;
-  const dataMatched = !parsed.notas.some((n) => /data/i.test(n));
-  const sufixoData = dataMatched ? "" : " Gasto registrado usando a data de hoje.";
-  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.${sufixoData}`;
+  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.`;
 
-  await supabaseAdmin
+  return { ok: true, gastoId: gastoRow.id, resposta };
+}
+
+// ---------- Pendências (aguardando confirmação) ----------
+
+const PENDING_TTL_MS = 30 * 60 * 1000; // 30 min
+
+async function buscarPendencia(userId: string, telefone: string): Promise<{
+  id: string;
+  parsed: ParsedExpense;
+  recebida_em: string;
+} | null> {
+  const desde = new Date(Date.now() - PENDING_TTL_MS).toISOString();
+  const { data } = await supabaseAdmin
     .from("whatsapp_messages")
-    .update({
-      status: "salva",
-      gasto_id: gastoRow.id,
-      resposta_sugerida: resposta,
-    })
-    .eq("id", logRow.id);
-
-  await supabaseAdmin
-    .from("whatsapp_links")
-    .update({ ultimo_uso: new Date().toISOString() })
+    .select("id, parsed, recebida_em")
     .eq("user_id", userId)
-    .eq("telefone", msg.telefone);
-
+    .eq("telefone", telefone)
+    .eq("status", "aguardando_confirmacao")
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data?.parsed) return null;
   return {
-    status: "salva",
-    gastoId: gastoRow.id,
-    confianca: parsed.confianca,
-    resposta,
+    id: data.id,
+    parsed: data.parsed as ParsedExpense,
+    recebida_em: data.recebida_em,
   };
 }
 
-function formatBRL(v: number): string {
-  return v.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+// ---------- Pipeline principal ----------
+
+export async function processarMensagemWhatsApp(
+  msg: WhatsAppMessageRow,
+): Promise<ProcessOutcome> {
+  // Dedupe por external_id (Meta retenta o mesmo evento).
+  if (msg.external_id) {
+    const { data: existente } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("id, gasto_id, status")
+      .eq("external_id", msg.external_id)
+      .maybeSingle();
+    if (existente) {
+      const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
+      if (existente.status === "salva" && gastoAindaExiste) {
+        return {
+          status: "duplicada",
+          gastoId: existente.gasto_id ?? undefined,
+          resposta: "Mensagem já processada anteriormente.",
+        };
+      }
+      // status pendente/aguardando ou gasto excluído → libera o slot
+      if (existente.status === "aguardando_confirmacao") {
+        return {
+          status: "duplicada",
+          resposta: "Mensagem já recebida — aguardando sua confirmação.",
+        };
+      }
+      await supabaseAdmin.from("whatsapp_messages").delete().eq("id", existente.id);
+    }
+  }
+
+  const texto = (msg.texto ?? "").trim();
+  if (!texto) return { status: "erro", resposta: "Mensagem vazia." };
+
+  const userId = await resolveUserId(msg.telefone);
+  if (!userId) {
+    return {
+      status: "sem_vinculo",
+      resposta:
+        "Número não vinculado a nenhuma conta. Acesse o app em /whatsapp e vincule seu número.",
+    };
+  }
+
+  const planoOk = await userPodeUsarWhatsApp(userId);
+  if (!planoOk.ok) {
+    return {
+      status: "sem_plano",
+      resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
+    };
+  }
+
+  // 1) É uma resposta a uma confirmação pendente?
+  const decisao = classificarResposta(texto);
+  if (decisao !== "outro") {
+    const pend = await buscarPendencia(userId, msg.telefone);
+    if (!pend) {
+      // log e responde, mas não cria gasto
+      await supabaseAdmin.from("whatsapp_messages").insert({
+        user_id: userId,
+        external_id: msg.external_id,
+        telefone: msg.telefone,
+        texto,
+        recebida_em: msg.recebida_em ?? new Date().toISOString(),
+        status: "sem_pendencia",
+        resposta_sugerida:
+          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+      });
+      return {
+        status: "sem_pendencia",
+        resposta:
+          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+      };
+    }
+
+    if (decisao === "cancel") {
+      await supabaseAdmin
+        .from("whatsapp_messages")
+        .update({
+          status: "cancelada",
+          resposta_sugerida: "Tudo bem, gasto cancelado. Nada foi salvo.",
+        })
+        .eq("id", pend.id);
+      await supabaseAdmin.from("whatsapp_messages").insert({
+        user_id: userId,
+        external_id: msg.external_id,
+        telefone: msg.telefone,
+        texto,
+        recebida_em: msg.recebida_em ?? new Date().toISOString(),
+        status: "cancelada",
+        resposta_sugerida: "Cancelado pelo usuário.",
+      });
+      return {
+        status: "cancelada",
+        resposta: "Tudo bem, gasto cancelado. Nada foi salvo.",
+      };
+    }
+
+    // confirm → salva o gasto vinculado à pendência
+    const cartoes = await carregarCartoes(userId);
+    const result = await persistirGasto(userId, pend.parsed, cartoes);
+    if (!result.ok) {
+      return { status: "erro", resposta: result.resposta };
+    }
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({
+        status: "salva",
+        gasto_id: result.gastoId,
+        resposta_sugerida: result.resposta,
+      })
+      .eq("id", pend.id);
+    await supabaseAdmin.from("whatsapp_messages").insert({
+      user_id: userId,
+      external_id: msg.external_id,
+      telefone: msg.telefone,
+      texto,
+      recebida_em: msg.recebida_em ?? new Date().toISOString(),
+      status: "salva",
+      gasto_id: result.gastoId,
+      resposta_sugerida: result.resposta,
+    });
+    await supabaseAdmin
+      .from("whatsapp_links")
+      .update({ ultimo_uso: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("telefone", msg.telefone);
+    return {
+      status: "salva",
+      gastoId: result.gastoId,
+      resposta: result.resposta,
+    };
+  }
+
+  // 2) Nova mensagem: parse e cria pendência (NUNCA salva direto)
+  const cartoes = await carregarCartoes(userId);
+  const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
+
+  // Cancela pendências antigas para evitar ambiguidade.
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({
+      status: "cancelada",
+      resposta_sugerida:
+        "Substituído por nova mensagem antes da confirmação.",
+    })
+    .eq("user_id", userId)
+    .eq("telefone", msg.telefone)
+    .eq("status", "aguardando_confirmacao");
+
+  // Verifica se faltam dados essenciais.
+  const faltante = detectarFaltantes(parsed, cartoes);
+  if (faltante) {
+    await supabaseAdmin.from("whatsapp_messages").insert({
+      user_id: userId,
+      external_id: msg.external_id,
+      telefone: msg.telefone,
+      texto,
+      recebida_em: msg.recebida_em ?? new Date().toISOString(),
+      status: "pendente",
+      confianca: parsed.confianca,
+      parsed: parsed as unknown as Record<string, unknown>,
+      resposta_sugerida: faltante,
+    });
+    const status: ProcessOutcome["status"] =
+      !parsed.valor || parsed.valor <= 0 ? "valor_invalido" : "pendente";
+    return { status, confianca: parsed.confianca, resposta: faltante };
+  }
+
+  // OK: cria pendência aguardando_confirmacao
+  const cartaoNome = parsed.cartaoId
+    ? cartoes.find((c) => c.id === parsed.cartaoId)?.nome
+    : undefined;
+  const respostaConfirm = formatarConfirmacao(parsed, cartaoNome);
+
+  const { error: insErr } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .insert({
+      user_id: userId,
+      external_id: msg.external_id,
+      telefone: msg.telefone,
+      texto,
+      recebida_em: msg.recebida_em ?? new Date().toISOString(),
+      status: "aguardando_confirmacao",
+      confianca: parsed.confianca,
+      parsed: parsed as unknown as Record<string, unknown>,
+      resposta_sugerida: respostaConfirm,
+    });
+  if (insErr) {
+    console.error("[whatsapp] log insert failed", insErr);
+    return { status: "erro", resposta: "Erro interno ao registrar mensagem." };
+  }
+
+  return {
+    status: "aguardando_confirmacao",
+    confianca: parsed.confianca,
+    resposta: respostaConfirm,
+  };
 }
 
 /**
- * Envio de resposta pelo WhatsApp (Graph API). PREPARADO mas inativo
- * enquanto WHATSAPP_ACCESS_TOKEN / WHATSAPP_PHONE_NUMBER_ID não forem
- * configurados. Retorna { sent: false, reason: "not_configured" } nesse caso.
+ * Envio de resposta pelo WhatsApp (Graph API). Inativo até os secrets
+ * estarem configurados.
  */
 export async function sendWhatsAppReply(
   to: string,
@@ -424,9 +552,7 @@ export async function sendWhatsAppReply(
 ): Promise<{ sent: boolean; reason?: string; status?: number }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!token || !phoneId) {
-    return { sent: false, reason: "not_configured" };
-  }
+  if (!token || !phoneId) return { sent: false, reason: "not_configured" };
   try {
     const res = await fetch(
       `https://graph.facebook.com/v20.0/${phoneId}/messages`,

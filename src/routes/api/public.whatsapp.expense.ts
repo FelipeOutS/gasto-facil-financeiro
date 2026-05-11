@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
+import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -95,6 +95,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           try {
             const out = await processarMensagemWhatsApp(msg);
             results.push({ status: out.status, gasto_id: out.gastoId });
+            // Envia a resposta de volta pelo WhatsApp (confirmação, perguntas, etc.)
+            if (out.resposta && msg.telefone) {
+              try {
+                await sendWhatsAppReply(msg.telefone, out.resposta);
+              } catch (replyErr) {
+                console.error("[whatsapp] reply send failed", replyErr);
+              }
+            }
           } catch (e) {
             console.error("[whatsapp] processar erro", e);
             results.push({ status: "erro" });

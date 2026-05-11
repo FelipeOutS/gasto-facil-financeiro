@@ -86,6 +86,9 @@ function maskTel(t: string) {
 
 const STATUS_STYLES: Record<string, string> = {
   salva: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
+  aguardando_confirmacao: "border-indigo-500/40 text-indigo-300 bg-indigo-500/10",
+  cancelada: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
+  sem_pendencia: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
   pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
@@ -118,7 +121,7 @@ function WhatsAppPage() {
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
   const [testTexto, setTestTexto] = useState(
-    "Spotify 19,90 assinatura Nubank",
+    "gastei R$ 48,90 no mercado hoje no Nubank",
   );
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
@@ -430,9 +433,10 @@ function WhatsAppPage() {
           </h2>
           <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
             <li>Vincule abaixo o número de WhatsApp que você usa.</li>
-            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"Spotify 19,90 Nubank"</span>.</li>
-            <li>A IA interpreta valor, data, cartão e categoria automaticamente.</li>
-            <li>Quando os dados estão claros, o gasto é salvo na hora e aparece no dashboard e em Gastos. Se faltar alguma informação, fica como pendente para você revisar aqui.</li>
+            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</li>
+            <li>A IA interpreta valor, data, cartão, categoria e forma de pagamento, e devolve um resumo para você conferir.</li>
+            <li><span className="font-medium text-foreground">O gasto só é salvo depois que você confirmar respondendo "sim", "salvar" ou "confirmar".</span> Para descartar, responda "não" ou "cancelar".</li>
+            <li>Se faltar algum dado (valor, cartão, forma de pagamento), o bot pergunta antes de criar o gasto.</li>
             <li>Mensagens de números não vinculados, ou de assinaturas inativas, são rejeitadas com segurança.</li>
           </ol>
         </section>
