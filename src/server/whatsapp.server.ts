@@ -223,19 +223,23 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
 }
 
 export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+  const categoria =
+    parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40
+      ? parsed.categoriaSugestao
+      : suggestCategoryFromText(parsed.nome) ?? "Outros";
   const linhas = [
     "🧾 Encontrei este gasto:",
-    `• Valor: ${formatBRL(parsed.valor)}`,
-    `• Descrição: ${parsed.nome}`,
-    `• Categoria: ${parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40 ? parsed.categoriaSugestao : suggestCategoryFromText(parsed.nome) ?? "Outros"}`,
-    `• Data: ${formatDataBR(parsed.data)}`,
-    `• Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
+    "",
+    `Valor: ${formatBRL(parsed.valor)}`,
+    `Categoria: ${categoria}`,
+    `Data: ${formatDataBR(parsed.data) === "hoje" ? "Hoje" : formatDataBR(parsed.data)}`,
+    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) {
-    linhas.push(`• Parcelas: ${parsed.parcelas}x`);
+    linhas.push(`Parcelas: ${parsed.parcelas}x`);
   }
   linhas.push("");
-  linhas.push("Deseja salvar esse gasto? Responda *sim* para confirmar ou *não* para cancelar.");
+  linhas.push("Deseja salvar esse gasto? Responda sim ou não.");
   return linhas.join("\n");
 }
 
@@ -245,22 +249,22 @@ export function detectarFaltantes(
   cartoes: Cartao[],
 ): string | null {
   if (!parsed.valor || parsed.valor <= 0) {
-    return "❓ Não consegui identificar o *valor*. Me diga quanto foi, ex: \"R$ 48,90\".";
+    return "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
+    return "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
   }
   if (parsed.formaPagamento === "credito") {
     if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
-      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Responda com o nome exato do cartão usado.`;
+      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Me diga o nome exato do cartão usado.`;
     }
     if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
-      return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
+      return "❓ Só preciso de mais uma informação: você pagou com Pix, dinheiro, débito ou cartão?";
     }
     if (!parsed.cartaoId && parsed.cartaoNomeDetectado) {
       const nomes = cartoes.map((c) => c.nome).filter(Boolean);
-      const lista = nomes.length > 0 ? `\nSeus cartões: ${nomes.join(", ")}.` : "";
-      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nResponda com o nome do cartão correto, escolha um da lista ou cadastre um novo no app antes de confirmar.`;
+      const lista = nomes.length > 0 ? `\nSeus cartões cadastrados: ${nomes.join(", ")}.` : "";
+      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nMe diga o nome certo do cartão ou cadastre um novo no app antes de confirmar.`;
     }
   }
   return null;
