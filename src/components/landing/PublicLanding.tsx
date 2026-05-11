@@ -71,11 +71,26 @@ function getHeaderOffset() {
 
 function smoothScrollToSection(sectionId: string) {
   if (typeof window === "undefined") return;
-  const element = document.getElementById(sectionId);
-  if (!element) return;
+
+  // "inicio" representa o topo da landing — mantemos a URL limpa em "/"
+  // (sem hash) ao invés de "/#inicio".
+  const isTop = sectionId === "inicio";
+  const element = isTop ? null : document.getElementById(sectionId);
+  if (!isTop && !element) return;
 
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const targetPosition = Math.max(0, element.getBoundingClientRect().top + window.scrollY - getHeaderOffset());
+  const targetPosition = isTop
+    ? 0
+    : Math.max(0, element!.getBoundingClientRect().top + window.scrollY - getHeaderOffset());
+
+  const updateHash = () => {
+    if (!history.replaceState) return;
+    if (isTop) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    } else {
+      history.replaceState(null, "", `#${sectionId}`);
+    }
+  };
 
   if (activeScrollFrame !== null) {
     window.cancelAnimationFrame(activeScrollFrame);
@@ -84,7 +99,7 @@ function smoothScrollToSection(sectionId: string) {
 
   if (reduce) {
     window.scrollTo(0, targetPosition);
-    if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+    updateHash();
     return;
   }
 
@@ -106,7 +121,7 @@ function smoothScrollToSection(sectionId: string) {
       activeScrollFrame = window.requestAnimationFrame(animation);
     } else {
       activeScrollFrame = null;
-      if (history.replaceState) history.replaceState(null, "", `#${sectionId}`);
+      updateHash();
     }
   };
 
