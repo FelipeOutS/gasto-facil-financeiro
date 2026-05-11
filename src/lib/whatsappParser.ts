@@ -22,6 +22,8 @@ export type ParsedExpense = {
   formaPagamento: FormaPagamento;
   cartaoNomeDetectado?: string;
   cartaoId?: string;
+  /** Quando o termo do cartão casa com mais de um cartão cadastrado. */
+  cartaoAmbiguo?: { ids: string[]; nomes: string[] };
   parcelas?: number;
   categoriaSugestao?: string; // texto livre p/ casar com suggestCategory
   mensagemOriginal: string;
