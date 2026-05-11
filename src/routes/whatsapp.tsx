@@ -494,7 +494,11 @@ function WhatsAppPage() {
           </h2>
           <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
             <li>Vincule abaixo o número de WhatsApp que você usa.</li>
-            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</li>
+            <li>
+              {MODO_TESTE
+                ? <>Quando o número oficial estiver ativo, você enviará uma mensagem como <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>
+                : <>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>}
+            </li>
             <li>A IA interpreta valor, data, cartão, categoria e forma de pagamento, e devolve um resumo para você conferir.</li>
             <li><span className="font-medium text-foreground">O gasto só é salvo depois que você confirmar respondendo "sim", "salvar" ou "confirmar".</span> Para descartar, responda "não" ou "cancelar".</li>
             <li>Se faltar algum dado (valor, cartão, forma de pagamento), o bot pergunta antes de criar o gasto.</li>
