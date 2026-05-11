@@ -1,16 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PublicLanding } from "@/components/landing/PublicLanding";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// Rota legada: redireciona /landing -> / para manter URL principal limpa
+// e preservar links antigos.
 export const Route = createFileRoute("/landing")({
-  head: () => ({
-    meta: [
-      { title: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
-      {
-        name: "description",
-        content:
-          "Organize gastos, cartões, contas, metas, renda e investimentos em um só lugar.",
-      },
-    ],
-  }),
-  component: PublicLanding,
+  beforeLoad: () => {
+    throw redirect({ to: "/", replace: true });
+  },
+  component: () => null,
 });

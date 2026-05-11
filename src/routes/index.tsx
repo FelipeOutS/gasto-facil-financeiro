@@ -82,6 +82,9 @@ export const Route = createFileRoute("/")({
           "Organize gastos, cartões, contas, metas, renda e investimentos em um só lugar. Visão clara do mês, alertas inteligentes e planos para pessoa física, MEI e empresa.",
       },
     ],
+    links: [
+      { rel: "canonical", href: "https://gastointeligente.com.br/" },
+    ],
   }),
   component: IndexGate,
 });
