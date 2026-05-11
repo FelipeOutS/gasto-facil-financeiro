@@ -441,29 +441,28 @@ function WhatsAppPage() {
     <MobileShell>
       <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
         {/* Header */}
-        <header className="flex items-center gap-3">
+        <header className="flex items-start gap-3">
           <Link
             to="/adicionar"
-            className="grid h-9 w-9 place-items-center rounded-full bg-card border border-border hover:bg-card-elevated"
+            className="grid h-9 w-9 place-items-center rounded-full bg-card border border-border hover:bg-card-elevated mt-0.5"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold flex items-center gap-2 flex-wrap">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
                 <MessageCircle className="h-4 w-4" />
               </span>
-              Gastos via WhatsApp
+              <h1 className="text-xl font-semibold">Lance gastos pelo WhatsApp</h1>
               {MODO_TESTE && (
                 <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide">
                   Modo teste
                 </Badge>
               )}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {MODO_TESTE
-                ? "Tela em ambientação. O número oficial do Gasto Inteligente ainda está em configuração."
-                : "Registre gastos enviando mensagens para o WhatsApp oficial do Gasto Inteligente."}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1.5">
+              Envie uma mensagem simples e o Gasto Inteligente identifica valor, categoria,
+              data e forma de pagamento para você confirmar antes de salvar.
             </p>
           </div>
           <Button variant="outline" size="icon" onClick={refresh} disabled={loading}>
@@ -471,213 +470,61 @@ function WhatsAppPage() {
           </Button>
         </header>
 
+        {/* Aviso de modo teste */}
         {MODO_TESTE && (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200 flex items-start gap-2">
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-100 flex items-start gap-3">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
             <div className="space-y-1.5">
-              <p className="font-semibold text-amber-300">Função em preparação (modo teste)</p>
+              <p className="font-semibold text-amber-300 text-sm">Modo teste</p>
               <p>
-                O número oficial do Gasto Inteligente no WhatsApp ainda está em configuração.
-                Por enquanto, você pode conhecer como o recurso vai funcionar e testar a
-                interpretação das mensagens pelo simulador desta tela.
+                O número oficial do Gasto Inteligente ainda está em configuração. Por enquanto,
+                você pode conhecer o funcionamento e testar a interpretação das mensagens
+                pelo simulador abaixo.
               </p>
-              <p>
-                O simulador serve apenas para ver como a IA entende a mensagem.
-                <span className="font-medium"> Nenhum gasto real é criado sem você confirmar.</span>
-                Assim que o número oficial for ativado, você receberá aqui o código de ativação
-                para enviar pelo WhatsApp.
+              <p className="text-amber-200/90">
+                Nenhum gasto é salvo sem a sua confirmação.
               </p>
             </div>
           </div>
         )}
 
-        {/* Como funciona — visível para todos os assinantes */}
-        <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
-          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
-            <MessageCircle className="h-4 w-4" />
-            Como lançar gastos pelo WhatsApp
-          </h2>
-          <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
-            <li>Vincule abaixo o número de WhatsApp que você usa.</li>
-            <li>
-              {MODO_TESTE
-                ? <>Quando o número oficial estiver ativo, você enviará uma mensagem como <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>
-                : <>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>}
-            </li>
-            <li>A IA interpreta valor, data, cartão, categoria e forma de pagamento, e devolve um resumo para você conferir.</li>
-            <li><span className="font-medium text-foreground">O gasto só é salvo depois que você confirmar respondendo "sim", "salvar" ou "confirmar".</span> Para descartar, responda "não" ou "cancelar".</li>
-            <li>Se faltar algum dado (valor, cartão, forma de pagamento), o bot pergunta antes de criar o gasto.</li>
-            <li>Mensagens de números não vinculados, ou de assinaturas inativas, são rejeitadas com segurança.</li>
-          </ol>
-        </section>
-
-        {/* Status */}
+        {/* Seu WhatsApp — vínculo */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              Status da integração
-            </h2>
-            <Badge variant="outline" className={integracaoStatus.cls}>
-              {integracaoStatus.label}
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-lg bg-card-elevated p-2.5">
-              <p className="text-muted-foreground">Última mensagem</p>
-              <p className="mt-0.5 font-medium num">
-                {ultimaMsg
-                  ? new Date(ultimaMsg.recebida_em).toLocaleString("pt-BR")
-                  : "—"}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <h2 className="text-base font-semibold">Seu WhatsApp</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {links.length === 0
+                  ? "Cadastre o número que você usa no WhatsApp para vincular à sua conta."
+                  : "Número vinculado à sua conta. Você pode alterar ou remover quando quiser."}
               </p>
             </div>
-            <div className="rounded-lg bg-card-elevated p-2.5">
-              <p className="text-muted-foreground">Números vinculados</p>
-              <p className="mt-0.5 font-medium num">{links.length}</p>
-            </div>
           </div>
 
-          {/* Status dos secrets do WhatsApp — visível apenas para Admin Master. */}
-          {isAdmin && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Secrets do servidor
-            </p>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-              {[
-                { key: "access_token", label: "WHATSAPP_ACCESS_TOKEN" },
-                { key: "phone_number_id", label: "WHATSAPP_PHONE_NUMBER_ID" },
-                { key: "business_account_id", label: "WHATSAPP_BUSINESS_ACCOUNT_ID" },
-                { key: "verify_token", label: "WHATSAPP_VERIFY_TOKEN" },
-              ].map((row) => {
-                const ok = configStatus
-                  ? configStatus[row.key as keyof typeof configStatus]
-                  : null;
-                return (
-                  <li key={row.key} className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2">
-                    <span className="font-mono text-[11px] truncate">{row.label}</span>
-                    {ok === null ? (
-                      <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">verificando…</Badge>
-                    ) : ok ? (
-                      <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">Token configurado</Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-rose-500/40 text-rose-400 text-[10px]">Token não configurado</Badge>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            {configStatus && !configStatus.access_token && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <p>Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> para ativar o envio de mensagens pelo WhatsApp.</p>
-              </div>
-            )}
-          </div>
-          )}
-        </section>
-
-        {/* Webhook URL + Verify Token — APENAS Admin Master */}
-        {isAdmin && (
-        <section className="rounded-2xl border border-border bg-card p-4 space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              No painel da Meta, abra seu app de WhatsApp → Configuration → Webhook → Edit. Cole os dois campos abaixo.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Callback URL
-            </p>
-            <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
-              <span className="flex-1">{webhookUrl}</span>
-              <button
-                type="button"
-                onClick={copiarUrl}
-                className="shrink-0 rounded-md p-1.5 hover:bg-border"
-                aria-label="Copiar URL"
-              >
-                {copiado ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Verify Token
-            </p>
-            <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
-              <span className="flex-1">{VERIFY_TOKEN}</span>
-              <button
-                type="button"
-                onClick={copiarToken}
-                className="shrink-0 rounded-md p-1.5 hover:bg-border"
-                aria-label="Copiar token"
-              >
-                {copiadoToken ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 space-y-1.5 text-[11px] text-muted-foreground">
-            <p className="font-medium text-emerald-400">Passo a passo</p>
-            <ol className="list-decimal list-inside space-y-0.5">
-              <li>Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da Meta.</li>
-              <li>Cole o Verify Token no campo <span className="font-mono">Verify token</span>.</li>
-              <li>Clique em <span className="font-medium">Verify and save</span>. A Meta fará um GET e o app responderá com o desafio.</li>
-              <li>Em <span className="font-medium">Webhook fields</span>, assine <span className="font-mono">messages</span>.</li>
-            </ol>
-          </div>
-        </section>
-        )}
-
-        {/* Vincular números */}
-        <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold">
-              {links.length === 0 ? "Conecte seu WhatsApp ao Gasto Inteligente" : "WhatsApp vinculado"}
-            </h2>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {links.length === 0
-                ? "Cadastre o número que você usa no WhatsApp para lançar gastos por mensagem. Aceitamos formatos como (11) 99999-8888 ou 5511999998888."
-                : "Você pode adicionar outro número, alterar o existente ou remover o vínculo a qualquer momento."}
-            </p>
-          </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               value={novoTel}
               onChange={(e) => setNovoTel(e.target.value)}
-              placeholder="Ex.: (11) 99999-8888"
+              placeholder="(11) 99999-8888"
               inputMode="tel"
+              className="flex-1"
             />
-            <Button onClick={adicionar} disabled={adding || !novoTel.trim()}>
-              <Plus className="h-4 w-4 mr-1" /> Vincular WhatsApp
+            <Button onClick={adicionar} disabled={adding || !novoTel.trim()} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+              <Plus className="h-4 w-4 mr-1" /> {links.length === 0 ? "Vincular WhatsApp" : "Adicionar outro"}
             </Button>
           </div>
 
           {links.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">
-              Nenhum número vinculado. Mensagens recebidas de números não vinculados são rejeitadas.
+              Você ainda não vinculou nenhum número.
             </p>
           )}
+
           <ul className="space-y-2">
             {links.map((l) => {
               const codigo = activationCode(l.id);
               return (
-                <li
-                  key={l.id}
-                  className="rounded-lg bg-card-elevated px-3 py-2.5 text-xs space-y-2"
-                >
+                <li key={l.id} className="rounded-xl bg-card-elevated px-3 py-3 text-sm space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -696,33 +543,29 @@ function WhatsAppPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         Vinculado em {new Date(l.created_at).toLocaleDateString("pt-BR")}
-                        {l.ultimo_uso
-                          ? ` · Último uso ${new Date(l.ultimo_uso).toLocaleString("pt-BR")}`
-                          : " · Sem uso ainda"}
+                        {l.ultimo_uso ? ` · Última mensagem ${new Date(l.ultimo_uso).toLocaleDateString("pt-BR")}` : " · Sem uso ainda"}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => excluir(l.id)}
-                      className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                      aria-label="Remover vínculo"
-                      title="Remover vínculo"
+                      className="shrink-0 rounded-md p-2 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                      aria-label="Remover número"
+                      title="Remover número"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="rounded-md border border-dashed border-emerald-500/30 bg-emerald-500/5 p-2.5 space-y-1">
-                    <p className="text-[11px] text-muted-foreground">
-                      Código de ativação
-                    </p>
-                    <p className="font-mono text-sm text-emerald-300">{codigo}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">Código de ativação</p>
+                    <p className="font-mono text-base font-semibold text-emerald-300 tracking-wide">{codigo}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
                       {MODO_TESTE
-                        ? "Quando o número oficial do Gasto Inteligente entrar em produção, envie esse código por WhatsApp para concluir a ativação."
-                        : `Envie esse código pelo WhatsApp para o número oficial do Gasto Inteligente para concluir a ativação.`}
+                        ? "Quando o número oficial do Gasto Inteligente estiver ativo, você enviará esse código por WhatsApp para finalizar a ativação."
+                        : "Envie esse código pelo WhatsApp para o número oficial do Gasto Inteligente para concluir a ativação."}
                     </p>
                   </div>
                 </li>
@@ -731,48 +574,197 @@ function WhatsAppPage() {
           </ul>
         </section>
 
-        {/* Simulador de lançamento */}
-        <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <Send className="h-4 w-4 text-emerald-400" />
-            Simulador de lançamento
-            {MODO_TESTE && (
-              <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
-                Modo teste
-              </Badge>
-            )}
+        {/* Simulador */}
+        <SimuladorCard
+          texto={testTexto}
+          onTextoChange={setTestTexto}
+          onTestar={testarWebhook}
+          testando={testando}
+          podeTestar={links.length > 0}
+          modoTeste={MODO_TESTE}
+        />
+
+        {/* Como vai funcionar quando estiver ativo */}
+        <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
+            <Sparkles className="h-4 w-4" />
+            Como vai funcionar quando estiver ativo
           </h2>
-          <p className="text-[11px] text-muted-foreground">
-            Digite uma mensagem como se fosse enviada pelo WhatsApp. O sistema vai interpretar
-            e mostrar o resumo do gasto, sempre aguardando sua confirmação antes de salvar.
-          </p>
-          <Textarea
-            value={testTexto}
-            onChange={(e) => setTestTexto(e.target.value)}
-            placeholder="Ex.: Gastei R$ 35,90 no mercado hoje no cartão Nubank"
-            className="min-h-[72px] bg-card-elevated text-sm"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={testarWebhook}
-              disabled={testando || links.length === 0}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              {testando ? "Simulando..." : "Testar lançamento"}
-            </Button>
-            {isAdmin && (
-            <Button
-              variant="outline"
-              onClick={limparDuplicados}
-              disabled={limpando}
-              className="border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
-            >
-              <Trash2 className="h-4 w-4 mr-1.5" />
-              {limpando ? "Limpando..." : "Limpar duplicados"}
-            </Button>
-            )}
-          </div>
+          <ol className="space-y-2 text-sm text-foreground/90">
+            {[
+              "Você envia um gasto pelo WhatsApp.",
+              "O bot entende as informações principais.",
+              "Ele mostra um resumo do gasto.",
+              "Você responde sim ou não.",
+              "O gasto só é salvo depois da sua confirmação.",
+            ].map((passo, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold">
+                  {i + 1}
+                </span>
+                <span className="text-xs sm:text-sm text-muted-foreground">{passo}</span>
+              </li>
+            ))}
+          </ol>
         </section>
+
+        {/* Histórico (apenas se houver mensagens) */}
+        {msgs.length > 0 && (
+          <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Mensagens recebidas</h2>
+              <Badge variant="outline" className={integracaoStatus.cls}>
+                {integracaoStatus.label}
+              </Badge>
+            </div>
+            <ul className="space-y-2">
+              {msgs.slice(0, 8).map((m) => (
+                <li key={m.id} className="rounded-lg bg-card-elevated p-3 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground num">
+                      {maskTel(m.telefone)} · {new Date(m.recebida_em).toLocaleString("pt-BR")}
+                    </span>
+                    <StatusBadge status={m.status} />
+                  </div>
+                  <p className="text-xs">{m.texto}</p>
+                  {m.resposta_sugerida && (
+                    <p className="text-[11px] text-muted-foreground border-l-2 border-emerald-500/40 pl-2 whitespace-pre-line">
+                      {m.resposta_sugerida}
+                    </p>
+                  )}
+                  {m.erro && (
+                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> {m.erro}
+                    </p>
+                  )}
+                  <MessageActions msg={m} onChanged={refresh} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* ============== ÁREA TÉCNICA — APENAS ADMIN MASTER ============== */}
+        {isAdmin && (
+          <>
+            <div className="pt-4 border-t border-border/60">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Área técnica (Admin Master)
+              </p>
+            </div>
+
+            {/* Status técnico + secrets */}
+            <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                  Status da integração
+                </h2>
+                <Badge variant="outline" className={integracaoStatus.cls}>
+                  {integracaoStatus.label}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-card-elevated p-2.5">
+                  <p className="text-muted-foreground">Última mensagem</p>
+                  <p className="mt-0.5 font-medium num">
+                    {ultimaMsg ? new Date(ultimaMsg.recebida_em).toLocaleString("pt-BR") : "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-card-elevated p-2.5">
+                  <p className="text-muted-foreground">Números vinculados</p>
+                  <p className="mt-0.5 font-medium num">{links.length}</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Secrets do servidor
+                </p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                  {[
+                    { key: "access_token", label: "WHATSAPP_ACCESS_TOKEN" },
+                    { key: "phone_number_id", label: "WHATSAPP_PHONE_NUMBER_ID" },
+                    { key: "business_account_id", label: "WHATSAPP_BUSINESS_ACCOUNT_ID" },
+                    { key: "verify_token", label: "WHATSAPP_VERIFY_TOKEN" },
+                  ].map((row) => {
+                    const ok = configStatus
+                      ? configStatus[row.key as keyof typeof configStatus]
+                      : null;
+                    return (
+                      <li key={row.key} className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2">
+                        <span className="font-mono text-[11px] truncate">{row.label}</span>
+                        {ok === null ? (
+                          <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">verificando…</Badge>
+                        ) : ok ? (
+                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">Configurado</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-rose-500/40 text-rose-400 text-[10px]">Pendente</Badge>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {configStatus && !configStatus.access_token && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <p>Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> para ativar o envio real.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Webhook URL + Verify Token */}
+            <section className="rounded-2xl border border-border bg-card p-4 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  No painel da Meta, abra seu app de WhatsApp → Configuration → Webhook → Edit. Cole os dois campos abaixo.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Callback URL</p>
+                <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
+                  <span className="flex-1">{webhookUrl}</span>
+                  <button type="button" onClick={copiarUrl} className="shrink-0 rounded-md p-1.5 hover:bg-border" aria-label="Copiar URL">
+                    {copiado ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Verify Token</p>
+                <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
+                  <span className="flex-1">{VERIFY_TOKEN}</span>
+                  <button type="button" onClick={copiarToken} className="shrink-0 rounded-md p-1.5 hover:bg-border" aria-label="Copiar token">
+                    {copiadoToken ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 space-y-1.5 text-[11px] text-muted-foreground">
+                <p className="font-medium text-emerald-400">Passo a passo</p>
+                <ol className="list-decimal list-inside space-y-0.5">
+                  <li>Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da Meta.</li>
+                  <li>Cole o Verify Token no campo <span className="font-mono">Verify token</span>.</li>
+                  <li>Clique em <span className="font-medium">Verify and save</span>.</li>
+                  <li>Em <span className="font-medium">Webhook fields</span>, assine <span className="font-mono">messages</span>.</li>
+                </ol>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={limparDuplicados}
+                disabled={limpando}
+                className="border-rose-500/40 text-rose-300 hover:bg-rose-500/10 w-full sm:w-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" />
+                {limpando ? "Limpando..." : "Limpar duplicados"}
+              </Button>
+            </section>
+          </>
+        )}
 
         {/* Histórico */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
