@@ -223,19 +223,23 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
 }
 
 export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+  const categoria =
+    parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40
+      ? parsed.categoriaSugestao
+      : suggestCategoryFromText(parsed.nome) ?? "Outros";
   const linhas = [
     "🧾 Encontrei este gasto:",
-    `• Valor: ${formatBRL(parsed.valor)}`,
-    `• Descrição: ${parsed.nome}`,
-    `• Categoria: ${parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40 ? parsed.categoriaSugestao : suggestCategoryFromText(parsed.nome) ?? "Outros"}`,
-    `• Data: ${formatDataBR(parsed.data)}`,
-    `• Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
+    "",
+    `Valor: ${formatBRL(parsed.valor)}`,
+    `Categoria: ${categoria}`,
+    `Data: ${formatDataBR(parsed.data) === "hoje" ? "Hoje" : formatDataBR(parsed.data)}`,
+    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) {
-    linhas.push(`• Parcelas: ${parsed.parcelas}x`);
+    linhas.push(`Parcelas: ${parsed.parcelas}x`);
   }
   linhas.push("");
-  linhas.push("Deseja salvar esse gasto? Responda *sim* para confirmar ou *não* para cancelar.");
+  linhas.push("Deseja salvar esse gasto? Responda sim ou não.");
   return linhas.join("\n");
 }
 
@@ -245,22 +249,22 @@ export function detectarFaltantes(
   cartoes: Cartao[],
 ): string | null {
   if (!parsed.valor || parsed.valor <= 0) {
-    return "❓ Não consegui identificar o *valor*. Me diga quanto foi, ex: \"R$ 48,90\".";
+    return "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
+    return "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
   }
   if (parsed.formaPagamento === "credito") {
     if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
-      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Responda com o nome exato do cartão usado.`;
+      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Me diga o nome exato do cartão usado.`;
     }
     if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
-      return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
+      return "❓ Só preciso de mais uma informação: você pagou com Pix, dinheiro, débito ou cartão?";
     }
     if (!parsed.cartaoId && parsed.cartaoNomeDetectado) {
       const nomes = cartoes.map((c) => c.nome).filter(Boolean);
-      const lista = nomes.length > 0 ? `\nSeus cartões: ${nomes.join(", ")}.` : "";
-      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nResponda com o nome do cartão correto, escolha um da lista ou cadastre um novo no app antes de confirmar.`;
+      const lista = nomes.length > 0 ? `\nSeus cartões cadastrados: ${nomes.join(", ")}.` : "";
+      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nMe diga o nome certo do cartão ou cadastre um novo no app antes de confirmar.`;
     }
   }
   return null;
@@ -305,13 +309,20 @@ async function persistirGasto(
 
   if (gastoErr || !gastoRow) {
     console.error("[whatsapp] gasto insert failed", gastoErr);
-    return { ok: false, resposta: "❌ Erro ao salvar o gasto. Tente novamente." };
+    return { ok: false, resposta: "❌ Não consegui salvar agora. Pode tentar de novo em instantes?" };
   }
 
   const cartaoNome = parsed.cartaoId
     ? cartoes.find((c) => c.id === parsed.cartaoId)?.nome
     : undefined;
-  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.`;
+  const categoria =
+    parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40
+      ? parsed.categoriaSugestao
+      : suggestCategoryFromText(parsed.nome) ?? "Outros";
+  const ondePagou = cartaoNome
+    ? ` no Cartão ${cartaoNome}`
+    : ` no ${rotuloFormaPagamento(parsed.formaPagamento)}`;
+  const resposta = `✅ Gasto salvo com sucesso!\n${formatBRL(parsed.valor)} em ${categoria} foi registrado${ondePagou}.`;
 
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
@@ -377,14 +388,14 @@ export async function processarMensagemWhatsApp(
   }
 
   const texto = (msg.texto ?? "").trim();
-  if (!texto) return { status: "erro", resposta: "Mensagem vazia." };
+  if (!texto) return { status: "erro", resposta: "Não recebi nenhum texto. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\"." };
 
   const userId = await resolveUserId(msg.telefone);
   if (!userId) {
     return {
       status: "sem_vinculo",
       resposta:
-        "Número não vinculado a nenhuma conta. Acesse o app em /whatsapp e vincule seu número.",
+        "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
     };
   }
 
@@ -392,7 +403,7 @@ export async function processarMensagemWhatsApp(
   if (!planoOk.ok) {
     return {
       status: "sem_plano",
-      resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
+      resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
     };
   }
 
@@ -410,12 +421,12 @@ export async function processarMensagemWhatsApp(
         recebida_em: msg.recebida_em ?? new Date().toISOString(),
         status: "sem_pendencia",
         resposta_sugerida:
-          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
       });
       return {
         status: "sem_pendencia",
         resposta:
-          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
       };
     }
 
@@ -424,7 +435,7 @@ export async function processarMensagemWhatsApp(
         .from("whatsapp_messages")
         .update({
           status: "cancelada",
-          resposta_sugerida: "Tudo bem, gasto cancelado. Nada foi salvo.",
+          resposta_sugerida: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
         })
         .eq("id", pend.id);
       await supabaseAdmin.from("whatsapp_messages").insert({
@@ -438,7 +449,7 @@ export async function processarMensagemWhatsApp(
       });
       return {
         status: "cancelada",
-        resposta: "Tudo bem, gasto cancelado. Nada foi salvo.",
+        resposta: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
       };
     }
 
@@ -490,7 +501,7 @@ export async function processarMensagemWhatsApp(
       ? cartoes.find((c) => c.id === pendenteExistente.parsed.cartaoId)?.nome
       : undefined;
     const resumoAnt = formatarConfirmacao(pendenteExistente.parsed, cartaoNomeAnt);
-    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda *sim* para salvar ou *não* para cancelar antes de enviar um novo gasto.`;
+    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda sim para salvar ou não para cancelar antes de enviar um novo gasto.`;
     await supabaseAdmin.from("whatsapp_messages").insert({
       user_id: userId,
       external_id: msg.external_id,
@@ -543,7 +554,7 @@ export async function processarMensagemWhatsApp(
     });
   if (insErr) {
     console.error("[whatsapp] log insert failed", insErr);
-    return { status: "erro", resposta: "Erro interno ao registrar mensagem." };
+    return { status: "erro", resposta: "Tive um problema para registrar sua mensagem agora. Pode tentar de novo em instantes?" };
   }
 
   return {
