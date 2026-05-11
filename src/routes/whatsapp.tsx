@@ -424,13 +424,15 @@ function WhatsAppPage() {
     }
   }
 
-  // Status global da integração
+  // Status global da integração (linguagem amigável para o usuário final)
   const ultimaMsg = msgs[0];
-  const integracaoStatus = links.length === 0
-    ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
-    : ultimaMsg
-      ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
-      : { label: "Webhook criado", cls: "border-sky-500/40 text-sky-400" };
+  const integracaoStatus = MODO_TESTE
+    ? { label: "Em configuração", cls: "border-amber-500/40 text-amber-300" }
+    : links.length === 0
+      ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
+      : ultimaMsg
+        ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
+        : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
 
   return (
     <MobileShell>
@@ -469,13 +471,18 @@ function WhatsAppPage() {
         {MODO_TESTE && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200 flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
-            <div className="space-y-1">
-              <p className="font-semibold text-amber-300">Modo teste ativo</p>
+            <div className="space-y-1.5">
+              <p className="font-semibold text-amber-300">Função em preparação (modo teste)</p>
               <p>
-                O número oficial do WhatsApp do Gasto Inteligente ainda está em configuração.
-                Por enquanto, esta tela serve para você cadastrar seu número, conhecer o fluxo
-                e simular lançamentos. Assim que o número oficial for ativado, você receberá
-                instruções para enviar o código de ativação por mensagem.
+                O número oficial do Gasto Inteligente no WhatsApp ainda está em configuração.
+                Por enquanto, você pode conhecer como o recurso vai funcionar e testar a
+                interpretação das mensagens pelo simulador desta tela.
+              </p>
+              <p>
+                O simulador serve apenas para ver como a IA entende a mensagem.
+                <span className="font-medium"> Nenhum gasto real é criado sem você confirmar.</span>
+                Assim que o número oficial for ativado, você receberá aqui o código de ativação
+                para enviar pelo WhatsApp.
               </p>
             </div>
           </div>
@@ -489,7 +496,11 @@ function WhatsAppPage() {
           </h2>
           <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
             <li>Vincule abaixo o número de WhatsApp que você usa.</li>
-            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</li>
+            <li>
+              {MODO_TESTE
+                ? <>Quando o número oficial estiver ativo, você enviará uma mensagem como <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>
+                : <>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"gastei R$ 48,90 no mercado hoje no Nubank"</span>.</>}
+            </li>
             <li>A IA interpreta valor, data, cartão, categoria e forma de pagamento, e devolve um resumo para você conferir.</li>
             <li><span className="font-medium text-foreground">O gasto só é salvo depois que você confirmar respondendo "sim", "salvar" ou "confirmar".</span> Para descartar, responda "não" ou "cancelar".</li>
             <li>Se faltar algum dado (valor, cartão, forma de pagamento), o bot pergunta antes de criar o gasto.</li>
