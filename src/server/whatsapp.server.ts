@@ -178,7 +178,7 @@ const CANCEL_TOKENS = [
   "ignorar", "apaga", "apagar", "errado", "no",
 ];
 
-function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
+export function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
   const t = normalizeText(texto);
   if (!t) return "outro";
   if (CONFIRM_TOKENS.includes(t)) return "confirm";
@@ -222,7 +222,7 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
   }
 }
 
-function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
   const linhas = [
     "🧾 Encontrei este gasto:",
     `• Valor: ${formatBRL(parsed.valor)}`,
@@ -240,7 +240,7 @@ function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string
 }
 
 /** Pergunta o que falta. Retorna null se nada falta. */
-function detectarFaltantes(
+export function detectarFaltantes(
   parsed: ParsedExpense,
   cartoes: Cartao[],
 ): string | null {
@@ -251,7 +251,9 @@ function detectarFaltantes(
     return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
   }
   if (parsed.formaPagamento === "credito") {
-    // Foi inferido como crédito sem que o usuário tenha dito explicitamente.
+    if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
+      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Responda com o nome exato do cartão usado.`;
+    }
     if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
       return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
     }

@@ -22,6 +22,8 @@ export type ParsedExpense = {
   formaPagamento: FormaPagamento;
   cartaoNomeDetectado?: string;
   cartaoId?: string;
+  /** Quando o termo do cartão casa com mais de um cartão cadastrado. */
+  cartaoAmbiguo?: { ids: string[]; nomes: string[] };
   parcelas?: number;
   categoriaSugestao?: string; // texto livre p/ casar com suggestCategory
   mensagemOriginal: string;
@@ -171,22 +173,36 @@ const BANCOS_KEYWORDS = [
 function detectCartao(
   textRaw: string,
   cartoes: Cartao[],
-): { cartaoId?: string; nomeDetectado?: string } {
+): { cartaoId?: string; nomeDetectado?: string; ambiguo?: { ids: string[]; nomes: string[] } } {
   const t = normalize(textRaw);
 
-  // 1) Match direto pelo nome do cartão cadastrado
-  for (const c of cartoes) {
+  // 1) Match direto pelo nome do cartão cadastrado (todos os matches)
+  const matchesNome = cartoes.filter((c) => {
     const n = normalize(c.nome);
-    if (n.length >= 3 && t.includes(n)) {
-      return { cartaoId: c.id, nomeDetectado: c.nome };
-    }
+    return n.length >= 3 && t.includes(n);
+  });
+  if (matchesNome.length === 1) {
+    return { cartaoId: matchesNome[0].id, nomeDetectado: matchesNome[0].nome };
+  }
+  if (matchesNome.length > 1) {
+    return {
+      nomeDetectado: matchesNome[0].nome,
+      ambiguo: { ids: matchesNome.map((c) => c.id), nomes: matchesNome.map((c) => c.nome) },
+    };
   }
   // 2) Match pelo banco do cartão cadastrado
-  for (const c of cartoes) {
+  const matchesBanco = cartoes.filter((c) => {
     const b = normalize(c.banco || "");
-    if (b.length >= 3 && t.includes(b)) {
-      return { cartaoId: c.id, nomeDetectado: c.nome };
-    }
+    return b.length >= 3 && t.includes(b);
+  });
+  if (matchesBanco.length === 1) {
+    return { cartaoId: matchesBanco[0].id, nomeDetectado: matchesBanco[0].nome };
+  }
+  if (matchesBanco.length > 1) {
+    return {
+      nomeDetectado: matchesBanco[0].banco,
+      ambiguo: { ids: matchesBanco.map((c) => c.id), nomes: matchesBanco.map((c) => c.nome) },
+    };
   }
   // 3) Keyword genérica de banco — sem cartão correspondente
   for (const k of BANCOS_KEYWORDS) {
@@ -328,6 +344,7 @@ export function parseWhatsAppExpenseMessage(
     formaPagamento: fp.forma,
     cartaoNomeDetectado: card.nomeDetectado ?? estr?.cartaoNomeDetectado,
     cartaoId: card.cartaoId,
+    cartaoAmbiguo: card.ambiguo,
     parcelas,
     categoriaSugestao: estr?.categoriaSugestao || `${nome} ${original}`,
     mensagemOriginal: original,
