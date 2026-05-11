@@ -309,13 +309,20 @@ async function persistirGasto(
 
   if (gastoErr || !gastoRow) {
     console.error("[whatsapp] gasto insert failed", gastoErr);
-    return { ok: false, resposta: "❌ Erro ao salvar o gasto. Tente novamente." };
+    return { ok: false, resposta: "❌ Não consegui salvar agora. Pode tentar de novo em instantes?" };
   }
 
   const cartaoNome = parsed.cartaoId
     ? cartoes.find((c) => c.id === parsed.cartaoId)?.nome
     : undefined;
-  const resposta = `✅ Gasto registrado: ${parsed.nome} — ${formatBRL(parsed.valor)}${cartaoNome ? ` no cartão ${cartaoNome}` : ""}.`;
+  const categoria =
+    parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40
+      ? parsed.categoriaSugestao
+      : suggestCategoryFromText(parsed.nome) ?? "Outros";
+  const ondePagou = cartaoNome
+    ? ` no Cartão ${cartaoNome}`
+    : ` no ${rotuloFormaPagamento(parsed.formaPagamento)}`;
+  const resposta = `✅ Gasto salvo com sucesso!\n${formatBRL(parsed.valor)} em ${categoria} foi registrado${ondePagou}.`;
 
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
