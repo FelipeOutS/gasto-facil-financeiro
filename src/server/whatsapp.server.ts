@@ -222,7 +222,7 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
   }
 }
 
-function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
   const linhas = [
     "🧾 Encontrei este gasto:",
     `• Valor: ${formatBRL(parsed.valor)}`,
