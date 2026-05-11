@@ -12,6 +12,38 @@ const supabaseAdmin = _supabaseAdmin as any;
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
+import { getSubscriptionForUserIdentity } from "./subscription.server";
+import { planAllowsFeature } from "@/lib/plans";
+
+/** Verifica se o dono do número tem plano ativo que inclua WhatsApp. */
+async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reason?: string }> {
+  const { data: u } = await supabaseAdmin
+    .from("auth.users" as never)
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+  let email: string | null = null;
+  if (u?.email) email = u.email;
+  // Fallback: usa admin API auth schema via rpc se select direto não funcionar
+  if (!email) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const adminApi = (supabaseAdmin as any).auth?.admin;
+      if (adminApi?.getUserById) {
+        const { data } = await adminApi.getUserById(userId);
+        email = data?.user?.email ?? null;
+      }
+    } catch {
+      email = null;
+    }
+  }
+  const sub = await getSubscriptionForUserIdentity({ userId, email });
+  if (!sub.active) return { ok: false, reason: "Sua assinatura não está ativa." };
+  if (!planAllowsFeature(sub.plan, "whatsapp")) {
+    return { ok: false, reason: "Seu plano atual não inclui o lançamento por WhatsApp." };
+  }
+  return { ok: true };
+}
 
 type WhatsAppMessageRow = {
   external_id: string | null;
