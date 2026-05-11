@@ -121,7 +121,7 @@ function WhatsAppPage() {
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
   const [testTexto, setTestTexto] = useState(
-    "Spotify 19,90 assinatura Nubank",
+    "gastei R$ 48,90 no mercado hoje no Nubank",
   );
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
