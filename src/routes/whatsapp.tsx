@@ -424,13 +424,15 @@ function WhatsAppPage() {
     }
   }
 
-  // Status global da integração
+  // Status global da integração (linguagem amigável para o usuário final)
   const ultimaMsg = msgs[0];
-  const integracaoStatus = links.length === 0
-    ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
-    : ultimaMsg
-      ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
-      : { label: "Webhook criado", cls: "border-sky-500/40 text-sky-400" };
+  const integracaoStatus = MODO_TESTE
+    ? { label: "Em configuração", cls: "border-amber-500/40 text-amber-300" }
+    : links.length === 0
+      ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
+      : ultimaMsg
+        ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
+        : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
 
   return (
     <MobileShell>
