@@ -636,6 +636,7 @@ function WhatsAppPage() {
             >
               {testando ? "Testando..." : "Disparar teste"}
             </Button>
+            {isAdmin && (
             <Button
               variant="outline"
               onClick={limparDuplicados}
@@ -645,6 +646,7 @@ function WhatsAppPage() {
               <Trash2 className="h-4 w-4 mr-1.5" />
               {limpando ? "Limpando..." : "Limpar duplicados"}
             </Button>
+            )}
           </div>
         </section>
 
