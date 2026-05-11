@@ -554,7 +554,7 @@ export async function processarMensagemWhatsApp(
     });
   if (insErr) {
     console.error("[whatsapp] log insert failed", insErr);
-    return { status: "erro", resposta: "Erro interno ao registrar mensagem." };
+    return { status: "erro", resposta: "Tive um problema para registrar sua mensagem agora. Pode tentar de novo em instantes?" };
   }
 
   return {
