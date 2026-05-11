@@ -108,6 +108,8 @@ function normTel(raw: string): string {
 }
 
 function WhatsAppPage() {
+  const { user } = useAuth();
+  const isAdmin = isAdminMasterEmail(user?.email);
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
