@@ -388,7 +388,7 @@ export async function processarMensagemWhatsApp(
   }
 
   const texto = (msg.texto ?? "").trim();
-  if (!texto) return { status: "erro", resposta: "Mensagem vazia." };
+  if (!texto) return { status: "erro", resposta: "Não recebi nenhum texto. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\"." };
 
   const userId = await resolveUserId(msg.telefone);
   if (!userId) {
