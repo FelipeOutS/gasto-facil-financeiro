@@ -421,12 +421,12 @@ export async function processarMensagemWhatsApp(
         recebida_em: msg.recebida_em ?? new Date().toISOString(),
         status: "sem_pendencia",
         resposta_sugerida:
-          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
       });
       return {
         status: "sem_pendencia",
         resposta:
-          "Não há nenhum gasto aguardando confirmação. Envie a mensagem do gasto novamente, ex: \"Mercado 48,90 hoje no Nubank\".",
+          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
       };
     }
 
@@ -435,7 +435,7 @@ export async function processarMensagemWhatsApp(
         .from("whatsapp_messages")
         .update({
           status: "cancelada",
-          resposta_sugerida: "Tudo bem, gasto cancelado. Nada foi salvo.",
+          resposta_sugerida: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
         })
         .eq("id", pend.id);
       await supabaseAdmin.from("whatsapp_messages").insert({
@@ -449,7 +449,7 @@ export async function processarMensagemWhatsApp(
       });
       return {
         status: "cancelada",
-        resposta: "Tudo bem, gasto cancelado. Nada foi salvo.",
+        resposta: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
       };
     }
 
