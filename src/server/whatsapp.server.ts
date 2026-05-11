@@ -482,17 +482,26 @@ export async function processarMensagemWhatsApp(
   const cartoes = await carregarCartoes(userId);
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
 
-  // Cancela pendências antigas para evitar ambiguidade.
-  await supabaseAdmin
-    .from("whatsapp_messages")
-    .update({
-      status: "cancelada",
-      resposta_sugerida:
-        "Substituído por nova mensagem antes da confirmação.",
-    })
-    .eq("user_id", userId)
-    .eq("telefone", msg.telefone)
-    .eq("status", "aguardando_confirmacao");
+  // Regra: se já existe uma pendência ativa, NÃO sobrescreve nem salva nada.
+  // Avisa o usuário para confirmar ou cancelar a anterior primeiro.
+  const pendenteExistente = await buscarPendencia(userId, msg.telefone);
+  if (pendenteExistente) {
+    const cartaoNomeAnt = pendenteExistente.parsed.cartaoId
+      ? cartoes.find((c) => c.id === pendenteExistente.parsed.cartaoId)?.nome
+      : undefined;
+    const resumoAnt = formatarConfirmacao(pendenteExistente.parsed, cartaoNomeAnt);
+    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda *sim* para salvar ou *não* para cancelar antes de enviar um novo gasto.`;
+    await supabaseAdmin.from("whatsapp_messages").insert({
+      user_id: userId,
+      external_id: msg.external_id,
+      telefone: msg.telefone,
+      texto,
+      recebida_em: msg.recebida_em ?? new Date().toISOString(),
+      status: "pendente",
+      resposta_sugerida: aviso,
+    });
+    return { status: "pendente", resposta: aviso };
+  }
 
   // Verifica se faltam dados essenciais.
   const faltante = detectarFaltantes(parsed, cartoes);
