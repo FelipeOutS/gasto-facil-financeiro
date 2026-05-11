@@ -251,6 +251,9 @@ export function detectarFaltantes(
     return "❓ Não consegui identificar o que você gastou. Me diga, ex: \"mercado\", \"uber\", \"farmácia\".";
   }
   if (parsed.formaPagamento === "credito") {
+    if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
+      return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Responda com o nome exato do cartão usado.`;
+    }
     if (!parsed.cartaoId && !parsed.cartaoNomeDetectado) {
       return "❓ Como você pagou? Responda *Pix*, *dinheiro*, *débito* ou o *nome do cartão* (ex: Nubank).";
     }
