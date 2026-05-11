@@ -344,6 +344,7 @@ export function parseWhatsAppExpenseMessage(
     formaPagamento: fp.forma,
     cartaoNomeDetectado: card.nomeDetectado ?? estr?.cartaoNomeDetectado,
     cartaoId: card.cartaoId,
+    cartaoAmbiguo: card.ambiguo,
     parcelas,
     categoriaSugestao: estr?.categoriaSugestao || `${nome} ${original}`,
     mensagemOriginal: original,
