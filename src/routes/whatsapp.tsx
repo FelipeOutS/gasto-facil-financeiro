@@ -565,6 +565,7 @@ function WhatsAppPage() {
             </ol>
           </div>
         </section>
+        )}
 
         {/* Vincular números */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
