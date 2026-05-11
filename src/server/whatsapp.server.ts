@@ -395,7 +395,7 @@ export async function processarMensagemWhatsApp(
     return {
       status: "sem_vinculo",
       resposta:
-        "Número não vinculado a nenhuma conta. Acesse o app em /whatsapp e vincule seu número.",
+        "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
     };
   }
 
@@ -403,7 +403,7 @@ export async function processarMensagemWhatsApp(
   if (!planoOk.ok) {
     return {
       status: "sem_plano",
-      resposta: `${planoOk.reason ?? "Plano inativo."} Acesse o app e ative um plano premium para usar o WhatsApp.`,
+      resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
     };
   }
 
