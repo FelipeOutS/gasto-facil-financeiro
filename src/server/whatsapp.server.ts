@@ -501,7 +501,7 @@ export async function processarMensagemWhatsApp(
       ? cartoes.find((c) => c.id === pendenteExistente.parsed.cartaoId)?.nome
       : undefined;
     const resumoAnt = formatarConfirmacao(pendenteExistente.parsed, cartaoNomeAnt);
-    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda *sim* para salvar ou *não* para cancelar antes de enviar um novo gasto.`;
+    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda sim para salvar ou não para cancelar antes de enviar um novo gasto.`;
     await supabaseAdmin.from("whatsapp_messages").insert({
       user_id: userId,
       external_id: msg.external_id,
