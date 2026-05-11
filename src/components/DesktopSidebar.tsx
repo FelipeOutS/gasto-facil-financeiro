@@ -60,6 +60,7 @@ const ITEMS: NavItem[] = [
   { to: "/orcamento", label: "Orçamento", icon: PieChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/gasto-ai", label: "Gasto AI", icon: Sparkles, feature: "gasto_ai" },
+  { to: "/whatsapp", label: "WhatsApp", icon: Bell, feature: "whatsapp" },
   { to: "/guardado", label: "Guardado", icon: Wallet },
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/contas-conectadas", label: "Contas conectadas", icon: Users, feature: "contas_conectadas" },

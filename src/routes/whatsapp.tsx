@@ -50,9 +50,11 @@ function WhatsAppPageGuarded() {
       </MobileShell>
     );
   }
-  if (!user || !isAdminMasterEmail(user.email)) {
-    return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
+  // O bloqueio por plano (feature "whatsapp") é feito pelo AuthGate.
+  // Aqui apenas garantimos que o usuário esteja logado.
   return <WhatsAppPage />;
 }
 
@@ -87,6 +89,7 @@ const STATUS_STYLES: Record<string, string> = {
   pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
+  sem_plano: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   erro: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   valor_invalido: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   recebida: "border-border text-muted-foreground bg-card",
@@ -106,6 +109,8 @@ function normTel(raw: string): string {
 }
 
 function WhatsAppPage() {
+  const { user } = useAuth();
+  const isAdmin = isAdminMasterEmail(user?.email);
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
@@ -417,6 +422,21 @@ function WhatsAppPage() {
           </Button>
         </header>
 
+        {/* Como funciona — visível para todos os assinantes */}
+        <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
+            <MessageCircle className="h-4 w-4" />
+            Como lançar gastos pelo WhatsApp
+          </h2>
+          <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
+            <li>Vincule abaixo o número de WhatsApp que você usa.</li>
+            <li>Envie uma mensagem para o WhatsApp oficial do Gasto Inteligente, ex.: <span className="font-medium text-foreground">"Spotify 19,90 Nubank"</span>.</li>
+            <li>A IA interpreta valor, data, cartão e categoria automaticamente.</li>
+            <li>Quando os dados estão claros, o gasto é salvo na hora e aparece no dashboard e em Gastos. Se faltar alguma informação, fica como pendente para você revisar aqui.</li>
+            <li>Mensagens de números não vinculados, ou de assinaturas inativas, são rejeitadas com segurança.</li>
+          </ol>
+        </section>
+
         {/* Status */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -443,7 +463,8 @@ function WhatsAppPage() {
             </div>
           </div>
 
-          {/* Status dos secrets do WhatsApp (apenas presença, nunca o valor). */}
+          {/* Status dos secrets do WhatsApp — visível apenas para Admin Master. */}
+          {isAdmin && (
           <div className="space-y-1.5">
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
               Secrets do servidor
@@ -452,44 +473,21 @@ function WhatsAppPage() {
               {[
                 { key: "access_token", label: "WHATSAPP_ACCESS_TOKEN" },
                 { key: "phone_number_id", label: "WHATSAPP_PHONE_NUMBER_ID" },
-                {
-                  key: "business_account_id",
-                  label: "WHATSAPP_BUSINESS_ACCOUNT_ID",
-                },
+                { key: "business_account_id", label: "WHATSAPP_BUSINESS_ACCOUNT_ID" },
                 { key: "verify_token", label: "WHATSAPP_VERIFY_TOKEN" },
               ].map((row) => {
                 const ok = configStatus
                   ? configStatus[row.key as keyof typeof configStatus]
                   : null;
                 return (
-                  <li
-                    key={row.key}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2"
-                  >
-                    <span className="font-mono text-[11px] truncate">
-                      {row.label}
-                    </span>
+                  <li key={row.key} className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2">
+                    <span className="font-mono text-[11px] truncate">{row.label}</span>
                     {ok === null ? (
-                      <Badge
-                        variant="outline"
-                        className="border-border text-muted-foreground text-[10px]"
-                      >
-                        verificando…
-                      </Badge>
+                      <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">verificando…</Badge>
                     ) : ok ? (
-                      <Badge
-                        variant="outline"
-                        className="border-emerald-500/40 text-emerald-400 text-[10px]"
-                      >
-                        Token configurado
-                      </Badge>
+                      <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">Token configurado</Badge>
                     ) : (
-                      <Badge
-                        variant="outline"
-                        className="border-rose-500/40 text-rose-400 text-[10px]"
-                      >
-                        Token não configurado
-                      </Badge>
+                      <Badge variant="outline" className="border-rose-500/40 text-rose-400 text-[10px]">Token não configurado</Badge>
                     )}
                   </li>
                 );
@@ -498,18 +496,15 @@ function WhatsAppPage() {
             {configStatus && !configStatus.access_token && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <p>
-                  Configure o secret{" "}
-                  <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> no
-                  Lovable/Supabase para ativar o envio de mensagens pelo
-                  WhatsApp.
-                </p>
+                <p>Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> para ativar o envio de mensagens pelo WhatsApp.</p>
               </div>
             )}
           </div>
+          )}
         </section>
 
-        {/* Webhook URL + Verify Token (para colar no painel da Meta) */}
+        {/* Webhook URL + Verify Token — APENAS Admin Master */}
+        {isAdmin && (
         <section className="rounded-2xl border border-border bg-card p-4 space-y-4">
           <div>
             <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
@@ -570,6 +565,7 @@ function WhatsAppPage() {
             </ol>
           </div>
         </section>
+        )}
 
         {/* Vincular números */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
@@ -640,6 +636,7 @@ function WhatsAppPage() {
             >
               {testando ? "Testando..." : "Disparar teste"}
             </Button>
+            {isAdmin && (
             <Button
               variant="outline"
               onClick={limparDuplicados}
@@ -649,6 +646,7 @@ function WhatsAppPage() {
               <Trash2 className="h-4 w-4 mr-1.5" />
               {limpando ? "Limpando..." : "Limpar duplicados"}
             </Button>
+            )}
           </div>
         </section>
 
