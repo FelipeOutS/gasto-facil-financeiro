@@ -10,12 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as TermosRouteImport } from './routes/termos'
+import { Route as StatusRouteImport } from './routes/status'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RadarRouteImport } from './routes/radar'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -23,6 +26,7 @@ import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LgpdRouteImport } from './routes/lgpd'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
@@ -73,6 +77,16 @@ const WhatsappRoute = WhatsappRouteImport.update({
   path: '/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumoRoute = ResumoRouteImport.update({
   id: '/resumo',
   path: '/resumo',
@@ -101,6 +115,11 @@ const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
 const RadarRoute = RadarRouteImport.update({
   id: '/radar',
   path: '/radar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -136,6 +155,11 @@ const ManualRoute = ManualRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LgpdRoute = LgpdRouteImport.update({
+  id: '/lgpd',
+  path: '/lgpd',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LandingRoute = LandingRouteImport.update({
@@ -387,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
+  '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -394,12 +419,15 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/status': typeof StatusRoute
+  '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
@@ -447,6 +475,7 @@ export interface FileRoutesByTo {
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
+  '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -454,12 +483,15 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/status': typeof StatusRoute
+  '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
@@ -508,6 +540,7 @@ export interface FileRoutesById {
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
+  '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
   '/metas': typeof MetasRoute
@@ -515,12 +548,15 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/status': typeof StatusRoute
+  '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
@@ -570,6 +606,7 @@ export interface FileRouteTypes {
     | '/guardado'
     | '/investimentos'
     | '/landing'
+    | '/lgpd'
     | '/login'
     | '/manual'
     | '/metas'
@@ -577,12 +614,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/privacidade'
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/status'
+    | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
@@ -630,6 +670,7 @@ export interface FileRouteTypes {
     | '/guardado'
     | '/investimentos'
     | '/landing'
+    | '/lgpd'
     | '/login'
     | '/manual'
     | '/metas'
@@ -637,12 +678,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/privacidade'
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/status'
+    | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
@@ -690,6 +734,7 @@ export interface FileRouteTypes {
     | '/guardado'
     | '/investimentos'
     | '/landing'
+    | '/lgpd'
     | '/login'
     | '/manual'
     | '/metas'
@@ -697,12 +742,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/privacidade'
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/status'
+    | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
@@ -751,6 +799,7 @@ export interface RootRouteChildren {
   GuardadoRoute: typeof GuardadoRoute
   InvestimentosRoute: typeof InvestimentosRoute
   LandingRoute: typeof LandingRoute
+  LgpdRoute: typeof LgpdRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
   MetasRoute: typeof MetasRoute
@@ -758,12 +807,15 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   OrcamentoRoute: typeof OrcamentoRoute
   PerfilRoute: typeof PerfilRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   RadarRoute: typeof RadarRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  StatusRoute: typeof StatusRoute
+  TermosRoute: typeof TermosRoute
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   ApiEconomicRadarRoute: typeof ApiEconomicRadarRoute
@@ -796,6 +848,20 @@ declare module '@tanstack/react-router' {
       path: '/whatsapp'
       fullPath: '/whatsapp'
       preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resumo': {
@@ -838,6 +904,13 @@ declare module '@tanstack/react-router' {
       path: '/radar'
       fullPath: '/radar'
       preLoaderRoute: typeof RadarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -887,6 +960,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lgpd': {
+      id: '/lgpd'
+      path: '/lgpd'
+      fullPath: '/lgpd'
+      preLoaderRoute: typeof LgpdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/landing': {
@@ -1223,6 +1303,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuardadoRoute: GuardadoRoute,
   InvestimentosRoute: InvestimentosRoute,
   LandingRoute: LandingRoute,
+  LgpdRoute: LgpdRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
   MetasRoute: MetasRoute,
@@ -1230,12 +1311,15 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   OrcamentoRoute: OrcamentoRoute,
   PerfilRoute: PerfilRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   RadarRoute: RadarRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  StatusRoute: StatusRoute,
+  TermosRoute: TermosRoute,
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   ApiEconomicRadarRoute: ApiEconomicRadarRoute,

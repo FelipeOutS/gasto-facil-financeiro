@@ -416,8 +416,8 @@ function Hero() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
           >
-            O Gasto Inteligente ajuda você a organizar gastos, cartões, contas, metas, renda e
-            investimentos em um só lugar, com uma visão simples e fácil de entender.
+            O Gasto Inteligente ajuda você a organizar gastos, cartões, contas, metas e renda
+            em um só lugar — com uma visão simples, visual e fácil de entender.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -3647,7 +3647,7 @@ function Footer() {
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
-              <li><span className="text-slate-400">Status do sistema</span></li>
+              <li><Link to="/status" className="transition-colors hover:text-slate-900">Status do sistema</Link></li>
             </ul>
           </div>
 
@@ -3655,9 +3655,9 @@ function Footer() {
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><span className="text-slate-400">Termos de uso</span></li>
-              <li><span className="text-slate-400">Política de privacidade</span></li>
-              <li><span className="text-slate-400">LGPD</span></li>
+              <li><Link to="/termos" className="transition-colors hover:text-slate-900">Termos de uso</Link></li>
+              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">Política de privacidade</Link></li>
+              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">LGPD</Link></li>
             </ul>
           </div>
         </div>
