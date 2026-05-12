@@ -66,6 +66,8 @@ import {
   calcularResumo,
   statusEfetivo,
 } from "@/lib/contas-receber";
+import { useClientes } from "@/lib/clientes";
+import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
 export const Route = createFileRoute("/contas-a-receber")({
   component: ContasAReceberPage,
