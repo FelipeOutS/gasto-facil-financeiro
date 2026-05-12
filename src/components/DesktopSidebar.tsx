@@ -25,6 +25,7 @@ import {
   Building2,
   Store,
   Contact,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
@@ -67,6 +68,7 @@ const ITEMS: NavItem[] = [
   { to: "/empresa", label: "Empresa Inteligente", icon: Building2, feature: "empresa_inteligente" },
   { to: "/fornecedores", label: "Fornecedores", icon: Store, feature: "empresa_inteligente" },
   { to: "/clientes", label: "Clientes", icon: Contact, feature: "empresa_inteligente" },
+  { to: "/contador", label: "Pacote para Contador", icon: ClipboardList, feature: "empresa_inteligente" },
   { to: "/gasto-ai", label: "Gasto AI", icon: Sparkles, feature: "gasto_ai" },
   { to: "/whatsapp", label: "WhatsApp", icon: Bell, feature: "whatsapp" },
   { to: "/guardado", label: "Guardado", icon: Wallet },
