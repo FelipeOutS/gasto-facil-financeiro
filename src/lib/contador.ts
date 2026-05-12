@@ -215,9 +215,162 @@ function nomeFornecedor(f: Fornecedor | undefined | null): string {
   );
 }
 
-// ============================================================
-// Entrada principal
-// ============================================================
+export function periodoAnterior(p: PeriodoMes): PeriodoMes {
+  if (p.mes === 1) return { mes: 12, ano: p.ano - 1 };
+  return { mes: p.mes - 1, ano: p.ano };
+}
+
+/** Calcula apenas o ResumoFinanceiro para um período (sem listas detalhadas). */
+function calcResumoFinanceiro(
+  input: MontarPacoteInput,
+  periodo: PeriodoMes,
+  incluirEmAberto: boolean,
+): ResumoFinanceiro {
+  const receitasMes = input.receitas.filter((r) => dataNoMes(r.data, periodo));
+  const gastosMes = input.gastos.filter((g) => dataNoMes(g.data, periodo));
+  const contasPagarMes = input.contasAPagar.filter((c) =>
+    dataNoMes(c.dataVencimento, periodo),
+  );
+  const contasReceberMes = input.contasAReceber.filter((c) =>
+    dataNoMes(c.data_prevista, periodo),
+  );
+
+  const totalReceitasRecebidas = receitasMes.reduce(
+    (s, r) => s + (Number(r.valor) || 0),
+    0,
+  );
+  let totalDespesasPagas = gastosMes.reduce(
+    (s, g) => s + (Number(g.valor) || 0),
+    0,
+  );
+  let contasReceberEmAberto = 0;
+  let contasPagarEmAberto = 0;
+  for (const c of contasPagarMes) {
+    const eff = statusContaEfetivo(c);
+    if (eff === "pago") totalDespesasPagas += Number(c.valor) || 0;
+    else if (eff === "pendente" || eff === "atrasado")
+      contasPagarEmAberto += Number(c.valor) || 0;
+  }
+  for (const c of contasReceberMes) {
+    const eff = statusContaReceberEfetivo(c);
+    if (eff === "pendente" || eff === "atrasado" || eff === "parcial") {
+      contasReceberEmAberto +=
+        Number(c.valor_restante) || Number(c.valor_total) || 0;
+    }
+  }
+
+  const clientesSet = new Set<string>();
+  for (const r of receitasMes) if (r.clienteId) clientesSet.add(r.clienteId);
+  for (const c of contasReceberMes) {
+    if (!c.cliente_id) continue;
+    const eff = statusContaReceberEfetivo(c);
+    if (eff === "cancelado") continue;
+    clientesSet.add(c.cliente_id);
+  }
+  const fornSet = new Set<string>();
+  for (const g of gastosMes) if (g.fornecedorId) fornSet.add(g.fornecedorId);
+  for (const c of contasPagarMes) {
+    if (!c.fornecedorId) continue;
+    fornSet.add(c.fornecedorId);
+  }
+
+  return {
+    totalReceitasRecebidas,
+    totalDespesasPagas,
+    saldoPeriodo: totalReceitasRecebidas - totalDespesasPagas,
+    contasReceberEmAberto: incluirEmAberto ? contasReceberEmAberto : 0,
+    contasPagarEmAberto: incluirEmAberto ? contasPagarEmAberto : 0,
+    qtdClientesMovimentados: clientesSet.size,
+    qtdFornecedoresMovimentados: fornSet.size,
+  };
+}
+
+function calcVariacao(
+  chave: VariacaoIndicador["chave"],
+  rotulo: string,
+  atual: number,
+  anterior: number,
+  formato: VariacaoIndicador["formato"],
+): VariacaoIndicador {
+  const diferenca = atual - anterior;
+  let tipo: VariacaoIndicador["tipo"];
+  let variacaoPercentual: number | null;
+  if (anterior === 0 && atual === 0) {
+    tipo = "zerado";
+    variacaoPercentual = null;
+  } else if (anterior === 0) {
+    tipo = "novo";
+    variacaoPercentual = null;
+  } else {
+    tipo = "comparavel";
+    variacaoPercentual = (diferenca / Math.abs(anterior)) * 100;
+  }
+  return { chave, rotulo, atual, anterior, diferenca, variacaoPercentual, tipo, formato };
+}
+
+function calcComparativo(
+  input: MontarPacoteInput,
+  resumoAtual: ResumoFinanceiro,
+): ComparativoMes {
+  const periodoAnt = periodoAnterior(input.periodo);
+  const resumoAnt = calcResumoFinanceiro(
+    input,
+    periodoAnt,
+    input.opcoes.incluirEmAberto,
+  );
+  const variacoes: VariacaoIndicador[] = [
+    calcVariacao(
+      "receitas",
+      "Receitas recebidas",
+      resumoAtual.totalReceitasRecebidas,
+      resumoAnt.totalReceitasRecebidas,
+      "valor",
+    ),
+    calcVariacao(
+      "despesas",
+      "Despesas pagas",
+      resumoAtual.totalDespesasPagas,
+      resumoAnt.totalDespesasPagas,
+      "valor",
+    ),
+    calcVariacao(
+      "saldo",
+      "Saldo do período",
+      resumoAtual.saldoPeriodo,
+      resumoAnt.saldoPeriodo,
+      "valor",
+    ),
+    calcVariacao(
+      "contasReceberEmAberto",
+      "Contas a receber em aberto",
+      resumoAtual.contasReceberEmAberto,
+      resumoAnt.contasReceberEmAberto,
+      "valor",
+    ),
+    calcVariacao(
+      "contasPagarEmAberto",
+      "Contas a pagar em aberto",
+      resumoAtual.contasPagarEmAberto,
+      resumoAnt.contasPagarEmAberto,
+      "valor",
+    ),
+    calcVariacao(
+      "clientesMovimentados",
+      "Clientes movimentados",
+      resumoAtual.qtdClientesMovimentados,
+      resumoAnt.qtdClientesMovimentados,
+      "quantidade",
+    ),
+    calcVariacao(
+      "fornecedoresMovimentados",
+      "Fornecedores movimentados",
+      resumoAtual.qtdFornecedoresMovimentados,
+      resumoAnt.qtdFornecedoresMovimentados,
+      "quantidade",
+    ),
+  ];
+  return { periodoAnterior: periodoAnt, resumoAnterior: resumoAnt, variacoes };
+}
 
 export interface MontarPacoteInput {
   periodo: PeriodoMes;
