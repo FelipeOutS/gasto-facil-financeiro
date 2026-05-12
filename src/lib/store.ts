@@ -2772,6 +2772,7 @@ export function updateReceita(
   if (fields.descricao !== undefined) basePatch.descricao = fields.descricao;
   if (fields.valor !== undefined) basePatch.valor = fields.valor;
   if (fields.tipo !== undefined) basePatch.tipo = fields.tipo;
+  if (fields.clienteId !== undefined) basePatch.cliente_id = fields.clienteId ?? null;
 
   // Para descrição/valor/tipo aplicamos em lote
   const ids = affected.map((r) => r.id);
