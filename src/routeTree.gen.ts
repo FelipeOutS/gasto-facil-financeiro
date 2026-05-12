@@ -35,6 +35,7 @@ import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
+import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -193,6 +194,11 @@ const ContaRoute = ContaRouteImport.update({
 const ConfirmarRoute = ConfirmarRouteImport.update({
   id: '/confirmar',
   path: '/confirmar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriasRoute = CategoriasRouteImport.update({
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
+  '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
@@ -412,6 +419,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
+  '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
@@ -470,6 +478,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
   '/categorias': typeof CategoriasRoute
+  '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
+    | '/clientes'
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
@@ -586,6 +596,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
+    | '/clientes'
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
@@ -643,6 +654,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cartoes'
     | '/categorias'
+    | '/clientes'
     | '/confirmar'
     | '/conta'
     | '/contas-a-pagar'
@@ -701,6 +713,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   CartoesRoute: typeof CartoesRoute
   CategoriasRoute: typeof CategoriasRoute
+  ClientesRoute: typeof ClientesRoute
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
   ContasAPagarRoute: typeof ContasAPagarRoute
@@ -934,6 +947,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfirmarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/categorias': {
       id: '/categorias'
       path: '/categorias'
@@ -1149,6 +1169,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   CartoesRoute: CartoesRoute,
   CategoriasRoute: CategoriasRoute,
+  ClientesRoute: ClientesRoute,
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,
   ContasAPagarRoute: ContasAPagarRoute,
