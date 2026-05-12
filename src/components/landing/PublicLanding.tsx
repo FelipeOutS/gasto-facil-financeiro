@@ -40,6 +40,10 @@ import {
   Send,
   Calculator,
   CalendarClock,
+  Building2,
+  Users,
+  ClipboardList,
+  Activity,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -236,6 +240,7 @@ export function PublicLanding() {
         visual={<ContasConectadasMock />}
         reverse
       />
+      <EmpresaInteligenteSection />
       <MultiDeviceShowcase />
       <ForWho />
       <TrustPoints />
@@ -2343,14 +2348,71 @@ function GuardadoMock() {
   );
 }
 
+/* ============================== EMPRESA INTELIGENTE ============================== */
+
+function EmpresaInteligenteSection() {
+  const cards = [
+    {
+      icon: Building2,
+      title: "Empresa Inteligente",
+      text: "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
+    },
+    {
+      icon: Users,
+      title: "Clientes e Fornecedores",
+      text: "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
+    },
+    {
+      icon: LineChart,
+      title: "Relatórios empresariais",
+      text: "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
+    },
+    {
+      icon: ClipboardList,
+      title: "Pacote para Contador",
+      text: "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
+    },
+    {
+      icon: Activity,
+      title: "Radar Econômico",
+      text: "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
+    },
+  ];
+  return (
+    <section id="mei-empresa" className="bg-slate-50 py-20 sm:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="MEI e Empresa"
+          title="Controle completo para MEI e pequenas empresas."
+          subtitle="Cadastre clientes e fornecedores, acompanhe contas a pagar e receber, veja relatórios por empresa e gere um pacote mensal para o contador."
+          center
+        />
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((c, i) => (
+            <Reveal key={c.title} delay={i * 0.05}>
+              <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+                  <c.icon className="h-5 w-5" />
+                </span>
+                <h3 className="text-base font-semibold text-slate-900">{c.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{c.text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== FOR WHO ============================== */
 
 function ForWho() {
   const items = [
     "Pessoa física",
     "MEI",
+    "Pequenas empresas",
     "Autônomos",
-    "Pequenos negócios",
     "Quem quer sair da bagunça financeira",
     "Quem quer trocar planilhas por uma ferramenta visual",
   ];
@@ -3003,7 +3065,19 @@ const FAQS = [
   },
   {
     q: "Existe plano para MEI?",
-    a: "Sim. Temos os planos MEI Essencial e MEI Inteligente, com linguagem e recursos pensados para o seu negócio.",
+    a: "Sim. Temos os planos MEI Essencial e MEI Inteligente, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
+  },
+  {
+    q: "O que tem na área Empresa Inteligente?",
+    a: "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês.",
+  },
+  {
+    q: "O Pacote para Contador substitui meu contador?",
+    a: "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional.",
+  },
+  {
+    q: "O que é o Radar Econômico?",
+    a: "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro.",
   },
   {
     q: "Posso acessar pelo celular?",
