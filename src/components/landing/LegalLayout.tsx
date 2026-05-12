@@ -51,7 +51,7 @@ export function LegalLayout({ title, eyebrow = "Institucional", updatedAt, child
           <p className="mt-2 text-sm text-slate-500">Última atualização: {updatedAt}</p>
         )}
 
-        <div className="prose prose-slate mt-8 max-w-none text-slate-700 prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:leading-relaxed prose-li:leading-relaxed prose-a:text-blue-700">
+        <div className="legal-content mt-8 space-y-5 text-[15px] leading-relaxed text-slate-700 [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-slate-900 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_a]:font-medium [&_a]:text-blue-700 hover:[&_a]:underline [&_strong]:font-semibold [&_strong]:text-slate-900">
           {children}
         </div>
 
