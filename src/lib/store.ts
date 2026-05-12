@@ -2355,6 +2355,7 @@ export type NovaReceitaInput = {
   tipo: TipoReceita;
   recorrente?: boolean;
   recorrenteMeses?: number;
+  clienteId?: string | null;
 };
 
 export function addReceita(input: NovaReceitaInput): Receita[] {
