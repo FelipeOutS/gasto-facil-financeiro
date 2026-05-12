@@ -1370,10 +1370,12 @@ function ReceitaItem({
   r,
   onEdit,
   onDelete,
+  clienteNome,
 }: {
   r: Receita;
   onEdit: () => void;
   onDelete: () => void;
+  clienteNome?: string;
 }) {
   const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
   const Icon = tipoIcon(r.tipo);
@@ -1409,6 +1411,11 @@ function ReceitaItem({
           <p className="truncate text-xs text-muted-foreground">
             {tipoLabel} · {formatDateBR(r.data)}
           </p>
+          {clienteNome ? (
+            <p className="truncate text-[11px] text-muted-foreground">
+              Cliente: {clienteNome}
+            </p>
+          ) : null}
           <p className="num mt-0.5 text-sm font-semibold text-success">
             +{formatBRL(r.valor)}
           </p>
