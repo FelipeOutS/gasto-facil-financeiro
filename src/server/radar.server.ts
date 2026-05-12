@@ -37,8 +37,10 @@ export interface IndicatorDTO {
 
 export interface RadarResult {
   indicators: IndicatorDTO[];
+  currencies: IndicatorDTO[];
   status: IndicatorStatus;
   fetchedAt: string;
+  updatedAt: string;
   message?: string;
 }
 
@@ -418,6 +420,7 @@ function dtoFromRow(row: PersistRow): IndicatorDTO {
 
 async function readCache(): Promise<IndicatorDTO[]> {
   const keys = SUPPORTED.map((s) => s.key);
+  console.info("[radar] lendo cache de indicadores");
   const { data, error } = await supabaseAdmin
     .from("economic_indicators")
     .select(
@@ -430,6 +433,7 @@ async function readCache(): Promise<IndicatorDTO[]> {
     return [];
   }
   if (!data) return [];
+  console.info(`[radar] cache encontrado: ${data.map((r) => r.indicator_key).join(",") || "vazio"}`);
   return data.map((r) => dtoFromCache(r as Parameters<typeof dtoFromCache>[0]));
 }
 
@@ -443,11 +447,13 @@ function isFresh(key: SupportedKey, fetchedAt: string): boolean {
 
 async function persist(rows: PersistRow[]): Promise<void> {
   if (rows.length === 0) return;
+  console.info(`[radar] gravando cache: ${rows.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`);
   const { error } = await supabaseAdmin
     .from("economic_indicators")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .upsert(rows as any, { onConflict: "indicator_key" });
   if (error) console.error("[radar] erro gravando cache:", error.message);
+  else console.info("[radar] cache gravado com sucesso");
 }
 
 /**
