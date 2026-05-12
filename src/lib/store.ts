@@ -663,6 +663,7 @@ type ContaAPagarRow = {
   frequencia_recorrencia?: string | null;
   import_batch_id?: string | null;
   mes_referencia?: string | null;
+  fornecedor_id?: string | null;
   mes: number;
   ano: number;
   created_at: string;
@@ -691,6 +692,7 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     codigoPix: r.codigo_pix ?? undefined,
     chavePix: r.chave_pix ?? undefined,
     bancoEmissor: r.banco_emissor ?? undefined,
+    fornecedorId: r.fornecedor_id ?? null,
     importBatchId: r.import_batch_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
@@ -3270,6 +3272,8 @@ export type NovaContaInput = {
   importBatchId?: string;
   /** Mês de referência (competência) `YYYY-MM`. Default = mês do vencimento. */
   mesReferencia?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string | null;
 };
 
 export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
@@ -3281,6 +3285,9 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   const rows: any[] = [];
   const catUuid = input.categoriaId ? categoriaUuidFor(input.categoriaId) : null;
 
+  const fornecedorVal =
+    input.fornecedorId && input.fornecedorId.trim() ? input.fornecedorId.trim() : null;
+
   // Campos comuns que se repetem em cada ocorrência
   const extras = {
     beneficiario: input.beneficiario,
@@ -3290,6 +3297,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     chavePix: input.chavePix,
     bancoEmissor: input.bancoEmissor,
     importBatchId: input.importBatchId,
+    fornecedorId: fornecedorVal,
   };
   const extrasRow = {
     beneficiario: input.beneficiario ?? null,
@@ -3299,6 +3307,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     chave_pix: input.chavePix ?? null,
     banco_emissor: input.bancoEmissor ?? null,
     import_batch_id: input.importBatchId ?? null,
+    fornecedor_id: fornecedorVal,
   };
 
   const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
@@ -3398,6 +3407,8 @@ export type ContaEditableFields = {
   codigoPix?: string | null;
   chavePix?: string | null;
   bancoEmissor?: string | null;
+  /** ID do fornecedor vinculado. Use null para remover. */
+  fornecedorId?: string | null;
   /** Mês de referência (competência) `YYYY-MM`. */
   mesReferencia?: string | null;
   /** Quando atualizando uma conta paga, sincroniza o gasto vinculado */
@@ -3443,6 +3454,12 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       fields.mesReferencia === null
         ? undefined
         : fields.mesReferencia ?? current.mesReferencia,
+    fornecedorId:
+      fields.fornecedorId === undefined
+        ? current.fornecedorId ?? null
+        : fields.fornecedorId && fields.fornecedorId !== ""
+          ? fields.fornecedorId
+          : null,
     atualizadoEm: new Date().toISOString(),
   };
   if (fields.dataVencimento) {
@@ -3467,6 +3484,9 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       valor: updated.valor,
       categoriaId: updated.categoriaId || "outros",
       observacao: updated.observacao,
+      ...(fields.fornecedorId !== undefined
+        ? { fornecedorId: updated.fornecedorId ?? null }
+        : {}),
     });
   }
 
@@ -3491,6 +3511,8 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
   if (fields.codigoPix !== undefined) row.codigo_pix = fields.codigoPix ?? null;
   if (fields.chavePix !== undefined) row.chave_pix = fields.chavePix ?? null;
   if (fields.bancoEmissor !== undefined) row.banco_emissor = fields.bancoEmissor ?? null;
+  if (fields.fornecedorId !== undefined)
+    row.fornecedor_id = fields.fornecedorId && fields.fornecedorId !== "" ? fields.fornecedorId : null;
   if (fields.mesReferencia !== undefined) row.mes_referencia = fields.mesReferencia ?? null;
   else if (fields.dataVencimento !== undefined && updated.mesReferencia)
     row.mes_referencia = updated.mesReferencia;
@@ -3736,6 +3758,7 @@ async function upsertGastoVinculadoConta(
     conta.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)
       ? conta.mesReferencia
       : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const fornecedorIdConta = conta.fornecedorId ?? null;
   const row = {
     descricao: input.nome,
     valor: input.valor,
@@ -3751,6 +3774,7 @@ async function upsertGastoVinculadoConta(
     origem: CONTA_A_PAGAR_GASTO_ORIGEM,
     id_operacao_banco: contaGastoOperationId(conta.id),
     invoice_month: invoiceMonth,
+    fornecedor_id: fornecedorIdConta,
     updated_at: now,
   };
 
@@ -3775,6 +3799,7 @@ async function upsertGastoVinculadoConta(
             origem: CONTA_A_PAGAR_GASTO_ORIGEM,
             idOperacaoBanco: contaGastoOperationId(conta.id),
             invoiceMonth,
+            fornecedorId: fornecedorIdConta,
             atualizadoEm: now,
           }
         : g,
@@ -3805,6 +3830,7 @@ async function upsertGastoVinculadoConta(
       origem: CONTA_A_PAGAR_GASTO_ORIGEM,
       idOperacaoBanco: contaGastoOperationId(conta.id),
       invoiceMonth,
+      fornecedorId: fornecedorIdConta,
       criadoEm: now,
       atualizadoEm: now,
     },

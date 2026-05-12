@@ -62,7 +62,7 @@ export type Gasto = {
   /** ID da operação no banco (quando importado de extrato). */
   idOperacaoBanco?: string;
   /** ID do fornecedor vinculado (opcional). */
-  fornecedorId?: string;
+  fornecedorId?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -354,6 +354,8 @@ export type ContaAPagar = {
   chavePix?: string;
   /** Banco emissor / cedente */
   bancoEmissor?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string | null;
   /** Lote de importação que originou a conta (quando vinda de boleto/Pix importado) */
   importBatchId?: string;
   mes: number;

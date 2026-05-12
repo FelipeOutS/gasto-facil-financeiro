@@ -46,6 +46,7 @@ import {
 import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/types";
 import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
+import { useFornecedores } from "@/lib/fornecedores";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { Money } from "@/components/Money";
@@ -1076,13 +1077,16 @@ function ContaFormDialog({
   const [codigoBoleto, setCodigoBoleto] = useState(conta?.codigoBoleto ?? "");
   const [codigoPix, setCodigoPix] = useState(conta?.codigoPix ?? "");
   const [chavePix, setChavePix] = useState(conta?.chavePix ?? "");
+  const [fornecedorId, setFornecedorId] = useState<string>(conta?.fornecedorId ?? "");
+  const { ativos: fornecedoresAtivos } = useFornecedores();
   const [mostrarExtras, setMostrarExtras] = useState(
     !!(conta?.beneficiario ||
       conta?.formaPagamento ||
       conta?.bancoEmissor ||
       conta?.codigoBoleto ||
       conta?.codigoPix ||
-      conta?.chavePix),
+      conta?.chavePix ||
+      conta?.fornecedorId),
   );
 
   // Sincronizar gasto vinculado (apenas conta já paga)
@@ -1117,6 +1121,7 @@ function ContaFormDialog({
         codigoBoleto: codigoBoleto.trim() || null,
         codigoPix: codigoPix.trim() || null,
         chavePix: chavePix.trim() || null,
+        fornecedorId: fornecedorId || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
       };
       // Se conta recorrente, sempre pergunta escopo da edição
@@ -1147,6 +1152,7 @@ function ContaFormDialog({
         codigoBoleto: codigoBoleto.trim() || undefined,
         codigoPix: codigoPix.trim() || undefined,
         chavePix: chavePix.trim() || undefined,
+        fornecedorId: fornecedorId || null,
       });
       toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
@@ -1311,6 +1317,38 @@ function ContaFormDialog({
                     onChange={(e) => setBeneficiario(e.target.value)}
                     placeholder="Quem recebe o pagamento"
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Fornecedor (opcional)</Label>
+                  {fornecedoresAtivos.length > 0 ? (
+                    <Select
+                      value={fornecedorId || "_none"}
+                      onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sem fornecedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Sem fornecedor</SelectItem>
+                        {fornecedoresAtivos.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.apelido || f.nome_fantasia || f.razao_social || f.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                      Você ainda não tem fornecedores cadastrados.{" "}
+                      <Link
+                        to="/fornecedores"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        Cadastrar fornecedor
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
