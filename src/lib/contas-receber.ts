@@ -41,6 +41,7 @@ export type ContaReceber = {
   forma_recebimento: FormaRecebimento | string | null;
   observacao: string | null;
   origem: string | null;
+  cliente_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -54,6 +55,7 @@ export type NovaContaReceberInput = {
   categoria?: string | null;
   forma_recebimento?: FormaRecebimento | string | null;
   observacao?: string | null;
+  cliente_id?: string | null;
 };
 
 export type EditarContaReceberInput = Partial<NovaContaReceberInput>;
