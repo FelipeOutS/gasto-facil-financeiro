@@ -134,6 +134,8 @@ export type Receita = {
   importBatchId?: string;
   /** ID da operação no banco. */
   idOperacaoBanco?: string;
+  /** Cliente vinculado (opcional). */
+  clienteId?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
