@@ -17,13 +17,17 @@ export type IndicatorStatus = "atualizado" | "cache" | "desatualizado";
 export interface IndicatorDTO {
   key: string;
   name: string;
+  code?: "USD" | "EUR" | string;
+  label?: string;
   value: number;
+  valueBRL?: number;
   currency: string | null;
   source: string;
   variationPercent: number | null;
   high: number | null;
   low: number | null;
   fetchedAt: string; // ISO
+  updatedAt: string; // ISO de referência exibível para o usuário
   status: IndicatorStatus;
   /** Data de referência do indicador (ex.: mês do IPCA). ISO ou null. */
   referenceDate?: string | null;
@@ -79,6 +83,11 @@ type SupportedKey = (typeof SUPPORTED)[number]["key"];
 const AWESOMEAPI_URL =
   "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL";
 
+const PTAX_BASE_URL =
+  "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata";
+
+const CURRENCY_KEYS = ["USD_BRL", "EUR_BRL"] as const;
+
 /** Códigos das séries no SGS do Banco Central. */
 const SGS_CODES: Record<"SELIC" | "IPCA", number> = {
   SELIC: 432, // Meta para a taxa Selic — % a.a.
@@ -122,6 +131,24 @@ function parseBRDate(d: string): string | null {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d.trim());
   if (!m) return null;
   return `${m[3]}-${m[2]}-${m[1]}T00:00:00.000Z`;
+}
+
+function parseAwesomeDate(d: string | undefined): string | null {
+  if (!d) return null;
+  const normalized = d.trim().replace(" ", "T");
+  const parsed = new Date(`${normalized}-03:00`);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+}
+
+function ptaxDate(d: Date): string {
+  return `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    d.getUTCDate(),
+  ).padStart(2, "0")}-${d.getUTCFullYear()}`;
+}
+
+function pctChange(current: number, previous: number | null): number | null {
+  if (!previous || !Number.isFinite(previous) || previous === 0) return null;
+  return ((current - previous) / previous) * 100;
 }
 
 async function fetchWithTimeout(url: string): Promise<Response> {
