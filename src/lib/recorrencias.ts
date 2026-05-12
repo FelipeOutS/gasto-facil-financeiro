@@ -35,6 +35,8 @@ export type StatusRecorrencia =
 
 export type TipoRecorrencia = "assinatura" | "recorrencia_fixa";
 
+export type MoedaRecorrencia = "BRL" | "USD" | "EUR";
+
 export type Recorrencia = {
   id: string;
   nome: string;
@@ -50,6 +52,8 @@ export type Recorrencia = {
   observacao?: string | null;
   ultimoValor?: number | null;
   detectionKey?: string | null;
+  moeda?: MoedaRecorrencia;
+  valorOriginal?: number | null;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -158,6 +162,8 @@ function rowToRec(r: any): Recorrencia {
     observacao: r.observacao ?? null,
     ultimoValor: r.ultimo_valor != null ? Number(r.ultimo_valor) : null,
     detectionKey: r.detection_key ?? null,
+    moeda: (r.moeda === "USD" || r.moeda === "EUR" ? r.moeda : "BRL") as MoedaRecorrencia,
+    valorOriginal: r.valor_original != null ? Number(r.valor_original) : null,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -588,6 +594,8 @@ export type NovaRecorrenciaInput = {
   observacao?: string | null;
   ultimoValor?: number | null;
   detectionKey?: string | null;
+  moeda?: MoedaRecorrencia;
+  valorOriginal?: number | null;
 };
 
 export async function criarRecorrencia(
@@ -624,6 +632,8 @@ export async function criarRecorrencia(
     observacao: input.observacao ?? null,
     ultimo_valor: input.ultimoValor ?? null,
     detection_key: input.detectionKey ?? null,
+    moeda: input.moeda ?? "BRL",
+    valor_original: input.valorOriginal ?? null,
   };
 
   const { data, error } = await (supabase as any)
@@ -661,6 +671,8 @@ export async function atualizarRecorrencia(
     update.tipo_recorrencia = patch.tipoRecorrencia;
   if (patch.observacao !== undefined) update.observacao = patch.observacao;
   if (patch.ultimoValor !== undefined) update.ultimo_valor = patch.ultimoValor;
+  if (patch.moeda !== undefined) update.moeda = patch.moeda;
+  if (patch.valorOriginal !== undefined) update.valor_original = patch.valorOriginal;
 
   const { data, error } = await (supabase as any)
     .from("recorrencias")

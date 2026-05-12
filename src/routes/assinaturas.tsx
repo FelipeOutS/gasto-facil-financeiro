@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { getEconomicRadar } from "@/server/radar.functions";
 import {
   Plus,
   RefreshCw,
@@ -678,9 +680,22 @@ function RecorrenciaCard({
             >
               {STATUS_LABEL[rec.status]}
             </Badge>
+            {rec.moeda && rec.moeda !== "BRL" && (
+              <Badge
+                variant="outline"
+                className="shrink-0 border-sky-500/40 bg-sky-500/10 text-[10px] text-sky-500"
+              >
+                {rec.moeda === "USD" ? "🇺🇸 USD" : "🇪🇺 EUR"}
+              </Badge>
+            )}
           </div>
           <p className="mt-0.5 text-base font-bold tracking-tight">
             {formatBRL(rec.valor)}
+            {rec.moeda && rec.moeda !== "BRL" && rec.valorOriginal ? (
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                (~{rec.moeda} {rec.valorOriginal.toFixed(2).replace(".", ",")})
+              </span>
+            ) : null}
             <span className="ml-1 text-xs font-normal text-muted-foreground">
               /{rec.frequencia === "mensal" ? "mês" : FREQ_LABEL[rec.frequencia].toLowerCase()}
             </span>
@@ -821,6 +836,10 @@ function RecorrenciaDialog({
   const cartoes = useStore(getCartoes);
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
+  const [moeda, setMoeda] = useState<"BRL" | "USD" | "EUR">("BRL");
+  const [valorOriginal, setValorOriginal] = useState("");
+  const [cotacaoUSD, setCotacaoUSD] = useState<number | null>(null);
+  const [cotacaoEUR, setCotacaoEUR] = useState<number | null>(null);
   const [categoriaId, setCategoriaId] = useState<string>("");
   const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>("mensal");
   const [proximaCobranca, setProximaCobranca] = useState<string>("");
@@ -830,10 +849,41 @@ function RecorrenciaDialog({
   const [status, setStatus] = useState<StatusRecorrencia>("ativa");
   const [saving, setSaving] = useState(false);
 
+  const fetchRadar = useServerFn(getEconomicRadar);
+  useEffect(() => {
+    if (!open) return;
+    fetchRadar()
+      .then((r: any) => {
+        const usd = r?.indicators?.find((i: any) => i.key === "USD_BRL");
+        const eur = r?.indicators?.find((i: any) => i.key === "EUR_BRL");
+        setCotacaoUSD(usd?.value ?? null);
+        setCotacaoEUR(eur?.value ?? null);
+      })
+      .catch(() => {});
+  }, [open, fetchRadar]);
+
+  // Recalcula estimativa BRL quando muda moeda/valor original
+  useEffect(() => {
+    if (moeda === "BRL") return;
+    const cot = moeda === "USD" ? cotacaoUSD : cotacaoEUR;
+    const n = parseBRLInput(valorOriginal);
+    if (cot && Number.isFinite(n) && n > 0) {
+      // estimativa com IOF + spread (~7,5%)
+      const brl = n * cot * 1.075;
+      setValor(brl.toFixed(2).replace(".", ","));
+    }
+  }, [moeda, valorOriginal, cotacaoUSD, cotacaoEUR]);
+
   useEffect(() => {
     if (editing) {
       setNome(editing.nome);
       setValor(editing.valor.toFixed(2).replace(".", ","));
+      setMoeda((editing.moeda ?? "BRL") as "BRL" | "USD" | "EUR");
+      setValorOriginal(
+        editing.valorOriginal != null
+          ? editing.valorOriginal.toFixed(2).replace(".", ",")
+          : "",
+      );
       setCategoriaId(editing.categoriaId ?? "");
       setFrequencia(editing.frequencia);
       setProximaCobranca(editing.proximaCobranca ?? "");
@@ -844,6 +894,8 @@ function RecorrenciaDialog({
     } else {
       setNome("");
       setValor("");
+      setMoeda("BRL");
+      setValorOriginal("");
       setCategoriaId("");
       setFrequencia("mensal");
       setProximaCobranca(toLocalISODate(new Date()));
@@ -863,6 +915,7 @@ function RecorrenciaDialog({
       return;
     }
     setSaving(true);
+    const valorOriginalNum = moeda !== "BRL" ? parseBRLInput(valorOriginal) : null;
     try {
       if (editing) {
         await atualizarRecorrencia(editing.id, {
@@ -875,6 +928,8 @@ function RecorrenciaDialog({
           cartaoId: cartaoId || null,
           observacao: observacao || null,
           status,
+          moeda,
+          valorOriginal: valorOriginalNum,
         });
         toast.success("Recorrência atualizada");
       } else {
@@ -889,6 +944,8 @@ function RecorrenciaDialog({
           observacao: observacao || null,
           status,
           origem: "manual",
+          moeda,
+          valorOriginal: valorOriginalNum,
         });
         toast.success("Recorrência criada");
       }
@@ -920,9 +977,60 @@ function RecorrenciaDialog({
               placeholder="Ex: Spotify, Aluguel"
             />
           </div>
+          <div>
+            <label className="text-xs font-medium">Moeda</label>
+            <Select
+              value={moeda}
+              onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BRL">🇧🇷 Real (BRL)</SelectItem>
+                <SelectItem value="USD">🇺🇸 Dólar (USD)</SelectItem>
+                <SelectItem value="EUR">🇪🇺 Euro (EUR)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {moeda !== "BRL" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium">
+                  Valor em {moeda === "USD" ? "dólares" : "euros"}
+                </label>
+                <Input
+                  value={valorOriginal}
+                  onChange={(e) => setValorOriginal(e.target.value)}
+                  inputMode="decimal"
+                  placeholder={moeda === "USD" ? "Ex: 9,99" : "Ex: 12,50"}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Cotação atual</label>
+                <Input
+                  readOnly
+                  value={
+                    (moeda === "USD" ? cotacaoUSD : cotacaoEUR)
+                      ? formatBRL(
+                          (moeda === "USD" ? cotacaoUSD : cotacaoEUR) as number,
+                        )
+                      : "—"
+                  }
+                  className="bg-muted/40"
+                />
+              </div>
+              <p className="col-span-2 rounded-md bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                Estimativa em reais já com IOF e spread médios. O valor final
+                pode variar a cada cobrança.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium">Valor</label>
+              <label className="text-xs font-medium">
+                {moeda === "BRL" ? "Valor (R$)" : "Estimativa em reais"}
+              </label>
               <Input
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}

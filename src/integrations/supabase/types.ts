@@ -1302,6 +1302,7 @@ export type Database = {
           forma_pagamento: string | null
           frequencia: string
           id: string
+          moeda: string
           nome: string
           observacao: string | null
           origem: string
@@ -1312,6 +1313,7 @@ export type Database = {
           updated_at: string
           user_id: string
           valor: number
+          valor_original: number | null
         }
         Insert: {
           cartao_id?: string | null
@@ -1321,6 +1323,7 @@ export type Database = {
           forma_pagamento?: string | null
           frequencia?: string
           id?: string
+          moeda?: string
           nome: string
           observacao?: string | null
           origem?: string
@@ -1331,6 +1334,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           valor?: number
+          valor_original?: number | null
         }
         Update: {
           cartao_id?: string | null
@@ -1340,6 +1344,7 @@ export type Database = {
           forma_pagamento?: string | null
           frequencia?: string
           id?: string
+          moeda?: string
           nome?: string
           observacao?: string | null
           origem?: string
@@ -1350,6 +1355,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor?: number
+          valor_original?: number | null
         }
         Relationships: []
       }

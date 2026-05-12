@@ -61,6 +61,7 @@ import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
+import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
   buildLinhasOrcamento,
@@ -407,6 +408,9 @@ function Index() {
 
       {/* Radar Econômico — dólar, euro e conversor */}
       <RadarEconomicoCard className="mt-4" />
+
+      {/* Aviso contextual: assinaturas em moeda estrangeira */}
+      <AssinaturasMoedaEstrangeiraBanner />
 
       {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
       {profile && !profile.tipo_cadastro && (
@@ -1829,3 +1833,34 @@ function ContasAReceberCard() {
     </section>
   );
 }
+
+function AssinaturasMoedaEstrangeiraBanner() {
+  const recs = useRecorrencias();
+  const ativas = recs.filter(
+    (r) => r.status === "ativa" && r.moeda && r.moeda !== "BRL",
+  );
+  if (ativas.length === 0) return null;
+  const moedas = Array.from(new Set(ativas.map((r) => r.moeda)));
+  const moedaLabel = moedas.length === 1
+    ? moedas[0] === "USD" ? "dólar" : "euro"
+    : "moeda estrangeira";
+  return (
+    <Link
+      to="/assinaturas"
+      className="mt-4 flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/5 p-3 transition-colors hover:bg-sky-500/10"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sky-500/15 text-sky-500">
+        🌎
+      </span>
+      <div className="min-w-0 text-sm">
+        <p className="font-semibold">
+          Você possui {ativas.length === 1 ? "uma assinatura" : `${ativas.length} assinaturas`} em {moedaLabel}.
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          A variação do câmbio pode alterar o valor da próxima fatura. Toque para revisar.
+        </p>
+      </div>
+    </Link>
+  );
+}
+

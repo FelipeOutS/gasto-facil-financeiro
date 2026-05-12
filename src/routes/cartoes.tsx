@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
+import { CompraInternacionalCard } from "@/components/CompraInternacionalCard";
 import { usePlan } from "@/lib/use-plan";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import {
@@ -425,6 +426,10 @@ function CartoesPage() {
           </aside>
         </div>
       )}
+
+      <section className="mt-6">
+        <CompraInternacionalCard />
+      </section>
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
         <ShieldCheck className="h-3.5 w-3.5" />
