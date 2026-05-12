@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -328,6 +328,20 @@ function EmpresaPage() {
             onCancelar={limparConsulta}
           />
         )}
+
+        <Link
+          to="/fornecedores"
+          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
+        >
+          <div>
+            <p className="text-sm font-semibold">Fornecedores</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cadastre fornecedores por CNPJ e organize melhor seus gastos
+              empresariais.
+            </p>
+          </div>
+          <span className="text-xs text-primary">Abrir →</span>
+        </Link>
 
         <section className="rounded-2xl border border-dashed bg-muted/30 p-4 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Sobre a consulta</p>

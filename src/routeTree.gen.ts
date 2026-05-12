@@ -28,6 +28,7 @@ import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
 import { Route as GastoAiRouteImport } from './routes/gasto-ai'
+import { Route as FornecedoresRouteImport } from './routes/fornecedores'
 import { Route as EmpresaRouteImport } from './routes/empresa'
 import { Route as ContasConectadasRouteImport } from './routes/contas-conectadas'
 import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
@@ -156,6 +157,11 @@ const GastosRoute = GastosRouteImport.update({
 const GastoAiRoute = GastoAiRouteImport.update({
   id: '/gasto-ai',
   path: '/gasto-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FornecedoresRoute = FornecedoresRouteImport.update({
+  id: '/fornecedores',
+  path: '/fornecedores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmpresaRoute = EmpresaRouteImport.update({
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -404,6 +411,7 @@ export interface FileRoutesByTo {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -460,6 +468,7 @@ export interface FileRoutesById {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -517,6 +526,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
+    | '/fornecedores'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
+    | '/fornecedores'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -627,6 +638,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
+    | '/fornecedores'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -683,6 +695,7 @@ export interface RootRouteChildren {
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
   EmpresaRoute: typeof EmpresaRoute
+  FornecedoresRoute: typeof FornecedoresRoute
   GastoAiRoute: typeof GastoAiRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
@@ -857,6 +870,13 @@ declare module '@tanstack/react-router' {
       path: '/gasto-ai'
       fullPath: '/gasto-ai'
       preLoaderRoute: typeof GastoAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fornecedores': {
+      id: '/fornecedores'
+      path: '/fornecedores'
+      fullPath: '/fornecedores'
+      preLoaderRoute: typeof FornecedoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/empresa': {
@@ -1115,6 +1135,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,
   EmpresaRoute: EmpresaRoute,
+  FornecedoresRoute: FornecedoresRoute,
   GastoAiRoute: GastoAiRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,

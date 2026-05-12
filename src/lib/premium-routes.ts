@@ -40,6 +40,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
   { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Pessoa Física Premium, MEI e Empresa." },
   { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
+  { path: "/fornecedores", feature: "empresa_inteligente", title: "Fornecedores é um recurso para MEI e Empresa", description: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {
