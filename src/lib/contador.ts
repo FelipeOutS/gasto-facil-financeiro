@@ -544,7 +544,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
   out.push("Receitas");
   out.push(csvLine(["Data", "Descrição", "Valor", "Tipo", "Cliente"]));
   for (const r of p.receitas) {
-    out.push(csvLine([r.data, r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]));
+    out.push(csvLine([fmtData(r.data), r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]));
   }
   out.push("");
 
@@ -556,7 +556,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
   for (const g of p.gastos) {
     out.push(
       csvLine([
-        g.data,
+        fmtData(g.data),
         g.descricao,
         g.valor.toFixed(2),
         g.categoriaNome ?? "",
@@ -578,10 +578,10 @@ export function gerarCsvPacote(p: PacoteContador): string {
   ]) {
     out.push(
       csvLine([
-        c.vencimento,
+        fmtData(c.vencimento),
         c.descricao,
         c.valor.toFixed(2),
-        c.status,
+        rotuloStatusPagar(c.status),
         c.fornecedorNome ?? "",
       ]),
     );
@@ -601,18 +601,16 @@ export function gerarCsvPacote(p: PacoteContador): string {
   ]) {
     out.push(
       csvLine([
-        c.dataPrevista,
+        fmtData(c.dataPrevista),
         c.descricao,
         c.valor.toFixed(2),
         c.valorRestante.toFixed(2),
-        c.status,
+        rotuloStatusReceber(c.status),
         c.clienteNome ?? "",
       ]),
     );
   }
   out.push("");
-
-  if (p.porCliente.length > 0) {
     out.push("Resumo por cliente");
     out.push(csvLine(["Cliente", "Recebido", "Em aberto", "Lançamentos"]));
     for (const c of p.porCliente) {
