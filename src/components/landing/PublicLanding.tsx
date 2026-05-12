@@ -2361,52 +2361,467 @@ function EmpresaInteligenteSection() {
       icon: Building2,
       title: "Empresa Inteligente",
       text: "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
+      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
     },
     {
       icon: Users,
       title: "Clientes e Fornecedores",
       text: "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
+      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
     },
     {
       icon: LineChart,
       title: "Relatórios empresariais",
       text: "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
+      tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100",
     },
     {
       icon: ClipboardList,
       title: "Pacote para Contador",
       text: "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
+      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
     },
     {
       icon: Activity,
       title: "Radar Econômico",
       text: "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
+      tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100",
     },
   ];
+
+  const trust = [
+    { icon: ShieldCheck, title: "Segurança de dados", text: "e conformidade" },
+    { icon: Landmark, title: "Integração bancária", text: "100% segura" },
+    { icon: Cloud, title: "Backup automático", text: "na nuvem" },
+  ];
+
   return (
-    <section id="mei-empresa" className="bg-slate-50 py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="MEI e Empresa"
-          title="Controle completo para MEI e pequenas empresas."
-          subtitle="Cadastre clientes e fornecedores, acompanhe contas a pagar e receber, veja relatórios por empresa e gere um pacote mensal para o contador."
-          center
-        />
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((c, i) => (
-            <Reveal key={c.title} delay={i * 0.05}>
-              <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
-                  <c.icon className="h-5 w-5" />
+    <section
+      id="mei-empresa"
+      className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-20 sm:py-28"
+    >
+      {/* decorative gradient blobs */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-gradient-to-br from-emerald-200/40 via-teal-200/30 to-transparent blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -right-24 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-violet-200/40 via-fuchsia-200/20 to-transparent blur-3xl"
+      />
+      {/* dotted grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+          maskImage:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.7), transparent 70%)",
+        }}
+      />
+
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+          {/* LEFT: copy + cards */}
+          <div className="lg:col-span-7">
+            <Reveal>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                MEI e Empresa
+              </span>
+              <h2 className="mt-4 text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.6rem]">
+                Controle completo para MEI e{" "}
+                <span className="relative inline-block">
+                  <span className="relative z-10 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                    pequenas empresas
+                  </span>
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-1 -z-0 h-2.5 rounded-full bg-emerald-200/60"
+                  />
                 </span>
-                <h3 className="text-base font-semibold text-slate-900">{c.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-600">{c.text}</p>
+                .
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+                Cadastre clientes e fornecedores, acompanhe contas a pagar e
+                receber, veja relatórios por empresa e gere um pacote mensal
+                para o contador.
+              </p>
+            </Reveal>
+
+            {/* staggered cards */}
+            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {cards.map((c, i) => (
+                <Reveal
+                  key={c.title}
+                  delay={i * 0.06}
+                  className={cn(
+                    i === 1 && "sm:translate-y-6",
+                    i === 3 && "sm:translate-y-6",
+                  )}
+                >
+                  <div className="group relative h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] backdrop-blur transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.28)]">
+                    <div
+                      className={cn(
+                        "mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ring-1",
+                        c.tone,
+                      )}
+                    >
+                      <c.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-[15px] font-semibold text-slate-900">
+                      {c.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                      {c.text}
+                    </p>
+                    <ArrowUpRight className="absolute right-4 top-4 h-4 w-4 text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600" />
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
+            {/* trust row */}
+            <Reveal delay={0.2}>
+              <div className="mt-10 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 backdrop-blur sm:grid-cols-3">
+                {trust.map((t) => (
+                  <div key={t.title} className="flex items-center gap-3 px-2">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
+                      <t.icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {t.title}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{t.text}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </Reveal>
-          ))}
+          </div>
+
+          {/* RIGHT: visual composition */}
+          <div className="relative lg:col-span-5">
+            <EmpresaVisual />
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function EmpresaVisual() {
+  return (
+    <div className="relative mx-auto aspect-[5/6] w-full max-w-[520px] lg:aspect-auto lg:h-[640px]">
+      {/* big gradient halo */}
+      <div
+        aria-hidden
+        className="absolute inset-x-6 top-6 bottom-10 rounded-[2.5rem] bg-gradient-to-br from-emerald-200/60 via-teal-100/50 to-violet-200/60 blur-2xl"
+      />
+      {/* dotted curve */}
+      <svg
+        aria-hidden
+        viewBox="0 0 400 600"
+        className="absolute inset-0 h-full w-full text-slate-300"
+        fill="none"
+      >
+        <path
+          d="M20 480 C 120 380, 280 520, 380 380"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeDasharray="2 6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M40 120 C 140 60, 260 200, 360 100"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeDasharray="2 6"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      {/* portrait */}
+      <div className="absolute left-1/2 top-6 h-[78%] w-[72%] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_30px_60px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/50">
+        <img
+          src={empresaEntrepreneur}
+          alt="Empreendedora sorrindo enquanto trabalha no notebook"
+          loading="lazy"
+          width={1024}
+          height={1024}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/80 to-transparent" />
+      </div>
+
+      {/* Floating: Overview */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="absolute left-0 top-16 w-[230px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            Resumo do mês
+          </span>
+          <LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />
+        </div>
+        <div className="mt-3 space-y-2 text-sm">
+          <Row label="Receitas" value="R$ 28.560,00" trend="up" delta="+12%" />
+          <Row label="Despesas" value="R$ 16.230,00" trend="down" delta="-4%" />
+          <div className="my-2 border-t border-dashed border-slate-200" />
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">Saldo</span>
+            <span className="font-bold text-emerald-600">R$ 12.330,00</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Floating: Contas a receber */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="absolute right-0 top-32 w-[210px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">
+            A receber
+          </span>
+          <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+        </div>
+        <p className="mt-2 text-lg font-bold text-slate-900">R$ 14.980,00</p>
+        <p className="text-xs text-slate-500">8 títulos em aberto</p>
+        <MiniChart color="emerald" points={[6, 9, 7, 12, 10, 14, 13, 16]} />
+      </motion.div>
+
+      {/* Floating: Contas a pagar */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.18 }}
+        className="absolute left-2 bottom-44 w-[210px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-violet-600">
+            A pagar
+          </span>
+          <ArrowDownRight className="h-3.5 w-3.5 text-violet-500" />
+        </div>
+        <p className="mt-2 text-lg font-bold text-slate-900">R$ 6.350,00</p>
+        <p className="text-xs text-slate-500">5 títulos em aberto</p>
+        <MiniChart color="violet" points={[5, 4, 6, 5, 7, 6, 8, 7]} />
+      </motion.div>
+
+      {/* Floating: Clientes em destaque */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.22 }}
+        className="absolute right-2 bottom-28 w-[230px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            Clientes em destaque
+          </span>
+          <Users className="h-3.5 w-3.5 text-slate-400" />
+        </div>
+        <ul className="mt-2 space-y-1.5 text-sm">
+          {[
+            { n: "Mercado Bom Preço", c: "bg-emerald-500" },
+            { n: "Loja Estilo & Cia", c: "bg-violet-500" },
+            { n: "Construtora Norte", c: "bg-sky-500" },
+          ].map((c) => (
+            <li key={c.n} className="flex items-center gap-2 text-slate-700">
+              <span className={cn("h-2 w-2 shrink-0 rounded-full", c.c)} />
+              <span className="truncate">{c.n}</span>
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
+      {/* Floating: Pacote para Contador */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="absolute left-1/2 -bottom-4 w-[280px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_22px_50px_-18px_rgba(15,23,42,0.45)] backdrop-blur"
+      >
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+            <ClipboardList className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Pacote para Contador
+            </p>
+            <p className="text-sm font-semibold text-slate-900">Outubro/2025</p>
+          </div>
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
+            Pronto
+          </span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-slate-500">
+          Resumo mensal com receitas, despesas e comparativo.
+        </p>
+        <button
+          type="button"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+        >
+          Gerar pacote <ArrowRight className="h-3 w-3" />
+        </button>
+      </motion.div>
+
+      {/* Floating: Radar */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.35 }}
+        className="absolute right-4 top-2 hidden w-[180px] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur sm:block"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Radar
+          </span>
+          <Activity className="h-3 w-3 text-slate-400" />
+        </div>
+        <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+          {[
+            { l: "Dólar", v: "5,12", up: false },
+            { l: "Euro", v: "5,58", up: true },
+            { l: "Selic", v: "10,75%", up: false },
+            { l: "IPCA", v: "4,21%", up: true },
+          ].map((r) => (
+            <li key={r.l} className="flex items-center justify-between">
+              <span className="text-slate-500">{r.l}</span>
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 font-semibold",
+                  r.up ? "text-emerald-600" : "text-rose-500",
+                )}
+              >
+                {r.v}
+                {r.up ? (
+                  <ArrowUpRight className="h-2.5 w-2.5" />
+                ) : (
+                  <ArrowDownRight className="h-2.5 w-2.5" />
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
+      {/* Floating: Fatura enviada */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="absolute -left-2 top-[55%] hidden w-[210px] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur sm:block"
+      >
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+            <FileText className="h-3.5 w-3.5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Fatura enviada
+            </p>
+            <p className="truncate text-xs font-semibold text-slate-900">
+              #2451 · Mercado Bom Preço
+            </p>
+          </div>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-900">R$ 3.480,00</span>
+          <button
+            type="button"
+            className="text-[11px] font-semibold text-sky-700 hover:underline"
+          >
+            Visualizar
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  trend,
+  delta,
+}: {
+  label: string;
+  value: string;
+  trend: "up" | "down";
+  delta: string;
+}) {
+  const up = trend === "up";
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-slate-600">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <span className="font-semibold text-slate-900">{value}</span>
+        <span
+          className={cn(
+            "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+            up
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-rose-50 text-rose-600",
+          )}
+        >
+          {up ? (
+            <TrendingUp className="h-2.5 w-2.5" />
+          ) : (
+            <TrendingDown className="h-2.5 w-2.5" />
+          )}
+          {delta}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function MiniChart({
+  color,
+  points,
+}: {
+  color: "emerald" | "violet";
+  points: number[];
+}) {
+  const w = 170;
+  const h = 36;
+  const max = Math.max(...points);
+  const min = Math.min(...points);
+  const span = Math.max(1, max - min);
+  const step = w / (points.length - 1);
+  const path = points
+    .map((p, i) => {
+      const x = i * step;
+      const y = h - ((p - min) / span) * (h - 4) - 2;
+      return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const area = `${path} L ${w} ${h} L 0 ${h} Z`;
+  const stroke = color === "emerald" ? "#059669" : "#7c3aed";
+  const fill = color === "emerald" ? "#10b98122" : "#8b5cf622";
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 h-9 w-full">
+      <path d={area} fill={fill} />
+      <path d={path} fill="none" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
