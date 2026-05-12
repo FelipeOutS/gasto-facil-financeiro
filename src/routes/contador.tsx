@@ -867,15 +867,24 @@ function Pendencias({ pacote }: { pacote: PacoteContador }) {
 const PRINT_CSS = `
 @media print {
   @page { size: A4; margin: 14mm; }
-  body { background: #fff !important; }
-  .no-print, nav, header[data-mobile-shell-header], aside, footer { display: none !important; }
+  html, body { background: #fff !important; }
+  .no-print, nav, aside, [data-mobile-shell-header], [role="banner"], button { display: none !important; }
+  .lg\\:pl-64 { padding-left: 0 !important; }
   [data-mobile-shell] { padding: 0 !important; max-width: 100% !important; }
+  main, section, div { max-width: 100% !important; }
   .print-block { break-inside: avoid; page-break-inside: avoid; }
   .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 4px !important; }
   .border { border-color: #d4d4d8 !important; }
-  .bg-card, .bg-muted\\/30 { background: #fff !important; }
-  .shadow-sm { box-shadow: none !important; }
-  * { color: #111 !important; }
-  .text-muted-foreground, .text-amber-600, .text-emerald-600 { color: #555 !important; }
+  .bg-card, .bg-muted\\/30, .bg-primary\\/10, .bg-amber-500\\/10 { background: #fff !important; }
+  .shadow-sm, .shadow { box-shadow: none !important; }
+  * { color: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .text-muted-foreground, .text-amber-600, .text-emerald-600, .text-amber-400 { color: #555 !important; }
+  ul, li, h1, h2, h3 { page-break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; }
+  /* Conteúdo fluído na largura total */
+  body * { font-size: 11pt; }
+  h1 { font-size: 16pt !important; }
+  h2 { font-size: 14pt !important; }
+  h3 { font-size: 12pt !important; }
 }
 `;
