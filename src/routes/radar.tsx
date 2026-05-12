@@ -1,32 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
-import {
-  RadarDetalhesDialog,
-  RadarEconomicoCard,
-} from "@/components/RadarEconomicoCard";
-import { getEconomicRadar } from "@/server/radar.functions";
-
-type Status = "atualizado" | "cache" | "desatualizado";
-interface Indicator {
-  key: string;
-  name: string;
-  value: number;
-  currency: string | null;
-  source: string;
-  variationPercent: number | null;
-  high: number | null;
-  low: number | null;
-  fetchedAt: string;
-  status: Status;
-}
-interface RadarResult {
-  indicators: Indicator[];
-  status: Status;
-  fetchedAt: string;
-  message?: string;
-}
+import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 
 export const Route = createFileRoute("/radar")({
   head: () => ({
@@ -49,33 +23,6 @@ export const Route = createFileRoute("/radar")({
 });
 
 function RadarPage() {
-  const fetchRadar = useServerFn(getEconomicRadar);
-  const [data, setData] = useState<RadarResult | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const carregar = async () => {
-    setLoading(true);
-    try {
-      const r = await fetchRadar();
-      setData(r as RadarResult);
-    } catch {
-      setData({
-        indicators: [],
-        status: "desatualizado",
-        fetchedAt: new Date(0).toISOString(),
-        message:
-          "Não conseguimos carregar as cotações agora. Tente novamente em instantes.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <MobileShell>
       <header className="pt-4">
@@ -91,19 +38,23 @@ function RadarPage() {
       </div>
 
       <section className="mt-6 rounded-2xl border bg-card p-4">
-        <h2 className="text-sm font-semibold">Detalhes e conversor</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Use o conversor para estimar quanto uma compra em dólar ou euro pode
-          custar em reais.
-        </p>
-        <div className="mt-3">
-          {/* Renderiza o conteúdo do modal inline para facilitar acesso direto */}
-          <RadarDetalhesInline
-            data={data}
-            loading={loading}
-            onRefresh={carregar}
-          />
-        </div>
+        <h2 className="text-sm font-semibold">Como funciona</h2>
+        <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+          <li>
+            <span className="font-medium text-foreground">Cotação de referência:</span>{" "}
+            mostramos os valores de dólar e euro do dia para você acompanhar.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">Conversor rápido:</span>{" "}
+            toque no card acima para abrir o conversor e estimar quanto uma
+            compra ficaria em reais.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">Estimativa:</span> o
+            valor real cobrado pelo cartão pode variar conforme IOF, spread e a
+            cotação usada no fechamento da fatura.
+          </li>
+        </ul>
       </section>
 
       <section className="mt-6 rounded-2xl border border-dashed bg-muted/30 p-4">
@@ -115,38 +66,5 @@ function RadarPage() {
         </ul>
       </section>
     </MobileShell>
-  );
-}
-
-/**
- * Reaproveita o modal de detalhes, mas mostra inline (sem Dialog) na página
- * dedicada — para isso usamos um truque simples: sempre `open` e ignoramos o
- * onOpenChange. Como o usuário já está numa página dedicada, abrir um modal
- * em cima seria redundante.
- */
-function RadarDetalhesInline({
-  data,
-  loading,
-  onRefresh,
-}: {
-  data: RadarResult | null;
-  loading: boolean;
-  onRefresh: () => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(true);
-  // Mantém o modal sempre aberto na página dedicada
-  useEffect(() => {
-    if (!open) setOpen(true);
-  }, [open]);
-  return (
-    <RadarDetalhesDialog
-      open={open}
-      onOpenChange={() => {
-        /* no-op na página dedicada */
-      }}
-      data={data}
-      loading={loading}
-      onRefresh={onRefresh}
-    />
   );
 }

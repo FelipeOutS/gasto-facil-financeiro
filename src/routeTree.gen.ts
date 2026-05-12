@@ -15,6 +15,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as RadarRouteImport } from './routes/radar'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -89,6 +90,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
   id: '/recuperar-senha',
   path: '/recuperar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RadarRoute = RadarRouteImport.update({
+  id: '/radar',
+  path: '/radar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
   '/perfil': typeof PerfilRoute
+  '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/renda': typeof RendaRoute
@@ -510,6 +519,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/orcamento'
     | '/perfil'
+    | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
     | '/renda'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   OrcamentoRoute: typeof OrcamentoRoute
   PerfilRoute: typeof PerfilRoute
+  RadarRoute: typeof RadarRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   RendaRoute: typeof RendaRoute
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/recuperar-senha'
       fullPath: '/recuperar-senha'
       preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/radar': {
+      id: '/radar'
+      path: '/radar'
+      fullPath: '/radar'
+      preLoaderRoute: typeof RadarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -1086,6 +1106,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   OrcamentoRoute: OrcamentoRoute,
   PerfilRoute: PerfilRoute,
+  RadarRoute: RadarRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
   RendaRoute: RendaRoute,
