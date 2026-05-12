@@ -578,9 +578,26 @@ async function refreshStale(opts: {
  *  3. Persiste atualizações e devolve o estado consolidado.
  *  4. Em caso de falha externa, devolve o último cache marcado como "desatualizado".
  */
+function radarResult(
+  indicators: IndicatorDTO[],
+  status: IndicatorStatus,
+  fetchedAt: string,
+  message?: string,
+): RadarResult {
+  const currencies = indicators.filter((i) => CURRENCY_KEYS.includes(i.key as (typeof CURRENCY_KEYS)[number]));
+  const updatedAt = fetchedAt;
+  console.info(
+    `[radar] dados finais enviados: status=${status}; moedas=${currencies
+      .map((i) => `${i.key}=${i.valueBRL ?? i.value}`)
+      .join(",") || "sem moedas"}; updatedAt=${updatedAt}`,
+  );
+  return { indicators, currencies, status, fetchedAt, updatedAt, ...(message ? { message } : {}) };
+}
+
 export async function getRadarIndicators(opts?: {
   force?: boolean;
 }): Promise<RadarResult> {
+  console.info(`[radar] início da chamada; force=${!!opts?.force}`);
   const cached = await readCache();
 
   // Se nada precisa atualizar (todos frescos), retorna direto do cache.
@@ -595,7 +612,8 @@ export async function getRadarIndicators(opts?: {
       .map((c) => c.fetchedAt)
       .sort()
       .reverse()[0]!;
-    return { indicators: cached, status: "cache", fetchedAt };
+    console.info("[radar] usando cache fresco");
+    return radarResult(cached, "cache", fetchedAt);
   }
 
   const { map, anyFailure } = await refreshStale({
@@ -608,13 +626,12 @@ export async function getRadarIndicators(opts?: {
   );
 
   if (indicators.length === 0) {
-    return {
-      indicators: [],
-      status: "desatualizado",
-      fetchedAt: new Date(0).toISOString(),
-      message:
-        "Não conseguimos carregar os indicadores no momento. Tente novamente em instantes.",
-    };
+    return radarResult(
+      [],
+      "desatualizado",
+      new Date(0).toISOString(),
+      "Não conseguimos carregar os indicadores no momento. Tente novamente em instantes.",
+    );
   }
 
   const fetchedAt = indicators
@@ -623,25 +640,25 @@ export async function getRadarIndicators(opts?: {
     .reverse()[0]!;
 
   if (anyFailure) {
-    return {
-      indicators: indicators.map((c) =>
+    const staleIndicators = indicators.map((c) =>
         // Marca como desatualizado apenas os que não foram atualizados nesta rodada.
         c.fetchedAt === fetchedAt && c.status === "atualizado"
           ? c
           : { ...c, status: "desatualizado" },
-      ),
-      status: "desatualizado",
+      );
+    return radarResult(
+      staleIndicators,
+      "desatualizado",
       fetchedAt,
-      message:
-        "Alguns indicadores não puderam ser atualizados agora. Mostrando os últimos valores conhecidos.",
-    };
+      "Alguns indicadores não puderam ser atualizados agora. Mostrando os últimos valores conhecidos.",
+    );
   }
 
-  return {
+  return radarResult(
     indicators,
-    status: indicators.every((i) => i.status === "atualizado")
+    indicators.every((i) => i.status === "atualizado")
       ? "atualizado"
       : "cache",
     fetchedAt,
-  };
+  );
 }
