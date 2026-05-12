@@ -58,10 +58,10 @@ export type FeatureKey =
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
   sem_assinatura: "Sem assinatura",
-  pessoal_manual: "Pessoa Física Manual",
-  pessoal_premium: "Pessoa Física Premium",
-  mei_essencial: "MEI Essencial",
-  mei_inteligente: "MEI Inteligente",
+  pessoal_manual: "Controle Simples Pessoal",
+  pessoal_premium: "Controle Completo Pessoal",
+  mei_essencial: "Essencial para MEI",
+  mei_inteligente: "MEI Completo",
   empresa: "Empresa",
   admin_master: "Admin Master",
 };
@@ -79,13 +79,13 @@ export const PLAN_ORDER: Record<PlanTier, number> = {
 
 // Plano mínimo necessário para cada recurso.
 const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
-  // Recursos básicos -> a partir do Pessoa Física Manual
+  // Recursos básicos -> a partir do Controle Simples Pessoal
   contas_a_pagar: "pessoal_manual",
   contas_a_receber: "pessoal_manual",
   cartoes: "pessoal_manual",
   orcamento: "pessoal_manual",
   lancamentos_ilimitados: "pessoal_manual",
-  // Recursos premium -> a partir do Pessoa Física Premium
+  // Recursos premium -> a partir do Controle Completo Pessoal
   importar_extrato: "pessoal_premium",
   importar_fatura: "pessoal_premium",
   importar_conta: "pessoal_premium",
@@ -116,7 +116,7 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   // Investimentos: somente planos premium específicos
   investimentos: ["pessoal_premium", "mei_inteligente", "empresa"],
   investimentos_futuro: ["pessoal_premium", "mei_inteligente", "empresa"],
-  // Importações automáticas: só nos premium e MEI Inteligente / Empresa
+  // Importações automáticas: só nos premium e MEI Completo / Empresa
   importacoes: ["pessoal_premium", "mei_inteligente", "empresa"],
   importar_extrato: ["pessoal_premium", "mei_inteligente", "empresa"],
   importar_fatura: ["pessoal_premium", "mei_inteligente", "empresa"],
@@ -128,7 +128,7 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   recursos_empresa: ["empresa"],
   // MEI: somente planos MEI
   recursos_mei: ["mei_essencial", "mei_inteligente"],
-  // Contas a receber avançado: premium e MEI Inteligente / Empresa
+  // Contas a receber avançado: premium e MEI Completo / Empresa
   contas_a_receber_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
   // Contas conectadas: somente planos premium e MEI / Empresa
   contas_conectadas: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
@@ -249,7 +249,7 @@ export type CommercialPlan = {
 export const COMMERCIAL_PLANS: CommercialPlan[] = [
   {
     tier: "pessoal_manual",
-    name: "Pessoa Física Manual",
+    name: "Controle Simples Pessoal",
     priceCents: 2500,
     priceLabel: "R$ 25,00/mês",
     tagline: "Para quem quer organizar tudo manualmente.",
@@ -264,12 +264,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     tier: "pessoal_premium",
-    name: "Pessoa Física Premium",
+    name: "Controle Completo Pessoal",
     priceCents: 5000,
     priceLabel: "R$ 50,00/mês",
     tagline: "Mais automação para o seu dia a dia.",
     highlights: [
-      "Tudo do Pessoa Física Manual",
+      "Tudo do Controle Simples Pessoal",
       "Importar extrato, fatura e boleto/Pix",
       "Contas a receber completas",
       "Metas com imagens",
@@ -282,12 +282,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     tier: "mei_essencial",
-    name: "MEI Essencial",
+    name: "Essencial para MEI",
     priceCents: 3990,
     priceLabel: "R$ 39,90/mês",
     tagline: "O essencial para o seu MEI.",
     highlights: [
-      "Tudo do Pessoa Física Manual",
+      "Tudo do Controle Simples Pessoal",
       "Empresa Inteligente: Minha Empresa, clientes e fornecedores",
       "Contas a pagar com fornecedor e a receber com cliente",
       "Relatórios por cliente e por fornecedor",
@@ -300,12 +300,12 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
   {
     tier: "mei_inteligente",
-    name: "MEI Inteligente",
+    name: "MEI Completo",
     priceCents: 9000,
     priceLabel: "R$ 90,00/mês",
     tagline: "MEI com automação completa.",
     highlights: [
-      "Tudo do MEI Essencial",
+      "Tudo do Essencial para MEI",
       "Importar extrato, fatura e boleto/Pix",
       "Contas a receber avançadas",
       "Relatórios avançados do negócio",
@@ -324,7 +324,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     priceLabel: "R$ 180,00/mês",
     tagline: "Visão financeira completa para a sua empresa.",
     highlights: [
-      "Tudo do MEI Inteligente",
+      "Tudo do MEI Completo",
       "Perfil empresarial com CNPJ",
       "Cadastro de clientes e fornecedores por CNPJ",
       "Relatórios completos por cliente e por fornecedor",

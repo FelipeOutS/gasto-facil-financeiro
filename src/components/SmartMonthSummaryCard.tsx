@@ -108,7 +108,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
               <Lock className="mt-0.5 h-4 w-4 text-primary" />
               <p className="text-sm text-foreground/80">
                 Análise automática do seu mês com IA. Disponível nos planos
-                <strong> Pessoa Física Premium</strong>, <strong>MEI Inteligente</strong> e{" "}
+                <strong> Controle Completo Pessoal</strong>, <strong>MEI Completo</strong> e{" "}
                 <strong>Empresa</strong>.
               </p>
             </div>

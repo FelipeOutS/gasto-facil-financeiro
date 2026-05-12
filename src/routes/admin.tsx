@@ -850,10 +850,10 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
           <Select value={plano} onValueChange={setPlano}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="pessoal_manual">Pessoa Física Manual</SelectItem>
-              <SelectItem value="pessoal_premium">Pessoa Física Premium</SelectItem>
-              <SelectItem value="mei_essencial">MEI Essencial</SelectItem>
-              <SelectItem value="mei_inteligente">MEI Inteligente</SelectItem>
+              <SelectItem value="pessoal_manual">Controle Simples Pessoal</SelectItem>
+              <SelectItem value="pessoal_premium">Controle Completo Pessoal</SelectItem>
+              <SelectItem value="mei_essencial">Essencial para MEI</SelectItem>
+              <SelectItem value="mei_inteligente">MEI Completo</SelectItem>
               <SelectItem value="empresa">Empresa</SelectItem>
             </SelectContent>
           </Select>

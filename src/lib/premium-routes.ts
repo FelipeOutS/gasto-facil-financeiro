@@ -33,16 +33,16 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/contas-a-receber", feature: "contas_a_receber", title: "Contas a receber é um recurso premium" },
   { path: "/orcamento", feature: "orcamento", title: "Orçamento é um recurso premium" },
   { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
-  { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Pessoa Física Premium, MEI Inteligente e Empresa." },
+  { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
   { path: "/metas", feature: "metas_visuais", title: "Metas é um recurso premium" },
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
   { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
-  { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Pessoa Física Premium, MEI e Empresa." },
-  { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
-  { path: "/fornecedores", feature: "empresa_inteligente", title: "Fornecedores é um recurso para MEI e Empresa", description: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
-  { path: "/clientes", feature: "empresa_inteligente", title: "Clientes é um recurso para MEI e Empresa", description: "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
-  { path: "/contador", feature: "empresa_inteligente", title: "Pacote para Contador é um recurso para MEI e Empresa", description: "Gere um resumo mensal organizado para enviar ao seu contador. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
+  { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Controle Completo Pessoal, MEI e Empresa." },
+  { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
+  { path: "/fornecedores", feature: "empresa_inteligente", title: "Fornecedores é um recurso para MEI e Empresa", description: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
+  { path: "/clientes", feature: "empresa_inteligente", title: "Clientes é um recurso para MEI e Empresa", description: "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
+  { path: "/contador", feature: "empresa_inteligente", title: "Pacote para Contador é um recurso para MEI e Empresa", description: "Gere um resumo mensal organizado para enviar ao seu contador. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {

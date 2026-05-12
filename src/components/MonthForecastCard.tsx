@@ -109,7 +109,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
               <h2 className="mt-0.5 text-base font-bold tracking-tight sm:text-lg">Previsão de fechamento</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Veja se você vai fechar o mês positivo ou negativo. Disponível nos planos
-                <strong> Pessoa Física Premium</strong>, <strong>MEI Inteligente</strong> e <strong>Empresa</strong>.
+                <strong> Controle Completo Pessoal</strong>, <strong>MEI Completo</strong> e <strong>Empresa</strong>.
               </p>
             </div>
           </div>

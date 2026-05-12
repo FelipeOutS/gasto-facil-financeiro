@@ -579,7 +579,7 @@ async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok:
   const plan = sub.plan as PlanTier;
   if (!sub.active) return { ok: false, reason: "Sua assinatura não está ativa. Acesse Meu plano para liberar." };
   if (!planAllowsFeature(plan, "gasto_ai")) {
-    return { ok: false, reason: "Este recurso está disponível nos planos Pessoa Física Premium, MEI Inteligente e Empresa." };
+    return { ok: false, reason: "Este recurso está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." };
   }
   return { ok: true };
 }

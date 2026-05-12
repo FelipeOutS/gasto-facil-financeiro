@@ -27,10 +27,10 @@ type Plano =
 type Periodicidade = "mensal" | "trimestral" | "semestral" | "anual";
 
 const PLAN_BASE: Record<Plano, { cents: number; name: string }> = {
-  pessoal_manual: { cents: 2500, name: "Pessoa Física Manual" },
-  pessoal_premium: { cents: 5000, name: "Pessoa Física Premium" },
-  mei_essencial: { cents: 3990, name: "MEI Essencial" },
-  mei_inteligente: { cents: 9000, name: "MEI Inteligente" },
+  pessoal_manual: { cents: 2500, name: "Controle Simples Pessoal" },
+  pessoal_premium: { cents: 5000, name: "Controle Completo Pessoal" },
+  mei_essencial: { cents: 3990, name: "Essencial para MEI" },
+  mei_inteligente: { cents: 9000, name: "MEI Completo" },
   empresa: { cents: 18000, name: "Empresa" },
 };
 
