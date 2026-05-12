@@ -7,7 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-/** Cópia client-safe do CompanyDTO retornado por consultarCnpj. */
+/** Cópia client-safe do EmpresaConsultada retornado por consultarCnpj. */
 export interface EmpresaConsultada {
   cnpj: string;
   cnpjFormatado: string;
@@ -75,12 +75,12 @@ export async function getMinhaEmpresa(
 }
 
 /**
- * Salva (cria) a empresa do usuário a partir de um CompanyDTO já consultado.
+ * Salva (cria) a empresa do usuário a partir de um EmpresaConsultada já consultado.
  * Falha se já existir uma empresa para o usuário (constraint UNIQUE).
  */
 export async function salvarMinhaEmpresa(
   userId: string,
-  company: CompanyDTO,
+  company: EmpresaConsultada,
   source: string | null,
   fetchedAt: string | null,
 ): Promise<MinhaEmpresa> {
@@ -117,10 +117,10 @@ export async function salvarMinhaEmpresa(
   return data as MinhaEmpresa;
 }
 
-/** Atualiza os dados da empresa do usuário a partir de um CompanyDTO. */
+/** Atualiza os dados da empresa do usuário a partir de um EmpresaConsultada. */
 export async function atualizarMinhaEmpresa(
   id: string,
-  company: CompanyDTO,
+  company: EmpresaConsultada,
   source: string | null,
   fetchedAt: string | null,
 ): Promise<MinhaEmpresa> {
