@@ -40,6 +40,10 @@ import {
   Send,
   Calculator,
   CalendarClock,
+  Building2,
+  Users,
+  ClipboardList,
+  Activity,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
