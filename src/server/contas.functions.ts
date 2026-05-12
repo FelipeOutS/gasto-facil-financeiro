@@ -210,6 +210,7 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
           origem: CONTA_GASTO_ORIGEM,
           id_operacao_banco: opId(conta.id),
           invoice_month: invoiceMonth,
+          fornecedor_id: conta.fornecedor_id ?? null,
           updated_at: now,
         };
 
