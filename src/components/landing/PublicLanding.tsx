@@ -3721,7 +3721,7 @@ export function Footer() {
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Central de ajuda</LandingAnchorLink></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
               <li><Link to="/status" className="transition-colors hover:text-slate-900">Status do sistema</Link></li>
             </ul>
