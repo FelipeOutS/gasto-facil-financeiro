@@ -87,6 +87,7 @@ function ContasAReceberPage() {
   const [confirmCancel, setConfirmCancel] = useState<ContaReceber | null>(null);
   const [filtro, setFiltro] = useState<FilterStatus>("todas");
   const [busca, setBusca] = useState("");
+  const { porId: clientesPorId } = useClientes();
 
   async function recarregar() {
     if (!userId) return;
