@@ -46,7 +46,6 @@ import {
   Activity,
   Cloud,
   Landmark,
-  
   TrendingDown,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
@@ -2390,8 +2389,8 @@ function EmpresaInteligenteSection() {
   ];
 
   const trust = [
-    { icon: ShieldCheck, title: "Segurança de dados", text: "e conformidade" },
-    { icon: Landmark, title: "Integração bancária", text: "100% segura" },
+    { icon: ShieldCheck, title: "Segurança de dados", text: "e privacidade" },
+    { icon: Landmark, title: "Importação de extratos", text: "com segurança" },
     { icon: Cloud, title: "Backup automático", text: "na nuvem" },
   ];
 
