@@ -21,6 +21,7 @@ import {
   Bell,
   Sparkles,
   Users,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
