@@ -625,6 +625,9 @@ export function montarPacoteContador(
     porCliente: opcoes.incluirClientes ? porCliente : [],
     porFornecedor: opcoes.incluirFornecedores ? porFornecedor : [],
     pendencias,
+    comparativo: opcoes.incluirComparativo
+      ? calcComparativo(input, resumo)
+      : null,
   };
 }
 
