@@ -253,6 +253,7 @@ type GastoRow = {
   origem?: string | null;
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
+  fornecedor_id?: string | null;
   created_at: string;
   updated_at: string;
 };
