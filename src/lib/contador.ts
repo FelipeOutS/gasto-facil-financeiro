@@ -881,6 +881,29 @@ export function gerarCsvPacote(p: PacoteContador): string {
     out.push("");
   }
 
+  if (p.comparativo) {
+    out.push(
+      `Comparativo com mês anterior (${rotuloPeriodo(p.comparativo.periodoAnterior)})`,
+    );
+    out.push(
+      csvLine(["Indicador", "Mês atual", "Mês anterior", "Diferença", "Variação"]),
+    );
+    for (const v of p.comparativo.variacoes) {
+      const atual =
+        v.formato === "valor" ? v.atual.toFixed(2) : String(v.atual);
+      const anterior =
+        v.formato === "valor" ? v.anterior.toFixed(2) : String(v.anterior);
+      const dif =
+        v.formato === "valor" ? v.diferenca.toFixed(2) : String(v.diferenca);
+      let variacao: string;
+      if (v.tipo === "zerado") variacao = "Sem variação";
+      else if (v.tipo === "novo") variacao = "Sem base anterior";
+      else variacao = fmtPct(v.variacaoPercentual ?? 0);
+      out.push(csvLine([v.rotulo, atual, anterior, dif, variacao]));
+    }
+    out.push("");
+  }
+
   // BOM UTF-8 para Excel abrir certo
   return "\ufeff" + out.join("\n");
 }
