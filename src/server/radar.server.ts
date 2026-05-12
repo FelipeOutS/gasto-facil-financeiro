@@ -141,7 +141,8 @@ async function persist(quotes: Record<string, AwesomeApiQuote>): Promise<Indicat
 
   const { error } = await supabaseAdmin
     .from("economic_indicators")
-    .upsert(rows, { onConflict: "indicator_key" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .upsert(rows as any, { onConflict: "indicator_key" });
 
   if (error) {
     console.error("[radar] erro gravando cache:", error.message);
