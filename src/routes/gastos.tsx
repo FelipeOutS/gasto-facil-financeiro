@@ -1150,7 +1150,7 @@ function GastosPage() {
           )}
         </div>
       ) : (
-        <ul className="mt-3 space-y-2 pb-4">
+        <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
               const cat = getCategoriaById(g.categoriaId);

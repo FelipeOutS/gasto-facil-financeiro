@@ -61,6 +61,8 @@ export type Gasto = {
   importBatchId?: string;
   /** ID da operação no banco (quando importado de extrato). */
   idOperacaoBanco?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string;
   criadoEm: string;
   atualizadoEm: string;
 };

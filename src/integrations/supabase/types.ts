@@ -337,6 +337,7 @@ export type Database = {
           data_pagamento: string | null
           data_vencimento: string
           forma_pagamento: string | null
+          fornecedor_id: string | null
           frequencia_recorrencia: string | null
           gasto_id: string | null
           id: string
@@ -366,6 +367,7 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento: string
           forma_pagamento?: string | null
+          fornecedor_id?: string | null
           frequencia_recorrencia?: string | null
           gasto_id?: string | null
           id?: string
@@ -395,6 +397,7 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento?: string
           forma_pagamento?: string | null
+          fornecedor_id?: string | null
           frequencia_recorrencia?: string | null
           gasto_id?: string | null
           id?: string
@@ -416,6 +419,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_a_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
         ]
@@ -872,6 +882,7 @@ export type Database = {
           essencial: boolean | null
           estabelecimento: string
           forma_pagamento: string
+          fornecedor_id: string | null
           gasto_fixo: boolean | null
           grupo_parcelamento_id: string | null
           horario: string | null
@@ -902,6 +913,7 @@ export type Database = {
           essencial?: boolean | null
           estabelecimento?: string
           forma_pagamento: string
+          fornecedor_id?: string | null
           gasto_fixo?: boolean | null
           grupo_parcelamento_id?: string | null
           horario?: string | null
@@ -932,6 +944,7 @@ export type Database = {
           essencial?: boolean | null
           estabelecimento?: string
           forma_pagamento?: string
+          fornecedor_id?: string | null
           gasto_fixo?: boolean | null
           grupo_parcelamento_id?: string | null
           horario?: string | null
@@ -957,6 +970,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
         ]

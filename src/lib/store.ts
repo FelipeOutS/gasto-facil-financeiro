@@ -253,6 +253,7 @@ type GastoRow = {
   origem?: string | null;
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
+  fornecedor_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -283,6 +284,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
+    fornecedorId: r.fornecedor_id ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -1657,6 +1659,8 @@ export type NovoGastoInput = {
   importBatchId?: string;
   /** ID da operação no banco. */
   idOperacaoBanco?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string | null;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
@@ -1892,6 +1896,8 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
       ? input.invoiceMonth
       : null;
+  const fornecedorVal =
+    input.fornecedorId && input.fornecedorId.trim() ? input.fornecedorId.trim() : null;
   for (const o of out) {
     type ExtraCols = GastoInsert & {
       horario?: string | null;
@@ -1899,6 +1905,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       import_batch_id?: string | null;
       id_operacao_banco?: string | null;
       invoice_month?: string | null;
+      fornecedor_id?: string | null;
     };
     (o.row as ExtraCols).horario = horarioVal;
     (o.row as ExtraCols).origem = origemVal;
@@ -1907,11 +1914,13 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     const fallbackInvoiceMonth = `${o.client.ano}-${String(o.client.mes).padStart(2, "0")}`;
     const resolvedInvoiceMonth = invoiceMonthVal ?? fallbackInvoiceMonth;
     (o.row as ExtraCols).invoice_month = resolvedInvoiceMonth;
+    (o.row as ExtraCols).fornecedor_id = fornecedorVal;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
     if (batchId) o.client.importBatchId = batchId;
     if (opId) o.client.idOperacaoBanco = opId;
     o.client.invoiceMonth = resolvedInvoiceMonth;
+    if (fornecedorVal) o.client.fornecedorId = fornecedorVal;
   }
   return out;
 }
@@ -2019,6 +2028,9 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
     (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
   if (patch.origem !== undefined)
     (row as GastoUpdate & { origem?: string | null }).origem = patch.origem ?? null;
+  if (patch.fornecedorId !== undefined)
+    (row as GastoUpdate & { fornecedor_id?: string | null }).fornecedor_id =
+      patch.fornecedorId ?? null;
 
   void supabase
     .from("gastos")
