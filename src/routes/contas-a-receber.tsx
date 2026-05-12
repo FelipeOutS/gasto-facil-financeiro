@@ -689,8 +689,11 @@ function ContaReceberFormDialog({
               maxLength={120}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cr-categoria">Categoria (opcional)</Label>
+          <ClienteSelect
+            value={clienteId}
+            onChange={setClienteId}
+            clientesAtivos={clientesAtivos}
+          />
             <Input
               id="cr-categoria"
               value={categoria}
