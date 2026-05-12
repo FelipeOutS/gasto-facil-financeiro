@@ -19,6 +19,7 @@ import {
   Users,
   Globe,
   Building2,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import {
