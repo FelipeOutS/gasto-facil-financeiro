@@ -190,6 +190,81 @@ export type Database = {
         }
         Relationships: []
       }
+      cnpj_cache: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cnae_principal_codigo: string | null
+          cnae_principal_descricao: string | null
+          cnpj: string
+          complemento: string | null
+          created_at: string
+          data_abertura: string | null
+          expires_at: string
+          fetched_at: string
+          logradouro: string | null
+          municipio: string | null
+          natureza_juridica: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          porte: string | null
+          raw_payload: Json | null
+          razao_social: string | null
+          situacao_cadastral: string | null
+          source: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj: string
+          complemento?: string | null
+          created_at?: string
+          data_abertura?: string | null
+          expires_at?: string
+          fetched_at?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          porte?: string | null
+          raw_payload?: Json | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string
+          complemento?: string | null
+          created_at?: string
+          data_abertura?: string | null
+          expires_at?: string
+          fetched_at?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          porte?: string | null
+          raw_payload?: Json | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connected_accounts: {
         Row: {
           accepted_at: string | null
