@@ -133,7 +133,7 @@ async function persist(quotes: Record<string, AwesomeApiQuote>): Promise<Indicat
       high: num(q.high),
       low: num(q.low),
       fetched_at: now,
-      raw_payload: q as unknown as Record<string, unknown> as never,
+      raw_payload: q as unknown as Record<string, unknown>,
     };
   }).filter((r): r is NonNullable<typeof r> => r !== null);
 
