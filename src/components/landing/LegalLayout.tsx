@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { Footer as PublicFooter } from "@/components/landing/PublicLanding";
 
 type Props = {
   title: string;
