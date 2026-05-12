@@ -3670,7 +3670,7 @@ function FinalCTA() {
 
 /* ============================== FOOTER ============================== */
 
-function Footer() {
+export function Footer() {
   return (
     <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
