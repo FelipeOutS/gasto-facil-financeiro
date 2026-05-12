@@ -3285,6 +3285,9 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   const rows: any[] = [];
   const catUuid = input.categoriaId ? categoriaUuidFor(input.categoriaId) : null;
 
+  const fornecedorVal =
+    input.fornecedorId && input.fornecedorId.trim() ? input.fornecedorId.trim() : null;
+
   // Campos comuns que se repetem em cada ocorrência
   const extras = {
     beneficiario: input.beneficiario,
@@ -3294,6 +3297,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     chavePix: input.chavePix,
     bancoEmissor: input.bancoEmissor,
     importBatchId: input.importBatchId,
+    fornecedorId: fornecedorVal,
   };
   const extrasRow = {
     beneficiario: input.beneficiario ?? null,
@@ -3303,6 +3307,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     chave_pix: input.chavePix ?? null,
     banco_emissor: input.bancoEmissor ?? null,
     import_batch_id: input.importBatchId ?? null,
+    fornecedor_id: fornecedorVal,
   };
 
   const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
