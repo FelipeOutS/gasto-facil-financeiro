@@ -55,8 +55,10 @@ import {
   nomeMes,
   gerarResumoTexto,
   gerarCsvPacote,
+  rotuloVariacao,
   type PacoteContador,
   type OpcoesPacote,
+  type VariacaoIndicador,
 } from "@/lib/contador";
 import type { Cartao } from "@/lib/types";
 
@@ -134,6 +136,7 @@ function PacoteContadorPage() {
     incluirClientes: true,
     incluirFornecedores: true,
     incluirPendencias: true,
+    incluirComparativo: true,
   });
 
   const cartoesPorId = useMemo<Record<string, Cartao>>(() => {
@@ -342,6 +345,13 @@ function PacoteContadorPage() {
               setOpcoes((o) => ({ ...o, incluirPendencias: v }))
             }
           />
+          <ToggleRow
+            label="Incluir comparativo com mês anterior"
+            value={opcoes.incluirComparativo}
+            onChange={(v) =>
+              setOpcoes((o) => ({ ...o, incluirComparativo: v }))
+            }
+          />
         </div>
       </section>
 
@@ -417,11 +427,13 @@ function PacoteContadorPage() {
                 label="Receitas recebidas"
                 value={formatBRL(pacote.resumo.totalReceitasRecebidas)}
                 accent="primary"
+                variacao={variacaoPor(pacote, "receitas")}
               />
               <KpiCard
                 icon={<TrendingDown className="h-4 w-4" />}
                 label="Despesas pagas"
                 value={formatBRL(pacote.resumo.totalDespesasPagas)}
+                variacao={variacaoPor(pacote, "despesas")}
               />
               <KpiCard
                 icon={<Wallet className="h-4 w-4" />}
@@ -430,30 +442,72 @@ function PacoteContadorPage() {
                 accent={
                   pacote.resumo.saldoPeriodo < 0 ? "warning" : "primary"
                 }
+                variacao={variacaoPor(pacote, "saldo")}
               />
               <KpiCard
                 icon={<TrendingUp className="h-4 w-4" />}
                 label="A receber em aberto"
                 value={formatBRL(pacote.resumo.contasReceberEmAberto)}
+                variacao={variacaoPor(pacote, "contasReceberEmAberto")}
               />
               <KpiCard
                 icon={<TrendingDown className="h-4 w-4" />}
                 label="A pagar em aberto"
                 value={formatBRL(pacote.resumo.contasPagarEmAberto)}
                 accent="warning"
+                variacao={variacaoPor(pacote, "contasPagarEmAberto")}
               />
               <KpiCard
                 icon={<Users className="h-4 w-4" />}
                 label="Clientes movimentados"
                 value={String(pacote.resumo.qtdClientesMovimentados)}
+                variacao={variacaoPor(pacote, "clientesMovimentados")}
               />
               <KpiCard
                 icon={<Truck className="h-4 w-4" />}
                 label="Fornecedores movimentados"
                 value={String(pacote.resumo.qtdFornecedoresMovimentados)}
+                variacao={variacaoPor(pacote, "fornecedoresMovimentados")}
               />
             </div>
           </section>
+
+          {/* Comparativo com mês anterior */}
+          {opcoes.incluirComparativo && pacote.comparativo && (
+            <section className="mt-6 print-block">
+              <h3 className="mb-2 text-sm font-semibold">
+                Comparativo com {rotuloPeriodo(pacote.comparativo.periodoAnterior)}
+              </h3>
+              <div className="overflow-x-auto rounded-xl border bg-card">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left font-medium">Indicador</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Mês atual</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Mês anterior</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Variação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pacote.comparativo.variacoes.map((v) => (
+                      <tr key={v.chave} className="border-t">
+                        <td className="px-2 py-1.5">{v.rotulo}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">
+                          {v.formato === "valor" ? formatBRL(v.atual) : v.atual}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                          {v.formato === "valor" ? formatBRL(v.anterior) : v.anterior}
+                        </td>
+                        <td className="px-2 py-1.5 text-right">
+                          <VariacaoBadge v={v} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Receitas */}
           <Secao titulo="Receitas" vazio="Sem receitas no período.">
@@ -647,11 +701,13 @@ function KpiCard({
   label,
   value,
   accent,
+  variacao,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   accent?: "primary" | "warning";
+  variacao?: VariacaoIndicador | null;
 }) {
   return (
     <div
@@ -677,7 +733,49 @@ function KpiCard({
       <p className="mt-1.5 truncate text-base font-semibold tabular-nums">
         {value}
       </p>
+      {variacao && (
+        <p
+          className={cn(
+            "mt-0.5 truncate text-[10px]",
+            variacaoTextoCor(variacao),
+          )}
+        >
+          {rotuloVariacao(variacao)}
+        </p>
+      )}
     </div>
+  );
+}
+
+function variacaoPor(
+  pacote: PacoteContador,
+  chave: VariacaoIndicador["chave"],
+): VariacaoIndicador | null {
+  if (!pacote.comparativo) return null;
+  return pacote.comparativo.variacoes.find((v) => v.chave === chave) ?? null;
+}
+
+/** Cor textual para badge/legenda de variação.
+ *  Receitas: subir é bom (verde). Despesas e contas a pagar: subir é ruim (âmbar).
+ *  Demais: neutro. */
+function variacaoTextoCor(v: VariacaoIndicador): string {
+  if (v.tipo !== "comparavel") return "text-muted-foreground";
+  const dif = v.diferenca;
+  if (dif === 0) return "text-muted-foreground";
+  const subirEhRuim =
+    v.chave === "despesas" || v.chave === "contasPagarEmAberto";
+  const subindo = dif > 0;
+  const positivo = subirEhRuim ? !subindo : subindo;
+  return positivo
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-amber-600 dark:text-amber-400";
+}
+
+function VariacaoBadge({ v }: { v: VariacaoIndicador }) {
+  return (
+    <span className={cn("text-[11px] font-medium", variacaoTextoCor(v))}>
+      {rotuloVariacao(v)}
+    </span>
   );
 }
 

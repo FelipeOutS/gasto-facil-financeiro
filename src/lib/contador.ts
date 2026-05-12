@@ -39,6 +39,7 @@ export interface OpcoesPacote {
   incluirClientes: boolean;
   incluirFornecedores: boolean;
   incluirPendencias: boolean;
+  incluirComparativo: boolean;
 }
 
 export interface ReceitaPacote {
@@ -123,6 +124,33 @@ export interface ResumoFinanceiro {
   qtdFornecedoresMovimentados: number;
 }
 
+export interface VariacaoIndicador {
+  chave:
+    | "receitas"
+    | "despesas"
+    | "saldo"
+    | "contasReceberEmAberto"
+    | "contasPagarEmAberto"
+    | "clientesMovimentados"
+    | "fornecedoresMovimentados";
+  rotulo: string;
+  atual: number;
+  anterior: number;
+  diferenca: number;
+  /** null quando não há base de comparação (anterior = 0 e atual > 0) ou ambos = 0 */
+  variacaoPercentual: number | null;
+  /** "novo" quando anterior=0 e atual>0; "zerado" quando ambos=0; "comparavel" caso contrário */
+  tipo: "novo" | "zerado" | "comparavel";
+  /** "valor" mostra como moeda; "quantidade" mostra como número */
+  formato: "valor" | "quantidade";
+}
+
+export interface ComparativoMes {
+  periodoAnterior: PeriodoMes;
+  resumoAnterior: ResumoFinanceiro;
+  variacoes: VariacaoIndicador[];
+}
+
 export interface PacoteContador {
   periodo: PeriodoMes;
   geradoEm: string; // ISO
@@ -144,6 +172,8 @@ export interface PacoteContador {
   porCliente: ResumoCliente[];
   porFornecedor: ResumoFornecedor[];
   pendencias: PendenciasPacote;
+  /** null quando o toggle de comparativo estiver desativado */
+  comparativo: ComparativoMes | null;
 }
 
 // ============================================================
@@ -185,9 +215,162 @@ function nomeFornecedor(f: Fornecedor | undefined | null): string {
   );
 }
 
-// ============================================================
-// Entrada principal
-// ============================================================
+export function periodoAnterior(p: PeriodoMes): PeriodoMes {
+  if (p.mes === 1) return { mes: 12, ano: p.ano - 1 };
+  return { mes: p.mes - 1, ano: p.ano };
+}
+
+/** Calcula apenas o ResumoFinanceiro para um período (sem listas detalhadas). */
+function calcResumoFinanceiro(
+  input: MontarPacoteInput,
+  periodo: PeriodoMes,
+  incluirEmAberto: boolean,
+): ResumoFinanceiro {
+  const receitasMes = input.receitas.filter((r) => dataNoMes(r.data, periodo));
+  const gastosMes = input.gastos.filter((g) => dataNoMes(g.data, periodo));
+  const contasPagarMes = input.contasAPagar.filter((c) =>
+    dataNoMes(c.dataVencimento, periodo),
+  );
+  const contasReceberMes = input.contasAReceber.filter((c) =>
+    dataNoMes(c.data_prevista, periodo),
+  );
+
+  const totalReceitasRecebidas = receitasMes.reduce(
+    (s, r) => s + (Number(r.valor) || 0),
+    0,
+  );
+  let totalDespesasPagas = gastosMes.reduce(
+    (s, g) => s + (Number(g.valor) || 0),
+    0,
+  );
+  let contasReceberEmAberto = 0;
+  let contasPagarEmAberto = 0;
+  for (const c of contasPagarMes) {
+    const eff = statusContaEfetivo(c);
+    if (eff === "pago") totalDespesasPagas += Number(c.valor) || 0;
+    else if (eff === "pendente" || eff === "atrasado")
+      contasPagarEmAberto += Number(c.valor) || 0;
+  }
+  for (const c of contasReceberMes) {
+    const eff = statusContaReceberEfetivo(c);
+    if (eff === "pendente" || eff === "atrasado" || eff === "parcial") {
+      contasReceberEmAberto +=
+        Number(c.valor_restante) || Number(c.valor_total) || 0;
+    }
+  }
+
+  const clientesSet = new Set<string>();
+  for (const r of receitasMes) if (r.clienteId) clientesSet.add(r.clienteId);
+  for (const c of contasReceberMes) {
+    if (!c.cliente_id) continue;
+    const eff = statusContaReceberEfetivo(c);
+    if (eff === "cancelado") continue;
+    clientesSet.add(c.cliente_id);
+  }
+  const fornSet = new Set<string>();
+  for (const g of gastosMes) if (g.fornecedorId) fornSet.add(g.fornecedorId);
+  for (const c of contasPagarMes) {
+    if (!c.fornecedorId) continue;
+    fornSet.add(c.fornecedorId);
+  }
+
+  return {
+    totalReceitasRecebidas,
+    totalDespesasPagas,
+    saldoPeriodo: totalReceitasRecebidas - totalDespesasPagas,
+    contasReceberEmAberto: incluirEmAberto ? contasReceberEmAberto : 0,
+    contasPagarEmAberto: incluirEmAberto ? contasPagarEmAberto : 0,
+    qtdClientesMovimentados: clientesSet.size,
+    qtdFornecedoresMovimentados: fornSet.size,
+  };
+}
+
+function calcVariacao(
+  chave: VariacaoIndicador["chave"],
+  rotulo: string,
+  atual: number,
+  anterior: number,
+  formato: VariacaoIndicador["formato"],
+): VariacaoIndicador {
+  const diferenca = atual - anterior;
+  let tipo: VariacaoIndicador["tipo"];
+  let variacaoPercentual: number | null;
+  if (anterior === 0 && atual === 0) {
+    tipo = "zerado";
+    variacaoPercentual = null;
+  } else if (anterior === 0) {
+    tipo = "novo";
+    variacaoPercentual = null;
+  } else {
+    tipo = "comparavel";
+    variacaoPercentual = (diferenca / Math.abs(anterior)) * 100;
+  }
+  return { chave, rotulo, atual, anterior, diferenca, variacaoPercentual, tipo, formato };
+}
+
+function calcComparativo(
+  input: MontarPacoteInput,
+  resumoAtual: ResumoFinanceiro,
+): ComparativoMes {
+  const periodoAnt = periodoAnterior(input.periodo);
+  const resumoAnt = calcResumoFinanceiro(
+    input,
+    periodoAnt,
+    input.opcoes.incluirEmAberto,
+  );
+  const variacoes: VariacaoIndicador[] = [
+    calcVariacao(
+      "receitas",
+      "Receitas recebidas",
+      resumoAtual.totalReceitasRecebidas,
+      resumoAnt.totalReceitasRecebidas,
+      "valor",
+    ),
+    calcVariacao(
+      "despesas",
+      "Despesas pagas",
+      resumoAtual.totalDespesasPagas,
+      resumoAnt.totalDespesasPagas,
+      "valor",
+    ),
+    calcVariacao(
+      "saldo",
+      "Saldo do período",
+      resumoAtual.saldoPeriodo,
+      resumoAnt.saldoPeriodo,
+      "valor",
+    ),
+    calcVariacao(
+      "contasReceberEmAberto",
+      "Contas a receber em aberto",
+      resumoAtual.contasReceberEmAberto,
+      resumoAnt.contasReceberEmAberto,
+      "valor",
+    ),
+    calcVariacao(
+      "contasPagarEmAberto",
+      "Contas a pagar em aberto",
+      resumoAtual.contasPagarEmAberto,
+      resumoAnt.contasPagarEmAberto,
+      "valor",
+    ),
+    calcVariacao(
+      "clientesMovimentados",
+      "Clientes movimentados",
+      resumoAtual.qtdClientesMovimentados,
+      resumoAnt.qtdClientesMovimentados,
+      "quantidade",
+    ),
+    calcVariacao(
+      "fornecedoresMovimentados",
+      "Fornecedores movimentados",
+      resumoAtual.qtdFornecedoresMovimentados,
+      resumoAnt.qtdFornecedoresMovimentados,
+      "quantidade",
+    ),
+  ];
+  return { periodoAnterior: periodoAnt, resumoAnterior: resumoAnt, variacoes };
+}
 
 export interface MontarPacoteInput {
   periodo: PeriodoMes;
@@ -442,6 +625,9 @@ export function montarPacoteContador(
     porCliente: opcoes.incluirClientes ? porCliente : [],
     porFornecedor: opcoes.incluirFornecedores ? porFornecedor : [],
     pendencias,
+    comparativo: opcoes.incluirComparativo
+      ? calcComparativo(input, resumo)
+      : null,
   };
 }
 
@@ -476,6 +662,21 @@ function brl(n: number): string {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function fmtPct(pct: number): string {
+  const v = pct.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  return `${pct > 0 ? "+" : ""}${v}%`;
+}
+
+/** Texto curto descritivo da variação ("+16,7%", "Sem base anterior", "Sem variação"). */
+export function rotuloVariacao(v: VariacaoIndicador): string {
+  if (v.tipo === "zerado") return "Sem variação";
+  if (v.tipo === "novo") return "Sem base anterior";
+  return `${fmtPct(v.variacaoPercentual ?? 0)} vs. mês anterior`;
+}
+
 /** Gera um resumo curto em texto para "Copiar resumo". */
 export function gerarResumoTexto(p: PacoteContador): string {
   const linhas: string[] = [];
@@ -495,6 +696,42 @@ export function gerarResumoTexto(p: PacoteContador): string {
   linhas.push(`Contas a pagar em aberto: ${brl(p.resumo.contasPagarEmAberto)}`);
   linhas.push(`Clientes movimentados: ${p.resumo.qtdClientesMovimentados}`);
   linhas.push(`Fornecedores movimentados: ${p.resumo.qtdFornecedoresMovimentados}`);
+
+  if (p.comparativo) {
+    linhas.push("");
+    linhas.push(
+      `Comparativo com ${rotuloPeriodo(p.comparativo.periodoAnterior)}:`,
+    );
+    const vReceita = p.comparativo.variacoes.find((x) => x.chave === "receitas");
+    const vDespesa = p.comparativo.variacoes.find((x) => x.chave === "despesas");
+    const ambosSemBase =
+      vReceita?.tipo !== "comparavel" && vDespesa?.tipo !== "comparavel";
+    if (ambosSemBase) {
+      linhas.push("Sem base suficiente para comparar com o mês anterior.");
+    } else {
+      const partes: string[] = [];
+      if (vReceita) {
+        if (vReceita.tipo === "comparavel") {
+          partes.push(`as receitas variaram ${fmtPct(vReceita.variacaoPercentual ?? 0)}`);
+        } else if (vReceita.tipo === "novo") {
+          partes.push("as receitas começaram neste mês");
+        }
+      }
+      if (vDespesa) {
+        if (vDespesa.tipo === "comparavel") {
+          partes.push(`as despesas variaram ${fmtPct(vDespesa.variacaoPercentual ?? 0)}`);
+        } else if (vDespesa.tipo === "novo") {
+          partes.push("as despesas começaram neste mês");
+        }
+      }
+      if (partes.length > 0) {
+        linhas.push(
+          `Em relação ao mês anterior, ${partes.join(" e ")}.`,
+        );
+      }
+    }
+  }
+
   return linhas.join("\n");
 }
 
@@ -640,6 +877,29 @@ export function gerarCsvPacote(p: PacoteContador): string {
           f.qtdLancamentos,
         ]),
       );
+    }
+    out.push("");
+  }
+
+  if (p.comparativo) {
+    out.push(
+      `Comparativo com mês anterior (${rotuloPeriodo(p.comparativo.periodoAnterior)})`,
+    );
+    out.push(
+      csvLine(["Indicador", "Mês atual", "Mês anterior", "Diferença", "Variação"]),
+    );
+    for (const v of p.comparativo.variacoes) {
+      const atual =
+        v.formato === "valor" ? v.atual.toFixed(2) : String(v.atual);
+      const anterior =
+        v.formato === "valor" ? v.anterior.toFixed(2) : String(v.anterior);
+      const dif =
+        v.formato === "valor" ? v.diferenca.toFixed(2) : String(v.diferenca);
+      let variacao: string;
+      if (v.tipo === "zerado") variacao = "Sem variação";
+      else if (v.tipo === "novo") variacao = "Sem base anterior";
+      else variacao = fmtPct(v.variacaoPercentual ?? 0);
+      out.push(csvLine([v.rotulo, atual, anterior, dif, variacao]));
     }
     out.push("");
   }
