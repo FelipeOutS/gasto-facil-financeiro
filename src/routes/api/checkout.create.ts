@@ -30,8 +30,8 @@ const PLAN_BASE: Record<Plano, { cents: number; name: string }> = {
   pessoal_manual: { cents: 2500, name: "Pessoa Física Manual" },
   pessoal_premium: { cents: 5000, name: "Pessoa Física Premium" },
   mei_essencial: { cents: 3990, name: "MEI Essencial" },
-  mei_inteligente: { cents: 7000, name: "MEI Inteligente" },
-  empresa: { cents: 15000, name: "Empresa" },
+  mei_inteligente: { cents: 9000, name: "MEI Inteligente" },
+  empresa: { cents: 18000, name: "Empresa" },
 };
 
 const PERIOD_INFO: Record<Periodicidade, { months: number; discount: number; label: string }> = {
