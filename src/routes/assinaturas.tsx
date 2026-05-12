@@ -964,9 +964,60 @@ function RecorrenciaDialog({
               placeholder="Ex: Spotify, Aluguel"
             />
           </div>
+          <div>
+            <label className="text-xs font-medium">Moeda</label>
+            <Select
+              value={moeda}
+              onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BRL">🇧🇷 Real (BRL)</SelectItem>
+                <SelectItem value="USD">🇺🇸 Dólar (USD)</SelectItem>
+                <SelectItem value="EUR">🇪🇺 Euro (EUR)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {moeda !== "BRL" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium">
+                  Valor em {moeda === "USD" ? "dólares" : "euros"}
+                </label>
+                <Input
+                  value={valorOriginal}
+                  onChange={(e) => setValorOriginal(e.target.value)}
+                  inputMode="decimal"
+                  placeholder={moeda === "USD" ? "Ex: 9,99" : "Ex: 12,50"}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Cotação atual</label>
+                <Input
+                  readOnly
+                  value={
+                    (moeda === "USD" ? cotacaoUSD : cotacaoEUR)
+                      ? formatBRL(
+                          (moeda === "USD" ? cotacaoUSD : cotacaoEUR) as number,
+                        )
+                      : "—"
+                  }
+                  className="bg-muted/40"
+                />
+              </div>
+              <p className="col-span-2 rounded-md bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                Estimativa em reais já com IOF e spread médios. O valor final
+                pode variar a cada cobrança.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium">Valor</label>
+              <label className="text-xs font-medium">
+                {moeda === "BRL" ? "Valor (R$)" : "Estimativa em reais"}
+              </label>
               <Input
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
