@@ -284,6 +284,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
+    fornecedorId: r.fornecedor_id ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
