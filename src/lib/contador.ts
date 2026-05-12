@@ -611,6 +611,8 @@ export function gerarCsvPacote(p: PacoteContador): string {
     );
   }
   out.push("");
+
+  if (p.porCliente.length > 0) {
     out.push("Resumo por cliente");
     out.push(csvLine(["Cliente", "Recebido", "Em aberto", "Lançamentos"]));
     for (const c of p.porCliente) {
