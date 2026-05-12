@@ -632,6 +632,8 @@ export async function criarRecorrencia(
     observacao: input.observacao ?? null,
     ultimo_valor: input.ultimoValor ?? null,
     detection_key: input.detectionKey ?? null,
+    moeda: input.moeda ?? "BRL",
+    valor_original: input.valorOriginal ?? null,
   };
 
   const { data, error } = await (supabase as any)
