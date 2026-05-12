@@ -301,8 +301,8 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   {
     tier: "mei_inteligente",
     name: "MEI Inteligente",
-    priceCents: 7000,
-    priceLabel: "R$ 70,00/mês",
+    priceCents: 9000,
+    priceLabel: "R$ 90,00/mês",
     tagline: "MEI com automação completa.",
     highlights: [
       "Tudo do MEI Essencial",
