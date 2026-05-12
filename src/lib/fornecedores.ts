@@ -135,7 +135,13 @@ export async function atualizarFornecedor(
   id: string,
   patch: EdicaoFornecedor,
 ): Promise<Fornecedor> {
-  const payload: Record<string, unknown> = {};
+  const payload: {
+    nome?: string;
+    apelido?: string | null;
+    telefone?: string | null;
+    email?: string | null;
+    observacoes?: string | null;
+  } = {};
   if (patch.nome !== undefined) payload.nome = patch.nome.trim();
   if (patch.apelido !== undefined) payload.apelido = patch.apelido?.trim() || null;
   if (patch.telefone !== undefined) payload.telefone = patch.telefone?.trim() || null;
