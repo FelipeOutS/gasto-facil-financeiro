@@ -865,6 +865,12 @@ function RecorrenciaDialog({
     if (editing) {
       setNome(editing.nome);
       setValor(editing.valor.toFixed(2).replace(".", ","));
+      setMoeda((editing.moeda ?? "BRL") as "BRL" | "USD" | "EUR");
+      setValorOriginal(
+        editing.valorOriginal != null
+          ? editing.valorOriginal.toFixed(2).replace(".", ",")
+          : "",
+      );
       setCategoriaId(editing.categoriaId ?? "");
       setFrequencia(editing.frequencia);
       setProximaCobranca(editing.proximaCobranca ?? "");
@@ -875,6 +881,8 @@ function RecorrenciaDialog({
     } else {
       setNome("");
       setValor("");
+      setMoeda("BRL");
+      setValorOriginal("");
       setCategoriaId("");
       setFrequencia("mensal");
       setProximaCobranca(toLocalISODate(new Date()));
