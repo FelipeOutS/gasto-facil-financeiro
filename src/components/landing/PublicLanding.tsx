@@ -2348,6 +2348,63 @@ function GuardadoMock() {
   );
 }
 
+/* ============================== EMPRESA INTELIGENTE ============================== */
+
+function EmpresaInteligenteSection() {
+  const cards = [
+    {
+      icon: Building2,
+      title: "Empresa Inteligente",
+      text: "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
+    },
+    {
+      icon: Users,
+      title: "Clientes e Fornecedores",
+      text: "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
+    },
+    {
+      icon: LineChart,
+      title: "Relatórios empresariais",
+      text: "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
+    },
+    {
+      icon: ClipboardList,
+      title: "Pacote para Contador",
+      text: "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
+    },
+    {
+      icon: Activity,
+      title: "Radar Econômico",
+      text: "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
+    },
+  ];
+  return (
+    <section id="mei-empresa" className="bg-slate-50 py-20 sm:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="MEI e Empresa"
+          title="Controle completo para MEI e pequenas empresas."
+          subtitle="Cadastre clientes e fornecedores, acompanhe contas a pagar e receber, veja relatórios por empresa e gere um pacote mensal para o contador."
+          center
+        />
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((c, i) => (
+            <Reveal key={c.title} delay={i * 0.05}>
+              <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.25)]">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+                  <c.icon className="h-5 w-5" />
+                </span>
+                <h3 className="text-base font-semibold text-slate-900">{c.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{c.text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== FOR WHO ============================== */
 
 function ForWho() {
