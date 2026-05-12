@@ -240,6 +240,7 @@ export function PublicLanding() {
         visual={<ContasConectadasMock />}
         reverse
       />
+      <EmpresaInteligenteSection />
       <MultiDeviceShowcase />
       <ForWho />
       <TrustPoints />
