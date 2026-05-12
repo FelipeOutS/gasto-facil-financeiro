@@ -1896,6 +1896,8 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
       ? input.invoiceMonth
       : null;
+  const fornecedorVal =
+    input.fornecedorId && input.fornecedorId.trim() ? input.fornecedorId.trim() : null;
   for (const o of out) {
     type ExtraCols = GastoInsert & {
       horario?: string | null;
@@ -1903,6 +1905,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
       import_batch_id?: string | null;
       id_operacao_banco?: string | null;
       invoice_month?: string | null;
+      fornecedor_id?: string | null;
     };
     (o.row as ExtraCols).horario = horarioVal;
     (o.row as ExtraCols).origem = origemVal;
@@ -1911,11 +1914,13 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     const fallbackInvoiceMonth = `${o.client.ano}-${String(o.client.mes).padStart(2, "0")}`;
     const resolvedInvoiceMonth = invoiceMonthVal ?? fallbackInvoiceMonth;
     (o.row as ExtraCols).invoice_month = resolvedInvoiceMonth;
+    (o.row as ExtraCols).fornecedor_id = fornecedorVal;
     if (horarioVal) o.client.horario = horarioVal;
     if (origemVal) o.client.origem = origemVal;
     if (batchId) o.client.importBatchId = batchId;
     if (opId) o.client.idOperacaoBanco = opId;
     o.client.invoiceMonth = resolvedInvoiceMonth;
+    if (fornecedorVal) o.client.fornecedorId = fornecedorVal;
   }
   return out;
 }
