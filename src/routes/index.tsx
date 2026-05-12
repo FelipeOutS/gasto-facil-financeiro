@@ -61,6 +61,7 @@ import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
+import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
   buildLinhasOrcamento,
