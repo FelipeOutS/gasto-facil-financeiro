@@ -906,6 +906,11 @@ function ContaCard({
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
           </div>
+          {conta.fornecedorId && fornecedorNome && (
+            <p className="mt-1 truncate text-[11px] text-muted-foreground">
+              Fornecedor: <span className="text-foreground/80">{fornecedorNome}</span>
+            </p>
+          )}
         </div>
       </div>
 
