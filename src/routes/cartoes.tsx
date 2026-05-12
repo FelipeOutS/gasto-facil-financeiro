@@ -427,6 +427,10 @@ function CartoesPage() {
         </div>
       )}
 
+      <section className="mt-6">
+        <CompraInternacionalCard />
+      </section>
+
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
         <ShieldCheck className="h-3.5 w-3.5" />
         Aqui só nome, banco/emissor, limite, fechamento e vencimento. Nada de número, CVV ou senha.
