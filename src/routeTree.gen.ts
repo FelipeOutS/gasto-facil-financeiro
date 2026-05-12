@@ -48,6 +48,7 @@ import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-f
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
+import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
@@ -255,6 +256,11 @@ const ApiImportContaRoute = ApiImportContaRouteImport.update({
   path: '/api/import-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEconomicRadarRoute = ApiEconomicRadarRouteImport.update({
+  id: '/api/economic-radar',
+  path: '/api/economic-radar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   id: '/aceitar-convite/$token',
   path: '/aceitar-convite/$token',
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -454,6 +462,7 @@ export interface FileRoutesById {
   '/resumo': typeof ResumoRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -508,6 +517,7 @@ export interface FileRouteTypes {
     | '/resumo'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/api/economic-radar'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -560,6 +570,7 @@ export interface FileRouteTypes {
     | '/resumo'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/api/economic-radar'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -612,6 +623,7 @@ export interface FileRouteTypes {
     | '/resumo'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/api/economic-radar'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -665,6 +677,7 @@ export interface RootRouteChildren {
   ResumoRoute: typeof ResumoRoute
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
+  ApiEconomicRadarRoute: typeof ApiEconomicRadarRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
@@ -960,6 +973,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/economic-radar': {
+      id: '/api/economic-radar'
+      path: '/api/economic-radar'
+      fullPath: '/api/economic-radar'
+      preLoaderRoute: typeof ApiEconomicRadarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aceitar-convite/$token': {
       id: '/aceitar-convite/$token'
       path: '/aceitar-convite/$token'
@@ -1073,6 +1093,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResumoRoute: ResumoRoute,
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
+  ApiEconomicRadarRoute: ApiEconomicRadarRoute,
   ApiImportContaRoute: ApiImportContaRoute,
   ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,

@@ -458,6 +458,54 @@ export type Database = {
           },
         ]
       }
+      economic_indicators: {
+        Row: {
+          created_at: string
+          currency: string | null
+          fetched_at: string
+          high: number | null
+          id: string
+          indicator_key: string
+          low: number | null
+          name: string
+          raw_payload: Json | null
+          source: string
+          updated_at: string
+          value: number
+          variation_percent: number | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          fetched_at?: string
+          high?: number | null
+          id?: string
+          indicator_key: string
+          low?: number | null
+          name: string
+          raw_payload?: Json | null
+          source?: string
+          updated_at?: string
+          value: number
+          variation_percent?: number | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          fetched_at?: string
+          high?: number | null
+          id?: string
+          indicator_key?: string
+          low?: number | null
+          name?: string
+          raw_payload?: Json | null
+          source?: string
+          updated_at?: string
+          value?: number
+          variation_percent?: number | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
