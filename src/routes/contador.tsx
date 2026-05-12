@@ -345,6 +345,13 @@ function PacoteContadorPage() {
               setOpcoes((o) => ({ ...o, incluirPendencias: v }))
             }
           />
+          <ToggleRow
+            label="Incluir comparativo com mês anterior"
+            value={opcoes.incluirComparativo}
+            onChange={(v) =>
+              setOpcoes((o) => ({ ...o, incluirComparativo: v }))
+            }
+          />
         </div>
       </section>
 
