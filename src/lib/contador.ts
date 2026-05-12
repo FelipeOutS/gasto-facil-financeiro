@@ -662,6 +662,21 @@ function brl(n: number): string {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function fmtPct(pct: number): string {
+  const v = pct.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  return `${pct > 0 ? "+" : ""}${v}%`;
+}
+
+/** Texto curto descritivo da variação ("+16,7%", "Sem base anterior", "Sem variação"). */
+export function rotuloVariacao(v: VariacaoIndicador): string {
+  if (v.tipo === "zerado") return "Sem variação";
+  if (v.tipo === "novo") return "Sem base anterior";
+  return `${fmtPct(v.variacaoPercentual ?? 0)} vs. mês anterior`;
+}
+
 /** Gera um resumo curto em texto para "Copiar resumo". */
 export function gerarResumoTexto(p: PacoteContador): string {
   const linhas: string[] = [];
@@ -681,6 +696,42 @@ export function gerarResumoTexto(p: PacoteContador): string {
   linhas.push(`Contas a pagar em aberto: ${brl(p.resumo.contasPagarEmAberto)}`);
   linhas.push(`Clientes movimentados: ${p.resumo.qtdClientesMovimentados}`);
   linhas.push(`Fornecedores movimentados: ${p.resumo.qtdFornecedoresMovimentados}`);
+
+  if (p.comparativo) {
+    linhas.push("");
+    linhas.push(
+      `Comparativo com ${rotuloPeriodo(p.comparativo.periodoAnterior)}:`,
+    );
+    const vReceita = p.comparativo.variacoes.find((x) => x.chave === "receitas");
+    const vDespesa = p.comparativo.variacoes.find((x) => x.chave === "despesas");
+    const ambosSemBase =
+      vReceita?.tipo !== "comparavel" && vDespesa?.tipo !== "comparavel";
+    if (ambosSemBase) {
+      linhas.push("Sem base suficiente para comparar com o mês anterior.");
+    } else {
+      const partes: string[] = [];
+      if (vReceita) {
+        if (vReceita.tipo === "comparavel") {
+          partes.push(`as receitas variaram ${fmtPct(vReceita.variacaoPercentual ?? 0)}`);
+        } else if (vReceita.tipo === "novo") {
+          partes.push("as receitas começaram neste mês");
+        }
+      }
+      if (vDespesa) {
+        if (vDespesa.tipo === "comparavel") {
+          partes.push(`as despesas variaram ${fmtPct(vDespesa.variacaoPercentual ?? 0)}`);
+        } else if (vDespesa.tipo === "novo") {
+          partes.push("as despesas começaram neste mês");
+        }
+      }
+      if (partes.length > 0) {
+        linhas.push(
+          `Em relação ao mês anterior, ${partes.join(" e ")}.`,
+        );
+      }
+    }
+  }
+
   return linhas.join("\n");
 }
 
