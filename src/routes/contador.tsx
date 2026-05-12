@@ -55,8 +55,10 @@ import {
   nomeMes,
   gerarResumoTexto,
   gerarCsvPacote,
+  rotuloVariacao,
   type PacoteContador,
   type OpcoesPacote,
+  type VariacaoIndicador,
 } from "@/lib/contador";
 import type { Cartao } from "@/lib/types";
 
