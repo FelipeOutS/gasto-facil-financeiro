@@ -836,7 +836,7 @@ function nomeExibicaoFornecedor(f: { apelido?: string | null; nome_fantasia?: st
   );
 }
 
-
+function ContaCard({
   conta,
   hojeISO,
   onEdit,
