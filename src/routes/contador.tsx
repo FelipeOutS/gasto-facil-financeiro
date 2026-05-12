@@ -701,11 +701,13 @@ function KpiCard({
   label,
   value,
   accent,
+  variacao,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   accent?: "primary" | "warning";
+  variacao?: VariacaoIndicador | null;
 }) {
   return (
     <div
@@ -731,7 +733,49 @@ function KpiCard({
       <p className="mt-1.5 truncate text-base font-semibold tabular-nums">
         {value}
       </p>
+      {variacao && (
+        <p
+          className={cn(
+            "mt-0.5 truncate text-[10px]",
+            variacaoTextoCor(variacao),
+          )}
+        >
+          {rotuloVariacao(variacao)}
+        </p>
+      )}
     </div>
+  );
+}
+
+function variacaoPor(
+  pacote: PacoteContador,
+  chave: VariacaoIndicador["chave"],
+): VariacaoIndicador | null {
+  if (!pacote.comparativo) return null;
+  return pacote.comparativo.variacoes.find((v) => v.chave === chave) ?? null;
+}
+
+/** Cor textual para badge/legenda de variação.
+ *  Receitas: subir é bom (verde). Despesas e contas a pagar: subir é ruim (âmbar).
+ *  Demais: neutro. */
+function variacaoTextoCor(v: VariacaoIndicador): string {
+  if (v.tipo !== "comparavel") return "text-muted-foreground";
+  const dif = v.diferenca;
+  if (dif === 0) return "text-muted-foreground";
+  const subirEhRuim =
+    v.chave === "despesas" || v.chave === "contasPagarEmAberto";
+  const subindo = dif > 0;
+  const positivo = subirEhRuim ? !subindo : subindo;
+  return positivo
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-amber-600 dark:text-amber-400";
+}
+
+function VariacaoBadge({ v }: { v: VariacaoIndicador }) {
+  return (
+    <span className={cn("text-[11px] font-medium", variacaoTextoCor(v))}>
+      {rotuloVariacao(v)}
+    </span>
   );
 }
 
