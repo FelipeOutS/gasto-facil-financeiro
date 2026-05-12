@@ -3758,6 +3758,7 @@ async function upsertGastoVinculadoConta(
     conta.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)
       ? conta.mesReferencia
       : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const fornecedorIdConta = conta.fornecedorId ?? null;
   const row = {
     descricao: input.nome,
     valor: input.valor,
@@ -3773,6 +3774,7 @@ async function upsertGastoVinculadoConta(
     origem: CONTA_A_PAGAR_GASTO_ORIGEM,
     id_operacao_banco: contaGastoOperationId(conta.id),
     invoice_month: invoiceMonth,
+    fornecedor_id: fornecedorIdConta,
     updated_at: now,
   };
 
