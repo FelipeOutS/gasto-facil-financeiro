@@ -18,6 +18,7 @@ import {
   Shield,
   Users,
   Globe,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import {

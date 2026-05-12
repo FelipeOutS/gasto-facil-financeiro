@@ -1647,6 +1647,81 @@ export type Database = {
         }
         Relationships: []
       }
+      user_companies: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cnae_principal_codigo: string | null
+          cnae_principal_descricao: string | null
+          cnpj: string
+          cnpj_cache_fetched_at: string | null
+          complemento: string | null
+          created_at: string
+          data_abertura: string | null
+          id: string
+          logradouro: string | null
+          municipio: string | null
+          natureza_juridica: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          porte: string | null
+          razao_social: string | null
+          situacao_cadastral: string | null
+          source: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj: string
+          cnpj_cache_fetched_at?: string | null
+          complemento?: string | null
+          created_at?: string
+          data_abertura?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          porte?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string
+          cnpj_cache_fetched_at?: string | null
+          complemento?: string | null
+          created_at?: string
+          data_abertura?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          porte?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           account_type: string | null

@@ -28,6 +28,7 @@ import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as GuardadoRouteImport } from './routes/guardado'
 import { Route as GastosRouteImport } from './routes/gastos'
 import { Route as GastoAiRouteImport } from './routes/gasto-ai'
+import { Route as EmpresaRouteImport } from './routes/empresa'
 import { Route as ContasConectadasRouteImport } from './routes/contas-conectadas'
 import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
@@ -155,6 +156,11 @@ const GastosRoute = GastosRouteImport.update({
 const GastoAiRoute = GastoAiRouteImport.update({
   id: '/gasto-ai',
   path: '/gasto-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmpresaRoute = EmpresaRouteImport.update({
+  id: '/empresa',
+  path: '/empresa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasConectadasRoute = ContasConectadasRouteImport.update({
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
+  '/empresa': typeof EmpresaRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
+  '/empresa': typeof EmpresaRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -451,6 +459,7 @@ export interface FileRoutesById {
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
+  '/empresa': typeof EmpresaRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
+    | '/empresa'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
+    | '/empresa'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -615,6 +626,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
+    | '/empresa'
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
   ContasAPagarRoute: typeof ContasAPagarRoute
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
+  EmpresaRoute: typeof EmpresaRoute
   GastoAiRoute: typeof GastoAiRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
@@ -844,6 +857,13 @@ declare module '@tanstack/react-router' {
       path: '/gasto-ai'
       fullPath: '/gasto-ai'
       preLoaderRoute: typeof GastoAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/empresa': {
+      id: '/empresa'
+      path: '/empresa'
+      fullPath: '/empresa'
+      preLoaderRoute: typeof EmpresaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contas-conectadas': {
@@ -1094,6 +1114,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAPagarRoute: ContasAPagarRoute,
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,
+  EmpresaRoute: EmpresaRoute,
   GastoAiRoute: GastoAiRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
