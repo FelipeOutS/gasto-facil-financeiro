@@ -105,6 +105,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   centro_de_custo: "empresa",
   contas_conectadas: "pessoal_premium",
   gasto_ai: "pessoal_premium",
+  empresa_inteligente: "mei_essencial",
 };
 
 /**
