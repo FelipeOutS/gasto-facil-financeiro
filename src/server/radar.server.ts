@@ -120,6 +120,13 @@ interface SgsRow {
   valor: string;
 }
 
+interface PtaxRow {
+  cotacaoCompra: number;
+  cotacaoVenda: number;
+  dataHoraCotacao: string;
+  tipoBoletim: string;
+}
+
 function num(v: unknown): number | null {
   if (v === null || v === undefined) return null;
   const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
@@ -165,9 +172,30 @@ async function fetchWithTimeout(url: string): Promise<Response> {
 }
 
 async function fetchAwesomeApi(): Promise<Record<string, AwesomeApiQuote>> {
+  console.info("[radar] buscando cotações na AwesomeAPI");
   const res = await fetchWithTimeout(AWESOMEAPI_URL);
+  console.info(`[radar] AwesomeAPI status HTTP: ${res.status}`);
+  const body = await res.text();
+  console.info(`[radar] AwesomeAPI corpo: ${body.slice(0, 1500)}`);
   if (!res.ok) throw new Error(`AwesomeAPI respondeu ${res.status}`);
-  return (await res.json()) as Record<string, AwesomeApiQuote>;
+  const data = JSON.parse(body) as Record<string, AwesomeApiQuote>;
+  console.info(
+    `[radar] AwesomeAPI chaves recebidas: ${Object.keys(data).join(",")}`,
+  );
+  return data;
+}
+
+async function fetchPtaxDay(currency: "USD" | "EUR", date: Date): Promise<PtaxRow[]> {
+  const dataCotacao = ptaxDate(date);
+  const url = `${PTAX_BASE_URL}/CotacaoMoedaDia(moeda=@moeda,dataCotacao=@dataCotacao)?@moeda='${currency}'&@dataCotacao='${dataCotacao}'&$top=100&$format=json`;
+  const res = await fetchWithTimeout(url);
+  const body = await res.text();
+  if (!res.ok) {
+    console.error(`[radar] PTAX ${currency} ${dataCotacao} respondeu ${res.status}: ${body.slice(0, 800)}`);
+    return [];
+  }
+  const parsed = JSON.parse(body) as { value?: PtaxRow[] };
+  return Array.isArray(parsed.value) ? parsed.value : [];
 }
 
 async function fetchSgs(code: number): Promise<SgsRow[]> {
