@@ -447,6 +447,7 @@ type ReceitaRow = {
   origem?: string | null;
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
+  cliente_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -465,6 +466,7 @@ function rowToReceita(r: ReceitaRow): Receita {
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
+    clienteId: r.cliente_id ?? null,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
