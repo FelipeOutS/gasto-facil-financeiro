@@ -25,6 +25,7 @@ import {
   Building2,
   Store,
   Contact,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
