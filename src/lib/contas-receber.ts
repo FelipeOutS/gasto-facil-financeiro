@@ -127,6 +127,7 @@ export async function atualizarContaReceber(
   if (fields.categoria !== undefined) patch.categoria = fields.categoria?.toString().trim() || null;
   if (fields.forma_recebimento !== undefined) patch.forma_recebimento = fields.forma_recebimento || null;
   if (fields.observacao !== undefined) patch.observacao = fields.observacao?.toString().trim() || null;
+  if (fields.cliente_id !== undefined) patch.cliente_id = fields.cliente_id ?? null;
 
   if (fields.valor_total !== undefined) {
     // Buscar para recalcular restante
