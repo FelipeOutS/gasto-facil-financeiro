@@ -748,6 +748,11 @@ function RendaPage() {
                 </SelectContent>
               </Select>
             </div>
+            <ClienteSelect
+              value={novaClienteId}
+              onChange={setNovaClienteId}
+              clientesAtivos={clientesAtivos}
+            />
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
                 <p className="text-sm font-medium">Repetir todo mês</p>
