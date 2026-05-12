@@ -416,6 +416,9 @@ function ContaCard({
           {conta.pagador_nome && (
             <p className="truncate text-[12px] text-muted-foreground">de {conta.pagador_nome}</p>
           )}
+          {clienteNome && (
+            <p className="truncate text-[11px] text-muted-foreground">Cliente: {clienteNome}</p>
+          )}
           <p className="mt-1 text-[11px] text-muted-foreground">
             Previsto: {formatDateBR(conta.data_prevista)}
             {conta.data_recebimento && (
