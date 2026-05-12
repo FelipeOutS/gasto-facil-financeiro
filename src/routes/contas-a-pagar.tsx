@@ -1152,6 +1152,7 @@ function ContaFormDialog({
         codigoBoleto: codigoBoleto.trim() || undefined,
         codigoPix: codigoPix.trim() || undefined,
         chavePix: chavePix.trim() || undefined,
+        fornecedorId: fornecedorId || null,
       });
       toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
     }
