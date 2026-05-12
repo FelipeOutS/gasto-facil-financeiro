@@ -97,6 +97,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClientes } from "@/lib/clientes";
+import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
 type RendaSearch = { ano?: number; mes?: number };
 
