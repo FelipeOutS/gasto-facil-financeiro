@@ -821,6 +821,10 @@ function RecorrenciaDialog({
   const cartoes = useStore(getCartoes);
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
+  const [moeda, setMoeda] = useState<"BRL" | "USD" | "EUR">("BRL");
+  const [valorOriginal, setValorOriginal] = useState("");
+  const [cotacaoUSD, setCotacaoUSD] = useState<number | null>(null);
+  const [cotacaoEUR, setCotacaoEUR] = useState<number | null>(null);
   const [categoriaId, setCategoriaId] = useState<string>("");
   const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>("mensal");
   const [proximaCobranca, setProximaCobranca] = useState<string>("");
@@ -829,6 +833,31 @@ function RecorrenciaDialog({
   const [observacao, setObservacao] = useState("");
   const [status, setStatus] = useState<StatusRecorrencia>("ativa");
   const [saving, setSaving] = useState(false);
+
+  const fetchRadar = useServerFn(getEconomicRadar);
+  useEffect(() => {
+    if (!open) return;
+    fetchRadar()
+      .then((r: any) => {
+        const usd = r?.indicators?.find((i: any) => i.key === "USD_BRL");
+        const eur = r?.indicators?.find((i: any) => i.key === "EUR_BRL");
+        setCotacaoUSD(usd?.value ?? null);
+        setCotacaoEUR(eur?.value ?? null);
+      })
+      .catch(() => {});
+  }, [open, fetchRadar]);
+
+  // Recalcula estimativa BRL quando muda moeda/valor original
+  useEffect(() => {
+    if (moeda === "BRL") return;
+    const cot = moeda === "USD" ? cotacaoUSD : cotacaoEUR;
+    const n = parseBRLInput(valorOriginal);
+    if (cot && Number.isFinite(n) && n > 0) {
+      // estimativa com IOF + spread (~7,5%)
+      const brl = n * cot * 1.075;
+      setValor(brl.toFixed(2).replace(".", ","));
+    }
+  }, [moeda, valorOriginal, cotacaoUSD, cotacaoEUR]);
 
   useEffect(() => {
     if (editing) {
