@@ -44,10 +44,15 @@ import {
   Users,
   ClipboardList,
   Activity,
+  Cloud,
+  Landmark,
+  FileText,
+  TrendingDown,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
+import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
