@@ -694,6 +694,8 @@ function ContaReceberFormDialog({
             onChange={setClienteId}
             clientesAtivos={clientesAtivos}
           />
+          <div className="space-y-1.5">
+            <Label htmlFor="cr-categoria">Categoria (opcional)</Label>
             <Input
               id="cr-categoria"
               value={categoria}
