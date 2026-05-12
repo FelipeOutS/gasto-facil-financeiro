@@ -46,7 +46,6 @@ import {
   Activity,
   Cloud,
   Landmark,
-  
   TrendingDown,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
