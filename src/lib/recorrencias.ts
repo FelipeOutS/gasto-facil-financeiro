@@ -671,6 +671,8 @@ export async function atualizarRecorrencia(
     update.tipo_recorrencia = patch.tipoRecorrencia;
   if (patch.observacao !== undefined) update.observacao = patch.observacao;
   if (patch.ultimoValor !== undefined) update.ultimo_valor = patch.ultimoValor;
+  if (patch.moeda !== undefined) update.moeda = patch.moeda;
+  if (patch.valorOriginal !== undefined) update.valor_original = patch.valorOriginal;
 
   const { data, error } = await (supabase as any)
     .from("recorrencias")
