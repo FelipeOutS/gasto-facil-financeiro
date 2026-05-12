@@ -170,7 +170,12 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
 
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
-  const stale = data?.status === "desatualizado";
+  const usdValue = usd?.valueBRL ?? usd?.value;
+  const eurValue = eur?.valueBRL ?? eur?.value;
+  const hasCurrencyValues =
+    Number.isFinite(usdValue) && Number.isFinite(eurValue);
+  const stale =
+    !loading && (!hasCurrencyValues || usd?.status === "desatualizado" || eur?.status === "desatualizado");
 
   return (
     <>
@@ -294,7 +299,14 @@ export function RadarDetalhesDialog({
 }) {
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
-  const stale = data?.status === "desatualizado";
+  const usdValue = usd?.valueBRL ?? usd?.value;
+  const eurValue = eur?.valueBRL ?? eur?.value;
+  const stale =
+    !loading &&
+    (!Number.isFinite(usdValue) ||
+      !Number.isFinite(eurValue) ||
+      usd?.status === "desatualizado" ||
+      eur?.status === "desatualizado");
 
   const [moeda, setMoeda] = useState<"USD_BRL" | "EUR_BRL">("USD_BRL");
   const [valor, setValor] = useState<string>("100");
