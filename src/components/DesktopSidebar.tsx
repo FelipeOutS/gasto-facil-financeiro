@@ -24,6 +24,7 @@ import {
   Globe,
   Building2,
   Store,
+  Contact,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";

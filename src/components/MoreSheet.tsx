@@ -20,6 +20,7 @@ import {
   Globe,
   Building2,
   Store,
+  Contact,
   type LucideIcon,
 } from "lucide-react";
 import {
