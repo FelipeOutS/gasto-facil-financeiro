@@ -467,6 +467,7 @@ function RendaPage() {
       tipo,
       recorrente,
       recorrenteMeses: recorrente ? meses : undefined,
+      clienteId: novaClienteId,
     };
 
     if (parecida) {
