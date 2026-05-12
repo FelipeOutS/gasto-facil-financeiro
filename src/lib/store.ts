@@ -692,6 +692,7 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     codigoPix: r.codigo_pix ?? undefined,
     chavePix: r.chave_pix ?? undefined,
     bancoEmissor: r.banco_emissor ?? undefined,
+    fornecedorId: r.fornecedor_id ?? null,
     importBatchId: r.import_batch_id ?? undefined,
     mes: r.mes,
     ano: r.ano,
