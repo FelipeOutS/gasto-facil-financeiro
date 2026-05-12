@@ -39,6 +39,7 @@ export interface OpcoesPacote {
   incluirClientes: boolean;
   incluirFornecedores: boolean;
   incluirPendencias: boolean;
+  incluirComparativo: boolean;
 }
 
 export interface ReceitaPacote {
