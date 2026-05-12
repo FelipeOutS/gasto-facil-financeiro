@@ -825,7 +825,18 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function ContaCard({
+function nomeExibicaoFornecedor(f: { apelido?: string | null; nome_fantasia?: string | null; razao_social?: string | null; nome?: string | null } | undefined): string | null {
+  if (!f) return null;
+  return (
+    f.apelido?.trim() ||
+    f.nome_fantasia?.trim() ||
+    f.razao_social?.trim() ||
+    f.nome?.trim() ||
+    null
+  );
+}
+
+
   conta,
   hojeISO,
   onEdit,
