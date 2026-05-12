@@ -2364,6 +2364,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
   const rows: ReceitaInsert[] = [];
+  const clienteId = input.clienteId ?? null;
 
   if (input.recorrente) {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
@@ -2383,6 +2384,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
         recorrenciaId: recId,
         mes: d.getMonth() + 1,
         ano: d.getFullYear(),
+        clienteId,
         criadoEm: now,
         atualizadoEm: now,
       });
@@ -2397,7 +2399,8 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
         recorrencia_id: recId,
         mes: d.getMonth() + 1,
         ano: d.getFullYear(),
-      });
+        ...(clienteId ? { cliente_id: clienteId } : {}),
+      } as ReceitaInsert);
     }
   } else {
     const id = crypto.randomUUID();
@@ -2410,6 +2413,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
       recorrente: false,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
+      clienteId,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -2423,7 +2427,8 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
       recorrente: false,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
-    });
+      ...(clienteId ? { cliente_id: clienteId } : {}),
+    } as ReceitaInsert);
   }
   memReceitas = [...memReceitas, ...created];
   emit();
