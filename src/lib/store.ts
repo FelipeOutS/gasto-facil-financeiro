@@ -3454,6 +3454,12 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       fields.mesReferencia === null
         ? undefined
         : fields.mesReferencia ?? current.mesReferencia,
+    fornecedorId:
+      fields.fornecedorId === undefined
+        ? current.fornecedorId ?? null
+        : fields.fornecedorId && fields.fornecedorId !== ""
+          ? fields.fornecedorId
+          : null,
     atualizadoEm: new Date().toISOString(),
   };
   if (fields.dataVencimento) {
