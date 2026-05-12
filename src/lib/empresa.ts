@@ -6,7 +6,29 @@
  * usuário (constraint UNIQUE(user_id)).
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { CompanyDTO } from "@/server/cnpj.server";
+
+/** Cópia client-safe do CompanyDTO retornado por consultarCnpj. */
+export interface EmpresaConsultada {
+  cnpj: string;
+  cnpjFormatado: string;
+  razaoSocial: string | null;
+  nomeFantasia: string | null;
+  situacaoCadastral: string | null;
+  cnaePrincipalCodigo: string | null;
+  cnaePrincipalDescricao: string | null;
+  endereco: {
+    logradouro: string | null;
+    numero: string | null;
+    complemento: string | null;
+    bairro: string | null;
+    cep: string | null;
+    municipio: string | null;
+    uf: string | null;
+  };
+  dataAbertura: string | null;
+  porte: string | null;
+  naturezaJuridica: string | null;
+}
 
 export interface MinhaEmpresa {
   id: string;
