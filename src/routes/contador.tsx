@@ -665,10 +665,11 @@ function Secao({
   vazio: string;
   children: React.ReactNode;
 }) {
+  const hasContent = children !== null && children !== undefined && children !== false;
   return (
     <section className="mt-6 print-block">
       <h3 className="mb-2 text-sm font-semibold">{titulo}</h3>
-      {children ?? (
+      {hasContent ? children : (
         <p className="text-xs text-muted-foreground">{vazio}</p>
       )}
     </section>
