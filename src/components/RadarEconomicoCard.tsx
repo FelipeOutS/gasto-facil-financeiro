@@ -36,12 +36,14 @@ interface Indicator {
   key: string;
   name: string;
   value: number;
+  valueBRL?: number;
   currency: string | null;
   source: string;
   variationPercent: number | null;
   high: number | null;
   low: number | null;
   fetchedAt: string;
+  updatedAt?: string;
   status: Status;
 }
 
@@ -49,6 +51,7 @@ interface RadarResult {
   indicators: Indicator[];
   status: Status;
   fetchedAt: string;
+  updatedAt?: string;
   message?: string;
 }
 
@@ -167,7 +170,12 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
 
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
-  const stale = data?.status === "desatualizado";
+  const usdValue = usd?.valueBRL ?? usd?.value;
+  const eurValue = eur?.valueBRL ?? eur?.value;
+  const hasCurrencyValues =
+    Number.isFinite(usdValue) && Number.isFinite(eurValue);
+  const stale =
+    !loading && (!hasCurrencyValues || usd?.status === "desatualizado" || eur?.status === "desatualizado");
 
   return (
     <>
@@ -259,6 +267,7 @@ function CotacaoMini({
 }) {
   const label = CURRENCY_LABEL[ind?.key ?? fallbackKey] ?? fallbackKey;
   const flag = CURRENCY_FLAG[ind?.key ?? fallbackKey] ?? "💱";
+  const value = ind?.valueBRL ?? ind?.value;
   return (
     <div className="rounded-xl border bg-background/50 p-3">
       <div className="flex items-center justify-between">
@@ -268,7 +277,7 @@ function CotacaoMini({
         <VariationBadge pct={ind?.variationPercent ?? null} />
       </div>
       <div className="mt-1 text-lg font-semibold tabular-nums">
-        {ind ? formatBRL(ind.value) : "—"}
+        {value !== undefined && Number.isFinite(value) ? formatBRL(value) : "—"}
       </div>
     </div>
   );
@@ -290,7 +299,14 @@ export function RadarDetalhesDialog({
 }) {
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
-  const stale = data?.status === "desatualizado";
+  const usdValue = usd?.valueBRL ?? usd?.value;
+  const eurValue = eur?.valueBRL ?? eur?.value;
+  const stale =
+    !loading &&
+    (!Number.isFinite(usdValue) ||
+      !Number.isFinite(eurValue) ||
+      usd?.status === "desatualizado" ||
+      eur?.status === "desatualizado");
 
   const [moeda, setMoeda] = useState<"USD_BRL" | "EUR_BRL">("USD_BRL");
   const [valor, setValor] = useState<string>("100");
@@ -442,6 +458,7 @@ function CotacaoDetalhe({
 }) {
   const label = CURRENCY_LABEL[ind?.key ?? fallbackKey] ?? fallbackKey;
   const flag = CURRENCY_FLAG[ind?.key ?? fallbackKey] ?? "💱";
+  const value = ind?.valueBRL ?? ind?.value;
   return (
     <div className="rounded-xl border bg-card p-3">
       <div className="flex items-center justify-between">
@@ -453,7 +470,7 @@ function CotacaoDetalhe({
             <Skeleton className="mt-1 h-7 w-24" />
           ) : (
             <p className="text-2xl font-semibold tabular-nums">
-              {ind ? formatBRL(ind.value) : "—"}
+              {value !== undefined && Number.isFinite(value) ? formatBRL(value) : "—"}
             </p>
           )}
         </div>
