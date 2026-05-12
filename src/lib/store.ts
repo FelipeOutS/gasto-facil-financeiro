@@ -2028,6 +2028,9 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
     (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
   if (patch.origem !== undefined)
     (row as GastoUpdate & { origem?: string | null }).origem = patch.origem ?? null;
+  if (patch.fornecedorId !== undefined)
+    (row as GastoUpdate & { fornecedor_id?: string | null }).fornecedor_id =
+      patch.fornecedorId ?? null;
 
   void supabase
     .from("gastos")
