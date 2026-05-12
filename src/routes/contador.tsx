@@ -176,11 +176,36 @@ function PacoteContadorPage() {
     !ready || loadingForn || loadingCli || loadingEmpresa || loadingCR;
 
   async function copiarResumo() {
+    const texto = gerarResumoTexto(pacote);
     try {
-      await navigator.clipboard.writeText(gerarResumoTexto(pacote));
-      toast.success("Resumo copiado para a área de transferência");
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(texto);
+        toast.success("Resumo copiado para a área de transferência");
+        return;
+      }
+      throw new Error("clipboard indisponível");
     } catch {
-      toast.error("Não foi possível copiar o resumo");
+      // Fallback: textarea + execCommand
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = texto;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.setAttribute("readonly", "");
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) {
+          toast.success("Resumo copiado");
+          return;
+        }
+        throw new Error("execCommand falhou");
+      } catch {
+        toast.error(
+          "Não foi possível copiar automaticamente. Selecione o texto manualmente.",
+        );
+      }
     }
   }
 
