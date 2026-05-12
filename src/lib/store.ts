@@ -1659,6 +1659,8 @@ export type NovoGastoInput = {
   importBatchId?: string;
   /** ID da operação no banco. */
   idOperacaoBanco?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string | null;
 };
 
 function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
