@@ -1086,6 +1086,7 @@ function RendaPage() {
                       r={r}
                       onEdit={() => setEditTarget(r)}
                       onDelete={() => setDeleteTarget(r)}
+                      clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                     />
                   </motion.div>
                 ))}
