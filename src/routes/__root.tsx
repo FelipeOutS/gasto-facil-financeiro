@@ -78,6 +78,42 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/favicon.png" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Gasto Inteligente",
+          url: "https://gastointeligente.com.br",
+          logo: "https://gastointeligente.com.br/logos/brand/gasto-inteligente-light.png",
+          email: "contato@gastointeligente.com.br",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Gasto Inteligente",
+          url: "https://gastointeligente.com.br",
+          description:
+            "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar.",
+          inLanguage: "pt-BR",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "Gasto Inteligente",
+          applicationCategory: "FinanceApplication",
+          operatingSystem: "Web",
+          url: "https://gastointeligente.com.br",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
