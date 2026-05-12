@@ -663,6 +663,7 @@ type ContaAPagarRow = {
   frequencia_recorrencia?: string | null;
   import_batch_id?: string | null;
   mes_referencia?: string | null;
+  fornecedor_id?: string | null;
   mes: number;
   ano: number;
   created_at: string;
