@@ -1077,13 +1077,16 @@ function ContaFormDialog({
   const [codigoBoleto, setCodigoBoleto] = useState(conta?.codigoBoleto ?? "");
   const [codigoPix, setCodigoPix] = useState(conta?.codigoPix ?? "");
   const [chavePix, setChavePix] = useState(conta?.chavePix ?? "");
+  const [fornecedorId, setFornecedorId] = useState<string>(conta?.fornecedorId ?? "");
+  const { ativos: fornecedoresAtivos } = useFornecedores();
   const [mostrarExtras, setMostrarExtras] = useState(
     !!(conta?.beneficiario ||
       conta?.formaPagamento ||
       conta?.bancoEmissor ||
       conta?.codigoBoleto ||
       conta?.codigoPix ||
-      conta?.chavePix),
+      conta?.chavePix ||
+      conta?.fornecedorId),
   );
 
   // Sincronizar gasto vinculado (apenas conta já paga)
