@@ -65,8 +65,8 @@ export function InvestimentosLockModal({ open, onOpenChange }: Props) {
           </DialogTitle>
           <DialogDescription className="text-center">
             Acompanhe sua carteira, patrimônio, rendimentos e movimentações em um
-            só lugar. Este recurso está disponível nos planos Pessoa Física
-            Premium, MEI Completo e Empresa.
+            só lugar. Este recurso está disponível nos planos Controle Completo
+            Pessoal, MEI Completo e Empresa.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">
