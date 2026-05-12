@@ -1205,6 +1205,15 @@ function GastosPage() {
                           ? " · recorrente"
                           : ""}
                     </p>
+                    {g.fornecedorId && fornecedoresPorId[g.fornecedorId] ? (
+                      <p className="truncate text-[11px] text-muted-foreground/80">
+                        Fornecedor:{" "}
+                        {fornecedoresPorId[g.fornecedorId].apelido ||
+                          fornecedoresPorId[g.fornecedorId].nome_fantasia ||
+                          fornecedoresPorId[g.fornecedorId].razao_social ||
+                          fornecedoresPorId[g.fornecedorId].nome}
+                      </p>
+                    ) : null}
                     {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) ? (
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft">
                         <CalendarIcon className="h-3 w-3" />
