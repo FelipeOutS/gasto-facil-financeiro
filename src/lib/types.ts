@@ -354,6 +354,8 @@ export type ContaAPagar = {
   chavePix?: string;
   /** Banco emissor / cedente */
   bancoEmissor?: string;
+  /** ID do fornecedor vinculado (opcional). */
+  fornecedorId?: string | null;
   /** Lote de importação que originou a conta (quando vinda de boleto/Pix importado) */
   importBatchId?: string;
   mes: number;
