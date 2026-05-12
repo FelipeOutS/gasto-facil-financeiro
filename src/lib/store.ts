@@ -2729,6 +2729,7 @@ export function updateReceita(
     if (fields.descricao !== undefined) next.descricao = fields.descricao;
     if (fields.valor !== undefined) next.valor = fields.valor;
     if (fields.tipo !== undefined) next.tipo = fields.tipo;
+    if (fields.clienteId !== undefined) next.clienteId = fields.clienteId ?? null;
     if (fields.data !== undefined) {
       // Para escopo "single" trocamos data/mes/ano da própria receita.
       // Para escopos "forward"/"all" só atualizamos a data quando for o item alvo;
