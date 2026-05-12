@@ -1451,7 +1451,9 @@ function EditReceitaDialog({
   const [valorStr, setValorStr] = useState("");
   const [data, setData] = useState(todayISO());
   const [tipo, setTipo] = useState<TipoReceita>("salario");
+  const [clienteId, setClienteId] = useState<string | null>(null);
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
+  const { ativos: clientesAtivos } = useClientes();
 
   useEffect(() => {
     if (receita) {
@@ -1459,6 +1461,7 @@ function EditReceitaDialog({
       setValorStr(receita.valor.toFixed(2).replace(".", ","));
       setData(receita.data);
       setTipo(receita.tipo);
+      setClienteId(receita.clienteId ?? null);
       setScope("single");
     }
   }, [receita]);
@@ -1472,7 +1475,7 @@ function EditReceitaDialog({
     }
     updateReceita(
       receita.id,
-      { descricao: descricao.trim(), valor, data, tipo },
+      { descricao: descricao.trim(), valor, data, tipo, clienteId },
       receita.recorrente && receita.recorrenciaId ? scope : "single",
     );
     toast.success("Renda atualizada. ✅");
