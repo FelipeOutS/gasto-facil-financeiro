@@ -640,11 +640,11 @@ export async function getRadarIndicators(opts?: {
     .reverse()[0]!;
 
   if (anyFailure) {
-    const staleIndicators = indicators.map((c) =>
+    const staleIndicators: IndicatorDTO[] = indicators.map((c) =>
         // Marca como desatualizado apenas os que não foram atualizados nesta rodada.
         c.fetchedAt === fetchedAt && c.status === "atualizado"
           ? c
-          : { ...c, status: "desatualizado" },
+          : { ...c, status: "desatualizado" as IndicatorStatus },
       );
     return radarResult(
       staleIndicators,
