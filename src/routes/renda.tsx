@@ -397,6 +397,8 @@ function RendaPage() {
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [recorrente, setRecorrente] = useState(true);
   const [meses, setMeses] = useState(12);
+  const [novaClienteId, setNovaClienteId] = useState<string | null>(null);
+  const { ativos: clientesAtivos, porId: clientesPorId } = useClientes();
   type NovaPayload = {
     descricao: string;
     valor: number;
@@ -404,6 +406,7 @@ function RendaPage() {
     tipo: TipoReceita;
     recorrente: boolean;
     recorrenteMeses?: number;
+    clienteId?: string | null;
   };
   const [confirmDup, setConfirmDup] = useState<null | {
     parecida: Receita;
@@ -417,6 +420,7 @@ function RendaPage() {
     setTipo("salario");
     setRecorrente(true);
     setMeses(12);
+    setNovaClienteId(null);
   }
 
   function persistNova(payload: NovaPayload) {
