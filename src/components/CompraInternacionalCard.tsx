@@ -69,7 +69,7 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchRadar({ data: {} })
+    fetchRadar()
       .then((r) => {
         if (alive) setRadar(r as RadarResult);
       })
