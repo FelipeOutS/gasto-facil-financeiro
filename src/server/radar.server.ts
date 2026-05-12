@@ -261,10 +261,20 @@ function dtoFromCache(row: {
   raw_payload?: Record<string, unknown> | null;
 }): IndicatorDTO {
   const raw = (row.raw_payload ?? {}) as Record<string, unknown>;
+  const key = row.indicator_key;
+  const isCurrency = key === "USD_BRL" || key === "EUR_BRL";
+  const value = Number(row.value);
+  const updatedAt =
+    (raw.create_date_iso as string | undefined) ??
+    (raw.dataHoraCotacao as string | undefined) ??
+    row.fetched_at;
   return {
-    key: row.indicator_key,
+    key,
     name: row.name,
-    value: Number(row.value),
+    code: key === "USD_BRL" ? "USD" : key === "EUR_BRL" ? "EUR" : key,
+    label: key === "USD_BRL" ? "Dólar" : key === "EUR_BRL" ? "Euro" : row.name,
+    value,
+    valueBRL: isCurrency ? value : undefined,
     currency: row.currency ?? null,
     source: row.source ?? "",
     variationPercent:
@@ -272,6 +282,7 @@ function dtoFromCache(row: {
     high: row.high === null ? null : Number(row.high),
     low: row.low === null ? null : Number(row.low),
     fetchedAt: row.fetched_at,
+    updatedAt,
     status: "cache",
     referenceDate: (raw.data_referencia_iso as string | undefined) ?? null,
     unit: (raw.unit as string | undefined) ?? null,
@@ -281,16 +292,35 @@ function dtoFromCache(row: {
 function dtoFromRow(row: PersistRow): IndicatorDTO {
   const cfg = SUPPORTED.find((s) => s.key === row.indicator_key);
   const raw = row.raw_payload;
+  const isCurrency = row.indicator_key === "USD_BRL" || row.indicator_key === "EUR_BRL";
+  const updatedAt =
+    (raw.create_date_iso as string | undefined) ??
+    (raw.dataHoraCotacao as string | undefined) ??
+    row.fetched_at;
   return {
     key: row.indicator_key,
     name: row.name,
+    code:
+      row.indicator_key === "USD_BRL"
+        ? "USD"
+        : row.indicator_key === "EUR_BRL"
+          ? "EUR"
+          : row.indicator_key,
+    label:
+      row.indicator_key === "USD_BRL"
+        ? "Dólar"
+        : row.indicator_key === "EUR_BRL"
+          ? "Euro"
+          : row.name,
     value: row.value,
+    valueBRL: isCurrency ? row.value : undefined,
     currency: row.currency,
     source: row.source,
     variationPercent: row.variation_percent,
     high: row.high,
     low: row.low,
     fetchedAt: row.fetched_at,
+    updatedAt,
     status: "atualizado",
     referenceDate: (raw.data_referencia_iso as string | undefined) ?? null,
     unit: cfg?.unit ?? null,
