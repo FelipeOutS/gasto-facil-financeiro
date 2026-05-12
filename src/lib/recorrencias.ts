@@ -594,6 +594,8 @@ export type NovaRecorrenciaInput = {
   observacao?: string | null;
   ultimoValor?: number | null;
   detectionKey?: string | null;
+  moeda?: MoedaRecorrencia;
+  valorOriginal?: number | null;
 };
 
 export async function criarRecorrencia(
