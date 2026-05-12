@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { getEconomicRadar } from "@/server/radar.functions";
 import {
   Plus,
   RefreshCw,
