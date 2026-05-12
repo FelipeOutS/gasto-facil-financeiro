@@ -46,20 +46,23 @@ export const Route = createRootRoute({
         content:
           "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
       },
-      { name: "theme-color", content: "#181818" },
-      { property: "og:title", content: "Gasto Inteligente — Controle de gastos do mês" },
+      { name: "theme-color", content: "#0B1F3A" },
+      { property: "og:title", content: "Gasto Inteligente" },
       {
         property: "og:description",
-        content: "Controle simples e visual dos seus gastos do mês.",
+        content:
+          "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Gasto Inteligente — Controle de gastos do mês" },
-      { name: "description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
-      { property: "og:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
-      { name: "twitter:description", content: "Controle gastos, renda, dinheiro guardado e metas financeiras em um app simples, visual e organizado para sua vida financeira." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d6618a1-4258-4191-814f-3125b565131f/id-preview-390ec87b--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1777051823289.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d6618a1-4258-4191-814f-3125b565131f/id-preview-390ec87b--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1777051823289.png" },
+      { property: "og:url", content: "https://gastointeligente.com.br/" },
+      { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Gasto Inteligente" },
+      { name: "twitter:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
     ],
     links: [
       {

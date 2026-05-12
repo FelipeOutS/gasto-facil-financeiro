@@ -12,6 +12,13 @@ export const Route = createFileRoute("/landing")({
         content:
           "Conheça o Gasto Inteligente: gastos, cartões, contas, metas, renda, investimentos e recursos para MEI e empresa em um só lugar.",
       },
+      { property: "og:title", content: "Gasto Inteligente" },
+      { property: "og:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Gasto Inteligente" },
+      { name: "twitter:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
     ],
     links: [{ rel: "canonical", href: "https://gastointeligente.com.br/" }],
   }),
