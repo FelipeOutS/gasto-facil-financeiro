@@ -2702,6 +2702,7 @@ export type ReceitaEditableFields = {
   valor?: number;
   data?: string;
   tipo?: TipoReceita;
+  clienteId?: string | null;
 };
 
 export type UpdateReceitaScope = "single" | "forward" | "all";
