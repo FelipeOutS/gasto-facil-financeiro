@@ -384,6 +384,43 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
             </div>
             <Switch checked={essencial} onCheckedChange={setEssencial} />
           </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Store className="h-3.5 w-3.5" />
+              Fornecedor (opcional)
+            </Label>
+            {fornecedoresAtivos.length > 0 ? (
+              <Select
+                value={fornecedorId || "_none"}
+                onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
+              >
+                <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
+                  <SelectValue placeholder="Sem fornecedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Sem fornecedor</SelectItem>
+                  {fornecedoresAtivos.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.apelido || f.nome_fantasia || f.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  Você ainda não tem fornecedores cadastrados.
+                </p>
+                <Link
+                  to="/fornecedores"
+                  className="text-xs font-semibold text-brand hover:underline"
+                >
+                  Cadastrar fornecedor
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
