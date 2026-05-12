@@ -680,9 +680,22 @@ function RecorrenciaCard({
             >
               {STATUS_LABEL[rec.status]}
             </Badge>
+            {rec.moeda && rec.moeda !== "BRL" && (
+              <Badge
+                variant="outline"
+                className="shrink-0 border-sky-500/40 bg-sky-500/10 text-[10px] text-sky-500"
+              >
+                {rec.moeda === "USD" ? "🇺🇸 USD" : "🇪🇺 EUR"}
+              </Badge>
+            )}
           </div>
           <p className="mt-0.5 text-base font-bold tracking-tight">
             {formatBRL(rec.valor)}
+            {rec.moeda && rec.moeda !== "BRL" && rec.valorOriginal ? (
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                (~{rec.moeda} {rec.valorOriginal.toFixed(2).replace(".", ",")})
+              </span>
+            ) : null}
             <span className="ml-1 text-xs font-normal text-muted-foreground">
               /{rec.frequencia === "mensal" ? "mês" : FREQ_LABEL[rec.frequencia].toLowerCase()}
             </span>
