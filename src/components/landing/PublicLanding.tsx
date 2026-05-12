@@ -186,31 +186,6 @@ export function PublicLanding() {
         visual={<CartaoMock />}
       />
       <FeatureSplit
-        eyebrow="Orçamento e limite inteligente"
-        title="Saiba quanto pode gastar por dia."
-        text="O limite inteligente calcula quanto ainda sobra no mês depois das contas fixas e faturas já pagas — e divide pelos dias restantes. Defina orçamentos por categoria e veja em tempo real onde você está estourando."
-        bullets={[
-          "Limite diário sugerido",
-          "Orçamento por categoria",
-          "Ignora contas fixas e faturas pagas",
-          "Alertas quando estoura",
-        ]}
-        visual={<OrcamentoMock />}
-        reverse
-      />
-      <FeatureSplit
-        eyebrow="Metas e guardado"
-        title="Transforme objetivos em progresso visual."
-        text="Crie metas financeiras e vincule o dinheiro guardado em cada banco. O sistema soma reservas e aportes diretos sem contar em dobro — você vê quanto já tem, quanto falta e a evolução até o objetivo."
-        bullets={[
-          "Capa visual da meta",
-          "Guardado vinculado à meta",
-          "Quanto falta para concluir",
-          "Histórico de aportes",
-        ]}
-        visual={<MetaMock />}
-      />
-      <FeatureSplit
         eyebrow="Contas e organização"
         title="Contas a pagar, a receber e renda no mesmo lugar."
         text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
@@ -224,27 +199,8 @@ export function PublicLanding() {
         visual={<ContasMock />}
         reverse
       />
-      <FeatureSplit
-        eyebrow="Investimentos"
-        title="Acompanhe seu crescimento financeiro."
-        text="Tenha uma visão organizada para acompanhar investimentos, evolução patrimonial e planejamento de longo prazo."
-        bullets={["Carteira consolidada", "Evolução mensal", "Resumo por classe", "Visão de longo prazo"]}
-        visual={<InvestimentosMock />}
-      />
-      <FeatureSplit
-        eyebrow="Contas conectadas"
-        title="Acompanhe outra conta com permissão."
-        text="Convide alguém por e-mail e acompanhe os gastos da pessoa ou da empresa, sempre com aceite e nível de acesso definidos por você. Ideal para famílias, sócios e contadores."
-        bullets={[
-          "Convite por e-mail com link de aceite",
-          "Níveis: somente ver, ver e lançar, administrador",
-          "Cada conta mantém seus dados separados",
-          "Remova o acesso a qualquer momento",
-        ]}
-        visual={<ContasConectadasMock />}
-        reverse
-      />
       <EmpresaInteligenteSection />
+      <MoreFeatures />
       <MultiDeviceShowcase />
       <ForWho />
       <TrustPoints />
