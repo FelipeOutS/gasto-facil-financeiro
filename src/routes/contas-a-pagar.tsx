@@ -1121,6 +1121,7 @@ function ContaFormDialog({
         codigoBoleto: codigoBoleto.trim() || null,
         codigoPix: codigoPix.trim() || null,
         chavePix: chavePix.trim() || null,
+        fornecedorId: fornecedorId || null,
         atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
       };
       // Se conta recorrente, sempre pergunta escopo da edição
