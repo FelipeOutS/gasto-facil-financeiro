@@ -190,3 +190,62 @@ export async function existeFornecedorComCnpj(
   }
   return !!data;
 }
+
+// ============================================================
+// Hook simples para componentes (lista + map por id)
+// ============================================================
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+
+interface UseFornecedoresResult {
+  fornecedores: Fornecedor[];
+  ativos: Fornecedor[];
+  porId: Record<string, Fornecedor>;
+  loading: boolean;
+  reload: () => void;
+}
+
+/**
+ * Carrega os fornecedores do usuário autenticado. Não é cache global —
+ * cada chamada faz uma leitura ao montar e expõe a função `reload`.
+ */
+export function useFornecedores(): UseFornecedoresResult {
+  const { user } = useAuth();
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setFornecedores([]);
+      return;
+    }
+    let cancelado = false;
+    setLoading(true);
+    void listarFornecedores(user.id)
+      .then((rows) => {
+        if (!cancelado) setFornecedores(rows);
+      })
+      .catch(() => {
+        if (!cancelado) setFornecedores([]);
+      })
+      .finally(() => {
+        if (!cancelado) setLoading(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.id, tick]);
+
+  const ativos = fornecedores.filter((f) => f.ativo);
+  const porId: Record<string, Fornecedor> = {};
+  for (const f of fornecedores) porId[f.id] = f;
+
+  return {
+    fornecedores,
+    ativos,
+    porId,
+    loading,
+    reload: () => setTick((t) => t + 1),
+  };
+}
