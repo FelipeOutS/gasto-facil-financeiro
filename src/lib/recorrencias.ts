@@ -35,6 +35,8 @@ export type StatusRecorrencia =
 
 export type TipoRecorrencia = "assinatura" | "recorrencia_fixa";
 
+export type MoedaRecorrencia = "BRL" | "USD" | "EUR";
+
 export type Recorrencia = {
   id: string;
   nome: string;
