@@ -797,3 +797,45 @@ function InfoBloco({
     </div>
   );
 }
+
+function GrupoAtalhos({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {titulo}
+      </h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
+function AtalhoCard({
+  to,
+  titulo,
+  descricao,
+  cta,
+}: {
+  to: string;
+  titulo: string;
+  descricao: string;
+  cta: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex h-full flex-col justify-between gap-2 rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
+    >
+      <div>
+        <p className="text-sm font-semibold">{titulo}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{descricao}</p>
+      </div>
+      <span className="text-xs font-medium text-primary">{cta} →</span>
+    </Link>
+  );
+}
