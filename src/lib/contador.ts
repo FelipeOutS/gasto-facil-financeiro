@@ -647,3 +647,28 @@ export function gerarCsvPacote(p: PacoteContador): string {
   // BOM UTF-8 para Excel abrir certo
   return "\ufeff" + out.join("\n");
 }
+
+function fmtData(iso: string): string {
+  if (!iso) return "";
+  // Espera "yyyy-mm-dd" ou ISO completo
+  const ymd = iso.slice(0, 10);
+  const [y, m, d] = ymd.split("-");
+  if (y && m && d) return `${d}/${m}/${y}`;
+  return iso;
+}
+
+function rotuloStatusPagar(s: "pago" | "pendente" | "atrasado"): string {
+  if (s === "pago") return "Pago";
+  if (s === "atrasado") return "Atrasado";
+  return "Pendente";
+}
+
+function rotuloStatusReceber(
+  s: "recebido" | "pendente" | "atrasado" | "parcial" | "cancelado",
+): string {
+  if (s === "recebido") return "Recebido";
+  if (s === "parcial") return "Parcial";
+  if (s === "atrasado") return "Atrasado";
+  if (s === "cancelado") return "Cancelado";
+  return "Pendente";
+}
