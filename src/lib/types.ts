@@ -62,7 +62,7 @@ export type Gasto = {
   /** ID da operação no banco (quando importado de extrato). */
   idOperacaoBanco?: string;
   /** ID do fornecedor vinculado (opcional). */
-  fornecedorId?: string;
+  fornecedorId?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
