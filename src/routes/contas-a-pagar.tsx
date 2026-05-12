@@ -825,6 +825,17 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
+function nomeExibicaoFornecedor(f: { apelido?: string | null; nome_fantasia?: string | null; razao_social?: string | null; nome?: string | null } | undefined): string | null {
+  if (!f) return null;
+  return (
+    f.apelido?.trim() ||
+    f.nome_fantasia?.trim() ||
+    f.razao_social?.trim() ||
+    f.nome?.trim() ||
+    null
+  );
+}
+
 function ContaCard({
   conta,
   hojeISO,
@@ -842,6 +853,10 @@ function ContaCard({
 }) {
   const status = statusContaEfetivo(conta, hojeISO);
   const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
+  const { porId: fornecedoresPorId } = useFornecedores();
+  const fornecedorNome = conta.fornecedorId
+    ? nomeExibicaoFornecedor(fornecedoresPorId[conta.fornecedorId])
+    : null;
 
   const diasParaVencer = useMemo(() => {
     const v = new Date(conta.dataVencimento + "T00:00:00").getTime();
@@ -891,6 +906,11 @@ function ContaCard({
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
           </div>
+          {conta.fornecedorId && fornecedorNome && (
+            <p className="mt-1 truncate text-[11px] text-muted-foreground">
+              Fornecedor: <span className="text-foreground/80">{fornecedorNome}</span>
+            </p>
+          )}
         </div>
       </div>
 
