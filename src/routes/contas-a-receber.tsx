@@ -586,6 +586,7 @@ function ContaReceberFormDialog({
         categoria: categoria || null,
         forma_recebimento: forma || null,
         observacao: observacao || null,
+        cliente_id: clienteId,
       };
       if (editing) {
         await atualizarContaReceber(editing.id, payload);
