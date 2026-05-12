@@ -329,71 +329,44 @@ function EmpresaPage() {
           />
         )}
 
-        <Link
-          to="/fornecedores"
-          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
-        >
-          <div>
-            <p className="text-sm font-semibold">Fornecedores</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Cadastre fornecedores por CNPJ e organize melhor seus gastos
-              empresariais.
-            </p>
-          </div>
-          <span className="text-xs text-primary">Abrir →</span>
-        </Link>
+        <GrupoAtalhos titulo="Cadastro">
+          <AtalhoCard
+            to="/fornecedores"
+            titulo="Fornecedores"
+            descricao="Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais."
+            cta="Abrir"
+          />
+          <AtalhoCard
+            to="/clientes"
+            titulo="Clientes"
+            descricao="Cadastre clientes por CNPJ e prepare seus relatórios de receitas."
+            cta="Abrir"
+          />
+        </GrupoAtalhos>
 
-        <Link
-          to="/fornecedores/relatorio"
-          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
-        >
-          <div>
-            <p className="text-sm font-semibold">Relatório por fornecedor</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Acompanhe quanto você movimenta com cada fornecedor.
-            </p>
-          </div>
-          <span className="text-xs text-primary">Abrir →</span>
-        </Link>
+        <GrupoAtalhos titulo="Relatórios">
+          <AtalhoCard
+            to="/fornecedores/relatorio"
+            titulo="Relatório por fornecedor"
+            descricao="Acompanhe quanto você movimenta com cada fornecedor."
+            cta="Ver relatório"
+          />
+          <AtalhoCard
+            to="/clientes/relatorio"
+            titulo="Relatório por cliente"
+            descricao="Veja de quais clientes sua empresa mais recebeu e o que ainda está em aberto."
+            cta="Ver relatório"
+          />
+        </GrupoAtalhos>
 
-        <Link
-          to="/clientes"
-          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
-        >
-          <div>
-            <p className="text-sm font-semibold">Clientes Inteligentes</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Cadastre clientes por CNPJ e prepare seus relatórios de receitas.
-            </p>
-          </div>
-          <span className="text-xs text-primary">Abrir →</span>
-        </Link>
-
-        <Link
-          to="/clientes/relatorio"
-          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
-        >
-          <div>
-            <p className="text-sm font-semibold">Relatório por cliente</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Veja de quais clientes sua empresa mais recebeu e o que ainda está em aberto.
-            </p>
-          </div>
-          <span className="text-xs text-primary">Abrir →</span>
-        </Link>
-
-        <Link
-          to="/contador"
-          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
-        >
-          <div>
-            <p className="text-sm font-semibold">Pacote para Contador</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências.
-            </p>
-          </div>
-          <span className="text-xs text-primary">Gerar pacote →</span>
-        </Link>
+        <GrupoAtalhos titulo="Contador">
+          <AtalhoCard
+            to="/contador"
+            titulo="Pacote para Contador"
+            descricao="Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências."
+            cta="Gerar pacote"
+          />
+        </GrupoAtalhos>
 
         <section className="rounded-2xl border border-dashed bg-muted/30 p-4 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Sobre a consulta</p>
