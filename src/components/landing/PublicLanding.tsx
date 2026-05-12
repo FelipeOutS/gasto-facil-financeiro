@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Wallet,
@@ -148,7 +148,56 @@ function handleAnchorClick(
   window.requestAnimationFrame(() => smoothScrollToSection(sectionId));
 }
 
+/**
+ * Link inteligente para âncoras da landing.
+ * - Se o usuário já está na landing ("/" ou "/landing"), faz smooth scroll.
+ * - Se está em outra rota pública (ex.: /termos), navega para "/#sectionId"
+ *   sem passar por login. O efeito de hash em PublicLanding rola até a seção.
+ */
+export function LandingAnchorLink({
+  section,
+  className,
+  children,
+  onClick,
+}: {
+  section: string;
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onLanding = pathname === "/" || pathname === "/landing";
+
+  if (onLanding) {
+    return (
+      <a
+        href={`#${section}`}
+        onClick={(e) => handleAnchorClick(e, `#${section}`, onClick)}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to="/" hash={section} onClick={onClick} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 export function PublicLanding() {
+  // Quando aterrissamos na landing com um hash (ex.: vindo de /termos via
+  // /#planos), rolamos suavemente até a seção correspondente.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+    // Espera o layout da landing montar antes de rolar.
+    const t = window.setTimeout(() => smoothScrollToSection(hash), 80);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return (
     <div
       className="gi-landing min-h-screen bg-white text-slate-900 antialiased"
@@ -3621,7 +3670,7 @@ function FinalCTA() {
 
 /* ============================== FOOTER ============================== */
 
-function Footer() {
+export function Footer() {
   return (
     <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -3651,10 +3700,10 @@ function Footer() {
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#como-funciona" onClick={(e) => handleAnchorClick(e, "#como-funciona")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
-              <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">Recursos</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">Como funciona</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">Planos</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Dúvidas</LandingAnchorLink></li>
             </ul>
           </div>
 
@@ -3672,7 +3721,7 @@ function Footer() {
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Central de ajuda</a></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Central de ajuda</LandingAnchorLink></li>
               <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
               <li><Link to="/status" className="transition-colors hover:text-slate-900">Status do sistema</Link></li>
             </ul>
