@@ -148,7 +148,56 @@ function handleAnchorClick(
   window.requestAnimationFrame(() => smoothScrollToSection(sectionId));
 }
 
+/**
+ * Link inteligente para âncoras da landing.
+ * - Se o usuário já está na landing ("/" ou "/landing"), faz smooth scroll.
+ * - Se está em outra rota pública (ex.: /termos), navega para "/#sectionId"
+ *   sem passar por login. O efeito de hash em PublicLanding rola até a seção.
+ */
+export function LandingAnchorLink({
+  section,
+  className,
+  children,
+  onClick,
+}: {
+  section: string;
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onLanding = pathname === "/" || pathname === "/landing";
+
+  if (onLanding) {
+    return (
+      <a
+        href={`#${section}`}
+        onClick={(e) => handleAnchorClick(e, `#${section}`, onClick)}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to="/" hash={section} onClick={onClick} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 export function PublicLanding() {
+  // Quando aterrissamos na landing com um hash (ex.: vindo de /termos via
+  // /#planos), rolamos suavemente até a seção correspondente.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+    // Espera o layout da landing montar antes de rolar.
+    const t = window.setTimeout(() => smoothScrollToSection(hash), 80);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return (
     <div
       className="gi-landing min-h-screen bg-white text-slate-900 antialiased"
