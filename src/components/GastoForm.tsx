@@ -58,6 +58,10 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
+  const [fornecedorId, setFornecedorId] = useState<string>(
+    (initial as { fornecedorId?: string } | undefined)?.fornecedorId ?? "",
+  );
+  const { ativos: fornecedoresAtivos } = useFornecedores();
   const [essencial, setEssencial] = useState<boolean>(initial?.essencial ?? false);
   const [invoiceMonth, setInvoiceMonth] = useState<string>(
     initial?.invoiceMonth && /^\d{4}-\d{2}$/.test(initial.invoiceMonth)
