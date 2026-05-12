@@ -2411,8 +2411,8 @@ function ForWho() {
   const items = [
     "Pessoa física",
     "MEI",
+    "Pequenas empresas",
     "Autônomos",
-    "Pequenos negócios",
     "Quem quer sair da bagunça financeira",
     "Quem quer trocar planilhas por uma ferramenta visual",
   ];
