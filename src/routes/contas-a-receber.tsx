@@ -385,6 +385,7 @@ function ContaCard({
   onEdit,
   onDelete,
   onCancel,
+  clienteNome,
 }: {
   conta: ContaReceber;
   onMarcar: () => void;
@@ -392,6 +393,7 @@ function ContaCard({
   onEdit: () => void;
   onDelete: () => void;
   onCancel: () => void;
+  clienteNome?: string;
 }) {
   const eff = statusEfetivo(conta);
   const isRecebido = eff === "recebido";
