@@ -22,9 +22,10 @@ import {
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoGasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
-import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays, Store } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useFornecedores } from "@/lib/fornecedores";
 
 export type GastoFormProps = {
   initial?: Partial<NovoGastoInput>;
