@@ -42,6 +42,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
   { path: "/fornecedores", feature: "empresa_inteligente", title: "Fornecedores é um recurso para MEI e Empresa", description: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
   { path: "/clientes", feature: "empresa_inteligente", title: "Clientes é um recurso para MEI e Empresa", description: "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
+  { path: "/contador", feature: "empresa_inteligente", title: "Pacote para Contador é um recurso para MEI e Empresa", description: "Gere um resumo mensal organizado para enviar ao seu contador. Disponível nos planos MEI Essencial, MEI Inteligente e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {
