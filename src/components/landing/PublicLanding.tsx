@@ -3700,10 +3700,10 @@ export function Footer() {
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#recursos" onClick={(e) => handleAnchorClick(e, "#recursos")} className="transition-colors hover:text-slate-900">Recursos</a></li>
-              <li><a href="#como-funciona" onClick={(e) => handleAnchorClick(e, "#como-funciona")} className="transition-colors hover:text-slate-900">Como funciona</a></li>
-              <li><a href="#planos" onClick={(e) => handleAnchorClick(e, "#planos")} className="transition-colors hover:text-slate-900">Planos</a></li>
-              <li><a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="transition-colors hover:text-slate-900">Dúvidas</a></li>
+              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">Recursos</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">Como funciona</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">Planos</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Dúvidas</LandingAnchorLink></li>
             </ul>
           </div>
 
