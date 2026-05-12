@@ -427,11 +427,13 @@ function PacoteContadorPage() {
                 label="Receitas recebidas"
                 value={formatBRL(pacote.resumo.totalReceitasRecebidas)}
                 accent="primary"
+                variacao={variacaoPor(pacote, "receitas")}
               />
               <KpiCard
                 icon={<TrendingDown className="h-4 w-4" />}
                 label="Despesas pagas"
                 value={formatBRL(pacote.resumo.totalDespesasPagas)}
+                variacao={variacaoPor(pacote, "despesas")}
               />
               <KpiCard
                 icon={<Wallet className="h-4 w-4" />}
@@ -440,30 +442,72 @@ function PacoteContadorPage() {
                 accent={
                   pacote.resumo.saldoPeriodo < 0 ? "warning" : "primary"
                 }
+                variacao={variacaoPor(pacote, "saldo")}
               />
               <KpiCard
                 icon={<TrendingUp className="h-4 w-4" />}
                 label="A receber em aberto"
                 value={formatBRL(pacote.resumo.contasReceberEmAberto)}
+                variacao={variacaoPor(pacote, "contasReceberEmAberto")}
               />
               <KpiCard
                 icon={<TrendingDown className="h-4 w-4" />}
                 label="A pagar em aberto"
                 value={formatBRL(pacote.resumo.contasPagarEmAberto)}
                 accent="warning"
+                variacao={variacaoPor(pacote, "contasPagarEmAberto")}
               />
               <KpiCard
                 icon={<Users className="h-4 w-4" />}
                 label="Clientes movimentados"
                 value={String(pacote.resumo.qtdClientesMovimentados)}
+                variacao={variacaoPor(pacote, "clientesMovimentados")}
               />
               <KpiCard
                 icon={<Truck className="h-4 w-4" />}
                 label="Fornecedores movimentados"
                 value={String(pacote.resumo.qtdFornecedoresMovimentados)}
+                variacao={variacaoPor(pacote, "fornecedoresMovimentados")}
               />
             </div>
           </section>
+
+          {/* Comparativo com mês anterior */}
+          {opcoes.incluirComparativo && pacote.comparativo && (
+            <section className="mt-6 print-block">
+              <h3 className="mb-2 text-sm font-semibold">
+                Comparativo com {rotuloPeriodo(pacote.comparativo.periodoAnterior)}
+              </h3>
+              <div className="overflow-x-auto rounded-xl border bg-card">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left font-medium">Indicador</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Mês atual</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Mês anterior</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Variação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pacote.comparativo.variacoes.map((v) => (
+                      <tr key={v.chave} className="border-t">
+                        <td className="px-2 py-1.5">{v.rotulo}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">
+                          {v.formato === "valor" ? formatBRL(v.atual) : v.atual}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                          {v.formato === "valor" ? formatBRL(v.anterior) : v.anterior}
+                        </td>
+                        <td className="px-2 py-1.5 text-right">
+                          <VariacaoBadge v={v} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Receitas */}
           <Secao titulo="Receitas" vazio="Sem receitas no período.">
