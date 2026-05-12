@@ -3830,6 +3830,7 @@ async function upsertGastoVinculadoConta(
       origem: CONTA_A_PAGAR_GASTO_ORIGEM,
       idOperacaoBanco: contaGastoOperationId(conta.id),
       invoiceMonth,
+      fornecedorId: fornecedorIdConta,
       criadoEm: now,
       atualizadoEm: now,
     },
