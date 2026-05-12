@@ -544,7 +544,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
   out.push("Receitas");
   out.push(csvLine(["Data", "Descrição", "Valor", "Tipo", "Cliente"]));
   for (const r of p.receitas) {
-    out.push(csvLine([r.data, r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]));
+    out.push(csvLine([fmtData(r.data), r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]));
   }
   out.push("");
 
@@ -556,7 +556,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
   for (const g of p.gastos) {
     out.push(
       csvLine([
-        g.data,
+        fmtData(g.data),
         g.descricao,
         g.valor.toFixed(2),
         g.categoriaNome ?? "",
@@ -578,10 +578,10 @@ export function gerarCsvPacote(p: PacoteContador): string {
   ]) {
     out.push(
       csvLine([
-        c.vencimento,
+        fmtData(c.vencimento),
         c.descricao,
         c.valor.toFixed(2),
-        c.status,
+        rotuloStatusPagar(c.status),
         c.fornecedorNome ?? "",
       ]),
     );
@@ -601,11 +601,11 @@ export function gerarCsvPacote(p: PacoteContador): string {
   ]) {
     out.push(
       csvLine([
-        c.dataPrevista,
+        fmtData(c.dataPrevista),
         c.descricao,
         c.valor.toFixed(2),
         c.valorRestante.toFixed(2),
-        c.status,
+        rotuloStatusReceber(c.status),
         c.clienteNome ?? "",
       ]),
     );
@@ -646,4 +646,29 @@ export function gerarCsvPacote(p: PacoteContador): string {
 
   // BOM UTF-8 para Excel abrir certo
   return "\ufeff" + out.join("\n");
+}
+
+function fmtData(iso: string): string {
+  if (!iso) return "";
+  // Espera "yyyy-mm-dd" ou ISO completo
+  const ymd = iso.slice(0, 10);
+  const [y, m, d] = ymd.split("-");
+  if (y && m && d) return `${d}/${m}/${y}`;
+  return iso;
+}
+
+function rotuloStatusPagar(s: "pago" | "pendente" | "atrasado"): string {
+  if (s === "pago") return "Pago";
+  if (s === "atrasado") return "Atrasado";
+  return "Pendente";
+}
+
+function rotuloStatusReceber(
+  s: "recebido" | "pendente" | "atrasado" | "parcial" | "cancelado",
+): string {
+  if (s === "recebido") return "Recebido";
+  if (s === "parcial") return "Parcial";
+  if (s === "atrasado") return "Atrasado";
+  if (s === "cancelado") return "Cancelado";
+  return "Pendente";
 }
