@@ -222,6 +222,7 @@ function GastosPage() {
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
+  const { porId: fornecedoresPorId } = useFornecedores();
 
   // Refetch gastos ao entrar na página: pega registros criados fora do
   // cliente (ex: webhook do WhatsApp) que não passaram pelo cache local.
