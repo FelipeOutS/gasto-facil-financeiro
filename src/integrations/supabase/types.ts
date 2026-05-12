@@ -776,6 +776,90 @@ export type Database = {
         }
         Relationships: []
       }
+      fornecedores: {
+        Row: {
+          apelido: string | null
+          ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cnae_principal_codigo: string | null
+          cnae_principal_descricao: string | null
+          cnpj: string | null
+          cnpj_cache_fetched_at: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logradouro: string | null
+          municipio: string | null
+          nome: string
+          nome_fantasia: string | null
+          numero: string | null
+          observacoes: string | null
+          razao_social: string | null
+          situacao_cadastral: string | null
+          source: string | null
+          telefone: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apelido?: string | null
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string | null
+          cnpj_cache_fetched_at?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          nome: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apelido?: string | null
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cnae_principal_codigo?: string | null
+          cnae_principal_descricao?: string | null
+          cnpj?: string | null
+          cnpj_cache_fetched_at?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          nome?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
+          source?: string | null
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gastos: {
         Row: {
           ano: number
