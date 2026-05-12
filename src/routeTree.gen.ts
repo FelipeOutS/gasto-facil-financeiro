@@ -33,6 +33,7 @@ import { Route as EmpresaRouteImport } from './routes/empresa'
 import { Route as ContasConectadasRouteImport } from './routes/contas-conectadas'
 import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
 import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
+import { Route as ContadorRouteImport } from './routes/contador'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as ClientesRouteImport } from './routes/clientes'
@@ -185,6 +186,11 @@ const ContasAReceberRoute = ContasAReceberRouteImport.update({
 const ContasAPagarRoute = ContasAPagarRouteImport.update({
   id: '/contas-a-pagar',
   path: '/contas-a-pagar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContadorRoute = ContadorRouteImport.update({
+  id: '/contador',
+  path: '/contador',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContaRoute = ContaRouteImport.update({
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contador': typeof ContadorRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contador': typeof ContadorRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
+  '/contador': typeof ContadorRoute
   '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/confirmar'
     | '/conta'
+    | '/contador'
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/confirmar'
     | '/conta'
+    | '/contador'
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/confirmar'
     | '/conta'
+    | '/contador'
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
@@ -728,6 +740,7 @@ export interface RootRouteChildren {
   ClientesRoute: typeof ClientesRoute
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
+  ContadorRoute: typeof ContadorRoute
   ContasAPagarRoute: typeof ContasAPagarRoute
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
@@ -944,6 +957,13 @@ declare module '@tanstack/react-router' {
       path: '/contas-a-pagar'
       fullPath: '/contas-a-pagar'
       preLoaderRoute: typeof ContasAPagarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contador': {
+      id: '/contador'
+      path: '/contador'
+      fullPath: '/contador'
+      preLoaderRoute: typeof ContadorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conta': {
@@ -1192,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientesRoute: ClientesRoute,
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,
+  ContadorRoute: ContadorRoute,
   ContasAPagarRoute: ContasAPagarRoute,
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,

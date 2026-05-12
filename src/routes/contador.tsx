@@ -665,21 +665,14 @@ function Secao({
   vazio: string;
   children: React.ReactNode;
 }) {
-  const hasContent = !!children && (Array.isArray(children) ? children.length > 0 : true);
   return (
     <section className="mt-6 print-block">
       <h3 className="mb-2 text-sm font-semibold">{titulo}</h3>
-      {hasContent ? children : null}
-      {/* fallback vazio é tratado pelos próprios children quando aplicável */}
-      <EmptyHint mensagem={vazio} oculto={hasContent} />
+      {children ?? (
+        <p className="text-xs text-muted-foreground">{vazio}</p>
+      )}
     </section>
   );
-}
-
-function EmptyHint({ mensagem, oculto }: { mensagem: string; oculto: boolean }) {
-  // Este componente só aparece quando o pai estiver explicitamente sem conteúdo.
-  // Para simplificar, sempre renderiza, e os pais escondem via CSS quando vazio.
-  return null && <p>{mensagem}{oculto}</p>;
 }
 
 function StatusBadgePagar({ status }: { status: "pago" | "pendente" | "atrasado" }) {
