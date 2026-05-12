@@ -1319,6 +1319,38 @@ function ContaFormDialog({
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label>Fornecedor (opcional)</Label>
+                  {fornecedoresAtivos.length > 0 ? (
+                    <Select
+                      value={fornecedorId || "_none"}
+                      onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sem fornecedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Sem fornecedor</SelectItem>
+                        {fornecedoresAtivos.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.apelido || f.nome_fantasia || f.razao_social || f.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                      Você ainda não tem fornecedores cadastrados.{" "}
+                      <Link
+                        to="/fornecedores"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        Cadastrar fornecedor
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Forma de pagamento</Label>
