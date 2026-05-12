@@ -20,6 +20,7 @@ import {
   Globe,
   Building2,
   Store,
+  Contact,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -64,6 +65,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/radar", label: "Radar Econômico", description: "Dólar, euro e conversor rápido", icon: Globe },
   { to: "/empresa", label: "Empresa Inteligente", description: "Consulte e cadastre sua empresa pelo CNPJ", icon: Building2, feature: "empresa_inteligente" },
   { to: "/fornecedores", label: "Fornecedores", description: "Cadastre fornecedores por CNPJ", icon: Store, feature: "empresa_inteligente" },
+  { to: "/clientes", label: "Clientes", description: "Cadastre clientes por CNPJ", icon: Contact, feature: "empresa_inteligente" },
   { to: "/gasto-ai", label: "Gasto AI", description: "Assistente financeiro com IA", icon: Sparkles, feature: "gasto_ai" },
   { to: "/guardado", label: "Guardado", description: "Reserva e poupança", icon: Wallet },
   { to: "/assinaturas", label: "Assinaturas", description: "Serviços recorrentes", icon: Repeat },
