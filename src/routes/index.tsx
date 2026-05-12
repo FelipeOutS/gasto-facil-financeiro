@@ -60,6 +60,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
+import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
   buildLinhasOrcamento,
@@ -403,6 +404,9 @@ function Index() {
 
       {/* Bloco da Central de Alertas */}
       <DashboardAlertasBloco className="mt-4" />
+
+      {/* Radar Econômico — dólar, euro e conversor */}
+      <RadarEconomicoCard className="mt-4" />
 
       {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
       {profile && !profile.tipo_cadastro && (

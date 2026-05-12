@@ -21,6 +21,7 @@ import {
   Bell,
   Sparkles,
   Users,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
@@ -59,6 +60,7 @@ const ITEMS: NavItem[] = [
   { to: "/contas-a-receber", label: "Contas a receber", icon: HandCoins },
   { to: "/orcamento", label: "Orçamento", icon: PieChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/radar", label: "Radar Econômico", icon: Globe },
   { to: "/gasto-ai", label: "Gasto AI", icon: Sparkles, feature: "gasto_ai" },
   { to: "/whatsapp", label: "WhatsApp", icon: Bell, feature: "whatsapp" },
   { to: "/guardado", label: "Guardado", icon: Wallet },
