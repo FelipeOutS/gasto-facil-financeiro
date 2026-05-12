@@ -2308,6 +2308,77 @@ function GuardadoMock() {
   );
 }
 
+/* ============================== MORE FEATURES (compact) ============================== */
+
+function MoreFeatures() {
+  const items = [
+    {
+      icon: SlidersHorizontal,
+      title: "Orçamento e limite inteligente",
+      text: "Defina limites por categoria e veja quanto pode gastar por dia, descontando contas fixas e faturas pagas.",
+      tone: "from-blue-50 to-blue-100/40 text-blue-700 ring-blue-100",
+    },
+    {
+      icon: Target,
+      title: "Metas e guardado",
+      text: "Crie metas com capa visual e vincule o dinheiro guardado em cada banco — sem contar em dobro.",
+      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
+    },
+    {
+      icon: TrendingUp,
+      title: "Investimentos",
+      text: "Acompanhe sua carteira, evolução mensal e resumo por classe em uma visão organizada.",
+      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
+    },
+    {
+      icon: UserPlus,
+      title: "Contas conectadas",
+      text: "Convide alguém por e-mail e acompanhe outra conta com permissão — ideal para famílias, sócios e contadores.",
+      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
+    },
+  ];
+
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/50 to-white py-16 sm:py-20">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Mais recursos</Eyebrow>
+          <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+            Mais recursos para o seu controle financeiro
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-base text-slate-600">
+            Tudo o que você precisa para acompanhar seu dinheiro com clareza —
+            sem deixar nada de fora.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+          {items.map((it, i) => (
+            <Reveal key={it.title} delay={i * 0.05}>
+              <div className="group relative h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_36px_-16px_rgba(15,23,42,0.25)]">
+                <div
+                  className={cn(
+                    "mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ring-1",
+                    it.tone,
+                  )}
+                >
+                  <it.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-[15px] font-semibold text-slate-900">
+                  {it.title}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  {it.text}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== EMPRESA INTELIGENTE ============================== */
 
 function EmpresaInteligenteSection() {
