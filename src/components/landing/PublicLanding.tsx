@@ -2398,27 +2398,27 @@ function EmpresaInteligenteSection() {
   return (
     <section
       id="mei-empresa"
-      className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-20 sm:py-28"
+      className="relative overflow-hidden bg-white py-20 sm:py-28"
     >
-      {/* decorative gradient blobs */}
+      {/* soft refined gradient accents */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-gradient-to-br from-emerald-200/40 via-teal-200/30 to-transparent blur-3xl"
+        className="pointer-events-none absolute -top-40 left-1/3 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-teal-100/50 via-emerald-50/30 to-transparent blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-32 -right-24 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-violet-200/40 via-fuchsia-200/20 to-transparent blur-3xl"
+        className="pointer-events-none absolute top-1/3 -right-32 h-[26rem] w-[26rem] rounded-full bg-gradient-to-br from-violet-100/40 via-indigo-50/20 to-transparent blur-3xl"
       />
-      {/* dotted grid */}
+      {/* very subtle dotted grid */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
           backgroundImage:
             "radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
+          backgroundSize: "26px 26px",
           maskImage:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.7), transparent 70%)",
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 75%)",
         }}
       />
 
