@@ -529,7 +529,9 @@ function ContaReceberFormDialog({
   const [categoria, setCategoria] = useState("");
   const [forma, setForma] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [clienteId, setClienteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { ativos: clientesAtivos } = useClientes();
 
   useEffect(() => {
     if (!open) return;
@@ -542,6 +544,7 @@ function ContaReceberFormDialog({
       setCategoria(editing.categoria ?? "");
       setForma((editing.forma_recebimento as string) ?? "");
       setObservacao(editing.observacao ?? "");
+      setClienteId(editing.cliente_id ?? null);
     } else {
       setTitulo("");
       setPagador("");
@@ -551,6 +554,7 @@ function ContaReceberFormDialog({
       setCategoria("");
       setForma("");
       setObservacao("");
+      setClienteId(null);
     }
   }, [open, editing]);
 
