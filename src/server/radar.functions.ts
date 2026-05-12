@@ -12,7 +12,9 @@ import { getRadarIndicators } from "./radar.server";
  * Retorna os indicadores econômicos com cache.
  *
  * - Sem auth: dados públicos de mercado.
- * - Cache: 30 minutos (gerenciado no servidor).
+ * - Cache: 1h para USD/EUR, 24h para Selic/IPCA (gerenciado no servidor).
+ *   O botão "Atualizar" usa esta função e respeita o TTL — só chama API
+ *   externa se o cache estiver expirado, evitando 429 da AwesomeAPI.
  * - Falha externa: degrada para o último valor salvo com status "desatualizado".
  */
 export const getEconomicRadar = createServerFn({ method: "GET" }).handler(async () => {

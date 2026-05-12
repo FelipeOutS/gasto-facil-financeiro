@@ -52,7 +52,7 @@ const SUPPORTED = [
     currency: "USD",
     source: "awesomeapi",
     unit: "BRL",
-    ttlMs: 30 * 60 * 1000, // 30 min
+    ttlMs: 60 * 60 * 1000, // 1h — evita estourar limite da AwesomeAPI (429)
   },
   {
     key: "EUR_BRL",
@@ -60,7 +60,7 @@ const SUPPORTED = [
     currency: "EUR",
     source: "awesomeapi",
     unit: "BRL",
-    ttlMs: 30 * 60 * 1000,
+    ttlMs: 60 * 60 * 1000, // 1h
   },
   {
     key: "SELIC",
@@ -68,7 +68,7 @@ const SUPPORTED = [
     currency: null,
     source: "bcb-sgs",
     unit: "% a.a.",
-    ttlMs: 12 * 60 * 60 * 1000, // 12h — só muda em reuniões do Copom
+    ttlMs: 24 * 60 * 60 * 1000, // 24h — só muda em reuniões do Copom
   },
   {
     key: "IPCA",
@@ -76,7 +76,7 @@ const SUPPORTED = [
     currency: null,
     source: "bcb-sgs",
     unit: "% no mês",
-    ttlMs: 12 * 60 * 60 * 1000, // 12h — divulgação mensal
+    ttlMs: 24 * 60 * 60 * 1000, // 24h — divulgação mensal
   },
 ] as const;
 
