@@ -162,6 +162,8 @@ function rowToRec(r: any): Recorrencia {
     observacao: r.observacao ?? null,
     ultimoValor: r.ultimo_valor != null ? Number(r.ultimo_valor) : null,
     detectionKey: r.detection_key ?? null,
+    moeda: (r.moeda === "USD" || r.moeda === "EUR" ? r.moeda : "BRL") as MoedaRecorrencia,
+    valorOriginal: r.valor_original != null ? Number(r.valor_original) : null,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
