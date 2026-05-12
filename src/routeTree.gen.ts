@@ -43,7 +43,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores.relatorio'
+import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
@@ -236,9 +236,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
-  id: '/relatorio',
-  path: '/relatorio',
-  getParentRoute: () => FornecedoresRoute,
+  id: '/fornecedores_/relatorio',
+  path: '/fornecedores/relatorio',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -361,7 +361,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRouteWithChildren
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -418,7 +418,7 @@ export interface FileRoutesByTo {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRouteWithChildren
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -476,7 +476,7 @@ export interface FileRoutesById {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRouteWithChildren
+  '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -506,7 +506,7 @@ export interface FileRoutesById {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -679,7 +679,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
-    | '/fornecedores/relatorio'
+    | '/fornecedores_/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -707,7 +707,7 @@ export interface RootRouteChildren {
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
   EmpresaRoute: typeof EmpresaRoute
-  FornecedoresRoute: typeof FornecedoresRouteWithChildren
+  FornecedoresRoute: typeof FornecedoresRoute
   GastoAiRoute: typeof GastoAiRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
@@ -737,6 +737,7 @@ export interface RootRouteChildren {
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -989,12 +990,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fornecedores/relatorio': {
-      id: '/fornecedores/relatorio'
-      path: '/relatorio'
+    '/fornecedores_/relatorio': {
+      id: '/fornecedores_/relatorio'
+      path: '/fornecedores/relatorio'
       fullPath: '/fornecedores/relatorio'
       preLoaderRoute: typeof FornecedoresRelatorioRouteImport
-      parentRoute: typeof FornecedoresRoute
+      parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -1139,18 +1140,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface FornecedoresRouteChildren {
-  FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
-}
-
-const FornecedoresRouteChildren: FornecedoresRouteChildren = {
-  FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
-}
-
-const FornecedoresRouteWithChildren = FornecedoresRoute._addFileChildren(
-  FornecedoresRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1166,7 +1155,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,
   EmpresaRoute: EmpresaRoute,
-  FornecedoresRoute: FornecedoresRouteWithChildren,
+  FornecedoresRoute: FornecedoresRoute,
   GastoAiRoute: GastoAiRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,
@@ -1196,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
@@ -1210,3 +1200,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

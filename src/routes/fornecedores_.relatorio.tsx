@@ -44,7 +44,7 @@ import {
 import { useFornecedores, type Fornecedor } from "@/lib/fornecedores";
 import type { ContaAPagar, Gasto } from "@/lib/types";
 
-export const Route = createFileRoute("/fornecedores/relatorio")({
+export const Route = createFileRoute("/fornecedores_/relatorio")({
   head: () => ({
     meta: [
       { title: "Relatório por Fornecedor — Gasto Inteligente" },
