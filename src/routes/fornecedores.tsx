@@ -365,10 +365,18 @@ function FornecedoresPage() {
               </p>
             </div>
           </div>
-          <Button onClick={abrirNovo} className="gap-2 shrink-0">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Novo</span>
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/fornecedores/relatorio">
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Relatório</span>
+              </Link>
+            </Button>
+            <Button onClick={abrirNovo} className="gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Novo</span>
+            </Button>
+          </div>
         </div>
       </header>
 
