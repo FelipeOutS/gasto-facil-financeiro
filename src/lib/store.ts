@@ -447,6 +447,7 @@ type ReceitaRow = {
   origem?: string | null;
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
+  cliente_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -465,6 +466,7 @@ function rowToReceita(r: ReceitaRow): Receita {
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
+    clienteId: r.cliente_id ?? null,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -2353,6 +2355,7 @@ export type NovaReceitaInput = {
   tipo: TipoReceita;
   recorrente?: boolean;
   recorrenteMeses?: number;
+  clienteId?: string | null;
 };
 
 export function addReceita(input: NovaReceitaInput): Receita[] {
@@ -2361,6 +2364,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
   const rows: ReceitaInsert[] = [];
+  const clienteId = input.clienteId ?? null;
 
   if (input.recorrente) {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
@@ -2380,6 +2384,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
         recorrenciaId: recId,
         mes: d.getMonth() + 1,
         ano: d.getFullYear(),
+        clienteId,
         criadoEm: now,
         atualizadoEm: now,
       });
@@ -2394,7 +2399,8 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
         recorrencia_id: recId,
         mes: d.getMonth() + 1,
         ano: d.getFullYear(),
-      });
+        ...(clienteId ? { cliente_id: clienteId } : {}),
+      } as ReceitaInsert);
     }
   } else {
     const id = crypto.randomUUID();
@@ -2407,6 +2413,7 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
       recorrente: false,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
+      clienteId,
       criadoEm: now,
       atualizadoEm: now,
     });
@@ -2420,7 +2427,8 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
       recorrente: false,
       mes: baseDate.getMonth() + 1,
       ano: baseDate.getFullYear(),
-    });
+      ...(clienteId ? { cliente_id: clienteId } : {}),
+    } as ReceitaInsert);
   }
   memReceitas = [...memReceitas, ...created];
   emit();
@@ -2694,6 +2702,7 @@ export type ReceitaEditableFields = {
   valor?: number;
   data?: string;
   tipo?: TipoReceita;
+  clienteId?: string | null;
 };
 
 export type UpdateReceitaScope = "single" | "forward" | "all";
@@ -2720,6 +2729,7 @@ export function updateReceita(
     if (fields.descricao !== undefined) next.descricao = fields.descricao;
     if (fields.valor !== undefined) next.valor = fields.valor;
     if (fields.tipo !== undefined) next.tipo = fields.tipo;
+    if (fields.clienteId !== undefined) next.clienteId = fields.clienteId ?? null;
     if (fields.data !== undefined) {
       // Para escopo "single" trocamos data/mes/ano da própria receita.
       // Para escopos "forward"/"all" só atualizamos a data quando for o item alvo;
@@ -2762,6 +2772,7 @@ export function updateReceita(
   if (fields.descricao !== undefined) basePatch.descricao = fields.descricao;
   if (fields.valor !== undefined) basePatch.valor = fields.valor;
   if (fields.tipo !== undefined) basePatch.tipo = fields.tipo;
+  if (fields.clienteId !== undefined) basePatch.cliente_id = fields.clienteId ?? null;
 
   // Para descrição/valor/tipo aplicamos em lote
   const ids = affected.map((r) => r.id);

@@ -517,6 +517,7 @@ export type Database = {
       contas_a_receber: {
         Row: {
           categoria: string | null
+          cliente_id: string | null
           created_at: string
           data_prevista: string
           data_recebimento: string | null
@@ -536,6 +537,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_prevista: string
           data_recebimento?: string | null
@@ -555,6 +557,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_prevista?: string
           data_recebimento?: string | null
@@ -572,7 +575,15 @@ export type Database = {
           valor_restante?: number
           valor_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contas_a_receber_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dinheiro_guardado: {
         Row: {
@@ -1502,6 +1513,7 @@ export type Database = {
       receitas: {
         Row: {
           ano: number
+          cliente_id: string | null
           created_at: string
           data: string
           descricao: string
@@ -1520,6 +1532,7 @@ export type Database = {
         }
         Insert: {
           ano: number
+          cliente_id?: string | null
           created_at?: string
           data: string
           descricao: string
@@ -1538,6 +1551,7 @@ export type Database = {
         }
         Update: {
           ano?: number
+          cliente_id?: string | null
           created_at?: string
           data?: string
           descricao?: string
@@ -1554,7 +1568,15 @@ export type Database = {
           user_id?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "receitas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recorrencias: {
         Row: {

@@ -97,6 +97,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClientes } from "@/lib/clientes";
+import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
 type RendaSearch = { ano?: number; mes?: number };
 
@@ -395,6 +397,8 @@ function RendaPage() {
   const [tipo, setTipo] = useState<TipoReceita>("salario");
   const [recorrente, setRecorrente] = useState(true);
   const [meses, setMeses] = useState(12);
+  const [novaClienteId, setNovaClienteId] = useState<string | null>(null);
+  const { ativos: clientesAtivos, porId: clientesPorId } = useClientes();
   type NovaPayload = {
     descricao: string;
     valor: number;
@@ -402,6 +406,7 @@ function RendaPage() {
     tipo: TipoReceita;
     recorrente: boolean;
     recorrenteMeses?: number;
+    clienteId?: string | null;
   };
   const [confirmDup, setConfirmDup] = useState<null | {
     parecida: Receita;
@@ -415,6 +420,7 @@ function RendaPage() {
     setTipo("salario");
     setRecorrente(true);
     setMeses(12);
+    setNovaClienteId(null);
   }
 
   function persistNova(payload: NovaPayload) {
@@ -461,6 +467,7 @@ function RendaPage() {
       tipo,
       recorrente,
       recorrenteMeses: recorrente ? meses : undefined,
+      clienteId: novaClienteId,
     };
 
     if (parecida) {
@@ -741,6 +748,11 @@ function RendaPage() {
                 </SelectContent>
               </Select>
             </div>
+            <ClienteSelect
+              value={novaClienteId}
+              onChange={setNovaClienteId}
+              clientesAtivos={clientesAtivos}
+            />
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
                 <p className="text-sm font-medium">Repetir todo mês</p>
@@ -1074,6 +1086,7 @@ function RendaPage() {
                       r={r}
                       onEdit={() => setEditTarget(r)}
                       onDelete={() => setDeleteTarget(r)}
+                      clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                     />
                   </motion.div>
                 ))}
@@ -1099,6 +1112,7 @@ function RendaPage() {
                   r={r}
                   onEdit={() => setEditTarget(r)}
                   onDelete={() => setDeleteTarget(r)}
+                  clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                 />
               ))}
             </ul>
@@ -1152,6 +1166,7 @@ function RendaPage() {
                                 r={r}
                                 onEdit={() => setEditTarget(r)}
                                 onDelete={() => setDeleteTarget(r)}
+                                clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                               />
                             ))}
                           </ul>
@@ -1358,10 +1373,12 @@ function ReceitaItem({
   r,
   onEdit,
   onDelete,
+  clienteNome,
 }: {
   r: Receita;
   onEdit: () => void;
   onDelete: () => void;
+  clienteNome?: string;
 }) {
   const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
   const Icon = tipoIcon(r.tipo);
@@ -1397,6 +1414,11 @@ function ReceitaItem({
           <p className="truncate text-xs text-muted-foreground">
             {tipoLabel} · {formatDateBR(r.data)}
           </p>
+          {clienteNome ? (
+            <p className="truncate text-[11px] text-muted-foreground">
+              Cliente: {clienteNome}
+            </p>
+          ) : null}
           <p className="num mt-0.5 text-sm font-semibold text-success">
             +{formatBRL(r.valor)}
           </p>
@@ -1439,7 +1461,9 @@ function EditReceitaDialog({
   const [valorStr, setValorStr] = useState("");
   const [data, setData] = useState(todayISO());
   const [tipo, setTipo] = useState<TipoReceita>("salario");
+  const [clienteId, setClienteId] = useState<string | null>(null);
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
+  const { ativos: clientesAtivos } = useClientes();
 
   useEffect(() => {
     if (receita) {
@@ -1447,6 +1471,7 @@ function EditReceitaDialog({
       setValorStr(receita.valor.toFixed(2).replace(".", ","));
       setData(receita.data);
       setTipo(receita.tipo);
+      setClienteId(receita.clienteId ?? null);
       setScope("single");
     }
   }, [receita]);
@@ -1460,7 +1485,7 @@ function EditReceitaDialog({
     }
     updateReceita(
       receita.id,
-      { descricao: descricao.trim(), valor, data, tipo },
+      { descricao: descricao.trim(), valor, data, tipo, clienteId },
       receita.recorrente && receita.recorrenciaId ? scope : "single",
     );
     toast.success("Renda atualizada. ✅");
@@ -1516,6 +1541,11 @@ function EditReceitaDialog({
               </SelectContent>
             </Select>
           </div>
+          <ClienteSelect
+            value={clienteId}
+            onChange={setClienteId}
+            clientesAtivos={clientesAtivos}
+          />
 
           {receita?.recorrente && receita.recorrenciaId && (
             <div className="rounded-xl border border-border bg-card-elevated p-3">

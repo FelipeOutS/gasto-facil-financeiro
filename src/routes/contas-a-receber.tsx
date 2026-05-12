@@ -66,6 +66,8 @@ import {
   calcularResumo,
   statusEfetivo,
 } from "@/lib/contas-receber";
+import { useClientes } from "@/lib/clientes";
+import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
 export const Route = createFileRoute("/contas-a-receber")({
   component: ContasAReceberPage,
@@ -85,6 +87,7 @@ function ContasAReceberPage() {
   const [confirmCancel, setConfirmCancel] = useState<ContaReceber | null>(null);
   const [filtro, setFiltro] = useState<FilterStatus>("todas");
   const [busca, setBusca] = useState("");
+  const { porId: clientesPorId } = useClientes();
 
   async function recarregar() {
     if (!userId) return;
@@ -240,6 +243,7 @@ function ContasAReceberPage() {
             <ContaCard
               key={c.id}
               conta={c}
+              clienteNome={c.cliente_id ? nomeExibicaoCliente(clientesPorId[c.cliente_id]) : undefined}
               onMarcar={() => setOpenReceber(c)}
               onDesmarcar={async () => {
                 try {
@@ -383,6 +387,7 @@ function ContaCard({
   onEdit,
   onDelete,
   onCancel,
+  clienteNome,
 }: {
   conta: ContaReceber;
   onMarcar: () => void;
@@ -390,6 +395,7 @@ function ContaCard({
   onEdit: () => void;
   onDelete: () => void;
   onCancel: () => void;
+  clienteNome?: string;
 }) {
   const eff = statusEfetivo(conta);
   const isRecebido = eff === "recebido";
@@ -411,6 +417,9 @@ function ContaCard({
           <h3 className="mt-1 truncate text-sm font-semibold">{conta.titulo}</h3>
           {conta.pagador_nome && (
             <p className="truncate text-[12px] text-muted-foreground">de {conta.pagador_nome}</p>
+          )}
+          {clienteNome && (
+            <p className="truncate text-[11px] text-muted-foreground">Cliente: {clienteNome}</p>
           )}
           <p className="mt-1 text-[11px] text-muted-foreground">
             Previsto: {formatDateBR(conta.data_prevista)}
@@ -527,7 +536,9 @@ function ContaReceberFormDialog({
   const [categoria, setCategoria] = useState("");
   const [forma, setForma] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [clienteId, setClienteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { ativos: clientesAtivos } = useClientes();
 
   useEffect(() => {
     if (!open) return;
@@ -540,6 +551,7 @@ function ContaReceberFormDialog({
       setCategoria(editing.categoria ?? "");
       setForma((editing.forma_recebimento as string) ?? "");
       setObservacao(editing.observacao ?? "");
+      setClienteId(editing.cliente_id ?? null);
     } else {
       setTitulo("");
       setPagador("");
@@ -549,6 +561,7 @@ function ContaReceberFormDialog({
       setCategoria("");
       setForma("");
       setObservacao("");
+      setClienteId(null);
     }
   }, [open, editing]);
 
@@ -580,6 +593,7 @@ function ContaReceberFormDialog({
         categoria: categoria || null,
         forma_recebimento: forma || null,
         observacao: observacao || null,
+        cliente_id: clienteId,
       };
       if (editing) {
         await atualizarContaReceber(editing.id, payload);
@@ -682,6 +696,11 @@ function ContaReceberFormDialog({
               maxLength={120}
             />
           </div>
+          <ClienteSelect
+            value={clienteId}
+            onChange={setClienteId}
+            clientesAtivos={clientesAtivos}
+          />
           <div className="space-y-1.5">
             <Label htmlFor="cr-categoria">Categoria (opcional)</Label>
             <Input

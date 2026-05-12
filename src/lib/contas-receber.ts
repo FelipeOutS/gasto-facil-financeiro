@@ -41,6 +41,7 @@ export type ContaReceber = {
   forma_recebimento: FormaRecebimento | string | null;
   observacao: string | null;
   origem: string | null;
+  cliente_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -54,6 +55,7 @@ export type NovaContaReceberInput = {
   categoria?: string | null;
   forma_recebimento?: FormaRecebimento | string | null;
   observacao?: string | null;
+  cliente_id?: string | null;
 };
 
 export type EditarContaReceberInput = Partial<NovaContaReceberInput>;
@@ -102,6 +104,7 @@ export async function criarContaReceber(userId: string, input: NovaContaReceberI
     forma_recebimento: input.forma_recebimento || null,
     observacao: input.observacao?.trim() || null,
     origem: "manual",
+    cliente_id: input.cliente_id ?? null,
   };
   const { data, error } = await supabase
     .from("contas_a_receber")
@@ -124,6 +127,7 @@ export async function atualizarContaReceber(
   if (fields.categoria !== undefined) patch.categoria = fields.categoria?.toString().trim() || null;
   if (fields.forma_recebimento !== undefined) patch.forma_recebimento = fields.forma_recebimento || null;
   if (fields.observacao !== undefined) patch.observacao = fields.observacao?.toString().trim() || null;
+  if (fields.cliente_id !== undefined) patch.cliente_id = fields.cliente_id ?? null;
 
   if (fields.valor_total !== undefined) {
     // Buscar para recalcular restante
