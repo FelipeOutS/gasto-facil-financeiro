@@ -124,6 +124,33 @@ export interface ResumoFinanceiro {
   qtdFornecedoresMovimentados: number;
 }
 
+export interface VariacaoIndicador {
+  chave:
+    | "receitas"
+    | "despesas"
+    | "saldo"
+    | "contasReceberEmAberto"
+    | "contasPagarEmAberto"
+    | "clientesMovimentados"
+    | "fornecedoresMovimentados";
+  rotulo: string;
+  atual: number;
+  anterior: number;
+  diferenca: number;
+  /** null quando não há base de comparação (anterior = 0 e atual > 0) ou ambos = 0 */
+  variacaoPercentual: number | null;
+  /** "novo" quando anterior=0 e atual>0; "zerado" quando ambos=0; "comparavel" caso contrário */
+  tipo: "novo" | "zerado" | "comparavel";
+  /** "valor" mostra como moeda; "quantidade" mostra como número */
+  formato: "valor" | "quantidade";
+}
+
+export interface ComparativoMes {
+  periodoAnterior: PeriodoMes;
+  resumoAnterior: ResumoFinanceiro;
+  variacoes: VariacaoIndicador[];
+}
+
 export interface PacoteContador {
   periodo: PeriodoMes;
   geradoEm: string; // ISO
@@ -145,6 +172,8 @@ export interface PacoteContador {
   porCliente: ResumoCliente[];
   porFornecedor: ResumoFornecedor[];
   pendencias: PendenciasPacote;
+  /** null quando o toggle de comparativo estiver desativado */
+  comparativo: ComparativoMes | null;
 }
 
 // ============================================================
