@@ -902,6 +902,7 @@ function RecorrenciaDialog({
       return;
     }
     setSaving(true);
+    const valorOriginalNum = moeda !== "BRL" ? parseBRLInput(valorOriginal) : null;
     try {
       if (editing) {
         await atualizarRecorrencia(editing.id, {
@@ -914,6 +915,8 @@ function RecorrenciaDialog({
           cartaoId: cartaoId || null,
           observacao: observacao || null,
           status,
+          moeda,
+          valorOriginal: valorOriginalNum,
         });
         toast.success("Recorrência atualizada");
       } else {
@@ -928,6 +931,8 @@ function RecorrenciaDialog({
           observacao: observacao || null,
           status,
           origem: "manual",
+          moeda,
+          valorOriginal: valorOriginalNum,
         });
         toast.success("Recorrência criada");
       }
