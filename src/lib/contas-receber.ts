@@ -104,6 +104,7 @@ export async function criarContaReceber(userId: string, input: NovaContaReceberI
     forma_recebimento: input.forma_recebimento || null,
     observacao: input.observacao?.trim() || null,
     origem: "manual",
+    cliente_id: input.cliente_id ?? null,
   };
   const { data, error } = await supabase
     .from("contas_a_receber")
