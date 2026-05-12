@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ImportFaturaDialog } from "@/components/ImportFaturaDialog";
+import { CompraInternacionalCard } from "@/components/CompraInternacionalCard";
 import { usePlan } from "@/lib/use-plan";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import {
