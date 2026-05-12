@@ -36,7 +36,7 @@ export function InvestimentosLockModal({ open, onOpenChange }: Props) {
     }
     setLoading(true);
     try {
-      // Recurso liberado a partir de Pessoa Física Premium — escolhemos
+      // Recurso liberado a partir de Controle Completo Pessoal — escolhemos
       // esse plano como padrão para o teste a partir desse modal.
       const res = await startTrial(user.id, "pessoal_premium");
       if (!res.ok) {
@@ -65,8 +65,8 @@ export function InvestimentosLockModal({ open, onOpenChange }: Props) {
           </DialogTitle>
           <DialogDescription className="text-center">
             Acompanhe sua carteira, patrimônio, rendimentos e movimentações em um
-            só lugar. Este recurso está disponível nos planos Pessoa Física
-            Premium, MEI Inteligente e Empresa.
+            só lugar. Este recurso está disponível nos planos Controle Completo
+            Pessoal, MEI Completo e Empresa.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">

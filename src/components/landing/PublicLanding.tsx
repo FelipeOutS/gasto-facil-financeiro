@@ -3463,7 +3463,7 @@ const FAQS = [
   },
   {
     q: "Existe plano para MEI?",
-    a: "Sim. Temos os planos MEI Essencial e MEI Inteligente, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
+    a: "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
   },
   {
     q: "O que tem na área Empresa Inteligente?",
