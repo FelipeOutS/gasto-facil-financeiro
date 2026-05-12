@@ -17,6 +17,7 @@ import {
   Bell,
   Shield,
   Users,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 import {
