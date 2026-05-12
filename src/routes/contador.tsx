@@ -134,6 +134,7 @@ function PacoteContadorPage() {
     incluirClientes: true,
     incluirFornecedores: true,
     incluirPendencias: true,
+    incluirComparativo: true,
   });
 
   const cartoesPorId = useMemo<Record<string, Cartao>>(() => {
