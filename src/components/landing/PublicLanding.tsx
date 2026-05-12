@@ -3065,7 +3065,19 @@ const FAQS = [
   },
   {
     q: "Existe plano para MEI?",
-    a: "Sim. Temos os planos MEI Essencial e MEI Inteligente, com linguagem e recursos pensados para o seu negócio.",
+    a: "Sim. Temos os planos MEI Essencial e MEI Inteligente, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
+  },
+  {
+    q: "O que tem na área Empresa Inteligente?",
+    a: "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês.",
+  },
+  {
+    q: "O Pacote para Contador substitui meu contador?",
+    a: "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional.",
+  },
+  {
+    q: "O que é o Radar Econômico?",
+    a: "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro.",
   },
   {
     q: "Posso acessar pelo celular?",
