@@ -1531,6 +1531,11 @@ function EditReceitaDialog({
               </SelectContent>
             </Select>
           </div>
+          <ClienteSelect
+            value={clienteId}
+            onChange={setClienteId}
+            clientesAtivos={clientesAtivos}
+          />
 
           {receita?.recorrente && receita.recorrenciaId && (
             <div className="rounded-xl border border-border bg-card-elevated p-3">
