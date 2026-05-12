@@ -60,6 +60,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
+import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
   buildLinhasOrcamento,
