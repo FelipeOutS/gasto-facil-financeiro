@@ -842,6 +842,10 @@ function ContaCard({
 }) {
   const status = statusContaEfetivo(conta, hojeISO);
   const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
+  const { porId: fornecedoresPorId } = useFornecedores();
+  const fornecedorNome = conta.fornecedorId
+    ? nomeExibicaoFornecedor(fornecedoresPorId[conta.fornecedorId])
+    : null;
 
   const diasParaVencer = useMemo(() => {
     const v = new Date(conta.dataVencimento + "T00:00:00").getTime();
