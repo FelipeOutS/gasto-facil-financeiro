@@ -47,7 +47,6 @@ import type { ContaAPagar, StatusConta, FrequenciaRecorrencia } from "@/lib/type
 import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { useFornecedores } from "@/lib/fornecedores";
-import { Link } from "@tanstack/react-router";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { Money } from "@/components/Money";
