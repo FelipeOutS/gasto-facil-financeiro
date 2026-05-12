@@ -3484,6 +3484,9 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       valor: updated.valor,
       categoriaId: updated.categoriaId || "outros",
       observacao: updated.observacao,
+      ...(fields.fornecedorId !== undefined
+        ? { fornecedorId: updated.fornecedorId ?? null }
+        : {}),
     });
   }
 
