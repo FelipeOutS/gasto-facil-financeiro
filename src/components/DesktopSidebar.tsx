@@ -23,6 +23,7 @@ import {
   Users,
   Globe,
   Building2,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
