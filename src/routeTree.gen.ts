@@ -46,6 +46,7 @@ import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
@@ -251,6 +252,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
+  id: '/clientes_/relatorio',
+  path: '/clientes/relatorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   id: '/api/ocr-gasto',
   path: '/api/ocr-gasto',
@@ -397,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -514,6 +522,7 @@ export interface FileRoutesById {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -574,6 +583,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/fornecedores/relatorio'
     | '/api/checkout/create'
@@ -632,6 +642,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/fornecedores/relatorio'
     | '/api/checkout/create'
@@ -690,6 +701,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/clientes_/relatorio'
     | '/email/unsubscribe'
     | '/fornecedores_/relatorio'
     | '/api/checkout/create'
@@ -749,6 +761,7 @@ export interface RootRouteChildren {
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
@@ -1024,6 +1037,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clientes_/relatorio': {
+      id: '/clientes_/relatorio'
+      path: '/clientes/relatorio'
+      fullPath: '/clientes/relatorio'
+      preLoaderRoute: typeof ClientesRelatorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ocr-gasto': {
       id: '/api/ocr-gasto'
       path: '/api/ocr-gasto'
@@ -1205,6 +1225,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
