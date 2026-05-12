@@ -2433,14 +2433,8 @@ function EmpresaInteligenteSection() {
               </span>
               <h2 className="mt-4 text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.6rem]">
                 Controle completo para MEI e{" "}
-                <span className="relative inline-block">
-                  <span className="relative z-10 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                    pequenas empresas
-                  </span>
-                  <span
-                    aria-hidden
-                    className="absolute inset-x-0 bottom-1 -z-0 h-2.5 rounded-full bg-emerald-200/60"
-                  />
+                <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                  pequenas empresas
                 </span>
                 .
               </h2>
