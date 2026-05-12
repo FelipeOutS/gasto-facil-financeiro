@@ -43,6 +43,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
@@ -234,6 +235,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
+  id: '/fornecedores_/relatorio',
+  path: '/fornecedores/relatorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByTo {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -612,6 +622,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores_/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -725,6 +737,7 @@ export interface RootRouteChildren {
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -977,6 +990,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fornecedores_/relatorio': {
+      id: '/fornecedores_/relatorio'
+      path: '/fornecedores/relatorio'
+      fullPath: '/fornecedores/relatorio'
+      preLoaderRoute: typeof FornecedoresRelatorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -1165,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
