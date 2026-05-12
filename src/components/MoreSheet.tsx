@@ -21,6 +21,7 @@ import {
   Building2,
   Store,
   Contact,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 import {
