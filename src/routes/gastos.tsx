@@ -41,6 +41,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { hasMerchantLogo } from "@/lib/logos";
 import { Money, CountNumber } from "@/components/Money";
+import { useFornecedores } from "@/lib/fornecedores";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   bulkDeleteGastos,
