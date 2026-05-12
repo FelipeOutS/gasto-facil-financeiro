@@ -43,6 +43,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores.relatorio'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
@@ -234,6 +235,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
+  getParentRoute: () => FornecedoresRoute,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -355,7 +361,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRoute
+  '/fornecedores': typeof FornecedoresRouteWithChildren
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -411,7 +418,7 @@ export interface FileRoutesByTo {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRoute
+  '/fornecedores': typeof FornecedoresRouteWithChildren
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByTo {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -468,7 +476,7 @@ export interface FileRoutesById {
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
-  '/fornecedores': typeof FornecedoresRoute
+  '/fornecedores': typeof FornecedoresRouteWithChildren
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRoute
   '/guardado': typeof GuardadoRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -612,6 +622,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/email/unsubscribe'
+    | '/fornecedores/relatorio'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -695,7 +707,7 @@ export interface RootRouteChildren {
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
   EmpresaRoute: typeof EmpresaRoute
-  FornecedoresRoute: typeof FornecedoresRoute
+  FornecedoresRoute: typeof FornecedoresRouteWithChildren
   GastoAiRoute: typeof GastoAiRoute
   GastosRoute: typeof GastosRoute
   GuardadoRoute: typeof GuardadoRoute
@@ -977,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fornecedores/relatorio': {
+      id: '/fornecedores/relatorio'
+      path: '/relatorio'
+      fullPath: '/fornecedores/relatorio'
+      preLoaderRoute: typeof FornecedoresRelatorioRouteImport
+      parentRoute: typeof FornecedoresRoute
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -1120,6 +1139,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface FornecedoresRouteChildren {
+  FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+}
+
+const FornecedoresRouteChildren: FornecedoresRouteChildren = {
+  FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+}
+
+const FornecedoresRouteWithChildren = FornecedoresRoute._addFileChildren(
+  FornecedoresRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1135,7 +1166,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,
   EmpresaRoute: EmpresaRoute,
-  FornecedoresRoute: FornecedoresRoute,
+  FornecedoresRoute: FornecedoresRouteWithChildren,
   GastoAiRoute: GastoAiRoute,
   GastosRoute: GastosRoute,
   GuardadoRoute: GuardadoRoute,

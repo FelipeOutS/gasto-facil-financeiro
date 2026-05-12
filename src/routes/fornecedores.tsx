@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Users,
+  BarChart3,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
