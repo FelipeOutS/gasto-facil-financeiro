@@ -479,19 +479,36 @@ async function refreshStale(opts: {
   if (needsAwesome) {
     tasks.push(
       (async () => {
+        console.info("[radar] moedas sem cache fresco; iniciando atualização USD/EUR");
         try {
           const quotes = await fetchAwesomeApi();
           const out: PersistRow[] = [];
-          for (const k of ["USD_BRL", "EUR_BRL"] as const) {
+          for (const k of CURRENCY_KEYS) {
             const cfg = SUPPORTED.find((s) => s.key === k)!;
             const awesomeKey = k === "USD_BRL" ? "USDBRL" : "EURBRL";
             const row = rowFromAwesome(cfg, quotes[awesomeKey], now);
             if (row) out.push(row);
           }
-          return out;
+          console.info(`[radar] AwesomeAPI parseada: ${out.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`);
+          if (out.length === CURRENCY_KEYS.length) return out;
+          console.error("[radar] AwesomeAPI retornou payload incompleto; tentando fallback PTAX");
+          const fallbackRows = await Promise.all(
+            CURRENCY_KEYS.map((k) =>
+              rowFromPtax(SUPPORTED.find((s) => s.key === k)!, k === "USD_BRL" ? "USD" : "EUR", now),
+            ),
+          );
+          return fallbackRows.filter((r): r is PersistRow => r !== null);
         } catch (err) {
           console.error("[radar] falha AwesomeAPI:", (err as Error).message);
-          return [];
+          console.info("[radar] tentando fallback PTAX para USD/EUR");
+          const fallbackRows = await Promise.all(
+            CURRENCY_KEYS.map((k) =>
+              rowFromPtax(SUPPORTED.find((s) => s.key === k)!, k === "USD_BRL" ? "USD" : "EUR", now),
+            ),
+          );
+          const valid = fallbackRows.filter((r): r is PersistRow => r !== null);
+          console.info(`[radar] fallback PTAX parseado: ${valid.map((r) => `${r.indicator_key}=${r.value}`).join(", ") || "sem dados"}`);
+          return valid;
         }
       })(),
     );
