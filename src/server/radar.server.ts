@@ -2,8 +2,13 @@
  * Radar Econômico — fetchers e cache.
  *
  * Server-only. Nunca importar a partir de código de cliente.
- * Busca cotações na AwesomeAPI, normaliza e mantém cache em
- * public.economic_indicators via service role.
+ *
+ * Fontes:
+ *  - AwesomeAPI para cotações de moeda (USD/BRL, EUR/BRL)
+ *  - Banco Central / SGS para Selic (série 432 — meta anual %) e
+ *    IPCA (série 433 — variação mensal %).
+ *
+ * Cache em public.economic_indicators via service role.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -20,6 +25,10 @@ export interface IndicatorDTO {
   low: number | null;
   fetchedAt: string; // ISO
   status: IndicatorStatus;
+  /** Data de referência do indicador (ex.: mês do IPCA). ISO ou null. */
+  referenceDate?: string | null;
+  /** Unidade textual (ex.: "% ao ano", "% no mês", "BRL"). */
+  unit?: string | null;
 }
 
 export interface RadarResult {
@@ -29,17 +38,56 @@ export interface RadarResult {
   message?: string;
 }
 
-/** Configuração dos pares suportados no MVP. Fácil estender depois. */
+/** Indicadores suportados. Fácil estender depois. */
 const SUPPORTED = [
-  { key: "USD_BRL", awesome: "USDBRL", name: "Dólar Comercial", currency: "USD" },
-  { key: "EUR_BRL", awesome: "EURBRL", name: "Euro", currency: "EUR" },
+  {
+    key: "USD_BRL",
+    name: "Dólar Comercial",
+    currency: "USD",
+    source: "awesomeapi",
+    unit: "BRL",
+    ttlMs: 30 * 60 * 1000, // 30 min
+  },
+  {
+    key: "EUR_BRL",
+    name: "Euro",
+    currency: "EUR",
+    source: "awesomeapi",
+    unit: "BRL",
+    ttlMs: 30 * 60 * 1000,
+  },
+  {
+    key: "SELIC",
+    name: "Selic (meta)",
+    currency: null,
+    source: "bcb-sgs",
+    unit: "% a.a.",
+    ttlMs: 12 * 60 * 60 * 1000, // 12h — só muda em reuniões do Copom
+  },
+  {
+    key: "IPCA",
+    name: "IPCA (mensal)",
+    currency: null,
+    source: "bcb-sgs",
+    unit: "% no mês",
+    ttlMs: 12 * 60 * 60 * 1000, // 12h — divulgação mensal
+  },
 ] as const;
+
+type SupportedKey = (typeof SUPPORTED)[number]["key"];
 
 const AWESOMEAPI_URL =
   "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL";
 
-/** Tempo de vida do cache em milissegundos (30 minutos). */
-const CACHE_TTL_MS = 30 * 60 * 1000;
+/** Códigos das séries no SGS do Banco Central. */
+const SGS_CODES: Record<"SELIC" | "IPCA", number> = {
+  SELIC: 432, // Meta para a taxa Selic — % a.a.
+  IPCA: 433, // IPCA — variação mensal %
+};
+
+function sgsUrl(code: number): string {
+  return `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados/ultimos/2?formato=json`;
+}
 
 /** Timeout do fetch externo. */
 const FETCH_TIMEOUT_MS = 5000;
@@ -58,27 +106,168 @@ interface AwesomeApiQuote {
   create_date: string;
 }
 
+interface SgsRow {
+  data: string; // dd/mm/yyyy
+  valor: string;
+}
+
 function num(v: unknown): number | null {
   if (v === null || v === undefined) return null;
-  const n = typeof v === "number" ? v : parseFloat(String(v));
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
   return Number.isFinite(n) ? n : null;
 }
 
-async function fetchAwesomeApi(): Promise<Record<string, AwesomeApiQuote>> {
+function parseBRDate(d: string): string | null {
+  // dd/mm/yyyy → ISO
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d.trim());
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}T00:00:00.000Z`;
+}
+
+async function fetchWithTimeout(url: string): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(AWESOMEAPI_URL, {
+    return await fetch(url, {
       signal: ctrl.signal,
       headers: { Accept: "application/json" },
     });
-    if (!res.ok) {
-      throw new Error(`AwesomeAPI respondeu ${res.status}`);
-    }
-    return (await res.json()) as Record<string, AwesomeApiQuote>;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchAwesomeApi(): Promise<Record<string, AwesomeApiQuote>> {
+  const res = await fetchWithTimeout(AWESOMEAPI_URL);
+  if (!res.ok) throw new Error(`AwesomeAPI respondeu ${res.status}`);
+  return (await res.json()) as Record<string, AwesomeApiQuote>;
+}
+
+async function fetchSgs(code: number): Promise<SgsRow[]> {
+  const res = await fetchWithTimeout(sgsUrl(code));
+  if (!res.ok) throw new Error(`BCB SGS ${code} respondeu ${res.status}`);
+  const data = (await res.json()) as SgsRow[];
+  if (!Array.isArray(data)) throw new Error(`BCB SGS ${code} payload inesperado`);
+  return data;
+}
+
+interface PersistRow {
+  indicator_key: string;
+  name: string;
+  value: number;
+  currency: string | null;
+  source: string;
+  variation_percent: number | null;
+  high: number | null;
+  low: number | null;
+  fetched_at: string;
+  raw_payload: Record<string, unknown>;
+}
+
+function rowFromAwesome(
+  cfg: (typeof SUPPORTED)[number],
+  q: AwesomeApiQuote | undefined,
+  now: string,
+): PersistRow | null {
+  if (!q) return null;
+  const value = num(q.bid);
+  if (value === null) return null;
+  return {
+    indicator_key: cfg.key,
+    name: cfg.name,
+    value,
+    currency: cfg.currency,
+    source: cfg.source,
+    variation_percent: num(q.pctChange),
+    high: num(q.high),
+    low: num(q.low),
+    fetched_at: now,
+    raw_payload: { ...q, unit: cfg.unit } as unknown as Record<string, unknown>,
+  };
+}
+
+function rowFromSgs(
+  cfg: (typeof SUPPORTED)[number],
+  rows: SgsRow[] | undefined,
+  now: string,
+): PersistRow | null {
+  if (!rows || rows.length === 0) return null;
+  const last = rows[rows.length - 1]!;
+  const prev = rows.length > 1 ? rows[rows.length - 2] : undefined;
+  const value = num(last.valor);
+  if (value === null) return null;
+  const prevValue = prev ? num(prev.valor) : null;
+  // Variação em pontos percentuais entre a leitura anterior e a atual.
+  const variation =
+    prevValue !== null && Number.isFinite(prevValue) ? value - prevValue : null;
+  const referenceIso = parseBRDate(last.data);
+  return {
+    indicator_key: cfg.key,
+    name: cfg.name,
+    value,
+    currency: cfg.currency,
+    source: cfg.source,
+    variation_percent: variation,
+    high: null,
+    low: null,
+    fetched_at: now,
+    raw_payload: {
+      data_referencia: last.data,
+      data_referencia_iso: referenceIso,
+      valor: last.valor,
+      anterior: prev?.valor ?? null,
+      unit: cfg.unit,
+    },
+  };
+}
+
+function dtoFromCache(row: {
+  indicator_key: string;
+  name: string;
+  value: number | string;
+  currency: string | null;
+  source: string | null;
+  variation_percent: number | string | null;
+  high: number | string | null;
+  low: number | string | null;
+  fetched_at: string;
+  raw_payload?: Record<string, unknown> | null;
+}): IndicatorDTO {
+  const raw = (row.raw_payload ?? {}) as Record<string, unknown>;
+  return {
+    key: row.indicator_key,
+    name: row.name,
+    value: Number(row.value),
+    currency: row.currency ?? null,
+    source: row.source ?? "",
+    variationPercent:
+      row.variation_percent === null ? null : Number(row.variation_percent),
+    high: row.high === null ? null : Number(row.high),
+    low: row.low === null ? null : Number(row.low),
+    fetchedAt: row.fetched_at,
+    status: "cache",
+    referenceDate: (raw.data_referencia_iso as string | undefined) ?? null,
+    unit: (raw.unit as string | undefined) ?? null,
+  };
+}
+
+function dtoFromRow(row: PersistRow): IndicatorDTO {
+  const cfg = SUPPORTED.find((s) => s.key === row.indicator_key);
+  const raw = row.raw_payload;
+  return {
+    key: row.indicator_key,
+    name: row.name,
+    value: row.value,
+    currency: row.currency,
+    source: row.source,
+    variationPercent: row.variation_percent,
+    high: row.high,
+    low: row.low,
+    fetchedAt: row.fetched_at,
+    status: "atualizado",
+    referenceDate: (raw.data_referencia_iso as string | undefined) ?? null,
+    unit: cfg?.unit ?? null,
+  };
 }
 
 async function readCache(): Promise<IndicatorDTO[]> {
@@ -86,7 +275,7 @@ async function readCache(): Promise<IndicatorDTO[]> {
   const { data, error } = await supabaseAdmin
     .from("economic_indicators")
     .select(
-      "indicator_key, name, value, currency, source, variation_percent, high, low, fetched_at",
+      "indicator_key, name, value, currency, source, variation_percent, high, low, fetched_at, raw_payload",
     )
     .in("indicator_key", keys);
 
@@ -95,137 +284,195 @@ async function readCache(): Promise<IndicatorDTO[]> {
     return [];
   }
   if (!data) return [];
-
-  return data.map((row) => ({
-    key: row.indicator_key as string,
-    name: row.name as string,
-    value: Number(row.value),
-    currency: (row.currency as string | null) ?? null,
-    source: (row.source as string) ?? "awesomeapi",
-    variationPercent: row.variation_percent === null ? null : Number(row.variation_percent),
-    high: row.high === null ? null : Number(row.high),
-    low: row.low === null ? null : Number(row.low),
-    fetchedAt: row.fetched_at as string,
-    status: "cache" as IndicatorStatus,
-  }));
+  return data.map((r) => dtoFromCache(r as Parameters<typeof dtoFromCache>[0]));
 }
 
-function isFresh(fetchedAt: string): boolean {
+function isFresh(key: SupportedKey, fetchedAt: string): boolean {
+  const cfg = SUPPORTED.find((s) => s.key === key);
+  if (!cfg) return false;
   const t = new Date(fetchedAt).getTime();
   if (!Number.isFinite(t)) return false;
-  return Date.now() - t < CACHE_TTL_MS;
+  return Date.now() - t < cfg.ttlMs;
 }
 
-async function persist(quotes: Record<string, AwesomeApiQuote>): Promise<IndicatorDTO[]> {
-  const now = new Date().toISOString();
-  const rows = SUPPORTED.map((s) => {
-    const q = quotes[s.awesome];
-    if (!q) return null;
-    const value = num(q.bid);
-    if (value === null) return null;
-    return {
-      indicator_key: s.key,
-      name: s.name,
-      value,
-      currency: s.currency,
-      source: "awesomeapi",
-      variation_percent: num(q.pctChange),
-      high: num(q.high),
-      low: num(q.low),
-      fetched_at: now,
-      raw_payload: q as unknown as Record<string, unknown>,
-    };
-  }).filter((r): r is NonNullable<typeof r> => r !== null);
-
-  if (rows.length === 0) return [];
-
+async function persist(rows: PersistRow[]): Promise<void> {
+  if (rows.length === 0) return;
   const { error } = await supabaseAdmin
     .from("economic_indicators")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .upsert(rows as any, { onConflict: "indicator_key" });
+  if (error) console.error("[radar] erro gravando cache:", error.message);
+}
 
-  if (error) {
-    console.error("[radar] erro gravando cache:", error.message);
+/**
+ * Atualiza, em paralelo, todos os indicadores cujo cache esteja expirado
+ * (ou todos, se force = true). Retorna o conjunto consolidado de DTOs por
+ * chave, combinando atualizações com o cache atual.
+ */
+async function refreshStale(opts: {
+  cached: IndicatorDTO[];
+  force: boolean;
+}): Promise<{ map: Map<string, IndicatorDTO>; anyFailure: boolean }> {
+  const map = new Map<string, IndicatorDTO>();
+  for (const c of opts.cached) map.set(c.key, c);
+
+  const now = new Date().toISOString();
+  const needsAwesome =
+    opts.force ||
+    (["USD_BRL", "EUR_BRL"] as const).some((k) => {
+      const c = map.get(k);
+      return !c || !isFresh(k, c.fetchedAt);
+    });
+  const needsSelic =
+    opts.force || !map.get("SELIC") || !isFresh("SELIC", map.get("SELIC")!.fetchedAt);
+  const needsIpca =
+    opts.force || !map.get("IPCA") || !isFresh("IPCA", map.get("IPCA")!.fetchedAt);
+
+  const tasks: Array<Promise<PersistRow[]>> = [];
+
+  if (needsAwesome) {
+    tasks.push(
+      (async () => {
+        try {
+          const quotes = await fetchAwesomeApi();
+          const out: PersistRow[] = [];
+          for (const k of ["USD_BRL", "EUR_BRL"] as const) {
+            const cfg = SUPPORTED.find((s) => s.key === k)!;
+            const awesomeKey = k === "USD_BRL" ? "USDBRL" : "EURBRL";
+            const row = rowFromAwesome(cfg, quotes[awesomeKey], now);
+            if (row) out.push(row);
+          }
+          return out;
+        } catch (err) {
+          console.error("[radar] falha AwesomeAPI:", (err as Error).message);
+          return [];
+        }
+      })(),
+    );
   }
 
-  return rows.map((r) => ({
-    key: r.indicator_key,
-    name: r.name,
-    value: r.value,
-    currency: r.currency,
-    source: r.source,
-    variationPercent: r.variation_percent,
-    high: r.high,
-    low: r.low,
-    fetchedAt: r.fetched_at,
-    status: "atualizado" as IndicatorStatus,
-  }));
+  if (needsSelic) {
+    tasks.push(
+      (async () => {
+        try {
+          const rows = await fetchSgs(SGS_CODES.SELIC);
+          const cfg = SUPPORTED.find((s) => s.key === "SELIC")!;
+          const r = rowFromSgs(cfg, rows, now);
+          return r ? [r] : [];
+        } catch (err) {
+          console.error("[radar] falha SGS Selic:", (err as Error).message);
+          return [];
+        }
+      })(),
+    );
+  }
+
+  if (needsIpca) {
+    tasks.push(
+      (async () => {
+        try {
+          const rows = await fetchSgs(SGS_CODES.IPCA);
+          const cfg = SUPPORTED.find((s) => s.key === "IPCA")!;
+          const r = rowFromSgs(cfg, rows, now);
+          return r ? [r] : [];
+        } catch (err) {
+          console.error("[radar] falha SGS IPCA:", (err as Error).message);
+          return [];
+        }
+      })(),
+    );
+  }
+
+  const settled = await Promise.all(tasks);
+  const allRows = settled.flat();
+  if (allRows.length > 0) await persist(allRows);
+
+  for (const r of allRows) map.set(r.indicator_key, dtoFromRow(r));
+
+  // Detecta falha: precisava atualizar algo mas a tarefa correspondente não trouxe linhas.
+  const anyFailure =
+    (needsAwesome &&
+      !(["USD_BRL", "EUR_BRL"] as const).every((k) =>
+        allRows.some((r) => r.indicator_key === k),
+      )) ||
+    (needsSelic && !allRows.some((r) => r.indicator_key === "SELIC")) ||
+    (needsIpca && !allRows.some((r) => r.indicator_key === "IPCA"));
+
+  return { map, anyFailure };
 }
 
 /**
  * Retorna os indicadores do Radar Econômico.
  *
- * Fluxo:
- *  1. Lê cache no Supabase.
- *  2. Se TODOS os indicadores suportados estão presentes e frescos (<30 min),
- *     retorna direto do cache com status "cache".
- *  3. Caso contrário, busca na AwesomeAPI, persiste e retorna status "atualizado".
- *  4. Se a API externa falhar, retorna o último cache com status "desatualizado".
- *  5. Se nem cache nem API existirem, retorna lista vazia com mensagem.
+ *  1. Lê cache.
+ *  2. Para cada indicador expirado, busca na fonte oficial em paralelo.
+ *  3. Persiste atualizações e devolve o estado consolidado.
+ *  4. Em caso de falha externa, devolve o último cache marcado como "desatualizado".
  */
-export async function getRadarIndicators(opts?: { force?: boolean }): Promise<RadarResult> {
+export async function getRadarIndicators(opts?: {
+  force?: boolean;
+}): Promise<RadarResult> {
   const cached = await readCache();
-  const haveAll =
-    cached.length >= SUPPORTED.length &&
-    SUPPORTED.every((s) => cached.some((c) => c.key === s.key));
-  const allFresh = haveAll && cached.every((c) => isFresh(c.fetchedAt));
+
+  // Se nada precisa atualizar (todos frescos), retorna direto do cache.
+  const allFresh =
+    SUPPORTED.every((s) => {
+      const c = cached.find((x) => x.key === s.key);
+      return c && isFresh(s.key, c.fetchedAt);
+    }) && cached.length >= SUPPORTED.length;
 
   if (!opts?.force && allFresh) {
-    return {
-      indicators: cached,
-      status: "cache",
-      fetchedAt: cached
-        .map((c) => c.fetchedAt)
-        .sort()
-        .reverse()[0]!,
-    };
+    const fetchedAt = cached
+      .map((c) => c.fetchedAt)
+      .sort()
+      .reverse()[0]!;
+    return { indicators: cached, status: "cache", fetchedAt };
   }
 
-  try {
-    const quotes = await fetchAwesomeApi();
-    const fresh = await persist(quotes);
-    if (fresh.length === 0) {
-      // API respondeu mas não trouxe dados utilizáveis — degrada para cache.
-      throw new Error("AwesomeAPI retornou payload sem cotações válidas");
-    }
-    return {
-      indicators: fresh,
-      status: "atualizado",
-      fetchedAt: fresh[0]!.fetchedAt,
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[radar] falha buscando AwesomeAPI:", msg);
+  const { map, anyFailure } = await refreshStale({
+    cached,
+    force: !!opts?.force,
+  });
 
-    if (cached.length > 0) {
-      return {
-        indicators: cached.map((c) => ({ ...c, status: "desatualizado" })),
-        status: "desatualizado",
-        fetchedAt: cached
-          .map((c) => c.fetchedAt)
-          .sort()
-          .reverse()[0]!,
-        message:
-          "Não foi possível atualizar as cotações agora. Mostrando os últimos valores conhecidos.",
-      };
-    }
+  const indicators = SUPPORTED.map((s) => map.get(s.key)).filter(
+    (x): x is IndicatorDTO => !!x,
+  );
 
+  if (indicators.length === 0) {
     return {
       indicators: [],
       status: "desatualizado",
       fetchedAt: new Date(0).toISOString(),
       message:
-        "Não conseguimos carregar as cotações no momento. Tente novamente em instantes.",
+        "Não conseguimos carregar os indicadores no momento. Tente novamente em instantes.",
     };
   }
+
+  const fetchedAt = indicators
+    .map((c) => c.fetchedAt)
+    .sort()
+    .reverse()[0]!;
+
+  if (anyFailure) {
+    return {
+      indicators: indicators.map((c) =>
+        // Marca como desatualizado apenas os que não foram atualizados nesta rodada.
+        c.fetchedAt === fetchedAt && c.status === "atualizado"
+          ? c
+          : { ...c, status: "desatualizado" },
+      ),
+      status: "desatualizado",
+      fetchedAt,
+      message:
+        "Alguns indicadores não puderam ser atualizados agora. Mostrando os últimos valores conhecidos.",
+    };
+  }
+
+  return {
+    indicators,
+    status: indicators.every((i) => i.status === "atualizado")
+      ? "atualizado"
+      : "cache",
+    fetchedAt,
+  };
 }
