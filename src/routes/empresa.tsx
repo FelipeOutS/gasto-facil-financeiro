@@ -382,6 +382,19 @@ function EmpresaPage() {
           <span className="text-xs text-primary">Abrir →</span>
         </Link>
 
+        <Link
+          to="/contador"
+          className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors hover:bg-accent/40"
+        >
+          <div>
+            <p className="text-sm font-semibold">Pacote para Contador</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências.
+            </p>
+          </div>
+          <span className="text-xs text-primary">Gerar pacote →</span>
+        </Link>
+
         <section className="rounded-2xl border border-dashed bg-muted/30 p-4 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Sobre a consulta</p>
           <p className="mt-1">
