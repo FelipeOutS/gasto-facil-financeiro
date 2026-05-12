@@ -227,6 +227,7 @@ function rowFromAwesome(
   if (!q) return null;
   const value = num(q.bid);
   if (value === null) return null;
+  const createDateIso = parseAwesomeDate(q.create_date);
   return {
     indicator_key: cfg.key,
     name: cfg.name,
@@ -237,7 +238,67 @@ function rowFromAwesome(
     high: num(q.high),
     low: num(q.low),
     fetched_at: now,
-    raw_payload: { ...q, unit: cfg.unit } as unknown as Record<string, unknown>,
+    raw_payload: {
+      ...q,
+      create_date_iso: createDateIso,
+      unit: cfg.unit,
+    } as unknown as Record<string, unknown>,
+  };
+}
+
+async function rowFromPtax(
+  cfg: (typeof SUPPORTED)[number],
+  currency: "USD" | "EUR",
+  now: string,
+): Promise<PersistRow | null> {
+  const days = [0, 1, 2, 3, 4, 5, 6].map((offset) => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - offset);
+    return d;
+  });
+
+  let latest: PtaxRow[] = [];
+  let previous: PtaxRow[] = [];
+  for (const day of days) {
+    const rows = await fetchPtaxDay(currency, day);
+    if (rows.length === 0) continue;
+    if (latest.length === 0) latest = rows;
+    else {
+      previous = rows;
+      break;
+    }
+  }
+
+  const closing = latest.find((r) => r.tipoBoletim.toLowerCase().includes("fechamento"));
+  const current = closing ?? latest[latest.length - 1];
+  if (!current) return null;
+  const previousClosing = previous.find((r) => r.tipoBoletim.toLowerCase().includes("fechamento"));
+  const previousCurrent = previousClosing ?? previous[previous.length - 1];
+  const value = num(current.cotacaoVenda);
+  if (value === null) return null;
+  const dayValues = latest
+    .map((r) => num(r.cotacaoVenda))
+    .filter((v): v is number => v !== null);
+
+  return {
+    indicator_key: cfg.key,
+    name: cfg.name,
+    value,
+    currency: cfg.currency,
+    source: "bcb-ptax",
+    variation_percent: pctChange(value, previousCurrent ? num(previousCurrent.cotacaoVenda) : null),
+    high: dayValues.length ? Math.max(...dayValues) : value,
+    low: dayValues.length ? Math.min(...dayValues) : value,
+    fetched_at: now,
+    raw_payload: {
+      dataHoraCotacao: current.dataHoraCotacao,
+      tipoBoletim: current.tipoBoletim,
+      cotacaoCompra: current.cotacaoCompra,
+      cotacaoVenda: current.cotacaoVenda,
+      previousCotacaoVenda: previousCurrent?.cotacaoVenda ?? null,
+      unit: cfg.unit,
+      fallbackSource: "bcb-ptax",
+    },
   };
 }
 
