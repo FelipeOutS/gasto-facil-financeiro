@@ -594,13 +594,13 @@ function MultiDeviceShowcase() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600 shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            Multiplataforma
+            {t("multiDevice.tag")}
           </span>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
-            Acompanhe suas finanças em qualquer dispositivo
+            {t("multiDevice.title")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Use o Gasto Inteligente com praticidade no notebook, tablet ou celular, com uma experiência clara, fluida e intuitiva em qualquer tela.
+            {t("multiDevice.subtitle")}
           </p>
         </div>
 
