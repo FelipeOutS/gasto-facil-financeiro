@@ -3014,6 +3014,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
 }
 
 function Plans() {
+  const { t } = useTranslation("landing");
   return (
     <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
       <div
