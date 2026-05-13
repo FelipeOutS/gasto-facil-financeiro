@@ -3442,18 +3442,20 @@ const FAQS = [
 ];
 
 function FAQ() {
+  const { t } = useTranslation("landing");
+  const faqs = t("faq.items", { returnObjects: true }) as Array<{ q: string; a: string }>;
   const [open, setOpen] = useState<number | null>(0);
   return (
     <section id="duvidas" className="bg-slate-50 py-20 sm:py-24">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Dúvidas"
-          title="Perguntas frequentes"
-          subtitle="Se ainda restou alguma dúvida, fale com a gente."
+          eyebrow={t("faq.eyebrow")}
+          title={t("faq.title")}
+          subtitle={t("faq.subtitle")}
           center
         />
         <div className="mt-10 space-y-3">
-          {FAQS.map((f, i) => {
+          {faqs.map((f, i) => {
             const active = open === i;
             return (
               <div
