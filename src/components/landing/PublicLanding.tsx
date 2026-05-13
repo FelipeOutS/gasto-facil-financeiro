@@ -2416,43 +2416,19 @@ function MoreFeatures() {
 /* ============================== EMPRESA INTELIGENTE ============================== */
 
 function EmpresaInteligenteSection() {
+  const { t } = useTranslation("landing");
   const cards = [
-    {
-      icon: Building2,
-      title: "Empresa Inteligente",
-      text: "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
-      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
-    },
-    {
-      icon: Users,
-      title: "Clientes e Fornecedores",
-      text: "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
-      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
-    },
-    {
-      icon: LineChart,
-      title: "Relatórios empresariais",
-      text: "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
-      tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100",
-    },
-    {
-      icon: ClipboardList,
-      title: "Pacote para Contador",
-      text: "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
-      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
-    },
-    {
-      icon: Activity,
-      title: "Radar Econômico",
-      text: "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
-      tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100",
-    },
+    { icon: Building2, title: t("empresa.c1Title"), text: t("empresa.c1Text"), tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100" },
+    { icon: Users, title: t("empresa.c2Title"), text: t("empresa.c2Text"), tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100" },
+    { icon: LineChart, title: t("empresa.c3Title"), text: t("empresa.c3Text"), tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100" },
+    { icon: ClipboardList, title: t("empresa.c4Title"), text: t("empresa.c4Text"), tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100" },
+    { icon: Activity, title: t("empresa.c5Title"), text: t("empresa.c5Text"), tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100" },
   ];
 
   const trust = [
-    { icon: ShieldCheck, title: "Segurança de dados", text: "e privacidade" },
-    { icon: Landmark, title: "Importação de extratos", text: "com segurança" },
-    { icon: Cloud, title: "Backup automático", text: "na nuvem" },
+    { icon: ShieldCheck, title: t("empresa.trust1Title"), text: t("empresa.trust1Text") },
+    { icon: Landmark, title: t("empresa.trust2Title"), text: t("empresa.trust2Text") },
+    { icon: Cloud, title: t("empresa.trust3Title"), text: t("empresa.trust3Text") },
   ];
 
   return (
