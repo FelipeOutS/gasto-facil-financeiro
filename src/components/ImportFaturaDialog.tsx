@@ -279,7 +279,7 @@ export function ImportFaturaDialog({
     setImgLoading(true);
     setImgStage(0);
     try {
-      const resp = await fetch("/api/import-fatura-imagem", {
+      const resp = await apiFetch("/api/import-fatura-imagem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
@@ -351,7 +351,7 @@ export function ImportFaturaDialog({
     setErrorMessage(null);
     setPdfLoading(true);
     try {
-      const resp = await fetch("/api/import-fatura-pdf", {
+      const resp = await apiFetch("/api/import-fatura-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdf: pdfFile.dataUri }),

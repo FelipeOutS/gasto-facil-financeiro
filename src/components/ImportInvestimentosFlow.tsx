@@ -286,7 +286,7 @@ export function ImportInvestimentosFlow({
         return;
       }
 
-      const resp = await fetch("/api/import-investimentos", {
+      const resp = await apiFetch("/api/import-investimentos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
