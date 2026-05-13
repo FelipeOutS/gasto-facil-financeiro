@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   Home,
@@ -42,7 +43,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 
 type NavItem = {
   to: string;
-  label: string;
+  labelKey: string;
   icon: typeof Home;
   exact?: boolean;
   feature?: FeatureKey;
@@ -53,33 +54,34 @@ const ROUTE_FEATURE: Record<string, { feature: FeatureKey; title: string }> = Ob
 );
 
 const ITEMS: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: Home, exact: true },
-  { to: "/gastos", label: "Gastos", icon: List },
-  { to: "/alertas", label: "Alertas", icon: Bell },
-  { to: "/cartoes", label: "Cartões", icon: CreditCard },
-  { to: "/assinaturas", label: "Assinaturas", icon: Repeat },
-  { to: "/investimentos", label: "Investimentos", icon: TrendingUp },
-  { to: "/renda", label: "Minha renda", icon: ArrowUp },
-  { to: "/contas-a-pagar", label: "Contas a pagar", icon: CalendarClock },
-  { to: "/contas-a-receber", label: "Contas a receber", icon: HandCoins },
-  { to: "/orcamento", label: "Orçamento", icon: PieChart },
-  { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
-  { to: "/radar", label: "Radar Econômico", icon: Globe },
-  { to: "/empresa", label: "Empresa Inteligente", icon: Building2, feature: "empresa_inteligente" },
-  { to: "/fornecedores", label: "Fornecedores", icon: Store, feature: "empresa_inteligente" },
-  { to: "/clientes", label: "Clientes", icon: Contact, feature: "empresa_inteligente" },
-  { to: "/contador", label: "Pacote para Contador", icon: ClipboardList, feature: "empresa_inteligente" },
-  { to: "/gasto-ai", label: "Gasto AI", icon: Sparkles, feature: "gasto_ai" },
-  { to: "/whatsapp", label: "WhatsApp", icon: Bell, feature: "whatsapp" },
-  { to: "/guardado", label: "Guardado", icon: Wallet },
-  { to: "/metas", label: "Metas", icon: Target },
-  { to: "/contas-conectadas", label: "Contas conectadas", icon: Users, feature: "contas_conectadas" },
-  { to: "/meu-plano", label: "Meu plano", icon: Crown },
-  { to: "/categorias", label: "Ajustes", icon: Settings2 },
-  { to: "/landing", label: "Conhecer o Gasto Inteligente", icon: Sparkles },
+  { to: "/", labelKey: "dashboard", icon: Home, exact: true },
+  { to: "/gastos", labelKey: "gastos", icon: List },
+  { to: "/alertas", labelKey: "alertas", icon: Bell },
+  { to: "/cartoes", labelKey: "cartoes", icon: CreditCard },
+  { to: "/assinaturas", labelKey: "assinaturas", icon: Repeat },
+  { to: "/investimentos", labelKey: "investimentos", icon: TrendingUp },
+  { to: "/renda", labelKey: "renda", icon: ArrowUp },
+  { to: "/contas-a-pagar", labelKey: "contasPagar", icon: CalendarClock },
+  { to: "/contas-a-receber", labelKey: "contasReceber", icon: HandCoins },
+  { to: "/orcamento", labelKey: "orcamento", icon: PieChart },
+  { to: "/relatorios", labelKey: "relatorios", icon: BarChart3 },
+  { to: "/radar", labelKey: "radar", icon: Globe },
+  { to: "/empresa", labelKey: "empresa", icon: Building2, feature: "empresa_inteligente" },
+  { to: "/fornecedores", labelKey: "fornecedores", icon: Store, feature: "empresa_inteligente" },
+  { to: "/clientes", labelKey: "clientes", icon: Contact, feature: "empresa_inteligente" },
+  { to: "/contador", labelKey: "contador", icon: ClipboardList, feature: "empresa_inteligente" },
+  { to: "/gasto-ai", labelKey: "gastoAi", icon: Sparkles, feature: "gasto_ai" },
+  { to: "/whatsapp", labelKey: "whatsapp", icon: Bell, feature: "whatsapp" },
+  { to: "/guardado", labelKey: "guardado", icon: Wallet },
+  { to: "/metas", labelKey: "metas", icon: Target },
+  { to: "/contas-conectadas", labelKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
+  { to: "/meu-plano", labelKey: "meuPlano", icon: Crown },
+  { to: "/categorias", labelKey: "categorias", icon: Settings2 },
+  { to: "/landing", labelKey: "landing", icon: Sparkles },
 ];
 
 export function DesktopSidebar() {
+  const { t } = useTranslation("nav");
   const location = useLocation();
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
@@ -88,7 +90,10 @@ export function DesktopSidebar() {
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const { user, profile } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
-  const items: NavItem[] = isAdminMaster ? [...ITEMS, { to: "/admin", label: "Admin", icon: Shield }] : ITEMS;
+  const items: NavItem[] = useMemo(
+    () => (isAdminMaster ? [...ITEMS, { to: "/admin", labelKey: "admin", icon: Shield }] : ITEMS),
+    [isAdminMaster],
+  );
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
   const currentPath = optimisticPath ?? location.pathname;
 
@@ -104,11 +109,11 @@ export function DesktopSidebar() {
   return (
     <aside
       className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border/60 lg:bg-card/40 lg:backdrop-blur-xl"
-      aria-label="Navegação lateral"
+      aria-label={t("aria.side")}
     >
       <div className="px-5 pt-6 pb-4">
         <BrandMark className="h-10 w-auto" />
-        <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">Controle financeiro</h2>
+        <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">{t("header.tagline")}</h2>
       </div>
 
       <div className="px-4 pb-3">
@@ -119,7 +124,7 @@ export function DesktopSidebar() {
         type="button"
         onClick={() => {
           if (!canWrite) {
-            requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+            requireSubscription(t("header.addExpenseRequiresPlan"));
             return;
           }
           navigate({ to: "/adicionar" });
@@ -127,18 +132,19 @@ export function DesktopSidebar() {
         className="card-press mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-grad px-4 py-2.5 text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
-        Adicionar gasto
+        {t("header.addExpense")}
       </button>
 
       <nav className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-1">
-          {items.map(({ to, label, icon: Icon, exact }) => {
+          {items.map(({ to, labelKey, icon: Icon, exact }) => {
             const active = exact
               ? currentPath === to
               : currentPath === to || currentPath.startsWith(to + "/");
             const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
             const routeRule = ROUTE_FEATURE[to];
             const locked = !isAdminMaster && !!routeRule && !can(routeRule.feature);
+            const label = t(`items.${labelKey}`);
             const linkClasses = cn(
               "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover-lift",
               active
@@ -169,8 +175,8 @@ export function DesktopSidebar() {
                 {showDot && (
                   <span className="sr-only">
                     {alerta === "vermelho"
-                      ? "Há contas atrasadas"
-                      : "Há contas vencendo em breve"}
+                      ? t("aria.overdueAccounts")
+                      : t("aria.soonAccounts")}
                   </span>
                 )}
               </>
@@ -225,7 +231,7 @@ export function DesktopSidebar() {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">
-            {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || "Usuário"}
+            {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || t("header.fallbackUser")}
           </p>
           <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
         </div>
