@@ -89,16 +89,16 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
       POST: async ({ request }) => {
         const rawBody = await request.text();
 
-        // Verify Meta's HMAC signature when WHATSAPP_APP_SECRET is configured.
-        // If the secret is set, ALL requests must be signed (rejects spoofed
-        // payloads). If unset, the endpoint is in legacy/test mode.
-        if (process.env.WHATSAPP_APP_SECRET) {
-          const sig = request.headers.get("x-hub-signature-256");
-          if (!verifyMetaSignature(rawBody, sig)) {
-            // Return 200 so Meta does not retry-storm on bad signatures from
-            // attackers; legitimate Meta deliveries always sign correctly.
-            return jsonResponse({ ok: true, skipped: "invalid_signature" });
-          }
+        // Require Meta's HMAC signature on every POST. Without
+        // WHATSAPP_APP_SECRET configured the endpoint refuses traffic so
+        // attackers cannot inject fake expense messages by guessing phones.
+        if (!process.env.WHATSAPP_APP_SECRET) {
+          console.error("[whatsapp] WHATSAPP_APP_SECRET not configured");
+          return jsonResponse({ error: "webhook_not_configured" }, 503);
+        }
+        const sig = request.headers.get("x-hub-signature-256");
+        if (!verifyMetaSignature(rawBody, sig)) {
+          return jsonResponse({ error: "invalid_signature" }, 403);
         }
 
         let payload: unknown;
