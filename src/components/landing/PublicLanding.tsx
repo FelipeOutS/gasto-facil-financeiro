@@ -271,6 +271,7 @@ export function PublicLanding() {
 /* ============================== HEADER ============================== */
 
 function Header() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -311,32 +312,36 @@ function Header() {
               onClick={(e) => handleAnchorClick(e, n.href)}
               className="whitespace-nowrap text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              {n.label}
+              {t(`nav.${n.key}`)}
             </a>
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
+          <LanguageSwitcher variant="ghost-light" />
           <Link
             to="/login"
             className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 lg:px-4"
           >
-            Entrar
+            {t("actions.signIn")}
           </Link>
           <Link
             to="/cadastro"
             className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(15,23,42,0.45)] transition-all hover:bg-slate-800 hover:shadow-[0_12px_28px_-10px_rgba(15,23,42,0.55)] lg:px-5"
           >
-            Começar agora
+            {t("actions.signUp")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 lg:hidden"
-          aria-label="Abrir menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1 lg:hidden">
+          <LanguageSwitcher variant="ghost-light" />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
+            aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
       {open && (
         <div className="border-t border-slate-200 bg-white lg:hidden">
@@ -348,7 +353,7 @@ function Header() {
                 onClick={(e) => handleAnchorClick(e, n.href, () => setOpen(false))}
                 className="rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
-                {n.label}
+                {t(`nav.${n.key}`)}
               </a>
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-slate-200 pt-3">
@@ -356,13 +361,13 @@ function Header() {
                 to="/login"
                 className="rounded-full border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Entrar
+                {t("actions.signIn")}
               </Link>
               <Link
                 to="/cadastro"
                 className="rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
               >
-                Começar agora
+                {t("actions.signUp")}
               </Link>
             </div>
           </div>
