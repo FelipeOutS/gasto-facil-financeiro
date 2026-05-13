@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   ArrowUp,
   CalendarClock,
@@ -48,34 +49,34 @@ const ROUTE_RULE = Object.fromEntries(
 
 type MoreItem = {
   to: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descKey: string;
   icon: LucideIcon;
   feature?: FeatureKey;
 };
 
-const ADMIN_ITEM: MoreItem = { to: "/admin", label: "Admin", description: "Painel administrativo", icon: Shield };
+const ADMIN_ITEM: MoreItem = { to: "/admin", labelKey: "admin", descKey: "admin", icon: Shield };
 
 export const MORE_ITEMS: MoreItem[] = [
-  { to: "/alertas", label: "Alertas", description: "Avisos importantes do seu financeiro", icon: Bell },
-  { to: "/renda", label: "Minha renda", description: "Receitas e fontes de renda", icon: ArrowUp },
-  { to: "/contas-a-pagar", label: "Contas a pagar", description: "Despesas e vencimentos", icon: CalendarClock },
-  { to: "/contas-a-receber", label: "Contas a receber", description: "Valores que você tem para receber", icon: HandCoins },
-  { to: "/orcamento", label: "Orçamento", description: "Limites mensais por categoria", icon: PieChart },
-  { to: "/relatorios", label: "Relatórios", description: "Análises e gráficos", icon: BarChart3 },
-  { to: "/radar", label: "Radar Econômico", description: "Dólar, euro e conversor rápido", icon: Globe },
-  { to: "/empresa", label: "Empresa Inteligente", description: "Consulte e cadastre sua empresa pelo CNPJ", icon: Building2, feature: "empresa_inteligente" },
-  { to: "/fornecedores", label: "Fornecedores", description: "Cadastre fornecedores por CNPJ", icon: Store, feature: "empresa_inteligente" },
-  { to: "/clientes", label: "Clientes", description: "Cadastre clientes por CNPJ", icon: Contact, feature: "empresa_inteligente" },
-  { to: "/contador", label: "Pacote para Contador", description: "Gere um resumo mensal para enviar ao contador.", icon: ClipboardList, feature: "empresa_inteligente" },
-  { to: "/gasto-ai", label: "Gasto AI", description: "Assistente financeiro com IA", icon: Sparkles, feature: "gasto_ai" },
-  { to: "/guardado", label: "Guardado", description: "Reserva e poupança", icon: Wallet },
-  { to: "/assinaturas", label: "Assinaturas", description: "Serviços recorrentes", icon: Repeat },
-  { to: "/investimentos", label: "Investimentos", description: "Carteira e rendimentos", icon: TrendingUp, feature: "investimentos" },
-  { to: "/contas-conectadas", label: "Contas conectadas", description: "Acompanhe outra conta com permissão", icon: Users, feature: "contas_conectadas" },
-  { to: "/meu-plano", label: "Meu plano", description: "Assinatura e recursos", icon: Crown },
-  { to: "/categorias", label: "Ajustes", description: "Preferências da conta", icon: Settings2 },
-  { to: "/landing", label: "Conhecer o Gasto Inteligente", description: "Ver recursos, planos e novidades", icon: Sparkles },
+  { to: "/alertas", labelKey: "alertas", descKey: "alertas", icon: Bell },
+  { to: "/renda", labelKey: "renda", descKey: "renda", icon: ArrowUp },
+  { to: "/contas-a-pagar", labelKey: "contasPagar", descKey: "contasPagar", icon: CalendarClock },
+  { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
+  { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart },
+  { to: "/relatorios", labelKey: "relatorios", descKey: "relatorios", icon: BarChart3 },
+  { to: "/radar", labelKey: "radar", descKey: "radar", icon: Globe },
+  { to: "/empresa", labelKey: "empresa", descKey: "empresa", icon: Building2, feature: "empresa_inteligente" },
+  { to: "/fornecedores", labelKey: "fornecedores", descKey: "fornecedores", icon: Store, feature: "empresa_inteligente" },
+  { to: "/clientes", labelKey: "clientes", descKey: "clientes", icon: Contact, feature: "empresa_inteligente" },
+  { to: "/contador", labelKey: "contador", descKey: "contador", icon: ClipboardList, feature: "empresa_inteligente" },
+  { to: "/gasto-ai", labelKey: "gastoAi", descKey: "gastoAi", icon: Sparkles, feature: "gasto_ai" },
+  { to: "/guardado", labelKey: "guardado", descKey: "guardado", icon: Wallet },
+  { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat },
+  { to: "/investimentos", labelKey: "investimentos", descKey: "investimentos", icon: TrendingUp, feature: "investimentos" },
+  { to: "/contas-conectadas", labelKey: "contasConectadas", descKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
+  { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
+  { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
+  { to: "/landing", labelKey: "landing", descKey: "landing", icon: Sparkles },
 ];
 
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
@@ -87,6 +88,7 @@ type Props = {
 };
 
 export function MoreSheet({ open, onOpenChange }: Props) {
+  const { t } = useTranslation("nav");
   const router = useRouter();
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
@@ -108,7 +110,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   }, [open, items, router, isAdminMaster, hasFullAccess, can]);
 
   function getRule(item: MoreItem) {
-    return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${item.label} é um recurso premium`, path: item.to } : null);
+    return ROUTE_RULE[item.to] ?? (item.feature ? { feature: item.feature, title: `${t(`items.${item.labelKey}`)} ${t("more.premiumSuffix")}`, path: item.to } : null);
   }
 
   function isLocked(item: MoreItem) {
@@ -140,9 +142,9 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-0 data-[state=open]:duration-150"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
-            <SheetTitle className="text-lg">Mais opções</SheetTitle>
+            <SheetTitle className="text-lg">{t("more.title")}</SheetTitle>
             <SheetDescription className="text-xs">
-              Acesse as outras áreas do seu controle financeiro.
+              {t("more.description")}
             </SheetDescription>
           </SheetHeader>
 
@@ -163,7 +165,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || "Usuário"}
+                  {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || t("header.fallbackUser")}
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
               </div>
@@ -171,14 +173,14 @@ export function MoreSheet({ open, onOpenChange }: Props) {
             <ConnectedAccountSwitcher className="mb-2" />
             <div className="rounded-2xl border border-border/60 bg-card/60 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Plano atual
+                {t("more.currentPlan")}
               </p>
               <div className="mt-0.5 flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
                 {isTrialActive && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
                     <Sparkles className="h-3 w-3" />
-                    Teste grátis · {trialDaysLeft}d
+                    {t("more.trial", { days: trialDaysLeft })}
                   </span>
                 )}
               </div>
@@ -203,11 +205,11 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                       <Icon className="h-4 w-4" strokeWidth={2} />
                     </span>
                     <span className="flex w-full items-center gap-1">
-                      <span className="text-sm font-semibold leading-tight">{item.label}</span>
+                      <span className="text-sm font-semibold leading-tight">{t(`items.${item.labelKey}`)}</span>
                       {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
                     </span>
                     <span className="text-[11px] leading-snug text-muted-foreground">
-                      {item.description}
+                      {t(`descriptions.${item.descKey}`)}
                     </span>
                   </button>
                 );
