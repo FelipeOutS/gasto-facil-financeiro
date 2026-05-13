@@ -569,26 +569,7 @@ function Hero() {
               <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
             </motion.div>
 
-            <motion.div
-              animate={reduce ? undefined : { y: [0, 7, 0] }}
-              transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
-              className="absolute -right-6 top-20 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100 text-violet-700">
-                    <CreditCard className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                      Fatura
-                    </p>
-                    <p className="text-xs font-bold text-slate-900">Em aberto</p>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
-            </motion.div>
+
           </motion.div>
         </div>
       </div>
