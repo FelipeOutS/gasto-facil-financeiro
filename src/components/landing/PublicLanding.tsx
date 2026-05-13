@@ -3209,31 +3209,10 @@ function BanksStrip() {
 
 /* ============================== TESTIMONIALS ============================== */
 
-const TESTIMONIALS = [
-  {
-    name: "Camila R.",
-    role: "Designer · Pessoa Física",
-    text: "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo.",
-    initials: "CR",
-    color: "from-blue-500 to-sky-500",
-    highlight: false,
-  },
-  {
-    name: "Rafael M.",
-    role: "MEI · Confeitaria",
-    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto.",
-    initials: "RM",
-    color: "from-emerald-500 to-teal-500",
-    highlight: true,
-  },
-  {
-    name: "Juliana A.",
-    role: "Autônoma",
-    text: "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar.",
-    initials: "JA",
-    color: "from-violet-500 to-fuchsia-500",
-    highlight: false,
-  },
+const TESTIMONIAL_META = [
+  { initials: "CR", color: "from-blue-500 to-sky-500", highlight: false },
+  { initials: "RM", color: "from-emerald-500 to-teal-500", highlight: true },
+  { initials: "JA", color: "from-violet-500 to-fuchsia-500", highlight: false },
 ];
 
 function Testimonials() {
