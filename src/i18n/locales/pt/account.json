@@ -1,0 +1,29 @@
+{
+  "title": "Minha conta",
+  "fullAccess": "Acesso total",
+  "admin": "Admin",
+  "completeProfile": "Complete seu perfil",
+  "completeProfileDesc": "Personalize sua experiência escolhendo entre Pessoa física, MEI ou Empresa.",
+  "completeBtn": "Completar perfil",
+  "fields": {
+    "type": "Tipo de cadastro",
+    "fullName": "Nome completo",
+    "responsible": "Responsável",
+    "fantasyName": "Nome fantasia",
+    "razaoSocial": "Razão social",
+    "cpf": "CPF",
+    "cnpj": "CNPJ",
+    "email": "E-mail",
+    "phone": "Telefone"
+  },
+  "actions": {
+    "edit": "Editar perfil",
+    "myPlan": "Meu plano",
+    "redoOnboarding": "Refazer configuração inicial",
+    "logout": "Sair da conta"
+  },
+  "language": {
+    "title": "Idioma do app",
+    "description": "Escolha o idioma da interface. A preferência é salva e usada nas próximas visitas."
+  }
+}

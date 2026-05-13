@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "badge": "A lighter financial life",
+    "titleStart": "Take control of your finances with more",
+    "titleHighlight": "clarity, intelligence",
+    "titleEnd": "and convenience.",
+    "subtitle": "Gasto Inteligente helps you organize expenses, cards, bills, goals and income in one place — with a simple, visual and easy-to-understand view.",
+    "ctaPrimary": "Get started",
+    "ctaSecondary": "Sign in to my account",
+    "chips": {
+      "personal": "Personal control",
+      "cards": "Cards and bills",
+      "goals": "Financial goals",
+      "monthly": "Monthly organization",
+      "visual": "Intuitive visuals"
+    }
+  },
+  "finalCta": {
+    "badge": "Start in minutes",
+    "title": "Ready to organize your financial life?",
+    "subtitle": "Start today and get a clearer view of your money, your expenses and your goals.",
+    "primary": "Create my account",
+    "secondary": "See plans",
+    "noCommitment": "No commitment",
+    "cancelAnytime": "Cancel anytime",
+    "browser": "Web access"
+  }
+}

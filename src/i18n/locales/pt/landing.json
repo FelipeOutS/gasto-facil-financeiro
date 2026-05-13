@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "badge": "Sua vida financeira mais leve",
+    "titleStart": "Controle suas finanças com mais",
+    "titleHighlight": "clareza, inteligência",
+    "titleEnd": "e praticidade.",
+    "subtitle": "O Gasto Inteligente ajuda você a organizar gastos, cartões, contas, metas e renda em um só lugar — com uma visão simples, visual e fácil de entender.",
+    "ctaPrimary": "Começar agora",
+    "ctaSecondary": "Entrar na minha conta",
+    "chips": {
+      "personal": "Controle pessoal",
+      "cards": "Cartões e faturas",
+      "goals": "Metas financeiras",
+      "monthly": "Organização mensal",
+      "visual": "Visual intuitivo"
+    }
+  },
+  "finalCta": {
+    "badge": "Comece em minutos",
+    "title": "Pronto para organizar sua vida financeira?",
+    "subtitle": "Comece hoje e tenha uma visão mais clara do seu dinheiro, dos seus gastos e dos seus objetivos.",
+    "primary": "Criar minha conta",
+    "secondary": "Ver planos",
+    "noCommitment": "Sem fidelidade",
+    "cancelAnytime": "Cancele quando quiser",
+    "browser": "Acesso pelo navegador"
+  }
+}
