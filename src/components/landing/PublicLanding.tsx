@@ -1427,9 +1427,9 @@ function WhyUs() {
     <section id="recursos" className="bg-white py-20 sm:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Por que usar"
-          title="Tudo que você precisa para entender seu dinheiro."
-          subtitle="Uma plataforma pensada para deixar a sua vida financeira simples, visual e organizada."
+          eyebrow={t("why.eyebrow")}
+          title={t("why.title")}
+          subtitle={t("why.subtitle")}
         />
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c, i) => (
@@ -3036,13 +3036,13 @@ function Plans() {
         {/* audience chips (decorative legend) */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Pessoa Física
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> {t("plans.audiencePF")}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> MEI
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {t("plans.audienceMEI")}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> Empresa
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> {t("plans.audienceEmpresa")}
           </span>
         </div>
 
@@ -3097,24 +3097,25 @@ const BANKS: { name: string; src: string; scale?: number }[] = [
 ];
 
 function BanksStrip() {
+  const { t } = useTranslation("landing");
   const explainers = [
     {
       icon: CreditCard,
       tone: "from-blue-500 to-sky-500",
-      title: "Cartões de qualquer banco",
-      text: "Cadastre Visa, Master, Elo ou cartões digitais — controle limite, fatura e parcelas.",
+      title: t("banks.e1Title"),
+      text: t("banks.e1Text"),
     },
     {
       icon: Receipt,
       tone: "from-emerald-500 to-teal-500",
-      title: "Contas, Pix e boletos",
-      text: "Lance entradas e saídas de qualquer conta corrente, poupança ou carteira digital.",
+      title: t("banks.e2Title"),
+      text: t("banks.e2Text"),
     },
     {
       icon: PiggyBank,
       tone: "from-violet-500 to-fuchsia-500",
-      title: "Reservas e guardado",
-      text: "Acompanhe quanto você guarda em cada banco e veja o total reservado num só lugar.",
+      title: t("banks.e3Title"),
+      text: t("banks.e3Text"),
     },
   ];
 
@@ -3136,13 +3137,12 @@ function BanksStrip() {
       />
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <Eyebrow>Funciona com qualquer banco</Eyebrow>
+          <Eyebrow>{t("banks.eyebrow")}</Eyebrow>
           <h2 className="mx-auto mt-3 max-w-2xl text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-            Organize sua vida financeira independentemente do banco que você usa.
+            {t("banks.title")}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500 sm:text-base">
-            Você lança seus gastos, contas e cartões de qualquer banco ou carteira digital.
-            Sem integração obrigatória — você no controle.
+            {t("banks.subtitle")}
           </p>
         </div>
 
@@ -3200,7 +3200,7 @@ function BanksStrip() {
         </div>
 
         <p className="mt-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
-          Marcas e logos pertencem a seus respectivos donos. Uso meramente ilustrativo.
+          {t("banks.disclaimer")}
         </p>
       </div>
     </section>
