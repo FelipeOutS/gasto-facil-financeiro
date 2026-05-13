@@ -2848,6 +2848,7 @@ const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "em
 const VISIBLE_HIGHLIGHTS = 5;
 
 function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[number]; index: number }) {
+  const { t } = useTranslation("landing");
   const [expanded, setExpanded] = useState(false);
   const tag = HIGHLIGHT[p.tier];
   const featured = !!tag;
@@ -2855,6 +2856,19 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
   const [priceMain, pricePer] = p.priceLabel.split("/");
   const hasMore = p.highlights.length > VISIBLE_HIGHLIGHTS;
   const visibleItems = expanded ? p.highlights : p.highlights.slice(0, VISIBLE_HIGHLIGHTS);
+  const audienceLabel = audience
+    ? audience.label === "Pessoa Física"
+      ? t("plans.audiencePF")
+      : audience.label === "MEI"
+        ? t("plans.audienceMEI")
+        : t("plans.audienceEmpresa")
+    : "";
+  const tagLabel = tag
+    ? tag.label === "Mais escolhido"
+      ? t("plans.highlightPremium")
+      : t("plans.highlightMEI")
+    : "";
+  const description = (t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string);
 
   return (
     <Reveal delay={i * 0.05} className="h-full">
