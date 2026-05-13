@@ -1816,10 +1816,11 @@ function GastosMock() {
 }
 
 function CartaoMock() {
+  const { t } = useTranslation("landing");
   const purchases = [
-    { c: "Spotify", v: "R$ 21,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
-    { c: "iFood", v: "R$ 64,80", t: "Ontem · 3x", color: "bg-rose-100 text-rose-700" },
-    { c: "Posto Shell", v: "R$ 180,00", t: "2 dias", color: "bg-amber-100 text-amber-700" },
+    { c: "Spotify", v: "R$ 21,90", t: t("mockup.card.purchases.spotify") },
+    { c: "iFood", v: "R$ 64,80", t: t("mockup.card.purchases.ifood") },
+    { c: "Posto Shell", v: "R$ 180,00", t: t("mockup.card.purchases.shell") },
   ];
   return (
     <MockShell>
@@ -1835,25 +1836,25 @@ function CartaoMock() {
           style={{ background: "radial-gradient(circle, rgba(16,185,129,0.30), transparent 70%)" }}
         />
         <div className="relative flex items-center justify-between">
-          <p className="text-xs font-semibold opacity-80">Inteligente Black</p>
+          <p className="text-xs font-semibold opacity-80">{t("mockup.card.name")}</p>
           <CreditCard className="h-5 w-5 opacity-80" />
         </div>
         {/* chip */}
         <div className="relative mt-5 flex items-center gap-3">
           <div className="h-7 w-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner ring-1 ring-amber-100/40" />
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-widest opacity-60">Contactless</span>
+            <span className="text-[9px] uppercase tracking-widest opacity-60">{t("mockup.card.contactless")}</span>
           </div>
         </div>
         <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
         <div className="relative mt-4 flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Limite disponível</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.limitAvailable")}</p>
             <p className="text-lg font-bold tabular-nums">R$ 4.820,00</p>
-            <p className="mt-0.5 text-[10px] opacity-60">de R$ 8.000,00</p>
+            <p className="mt-0.5 text-[10px] opacity-60">{t("mockup.card.ofTotal")}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Vence</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.due")}</p>
             <p className="text-sm font-semibold">15/12</p>
             <p className="text-[10px] opacity-60">VISA</p>
           </div>
@@ -1862,9 +1863,9 @@ function CartaoMock() {
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
+          <p className="text-xs font-semibold text-slate-700">{t("mockup.card.openInvoice")}</p>
           <span className="whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Vence 15/12
+            {t("mockup.card.dueShort")}
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
@@ -1877,7 +1878,7 @@ function CartaoMock() {
             className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
           />
         </div>
-        <p className="mt-1.5 text-[11px] text-slate-500">42% do limite utilizado</p>
+        <p className="mt-1.5 text-[11px] text-slate-500">{t("mockup.card.limitUsed")}</p>
 
         <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
           {purchases.map((p) => (
@@ -1896,7 +1897,7 @@ function CartaoMock() {
 
         <button className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-slate-900 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800">
           <CheckCircle2 className="h-3.5 w-3.5" />
-          Marcar fatura como paga
+          {t("mockup.card.markPaid")}
         </button>
       </div>
     </MockShell>
