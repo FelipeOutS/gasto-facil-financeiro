@@ -1233,11 +1233,12 @@ function KpiMini({
 /* ============================== TRUST STRIP ============================== */
 
 function TrustStrip() {
+  const { t } = useTranslation("landing");
   const items = [
-    { icon: ShieldCheck, label: "Seus dados protegidos", hint: "Privacidade em primeiro lugar" },
-    { icon: Zap, label: "Rápido e leve", hint: "Pensado para o dia a dia" },
-    { icon: Eye, label: "Visão clara do mês", hint: "Tudo organizado num olhar" },
-    { icon: Star, label: "Feito para sua rotina", hint: "Pessoa física, MEI e mais" },
+    { icon: ShieldCheck, label: t("trust.dataProtected"), hint: t("trust.dataProtectedHint") },
+    { icon: Zap, label: t("trust.fast"), hint: t("trust.fastHint") },
+    { icon: Eye, label: t("trust.clearVision"), hint: t("trust.clearVisionHint") },
+    { icon: Star, label: t("trust.routine"), hint: t("trust.routineHint") },
   ];
   return (
     <div className="relative border-y border-slate-100 bg-gradient-to-b from-white via-slate-50/40 to-white">
@@ -1261,38 +1262,39 @@ function TrustStrip() {
 /* ============================== HOW IT WORKS ============================== */
 
 function HowItWorks() {
+  const { t } = useTranslation("landing");
   const steps = [
     {
       icon: UserPlus,
       n: "01",
-      title: "Crie sua conta",
-      text: "Cadastre-se em poucos segundos e personalize seu perfil pessoal, MEI ou empresa.",
+      title: t("how.step1Title"),
+      text: t("how.step1Text"),
       accent: "from-blue-500 to-sky-500",
       ring: "ring-blue-100",
       glow: "shadow-[0_18px_40px_-18px_rgba(59,130,246,0.55)]",
-      tag: "Passo 01",
+      tag: `${t("how.stepTag")} 01`,
       tagBg: "bg-blue-50 text-blue-700 ring-blue-100",
     },
     {
       icon: Pencil,
       n: "02",
-      title: "Lance suas finanças",
-      text: "Adicione gastos, receitas, contas e cartões. Tudo organizado por mês de referência.",
+      title: t("how.step2Title"),
+      text: t("how.step2Text"),
       accent: "from-emerald-500 to-teal-500",
       ring: "ring-emerald-100",
       glow: "shadow-[0_18px_40px_-18px_rgba(16,185,129,0.55)]",
-      tag: "Passo 02",
+      tag: `${t("how.stepTag")} 02`,
       tagBg: "bg-emerald-50 text-emerald-700 ring-emerald-100",
     },
     {
       icon: LineChart,
       n: "03",
-      title: "Acompanhe a evolução",
-      text: "Visualize gráficos, alertas, metas e tenha clareza total sobre o seu dinheiro.",
+      title: t("how.step3Title"),
+      text: t("how.step3Text"),
       accent: "from-violet-500 to-fuchsia-500",
       ring: "ring-violet-100",
       glow: "shadow-[0_18px_40px_-18px_rgba(139,92,246,0.55)]",
-      tag: "Passo 03",
+      tag: `${t("how.stepTag")} 03`,
       tagBg: "bg-violet-50 text-violet-700 ring-violet-100",
     },
   ];
@@ -1318,17 +1320,17 @@ function HowItWorks() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm backdrop-blur">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            Como funciona
+            {t("how.eyebrow")}
           </span>
           <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
-            Em{" "}
+            {t("how.titleA")}{" "}
             <span className="bg-gradient-to-r from-blue-600 via-emerald-600 to-violet-600 bg-clip-text text-transparent">
-              3 passos simples
+              {t("how.titleHighlight")}
             </span>{" "}
-            você assume o controle.
+            {t("how.titleB")}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
-            Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês.
+            {t("how.subtitle")}
           </p>
         </div>
 
@@ -1403,7 +1405,7 @@ function HowItWorks() {
         {/* Footer line */}
         <p className="mx-auto mt-14 flex max-w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-[12.5px] text-slate-600 shadow-sm backdrop-blur">
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          Em menos de 5 minutos você está com tudo no controle.
+          {t("how.footer")}
         </p>
       </div>
     </section>
@@ -1413,43 +1415,14 @@ function HowItWorks() {
 /* ============================== WHY US ============================== */
 
 function WhyUs() {
+  const { t } = useTranslation("landing");
   const cards = [
-    {
-      icon: LayoutDashboard,
-      title: "Tudo em um só lugar",
-      text: "Acompanhe gastos, contas, cartões, metas, renda e investimentos sem depender de várias planilhas.",
-      tone: "blue",
-    },
-    {
-      icon: Eye,
-      title: "Visão clara do mês",
-      text: "Entenda quanto entrou, quanto saiu, o que já foi pago e o que ainda precisa de atenção.",
-      tone: "emerald",
-    },
-    {
-      icon: CreditCard,
-      title: "Cartões mais organizados",
-      text: "Controle faturas, compras, vencimentos, limite disponível e ciclo do cartão com mais facilidade.",
-      tone: "violet",
-    },
-    {
-      icon: Target,
-      title: "Metas com progresso visual",
-      text: "Veja quanto você já guardou, quanto falta e acompanhe sua evolução até o objetivo.",
-      tone: "rose",
-    },
-    {
-      icon: Bell,
-      title: "Alertas inteligentes",
-      text: "Receba avisos importantes sobre contas, faturas, vencimentos e pontos que precisam da sua atenção.",
-      tone: "amber",
-    },
-    {
-      icon: Bot,
-      title: "Gasto AI",
-      text: "Pergunte sobre seus gastos, faturas, metas e contas. A IA responde com base nos seus dados — sem chute.",
-      tone: "sky",
-    },
+    { icon: LayoutDashboard, title: t("why.c1Title"), text: t("why.c1Text"), tone: "blue" },
+    { icon: Eye, title: t("why.c2Title"), text: t("why.c2Text"), tone: "emerald" },
+    { icon: CreditCard, title: t("why.c3Title"), text: t("why.c3Text"), tone: "violet" },
+    { icon: Target, title: t("why.c4Title"), text: t("why.c4Text"), tone: "rose" },
+    { icon: Bell, title: t("why.c5Title"), text: t("why.c5Text"), tone: "amber" },
+    { icon: Bot, title: t("why.c6Title"), text: t("why.c6Text"), tone: "sky" },
   ] as const;
 
   const toneMap: Record<string, string> = {
