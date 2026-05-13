@@ -3027,9 +3027,9 @@ function Plans() {
       />
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Planos"
-          title="Escolha o plano ideal para sua rotina financeira."
-          subtitle="Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer."
+          eyebrow={t("plans.eyebrow")}
+          title={t("plans.title")}
+          subtitle={t("plans.subtitle")}
           center
         />
 
