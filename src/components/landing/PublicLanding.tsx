@@ -578,6 +578,7 @@ function Hero() {
 /* ============================== MULTI-DEVICE SHOWCASE ============================== */
 
 function MultiDeviceShowcase() {
+  const { t } = useTranslation("landing");
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-14 sm:py-20">
       {/* soft brand glow */}
