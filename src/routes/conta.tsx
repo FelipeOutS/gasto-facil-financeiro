@@ -209,6 +209,8 @@ function ContaPage() {
         </Button>
       </div>
 
+      <LanguageSection />
+
       <div className="mt-auto pt-8">
         <Button
           variant="outline"
@@ -221,6 +223,23 @@ function ContaPage() {
         </Button>
       </div>
     </MobileShell>
+  );
+}
+
+function LanguageSection() {
+  const { t } = useTranslation("account");
+  return (
+    <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{t("language.title")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("language.description")}
+          </p>
+        </div>
+        <LanguageSwitcher variant="ghost-dark" align="end" />
+      </div>
+    </section>
   );
 }
 
