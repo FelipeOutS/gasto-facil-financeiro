@@ -218,38 +218,25 @@ export function PublicLanding() {
         <DashboardShowcase />
         <GastoAISection />
         <FeatureSplit
-          eyebrow="Gastos"
-          title="Entenda para onde seu dinheiro está indo."
-          text="Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence."
-          bullets={["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]}
+          eyebrow={t("gastosSplit.eyebrow")}
+          title={t("gastosSplit.title")}
+          text={t("gastosSplit.text")}
+          bullets={t("gastosSplit.bullets", { returnObjects: true }) as string[]}
           visual={<GastosMock />}
           reverse
         />
         <FeatureSplit
-          eyebrow="Cartões e faturas"
-          title="Controle suas faturas sem confusão."
-          text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
-          bullets={[
-            "Limite disponível em tempo real",
-            "Fechamento e vencimento",
-            "Status: aberta, paga ou vencida",
-            "Marcar fatura como paga em 1 clique",
-            "Importar fatura por PDF",
-            "Próximos vencimentos no aside",
-          ]}
+          eyebrow={t("cartoesSplit.eyebrow")}
+          title={t("cartoesSplit.title")}
+          text={t("cartoesSplit.text")}
+          bullets={t("cartoesSplit.bullets", { returnObjects: true }) as string[]}
           visual={<CartaoMock />}
         />
         <FeatureSplit
-          eyebrow="Contas e organização"
-          title="Contas a pagar, a receber e renda no mesmo lugar."
-          text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
-          bullets={[
-            "Contas a pagar com recorrência",
-            "Contas a receber",
-            "Minha renda mensal",
-            "Calendário financeiro",
-            "Alertas de vencimento",
-          ]}
+          eyebrow={t("contasSplit.eyebrow")}
+          title={t("contasSplit.title")}
+          text={t("contasSplit.text")}
+          bullets={t("contasSplit.bullets", { returnObjects: true }) as string[]}
           visual={<ContasMock />}
           reverse
         />
