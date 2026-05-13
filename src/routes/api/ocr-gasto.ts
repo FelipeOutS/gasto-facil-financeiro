@@ -97,6 +97,13 @@ export const Route = createFileRoute("/api/ocr-gasto")({
               { status: 400 },
             );
           }
+          // Limite de tamanho: ~15 MB de imagem (≈20 MB em base64).
+          if (img.length > 20 * 1024 * 1024) {
+            return Response.json(
+              { error: "Imagem muito grande. Máximo 15 MB." },
+              { status: 413 },
+            );
+          }
 
           const aiResp = await fetch(
             "https://ai.gateway.lovable.dev/v1/chat/completions",
