@@ -282,5 +282,131 @@
     "msg4": "The statement closes on 11/28 and is due on 12/05. Today it's at R$ 1,247.80 — within the average of the last 3 months.",
     "chips": ["Monthly summary", "Largest expense", "Upcoming bills", "How can I save?"],
     "inputPlaceholder": "Ask about your expenses…"
+  },
+  "mockup": {
+    "float": {
+      "income": "Income",
+      "alert": "Alert",
+      "alertText": "Bill due tomorrow",
+      "goalTrip": "Goal · Trip",
+      "goalDone": "{{pct}}% complete",
+      "invoice": "Invoice",
+      "invoiceOpen": "Open"
+    },
+    "dashboard": {
+      "overview": "Overview",
+      "month": "November · 2026",
+      "balance": "Balance",
+      "income": "Income",
+      "expenses": "Expenses",
+      "toPay": "To pay",
+      "monthFlow": "Month flow",
+      "incomeVsExpenses": "Income vs. expenses",
+      "incomeShort": "Income",
+      "expensesShort": "Expenses",
+      "smartLimit": "Smart limit",
+      "smartLimitHint": "You can still spend R$ 1,180 this week."
+    },
+    "gastos": {
+      "eyebrow": "Expenses · month",
+      "filterDate": "Nov · 2026",
+      "filterCategory": "Category",
+      "filterPix": "Pix",
+      "filterCard": "Card",
+      "items": {
+        "market": "Groceries",
+        "restaurant": "Restaurant",
+        "transport": "Transport",
+        "subscription": "Subscription"
+      },
+      "when": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{n}} days ago"
+      },
+      "total": "Total",
+      "average": "Average"
+    },
+    "card": {
+      "name": "Inteligente Black",
+      "contactless": "Contactless",
+      "limitAvailable": "Available limit",
+      "ofTotal": "of R$ 8,000.00",
+      "due": "Due",
+      "openInvoice": "Open invoice",
+      "dueShort": "Due 12/15",
+      "limitUsed": "42% of limit used",
+      "purchases": {
+        "spotify": "Today",
+        "ifood": "Yesterday · 3x",
+        "shell": "2 days ago"
+      },
+      "markPaid": "Mark invoice as paid"
+    },
+    "meta": {
+      "active": "Active goal",
+      "monthYear": "Dec · 2027",
+      "eyebrow": "Goal · Property",
+      "title": "Apartment down payment",
+      "saved": "Saved",
+      "objective": "Objective",
+      "complete": "{{pct}}% complete",
+      "remaining": "Remaining",
+      "otherGoals": "Other goals",
+      "active3": "3 active",
+      "names": {
+        "beach": "Beach trip",
+        "car": "Buy a car",
+        "reserve": "Emergency fund"
+      }
+    },
+    "invest": {
+      "wallet": "Portfolio",
+      "totalAssets": "Total assets · 12 months",
+      "vsLastMonth": "vs. last month",
+      "evolution": "Evolution",
+      "fixed": "Fixed income",
+      "stocks": "Stocks",
+      "funds": "Funds",
+      "ofPortfolio": "{{pct}}% of portfolio"
+    },
+    "guardado": {
+      "totalSaved": "Total saved",
+      "reservesIn": "Reserves across 4 accounts",
+      "secureReserve": "Secure reserve",
+      "wallet": "Wallet"
+    },
+    "orcamento": {
+      "smartLimitToday": "Smart limit · today",
+      "perDay": "per day · until end of month",
+      "income": "Income",
+      "fixedPaid": "Fixed paid",
+      "leftover": "Leftover",
+      "byCategory": "Budget by category",
+      "overrun": "1 overrun",
+      "categories": {
+        "market": "Groceries",
+        "transport": "Transport",
+        "leisure": "Leisure",
+        "subscriptions": "Subscriptions"
+      }
+    },
+    "contas": {
+      "eyebrow": "Bills · December",
+      "open": "R$ 1,818.20 open",
+      "due": "Due {{date}}",
+      "items": {
+        "rent": "Rent",
+        "internet": "Internet",
+        "energy": "Energy",
+        "client": "Client — project"
+      },
+      "labels": {
+        "paid": "Paid",
+        "in3": "In 3 days",
+        "in9": "In 9 days",
+        "toReceive": "To receive"
+      }
+    }
   }
 }
