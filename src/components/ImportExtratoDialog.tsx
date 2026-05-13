@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ImageIcon,
@@ -326,7 +327,7 @@ export function ImportExtratoDialog({
       setObservacaoIA(null);
       try {
         const dataUrls = await Promise.all(files.map(fileToDataUrl));
-        const resp = await fetch("/api/import-extrato", {
+        const resp = await apiFetch("/api/import-extrato", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imagens: dataUrls }),
@@ -379,7 +380,7 @@ export function ImportExtratoDialog({
         // Envia como multipart/form-data — sem header manual (browser gera o boundary).
         const fd = new FormData();
         fd.append("pdf", file, file.name || "extrato.pdf");
-        const resp = await fetch("/api/import-extrato", {
+        const resp = await apiFetch("/api/import-extrato", {
           method: "POST",
           body: fd,
         });

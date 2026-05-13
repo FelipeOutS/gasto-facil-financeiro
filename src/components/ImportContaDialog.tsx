@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-fetch";
 import { useRef, useState } from "react";
 import {
   Upload,
@@ -181,7 +182,7 @@ export function ImportContaDialog({
   async function processar(payload: { images?: string[]; text?: string }) {
     setLoading(true);
     try {
-      const res = await fetch("/api/import-conta", {
+      const res = await apiFetch("/api/import-conta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -208,7 +209,7 @@ export function ImportContaDialog({
   async function processarPdf(pdfDataUrl: string) {
     setLoading(true);
     try {
-      const res = await fetch("/api/import-conta-pdf", {
+      const res = await apiFetch("/api/import-conta-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdf: pdfDataUrl }),

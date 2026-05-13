@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
 
 /**
  * OCR de comprovante via Lovable AI Gateway (Gemini Vision).
@@ -77,6 +78,8 @@ export const Route = createFileRoute("/api/ocr-gasto")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const __user = await getUserFromRequest(request);
+        if (!__user) return unauthorizedResponse();
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {

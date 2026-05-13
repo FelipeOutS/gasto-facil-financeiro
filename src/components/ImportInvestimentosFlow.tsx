@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-fetch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "@e965/xlsx";
 import {
@@ -285,7 +286,7 @@ export function ImportInvestimentosFlow({
         return;
       }
 
-      const resp = await fetch("/api/import-investimentos", {
+      const resp = await apiFetch("/api/import-investimentos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

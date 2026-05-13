@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-fetch";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -101,7 +102,7 @@ function Confirmar() {
     setStep("analisando");
     setErro("");
     try {
-      const resp = await fetch("/api/ocr-gasto", {
+      const resp = await apiFetch("/api/ocr-gasto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64: imagem }),
