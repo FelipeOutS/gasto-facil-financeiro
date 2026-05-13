@@ -1,0 +1,18 @@
+# Gasto Inteligente
+
+> Plataforma brasileira de controle financeiro para pessoa física, MEI e empresa: gastos, cartões, contas, metas, renda, investimentos, relatórios e radar econômico em um só lugar.
+
+O Gasto Inteligente organiza gastos por mês de referência, lê faturas e extratos por PDF, oferece IA financeira, alertas inteligentes, calendário financeiro, cadastro de clientes e fornecedores por CNPJ, pacote para contador e indicadores oficiais (Selic, IPCA, dólar e euro).
+
+## Pages
+
+- [Início](/): Visão geral do produto e acesso ao app.
+- [Conheça o Gasto Inteligente](/landing): Recursos, planos e diferenciais.
+- [Termos de uso](/termos): Regras gerais de utilização da plataforma.
+- [Política de privacidade](/privacidade): Como coletamos, usamos e protegemos seus dados.
+- [LGPD](/lgpd): Compromisso com a Lei Geral de Proteção de Dados.
+
+## Optional
+
+- [Entrar](/login): Acesso à conta.
+- [Cadastro](/cadastro): Criação de conta.
