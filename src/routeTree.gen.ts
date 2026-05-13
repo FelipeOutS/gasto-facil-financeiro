@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as StatusRouteImport } from './routes/status'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RendaRouteImport } from './routes/renda'
@@ -85,6 +86,11 @@ const TermosRoute = TermosRouteImport.update({
 const StatusRoute = StatusRouteImport.update({
   id: '/status',
   path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResumoRoute = ResumoRouteImport.update({
@@ -426,6 +432,7 @@ export interface FileRoutesByFullPath {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -555,6 +563,7 @@ export interface FileRoutesById {
   '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -621,6 +630,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/sitemap.xml'
     | '/status'
     | '/termos'
     | '/whatsapp'
@@ -685,6 +695,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/sitemap.xml'
     | '/status'
     | '/termos'
     | '/whatsapp'
@@ -749,6 +760,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/reset-password'
     | '/resumo'
+    | '/sitemap.xml'
     | '/status'
     | '/termos'
     | '/whatsapp'
@@ -814,6 +826,7 @@ export interface RootRouteChildren {
   RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusRoute: typeof StatusRoute
   TermosRoute: typeof TermosRoute
   WhatsappRoute: typeof WhatsappRoute
@@ -862,6 +875,13 @@ declare module '@tanstack/react-router' {
       path: '/status'
       fullPath: '/status'
       preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resumo': {
@@ -1318,6 +1338,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusRoute: StatusRoute,
   TermosRoute: TermosRoute,
   WhatsappRoute: WhatsappRoute,

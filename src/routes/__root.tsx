@@ -47,14 +47,14 @@ export const Route = createRootRoute({
           "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
       },
       { name: "theme-color", content: "#0B1F3A" },
-      { property: "og:title", content: "Gasto Inteligente" },
+      { property: "og:site_name", content: "Gasto Inteligente" },
+      { property: "og:title", content: "Gasto Inteligente — Controle financeiro simples e visual" },
       {
         property: "og:description",
         content:
           "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://gastointeligente.com.br/" },
       { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
@@ -79,7 +79,6 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "canonical", href: "https://gastointeligente.com.br/" },
     ],
     scripts: [
       {
