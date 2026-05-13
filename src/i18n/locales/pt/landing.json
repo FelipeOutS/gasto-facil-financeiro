@@ -15,6 +15,223 @@
       "visual": "Visual intuitivo"
     }
   },
+  "trust": {
+    "dataProtected": "Seus dados protegidos",
+    "dataProtectedHint": "Privacidade em primeiro lugar",
+    "fast": "Rápido e leve",
+    "fastHint": "Pensado para o dia a dia",
+    "clearVision": "Visão clara do mês",
+    "clearVisionHint": "Tudo organizado num olhar",
+    "routine": "Feito para sua rotina",
+    "routineHint": "Pessoa física, MEI e mais"
+  },
+  "how": {
+    "eyebrow": "Como funciona",
+    "titleA": "Em",
+    "titleHighlight": "3 passos simples",
+    "titleB": "você assume o controle.",
+    "subtitle": "Sem planilha, sem complicação. Você começa em minutos e enxerga resultado já no primeiro mês.",
+    "footer": "Em menos de 5 minutos você está com tudo no controle.",
+    "stepTag": "Passo",
+    "step1Title": "Crie sua conta",
+    "step1Text": "Cadastre-se em poucos segundos e personalize seu perfil pessoal, MEI ou empresa.",
+    "step2Title": "Lance suas finanças",
+    "step2Text": "Adicione gastos, receitas, contas e cartões. Tudo organizado por mês de referência.",
+    "step3Title": "Acompanhe a evolução",
+    "step3Text": "Visualize gráficos, alertas, metas e tenha clareza total sobre o seu dinheiro."
+  },
+  "why": {
+    "eyebrow": "Por que usar",
+    "title": "Tudo que você precisa para entender seu dinheiro.",
+    "subtitle": "Uma plataforma pensada para deixar a sua vida financeira simples, visual e organizada.",
+    "c1Title": "Tudo em um só lugar",
+    "c1Text": "Acompanhe gastos, contas, cartões, metas, renda e investimentos sem depender de várias planilhas.",
+    "c2Title": "Visão clara do mês",
+    "c2Text": "Entenda quanto entrou, quanto saiu, o que já foi pago e o que ainda precisa de atenção.",
+    "c3Title": "Cartões mais organizados",
+    "c3Text": "Controle faturas, compras, vencimentos, limite disponível e ciclo do cartão com mais facilidade.",
+    "c4Title": "Metas com progresso visual",
+    "c4Text": "Veja quanto você já guardou, quanto falta e acompanhe sua evolução até o objetivo.",
+    "c5Title": "Alertas inteligentes",
+    "c5Text": "Receba avisos importantes sobre contas, faturas, vencimentos e pontos que precisam da sua atenção.",
+    "c6Title": "Gasto AI",
+    "c6Text": "Pergunte sobre seus gastos, faturas, metas e contas. A IA responde com base nos seus dados — sem chute."
+  },
+  "screens": {
+    "eyebrow": "Veja por dentro",
+    "title": "As telas que organizam toda a sua rotina financeira.",
+    "subtitle": "Navegue pelas principais áreas do Gasto Inteligente e veja como cada parte trabalha pra você.",
+    "cta": "Conhecer o sistema",
+    "dashboard": "Dashboard",
+    "dashboardDesc": "Uma visão geral do seu mês, com saldo, receitas, despesas, contas a pagar, alertas e resumo financeiro.",
+    "gastos": "Gastos",
+    "gastosDesc": "Organize seus gastos por mês de referência, categoria, forma de pagamento e período, com filtros claros e fáceis de usar.",
+    "cartoes": "Cartões",
+    "cartoesDesc": "Acompanhe faturas, compras, limite, fechamento, vencimento e status de pagamento.",
+    "metas": "Metas",
+    "metasDesc": "Crie objetivos financeiros, acompanhe o progresso e veja quanto ainda falta para chegar lá.",
+    "investimentos": "Investimentos",
+    "investimentosDesc": "Tenha uma área preparada para acompanhar sua evolução patrimonial e organizar seus investimentos.",
+    "guardado": "Guardado",
+    "guardadoDesc": "Registre valores reservados em bancos ou carteiras e acompanhe quanto você realmente tem guardado.",
+    "highlights": {
+      "dashboard": ["Saldo, receitas e despesas", "Fluxo do mês em gráfico", "Limite inteligente", "Alertas e calendário"],
+      "gastos": ["Filtro por mês de referência", "Categorias e formas de pagamento", "Total e média do mês", "Lista clara e organizada"],
+      "cartoes": ["Cartão visual com limite", "Fatura aberta e vencimento", "Compras e parcelas", "Marcar fatura como paga"],
+      "metas": ["Capa visual da meta", "Progresso animado", "Quanto falta para concluir", "Histórico de aportes"],
+      "investimentos": ["Carteira total e variação", "Gráfico de crescimento", "Distribuição por classe", "Resumo visual rápido"],
+      "guardado": ["Total reservado", "Valor por banco e carteira", "Visual seguro e limpo", "Acompanhamento mensal"]
+    }
+  },
+  "dashboardShowcase": {
+    "eyebrow": "Dashboard",
+    "title": "Seu mês financeiro em uma visão simples.",
+    "text": "O Dashboard reúne as informações mais importantes para você entender rapidamente sua situação: receitas, despesas, contas, saldo, alertas e limite inteligente.",
+    "bullets": ["Saldo do mês", "Receitas e despesas", "Contas a pagar", "Alertas importantes", "Limite inteligente"]
+  },
+  "gastosSplit": {
+    "eyebrow": "Gastos",
+    "title": "Entenda para onde seu dinheiro está indo.",
+    "text": "Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence.",
+    "bullets": ["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]
+  },
+  "cartoesSplit": {
+    "eyebrow": "Cartões e faturas",
+    "title": "Controle suas faturas sem confusão.",
+    "text": "Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente.",
+    "bullets": ["Limite disponível em tempo real", "Fechamento e vencimento", "Status: aberta, paga ou vencida", "Marcar fatura como paga em 1 clique", "Importar fatura por PDF", "Próximos vencimentos no aside"]
+  },
+  "contasSplit": {
+    "eyebrow": "Contas e organização",
+    "title": "Contas a pagar, a receber e renda no mesmo lugar.",
+    "text": "Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente.",
+    "bullets": ["Contas a pagar com recorrência", "Contas a receber", "Minha renda mensal", "Calendário financeiro", "Alertas de vencimento"]
+  },
+  "more": {
+    "eyebrow": "Mais recursos",
+    "title": "Mais recursos para o seu controle financeiro",
+    "subtitle": "Tudo o que você precisa para acompanhar seu dinheiro com clareza — sem deixar nada de fora.",
+    "i1Title": "Orçamento e limite inteligente",
+    "i1Text": "Defina limites por categoria e veja quanto pode gastar por dia, descontando contas fixas e faturas pagas.",
+    "i2Title": "Metas e guardado",
+    "i2Text": "Crie metas com capa visual e vincule o dinheiro guardado em cada banco — sem contar em dobro.",
+    "i3Title": "Investimentos",
+    "i3Text": "Acompanhe sua carteira, evolução mensal e resumo por classe em uma visão organizada.",
+    "i4Title": "Contas conectadas",
+    "i4Text": "Convide alguém por e-mail e acompanhe outra conta com permissão — ideal para famílias, sócios e contadores."
+  },
+  "empresa": {
+    "tag": "MEI e Empresa",
+    "titleA": "Controle completo para MEI e",
+    "titleHighlight": "pequenas empresas",
+    "titleB": ".",
+    "subtitle": "Cadastre clientes e fornecedores, acompanhe contas a pagar e receber, veja relatórios por empresa e gere um pacote mensal para o contador.",
+    "c1Title": "Empresa Inteligente",
+    "c1Text": "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
+    "c2Title": "Clientes e Fornecedores",
+    "c2Text": "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
+    "c3Title": "Relatórios empresariais",
+    "c3Text": "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
+    "c4Title": "Pacote para Contador",
+    "c4Text": "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
+    "c5Title": "Radar Econômico",
+    "c5Text": "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
+    "trust1Title": "Segurança de dados",
+    "trust1Text": "e privacidade",
+    "trust2Title": "Importação de extratos",
+    "trust2Text": "com segurança",
+    "trust3Title": "Backup automático",
+    "trust3Text": "na nuvem"
+  },
+  "multiDevice": {
+    "tag": "Multiplataforma",
+    "title": "Acompanhe suas finanças em qualquer dispositivo",
+    "subtitle": "Use o Gasto Inteligente com praticidade no notebook, tablet ou celular, com uma experiência clara, fluida e intuitiva em qualquer tela."
+  },
+  "forWho": {
+    "eyebrow": "Para quem é",
+    "title": "Feito para quem quer enxergar melhor o próprio dinheiro.",
+    "subtitle": "Do controle pessoal ao acompanhamento de pequenas rotinas financeiras, o Gasto Inteligente foi pensado para você.",
+    "items": ["Pessoa física", "MEI", "Pequenas empresas", "Autônomos", "Quem quer sair da bagunça financeira", "Quem quer trocar planilhas por uma ferramenta visual"]
+  },
+  "trustPoints": ["Sem complicação", "Visual fácil de entender", "Organização mensal", "Controle por categorias", "Ideal para rotina pessoal e MEI", "Acesso pelo navegador", "Pensado para uso diário"],
+  "plans": {
+    "eyebrow": "Planos",
+    "title": "Escolha o plano ideal para sua rotina financeira.",
+    "subtitle": "Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer.",
+    "audiencePF": "Pessoa Física",
+    "audienceMEI": "MEI",
+    "audienceEmpresa": "Empresa",
+    "highlightPremium": "Mais escolhido",
+    "highlightMEI": "Recomendado MEI",
+    "perMonth": "mês",
+    "cancelAnytime": "Cancele quando quiser",
+    "viewLess": "Ver menos",
+    "viewAll": "Ver todos os {{count}} recursos",
+    "choose": "Escolher plano",
+    "trustPay": "Pagamento seguro",
+    "trustNoFid": "Sem fidelidade",
+    "trustImmediate": "Acesso imediato",
+    "trustUpdates": "Atualizações inclusas",
+    "helperA": "Não sabe qual escolher?",
+    "helperLink": "Veja as dúvidas frequentes",
+    "helperB": "ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.",
+    "descriptions": {
+      "pessoal_manual": "Para começar a organizar suas finanças pessoais com simplicidade.",
+      "pessoal_premium": "Vida financeira pessoal completa, com automação e mais recursos.",
+      "mei_essencial": "O essencial para o MEI manter contas, recibos e fluxo organizados.",
+      "mei_inteligente": "MEI com automação completa: ganhe tempo e tenha clareza total.",
+      "empresa": "Visão financeira completa para empresas que precisam de mais controle."
+    }
+  },
+  "banks": {
+    "eyebrow": "Funciona com qualquer banco",
+    "title": "Organize sua vida financeira independentemente do banco que você usa.",
+    "subtitle": "Você lança seus gastos, contas e cartões de qualquer banco ou carteira digital. Sem integração obrigatória — você no controle.",
+    "e1Title": "Cartões de qualquer banco",
+    "e1Text": "Cadastre Visa, Master, Elo ou cartões digitais — controle limite, fatura e parcelas.",
+    "e2Title": "Contas, Pix e boletos",
+    "e2Text": "Lance entradas e saídas de qualquer conta corrente, poupança ou carteira digital.",
+    "e3Title": "Reservas e guardado",
+    "e3Text": "Acompanhe quanto você guarda em cada banco e veja o total reservado num só lugar.",
+    "disclaimer": "Marcas e logos pertencem a seus respectivos donos. Uso meramente ilustrativo."
+  },
+  "testimonials": {
+    "rating": "4.9/5 · Avaliação dos usuários",
+    "titleA": "Pessoas reais,",
+    "titleHighlight": "controle de verdade",
+    "titleB": ".",
+    "subtitle": "Histórias de quem trocou a bagunça por uma rotina financeira leve, clara e sob controle.",
+    "highlightTag": "Em destaque",
+    "verifiedAria": "Usuário verificado",
+    "trust1": "Depoimentos verificados",
+    "trust2": "+10 mil pessoas no controle",
+    "trust3": "4.9 de média",
+    "items": [
+      { "name": "Camila R.", "role": "Designer · Pessoa Física", "text": "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo." },
+      { "name": "Rafael M.", "role": "MEI · Confeitaria", "text": "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto." },
+      { "name": "Juliana A.", "role": "Autônoma", "text": "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar." }
+    ]
+  },
+  "faq": {
+    "eyebrow": "Dúvidas",
+    "title": "Perguntas frequentes",
+    "subtitle": "Se ainda restou alguma dúvida, fale com a gente.",
+    "items": [
+      { "q": "O que é o Gasto Inteligente?", "a": "É uma plataforma de controle financeiro que ajuda você a organizar gastos, cartões, contas, metas, renda e investimentos em um só lugar, com uma visão simples e fácil de entender." },
+      { "q": "Preciso entender de finanças para usar?", "a": "Não. O sistema foi pensado para ser simples e visual, mesmo para quem não entende muito de finanças." },
+      { "q": "Posso controlar cartões e faturas?", "a": "Sim. Você acompanha compras, faturas, vencimentos, limite usado e pagamento da fatura em um só lugar." },
+      { "q": "Consigo separar gastos por mês de referência?", "a": "Sim. O sistema trabalha com mês de referência, então você define a qual mês cada gasto pertence — perfeito para faturas e contas que pagam um mês mas se referem a outro." },
+      { "q": "O sistema ajuda com metas financeiras?", "a": "Sim. Você cria metas, acompanha quanto já foi reservado, quanto falta e visualiza a evolução até o objetivo." },
+      { "q": "Existe plano para MEI?", "a": "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle." },
+      { "q": "O que tem na área Empresa Inteligente?", "a": "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês." },
+      { "q": "O Pacote para Contador substitui meu contador?", "a": "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional." },
+      { "q": "O que é o Radar Econômico?", "a": "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro." },
+      { "q": "Posso acessar pelo celular?", "a": "Sim. O Gasto Inteligente é totalmente responsivo e funciona muito bem no celular, tablet e computador, direto pelo navegador." },
+      { "q": "O modo dark existe?", "a": "O modo dark/light fica disponível dentro da área logada do usuário. A página pública de apresentação usa visual claro para facilitar a leitura." },
+      { "q": "Como faço para começar?", "a": "Clique em \"Começar agora\" no topo da página, crie sua conta gratuitamente e escolha o plano que combina com você." }
+    ]
+  },
   "finalCta": {
     "badge": "Comece em minutos",
     "title": "Pronto para organizar sua vida financeira?",
@@ -24,5 +241,46 @@
     "noCommitment": "Sem fidelidade",
     "cancelAnytime": "Cancele quando quiser",
     "browser": "Acesso pelo navegador"
+  },
+  "footer": {
+    "tagline": "Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.",
+    "badgeData": "Dados protegidos",
+    "badgeFast": "Rápido e leve",
+    "product": "Produto",
+    "account": "Conta",
+    "support": "Suporte",
+    "legal": "Legal",
+    "links": {
+      "features": "Recursos",
+      "how": "Como funciona",
+      "plans": "Planos",
+      "faq": "Dúvidas",
+      "signIn": "Entrar",
+      "signUp": "Cadastrar-se",
+      "reset": "Recuperar senha",
+      "help": "Central de ajuda",
+      "contact": "Fale conosco",
+      "status": "Status do sistema",
+      "terms": "Termos de uso",
+      "privacy": "Política de privacidade",
+      "lgpd": "LGPD"
+    },
+    "copyright": "© {{year}} Gasto Inteligente. Todos os direitos reservados.",
+    "madeWith": "Feito com cuidado para sua vida financeira."
+  },
+  "ai": {
+    "tag": "Gasto AI",
+    "title": "Converse com sua vida financeira.",
+    "text": "Pergunte sobre seus gastos, faturas, metas e contas. O Gasto AI analisa apenas os dados que você cadastrou e entrega respostas claras — sem chute, sem estimativa solta.",
+    "bullets": ["Resumo do mês em segundos", "Comparação entre períodos", "Faturas, vencimentos e cartões", "Onde dá pra economizar", "Status das metas", "Contas a pagar e a receber"],
+    "cta": "Experimentar o Gasto AI",
+    "chatTitle": "Gasto AI",
+    "chatStatus": "Conectado aos seus dados",
+    "msg1": "Quanto gastei com mercado este mês?",
+    "msg2": "Em novembro você gastou R$ 842,30 em mercado — 18% a menos que outubro (R$ 1.027,90). A maior compra foi no dia 14, R$ 312,40.",
+    "msg3": "E a fatura do Nubank, já está fechada?",
+    "msg4": "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
+    "chips": ["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"],
+    "inputPlaceholder": "Pergunte sobre seus gastos…"
   }
 }
