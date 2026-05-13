@@ -293,6 +293,9 @@ function Header() {
           <img
             src="/logos/brand/gasto-inteligente-light.png"
             alt="Gasto Inteligente"
+            width={176}
+            height={44}
+            fetchPriority="high"
             className="h-9 w-auto sm:h-11 object-contain"
             draggable={false}
           />
