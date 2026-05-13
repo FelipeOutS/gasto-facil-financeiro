@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
@@ -95,8 +96,9 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexGate() {
+  const { t } = useTranslation("dashboard");
   const { session, loading } = useAuth();
-  if (loading) return <BrandLoader message="Carregando sua conta…" />;
+  if (loading) return <BrandLoader message={t("loading")} />;
   if (!session) return <PublicLanding />;
   return <Index />;
 }

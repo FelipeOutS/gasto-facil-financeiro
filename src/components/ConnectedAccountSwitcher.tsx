@@ -3,6 +3,7 @@
  * um menu com as contas conectadas que o usuário pode acessar.
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronDown, Users, Eye, Pencil, Shield } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,12 +23,6 @@ const LEVEL_ICON = {
   admin: Shield,
 } as const;
 
-const LEVEL_LABEL = {
-  view: "Somente ver",
-  view_create: "Ver e lançar",
-  admin: "Administrador",
-} as const;
-
 function initials(text: string): string {
   const parts = text.trim().split(/[\s@.]+/).filter(Boolean);
   if (!parts.length) return "?";
@@ -37,6 +32,7 @@ function initials(text: string): string {
 }
 
 export function ConnectedAccountSwitcher({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const { user, profile } = useAuth();
   const { connections, isOwnAccount, activeConnection, switchTo } = useActiveAccount();
   const [open, setOpen] = useState(false);
@@ -44,10 +40,10 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
   // Sem conexões aceitas: não mostra (mantém sidebar limpa).
   if (connections.length === 0) return null;
 
-  const ownName = profile?.nome || user?.email?.split("@")[0] || "Minha conta";
+  const ownName = profile?.nome || user?.email?.split("@")[0] || t("switcher.minhaConta");
   const currentLabel = isOwnAccount
-    ? "Minha conta"
-    : activeConnection?.nickname || activeConnection?.email || "Conta conectada";
+    ? t("switcher.minhaConta")
+    : activeConnection?.nickname || activeConnection?.email || t("switcher.contaConectada");
   const currentInitials = isOwnAccount
     ? initials(ownName)
     : initials(activeConnection?.nickname || activeConnection?.email || "?");
@@ -73,7 +69,7 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {isOwnAccount ? "Você" : "Vendo conta de"}
+              {isOwnAccount ? t("switcher.voce") : t("switcher.vendoContaDe")}
             </p>
             <p className="truncate text-xs font-semibold">{currentLabel}</p>
           </div>
@@ -82,7 +78,7 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel className="flex items-center gap-2 text-xs">
-          <Users className="h-3.5 w-3.5" /> Trocar de conta
+          <Users className="h-3.5 w-3.5" /> {t("switcher.trocarConta")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -93,14 +89,14 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
             {initials(ownName)}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">Minha conta</p>
+            <p className="truncate text-sm font-medium">{t("switcher.minhaConta")}</p>
             <p className="truncate text-[11px] text-muted-foreground">{user?.email ?? ""}</p>
           </div>
           {isOwnAccount && <Check className="h-4 w-4 text-brand" />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Contas que você acompanha
+          {t("switcher.queVoceAcompanha")}
         </DropdownMenuLabel>
         {connections.map((c) => {
           const Icon = LEVEL_ICON[c.accessLevel];
@@ -117,7 +113,7 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{c.nickname || c.email}</p>
                 <p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-                  <Icon className="h-3 w-3" /> {LEVEL_LABEL[c.accessLevel]}
+                  <Icon className="h-3 w-3" /> {t(`switcher.level.${c.accessLevel}`)}
                 </p>
               </div>
               {active && <Check className="h-4 w-4 text-brand" />}
