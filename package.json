@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
+    "@e965/xlsx": "^0.20.3",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
     "@lovable.dev/email-js": "^0.0.4",
@@ -78,7 +79,6 @@
     "unpdf": "^1.6.1",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
