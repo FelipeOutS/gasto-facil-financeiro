@@ -2916,7 +2916,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               )}
             >
               <Sparkles className="h-3 w-3" />
-              {tag.label}
+              {tagLabel}
             </span>
           )}
         </div>
