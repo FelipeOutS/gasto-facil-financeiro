@@ -3005,7 +3005,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               : "bg-slate-900 text-white hover:bg-slate-800",
           )}
         >
-          Escolher plano
+          {t("plans.choose")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
