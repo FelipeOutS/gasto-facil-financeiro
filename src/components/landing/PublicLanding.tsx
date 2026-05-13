@@ -2870,8 +2870,10 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
   const featured = !!tag;
   const audience = PLAN_AUDIENCE[p.tier];
   const [priceMain, pricePer] = p.priceLabel.split("/");
-  const hasMore = p.highlights.length > VISIBLE_HIGHLIGHTS;
-  const visibleItems = expanded ? p.highlights : p.highlights.slice(0, VISIBLE_HIGHLIGHTS);
+  const translatedHighlights = t(`plans.highlights.${p.tier}`, { returnObjects: true }) as string[];
+  const highlightItems = Array.isArray(translatedHighlights) ? translatedHighlights : p.highlights;
+  const hasMore = highlightItems.length > VISIBLE_HIGHLIGHTS;
+  const visibleItems = expanded ? highlightItems : highlightItems.slice(0, VISIBLE_HIGHLIGHTS);
   const audienceLabel = audience
     ? audience.label === "Pessoa Física"
       ? t("plans.audiencePF")
@@ -2885,6 +2887,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
       : t("plans.highlightMEI")
     : "";
   const description = (t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string);
+  const planName = t(`plans.names.${p.tier}`, { defaultValue: p.name });
 
   return (
     <Reveal delay={i * 0.05} className="h-full">
@@ -2938,7 +2941,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
         </div>
 
         <h3 className={cn("relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
-          {p.name}
+          {planName}
         </h3>
         <p
           className={cn(
@@ -3006,7 +3009,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               featured ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: p.highlights.length })}
+            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: highlightItems.length })}
           </button>
         )}
 
