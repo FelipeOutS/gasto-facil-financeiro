@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gastointeligente.com.br/sitemap.xml
