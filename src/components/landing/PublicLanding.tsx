@@ -2292,22 +2292,23 @@ function InvestimentosMock() {
 }
 
 function GuardadoMock() {
+  const { t } = useTranslation("landing");
   const items = [
     { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500", logoBg: "#fff" as string | null },
     { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500", logoBg: "#ff7a00" as string | null },
     { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700", logoBg: "#1f1f1f" as string | null },
-    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
+    { l: t("mockup.guardado.wallet"), v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.guardado.totalSaved")}</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">Reservas em 4 contas</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.guardado.reservesIn")}</p>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-          <ShieldCheck className="h-3.5 w-3.5" /> Reserva segura
+          <ShieldCheck className="h-3.5 w-3.5" /> {t("mockup.guardado.secureReserve")}
         </span>
       </div>
 
