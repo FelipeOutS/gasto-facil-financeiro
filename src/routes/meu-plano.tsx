@@ -609,13 +609,13 @@ function MeuPlanoPage() {
             <button key={p.key} type="button" onClick={() => setPeriodicidade(p.key)}
               className={cn("relative rounded-2xl border p-3 text-left transition-colors",
                 active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}>
-              <p className="text-sm font-semibold">{p.label}</p>
+              <p className="text-sm font-semibold">{periodLabel(p.key)}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {p.discountPercent > 0 ? `${p.discountPercent}% off` : "sem desconto"}
+                {p.discountPercent > 0 ? `${p.discountPercent}% off` : t("billing.noDiscount")}
               </p>
               {p.badge && (
                 <span className="absolute -top-2 right-2 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                  {p.badge}
+                  {periodBadge(p.key, p.badge)}
                 </span>
               )}
             </button>
@@ -638,7 +638,7 @@ function MeuPlanoPage() {
         })}
       </div>
       <p className="mt-2 text-[11px] text-muted-foreground">
-        🔒 Pagamento seguro processado pelo Mercado Pago. O Gasto Inteligente não armazena dados do seu cartão.
+        {t("billing.secureInfo")}
       </p>
       <section className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {COMMERCIAL_PLANS.map((p) => {
