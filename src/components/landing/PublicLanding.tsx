@@ -2465,19 +2465,17 @@ function EmpresaInteligenteSection() {
             <Reveal>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                MEI e Empresa
+                {t("empresa.tag")}
               </span>
               <h2 className="mt-4 text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.6rem]">
-                Controle completo para MEI e{" "}
+                {t("empresa.titleA")}{" "}
                 <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                  pequenas empresas
+                  {t("empresa.titleHighlight")}
                 </span>
-                .
+                {t("empresa.titleB")}
               </h2>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-                Cadastre clientes e fornecedores, acompanhe contas a pagar e
-                receber, veja relatórios por empresa e gere um pacote mensal
-                para o contador.
+                {t("empresa.subtitle")}
               </p>
             </Reveal>
 
