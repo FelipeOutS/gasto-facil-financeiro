@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
 
 /**
  * Importação de fatura por imagem/print via Lovable AI Gateway (Gemini Vision).
@@ -90,6 +91,8 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const __user = await getUserFromRequest(request);
+        if (!__user) return unauthorizedResponse();
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {

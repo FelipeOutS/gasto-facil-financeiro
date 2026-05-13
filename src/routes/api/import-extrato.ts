@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
 import { extractText, extractTextItems, getDocumentProxy } from "unpdf";
 
 /**
@@ -573,6 +574,8 @@ export const Route = createFileRoute("/api/import-extrato")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const __user = await getUserFromRequest(request);
+        if (!__user) return unauthorizedResponse();
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {

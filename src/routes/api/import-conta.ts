@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
 
 /**
  * Importação de conta a pagar (boleto / Pix copia e cola / fatura solta)
@@ -95,6 +96,8 @@ export const Route = createFileRoute("/api/import-conta")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const __user = await getUserFromRequest(request);
+        if (!__user) return unauthorizedResponse();
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
