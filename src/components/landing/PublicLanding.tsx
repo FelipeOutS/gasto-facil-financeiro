@@ -2048,6 +2048,7 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
 }
 
 function MetaMock() {
+  const { t } = useTranslation("landing");
   // Featured goal — emotional, easy to read
   const guardado = 1050;
   const objetivo = 10000;
@@ -2055,9 +2056,9 @@ function MetaMock() {
   const falta = objetivo - guardado;
 
   const otherGoals: { name: string; pct: number; saved: string; cover: "beach" | "car" | "reserve" }[] = [
-    { name: "Viagem para a praia", pct: 68, saved: "R$ 3.400", cover: "beach" },
-    { name: "Comprar um carro", pct: 32, saved: "R$ 8.000", cover: "car" },
-    { name: "Reserva de emergência", pct: 84, saved: "R$ 8.400", cover: "reserve" },
+    { name: t("mockup.meta.names.beach"), pct: 68, saved: "R$ 3.400", cover: "beach" },
+    { name: t("mockup.meta.names.car"), pct: 32, saved: "R$ 8.000", cover: "car" },
+    { name: t("mockup.meta.names.reserve"), pct: 84, saved: "R$ 8.400", cover: "reserve" },
   ];
 
   return (
@@ -2074,10 +2075,10 @@ function MetaMock() {
             style={{ background: "linear-gradient(180deg, rgba(15,23,42,0) 50%, rgba(15,23,42,0.45) 100%)" }}
           />
           <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-blue-700 backdrop-blur">
-            <Target className="h-3 w-3" /> Meta ativa
+            <Target className="h-3 w-3" /> {t("mockup.meta.active")}
           </div>
           <div className="absolute bottom-2 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
-            <Calendar className="h-3 w-3" /> Dez · 2027
+            <Calendar className="h-3 w-3" /> {t("mockup.meta.monthYear")}
           </div>
           <div className="absolute bottom-2 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-bold text-white shadow">
             <TrendingUp className="h-3 w-3" /> {pct}%
@@ -2086,19 +2087,19 @@ function MetaMock() {
 
         {/* Body */}
         <div className="p-4 sm:p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Imóvel</p>
-          <h4 className="mt-0.5 text-lg font-bold text-slate-900">Entrada do apartamento</h4>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.eyebrow")}</p>
+          <h4 className="mt-0.5 text-lg font-bold text-slate-900">{t("mockup.meta.title")}</h4>
 
           {/* Saved + total */}
           <div className="mt-3 flex items-end justify-between">
             <div>
-              <p className="text-[11px] font-medium text-slate-500">Guardado</p>
+              <p className="text-[11px] font-medium text-slate-500">{t("mockup.meta.saved")}</p>
               <p className="text-2xl font-extrabold tabular-nums text-slate-900">
                 R$ {guardado.toLocaleString("pt-BR")},00
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-medium text-slate-500">Objetivo</p>
+              <p className="text-[11px] font-medium text-slate-500">{t("mockup.meta.objective")}</p>
               <p className="text-sm font-bold tabular-nums text-slate-700">
                 R$ {objetivo.toLocaleString("pt-BR")},00
               </p>
@@ -2117,14 +2118,21 @@ function MetaMock() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-emerald-700">{pct}% concluído</span>
+              <span className="font-semibold text-emerald-700">{t("mockup.meta.complete", { pct })}</span>
               <span className="text-slate-500">
-                Faltam <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
+                {t("mockup.meta.remaining")} <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
               </span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Other goals — variety */}
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.otherGoals")}</p>
+          <span className="text-[10px] font-medium text-slate-400">{t("mockup.meta.active3")}</span>
+        </div>
 
       {/* Other goals — variety */}
       <div className="mt-4">
