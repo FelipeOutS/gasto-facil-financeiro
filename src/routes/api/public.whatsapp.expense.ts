@@ -1,5 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createHmac, timingSafeEqual } from "crypto";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
+
+/**
+ * Verifies Meta's X-Hub-Signature-256 header against the raw request body
+ * using WHATSAPP_APP_SECRET. Returns true when valid.
+ */
+function verifyMetaSignature(rawBody: string, headerValue: string | null): boolean {
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  if (!appSecret || !headerValue) return false;
+  const expected = createHmac("sha256", appSecret).update(rawBody).digest("hex");
+  const received = headerValue.startsWith("sha256=") ? headerValue.slice(7) : headerValue;
+  if (received.length !== expected.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(received, "hex"), Buffer.from(expected, "hex"));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -34,20 +52,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
       // Devemos responder com o conteúdo PURO de hub.challenge (text/plain),
       // status 200. Caso o token esteja errado, retornar 403.
       GET: async ({ request }) => {
-        // Token oficial do projeto. Aceita também o valor da env var
-        // (WHATSAPP_VERIFY_TOKEN) caso seja alterado no futuro.
-        const FIXED_TOKEN = "gasto_inteligente_whatsapp_2026";
         const envToken = process.env.WHATSAPP_VERIFY_TOKEN;
-        const validTokens = new Set(
-          [FIXED_TOKEN, envToken].filter((v): v is string => !!v && v.length > 0),
-        );
+        if (!envToken) {
+          return new Response("Verify token not configured", {
+            status: 500,
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          });
+        }
 
         const url = new URL(request.url);
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
 
-        if (mode === "subscribe" && token && validTokens.has(token)) {
+        if (mode === "subscribe" && token === envToken) {
           return new Response(challenge ?? "", {
             status: 200,
             headers: {
