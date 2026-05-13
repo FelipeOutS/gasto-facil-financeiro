@@ -190,6 +190,7 @@ export function LandingAnchorLink({
 }
 
 export function PublicLanding() {
+  const { t } = useTranslation("landing");
   // Quando aterrissamos na landing com um hash (ex.: vindo de /termos via
   // /#planos), rolamos suavemente até a seção correspondente.
   useEffect(() => {
@@ -217,38 +218,25 @@ export function PublicLanding() {
         <DashboardShowcase />
         <GastoAISection />
         <FeatureSplit
-          eyebrow="Gastos"
-          title="Entenda para onde seu dinheiro está indo."
-          text="Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence."
-          bullets={["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]}
+          eyebrow={t("gastosSplit.eyebrow")}
+          title={t("gastosSplit.title")}
+          text={t("gastosSplit.text")}
+          bullets={t("gastosSplit.bullets", { returnObjects: true }) as string[]}
           visual={<GastosMock />}
           reverse
         />
         <FeatureSplit
-          eyebrow="Cartões e faturas"
-          title="Controle suas faturas sem confusão."
-          text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
-          bullets={[
-            "Limite disponível em tempo real",
-            "Fechamento e vencimento",
-            "Status: aberta, paga ou vencida",
-            "Marcar fatura como paga em 1 clique",
-            "Importar fatura por PDF",
-            "Próximos vencimentos no aside",
-          ]}
+          eyebrow={t("cartoesSplit.eyebrow")}
+          title={t("cartoesSplit.title")}
+          text={t("cartoesSplit.text")}
+          bullets={t("cartoesSplit.bullets", { returnObjects: true }) as string[]}
           visual={<CartaoMock />}
         />
         <FeatureSplit
-          eyebrow="Contas e organização"
-          title="Contas a pagar, a receber e renda no mesmo lugar."
-          text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
-          bullets={[
-            "Contas a pagar com recorrência",
-            "Contas a receber",
-            "Minha renda mensal",
-            "Calendário financeiro",
-            "Alertas de vencimento",
-          ]}
+          eyebrow={t("contasSplit.eyebrow")}
+          title={t("contasSplit.title")}
+          text={t("contasSplit.text")}
+          bullets={t("contasSplit.bullets", { returnObjects: true }) as string[]}
           visual={<ContasMock />}
           reverse
         />
@@ -590,6 +578,7 @@ function Hero() {
 /* ============================== MULTI-DEVICE SHOWCASE ============================== */
 
 function MultiDeviceShowcase() {
+  const { t } = useTranslation("landing");
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-14 sm:py-20">
       {/* soft brand glow */}
@@ -605,13 +594,13 @@ function MultiDeviceShowcase() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600 shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            Multiplataforma
+            {t("multiDevice.tag")}
           </span>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
-            Acompanhe suas finanças em qualquer dispositivo
+            {t("multiDevice.title")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Use o Gasto Inteligente com praticidade no notebook, tablet ou celular, com uma experiência clara, fluida e intuitiva em qualquer tela.
+            {t("multiDevice.subtitle")}
           </p>
         </div>
 
@@ -1518,9 +1507,26 @@ const SCREEN_HIGHLIGHTS: Record<ScreenKey, string[]> = {
 };
 
 function ScreensTabs() {
+  const { t } = useTranslation("landing");
   const [active, setActive] = useState<ScreenKey>("dashboard");
+  const labelMap: Record<ScreenKey, string> = {
+    dashboard: t("screens.dashboard"),
+    gastos: t("screens.gastos"),
+    cartoes: t("screens.cartoes"),
+    metas: t("screens.metas"),
+    investimentos: t("screens.investimentos"),
+    guardado: t("screens.guardado"),
+  };
+  const descMap: Record<ScreenKey, string> = {
+    dashboard: t("screens.dashboardDesc"),
+    gastos: t("screens.gastosDesc"),
+    cartoes: t("screens.cartoesDesc"),
+    metas: t("screens.metasDesc"),
+    investimentos: t("screens.investimentosDesc"),
+    guardado: t("screens.guardadoDesc"),
+  };
   const current = SCREENS.find((s) => s.key === active)!;
-  const highlights = SCREEN_HIGHLIGHTS[active];
+  const highlights = t(`screens.highlights.${active}`, { returnObjects: true }) as string[];
 
   return (
     <section id="como-funciona" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
@@ -1535,9 +1541,9 @@ function ScreensTabs() {
       />
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Veja por dentro"
-          title="As telas que organizam toda a sua rotina financeira."
-          subtitle="Navegue pelas principais áreas do Gasto Inteligente e veja como cada parte trabalha pra você."
+          eyebrow={t("screens.eyebrow")}
+          title={t("screens.title")}
+          subtitle={t("screens.subtitle")}
         />
 
         {/* tabs — pill rail with sliding indicator */}
@@ -1563,7 +1569,7 @@ function ScreensTabs() {
                     />
                   )}
                   <Icon className="relative z-10 h-4 w-4" />
-                  <span className="relative z-10">{s.label}</span>
+                  <span className="relative z-10">{labelMap[s.key]}</span>
                 </button>
               );
             })}
@@ -1583,12 +1589,12 @@ function ScreensTabs() {
             >
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 <current.icon className="h-3.5 w-3.5 text-slate-700" />
-                {current.label}
+                {labelMap[active]}
               </span>
               <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                {current.label}
+                {labelMap[active]}
               </h3>
-              <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">{descMap[active]}</p>
               <ul className="mt-5 space-y-2">
                 {highlights.map((h) => (
                   <li key={h} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -1603,7 +1609,7 @@ function ScreensTabs() {
                 to="/cadastro"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
               >
-                Conhecer o sistema
+                {t("screens.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </motion.div>
@@ -1654,27 +1660,26 @@ function ScreenMock({ keyName }: { keyName: ScreenKey }) {
 /* ============================== DASHBOARD SHOWCASE ============================== */
 
 function DashboardShowcase() {
+  const { t } = useTranslation("landing");
+  const bullets = t("dashboardShowcase.bullets", { returnObjects: true }) as string[];
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className="lg:col-span-5">
-          <Eyebrow>Dashboard</Eyebrow>
+          <Eyebrow>{t("dashboardShowcase.eyebrow")}</Eyebrow>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Seu mês financeiro em uma visão simples.
+            {t("dashboardShowcase.title")}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            O Dashboard reúne as informações mais importantes para você entender rapidamente sua
-            situação: receitas, despesas, contas, saldo, alertas e limite inteligente.
+            {t("dashboardShowcase.text")}
           </p>
           <ul className="mt-6 space-y-2.5">
-            {["Saldo do mês", "Receitas e despesas", "Contas a pagar", "Alertas importantes", "Limite inteligente"].map(
-              (b) => (
-                <li key={b} className="flex items-center gap-2 text-sm text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  {b}
-                </li>
-              ),
-            )}
+            {bullets.map((b) => (
+              <li key={b} className="flex items-center gap-2 text-sm text-slate-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                {b}
+              </li>
+            ))}
           </ul>
         </Reveal>
         <Reveal className="lg:col-span-7" delay={0.1}>
@@ -2340,29 +2345,30 @@ function GuardadoMock() {
 /* ============================== MORE FEATURES (compact) ============================== */
 
 function MoreFeatures() {
+  const { t } = useTranslation("landing");
   const items = [
     {
       icon: SlidersHorizontal,
-      title: "Orçamento e limite inteligente",
-      text: "Defina limites por categoria e veja quanto pode gastar por dia, descontando contas fixas e faturas pagas.",
+      title: t("more.i1Title"),
+      text: t("more.i1Text"),
       tone: "from-blue-50 to-blue-100/40 text-blue-700 ring-blue-100",
     },
     {
       icon: Target,
-      title: "Metas e guardado",
-      text: "Crie metas com capa visual e vincule o dinheiro guardado em cada banco — sem contar em dobro.",
+      title: t("more.i2Title"),
+      text: t("more.i2Text"),
       tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
     },
     {
       icon: TrendingUp,
-      title: "Investimentos",
-      text: "Acompanhe sua carteira, evolução mensal e resumo por classe em uma visão organizada.",
+      title: t("more.i3Title"),
+      text: t("more.i3Text"),
       tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
     },
     {
       icon: UserPlus,
-      title: "Contas conectadas",
-      text: "Convide alguém por e-mail e acompanhe outra conta com permissão — ideal para famílias, sócios e contadores.",
+      title: t("more.i4Title"),
+      text: t("more.i4Text"),
       tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
     },
   ];
@@ -2371,13 +2377,12 @@ function MoreFeatures() {
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/50 to-white py-16 sm:py-20">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <Eyebrow>Mais recursos</Eyebrow>
+          <Eyebrow>{t("more.eyebrow")}</Eyebrow>
           <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-            Mais recursos para o seu controle financeiro
+            {t("more.title")}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-base text-slate-600">
-            Tudo o que você precisa para acompanhar seu dinheiro com clareza —
-            sem deixar nada de fora.
+            {t("more.subtitle")}
           </p>
         </div>
 
@@ -2411,43 +2416,19 @@ function MoreFeatures() {
 /* ============================== EMPRESA INTELIGENTE ============================== */
 
 function EmpresaInteligenteSection() {
+  const { t } = useTranslation("landing");
   const cards = [
-    {
-      icon: Building2,
-      title: "Empresa Inteligente",
-      text: "Organize os dados da sua empresa, clientes e fornecedores em um só lugar.",
-      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
-    },
-    {
-      icon: Users,
-      title: "Clientes e Fornecedores",
-      text: "Cadastre clientes e fornecedores por CNPJ e acompanhe as movimentações vinculadas a cada um.",
-      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
-    },
-    {
-      icon: LineChart,
-      title: "Relatórios empresariais",
-      text: "Veja quem mais paga sua empresa e quais fornecedores mais pesam no seu caixa.",
-      tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100",
-    },
-    {
-      icon: ClipboardList,
-      title: "Pacote para Contador",
-      text: "Gere um resumo mensal com receitas, despesas, pendências e comparativo com o mês anterior para enviar ao contador.",
-      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
-    },
-    {
-      icon: Activity,
-      title: "Radar Econômico",
-      text: "Acompanhe dólar, euro, Selic e IPCA para entender melhor o impacto da economia no seu dinheiro.",
-      tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100",
-    },
+    { icon: Building2, title: t("empresa.c1Title"), text: t("empresa.c1Text"), tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100" },
+    { icon: Users, title: t("empresa.c2Title"), text: t("empresa.c2Text"), tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100" },
+    { icon: LineChart, title: t("empresa.c3Title"), text: t("empresa.c3Text"), tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100" },
+    { icon: ClipboardList, title: t("empresa.c4Title"), text: t("empresa.c4Text"), tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100" },
+    { icon: Activity, title: t("empresa.c5Title"), text: t("empresa.c5Text"), tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100" },
   ];
 
   const trust = [
-    { icon: ShieldCheck, title: "Segurança de dados", text: "e privacidade" },
-    { icon: Landmark, title: "Importação de extratos", text: "com segurança" },
-    { icon: Cloud, title: "Backup automático", text: "na nuvem" },
+    { icon: ShieldCheck, title: t("empresa.trust1Title"), text: t("empresa.trust1Text") },
+    { icon: Landmark, title: t("empresa.trust2Title"), text: t("empresa.trust2Text") },
+    { icon: Cloud, title: t("empresa.trust3Title"), text: t("empresa.trust3Text") },
   ];
 
   return (
@@ -2484,19 +2465,17 @@ function EmpresaInteligenteSection() {
             <Reveal>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                MEI e Empresa
+                {t("empresa.tag")}
               </span>
               <h2 className="mt-4 text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.6rem]">
-                Controle completo para MEI e{" "}
+                {t("empresa.titleA")}{" "}
                 <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                  pequenas empresas
+                  {t("empresa.titleHighlight")}
                 </span>
-                .
+                {t("empresa.titleB")}
               </h2>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-                Cadastre clientes e fornecedores, acompanhe contas a pagar e
-                receber, veja relatórios por empresa e gere um pacote mensal
-                para o contador.
+                {t("empresa.subtitle")}
               </p>
             </Reveal>
 
@@ -2786,21 +2765,15 @@ function MiniChart({
 /* ============================== FOR WHO ============================== */
 
 function ForWho() {
-  const items = [
-    "Pessoa física",
-    "MEI",
-    "Pequenas empresas",
-    "Autônomos",
-    "Quem quer sair da bagunça financeira",
-    "Quem quer trocar planilhas por uma ferramenta visual",
-  ];
+  const { t } = useTranslation("landing");
+  const items = t("forWho.items", { returnObjects: true }) as string[];
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Para quem é"
-          title="Feito para quem quer enxergar melhor o próprio dinheiro."
-          subtitle="Do controle pessoal ao acompanhamento de pequenas rotinas financeiras, o Gasto Inteligente foi pensado para você."
+          eyebrow={t("forWho.eyebrow")}
+          title={t("forWho.title")}
+          subtitle={t("forWho.subtitle")}
         />
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {items.map((it, i) => (
@@ -2822,15 +2795,8 @@ function ForWho() {
 /* ============================== TRUST POINTS ============================== */
 
 function TrustPoints() {
-  const points = [
-    "Sem complicação",
-    "Visual fácil de entender",
-    "Organização mensal",
-    "Controle por categorias",
-    "Ideal para rotina pessoal e MEI",
-    "Acesso pelo navegador",
-    "Pensado para uso diário",
-  ];
+  const { t } = useTranslation("landing");
+  const points = t("trustPoints", { returnObjects: true }) as string[];
   return (
     <section className="bg-slate-50 py-16">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -2882,6 +2848,7 @@ const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "em
 const VISIBLE_HIGHLIGHTS = 5;
 
 function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[number]; index: number }) {
+  const { t } = useTranslation("landing");
   const [expanded, setExpanded] = useState(false);
   const tag = HIGHLIGHT[p.tier];
   const featured = !!tag;
@@ -2889,6 +2856,19 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
   const [priceMain, pricePer] = p.priceLabel.split("/");
   const hasMore = p.highlights.length > VISIBLE_HIGHLIGHTS;
   const visibleItems = expanded ? p.highlights : p.highlights.slice(0, VISIBLE_HIGHLIGHTS);
+  const audienceLabel = audience
+    ? audience.label === "Pessoa Física"
+      ? t("plans.audiencePF")
+      : audience.label === "MEI"
+        ? t("plans.audienceMEI")
+        : t("plans.audienceEmpresa")
+    : "";
+  const tagLabel = tag
+    ? tag.label === "Mais escolhido"
+      ? t("plans.highlightPremium")
+      : t("plans.highlightMEI")
+    : "";
+  const description = (t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string);
 
   return (
     <Reveal delay={i * 0.05} className="h-full">
@@ -2921,7 +2901,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
                 featured ? "bg-white/10 text-white/90 ring-white/20" : audience.tone,
               )}
             >
-              {audience.label}
+              {audienceLabel}
             </span>
           ) : (
             <span />
@@ -2936,7 +2916,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               )}
             >
               <Sparkles className="h-3 w-3" />
-              {tag.label}
+              {tagLabel}
             </span>
           )}
         </div>
@@ -2950,7 +2930,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             featured ? "text-slate-300" : "text-slate-500",
           )}
         >
-          {PLAN_DESCRIPTIONS[p.tier]}
+          {description}
         </p>
 
         <div className="relative mt-3 flex items-baseline gap-1">
@@ -2963,11 +2943,11 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             {priceMain.trim()}
           </span>
           <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
-            /{(pricePer || "mês").trim()}
+            /{(pricePer || t("plans.perMonth")).trim()}
           </span>
         </div>
         <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
-          Cancele quando quiser
+          {t("plans.cancelAnytime")}
         </p>
 
         <div
@@ -3010,7 +2990,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               featured ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            {expanded ? "Ver menos" : `Ver todos os ${p.highlights.length} recursos`}
+            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: p.highlights.length })}
           </button>
         )}
 
@@ -3025,7 +3005,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               : "bg-slate-900 text-white hover:bg-slate-800",
           )}
         >
-          Escolher plano
+          {t("plans.choose")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
@@ -3034,6 +3014,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
 }
 
 function Plans() {
+  const { t } = useTranslation("landing");
   return (
     <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
       <div
@@ -3046,9 +3027,9 @@ function Plans() {
       />
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Planos"
-          title="Escolha o plano ideal para sua rotina financeira."
-          subtitle="Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer."
+          eyebrow={t("plans.eyebrow")}
+          title={t("plans.title")}
+          subtitle={t("plans.subtitle")}
           center
         />
 
