@@ -2990,7 +2990,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               featured ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            {expanded ? "Ver menos" : `Ver todos os ${p.highlights.length} recursos`}
+            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: p.highlights.length })}
           </button>
         )}
 
