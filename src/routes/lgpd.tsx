@@ -15,7 +15,9 @@ export const Route = createFileRoute("/lgpd")({
         property: "og:description",
         content: "Compromisso do Gasto Inteligente com a LGPD.",
       },
+      { property: "og:url", content: "https://gastointeligente.com.br/lgpd" },
     ],
+    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/lgpd" }],
   }),
   component: LgpdPage,
 });
