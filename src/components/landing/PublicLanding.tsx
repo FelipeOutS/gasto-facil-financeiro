@@ -2765,21 +2765,15 @@ function MiniChart({
 /* ============================== FOR WHO ============================== */
 
 function ForWho() {
-  const items = [
-    "Pessoa física",
-    "MEI",
-    "Pequenas empresas",
-    "Autônomos",
-    "Quem quer sair da bagunça financeira",
-    "Quem quer trocar planilhas por uma ferramenta visual",
-  ];
+  const { t } = useTranslation("landing");
+  const items = t("forWho.items", { returnObjects: true }) as string[];
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Para quem é"
-          title="Feito para quem quer enxergar melhor o próprio dinheiro."
-          subtitle="Do controle pessoal ao acompanhamento de pequenas rotinas financeiras, o Gasto Inteligente foi pensado para você."
+          eyebrow={t("forWho.eyebrow")}
+          title={t("forWho.title")}
+          subtitle={t("forWho.subtitle")}
         />
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {items.map((it, i) => (
@@ -2801,15 +2795,8 @@ function ForWho() {
 /* ============================== TRUST POINTS ============================== */
 
 function TrustPoints() {
-  const points = [
-    "Sem complicação",
-    "Visual fácil de entender",
-    "Organização mensal",
-    "Controle por categorias",
-    "Ideal para rotina pessoal e MEI",
-    "Acesso pelo navegador",
-    "Pensado para uso diário",
-  ];
+  const { t } = useTranslation("landing");
+  const points = t("trustPoints", { returnObjects: true }) as string[];
   return (
     <section className="bg-slate-50 py-16">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
