@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   Bell,
@@ -21,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/lib/alerts/use-alerts";
 import {
-  PRIORITY_LABEL,
   categoryOf,
   type AlertPriority,
   type UserAlert,
@@ -83,6 +83,7 @@ function iconForType(type: string): LucideIcon {
 }
 
 function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) {
+  const { t } = useTranslation("dashboard");
   const meta = priorityMeta(alert.priority);
   const Icon = iconForType(alert.type);
   return (
@@ -94,7 +95,7 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
         <div className="flex items-start justify-between gap-2">
           <p className="truncate text-sm font-semibold">{alert.title}</p>
           <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", meta.badge)}>
-            {PRIORITY_LABEL[alert.priority]}
+            {t(`notifications.priority.${alert.priority}`)}
           </span>
         </div>
         {alert.description && (
@@ -109,7 +110,7 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
               className="h-7 px-2 text-xs"
               onClick={onClose}
             >
-              <Link to={alert.action_url}>{alert.action_label || "Ver"}</Link>
+              <Link to={alert.action_url}>{alert.action_label || t("notifications.actionDefault")}</Link>
             </Button>
           </div>
         )}
@@ -119,6 +120,7 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
 }
 
 export function NotificationBell() {
+  const { t } = useTranslation("dashboard");
   const [open, setOpen] = useState(false);
   const { visible, unreadCount } = useAlerts();
   const total = visible.length;
@@ -130,7 +132,7 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={unreadCount > 0 ? `${unreadCount} alertas não lidos` : "Alertas"}
+          aria-label={unreadCount > 0 ? t("notifications.ariaUnread", { count: unreadCount }) : t("notifications.ariaDefault")}
           className={cn(
             "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
             "border border-border/60 bg-card/60 backdrop-blur transition-all",
@@ -165,11 +167,13 @@ export function NotificationBell() {
         className="w-[340px] p-0 overflow-hidden border-border/70 shadow-xl"
       >
         <div className="px-4 pt-4 pb-3 border-b border-border/60">
-          <h3 className="text-base font-semibold leading-tight">Alertas</h3>
+          <h3 className="text-base font-semibold leading-tight">{t("notifications.title")}</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {unreadCount > 0
-              ? `${unreadCount} ${unreadCount === 1 ? "novo aviso" : "novos avisos"} para você.`
-              : "Veja o que precisa da sua atenção."}
+              ? unreadCount === 1
+                ? t("notifications.novosSing", { count: unreadCount })
+                : t("notifications.novosPlur", { count: unreadCount })
+              : t("notifications.padrao")}
           </p>
         </div>
 
@@ -178,9 +182,9 @@ export function NotificationBell() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
               <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p className="mt-3 text-sm font-semibold">Tudo certo por aqui.</p>
+            <p className="mt-3 text-sm font-semibold">{t("notifications.tudoCerto")}</p>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Nada urgente no radar.
+              {t("notifications.tudoCertoSub")}
             </p>
           </div>
         ) : (
@@ -199,7 +203,7 @@ export function NotificationBell() {
             className="w-full justify-center text-xs"
             onClick={() => setOpen(false)}
           >
-            <Link to="/alertas">Ver todos</Link>
+            <Link to="/alertas">{t("notifications.verTodos")}</Link>
           </Button>
         </div>
       </PopoverContent>
