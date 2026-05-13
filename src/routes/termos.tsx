@@ -15,7 +15,9 @@ export const Route = createFileRoute("/termos")({
         property: "og:description",
         content: "Termos de uso da plataforma Gasto Inteligente.",
       },
+      { property: "og:url", content: "https://gastointeligente.com.br/termos" },
     ],
+    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/termos" }],
   }),
   component: TermosPage,
 });
