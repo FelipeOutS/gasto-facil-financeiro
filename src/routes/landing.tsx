@@ -6,21 +6,22 @@ import { PublicLanding } from "@/components/landing/PublicLanding";
 export const Route = createFileRoute("/landing")({
   head: () => ({
     meta: [
-      { title: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
+      { title: "Conheça o Gasto Inteligente — Recursos, planos e diferenciais" },
       {
         name: "description",
         content:
           "Conheça o Gasto Inteligente: gastos, cartões, contas, metas, renda, investimentos e recursos para MEI e empresa em um só lugar.",
       },
-      { property: "og:title", content: "Gasto Inteligente" },
-      { property: "og:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { property: "og:title", content: "Conheça o Gasto Inteligente — Recursos, planos e diferenciais" },
+      { property: "og:description", content: "Conheça os recursos do Gasto Inteligente para pessoa física, MEI e empresa." },
+      { property: "og:url", content: "https://gastointeligente.com.br/landing" },
       { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gasto Inteligente" },
-      { name: "twitter:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { name: "twitter:title", content: "Conheça o Gasto Inteligente" },
+      { name: "twitter:description", content: "Recursos, planos e diferenciais do Gasto Inteligente." },
       { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
     ],
-    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/" }],
+    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/landing" }],
   }),
   component: LandingPage,
 });
