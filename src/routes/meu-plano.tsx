@@ -33,6 +33,7 @@ import {
 } from "@/lib/plans";
 import {
   getVocab,
+  tipoCadastroLabel,
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
