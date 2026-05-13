@@ -1540,9 +1540,9 @@ function ScreensTabs() {
       />
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Veja por dentro"
-          title="As telas que organizam toda a sua rotina financeira."
-          subtitle="Navegue pelas principais áreas do Gasto Inteligente e veja como cada parte trabalha pra você."
+          eyebrow={t("screens.eyebrow")}
+          title={t("screens.title")}
+          subtitle={t("screens.subtitle")}
         />
 
         {/* tabs — pill rail with sliding indicator */}
