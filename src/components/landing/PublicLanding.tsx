@@ -1568,7 +1568,7 @@ function ScreensTabs() {
                     />
                   )}
                   <Icon className="relative z-10 h-4 w-4" />
-                  <span className="relative z-10">{s.label}</span>
+                  <span className="relative z-10">{labelMap[s.key]}</span>
                 </button>
               );
             })}
