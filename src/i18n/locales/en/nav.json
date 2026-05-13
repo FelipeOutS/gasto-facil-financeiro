@@ -1,0 +1,72 @@
+{
+  "aria": {
+    "side": "Side navigation",
+    "primary": "Primary navigation",
+    "openMore": "Open more options",
+    "overdueAccounts": "There are overdue bills",
+    "soonAccounts": "There are bills due soon"
+  },
+  "header": {
+    "tagline": "Financial control",
+    "addExpense": "Add expense",
+    "addExpenseRequiresPlan": "To add expenses, choose an active plan.",
+    "fallbackUser": "User"
+  },
+  "items": {
+    "dashboard": "Dashboard",
+    "gastos": "Expenses",
+    "alertas": "Alerts",
+    "cartoes": "Cards",
+    "assinaturas": "Subscriptions",
+    "investimentos": "Investments",
+    "renda": "My income",
+    "contasPagar": "Bills to pay",
+    "contasReceber": "Bills to receive",
+    "orcamento": "Budget",
+    "relatorios": "Reports",
+    "radar": "Economic Radar",
+    "empresa": "Smart Business",
+    "fornecedores": "Suppliers",
+    "clientes": "Clients",
+    "contador": "Accountant Package",
+    "gastoAi": "Gasto AI",
+    "whatsapp": "WhatsApp",
+    "guardado": "Savings",
+    "metas": "Goals",
+    "contasConectadas": "Connected accounts",
+    "meuPlano": "My plan",
+    "categorias": "Settings",
+    "landing": "Discover Gasto Inteligente",
+    "admin": "Admin",
+    "more": "More"
+  },
+  "more": {
+    "title": "More options",
+    "description": "Access the other areas of your financial control.",
+    "currentPlan": "Current plan",
+    "trial": "Free trial · {{days}}d",
+    "premiumSuffix": "is a premium feature"
+  },
+  "descriptions": {
+    "alertas": "Important alerts about your finances",
+    "renda": "Income and revenue sources",
+    "contasPagar": "Expenses and due dates",
+    "contasReceber": "Amounts you have to receive",
+    "orcamento": "Monthly limits per category",
+    "relatorios": "Analytics and charts",
+    "radar": "USD, EUR and quick converter",
+    "empresa": "Look up and register your business by tax ID",
+    "fornecedores": "Register suppliers by tax ID",
+    "clientes": "Register clients by tax ID",
+    "contador": "Generate a monthly summary to send to your accountant.",
+    "gastoAi": "AI-powered financial assistant",
+    "guardado": "Reserves and savings",
+    "assinaturas": "Recurring services",
+    "investimentos": "Portfolio and returns",
+    "contasConectadas": "Follow another account with permission",
+    "meuPlano": "Subscription and features",
+    "categorias": "Account preferences",
+    "landing": "See features, plans and news",
+    "admin": "Admin panel"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "aria": {
+    "side": "Navegação lateral",
+    "primary": "Navegação principal",
+    "openMore": "Abrir mais opções",
+    "overdueAccounts": "Há contas atrasadas",
+    "soonAccounts": "Há contas vencendo em breve"
+  },
+  "header": {
+    "tagline": "Controle financeiro",
+    "addExpense": "Adicionar gasto",
+    "addExpenseRequiresPlan": "Para adicionar gastos, escolha um plano ativo.",
+    "fallbackUser": "Usuário"
+  },
+  "items": {
+    "dashboard": "Dashboard",
+    "gastos": "Gastos",
+    "alertas": "Alertas",
+    "cartoes": "Cartões",
+    "assinaturas": "Assinaturas",
+    "investimentos": "Investimentos",
+    "renda": "Minha renda",
+    "contasPagar": "Contas a pagar",
+    "contasReceber": "Contas a receber",
+    "orcamento": "Orçamento",
+    "relatorios": "Relatórios",
+    "radar": "Radar Econômico",
+    "empresa": "Empresa Inteligente",
+    "fornecedores": "Fornecedores",
+    "clientes": "Clientes",
+    "contador": "Pacote para Contador",
+    "gastoAi": "Gasto AI",
+    "whatsapp": "WhatsApp",
+    "guardado": "Guardado",
+    "metas": "Metas",
+    "contasConectadas": "Contas conectadas",
+    "meuPlano": "Meu plano",
+    "categorias": "Ajustes",
+    "landing": "Conhecer o Gasto Inteligente",
+    "admin": "Admin",
+    "more": "Mais"
+  },
+  "more": {
+    "title": "Mais opções",
+    "description": "Acesse as outras áreas do seu controle financeiro.",
+    "currentPlan": "Plano atual",
+    "trial": "Teste grátis · {{days}}d",
+    "premiumSuffix": "é um recurso premium"
+  },
+  "descriptions": {
+    "alertas": "Avisos importantes do seu financeiro",
+    "renda": "Receitas e fontes de renda",
+    "contasPagar": "Despesas e vencimentos",
+    "contasReceber": "Valores que você tem para receber",
+    "orcamento": "Limites mensais por categoria",
+    "relatorios": "Análises e gráficos",
+    "radar": "Dólar, euro e conversor rápido",
+    "empresa": "Consulte e cadastre sua empresa pelo CNPJ",
+    "fornecedores": "Cadastre fornecedores por CNPJ",
+    "clientes": "Cadastre clientes por CNPJ",
+    "contador": "Gere um resumo mensal para enviar ao contador.",
+    "gastoAi": "Assistente financeiro com IA",
+    "guardado": "Reserva e poupança",
+    "assinaturas": "Serviços recorrentes",
+    "investimentos": "Carteira e rendimentos",
+    "contasConectadas": "Acompanhe outra conta com permissão",
+    "meuPlano": "Assinatura e recursos",
+    "categorias": "Preferências da conta",
+    "landing": "Ver recursos, planos e novidades",
+    "admin": "Painel administrativo"
+  }
+}
