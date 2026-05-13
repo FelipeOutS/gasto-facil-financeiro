@@ -51,6 +51,8 @@ import {
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
@@ -60,12 +62,13 @@ import { cn } from "@/lib/utils";
    Scoped under .gi-landing so dark theme classes don't leak in.
    ────────────────────────────────────────────────────────────── */
 
-const NAV = [
-  { label: "Início", href: "#inicio", sectionId: "inicio" },
-  { label: "Recursos", href: "#recursos", sectionId: "recursos" },
-  { label: "Como funciona", href: "#como-funciona", sectionId: "como-funciona" },
-  { label: "Planos", href: "#planos", sectionId: "planos" },
-  { label: "Dúvidas", href: "#duvidas", sectionId: "duvidas" },
+type NavKey = "home" | "features" | "how" | "plans" | "faq";
+const NAV: { key: NavKey; href: string; sectionId: string }[] = [
+  { key: "home", href: "#inicio", sectionId: "inicio" },
+  { key: "features", href: "#recursos", sectionId: "recursos" },
+  { key: "how", href: "#como-funciona", sectionId: "como-funciona" },
+  { key: "plans", href: "#planos", sectionId: "planos" },
+  { key: "faq", href: "#duvidas", sectionId: "duvidas" },
 ];
 
 const SCROLL_DURATION = 800;
