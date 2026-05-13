@@ -1,0 +1,45 @@
+{
+  "lang": {
+    "label": "Idioma",
+    "select": "Selecionar idioma",
+    "pt": "Português (BR)",
+    "en": "English",
+    "current": "Idioma atual: {{name}}"
+  },
+  "nav": {
+    "home": "Início",
+    "features": "Recursos",
+    "how": "Como funciona",
+    "plans": "Planos",
+    "faq": "Dúvidas",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu"
+  },
+  "actions": {
+    "signIn": "Entrar",
+    "signUp": "Começar agora",
+    "signOut": "Sair",
+    "back": "Voltar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "loading": "Carregando…",
+    "knowMore": "Conheça o Gasto Inteligente"
+  },
+  "footer": {
+    "tagline": "Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.",
+    "secure": "Dados protegidos",
+    "fast": "Rápido e leve",
+    "product": "Produto",
+    "account": "Conta",
+    "support": "Suporte",
+    "legal": "Legal",
+    "helpCenter": "Central de ajuda",
+    "contact": "Fale conosco",
+    "status": "Status do sistema",
+    "terms": "Termos de uso",
+    "privacy": "Política de privacidade",
+    "lgpd": "LGPD",
+    "rights": "© {{year}} Gasto Inteligente. Todos os direitos reservados.",
+    "madeWith": "Feito com cuidado para sua vida financeira."
+  }
+}

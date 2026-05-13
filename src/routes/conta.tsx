@@ -13,6 +13,8 @@ import {
   Settings2,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";

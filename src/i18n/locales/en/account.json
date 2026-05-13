@@ -1,0 +1,29 @@
+{
+  "title": "My account",
+  "fullAccess": "Full access",
+  "admin": "Admin",
+  "completeProfile": "Complete your profile",
+  "completeProfileDesc": "Personalize your experience by choosing between Individual, MEI or Company.",
+  "completeBtn": "Complete profile",
+  "fields": {
+    "type": "Account type",
+    "fullName": "Full name",
+    "responsible": "Responsible",
+    "fantasyName": "Trade name",
+    "razaoSocial": "Legal name",
+    "cpf": "CPF",
+    "cnpj": "CNPJ",
+    "email": "Email",
+    "phone": "Phone"
+  },
+  "actions": {
+    "edit": "Edit profile",
+    "myPlan": "My plan",
+    "redoOnboarding": "Redo initial setup",
+    "logout": "Sign out"
+  },
+  "language": {
+    "title": "App language",
+    "description": "Choose the interface language. Your preference is saved and used on future visits."
+  }
+}

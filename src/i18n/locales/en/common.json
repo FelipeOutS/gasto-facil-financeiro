@@ -1,0 +1,45 @@
+{
+  "lang": {
+    "label": "Language",
+    "select": "Select language",
+    "pt": "Português (BR)",
+    "en": "English",
+    "current": "Current language: {{name}}"
+  },
+  "nav": {
+    "home": "Home",
+    "features": "Features",
+    "how": "How it works",
+    "plans": "Plans",
+    "faq": "FAQ",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "actions": {
+    "signIn": "Sign in",
+    "signUp": "Get started",
+    "signOut": "Sign out",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "knowMore": "Discover Gasto Inteligente"
+  },
+  "footer": {
+    "tagline": "Gasto Inteligente — simple, visual financial control built for your daily life.",
+    "secure": "Protected data",
+    "fast": "Fast and lightweight",
+    "product": "Product",
+    "account": "Account",
+    "support": "Support",
+    "legal": "Legal",
+    "helpCenter": "Help center",
+    "contact": "Contact us",
+    "status": "System status",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy",
+    "lgpd": "LGPD",
+    "rights": "© {{year}} Gasto Inteligente. All rights reserved.",
+    "madeWith": "Built with care for your financial life."
+  }
+}
