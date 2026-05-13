@@ -502,7 +502,7 @@ function Hero() {
                 </div>
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Receita
+                    {t("mockup.float.income")}
                   </p>
                   <p className="text-sm font-bold tabular-nums text-slate-900">R$ 6.420</p>
                 </div>
@@ -520,9 +520,9 @@ function Hero() {
                 </div>
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Alerta
+                    {t("mockup.float.alert")}
                   </p>
-                  <p className="text-xs font-bold leading-tight text-slate-900">Conta vence amanhã</p>
+                  <p className="text-xs font-bold leading-tight text-slate-900">{t("mockup.float.alertText")}</p>
                 </div>
               </div>
             </motion.div>
@@ -538,9 +538,9 @@ function Hero() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Meta · Viagem
+                    {t("mockup.float.goalTrip")}
                   </p>
-                  <p className="text-sm font-bold tabular-nums text-slate-900">68% concluída</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-900">{t("mockup.float.goalDone", { pct: 68 })}</p>
                 </div>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -560,14 +560,16 @@ function Hero() {
                   </div>
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                      Fatura
+                      {t("mockup.float.invoice")}
                     </p>
-                    <p className="text-xs font-bold text-slate-900">Em aberto</p>
+                    <p className="text-xs font-bold text-slate-900">{t("mockup.float.invoiceOpen")}</p>
                   </div>
                 </div>
               </div>
               <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
             </motion.div>
+
+
           </motion.div>
         </div>
       </div>
@@ -1124,6 +1126,7 @@ function MobileDashboardMock() {
 }
 
 function HeroDashboardMock() {
+  const { t } = useTranslation("landing");
   return (
     <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_40px_80px_-30px_rgba(15,23,42,0.35)]">
       <div className="rounded-[22px] border border-slate-200/70 bg-white p-4 sm:p-5">
@@ -1131,9 +1134,9 @@ function HeroDashboardMock() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              Visão geral
+              {t("mockup.dashboard.overview")}
             </p>
-            <p className="text-base font-bold text-slate-900">Novembro · 2026</p>
+            <p className="text-base font-bold text-slate-900">{t("mockup.dashboard.month")}</p>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-slate-500">
@@ -1146,24 +1149,24 @@ function HeroDashboardMock() {
         </div>
         {/* KPI grid */}
         <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <KpiMini label="Saldo" value="R$ 3.142,80" tone="brand" icon={<Wallet className="h-3.5 w-3.5" />} />
-          <KpiMini label="Receitas" value="R$ 6.420,00" tone="success" icon={<ArrowUpRight className="h-3.5 w-3.5" />} />
-          <KpiMini label="Despesas" value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
-          <KpiMini label="A pagar" value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.balance")} value="R$ 3.142,80" tone="brand" icon={<Wallet className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.income")} value="R$ 6.420,00" tone="success" icon={<ArrowUpRight className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.expenses")} value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.toPay")} value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
         </div>
         {/* Chart */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
-              <p className="text-[10px] text-slate-400">Receitas vs. despesas</p>
+              <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.monthFlow")}</p>
+              <p className="text-[10px] text-slate-400">{t("mockup.dashboard.incomeVsExpenses")}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />Receitas
+                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />{t("mockup.dashboard.incomeShort")}
               </span>
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-blue-500" />Despesas
+                <span className="h-1.5 w-2 rounded-full bg-blue-500" />{t("mockup.dashboard.expensesShort")}
               </span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 +12%
@@ -1178,13 +1181,13 @@ function HeroDashboardMock() {
         {/* Limite */}
         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-700">Limite inteligente</p>
+            <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.smartLimit")}</p>
             <p className="text-xs font-semibold tabular-nums text-slate-500">62%</p>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" />
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">Você ainda pode gastar R$ 1.180 esta semana.</p>
+          <p className="mt-2 text-[11px] text-slate-500">{t("mockup.dashboard.smartLimitHint")}</p>
         </div>
       </div>
     </div>
@@ -1747,21 +1750,28 @@ function MockShell({ children }: { children: React.ReactNode }) {
 }
 
 function GastosMock() {
+  const { t } = useTranslation("landing");
   const items = [
-    { c: "Mercado", v: "R$ 340,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
-    { c: "Restaurante", v: "R$ 78,50", t: "Ontem", color: "bg-amber-100 text-amber-700" },
-    { c: "Transporte", v: "R$ 24,00", t: "2 dias", color: "bg-blue-100 text-blue-700" },
-    { c: "Assinatura", v: "R$ 39,90", t: "3 dias", color: "bg-violet-100 text-violet-700" },
+    { c: t("mockup.gastos.items.market"), avatarKey: "Mercado", v: "R$ 340,90", t: t("mockup.gastos.when.today") },
+    { c: t("mockup.gastos.items.restaurant"), avatarKey: "Restaurante", v: "R$ 78,50", t: t("mockup.gastos.when.yesterday") },
+    { c: t("mockup.gastos.items.transport"), avatarKey: "Transporte", v: "R$ 24,00", t: t("mockup.gastos.when.daysAgo", { n: 2 }) },
+    { c: t("mockup.gastos.items.subscription"), avatarKey: "Assinatura", v: "R$ 39,90", t: t("mockup.gastos.when.daysAgo", { n: 3 }) },
+  ];
+  const filters = [
+    t("mockup.gastos.filterDate"),
+    t("mockup.gastos.filterCategory"),
+    t("mockup.gastos.filterPix"),
+    t("mockup.gastos.filterCard"),
   ];
   return (
     <MockShell>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.gastos.eyebrow")}</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 sm:flex-wrap sm:justify-end sm:overflow-visible">
-          {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
+          {filters.map((p, i) => (
             <span
               key={p}
               className={cn(
@@ -1781,7 +1791,7 @@ function GastosMock() {
         {items.map((it) => (
           <li key={it.c} className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
-              <TransactionAvatar estabelecimento={it.c} size="sm" />
+              <TransactionAvatar estabelecimento={it.avatarKey} size="sm" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">{it.c}</p>
                 <p className="text-[11px] text-slate-500">{it.t}</p>
@@ -1793,11 +1803,11 @@ function GastosMock() {
       </ul>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.total")}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Média</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.average")}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 109,24</p>
         </div>
       </div>
@@ -1806,10 +1816,11 @@ function GastosMock() {
 }
 
 function CartaoMock() {
+  const { t } = useTranslation("landing");
   const purchases = [
-    { c: "Spotify", v: "R$ 21,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
-    { c: "iFood", v: "R$ 64,80", t: "Ontem · 3x", color: "bg-rose-100 text-rose-700" },
-    { c: "Posto Shell", v: "R$ 180,00", t: "2 dias", color: "bg-amber-100 text-amber-700" },
+    { c: "Spotify", v: "R$ 21,90", t: t("mockup.card.purchases.spotify") },
+    { c: "iFood", v: "R$ 64,80", t: t("mockup.card.purchases.ifood") },
+    { c: "Posto Shell", v: "R$ 180,00", t: t("mockup.card.purchases.shell") },
   ];
   return (
     <MockShell>
@@ -1825,25 +1836,25 @@ function CartaoMock() {
           style={{ background: "radial-gradient(circle, rgba(16,185,129,0.30), transparent 70%)" }}
         />
         <div className="relative flex items-center justify-between">
-          <p className="text-xs font-semibold opacity-80">Inteligente Black</p>
+          <p className="text-xs font-semibold opacity-80">{t("mockup.card.name")}</p>
           <CreditCard className="h-5 w-5 opacity-80" />
         </div>
         {/* chip */}
         <div className="relative mt-5 flex items-center gap-3">
           <div className="h-7 w-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner ring-1 ring-amber-100/40" />
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-widest opacity-60">Contactless</span>
+            <span className="text-[9px] uppercase tracking-widest opacity-60">{t("mockup.card.contactless")}</span>
           </div>
         </div>
         <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
         <div className="relative mt-4 flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Limite disponível</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.limitAvailable")}</p>
             <p className="text-lg font-bold tabular-nums">R$ 4.820,00</p>
-            <p className="mt-0.5 text-[10px] opacity-60">de R$ 8.000,00</p>
+            <p className="mt-0.5 text-[10px] opacity-60">{t("mockup.card.ofTotal")}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Vence</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.due")}</p>
             <p className="text-sm font-semibold">15/12</p>
             <p className="text-[10px] opacity-60">VISA</p>
           </div>
@@ -1852,9 +1863,9 @@ function CartaoMock() {
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-slate-700">Fatura aberta</p>
+          <p className="text-xs font-semibold text-slate-700">{t("mockup.card.openInvoice")}</p>
           <span className="whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-            Vence 15/12
+            {t("mockup.card.dueShort")}
           </span>
         </div>
         <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 1.180,00</p>
@@ -1867,7 +1878,7 @@ function CartaoMock() {
             className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
           />
         </div>
-        <p className="mt-1.5 text-[11px] text-slate-500">42% do limite utilizado</p>
+        <p className="mt-1.5 text-[11px] text-slate-500">{t("mockup.card.limitUsed")}</p>
 
         <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
           {purchases.map((p) => (
@@ -1886,7 +1897,7 @@ function CartaoMock() {
 
         <button className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-slate-900 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800">
           <CheckCircle2 className="h-3.5 w-3.5" />
-          Marcar fatura como paga
+          {t("mockup.card.markPaid")}
         </button>
       </div>
     </MockShell>
@@ -2037,6 +2048,7 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
 }
 
 function MetaMock() {
+  const { t } = useTranslation("landing");
   // Featured goal — emotional, easy to read
   const guardado = 1050;
   const objetivo = 10000;
@@ -2044,9 +2056,9 @@ function MetaMock() {
   const falta = objetivo - guardado;
 
   const otherGoals: { name: string; pct: number; saved: string; cover: "beach" | "car" | "reserve" }[] = [
-    { name: "Viagem para a praia", pct: 68, saved: "R$ 3.400", cover: "beach" },
-    { name: "Comprar um carro", pct: 32, saved: "R$ 8.000", cover: "car" },
-    { name: "Reserva de emergência", pct: 84, saved: "R$ 8.400", cover: "reserve" },
+    { name: t("mockup.meta.names.beach"), pct: 68, saved: "R$ 3.400", cover: "beach" },
+    { name: t("mockup.meta.names.car"), pct: 32, saved: "R$ 8.000", cover: "car" },
+    { name: t("mockup.meta.names.reserve"), pct: 84, saved: "R$ 8.400", cover: "reserve" },
   ];
 
   return (
@@ -2063,10 +2075,10 @@ function MetaMock() {
             style={{ background: "linear-gradient(180deg, rgba(15,23,42,0) 50%, rgba(15,23,42,0.45) 100%)" }}
           />
           <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-blue-700 backdrop-blur">
-            <Target className="h-3 w-3" /> Meta ativa
+            <Target className="h-3 w-3" /> {t("mockup.meta.active")}
           </div>
           <div className="absolute bottom-2 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 backdrop-blur">
-            <Calendar className="h-3 w-3" /> Dez · 2027
+            <Calendar className="h-3 w-3" /> {t("mockup.meta.monthYear")}
           </div>
           <div className="absolute bottom-2 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-bold text-white shadow">
             <TrendingUp className="h-3 w-3" /> {pct}%
@@ -2075,19 +2087,19 @@ function MetaMock() {
 
         {/* Body */}
         <div className="p-4 sm:p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta · Imóvel</p>
-          <h4 className="mt-0.5 text-lg font-bold text-slate-900">Entrada do apartamento</h4>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.eyebrow")}</p>
+          <h4 className="mt-0.5 text-lg font-bold text-slate-900">{t("mockup.meta.title")}</h4>
 
           {/* Saved + total */}
           <div className="mt-3 flex items-end justify-between">
             <div>
-              <p className="text-[11px] font-medium text-slate-500">Guardado</p>
+              <p className="text-[11px] font-medium text-slate-500">{t("mockup.meta.saved")}</p>
               <p className="text-2xl font-extrabold tabular-nums text-slate-900">
                 R$ {guardado.toLocaleString("pt-BR")},00
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-medium text-slate-500">Objetivo</p>
+              <p className="text-[11px] font-medium text-slate-500">{t("mockup.meta.objective")}</p>
               <p className="text-sm font-bold tabular-nums text-slate-700">
                 R$ {objetivo.toLocaleString("pt-BR")},00
               </p>
@@ -2106,9 +2118,9 @@ function MetaMock() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-emerald-700">{pct}% concluído</span>
+              <span className="font-semibold text-emerald-700">{t("mockup.meta.complete", { pct })}</span>
               <span className="text-slate-500">
-                Faltam <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
+                {t("mockup.meta.remaining")} <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
               </span>
             </div>
           </div>
@@ -2118,9 +2130,11 @@ function MetaMock() {
       {/* Other goals — variety */}
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Outras metas</p>
-          <span className="text-[10px] font-medium text-slate-400">3 ativas</span>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.otherGoals")}</p>
+          <span className="text-[10px] font-medium text-slate-400">{t("mockup.meta.active3")}</span>
         </div>
+
+
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {otherGoals.map((g) => (
             <div
@@ -2194,30 +2208,31 @@ function ContasConectadasMock() {
 }
 
 function InvestimentosMock() {
+  const { t } = useTranslation("landing");
   const classes = [
-    { l: "Renda fixa", v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
-    { l: "Ações", v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
-    { l: "Fundos", v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
+    { l: t("mockup.invest.fixed"), v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
+    { l: t("mockup.invest.stocks"), v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
+    { l: t("mockup.invest.funds"), v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Carteira</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.invest.wallet")}</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 48.320,90</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">Patrimônio total · 12 meses</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.invest.totalAssets")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
             <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
           </span>
-          <span className="text-[10px] font-medium text-slate-400">vs. mês anterior</span>
+          <span className="text-[10px] font-medium text-slate-400">{t("mockup.invest.vsLastMonth")}</span>
         </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-emerald-50/40 to-white p-3">
         <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          <span>Evolução</span>
+          <span>{t("mockup.invest.evolution")}</span>
           <span className="text-emerald-600">+R$ 1.940</span>
         </div>
         <svg viewBox="0 0 300 100" className="mt-1 h-28 w-full">
@@ -2268,7 +2283,7 @@ function InvestimentosMock() {
               <span className="shrink-0 text-[9px] font-bold text-emerald-600">{c.chip}</span>
             </div>
             <p className="mt-1 text-xs font-bold tabular-nums text-slate-900 sm:text-sm">{c.v}</p>
-            <p className="text-[9px] text-slate-500 sm:text-[10px]">{c.pct}% da carteira</p>
+            <p className="text-[9px] text-slate-500 sm:text-[10px]">{t("mockup.invest.ofPortfolio", { pct: c.pct })}</p>
           </div>
         ))}
       </div>
@@ -2277,22 +2292,23 @@ function InvestimentosMock() {
 }
 
 function GuardadoMock() {
+  const { t } = useTranslation("landing");
   const items = [
     { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500", logoBg: "#fff" as string | null },
     { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500", logoBg: "#ff7a00" as string | null },
     { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700", logoBg: "#1f1f1f" as string | null },
-    { l: "Carteira", v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
+    { l: t("mockup.guardado.wallet"), v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total guardado</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.guardado.totalSaved")}</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">Reservas em 4 contas</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.guardado.reservesIn")}</p>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-          <ShieldCheck className="h-3.5 w-3.5" /> Reserva segura
+          <ShieldCheck className="h-3.5 w-3.5" /> {t("mockup.guardado.secureReserve")}
         </span>
       </div>
 
