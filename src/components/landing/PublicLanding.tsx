@@ -3474,13 +3474,13 @@ function FinalCTA() {
             {/* Copy */}
             <div className="lg:col-span-7">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur">
-                <Sparkles className="h-3 w-3" /> Comece em minutos
+                <Sparkles className="h-3 w-3" /> {t("finalCta.badge")}
               </span>
               <h2 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
-                Pronto para organizar sua vida financeira?
+                {t("finalCta.title")}
               </h2>
               <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
-                Comece hoje e tenha uma visão mais clara do seu dinheiro, dos seus gastos e dos seus objetivos.
+                {t("finalCta.subtitle")}
               </p>
 
               <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -3488,7 +3488,7 @@ function FinalCTA() {
                   to="/cadastro"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_18px_36px_-12px_rgba(255,255,255,0.35)] transition-transform hover:-translate-y-0.5"
                 >
-                  Criar minha conta
+                  {t("finalCta.primary")}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
@@ -3496,14 +3496,14 @@ function FinalCTA() {
                   onClick={(e) => handleAnchorClick(e, "#planos")}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
                 >
-                  Ver planos
+                  {t("finalCta.secondary")}
                 </a>
               </div>
 
               <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-300">
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Sem fidelidade</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Cancele quando quiser</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Acesso pelo navegador</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.noCommitment")}</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.cancelAnytime")}</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.browser")}</li>
               </ul>
             </div>
 
