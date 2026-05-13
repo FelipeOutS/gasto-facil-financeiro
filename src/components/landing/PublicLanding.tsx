@@ -3074,26 +3074,26 @@ function Plans() {
         {/* Trust microcopy under plans */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Pagamento seguro
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("plans.trustPay")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Sem fidelidade
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> {t("plans.trustNoFid")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Zap className="h-4 w-4 text-emerald-600" /> Acesso imediato
+            <Zap className="h-4 w-4 text-emerald-600" /> {t("plans.trustImmediate")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-emerald-600" /> Atualizações inclusas
+            <Sparkles className="h-4 w-4 text-emerald-600" /> {t("plans.trustUpdates")}
           </span>
         </div>
 
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
-          Não sabe qual escolher?{" "}
+          {t("plans.helperA")}{" "}
           <a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
-            Veja as dúvidas frequentes
+            {t("plans.helperLink")}
           </a>{" "}
-          ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
+          {t("plans.helperB")}
         </p>
       </div>
     </section>
