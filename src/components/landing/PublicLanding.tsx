@@ -2208,30 +2208,31 @@ function ContasConectadasMock() {
 }
 
 function InvestimentosMock() {
+  const { t } = useTranslation("landing");
   const classes = [
-    { l: "Renda fixa", v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
-    { l: "Ações", v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
-    { l: "Fundos", v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
+    { l: t("mockup.invest.fixed"), v: "R$ 22,4k", pct: 46, color: "#10b981", chip: "+1,8%" },
+    { l: t("mockup.invest.stocks"), v: "R$ 14,1k", pct: 29, color: "#3b82f6", chip: "+6,4%" },
+    { l: t("mockup.invest.funds"), v: "R$ 11,8k", pct: 25, color: "#a855f7", chip: "+2,1%" },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Carteira</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.invest.wallet")}</p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 48.320,90</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">Patrimônio total · 12 meses</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.invest.totalAssets")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
             <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
           </span>
-          <span className="text-[10px] font-medium text-slate-400">vs. mês anterior</span>
+          <span className="text-[10px] font-medium text-slate-400">{t("mockup.invest.vsLastMonth")}</span>
         </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-emerald-50/40 to-white p-3">
         <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          <span>Evolução</span>
+          <span>{t("mockup.invest.evolution")}</span>
           <span className="text-emerald-600">+R$ 1.940</span>
         </div>
         <svg viewBox="0 0 300 100" className="mt-1 h-28 w-full">
@@ -2282,7 +2283,7 @@ function InvestimentosMock() {
               <span className="shrink-0 text-[9px] font-bold text-emerald-600">{c.chip}</span>
             </div>
             <p className="mt-1 text-xs font-bold tabular-nums text-slate-900 sm:text-sm">{c.v}</p>
-            <p className="text-[9px] text-slate-500 sm:text-[10px]">{c.pct}% da carteira</p>
+            <p className="text-[9px] text-slate-500 sm:text-[10px]">{t("mockup.invest.ofPortfolio", { pct: c.pct })}</p>
           </div>
         ))}
       </div>
