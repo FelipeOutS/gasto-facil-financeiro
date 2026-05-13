@@ -1660,27 +1660,26 @@ function ScreenMock({ keyName }: { keyName: ScreenKey }) {
 /* ============================== DASHBOARD SHOWCASE ============================== */
 
 function DashboardShowcase() {
+  const { t } = useTranslation("landing");
+  const bullets = t("dashboardShowcase.bullets", { returnObjects: true }) as string[];
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className="lg:col-span-5">
-          <Eyebrow>Dashboard</Eyebrow>
+          <Eyebrow>{t("dashboardShowcase.eyebrow")}</Eyebrow>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Seu mês financeiro em uma visão simples.
+            {t("dashboardShowcase.title")}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            O Dashboard reúne as informações mais importantes para você entender rapidamente sua
-            situação: receitas, despesas, contas, saldo, alertas e limite inteligente.
+            {t("dashboardShowcase.text")}
           </p>
           <ul className="mt-6 space-y-2.5">
-            {["Saldo do mês", "Receitas e despesas", "Contas a pagar", "Alertas importantes", "Limite inteligente"].map(
-              (b) => (
-                <li key={b} className="flex items-center gap-2 text-sm text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  {b}
-                </li>
-              ),
-            )}
+            {bullets.map((b) => (
+              <li key={b} className="flex items-center gap-2 text-sm text-slate-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                {b}
+              </li>
+            ))}
           </ul>
         </Reveal>
         <Reveal className="lg:col-span-7" delay={0.1}>
