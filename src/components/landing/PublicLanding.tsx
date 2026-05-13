@@ -3714,18 +3714,15 @@ function Reveal({
 /* ============================== GASTO AI SECTION ============================== */
 
 function GastoAISection() {
+  const { t } = useTranslation("landing");
   const messages = [
-    { role: "user" as const, text: "Quanto gastei com mercado este mês?" },
-    {
-      role: "ai" as const,
-      text: "Em novembro você gastou R$ 842,30 em mercado — 18% a menos que outubro (R$ 1.027,90). A maior compra foi no dia 14, R$ 312,40.",
-    },
-    { role: "user" as const, text: "E a fatura do Nubank, já está fechada?" },
-    {
-      role: "ai" as const,
-      text: "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
-    },
+    { role: "user" as const, text: t("ai.msg1") },
+    { role: "ai" as const, text: t("ai.msg2") },
+    { role: "user" as const, text: t("ai.msg3") },
+    { role: "ai" as const, text: t("ai.msg4") },
   ];
+  const bullets = t("ai.bullets", { returnObjects: true }) as string[];
+  const chips = t("ai.chips", { returnObjects: true }) as string[];
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/60 py-20 sm:py-24">
@@ -3740,24 +3737,16 @@ function GastoAISection() {
       <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className="lg:col-span-5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-            <Sparkles className="h-3 w-3" /> Gasto AI
+            <Sparkles className="h-3 w-3" /> {t("ai.tag")}
           </span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Converse com sua vida financeira.
+            {t("ai.title")}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            Pergunte sobre seus gastos, faturas, metas e contas. O Gasto AI analisa apenas os dados
-            que você cadastrou e entrega respostas claras — sem chute, sem estimativa solta.
+            {t("ai.text")}
           </p>
           <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {[
-              "Resumo do mês em segundos",
-              "Comparação entre períodos",
-              "Faturas, vencimentos e cartões",
-              "Onde dá pra economizar",
-              "Status das metas",
-              "Contas a pagar e a receber",
-            ].map((b) => (
+            {bullets.map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-slate-700">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 {b}
@@ -3768,7 +3757,7 @@ function GastoAISection() {
             to="/cadastro"
             className="mt-7 inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_-14px_rgba(15,23,42,0.55)] transition-transform hover:-translate-y-0.5"
           >
-            Experimentar o Gasto AI
+            {t("ai.cta")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Reveal>
@@ -3788,10 +3777,10 @@ function GastoAISection() {
                       <Bot className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Gasto AI</p>
+                      <p className="text-sm font-bold text-slate-900">{t("ai.chatTitle")}</p>
                       <p className="inline-flex items-center gap-1 text-[11px] text-slate-500">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        Conectado aos seus dados
+                        {t("ai.chatStatus")}
                       </p>
                     </div>
                   </div>
@@ -3814,7 +3803,7 @@ function GastoAISection() {
                       >
                         {m.role === "ai" && (
                           <span className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                            <Sparkles className="h-3 w-3" /> Gasto AI
+                            <Sparkles className="h-3 w-3" /> {t("ai.chatTitle")}
                           </span>
                         )}
                         {m.text}
@@ -3825,7 +3814,7 @@ function GastoAISection() {
 
                 {/* Suggested chips */}
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  {["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"].map((c) => (
+                  {chips.map((c) => (
                     <span
                       key={c}
                       className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
@@ -3838,7 +3827,7 @@ function GastoAISection() {
                 {/* Input */}
                 <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-2 pl-4 pr-1">
                   <MessageCircle className="h-4 w-4 text-slate-400" />
-                  <p className="flex-1 truncate text-sm text-slate-500">Pergunte sobre seus gastos…</p>
+                  <p className="flex-1 truncate text-sm text-slate-500">{t("ai.inputPlaceholder")}</p>
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-900 text-white">
                     <Send className="h-4 w-4" />
                   </span>
