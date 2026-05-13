@@ -380,6 +380,7 @@ function Header() {
 /* ============================== HERO ============================== */
 
 function Hero() {
+  const { t } = useTranslation("landing");
   const reduce = useReducedMotion();
   return (
     <section id="inicio" className="relative overflow-hidden">
@@ -422,11 +423,11 @@ function Hero() {
             transition={{ duration: 0.35, delay: 0 }}
             className="mt-5 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
           >
-            Controle suas finanças com mais{" "}
+            {t("hero.titleStart")}{" "}
             <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
-              clareza, inteligência
+              {t("hero.titleHighlight")}
             </span>{" "}
-            e praticidade.
+            {t("hero.titleEnd")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -434,8 +435,7 @@ function Hero() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
           >
-            O Gasto Inteligente ajuda você a organizar gastos, cartões, contas, metas e renda
-            em um só lugar — com uma visão simples, visual e fácil de entender.
+            {t("hero.subtitle")}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -447,14 +447,14 @@ function Hero() {
               to="/cadastro"
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_-12px_rgba(15,23,42,0.45)] transition-all hover:bg-slate-800 hover:-translate-y-0.5"
             >
-              Começar agora
+              {t("hero.ctaPrimary")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               to="/login"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              Entrar na minha conta
+              {t("hero.ctaSecondary")}
             </Link>
           </motion.div>
           <motion.ul
@@ -463,19 +463,13 @@ function Hero() {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="mt-8 flex flex-wrap gap-2"
           >
-            {[
-              "Controle pessoal",
-              "Cartões e faturas",
-              "Metas financeiras",
-              "Organização mensal",
-              "Visual intuitivo",
-            ].map((b) => (
+            {(["personal", "cards", "goals", "monthly", "visual"] as const).map((k) => (
               <li
-                key={b}
+                key={k}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-medium text-slate-700"
               >
                 <Check className="h-3.5 w-3.5 text-emerald-600" />
-                {b}
+                {t(`hero.chips.${k}`)}
               </li>
             ))}
           </motion.ul>
