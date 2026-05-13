@@ -1126,6 +1126,7 @@ function MobileDashboardMock() {
 }
 
 function HeroDashboardMock() {
+  const { t } = useTranslation("landing");
   return (
     <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_40px_80px_-30px_rgba(15,23,42,0.35)]">
       <div className="rounded-[22px] border border-slate-200/70 bg-white p-4 sm:p-5">
@@ -1133,9 +1134,9 @@ function HeroDashboardMock() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              Visão geral
+              {t("mockup.dashboard.overview")}
             </p>
-            <p className="text-base font-bold text-slate-900">Novembro · 2026</p>
+            <p className="text-base font-bold text-slate-900">{t("mockup.dashboard.month")}</p>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-slate-500">
@@ -1148,24 +1149,24 @@ function HeroDashboardMock() {
         </div>
         {/* KPI grid */}
         <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <KpiMini label="Saldo" value="R$ 3.142,80" tone="brand" icon={<Wallet className="h-3.5 w-3.5" />} />
-          <KpiMini label="Receitas" value="R$ 6.420,00" tone="success" icon={<ArrowUpRight className="h-3.5 w-3.5" />} />
-          <KpiMini label="Despesas" value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
-          <KpiMini label="A pagar" value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.balance")} value="R$ 3.142,80" tone="brand" icon={<Wallet className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.income")} value="R$ 6.420,00" tone="success" icon={<ArrowUpRight className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.expenses")} value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
+          <KpiMini label={t("mockup.dashboard.toPay")} value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
         </div>
         {/* Chart */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-700">Fluxo do mês</p>
-              <p className="text-[10px] text-slate-400">Receitas vs. despesas</p>
+              <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.monthFlow")}</p>
+              <p className="text-[10px] text-slate-400">{t("mockup.dashboard.incomeVsExpenses")}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />Receitas
+                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />{t("mockup.dashboard.incomeShort")}
               </span>
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-blue-500" />Despesas
+                <span className="h-1.5 w-2 rounded-full bg-blue-500" />{t("mockup.dashboard.expensesShort")}
               </span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 +12%
@@ -1180,13 +1181,13 @@ function HeroDashboardMock() {
         {/* Limite */}
         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-700">Limite inteligente</p>
+            <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.smartLimit")}</p>
             <p className="text-xs font-semibold tabular-nums text-slate-500">62%</p>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-emerald-500 to-blue-500" />
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">Você ainda pode gastar R$ 1.180 esta semana.</p>
+          <p className="mt-2 text-[11px] text-slate-500">{t("mockup.dashboard.smartLimitHint")}</p>
         </div>
       </div>
     </div>
