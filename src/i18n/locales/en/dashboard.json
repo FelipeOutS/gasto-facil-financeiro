@@ -1,0 +1,244 @@
+{
+  "loading": "Loading your account…",
+  "monthSwitcher": {
+    "prev": "Previous month",
+    "next": "Next month"
+  },
+  "empty": {
+    "eyebrow": "Gasto Inteligente",
+    "title": "Let's get started? 🚀",
+    "subtitle": "Your money clearer, no fuss. Pick where to start:",
+    "footer": "Everything is saved in your account. 🔒",
+    "cards": {
+      "salario": "Add salary",
+      "gasto": "Log expense",
+      "guardado": "Money saved",
+      "meta": "Create first goal"
+    }
+  },
+  "completeProfile": {
+    "title": "Complete your profile",
+    "subtitle": "Personalize your experience: Individual, Freelancer or Business.",
+    "cta": "Complete"
+  },
+  "sections": {
+    "radar": "Everything on the radar",
+    "visao": "Financial overview",
+    "resumo": "Summary and next steps",
+    "categoriasCartoes": "Categories and cards",
+    "resumoOrcamento": "Summary and budget",
+    "controle": "Financial control"
+  },
+  "kpi": {
+    "saldo": "Balance",
+    "receitas": "Income",
+    "despesas": "Expenses",
+    "aPagar": "To pay",
+    "saldoNoMes": "this month",
+    "saldoNegativoHint": "{{valor}} more than received",
+    "entradaSing": "entry",
+    "entradaPlur": "entries",
+    "lancamentoSing": "transaction",
+    "lancamentoPlur": "transactions",
+    "atrasada": "overdue",
+    "pendente": "pending",
+    "tudoEmDia": "all up to date"
+  },
+  "saldoNegativoAlerta": "You spent {{valor}} more than you received this month.",
+  "ctaLancar": "Log expense",
+  "metaProxima": {
+    "title": "Closest goal",
+    "verTodas": "View all →",
+    "falta": "{{valor}} left",
+    "incluiGuardado": "Includes <strong>{{valor}}</strong> from linked Savings",
+    "ativaSing": "active goal",
+    "ativaPlur": "active goals"
+  },
+  "metasFallback": {
+    "title": "Goals",
+    "andamento": "{{count}} in progress"
+  },
+  "porCategoria": {
+    "title": "By category",
+    "verTudo": "View all →",
+    "total": "Total",
+    "outros": "Other"
+  },
+  "atalhos": {
+    "orcamentoEyebrow": "Budget",
+    "orcamentoTitle": "By category",
+    "orcamentoSub": "Set and track",
+    "guardadoEyebrow": "Total saved",
+    "guardadoSub_one": "{{count}} reserve",
+    "guardadoSub_other": "{{count}} reserves",
+    "fixosEyebrow": "Fixed expenses",
+    "fixosPctRenda": "{{pct}}% of income",
+    "metasEyebrow": "Goals",
+    "metasSub": "in progress"
+  },
+  "limiteMensal": {
+    "eyebrow": "Monthly limit",
+    "ultrapassado": "Limit exceeded by {{valor}}",
+    "quase": "You've already used {{pct}}% of the limit",
+    "usado": "{{pct}}% used"
+  },
+  "minhaRenda": {
+    "title": "My income",
+    "esteMes": "{{valor}} this month"
+  },
+  "atividade": {
+    "eyebrow": "Activity",
+    "title": "Recent transactions",
+    "verTudo": "View all →",
+    "vazio": "Nothing here yet.",
+    "primeiro": "Log your first expense",
+    "outros": "Other"
+  },
+  "contas": {
+    "eyebrow": "Upcoming bills",
+    "semContas": "Add your bills and never miss a due date",
+    "tudoPago": "All paid this month 🎉",
+    "pendentes": "{{valor}} pending",
+    "ver": "View →",
+    "proximaVencer": "Next due",
+    "vencimento": {
+      "atrasada": "overdue by {{dias}}d",
+      "hoje": "due today",
+      "amanha": "due tomorrow",
+      "futuro": "due in {{dias}}d"
+    },
+    "pendenteSing": "pending",
+    "pendentePlur": "pending",
+    "atrasadaSing": "overdue",
+    "atrasadaPlur": "overdue",
+    "adicionar": "Add bill"
+  },
+  "alertasContas": {
+    "eyebrow": "Financial alerts",
+    "atrasadasSing": "{{count}} overdue bill",
+    "atrasadasPlur": "{{count}} overdue bills",
+    "hojeSing": "{{count}} bill due today",
+    "hojePlur": "{{count}} bills due today",
+    "amanhaSing": "{{count}} bill due tomorrow",
+    "amanhaPlur": "{{count}} bills due tomorrow",
+    "proxSing": "{{count}} bill due in the coming days",
+    "proxPlur": "{{count}} bills due in the coming days",
+    "pillAtrasadas": "Overdue",
+    "pillHojeAmanha": "Today/tomorrow",
+    "pillProx7": "Next 7 days",
+    "vencidaHa": "Overdue by {{dias}}d",
+    "venceHoje": "Due today",
+    "venceAmanha": "Due tomorrow",
+    "venceEm": "Due in {{dias}}d"
+  },
+  "orcamentoCard": {
+    "eyebrow": "Monthly budget",
+    "ver": "View →",
+    "usado": "{{pct}}% used",
+    "pillDentro": "Within",
+    "pillAtencao": "Watch",
+    "pillEstourou": "Over",
+    "maiorUso": "Highest use this month"
+  },
+  "resumoMes": {
+    "eyebrow": "Month summary",
+    "default": "Month summary",
+    "defaultMsg": "Keep logging your data so we can better understand your month.",
+    "vamosComecar": "Shall we start?",
+    "vamosComecarMsg": "Add income and expenses to see a personalized summary of your month here.",
+    "atrasada": "There's an overdue bill",
+    "atrasadaMsg_one": "You have {{count}} overdue bill. Solving it first avoids interest and headaches.",
+    "atrasadaMsg_other": "You have {{count}} overdue bills. Solving them first avoids interest and headaches.",
+    "negativo": "Negative balance",
+    "negativoMsg": "Expenses exceeded income by {{valor}}. Worth reviewing the {{categoria}} category to slow down.",
+    "negativoMsgSemCat": "Expenses exceeded income by {{valor}}. Worth reviewing the main category to slow down.",
+    "limite": "Whoa, the limit was exceeded",
+    "limiteMsg": "You spent {{valor}} over the monthly limit. How about slowing down in the coming days?",
+    "categorias": "Some categories went over",
+    "categoriasMsg": "{{count}} categories went over budget — starting with {{categoria}}.",
+    "categoria": "Heads up: this month was a bit heavy",
+    "categoriaMsg": "The {{categoria}} category went over budget. The others are under control 👍",
+    "otimo": "Great job!",
+    "otimoMsg": "{{valor}} left this month — a {{pct}}% buffer of your income. How about putting it toward a goal?",
+    "bom": "Nice! You ended in the green",
+    "bomMsg": "{{valor}} left this month. Keep going and you can still save part of it 💰",
+    "apertado": "Closed positive, but with little buffer",
+    "apertadoMsg": "{{valor}} left at month end. It's tight — any surprise can flip things.",
+    "equilibrado": "Balanced month",
+    "equilibradoMsg": "Income and expenses at the same level. Worth trying to open a small buffer next month.",
+    "maiorCategoria": "Largest category",
+    "orcamento": "Budget",
+    "estourou": "Over: {{categoria}}",
+    "tudoControle": "All under control",
+    "semLimite": "No limit",
+    "verRelatorio": "View full report"
+  },
+  "contasReceber": {
+    "eyebrow": "To receive",
+    "emAberto": "{{valor}} open",
+    "ver": "View →",
+    "proximaEntrada": "Next entry",
+    "atrasada": "{{dias}} day(s) overdue",
+    "venceHoje": "due today",
+    "venceAmanha": "due tomorrow",
+    "venceEm": "due in {{dias}} day(s)",
+    "abertasSing": "{{count}} open",
+    "abertasPlur": "{{count}} open",
+    "atrasadasSing": "{{count}} overdue",
+    "atrasadasPlur": "{{count}} overdue"
+  },
+  "moedaEstrangeira": {
+    "umaSing": "You have one subscription in {{moeda}}.",
+    "umaPlur": "You have {{count}} subscriptions in {{moeda}}.",
+    "subtitle": "Exchange rate changes may alter the next bill amount. Tap to review.",
+    "dolar": "USD",
+    "euro": "EUR",
+    "moedaEstrangeira": "foreign currency"
+  },
+  "whatsappBanner": {
+    "title": "Coming soon: WhatsApp integration",
+    "novo": "New",
+    "subtitle": "Log expenses, income and check balances by sending messages — directly on your WhatsApp. No need to open the app.",
+    "dispensar": "Dismiss notice"
+  },
+  "connectedBanner": {
+    "vendoConta": "You are viewing the account of",
+    "voltar": "Back to my account",
+    "access": {
+      "view": "View only",
+      "view_create": "View and log",
+      "admin": "Administrator"
+    }
+  },
+  "switcher": {
+    "minhaConta": "My account",
+    "contaConectada": "Connected account",
+    "voce": "You",
+    "vendoContaDe": "Viewing account of",
+    "trocarConta": "Switch account",
+    "queVoceAcompanha": "Accounts you follow",
+    "level": {
+      "view": "View only",
+      "view_create": "View and log",
+      "admin": "Administrator"
+    }
+  },
+  "notifications": {
+    "title": "Alerts",
+    "ariaUnread": "{{count}} unread alerts",
+    "ariaDefault": "Alerts",
+    "novosSing": "{{count}} new notice for you.",
+    "novosPlur": "{{count}} new notices for you.",
+    "padrao": "See what needs your attention.",
+    "tudoCerto": "All good here.",
+    "tudoCertoSub": "Nothing urgent on the radar.",
+    "verTodos": "View all",
+    "actionDefault": "View",
+    "priority": {
+      "critica": "Critical",
+      "alta": "High",
+      "media": "Medium",
+      "baixa": "Low"
+    }
+  }
+}

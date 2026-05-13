@@ -1,0 +1,244 @@
+{
+  "loading": "Carregando sua conta…",
+  "monthSwitcher": {
+    "prev": "Mês anterior",
+    "next": "Próximo mês"
+  },
+  "empty": {
+    "eyebrow": "Gasto Inteligente",
+    "title": "Bora começar? 🚀",
+    "subtitle": "Seu dinheiro mais claro, sem complicação. Escolha por onde começar:",
+    "footer": "Tudo fica salvo na sua conta. 🔒",
+    "cards": {
+      "salario": "Cadastrar salário",
+      "gasto": "Lançar gasto",
+      "guardado": "Dinheiro guardado",
+      "meta": "Criar primeira meta"
+    }
+  },
+  "completeProfile": {
+    "title": "Complete seu perfil",
+    "subtitle": "Personalize sua experiência: Pessoa física, MEI ou Empresa.",
+    "cta": "Completar"
+  },
+  "sections": {
+    "radar": "Tá tudo no radar",
+    "visao": "Visão financeira",
+    "resumo": "Resumo e próximas ações",
+    "categoriasCartoes": "Categorias e cartões",
+    "resumoOrcamento": "Resumo e orçamento",
+    "controle": "Controle financeiro"
+  },
+  "kpi": {
+    "saldo": "Saldo",
+    "receitas": "Receitas",
+    "despesas": "Despesas",
+    "aPagar": "A pagar",
+    "saldoNoMes": "no mês atual",
+    "saldoNegativoHint": "{{valor}} a mais que recebeu",
+    "entradaSing": "entrada",
+    "entradaPlur": "entradas",
+    "lancamentoSing": "lançamento",
+    "lancamentoPlur": "lançamentos",
+    "atrasada": "atrasada(s)",
+    "pendente": "pendente(s)",
+    "tudoEmDia": "tudo em dia"
+  },
+  "saldoNegativoAlerta": "Ops, você passou {{valor}} do que recebeu este mês.",
+  "ctaLancar": "Lançar gasto",
+  "metaProxima": {
+    "title": "Meta mais próxima",
+    "verTodas": "Ver todas →",
+    "falta": "Falta {{valor}}",
+    "incluiGuardado": "Inclui <strong>{{valor}}</strong> do Guardado vinculado",
+    "ativaSing": "meta ativa",
+    "ativaPlur": "metas ativas"
+  },
+  "metasFallback": {
+    "title": "Metas",
+    "andamento": "{{count}} em andamento"
+  },
+  "porCategoria": {
+    "title": "Por categoria",
+    "verTudo": "Ver tudo →",
+    "total": "Total",
+    "outros": "Outros"
+  },
+  "atalhos": {
+    "orcamentoEyebrow": "Orçamento",
+    "orcamentoTitle": "Por categoria",
+    "orcamentoSub": "Definir e acompanhar",
+    "guardadoEyebrow": "Total guardado",
+    "guardadoSub_one": "{{count}} reserva",
+    "guardadoSub_other": "{{count}} reservas",
+    "fixosEyebrow": "Gastos fixos",
+    "fixosPctRenda": "{{pct}}% da renda",
+    "metasEyebrow": "Metas",
+    "metasSub": "em andamento"
+  },
+  "limiteMensal": {
+    "eyebrow": "Limite mensal",
+    "ultrapassado": "Limite ultrapassado em {{valor}}",
+    "quase": "Você já usou {{pct}}% do limite",
+    "usado": "{{pct}}% usado"
+  },
+  "minhaRenda": {
+    "title": "Minha renda",
+    "esteMes": "{{valor}} este mês"
+  },
+  "atividade": {
+    "eyebrow": "Atividade",
+    "title": "Transações recentes",
+    "verTudo": "Ver tudo →",
+    "vazio": "Tudo vazio por aqui ainda.",
+    "primeiro": "Lançar o primeiro gasto",
+    "outros": "Outros"
+  },
+  "contas": {
+    "eyebrow": "Próximas contas",
+    "semContas": "Cadastre suas contas e não perca nenhum vencimento",
+    "tudoPago": "Tudo pago neste mês 🎉",
+    "pendentes": "{{valor}} pendentes",
+    "ver": "Ver →",
+    "proximaVencer": "Próxima a vencer",
+    "vencimento": {
+      "atrasada": "vencida há {{dias}}d",
+      "hoje": "vence hoje",
+      "amanha": "vence amanhã",
+      "futuro": "vence em {{dias}}d"
+    },
+    "pendenteSing": "pendente",
+    "pendentePlur": "pendentes",
+    "atrasadaSing": "atrasada",
+    "atrasadaPlur": "atrasadas",
+    "adicionar": "Adicionar conta"
+  },
+  "alertasContas": {
+    "eyebrow": "Alertas financeiros",
+    "atrasadasSing": "{{count}} conta atrasada",
+    "atrasadasPlur": "{{count}} contas atrasadas",
+    "hojeSing": "{{count}} conta vence hoje",
+    "hojePlur": "{{count}} contas vencem hoje",
+    "amanhaSing": "{{count}} conta vence amanhã",
+    "amanhaPlur": "{{count}} contas vencem amanhã",
+    "proxSing": "{{count}} conta vence nos próximos dias",
+    "proxPlur": "{{count}} contas vencem nos próximos dias",
+    "pillAtrasadas": "Atrasadas",
+    "pillHojeAmanha": "Hoje/amanhã",
+    "pillProx7": "Próx. 7 dias",
+    "vencidaHa": "Vencida há {{dias}}d",
+    "venceHoje": "Vence hoje",
+    "venceAmanha": "Vence amanhã",
+    "venceEm": "Vence em {{dias}}d"
+  },
+  "orcamentoCard": {
+    "eyebrow": "Orçamento do mês",
+    "ver": "Ver →",
+    "usado": "{{pct}}% usado",
+    "pillDentro": "Dentro",
+    "pillAtencao": "Atenção",
+    "pillEstourou": "Estourou",
+    "maiorUso": "Maior uso no mês"
+  },
+  "resumoMes": {
+    "eyebrow": "Resumo do mês",
+    "default": "Resumo do mês",
+    "defaultMsg": "Continue lançando seus dados para a gente entender melhor seu mês.",
+    "vamosComecar": "Vamos começar?",
+    "vamosComecarMsg": "Adicione receitas e gastos para ver um resumo personalizado do seu mês aqui.",
+    "atrasada": "Tem conta atrasada por aí",
+    "atrasadaMsg_one": "Você tem {{count}} conta atrasada. Resolver isso primeiro evita juros e dor de cabeça.",
+    "atrasadaMsg_other": "Você tem {{count}} contas atrasadas. Resolver isso primeiro evita juros e dor de cabeça.",
+    "negativo": "Saldo negativo",
+    "negativoMsg": "Os gastos passaram da receita em {{valor}}. Vale revisar a categoria {{categoria}} para frear.",
+    "negativoMsgSemCat": "Os gastos passaram da receita em {{valor}}. Vale revisar a categoria principal para frear.",
+    "limite": "Eita, o limite foi ultrapassado",
+    "limiteMsg": "Você passou {{valor}} do limite mensal. Bora desacelerar nos próximos dias?",
+    "categorias": "Algumas categorias estouraram",
+    "categoriasMsg": "{{count}} categorias passaram do orçamento — começando por {{categoria}}.",
+    "categoria": "Atenção: esse mês pesou um pouco",
+    "categoriaMsg": "A categoria {{categoria}} passou do orçamento. As outras estão sob controle 👍",
+    "otimo": "Mandou muito bem!",
+    "otimoMsg": "Sobrou {{valor}} no mês — uma folga de {{pct}}% da sua renda. Que tal direcionar pra uma meta?",
+    "bom": "Boa! Você terminou no azul",
+    "bomMsg": "Sobrou {{valor}} este mês. Continue assim e ainda dá pra guardar uma parte 💰",
+    "apertado": "Fechou positivo, mas com pouca folga",
+    "apertadoMsg": "Sobrou {{valor}} no fim do mês. Tá apertado — qualquer imprevisto pode virar o jogo.",
+    "equilibrado": "Mês equilibrado",
+    "equilibradoMsg": "Entradas e gastos no mesmo patamar. Vale tentar abrir uma folguinha pro próximo mês.",
+    "maiorCategoria": "Maior categoria",
+    "orcamento": "Orçamento",
+    "estourou": "Estourou: {{categoria}}",
+    "tudoControle": "Tudo no controle",
+    "semLimite": "Sem limite",
+    "verRelatorio": "Ver relatório completo"
+  },
+  "contasReceber": {
+    "eyebrow": "A receber",
+    "emAberto": "{{valor}} em aberto",
+    "ver": "Ver →",
+    "proximaEntrada": "Próxima entrada",
+    "atrasada": "{{dias}} dia(s) atrasado",
+    "venceHoje": "vence hoje",
+    "venceAmanha": "vence amanhã",
+    "venceEm": "vence em {{dias}} dia(s)",
+    "abertasSing": "{{count}} aberta",
+    "abertasPlur": "{{count}} abertas",
+    "atrasadasSing": "{{count}} atrasada",
+    "atrasadasPlur": "{{count}} atrasadas"
+  },
+  "moedaEstrangeira": {
+    "umaSing": "Você possui uma assinatura em {{moeda}}.",
+    "umaPlur": "Você possui {{count}} assinaturas em {{moeda}}.",
+    "subtitle": "A variação do câmbio pode alterar o valor da próxima fatura. Toque para revisar.",
+    "dolar": "dólar",
+    "euro": "euro",
+    "moedaEstrangeira": "moeda estrangeira"
+  },
+  "whatsappBanner": {
+    "title": "Em breve: integração com WhatsApp",
+    "novo": "Novo",
+    "subtitle": "Lance gastos, receitas e consulte saldos enviando mensagens — direto no seu WhatsApp. Sem precisar abrir o app.",
+    "dispensar": "Dispensar aviso"
+  },
+  "connectedBanner": {
+    "vendoConta": "Você está vendo a conta de",
+    "voltar": "Voltar para minha conta",
+    "access": {
+      "view": "Somente visualizar",
+      "view_create": "Visualizar e lançar",
+      "admin": "Administrador"
+    }
+  },
+  "switcher": {
+    "minhaConta": "Minha conta",
+    "contaConectada": "Conta conectada",
+    "voce": "Você",
+    "vendoContaDe": "Vendo conta de",
+    "trocarConta": "Trocar de conta",
+    "queVoceAcompanha": "Contas que você acompanha",
+    "level": {
+      "view": "Somente ver",
+      "view_create": "Ver e lançar",
+      "admin": "Administrador"
+    }
+  },
+  "notifications": {
+    "title": "Alertas",
+    "ariaUnread": "{{count}} alertas não lidos",
+    "ariaDefault": "Alertas",
+    "novosSing": "{{count}} novo aviso para você.",
+    "novosPlur": "{{count}} novos avisos para você.",
+    "padrao": "Veja o que precisa da sua atenção.",
+    "tudoCerto": "Tudo certo por aqui.",
+    "tudoCertoSub": "Nada urgente no radar.",
+    "verTodos": "Ver todos",
+    "actionDefault": "Ver",
+    "priority": {
+      "critica": "Crítica",
+      "alta": "Alta",
+      "media": "Média",
+      "baixa": "Baixa"
+    }
+  }
+}
