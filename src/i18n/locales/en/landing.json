@@ -176,12 +176,76 @@
     "helperA": "Not sure which to pick?",
     "helperLink": "See the FAQ",
     "helperB": "or start with the plan closest to your moment — you can upgrade later.",
+    "names": {
+      "pessoal_manual": "Simple Personal Control",
+      "pessoal_premium": "Complete Personal Control",
+      "mei_essencial": "Essential for MEI",
+      "mei_inteligente": "Complete MEI",
+      "empresa": "Business"
+    },
     "descriptions": {
       "pessoal_manual": "Start organizing your personal finances simply.",
       "pessoal_premium": "Complete personal financial life with automation and more features.",
       "mei_essencial": "The essentials to keep bills, receipts and cash flow organized.",
       "mei_inteligente": "Full automation: save time and gain total clarity.",
       "empresa": "Complete financial view for businesses that need more control."
+    },
+    "highlights": {
+      "pessoal_manual": [
+        "Unlimited manual entries",
+        "Expenses, income and bills payable",
+        "Simple accounts receivable",
+        "Goals, savings and budget",
+        "Basic reports",
+        "No automatic imports"
+      ],
+      "pessoal_premium": [
+        "Everything in Simple Personal Control",
+        "Import statement, invoice and bill/Pix",
+        "Complete accounts receivable",
+        "Goals with images",
+        "Advanced reports and insights",
+        "Investments unlocked",
+        "Subscriptions and recurring items",
+        "Connected accounts by invitation",
+        "Import history"
+      ],
+      "mei_essencial": [
+        "Everything in Simple Personal Control",
+        "Smart Business: My Business, clients and suppliers",
+        "Bills payable with supplier and receivable with client",
+        "Reports by client and supplier",
+        "Accountant Package (monthly summary)",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Personal × business separation",
+        "Connected accounts by invitation",
+        "No automatic imports"
+      ],
+      "mei_inteligente": [
+        "Everything in Essential for MEI",
+        "Import statement, invoice and bill/Pix",
+        "Advanced accounts receivable",
+        "Advanced business reports",
+        "Accountant Package with previous-month comparison",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Goals with images",
+        "Investments unlocked",
+        "Import history",
+        "Business insights"
+      ],
+      "empresa": [
+        "Everything in Complete MEI",
+        "Business profile with company tax ID",
+        "Client and supplier registration by company tax ID",
+        "Complete reports by client and supplier",
+        "Accountant Package with previous-month comparison",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Cost center control",
+        "Business cash flow",
+        "Users and connected accounts",
+        "Permission-based access control",
+        "Report export"
+      ]
     }
   },
   "banks": {
@@ -241,6 +305,25 @@
     "noCommitment": "No commitment",
     "cancelAnytime": "Cancel anytime",
     "browser": "Web access"
+  },
+  "billing": {
+    "periods": {
+      "mensal": { "label": "Monthly", "suffix": "/month" },
+      "trimestral": { "label": "Quarterly", "suffix": "every 3 months" },
+      "semestral": { "label": "Semiannual", "suffix": "every 6 months", "badge": "More savings" },
+      "anual": { "label": "Annual", "suffix": "per year", "badge": "Best value" }
+    },
+    "noDiscount": "no discount",
+    "save": "Save {{value}} ({{percent}}% off)",
+    "secureInfo": "🔒 Secure payment processed by Mercado Pago. Gasto Inteligente does not store your card data.",
+    "currentPlan": "Current plan",
+    "pendingPayment": "Pending payment",
+    "mostChosen": "Most chosen",
+    "totalAccess": "Full access",
+    "newCharge": "Generate new charge",
+    "processing": "Processing…",
+    "subscribe": "Subscribe",
+    "trial": "Try for 10 days"
   },
   "footer": {
     "tagline": "Gasto Inteligente — simple, visual financial control built for your everyday life.",

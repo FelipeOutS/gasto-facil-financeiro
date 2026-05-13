@@ -2869,9 +2869,11 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
   const tag = HIGHLIGHT[p.tier];
   const featured = !!tag;
   const audience = PLAN_AUDIENCE[p.tier];
-  const [priceMain, pricePer] = p.priceLabel.split("/");
-  const hasMore = p.highlights.length > VISIBLE_HIGHLIGHTS;
-  const visibleItems = expanded ? p.highlights : p.highlights.slice(0, VISIBLE_HIGHLIGHTS);
+  const [priceMain] = p.priceLabel.split("/");
+  const translatedHighlights = t(`plans.highlights.${p.tier}`, { returnObjects: true }) as string[];
+  const highlightItems = Array.isArray(translatedHighlights) ? translatedHighlights : p.highlights;
+  const hasMore = highlightItems.length > VISIBLE_HIGHLIGHTS;
+  const visibleItems = expanded ? highlightItems : highlightItems.slice(0, VISIBLE_HIGHLIGHTS);
   const audienceLabel = audience
     ? audience.label === "Pessoa Física"
       ? t("plans.audiencePF")
@@ -2885,6 +2887,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
       : t("plans.highlightMEI")
     : "";
   const description = (t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string);
+  const planName = t(`plans.names.${p.tier}`, { defaultValue: p.name });
 
   return (
     <Reveal delay={i * 0.05} className="h-full">
@@ -2938,7 +2941,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
         </div>
 
         <h3 className={cn("relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
-          {p.name}
+          {planName}
         </h3>
         <p
           className={cn(
@@ -2959,7 +2962,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             {priceMain.trim()}
           </span>
           <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
-            /{(pricePer || t("plans.perMonth")).trim()}
+            /{t("plans.perMonth")}
           </span>
         </div>
         <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
@@ -3006,7 +3009,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               featured ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: p.highlights.length })}
+            {expanded ? t("plans.viewLess") : t("plans.viewAll", { count: highlightItems.length })}
           </button>
         )}
 
@@ -3071,26 +3074,26 @@ function Plans() {
         {/* Trust microcopy under plans */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Pagamento seguro
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t("plans.trustPay")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Sem fidelidade
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> {t("plans.trustNoFid")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Zap className="h-4 w-4 text-emerald-600" /> Acesso imediato
+            <Zap className="h-4 w-4 text-emerald-600" /> {t("plans.trustImmediate")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-emerald-600" /> Atualizações inclusas
+            <Sparkles className="h-4 w-4 text-emerald-600" /> {t("plans.trustUpdates")}
           </span>
         </div>
 
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
-          Não sabe qual escolher?{" "}
+          {t("plans.helperA")}{" "}
           <a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
-            Veja as dúvidas frequentes
+            {t("plans.helperLink")}
           </a>{" "}
-          ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.
+          {t("plans.helperB")}
         </p>
       </div>
     </section>

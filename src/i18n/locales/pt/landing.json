@@ -176,12 +176,76 @@
     "helperA": "Não sabe qual escolher?",
     "helperLink": "Veja as dúvidas frequentes",
     "helperB": "ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.",
+    "names": {
+      "pessoal_manual": "Controle Simples Pessoal",
+      "pessoal_premium": "Controle Completo Pessoal",
+      "mei_essencial": "Essencial para MEI",
+      "mei_inteligente": "MEI Completo",
+      "empresa": "Empresa"
+    },
     "descriptions": {
       "pessoal_manual": "Para começar a organizar suas finanças pessoais com simplicidade.",
       "pessoal_premium": "Vida financeira pessoal completa, com automação e mais recursos.",
       "mei_essencial": "O essencial para o MEI manter contas, recibos e fluxo organizados.",
       "mei_inteligente": "MEI com automação completa: ganhe tempo e tenha clareza total.",
       "empresa": "Visão financeira completa para empresas que precisam de mais controle."
+    },
+    "highlights": {
+      "pessoal_manual": [
+        "Lançamentos manuais ilimitados",
+        "Gastos, receitas e contas a pagar",
+        "Contas a receber simples",
+        "Metas, guardado e orçamento",
+        "Relatórios básicos",
+        "Sem importações automáticas"
+      ],
+      "pessoal_premium": [
+        "Tudo do Controle Simples Pessoal",
+        "Importar extrato, fatura e boleto/Pix",
+        "Contas a receber completas",
+        "Metas com imagens",
+        "Relatórios avançados e insights",
+        "Investimentos liberados",
+        "Assinaturas e recorrências",
+        "Contas conectadas por convite",
+        "Histórico de importações"
+      ],
+      "mei_essencial": [
+        "Tudo do Controle Simples Pessoal",
+        "Empresa Inteligente: Minha Empresa, clientes e fornecedores",
+        "Contas a pagar com fornecedor e a receber com cliente",
+        "Relatórios por cliente e por fornecedor",
+        "Pacote para Contador (resumo mensal)",
+        "Radar Econômico: dólar, euro, Selic e IPCA",
+        "Separação pessoal × negócio",
+        "Contas conectadas por convite",
+        "Sem importações automáticas"
+      ],
+      "mei_inteligente": [
+        "Tudo do Essencial para MEI",
+        "Importar extrato, fatura e boleto/Pix",
+        "Contas a receber avançadas",
+        "Relatórios avançados do negócio",
+        "Pacote para Contador com comparativo do mês anterior",
+        "Radar Econômico: dólar, euro, Selic e IPCA",
+        "Metas com imagens",
+        "Investimentos liberados",
+        "Histórico de importações",
+        "Insights do negócio"
+      ],
+      "empresa": [
+        "Tudo do MEI Completo",
+        "Perfil empresarial com CNPJ",
+        "Cadastro de clientes e fornecedores por CNPJ",
+        "Relatórios completos por cliente e por fornecedor",
+        "Pacote para Contador com comparativo do mês anterior",
+        "Radar Econômico: dólar, euro, Selic e IPCA",
+        "Controle por centro de custo",
+        "Fluxo de caixa empresarial",
+        "Usuários e contas conectadas",
+        "Controle de acessos por permissão",
+        "Exportação de relatórios"
+      ]
     }
   },
   "banks": {
@@ -241,6 +305,25 @@
     "noCommitment": "Sem fidelidade",
     "cancelAnytime": "Cancele quando quiser",
     "browser": "Acesso pelo navegador"
+  },
+  "billing": {
+    "periods": {
+      "mensal": { "label": "Mensal", "suffix": "/mês" },
+      "trimestral": { "label": "Trimestral", "suffix": "a cada 3 meses" },
+      "semestral": { "label": "Semestral", "suffix": "a cada 6 meses", "badge": "Mais economia" },
+      "anual": { "label": "Anual", "suffix": "por ano", "badge": "Melhor custo-benefício" }
+    },
+    "noDiscount": "sem desconto",
+    "save": "Economize {{value}} ({{percent}}% off)",
+    "secureInfo": "🔒 Pagamento seguro processado pelo Mercado Pago. O Gasto Inteligente não armazena dados do seu cartão.",
+    "currentPlan": "Plano atual",
+    "pendingPayment": "Aguardando pagamento",
+    "mostChosen": "Mais escolhido",
+    "totalAccess": "Acesso total",
+    "newCharge": "Gerar nova cobrança",
+    "processing": "Processando…",
+    "subscribe": "Assinar plano",
+    "trial": "Testar por 10 dias"
   },
   "footer": {
     "tagline": "Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.",
