@@ -52,6 +52,8 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
+  validateSearch: zodValidator(rootSearchSchema),
+  search: { middlewares: [retainSearchParams(["lang"])] },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -175,11 +177,48 @@ function RootComponent() {
     preloadAllMerchantLogos();
   }, []);
 
+  // Sincroniza idioma (URL ↔ i18n ↔ localStorage ↔ <html lang>)
+  useLocale();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Hreflang dinâmico: aponta para /pt{path} e /en{path} para SEO multilíngue.
+  // Usa o pathname "limpo" (sem prefixo /pt|/en).
+  const cleanPath = pathname.replace(/^\/(pt|en)(?=\/|$)/, "") || "/";
+
   return (
     <>
+      <HreflangTags path={cleanPath} />
       <ConnectedAccountBanner />
       <Outlet />
       <Toaster position="top-center" />
     </>
   );
+}
+
+function HreflangTags({ path }: { path: string }) {
+  // Usar useEffect + manipulação direta do <head> garante que tags antigas sejam
+  // removidas em transições de rota (evita acúmulo entre navegações no SPA).
+  useEffect(() => {
+    const base = "https://gastointeligente.com.br";
+    const ptHref = `${base}/pt${path === "/" ? "" : path}`;
+    const enHref = `${base}/en${path === "/" ? "" : path}`;
+    const tags = [
+      { hreflang: "pt-BR", href: ptHref },
+      { hreflang: "en", href: enHref },
+      { hreflang: "x-default", href: ptHref },
+    ];
+    const created: HTMLLinkElement[] = [];
+    for (const t of tags) {
+      const link = document.createElement("link");
+      link.rel = "alternate";
+      link.hreflang = t.hreflang;
+      link.href = t.href;
+      link.dataset.hreflang = "1";
+      document.head.appendChild(link);
+      created.push(link);
+    }
+    return () => {
+      created.forEach((el) => el.remove());
+    };
+  }, [path]);
+  return null;
 }
