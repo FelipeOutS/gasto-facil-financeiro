@@ -15,7 +15,9 @@ export const Route = createFileRoute("/privacidade")({
         property: "og:description",
         content: "Como cuidamos dos seus dados no Gasto Inteligente.",
       },
+      { property: "og:url", content: "https://gastointeligente.com.br/privacidade" },
     ],
+    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/privacidade" }],
   }),
   component: PrivacidadePage,
 });
