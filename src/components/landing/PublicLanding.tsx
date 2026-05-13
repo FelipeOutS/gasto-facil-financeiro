@@ -1506,9 +1506,26 @@ const SCREEN_HIGHLIGHTS: Record<ScreenKey, string[]> = {
 };
 
 function ScreensTabs() {
+  const { t } = useTranslation("landing");
   const [active, setActive] = useState<ScreenKey>("dashboard");
+  const labelMap: Record<ScreenKey, string> = {
+    dashboard: t("screens.dashboard"),
+    gastos: t("screens.gastos"),
+    cartoes: t("screens.cartoes"),
+    metas: t("screens.metas"),
+    investimentos: t("screens.investimentos"),
+    guardado: t("screens.guardado"),
+  };
+  const descMap: Record<ScreenKey, string> = {
+    dashboard: t("screens.dashboardDesc"),
+    gastos: t("screens.gastosDesc"),
+    cartoes: t("screens.cartoesDesc"),
+    metas: t("screens.metasDesc"),
+    investimentos: t("screens.investimentosDesc"),
+    guardado: t("screens.guardadoDesc"),
+  };
   const current = SCREENS.find((s) => s.key === active)!;
-  const highlights = SCREEN_HIGHLIGHTS[active];
+  const highlights = t(`screens.highlights.${active}`, { returnObjects: true }) as string[];
 
   return (
     <section id="como-funciona" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
