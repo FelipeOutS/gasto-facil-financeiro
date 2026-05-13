@@ -2869,7 +2869,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
   const tag = HIGHLIGHT[p.tier];
   const featured = !!tag;
   const audience = PLAN_AUDIENCE[p.tier];
-  const [priceMain, pricePer] = p.priceLabel.split("/");
+  const [priceMain] = p.priceLabel.split("/");
   const translatedHighlights = t(`plans.highlights.${p.tier}`, { returnObjects: true }) as string[];
   const highlightItems = Array.isArray(translatedHighlights) ? translatedHighlights : p.highlights;
   const hasMore = highlightItems.length > VISIBLE_HIGHLIGHTS;
@@ -2962,7 +2962,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             {priceMain.trim()}
           </span>
           <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
-            /{(pricePer || t("plans.perMonth")).trim()}
+            /{t("plans.perMonth")}
           </span>
         </div>
         <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
