@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Check,
@@ -32,7 +33,6 @@ import {
 } from "@/lib/plans";
 import {
   getVocab,
-  tipoCadastroLabel,
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
