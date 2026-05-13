@@ -2901,7 +2901,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
                 featured ? "bg-white/10 text-white/90 ring-white/20" : audience.tone,
               )}
             >
-              {audience.label}
+              {audienceLabel}
             </span>
           ) : (
             <span />
