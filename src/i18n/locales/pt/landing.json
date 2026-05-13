@@ -282,5 +282,131 @@
     "msg4": "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
     "chips": ["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"],
     "inputPlaceholder": "Pergunte sobre seus gastos…"
+  },
+  "mockup": {
+    "float": {
+      "income": "Receita",
+      "alert": "Alerta",
+      "alertText": "Conta vence amanhã",
+      "goalTrip": "Meta · Viagem",
+      "goalDone": "{{pct}}% concluída",
+      "invoice": "Fatura",
+      "invoiceOpen": "Em aberto"
+    },
+    "dashboard": {
+      "overview": "Visão geral",
+      "month": "Novembro · 2026",
+      "balance": "Saldo",
+      "income": "Receitas",
+      "expenses": "Despesas",
+      "toPay": "A pagar",
+      "monthFlow": "Fluxo do mês",
+      "incomeVsExpenses": "Receitas vs. despesas",
+      "incomeShort": "Receitas",
+      "expensesShort": "Despesas",
+      "smartLimit": "Limite inteligente",
+      "smartLimitHint": "Você ainda pode gastar R$ 1.180 esta semana."
+    },
+    "gastos": {
+      "eyebrow": "Gastos · mês",
+      "filterDate": "Nov · 2026",
+      "filterCategory": "Categoria",
+      "filterPix": "Pix",
+      "filterCard": "Cartão",
+      "items": {
+        "market": "Mercado",
+        "restaurant": "Restaurante",
+        "transport": "Transporte",
+        "subscription": "Assinatura"
+      },
+      "when": {
+        "today": "Hoje",
+        "yesterday": "Ontem",
+        "daysAgo": "{{n}} dias"
+      },
+      "total": "Total",
+      "average": "Média"
+    },
+    "card": {
+      "name": "Inteligente Black",
+      "contactless": "Contactless",
+      "limitAvailable": "Limite disponível",
+      "ofTotal": "de R$ 8.000,00",
+      "due": "Vence",
+      "openInvoice": "Fatura aberta",
+      "dueShort": "Vence 15/12",
+      "limitUsed": "42% do limite utilizado",
+      "purchases": {
+        "spotify": "Hoje",
+        "ifood": "Ontem · 3x",
+        "shell": "2 dias"
+      },
+      "markPaid": "Marcar fatura como paga"
+    },
+    "meta": {
+      "active": "Meta ativa",
+      "monthYear": "Dez · 2027",
+      "eyebrow": "Meta · Imóvel",
+      "title": "Entrada do apartamento",
+      "saved": "Guardado",
+      "objective": "Objetivo",
+      "complete": "{{pct}}% concluído",
+      "remaining": "Faltam",
+      "otherGoals": "Outras metas",
+      "active3": "3 ativas",
+      "names": {
+        "beach": "Viagem para a praia",
+        "car": "Comprar um carro",
+        "reserve": "Reserva de emergência"
+      }
+    },
+    "invest": {
+      "wallet": "Carteira",
+      "totalAssets": "Patrimônio total · 12 meses",
+      "vsLastMonth": "vs. mês anterior",
+      "evolution": "Evolução",
+      "fixed": "Renda fixa",
+      "stocks": "Ações",
+      "funds": "Fundos",
+      "ofPortfolio": "{{pct}}% da carteira"
+    },
+    "guardado": {
+      "totalSaved": "Total guardado",
+      "reservesIn": "Reservas em 4 contas",
+      "secureReserve": "Reserva segura",
+      "wallet": "Carteira"
+    },
+    "orcamento": {
+      "smartLimitToday": "Limite inteligente · hoje",
+      "perDay": "por dia · até o fim do mês",
+      "income": "Renda",
+      "fixedPaid": "Fixas pagas",
+      "leftover": "Sobra",
+      "byCategory": "Orçamento por categoria",
+      "overrun": "1 estouro",
+      "categories": {
+        "market": "Mercado",
+        "transport": "Transporte",
+        "leisure": "Lazer",
+        "subscriptions": "Assinaturas"
+      }
+    },
+    "contas": {
+      "eyebrow": "Contas · dezembro",
+      "open": "R$ 1.818,20 em aberto",
+      "due": "Vence {{date}}",
+      "items": {
+        "rent": "Aluguel",
+        "internet": "Internet",
+        "energy": "Energia",
+        "client": "Cliente — projeto"
+      },
+      "labels": {
+        "paid": "Pago",
+        "in3": "Em 3 dias",
+        "in9": "Em 9 dias",
+        "toReceive": "A receber"
+      }
+    }
   }
 }
