@@ -1588,12 +1588,12 @@ function ScreensTabs() {
             >
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 <current.icon className="h-3.5 w-3.5 text-slate-700" />
-                {current.label}
+                {labelMap[active]}
               </span>
               <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                {current.label}
+                {labelMap[active]}
               </h3>
-              <p className="mt-3 text-base leading-relaxed text-slate-600">{current.desc}</p>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">{descMap[active]}</p>
               <ul className="mt-5 space-y-2">
                 {highlights.map((h) => (
                   <li key={h} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -1608,7 +1608,7 @@ function ScreensTabs() {
                 to="/cadastro"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
               >
-                Conhecer o sistema
+                {t("screens.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </motion.div>
