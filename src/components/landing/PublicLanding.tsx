@@ -2930,7 +2930,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             featured ? "text-slate-300" : "text-slate-500",
           )}
         >
-          {PLAN_DESCRIPTIONS[p.tier]}
+          {description}
         </p>
 
         <div className="relative mt-3 flex items-baseline gap-1">
