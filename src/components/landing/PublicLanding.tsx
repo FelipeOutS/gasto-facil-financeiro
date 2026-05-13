@@ -3216,6 +3216,12 @@ const TESTIMONIAL_META = [
 ];
 
 function Testimonials() {
+  const { t } = useTranslation("landing");
+  const items = t("testimonials.items", { returnObjects: true }) as Array<{
+    name: string;
+    role: string;
+    text: string;
+  }>;
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-24 sm:py-28">
       {/* Decorative background */}
@@ -3242,39 +3248,42 @@ function Testimonials() {
                 <Star key={k} className="h-3 w-3 fill-current" />
               ))}
             </span>
-            <span>4.9/5 · Avaliação dos usuários</span>
+            <span>{t("testimonials.rating")}</span>
           </span>
           <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
-            Pessoas reais,{" "}
+            {t("testimonials.titleA")}{" "}
             <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-              controle de verdade
+              {t("testimonials.titleHighlight")}
             </span>
-            .
+            {t("testimonials.titleB")}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
-            Histórias de quem trocou a bagunça por uma rotina financeira leve, clara e sob controle.
+            {t("testimonials.subtitle")}
           </p>
         </div>
 
         <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-6 md:max-w-3xl md:gap-7 lg:max-w-none lg:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.08}>
+          {items.map((item, i) => {
+            const meta = TESTIMONIAL_META[i] ?? TESTIMONIAL_META[0];
+            const tt = { ...item, ...meta };
+            return (
+            <Reveal key={tt.name} delay={i * 0.08}>
               <figure
                 className={cn(
                   "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
-                  t.highlight
+                  tt.highlight
                     ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
                     : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
                 )}
               >
-                {t.highlight && (
+                {tt.highlight && (
                   <>
                     <div
                       aria-hidden
                       className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
                     />
                     <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
-                      <Sparkles className="h-3 w-3" /> Em destaque
+                      <Sparkles className="h-3 w-3" /> {t("testimonials.highlightTag")}
                     </span>
                   </>
                 )}
@@ -3284,7 +3293,7 @@ function Testimonials() {
                   aria-hidden
                   className={cn(
                     "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
-                    t.highlight ? "text-white/10" : "text-slate-100",
+                    tt.highlight ? "text-white/10" : "text-slate-100",
                   )}
                 >
                   “
@@ -3293,7 +3302,7 @@ function Testimonials() {
                 <div
                   className={cn(
                     "relative flex items-center gap-1",
-                    t.highlight ? "text-amber-300" : "text-amber-400",
+                    tt.highlight ? "text-amber-300" : "text-amber-400",
                   )}
                 >
                   {Array.from({ length: 5 }).map((_, k) => (
@@ -3304,73 +3313,74 @@ function Testimonials() {
                 <blockquote
                   className={cn(
                     "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
-                    t.highlight ? "text-white/90" : "text-slate-700",
+                    tt.highlight ? "text-white/90" : "text-slate-700",
                   )}
                 >
-                  {t.text}
+                  {tt.text}
                 </blockquote>
 
                 <figcaption
                   className={cn(
                     "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
-                    t.highlight ? "border-white/10" : "border-slate-100",
+                    tt.highlight ? "border-white/10" : "border-slate-100",
                   )}
                 >
                   <span
                     className={cn(
                       "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
-                      t.color,
-                      t.highlight ? "ring-white/20" : "ring-white",
+                      tt.color,
+                      tt.highlight ? "ring-white/20" : "ring-white",
                     )}
                   >
-                    {t.initials}
+                    {tt.initials}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p
                       className={cn(
                         "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
-                        t.highlight ? "text-white" : "text-slate-900",
+                        tt.highlight ? "text-white" : "text-slate-900",
                       )}
                     >
-                      {t.name}
+                      {tt.name}
                     </p>
                     <p
                       className={cn(
                         "text-[12px] md:text-[13px] lg:truncate",
-                        t.highlight ? "text-white/60" : "text-slate-500",
+                        tt.highlight ? "text-white/60" : "text-slate-500",
                       )}
                     >
-                      {t.role}
+                      {tt.role}
                     </p>
                   </div>
                   <ShieldCheck
                     className={cn(
                       "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
-                      t.highlight ? "text-emerald-300" : "text-emerald-500",
+                      tt.highlight ? "text-emerald-300" : "text-emerald-500",
                     )}
-                    aria-label="Usuário verificado"
+                    aria-label={t("testimonials.verifiedAria")}
                   />
                 </figcaption>
               </figure>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
 
         {/* Trust footer */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12px] text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            Depoimentos verificados
+            {t("testimonials.trust1")}
           </span>
           <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
           <span className="inline-flex items-center gap-1.5">
             <Sparkles className="h-4 w-4 text-blue-500" />
-            +10 mil pessoas no controle
+            {t("testimonials.trust2")}
           </span>
           <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
           <span className="inline-flex items-center gap-1.5 text-amber-500">
             <Star className="h-4 w-4 fill-current" />
-            <span className="text-slate-600">4.9 de média</span>
+            <span className="text-slate-600">{t("testimonials.trust3")}</span>
           </span>
         </div>
       </div>
