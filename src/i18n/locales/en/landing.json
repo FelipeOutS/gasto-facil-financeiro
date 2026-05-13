@@ -176,12 +176,76 @@
     "helperA": "Not sure which to pick?",
     "helperLink": "See the FAQ",
     "helperB": "or start with the plan closest to your moment — you can upgrade later.",
+    "names": {
+      "pessoal_manual": "Simple Personal Control",
+      "pessoal_premium": "Complete Personal Control",
+      "mei_essencial": "Essential for MEI",
+      "mei_inteligente": "Complete MEI",
+      "empresa": "Business"
+    },
     "descriptions": {
       "pessoal_manual": "Start organizing your personal finances simply.",
       "pessoal_premium": "Complete personal financial life with automation and more features.",
       "mei_essencial": "The essentials to keep bills, receipts and cash flow organized.",
       "mei_inteligente": "Full automation: save time and gain total clarity.",
       "empresa": "Complete financial view for businesses that need more control."
+    },
+    "highlights": {
+      "pessoal_manual": [
+        "Unlimited manual entries",
+        "Expenses, income and bills payable",
+        "Simple accounts receivable",
+        "Goals, savings and budget",
+        "Basic reports",
+        "No automatic imports"
+      ],
+      "pessoal_premium": [
+        "Everything in Simple Personal Control",
+        "Import statement, invoice and bill/Pix",
+        "Complete accounts receivable",
+        "Goals with images",
+        "Advanced reports and insights",
+        "Investments unlocked",
+        "Subscriptions and recurring items",
+        "Connected accounts by invitation",
+        "Import history"
+      ],
+      "mei_essencial": [
+        "Everything in Simple Personal Control",
+        "Smart Business: My Business, clients and suppliers",
+        "Bills payable with supplier and receivable with client",
+        "Reports by client and supplier",
+        "Accountant Package (monthly summary)",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Personal × business separation",
+        "Connected accounts by invitation",
+        "No automatic imports"
+      ],
+      "mei_inteligente": [
+        "Everything in Essential for MEI",
+        "Import statement, invoice and bill/Pix",
+        "Advanced accounts receivable",
+        "Advanced business reports",
+        "Accountant Package with previous-month comparison",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Goals with images",
+        "Investments unlocked",
+        "Import history",
+        "Business insights"
+      ],
+      "empresa": [
+        "Everything in Complete MEI",
+        "Business profile with company tax ID",
+        "Client and supplier registration by company tax ID",
+        "Complete reports by client and supplier",
+        "Accountant Package with previous-month comparison",
+        "Economic Radar: dollar, euro, Selic and IPCA",
+        "Cost center control",
+        "Business cash flow",
+        "Users and connected accounts",
+        "Permission-based access control",
+        "Report export"
+      ]
     }
   },
   "banks": {
