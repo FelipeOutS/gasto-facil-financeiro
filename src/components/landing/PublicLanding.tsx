@@ -3209,34 +3209,19 @@ function BanksStrip() {
 
 /* ============================== TESTIMONIALS ============================== */
 
-const TESTIMONIALS = [
-  {
-    name: "Camila R.",
-    role: "Designer · Pessoa Física",
-    text: "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo.",
-    initials: "CR",
-    color: "from-blue-500 to-sky-500",
-    highlight: false,
-  },
-  {
-    name: "Rafael M.",
-    role: "MEI · Confeitaria",
-    text: "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto.",
-    initials: "RM",
-    color: "from-emerald-500 to-teal-500",
-    highlight: true,
-  },
-  {
-    name: "Juliana A.",
-    role: "Autônoma",
-    text: "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar.",
-    initials: "JA",
-    color: "from-violet-500 to-fuchsia-500",
-    highlight: false,
-  },
+const TESTIMONIAL_META = [
+  { initials: "CR", color: "from-blue-500 to-sky-500", highlight: false },
+  { initials: "RM", color: "from-emerald-500 to-teal-500", highlight: true },
+  { initials: "JA", color: "from-violet-500 to-fuchsia-500", highlight: false },
 ];
 
 function Testimonials() {
+  const { t } = useTranslation("landing");
+  const items = t("testimonials.items", { returnObjects: true }) as Array<{
+    name: string;
+    role: string;
+    text: string;
+  }>;
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-24 sm:py-28">
       {/* Decorative background */}
@@ -3263,39 +3248,42 @@ function Testimonials() {
                 <Star key={k} className="h-3 w-3 fill-current" />
               ))}
             </span>
-            <span>4.9/5 · Avaliação dos usuários</span>
+            <span>{t("testimonials.rating")}</span>
           </span>
           <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
-            Pessoas reais,{" "}
+            {t("testimonials.titleA")}{" "}
             <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-              controle de verdade
+              {t("testimonials.titleHighlight")}
             </span>
-            .
+            {t("testimonials.titleB")}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
-            Histórias de quem trocou a bagunça por uma rotina financeira leve, clara e sob controle.
+            {t("testimonials.subtitle")}
           </p>
         </div>
 
         <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-6 md:max-w-3xl md:gap-7 lg:max-w-none lg:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.08}>
+          {items.map((item, i) => {
+            const meta = TESTIMONIAL_META[i] ?? TESTIMONIAL_META[0];
+            const tt = { ...item, ...meta };
+            return (
+            <Reveal key={tt.name} delay={i * 0.08}>
               <figure
                 className={cn(
                   "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
-                  t.highlight
+                  tt.highlight
                     ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
                     : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
                 )}
               >
-                {t.highlight && (
+                {tt.highlight && (
                   <>
                     <div
                       aria-hidden
                       className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
                     />
                     <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
-                      <Sparkles className="h-3 w-3" /> Em destaque
+                      <Sparkles className="h-3 w-3" /> {t("testimonials.highlightTag")}
                     </span>
                   </>
                 )}
@@ -3305,7 +3293,7 @@ function Testimonials() {
                   aria-hidden
                   className={cn(
                     "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
-                    t.highlight ? "text-white/10" : "text-slate-100",
+                    tt.highlight ? "text-white/10" : "text-slate-100",
                   )}
                 >
                   “
@@ -3314,7 +3302,7 @@ function Testimonials() {
                 <div
                   className={cn(
                     "relative flex items-center gap-1",
-                    t.highlight ? "text-amber-300" : "text-amber-400",
+                    tt.highlight ? "text-amber-300" : "text-amber-400",
                   )}
                 >
                   {Array.from({ length: 5 }).map((_, k) => (
@@ -3325,73 +3313,74 @@ function Testimonials() {
                 <blockquote
                   className={cn(
                     "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
-                    t.highlight ? "text-white/90" : "text-slate-700",
+                    tt.highlight ? "text-white/90" : "text-slate-700",
                   )}
                 >
-                  {t.text}
+                  {tt.text}
                 </blockquote>
 
                 <figcaption
                   className={cn(
                     "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
-                    t.highlight ? "border-white/10" : "border-slate-100",
+                    tt.highlight ? "border-white/10" : "border-slate-100",
                   )}
                 >
                   <span
                     className={cn(
                       "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
-                      t.color,
-                      t.highlight ? "ring-white/20" : "ring-white",
+                      tt.color,
+                      tt.highlight ? "ring-white/20" : "ring-white",
                     )}
                   >
-                    {t.initials}
+                    {tt.initials}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p
                       className={cn(
                         "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
-                        t.highlight ? "text-white" : "text-slate-900",
+                        tt.highlight ? "text-white" : "text-slate-900",
                       )}
                     >
-                      {t.name}
+                      {tt.name}
                     </p>
                     <p
                       className={cn(
                         "text-[12px] md:text-[13px] lg:truncate",
-                        t.highlight ? "text-white/60" : "text-slate-500",
+                        tt.highlight ? "text-white/60" : "text-slate-500",
                       )}
                     >
-                      {t.role}
+                      {tt.role}
                     </p>
                   </div>
                   <ShieldCheck
                     className={cn(
                       "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
-                      t.highlight ? "text-emerald-300" : "text-emerald-500",
+                      tt.highlight ? "text-emerald-300" : "text-emerald-500",
                     )}
-                    aria-label="Usuário verificado"
+                    aria-label={t("testimonials.verifiedAria")}
                   />
                 </figcaption>
               </figure>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
 
         {/* Trust footer */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12px] text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            Depoimentos verificados
+            {t("testimonials.trust1")}
           </span>
           <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
           <span className="inline-flex items-center gap-1.5">
             <Sparkles className="h-4 w-4 text-blue-500" />
-            +10 mil pessoas no controle
+            {t("testimonials.trust2")}
           </span>
           <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
           <span className="inline-flex items-center gap-1.5 text-amber-500">
             <Star className="h-4 w-4 fill-current" />
-            <span className="text-slate-600">4.9 de média</span>
+            <span className="text-slate-600">{t("testimonials.trust3")}</span>
           </span>
         </div>
       </div>
@@ -3401,70 +3390,21 @@ function Testimonials() {
 
 /* ============================== FAQ ============================== */
 
-const FAQS = [
-  {
-    q: "O que é o Gasto Inteligente?",
-    a: "É uma plataforma de controle financeiro que ajuda você a organizar gastos, cartões, contas, metas, renda e investimentos em um só lugar, com uma visão simples e fácil de entender.",
-  },
-  {
-    q: "Preciso entender de finanças para usar?",
-    a: "Não. O sistema foi pensado para ser simples e visual, mesmo para quem não entende muito de finanças.",
-  },
-  {
-    q: "Posso controlar cartões e faturas?",
-    a: "Sim. Você acompanha compras, faturas, vencimentos, limite usado e pagamento da fatura em um só lugar.",
-  },
-  {
-    q: "Consigo separar gastos por mês de referência?",
-    a: "Sim. O sistema trabalha com mês de referência, então você define a qual mês cada gasto pertence — perfeito para faturas e contas que pagam um mês mas se referem a outro.",
-  },
-  {
-    q: "O sistema ajuda com metas financeiras?",
-    a: "Sim. Você cria metas, acompanha quanto já foi reservado, quanto falta e visualiza a evolução até o objetivo.",
-  },
-  {
-    q: "Existe plano para MEI?",
-    a: "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
-  },
-  {
-    q: "O que tem na área Empresa Inteligente?",
-    a: "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês.",
-  },
-  {
-    q: "O Pacote para Contador substitui meu contador?",
-    a: "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional.",
-  },
-  {
-    q: "O que é o Radar Econômico?",
-    a: "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro.",
-  },
-  {
-    q: "Posso acessar pelo celular?",
-    a: "Sim. O Gasto Inteligente é totalmente responsivo e funciona muito bem no celular, tablet e computador, direto pelo navegador.",
-  },
-  {
-    q: "O modo dark existe?",
-    a: "O modo dark/light fica disponível dentro da área logada do usuário. A página pública de apresentação usa visual claro para facilitar a leitura.",
-  },
-  {
-    q: "Como faço para começar?",
-    a: "Clique em “Começar agora” no topo da página, crie sua conta gratuitamente e escolha o plano que combina com você.",
-  },
-];
-
 function FAQ() {
+  const { t } = useTranslation("landing");
+  const faqs = t("faq.items", { returnObjects: true }) as Array<{ q: string; a: string }>;
   const [open, setOpen] = useState<number | null>(0);
   return (
     <section id="duvidas" className="bg-slate-50 py-20 sm:py-24">
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Dúvidas"
-          title="Perguntas frequentes"
-          subtitle="Se ainda restou alguma dúvida, fale com a gente."
+          eyebrow={t("faq.eyebrow")}
+          title={t("faq.title")}
+          subtitle={t("faq.subtitle")}
           center
         />
         <div className="mt-10 space-y-3">
-          {FAQS.map((f, i) => {
+          {faqs.map((f, i) => {
             const active = open === i;
             return (
               <div
@@ -3505,6 +3445,7 @@ function FAQ() {
 /* ============================== FINAL CTA ============================== */
 
 function FinalCTA() {
+  const { t } = useTranslation("landing");
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -3533,13 +3474,13 @@ function FinalCTA() {
             {/* Copy */}
             <div className="lg:col-span-7">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur">
-                <Sparkles className="h-3 w-3" /> Comece em minutos
+                <Sparkles className="h-3 w-3" /> {t("finalCta.badge")}
               </span>
               <h2 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
-                Pronto para organizar sua vida financeira?
+                {t("finalCta.title")}
               </h2>
               <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
-                Comece hoje e tenha uma visão mais clara do seu dinheiro, dos seus gastos e dos seus objetivos.
+                {t("finalCta.subtitle")}
               </p>
 
               <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -3547,7 +3488,7 @@ function FinalCTA() {
                   to="/cadastro"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_18px_36px_-12px_rgba(255,255,255,0.35)] transition-transform hover:-translate-y-0.5"
                 >
-                  Criar minha conta
+                  {t("finalCta.primary")}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
@@ -3555,14 +3496,14 @@ function FinalCTA() {
                   onClick={(e) => handleAnchorClick(e, "#planos")}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
                 >
-                  Ver planos
+                  {t("finalCta.secondary")}
                 </a>
               </div>
 
               <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-300">
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Sem fidelidade</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Cancele quando quiser</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> Acesso pelo navegador</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.noCommitment")}</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.cancelAnytime")}</li>
+                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.browser")}</li>
               </ul>
             </div>
 
@@ -3632,6 +3573,7 @@ function FinalCTA() {
 /* ============================== FOOTER ============================== */
 
 export function Footer() {
+  const { t } = useTranslation("landing");
   return (
     <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -3645,56 +3587,56 @@ export function Footer() {
               draggable={false}
             />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
-              Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
+              {t("footer.tagline")}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Dados protegidos
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> {t("footer.badgeData")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
-                <Zap className="h-3.5 w-3.5 text-blue-600" /> Rápido e leve
+                <Zap className="h-3.5 w-3.5 text-blue-600" /> {t("footer.badgeFast")}
               </span>
             </div>
           </div>
 
           {/* Produto */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.product")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">Recursos</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">Como funciona</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">Planos</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Dúvidas</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">{t("footer.links.features")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">{t("footer.links.how")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">{t("footer.links.plans")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.faq")}</LandingAnchorLink></li>
             </ul>
           </div>
 
           {/* Conta */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Conta</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.account")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/login" className="transition-colors hover:text-slate-900">Entrar</Link></li>
-              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">Cadastrar-se</Link></li>
-              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">Recuperar senha</Link></li>
+              <li><Link to="/login" className="transition-colors hover:text-slate-900">{t("footer.links.signIn")}</Link></li>
+              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">{t("footer.links.signUp")}</Link></li>
+              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">{t("footer.links.reset")}</Link></li>
             </ul>
           </div>
 
           {/* Suporte */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.support")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Central de ajuda</LandingAnchorLink></li>
-              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
-              <li><Link to="/status" className="transition-colors hover:text-slate-900">Status do sistema</Link></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.help")}</LandingAnchorLink></li>
+              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">{t("footer.links.contact")}</a></li>
+              <li><Link to="/status" className="transition-colors hover:text-slate-900">{t("footer.links.status")}</Link></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.legal")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/termos" className="transition-colors hover:text-slate-900">Termos de uso</Link></li>
-              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">Política de privacidade</Link></li>
-              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">LGPD</Link></li>
+              <li><Link to="/termos" className="transition-colors hover:text-slate-900">{t("footer.links.terms")}</Link></li>
+              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">{t("footer.links.privacy")}</Link></li>
+              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">{t("footer.links.lgpd")}</Link></li>
             </ul>
           </div>
         </div>
@@ -3702,10 +3644,10 @@ export function Footer() {
 
       <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} Gasto Inteligente. Todos os direitos reservados.</p>
+          <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
           <p className="inline-flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Feito com cuidado para sua vida financeira.
+            {t("footer.madeWith")}
           </p>
         </div>
       </div>
@@ -3772,18 +3714,15 @@ function Reveal({
 /* ============================== GASTO AI SECTION ============================== */
 
 function GastoAISection() {
+  const { t } = useTranslation("landing");
   const messages = [
-    { role: "user" as const, text: "Quanto gastei com mercado este mês?" },
-    {
-      role: "ai" as const,
-      text: "Em novembro você gastou R$ 842,30 em mercado — 18% a menos que outubro (R$ 1.027,90). A maior compra foi no dia 14, R$ 312,40.",
-    },
-    { role: "user" as const, text: "E a fatura do Nubank, já está fechada?" },
-    {
-      role: "ai" as const,
-      text: "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
-    },
+    { role: "user" as const, text: t("ai.msg1") },
+    { role: "ai" as const, text: t("ai.msg2") },
+    { role: "user" as const, text: t("ai.msg3") },
+    { role: "ai" as const, text: t("ai.msg4") },
   ];
+  const bullets = t("ai.bullets", { returnObjects: true }) as string[];
+  const chips = t("ai.chips", { returnObjects: true }) as string[];
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/60 py-20 sm:py-24">
@@ -3798,24 +3737,16 @@ function GastoAISection() {
       <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className="lg:col-span-5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-            <Sparkles className="h-3 w-3" /> Gasto AI
+            <Sparkles className="h-3 w-3" /> {t("ai.tag")}
           </span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Converse com sua vida financeira.
+            {t("ai.title")}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            Pergunte sobre seus gastos, faturas, metas e contas. O Gasto AI analisa apenas os dados
-            que você cadastrou e entrega respostas claras — sem chute, sem estimativa solta.
+            {t("ai.text")}
           </p>
           <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {[
-              "Resumo do mês em segundos",
-              "Comparação entre períodos",
-              "Faturas, vencimentos e cartões",
-              "Onde dá pra economizar",
-              "Status das metas",
-              "Contas a pagar e a receber",
-            ].map((b) => (
+            {bullets.map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-slate-700">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 {b}
@@ -3826,7 +3757,7 @@ function GastoAISection() {
             to="/cadastro"
             className="mt-7 inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_-14px_rgba(15,23,42,0.55)] transition-transform hover:-translate-y-0.5"
           >
-            Experimentar o Gasto AI
+            {t("ai.cta")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Reveal>
@@ -3846,10 +3777,10 @@ function GastoAISection() {
                       <Bot className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Gasto AI</p>
+                      <p className="text-sm font-bold text-slate-900">{t("ai.chatTitle")}</p>
                       <p className="inline-flex items-center gap-1 text-[11px] text-slate-500">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        Conectado aos seus dados
+                        {t("ai.chatStatus")}
                       </p>
                     </div>
                   </div>
@@ -3872,7 +3803,7 @@ function GastoAISection() {
                       >
                         {m.role === "ai" && (
                           <span className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                            <Sparkles className="h-3 w-3" /> Gasto AI
+                            <Sparkles className="h-3 w-3" /> {t("ai.chatTitle")}
                           </span>
                         )}
                         {m.text}
@@ -3883,7 +3814,7 @@ function GastoAISection() {
 
                 {/* Suggested chips */}
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  {["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"].map((c) => (
+                  {chips.map((c) => (
                     <span
                       key={c}
                       className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
@@ -3896,7 +3827,7 @@ function GastoAISection() {
                 {/* Input */}
                 <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-2 pl-4 pr-1">
                   <MessageCircle className="h-4 w-4 text-slate-400" />
-                  <p className="flex-1 truncate text-sm text-slate-500">Pergunte sobre seus gastos…</p>
+                  <p className="flex-1 truncate text-sm text-slate-500">{t("ai.inputPlaceholder")}</p>
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-900 text-white">
                     <Send className="h-4 w-4" />
                   </span>
