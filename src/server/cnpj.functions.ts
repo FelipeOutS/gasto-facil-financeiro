@@ -7,6 +7,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { consultarCnpjInterno } from "./cnpj.server";
 
 const inputSchema = z.object({
@@ -22,6 +23,7 @@ const inputSchema = z.object({
  * - CNPJ inválido nunca chama API externa.
  */
 export const consultarCnpj = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => inputSchema.parse(input))
   .handler(async ({ data }) => {
     return consultarCnpjInterno(data.cnpj);
