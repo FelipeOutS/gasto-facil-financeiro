@@ -647,6 +647,9 @@ function MeuPlanoPage() {
           const isRecommended = !isCurrent && !isPending && recommended === p.tier;
           const accessGranted = isAdminMaster || isCurrent;
           const pr = priceForPeriod(p, periodicidade);
+          const translatedName = planName(p.tier);
+          const translatedDescription = planDescription(p.tier, p.tagline);
+          const translatedHighlights = planHighlights(p.tier, p.highlights);
           return (
             <div
               key={p.tier}
@@ -674,15 +677,15 @@ function MeuPlanoPage() {
                         : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
                   )}
                 >
-                  {isCurrent ? "Plano atual" : isPending ? "Aguardando pagamento" : "Mais escolhido"}
+                  {isCurrent ? t("billing.currentPlan") : isPending ? t("billing.pendingPayment") : t("billing.mostChosen")}
                 </span>
               )}
 
               {/* Cabeçalho */}
               <div>
-                <p className="text-base font-bold tracking-tight">{p.name}</p>
+                <p className="text-base font-bold tracking-tight">{translatedName}</p>
                 <p className="mt-1 text-xs text-muted-foreground min-h-[2rem]">
-                  {p.tagline}
+                  {translatedDescription}
                 </p>
               </div>
 
@@ -693,21 +696,21 @@ function MeuPlanoPage() {
                     {formatBRL(pr.totalCents)}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
-                    {periodInfo.suffix}
+                    {periodSuffix(periodicidade)}
                   </span>
                 </div>
                 {pr.discountCents > 0 ? (
                   <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    Economize {formatBRL(pr.discountCents)} ({pr.discountPercent}% off)
+                    {t("billing.save", { value: formatBRL(pr.discountCents), percent: pr.discountPercent })}
                   </p>
                 ) : (
-                  <p className="mt-1 text-[11px] text-muted-foreground">{p.priceLabel}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{formatBRL(p.priceCents)}{periodSuffix("mensal")}</p>
                 )}
               </div>
 
               {/* Benefícios */}
               <ul className="mt-5 flex-1 space-y-2.5">
-                {p.highlights.map((h) => (
+                {translatedHighlights.map((h) => (
                   <li
                     key={h}
                     className="flex items-start gap-2 text-xs leading-relaxed text-foreground/85"
@@ -725,7 +728,7 @@ function MeuPlanoPage() {
                 {accessGranted ? (
                   <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary">
                     <Check className="h-4 w-4" />
-                    {isAdminMaster ? "Acesso total" : "Plano atual"}
+                    {isAdminMaster ? t("billing.totalAccess") : t("billing.currentPlan")}
                   </div>
                 ) : (
                   <Button
@@ -737,10 +740,10 @@ function MeuPlanoPage() {
                     onClick={() => escolherPlano(p.tier)}
                   >
                     {isPending
-                      ? "Gerar nova cobrança"
+                      ? t("billing.newCharge")
                       : submitting === p.tier
-                        ? "Processando…"
-                        : "Assinar plano"}
+                        ? t("billing.processing")
+                        : t("billing.subscribe")}
                   </Button>
                 )}
                 {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
@@ -752,7 +755,7 @@ function MeuPlanoPage() {
                     onClick={() => iniciarTeste(p.tier)}
                   >
                     <Sparkles className="mr-2 h-3.5 w-3.5" />
-                    Testar por 10 dias
+                    {t("billing.trial")}
                   </Button>
                 )}
               </div>
