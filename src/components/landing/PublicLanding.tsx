@@ -3573,6 +3573,7 @@ function FinalCTA() {
 /* ============================== FOOTER ============================== */
 
 export function Footer() {
+  const { t } = useTranslation("landing");
   return (
     <footer className="relative border-t border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -3586,56 +3587,56 @@ export function Footer() {
               draggable={false}
             />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
-              Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.
+              {t("footer.tagline")}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Dados protegidos
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> {t("footer.badgeData")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
-                <Zap className="h-3.5 w-3.5 text-blue-600" /> Rápido e leve
+                <Zap className="h-3.5 w-3.5 text-blue-600" /> {t("footer.badgeFast")}
               </span>
             </div>
           </div>
 
           {/* Produto */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produto</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.product")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">Recursos</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">Como funciona</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">Planos</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Dúvidas</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">{t("footer.links.features")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">{t("footer.links.how")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">{t("footer.links.plans")}</LandingAnchorLink></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.faq")}</LandingAnchorLink></li>
             </ul>
           </div>
 
           {/* Conta */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Conta</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.account")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/login" className="transition-colors hover:text-slate-900">Entrar</Link></li>
-              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">Cadastrar-se</Link></li>
-              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">Recuperar senha</Link></li>
+              <li><Link to="/login" className="transition-colors hover:text-slate-900">{t("footer.links.signIn")}</Link></li>
+              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">{t("footer.links.signUp")}</Link></li>
+              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">{t("footer.links.reset")}</Link></li>
             </ul>
           </div>
 
           {/* Suporte */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Suporte</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.support")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">Central de ajuda</LandingAnchorLink></li>
-              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">Fale conosco</a></li>
-              <li><Link to="/status" className="transition-colors hover:text-slate-900">Status do sistema</Link></li>
+              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.help")}</LandingAnchorLink></li>
+              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">{t("footer.links.contact")}</a></li>
+              <li><Link to="/status" className="transition-colors hover:text-slate-900">{t("footer.links.status")}</Link></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.legal")}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/termos" className="transition-colors hover:text-slate-900">Termos de uso</Link></li>
-              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">Política de privacidade</Link></li>
-              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">LGPD</Link></li>
+              <li><Link to="/termos" className="transition-colors hover:text-slate-900">{t("footer.links.terms")}</Link></li>
+              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">{t("footer.links.privacy")}</Link></li>
+              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">{t("footer.links.lgpd")}</Link></li>
             </ul>
           </div>
         </div>
@@ -3643,10 +3644,10 @@ export function Footer() {
 
       <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} Gasto Inteligente. Todos os direitos reservados.</p>
+          <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
           <p className="inline-flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Feito com cuidado para sua vida financeira.
+            {t("footer.madeWith")}
           </p>
         </div>
       </div>
