@@ -73,6 +73,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function MeuPlanoPage() {
+  const { t, i18n } = useTranslation("landing");
   const { profile, user } = useAuth();
   const {
     plan,
@@ -163,6 +164,20 @@ function MeuPlanoPage() {
   const planoAtualMetodo = paymentMethod ?? ultimoAprovado?.method ?? null;
   const planoAtualTotal = paymentAmountCents ?? ultimoAprovado?.amount_cents ?? null;
   const planoAtualPagoEm = paidAt ?? ultimoAprovado?.paid_at ?? null;
+  const isEnglish = i18n.language?.startsWith("en");
+  const periodLabel = (key: Periodicidade) => t(`billing.periods.${key}.label`);
+  const periodSuffix = (key: Periodicidade) => t(`billing.periods.${key}.suffix`);
+  const periodBadge = (key: Periodicidade, fallback?: string) =>
+    t(`billing.periods.${key}.badge`, { defaultValue: fallback ?? "" });
+  const formatDate = (date: string | Date) =>
+    new Date(date).toLocaleDateString(isEnglish ? "en-US" : "pt-BR");
+  const planName = (tier: PlanTier) => t(`plans.names.${tier}`, { defaultValue: PLAN_LABEL[tier] });
+  const planDescription = (tier: PlanTier, fallback: string) =>
+    t(`plans.descriptions.${tier}`, { defaultValue: fallback });
+  const planHighlights = (tier: PlanTier, fallback: string[]) => {
+    const translated = t(`plans.highlights.${tier}`, { returnObjects: true }) as string[];
+    return Array.isArray(translated) ? translated : fallback;
+  };
 
   const ultimoStatus = historico[0]?.status?.toLowerCase() ?? "";
   const recusado =
