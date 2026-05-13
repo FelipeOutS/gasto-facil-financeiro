@@ -502,7 +502,7 @@ function Hero() {
                 </div>
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Receita
+                    {t("mockup.float.income")}
                   </p>
                   <p className="text-sm font-bold tabular-nums text-slate-900">R$ 6.420</p>
                 </div>
@@ -520,9 +520,9 @@ function Hero() {
                 </div>
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Alerta
+                    {t("mockup.float.alert")}
                   </p>
-                  <p className="text-xs font-bold leading-tight text-slate-900">Conta vence amanhã</p>
+                  <p className="text-xs font-bold leading-tight text-slate-900">{t("mockup.float.alertText")}</p>
                 </div>
               </div>
             </motion.div>
@@ -538,14 +538,35 @@ function Hero() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Meta · Viagem
+                    {t("mockup.float.goalTrip")}
                   </p>
-                  <p className="text-sm font-bold tabular-nums text-slate-900">68% concluída</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-900">{t("mockup.float.goalDone", { pct: 68 })}</p>
                 </div>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
               </div>
+            </motion.div>
+
+            <motion.div
+              animate={reduce ? undefined : { y: [0, 7, 0] }}
+              transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
+              className="absolute -right-6 top-20 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100 text-violet-700">
+                    <CreditCard className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                      {t("mockup.float.invoice")}
+                    </p>
+                    <p className="text-xs font-bold text-slate-900">{t("mockup.float.invoiceOpen")}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
             </motion.div>
 
             <motion.div
