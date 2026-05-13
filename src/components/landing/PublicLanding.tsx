@@ -3390,57 +3390,6 @@ function Testimonials() {
 
 /* ============================== FAQ ============================== */
 
-const FAQS = [
-  {
-    q: "O que é o Gasto Inteligente?",
-    a: "É uma plataforma de controle financeiro que ajuda você a organizar gastos, cartões, contas, metas, renda e investimentos em um só lugar, com uma visão simples e fácil de entender.",
-  },
-  {
-    q: "Preciso entender de finanças para usar?",
-    a: "Não. O sistema foi pensado para ser simples e visual, mesmo para quem não entende muito de finanças.",
-  },
-  {
-    q: "Posso controlar cartões e faturas?",
-    a: "Sim. Você acompanha compras, faturas, vencimentos, limite usado e pagamento da fatura em um só lugar.",
-  },
-  {
-    q: "Consigo separar gastos por mês de referência?",
-    a: "Sim. O sistema trabalha com mês de referência, então você define a qual mês cada gasto pertence — perfeito para faturas e contas que pagam um mês mas se referem a outro.",
-  },
-  {
-    q: "O sistema ajuda com metas financeiras?",
-    a: "Sim. Você cria metas, acompanha quanto já foi reservado, quanto falta e visualiza a evolução até o objetivo.",
-  },
-  {
-    q: "Existe plano para MEI?",
-    a: "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle.",
-  },
-  {
-    q: "O que tem na área Empresa Inteligente?",
-    a: "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês.",
-  },
-  {
-    q: "O Pacote para Contador substitui meu contador?",
-    a: "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional.",
-  },
-  {
-    q: "O que é o Radar Econômico?",
-    a: "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro.",
-  },
-  {
-    q: "Posso acessar pelo celular?",
-    a: "Sim. O Gasto Inteligente é totalmente responsivo e funciona muito bem no celular, tablet e computador, direto pelo navegador.",
-  },
-  {
-    q: "O modo dark existe?",
-    a: "O modo dark/light fica disponível dentro da área logada do usuário. A página pública de apresentação usa visual claro para facilitar a leitura.",
-  },
-  {
-    q: "Como faço para começar?",
-    a: "Clique em “Começar agora” no topo da página, crie sua conta gratuitamente e escolha o plano que combina com você.",
-  },
-];
-
 function FAQ() {
   const { t } = useTranslation("landing");
   const faqs = t("faq.items", { returnObjects: true }) as Array<{ q: string; a: string }>;
