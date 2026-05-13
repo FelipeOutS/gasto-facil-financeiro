@@ -204,59 +204,61 @@ export function PublicLanding() {
       style={{ colorScheme: "light" }}
     >
       <Header />
-      <Hero />
-      <BanksStrip />
-      <TrustStrip />
-      <WhyUs />
-      <HowItWorks />
-      <ScreensTabs />
-      <DashboardShowcase />
-      <GastoAISection />
-      <FeatureSplit
-        eyebrow="Gastos"
-        title="Entenda para onde seu dinheiro está indo."
-        text="Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence."
-        bullets={["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]}
-        visual={<GastosMock />}
-        reverse
-      />
-      <FeatureSplit
-        eyebrow="Cartões e faturas"
-        title="Controle suas faturas sem confusão."
-        text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
-        bullets={[
-          "Limite disponível em tempo real",
-          "Fechamento e vencimento",
-          "Status: aberta, paga ou vencida",
-          "Marcar fatura como paga em 1 clique",
-          "Importar fatura por PDF",
-          "Próximos vencimentos no aside",
-        ]}
-        visual={<CartaoMock />}
-      />
-      <FeatureSplit
-        eyebrow="Contas e organização"
-        title="Contas a pagar, a receber e renda no mesmo lugar."
-        text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
-        bullets={[
-          "Contas a pagar com recorrência",
-          "Contas a receber",
-          "Minha renda mensal",
-          "Calendário financeiro",
-          "Alertas de vencimento",
-        ]}
-        visual={<ContasMock />}
-        reverse
-      />
-      <EmpresaInteligenteSection />
-      <MoreFeatures />
-      <MultiDeviceShowcase />
-      <ForWho />
-      <TrustPoints />
-      <Plans />
-      <Testimonials />
-      <FAQ />
-      <FinalCTA />
+      <main>
+        <Hero />
+        <BanksStrip />
+        <TrustStrip />
+        <WhyUs />
+        <HowItWorks />
+        <ScreensTabs />
+        <DashboardShowcase />
+        <GastoAISection />
+        <FeatureSplit
+          eyebrow="Gastos"
+          title="Entenda para onde seu dinheiro está indo."
+          text="Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence."
+          bullets={["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]}
+          visual={<GastosMock />}
+          reverse
+        />
+        <FeatureSplit
+          eyebrow="Cartões e faturas"
+          title="Controle suas faturas sem confusão."
+          text="Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente."
+          bullets={[
+            "Limite disponível em tempo real",
+            "Fechamento e vencimento",
+            "Status: aberta, paga ou vencida",
+            "Marcar fatura como paga em 1 clique",
+            "Importar fatura por PDF",
+            "Próximos vencimentos no aside",
+          ]}
+          visual={<CartaoMock />}
+        />
+        <FeatureSplit
+          eyebrow="Contas e organização"
+          title="Contas a pagar, a receber e renda no mesmo lugar."
+          text="Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente."
+          bullets={[
+            "Contas a pagar com recorrência",
+            "Contas a receber",
+            "Minha renda mensal",
+            "Calendário financeiro",
+            "Alertas de vencimento",
+          ]}
+          visual={<ContasMock />}
+          reverse
+        />
+        <EmpresaInteligenteSection />
+        <MoreFeatures />
+        <MultiDeviceShowcase />
+        <ForWho />
+        <TrustPoints />
+        <Plans />
+        <Testimonials />
+        <FAQ />
+        <FinalCTA />
+      </main>
       <Footer />
       <LandingStyles />
     </div>
