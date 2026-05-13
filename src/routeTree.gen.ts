@@ -50,7 +50,11 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PtIndexRouteImport } from './routes/pt.index'
+import { Route as EnIndexRouteImport } from './routes/en.index'
+import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
+import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
@@ -278,9 +282,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PtIndexRoute = PtIndexRouteImport.update({
+  id: '/pt/',
+  path: '/pt/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnIndexRoute = EnIndexRouteImport.update({
+  id: '/en/',
+  path: '/en/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtSplatRoute = PtSplatRouteImport.update({
+  id: '/pt/$',
+  path: '/pt/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
   id: '/fornecedores_/relatorio',
   path: '/fornecedores/relatorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnSplatRoute = EnSplatRouteImport.update({
+  id: '/en/$',
+  path: '/en/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
@@ -447,7 +471,11 @@ export interface FileRoutesByFullPath {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/pt/$': typeof PtSplatRoute
+  '/en/': typeof EnIndexRoute
+  '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -512,7 +540,11 @@ export interface FileRoutesByTo {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/pt/$': typeof PtSplatRoute
+  '/en': typeof EnIndexRoute
+  '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -578,7 +610,11 @@ export interface FileRoutesById {
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
+  '/pt/$': typeof PtSplatRoute
+  '/en/': typeof EnIndexRoute
+  '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -645,7 +681,11 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
+    | '/en/$'
     | '/fornecedores/relatorio'
+    | '/pt/$'
+    | '/en/'
+    | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -710,7 +750,11 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
+    | '/en/$'
     | '/fornecedores/relatorio'
+    | '/pt/$'
+    | '/en'
+    | '/pt'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -775,7 +819,11 @@ export interface FileRouteTypes {
     | '/api/ocr-gasto'
     | '/clientes_/relatorio'
     | '/email/unsubscribe'
+    | '/en/$'
     | '/fornecedores_/relatorio'
+    | '/pt/$'
+    | '/en/'
+    | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
@@ -841,7 +889,11 @@ export interface RootRouteChildren {
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+  PtSplatRoute: typeof PtSplatRoute
+  EnIndexRoute: typeof EnIndexRoute
+  PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -1143,11 +1195,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pt/': {
+      id: '/pt/'
+      path: '/pt'
+      fullPath: '/pt/'
+      preLoaderRoute: typeof PtIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en/': {
+      id: '/en/'
+      path: '/en'
+      fullPath: '/en/'
+      preLoaderRoute: typeof EnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt/$': {
+      id: '/pt/$'
+      path: '/pt/$'
+      fullPath: '/pt/$'
+      preLoaderRoute: typeof PtSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fornecedores_/relatorio': {
       id: '/fornecedores_/relatorio'
       path: '/fornecedores/relatorio'
       fullPath: '/fornecedores/relatorio'
       preLoaderRoute: typeof FornecedoresRelatorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en/$': {
+      id: '/en/$'
+      path: '/en/$'
+      fullPath: '/en/$'
+      preLoaderRoute: typeof EnSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
@@ -1353,7 +1433,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+  PtSplatRoute: PtSplatRoute,
+  EnIndexRoute: EnIndexRoute,
+  PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,

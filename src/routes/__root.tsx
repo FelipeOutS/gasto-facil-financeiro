@@ -1,5 +1,15 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRoute,
+  HeadContent,
+  Scripts,
+  retainSearchParams,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme";
@@ -8,8 +18,14 @@ import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
+import "@/i18n";
+import { useLocale } from "@/i18n/use-locale";
 
 import appCss from "../styles.css?url";
+
+const rootSearchSchema = z.object({
+  lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),
+});
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('gf-theme')||'dark';var r=t;if(t==='system'){r=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(r==='light'){d.classList.add('light');d.classList.remove('dark');d.style.colorScheme='light';}else{d.classList.add('dark');d.classList.remove('light');d.style.colorScheme='dark';}}catch(e){}})();`;
 
