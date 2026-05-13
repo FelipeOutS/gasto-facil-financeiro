@@ -1,18 +1,20 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Home, List, CreditCard, Target, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { MoreSheet, MORE_PATHS } from "@/components/MoreSheet";
 
 const TABS = [
-  { to: "/", label: "Dashboard", icon: Home },
-  { to: "/gastos", label: "Gastos", icon: List },
-  { to: "/cartoes", label: "Cartões", icon: CreditCard },
-  { to: "/metas", label: "Metas", icon: Target },
+  { to: "/", labelKey: "dashboard", icon: Home },
+  { to: "/gastos", labelKey: "gastos", icon: List },
+  { to: "/cartoes", labelKey: "cartoes", icon: CreditCard },
+  { to: "/metas", labelKey: "metas", icon: Target },
 ] as const;
 
 export function BottomNav() {
+  const { t } = useTranslation("nav");
   const location = useLocation();
   const alerta = useAlertaContas();
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -41,10 +43,10 @@ export function BottomNav() {
     <>
       <nav
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom lg:hidden"
-        aria-label="Navegação principal"
+        aria-label={t("aria.primary")}
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
-          {TABS.map(({ to, label, icon: Icon }) => {
+          {TABS.map(({ to, labelKey, icon: Icon }) => {
             const active =
               to === "/" ? currentPath === "/" : currentPath.startsWith(to);
             const showDot = to === "/" && alerta !== "nenhum";
@@ -81,12 +83,12 @@ export function BottomNav() {
                       />
                     )}
                   </span>
-                  <span>{label}</span>
+                  <span>{t(`items.${labelKey}`)}</span>
                   {showDot && (
                     <span className="sr-only">
                       {alerta === "vermelho"
-                        ? "Há contas atrasadas"
-                        : "Há contas vencendo em breve"}
+                        ? t("aria.overdueAccounts")
+                        : t("aria.soonAccounts")}
                     </span>
                   )}
                 </Link>
@@ -101,7 +103,7 @@ export function BottomNav() {
                 "relative flex w-full flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-medium transition-all duration-200 active:scale-95",
                 moreActive ? "text-brand" : "text-muted-foreground hover:text-foreground",
               )}
-              aria-label="Abrir mais opções"
+              aria-label={t("aria.openMore")}
             >
               {moreActive && (
                 <span
@@ -113,7 +115,7 @@ export function BottomNav() {
                 className={cn("h-5 w-5 transition-transform", moreActive && "scale-110")}
                 strokeWidth={moreActive ? 2.4 : 1.8}
               />
-              <span>Mais</span>
+              <span>{t("items.more")}</span>
             </button>
           </li>
         </ul>
