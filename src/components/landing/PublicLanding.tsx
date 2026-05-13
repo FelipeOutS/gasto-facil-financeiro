@@ -2134,12 +2134,7 @@ function MetaMock() {
           <span className="text-[10px] font-medium text-slate-400">{t("mockup.meta.active3")}</span>
         </div>
 
-      {/* Other goals — variety */}
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Outras metas</p>
-          <span className="text-[10px] font-medium text-slate-400">3 ativas</span>
-        </div>
+
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {otherGoals.map((g) => (
             <div
