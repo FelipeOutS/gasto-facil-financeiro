@@ -2943,11 +2943,11 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
             {priceMain.trim()}
           </span>
           <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
-            /{(pricePer || "mês").trim()}
+            /{(pricePer || t("plans.perMonth")).trim()}
           </span>
         </div>
         <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
-          Cancele quando quiser
+          {t("plans.cancelAnytime")}
         </p>
 
         <div
