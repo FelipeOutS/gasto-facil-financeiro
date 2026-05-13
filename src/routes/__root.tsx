@@ -66,7 +66,7 @@ export const Route = createRootRoute({
       },
       { name: "theme-color", content: "#0B1F3A" },
       { property: "og:site_name", content: "Gasto Inteligente" },
-      { property: "og:title", content: "Gasto Inteligente — Controle financeiro simples e visual" },
+      { property: "og:title", content: "Gasto Inteligente — Controle de gastos do mês" },
       {
         property: "og:description",
         content:
@@ -78,9 +78,11 @@ export const Route = createRootRoute({
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gasto Inteligente" },
-      { name: "twitter:description", content: "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar." },
+      { name: "twitter:title", content: "Gasto Inteligente — Controle de gastos do mês" },
+      { name: "twitter:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
       { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { name: "description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
+      { property: "og:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
     ],
     links: [
       {
