@@ -190,6 +190,7 @@ export function LandingAnchorLink({
 }
 
 export function PublicLanding() {
+  const { t } = useTranslation("landing");
   // Quando aterrissamos na landing com um hash (ex.: vindo de /termos via
   // /#planos), rolamos suavemente até a seção correspondente.
   useEffect(() => {
