@@ -155,7 +155,6 @@ function MeuPlanoPage() {
     if (user?.id) void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id, refresh]);
 
-  const periodInfo = getPeriodicidade(periodicidade);
   // Periodicidade do plano atual: último pagamento aprovado, se houver
   const ultimoAprovado = historico.find((h) =>
     ["approved", "paid", "authorized"].includes((h.status ?? "").toLowerCase()),
