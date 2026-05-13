@@ -293,6 +293,9 @@ function Header() {
           <img
             src="/logos/brand/gasto-inteligente-light.png"
             alt="Gasto Inteligente"
+            width={176}
+            height={44}
+            fetchPriority="high"
             className="h-9 w-auto sm:h-11 object-contain"
             draggable={false}
           />
@@ -406,9 +409,9 @@ function Hero() {
             Sua vida financeira mais leve
           </motion.span>
           <motion.h1
-            initial={{ opacity: 0, y: 12 }}
+            initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
+            transition={{ duration: 0.35, delay: 0 }}
             className="mt-5 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.6rem]"
           >
             Controle suas finanças com mais{" "}
