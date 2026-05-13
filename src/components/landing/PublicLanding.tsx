@@ -1750,21 +1750,28 @@ function MockShell({ children }: { children: React.ReactNode }) {
 }
 
 function GastosMock() {
+  const { t } = useTranslation("landing");
   const items = [
-    { c: "Mercado", v: "R$ 340,90", t: "Hoje", color: "bg-emerald-100 text-emerald-700" },
-    { c: "Restaurante", v: "R$ 78,50", t: "Ontem", color: "bg-amber-100 text-amber-700" },
-    { c: "Transporte", v: "R$ 24,00", t: "2 dias", color: "bg-blue-100 text-blue-700" },
-    { c: "Assinatura", v: "R$ 39,90", t: "3 dias", color: "bg-violet-100 text-violet-700" },
+    { c: t("mockup.gastos.items.market"), avatarKey: "Mercado", v: "R$ 340,90", t: t("mockup.gastos.when.today") },
+    { c: t("mockup.gastos.items.restaurant"), avatarKey: "Restaurante", v: "R$ 78,50", t: t("mockup.gastos.when.yesterday") },
+    { c: t("mockup.gastos.items.transport"), avatarKey: "Transporte", v: "R$ 24,00", t: t("mockup.gastos.when.daysAgo", { n: 2 }) },
+    { c: t("mockup.gastos.items.subscription"), avatarKey: "Assinatura", v: "R$ 39,90", t: t("mockup.gastos.when.daysAgo", { n: 3 }) },
+  ];
+  const filters = [
+    t("mockup.gastos.filterDate"),
+    t("mockup.gastos.filterCategory"),
+    t("mockup.gastos.filterPix"),
+    t("mockup.gastos.filterCard"),
   ];
   return (
     <MockShell>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Gastos · mês</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.gastos.eyebrow")}</p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 sm:flex-wrap sm:justify-end sm:overflow-visible">
-          {["Nov · 2026", "Categoria", "Pix", "Cartão"].map((p, i) => (
+          {filters.map((p, i) => (
             <span
               key={p}
               className={cn(
@@ -1784,7 +1791,7 @@ function GastosMock() {
         {items.map((it) => (
           <li key={it.c} className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
-              <TransactionAvatar estabelecimento={it.c} size="sm" />
+              <TransactionAvatar estabelecimento={it.avatarKey} size="sm" />
               <div>
                 <p className="text-sm font-semibold text-slate-900">{it.c}</p>
                 <p className="text-[11px] text-slate-500">{it.t}</p>
@@ -1796,11 +1803,11 @@ function GastosMock() {
       </ul>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.total")}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Média</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.average")}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 109,24</p>
         </div>
       </div>
