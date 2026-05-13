@@ -306,6 +306,25 @@
     "cancelAnytime": "Cancele quando quiser",
     "browser": "Acesso pelo navegador"
   },
+  "billing": {
+    "periods": {
+      "mensal": { "label": "Mensal", "suffix": "/mês" },
+      "trimestral": { "label": "Trimestral", "suffix": "a cada 3 meses" },
+      "semestral": { "label": "Semestral", "suffix": "a cada 6 meses", "badge": "Mais economia" },
+      "anual": { "label": "Anual", "suffix": "por ano", "badge": "Melhor custo-benefício" }
+    },
+    "noDiscount": "sem desconto",
+    "save": "Economize {{value}} ({{percent}}% off)",
+    "secureInfo": "🔒 Pagamento seguro processado pelo Mercado Pago. O Gasto Inteligente não armazena dados do seu cartão.",
+    "currentPlan": "Plano atual",
+    "pendingPayment": "Aguardando pagamento",
+    "mostChosen": "Mais escolhido",
+    "totalAccess": "Acesso total",
+    "newCharge": "Gerar nova cobrança",
+    "processing": "Processando…",
+    "subscribe": "Assinar plano",
+    "trial": "Testar por 10 dias"
+  },
   "footer": {
     "tagline": "Gasto Inteligente — controle financeiro simples, visual e pensado para o seu dia a dia.",
     "badgeData": "Dados protegidos",
