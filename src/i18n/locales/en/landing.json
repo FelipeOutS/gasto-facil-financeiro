@@ -306,6 +306,25 @@
     "cancelAnytime": "Cancel anytime",
     "browser": "Web access"
   },
+  "billing": {
+    "periods": {
+      "mensal": { "label": "Monthly", "suffix": "/month" },
+      "trimestral": { "label": "Quarterly", "suffix": "every 3 months" },
+      "semestral": { "label": "Semiannual", "suffix": "every 6 months", "badge": "More savings" },
+      "anual": { "label": "Annual", "suffix": "per year", "badge": "Best value" }
+    },
+    "noDiscount": "no discount",
+    "save": "Save {{value}} ({{percent}}% off)",
+    "secureInfo": "🔒 Secure payment processed by Mercado Pago. Gasto Inteligente does not store your card data.",
+    "currentPlan": "Current plan",
+    "pendingPayment": "Pending payment",
+    "mostChosen": "Most chosen",
+    "totalAccess": "Full access",
+    "newCharge": "Generate new charge",
+    "processing": "Processing…",
+    "subscribe": "Subscribe",
+    "trial": "Try for 10 days"
+  },
   "footer": {
     "tagline": "Gasto Inteligente — simple, visual financial control built for your everyday life.",
     "badgeData": "Data protected",
