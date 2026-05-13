@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MessageCircle, X, Sparkles } from "lucide-react";
 
 const STORAGE_KEY = "gi.whatsapp-banner-dismissed-v1";
 
 export function AvisoWhatsAppBanner() {
+  const { t } = useTranslation("dashboard");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -41,22 +43,21 @@ export function AvisoWhatsAppBanner() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-foreground">
-              Em breve: integração com WhatsApp
+              {t("whatsappBanner.title")}
             </p>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
               <Sparkles className="h-2.5 w-2.5" />
-              Novo
+              {t("whatsappBanner.novo")}
             </span>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Lance gastos, receitas e consulte saldos enviando mensagens — direto no seu WhatsApp.
-            Sem precisar abrir o app.
+            {t("whatsappBanner.subtitle")}
           </p>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Dispensar aviso"
+          aria-label={t("whatsappBanner.dispensar")}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
         >
           <X className="h-4 w-4" />
