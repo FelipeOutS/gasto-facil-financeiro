@@ -81,9 +81,8 @@ function ResetPasswordPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="confirm">Confirmar senha</Label>
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             autoComplete="new-password"
             required
             value={confirm}
