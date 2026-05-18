@@ -85,7 +85,12 @@ type DialogMode =
   | { kind: "create" }
   | { kind: "edit"; reserva: Guardado };
 
+function tipoLabel(tipo: TipoReserva, t: (k: string) => string) {
+  return t("tipo." + tipo) || TIPOS_RESERVA.find((x) => x.id === tipo)?.label || tipo;
+}
+
 function GuardadoPage() {
+  const { t } = useTranslation("guardado");
   const ready = useBootstrap();
   const bancos = useStore(() => getBancos());
   const guardado = useStore(() => getGuardado());
@@ -114,11 +119,11 @@ function GuardadoPage() {
 
   function handleSaveBanco() {
     if (!novoBancoNome.trim()) {
-      toast.error("Dá um nome pro banco antes de salvar.");
+      toast.error(t("toasts.bankNameRequired"));
       return;
     }
     addBanco({ nome: novoBancoNome.trim(), colorHex: novoBancoCor });
-    toast.success("Banco adicionado.");
+    toast.success(t("toasts.bankAdded"));
     setNovoBancoNome("");
     setOpenB(false);
   }
