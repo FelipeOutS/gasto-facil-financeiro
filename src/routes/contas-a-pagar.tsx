@@ -847,6 +847,7 @@ function ContaCard({
   onPagar: () => void;
   onDesmarcar: () => void;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const status = statusContaEfetivo(conta, hojeISO);
   const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
   const { porId: fornecedoresPorId } = useFornecedores();
@@ -893,18 +894,20 @@ function ContaCard({
             </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-            <span className="num">Vence {formatDateBR(conta.dataVencimento)}</span>
+            <span className="num">{t("card.dueShort", { date: formatDateBR(conta.dataVencimento) })}</span>
             {conta.recorrente && (
               <span className="inline-flex items-center gap-1">
                 <Repeat className="h-3 w-3" />
-                {FREQUENCIAS_RECORRENCIA.find((f) => f.id === conta.frequenciaRecorrencia)?.label ?? "Recorrente"}
+                {conta.frequenciaRecorrencia
+                  ? t(`frequency.${conta.frequenciaRecorrencia}`, { defaultValue: t("card.recurringFallback") })
+                  : t("card.recurringFallback")}
               </span>
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
           </div>
           {conta.fornecedorId && fornecedorNome && (
             <p className="mt-1 truncate text-[11px] text-muted-foreground">
-              Fornecedor: <span className="text-foreground/80">{fornecedorNome}</span>
+              {t("card.supplier")} <span className="text-foreground/80">{fornecedorNome}</span>
             </p>
           )}
         </div>
@@ -913,13 +916,13 @@ function ContaCard({
       {(conta.codigoBoleto || conta.codigoPix || conta.chavePix) && (
         <div className="mt-3 space-y-1.5">
           {conta.codigoBoleto && (
-            <CodigoCopiavel label="Código de boleto" valor={conta.codigoBoleto} />
+            <CodigoCopiavel label={t("copy.boletoLabel")} valor={conta.codigoBoleto} />
           )}
           {conta.codigoPix && (
-            <CodigoCopiavel label="Pix copia e cola" valor={conta.codigoPix} />
+            <CodigoCopiavel label={t("copy.pixCopyLabel")} valor={conta.codigoPix} />
           )}
           {conta.chavePix && (
-            <CodigoCopiavel label="Chave Pix" valor={conta.chavePix} />
+            <CodigoCopiavel label={t("copy.pixKeyLabel")} valor={conta.chavePix} />
           )}
         </div>
       )}
@@ -933,12 +936,12 @@ function ContaCard({
             onClick={onDesmarcar}
           >
             <RotateCcw className="mr-1 h-3.5 w-3.5" />
-            Desmarcar
+            {t("card.undoPaid")}
           </Button>
         ) : (
           <Button size="sm" className="flex-1" onClick={onPagar}>
             <Check className="mr-1 h-3.5 w-3.5" />
-            Marcar como pago
+            {t("card.markPaid")}
           </Button>
         )}
         <Button
@@ -946,7 +949,7 @@ function ContaCard({
           size="icon"
           className="shrink-0"
           onClick={onEdit}
-          aria-label="Editar"
+          aria-label={t("card.edit")}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -955,7 +958,7 @@ function ContaCard({
           size="icon"
           className="shrink-0 text-destructive hover:text-destructive"
           onClick={onDelete}
-          aria-label="Excluir"
+          aria-label={t("card.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
