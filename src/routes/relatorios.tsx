@@ -605,7 +605,7 @@ function RelatoriosPage() {
                         style={{ width: `${Math.min(100, c.pct)}%`, background: categoryColor(cat) }}
                       />
                     </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">{c.pct.toFixed(0)}{t("chart.pctDoMes").replace(/^%/, "%")}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">{t("chart.pctDoMes", { pct: c.pct.toFixed(0) })}</div>
                   </li>
                 );
               })}
