@@ -535,6 +535,7 @@ function ContaReceberFormDialog({
   userId: string | undefined;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const [titulo, setTitulo] = useState("");
   const [pagador, setPagador] = useState("");
   const [tipo, setTipo] = useState<string>("cliente");
