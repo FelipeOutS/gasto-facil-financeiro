@@ -1073,8 +1073,8 @@ function UltimasCompras({
 
 /* =============== Fatura Sheet (detalhe do cartão) =============== */
 
-const MESES_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const MESES_FULL = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
