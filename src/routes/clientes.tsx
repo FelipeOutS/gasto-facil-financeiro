@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -97,6 +98,7 @@ function aplicarMascaraCnpj(v: string): string {
 }
 
 function ClientesPage() {
+  const { t } = useTranslation("clientes");
   const { user } = useAuth();
   const consultarFn = useServerFn(consultarCnpj);
 
@@ -149,7 +151,7 @@ function ClientesPage() {
         if (!cancelado) setList(itens);
       } catch {
         if (!cancelado)
-          toast.error("Não conseguimos carregar seus clientes.");
+          toast.error(t("toasts.loadError"));
       } finally {
         if (!cancelado) setLoading(false);
       }
@@ -157,7 +159,7 @@ function ClientesPage() {
     return () => {
       cancelado = true;
     };
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   const cnpjValido = useMemo(() => validarCnpj(cnpjInput), [cnpjInput]);
 
@@ -195,7 +197,7 @@ function ClientesPage() {
     }
     const jaExiste = await existeClienteComCnpj(user.id, limpo);
     if (jaExiste) {
-      toast.error("Este cliente já está cadastrado na sua conta.");
+      toast.error(t("toasts.duplicate"));
       return;
     }
     setErroCnpj(null);
@@ -211,9 +213,7 @@ function ClientesPage() {
       }
     } catch (err) {
       console.error("[clientes] erro na consulta:", err);
-      toast.error(
-        "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
-      );
+      toast.error(t("toasts.cnpjError"));
     } finally {
       setConsultando(false);
     }
@@ -237,7 +237,7 @@ function ClientesPage() {
         },
       );
       setList((prev) => ordenar([novo, ...prev]));
-      toast.success("Cliente cadastrado.");
+      toast.success(t("toasts.saved"));
       setNovoAberto(false);
       limparCnpjForm();
     } catch (err) {
@@ -246,9 +246,9 @@ function ClientesPage() {
         msg.toLowerCase().includes("duplicate") ||
         msg.toLowerCase().includes("unique")
       ) {
-        toast.error("Este cliente já está cadastrado na sua conta.");
+        toast.error(t("toasts.duplicate"));
       } else {
-        toast.error("Não conseguimos salvar agora. Tente novamente.");
+        toast.error(t("toasts.saveError"));
       }
     } finally {
       setSalvando(false);
@@ -259,7 +259,7 @@ function ClientesPage() {
     if (!user?.id) return;
     const nome = manNome.trim();
     if (nome.length < 2) {
-      toast.error("Informe o nome do cliente.");
+      toast.error(t("toasts.nameRequired"));
       return;
     }
     setSalvando(true);
@@ -272,11 +272,11 @@ function ClientesPage() {
         observacoes: manObs,
       });
       setList((prev) => ordenar([novo, ...prev]));
-      toast.success("Cliente cadastrado.");
+      toast.success(t("toasts.saved"));
       setNovoAberto(false);
       limparManualForm();
     } catch {
-      toast.error("Não conseguimos salvar agora. Tente novamente.");
+      toast.error(t("toasts.saveError"));
     } finally {
       setSalvando(false);
     }
@@ -294,7 +294,7 @@ function ClientesPage() {
   async function salvarEdicao() {
     if (!editando) return;
     if (editNome.trim().length < 2) {
-      toast.error("Informe o nome do cliente.");
+      toast.error(t("toasts.nameRequired"));
       return;
     }
     setSalvandoEdit(true);
@@ -309,10 +309,10 @@ function ClientesPage() {
       setList((prev) =>
         ordenar(prev.map((x) => (x.id === atualizado.id ? atualizado : x))),
       );
-      toast.success("Cliente atualizado.");
+      toast.success(t("toasts.updated"));
       setEditando(null);
     } catch {
-      toast.error("Não conseguimos atualizar agora. Tente novamente.");
+      toast.error(t("toasts.updateError"));
     } finally {
       setSalvandoEdit(false);
     }
@@ -326,9 +326,9 @@ function ClientesPage() {
           prev.map((x) => (x.id === c.id ? { ...x, ativo: !c.ativo } : x)),
         ),
       );
-      toast.success(c.ativo ? "Cliente desativado." : "Cliente ativado.");
+      toast.success(c.ativo ? t("toasts.deactivated") : t("toasts.activated"));
     } catch {
-      toast.error("Não conseguimos atualizar agora.");
+      toast.error(t("toasts.toggleError"));
     }
   }
 
@@ -338,10 +338,10 @@ function ClientesPage() {
     try {
       await removerCliente(confirmarRemover.id);
       setList((prev) => prev.filter((x) => x.id !== confirmarRemover.id));
-      toast.success("Cliente removido.");
+      toast.success(t("toasts.removed"));
       setConfirmarRemover(null);
     } catch {
-      toast.error("Não conseguimos remover agora.");
+      toast.error(t("toasts.removeError"));
     } finally {
       setRemovendo(false);
     }
@@ -355,7 +355,7 @@ function ClientesPage() {
           className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Empresa Inteligente
+          {t("header.back")}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -363,10 +363,9 @@ function ClientesPage() {
               <Contact className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-2xl font-semibold">Clientes</h1>
+              <h1 className="text-2xl font-semibold">{t("header.title")}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Cadastre clientes por CNPJ e organize melhor suas receitas
-                empresariais.
+                {t("header.subtitle")}
               </p>
             </div>
           </div>
@@ -374,12 +373,12 @@ function ClientesPage() {
             <Button asChild variant="outline" className="gap-2">
               <Link to="/clientes/relatorio">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Relatório</span>
+                <span className="hidden sm:inline">{t("header.report")}</span>
               </Link>
             </Button>
             <Button onClick={abrirNovo} className="gap-2">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Novo</span>
+              <span className="hidden sm:inline">{t("header.new")}</span>
             </Button>
           </div>
         </div>
@@ -412,27 +411,26 @@ function ClientesPage() {
       <Dialog open={novoAberto} onOpenChange={setNovoAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Novo cliente</DialogTitle>
+            <DialogTitle>{t("dialog.newTitle")}</DialogTitle>
             <DialogDescription>
-              Cadastre por CNPJ para preencher os dados automaticamente ou
-              adicione manualmente.
+              {t("dialog.newDesc")}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as "cnpj" | "manual")}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="cnpj">Por CNPJ</TabsTrigger>
-              <TabsTrigger value="manual">Manualmente</TabsTrigger>
+              <TabsTrigger value="cnpj">{t("dialog.tabCnpj")}</TabsTrigger>
+              <TabsTrigger value="manual">{t("dialog.tabManual")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cnpj" className="mt-4 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cli-cnpj">CNPJ</Label>
+                <Label htmlFor="cli-cnpj">{t("dialog.cnpj")}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="cli-cnpj"
                     inputMode="numeric"
-                    placeholder="00.000.000/0000-00"
+                    placeholder={t("dialog.cnpjPlaceholder")}
                     value={cnpjInput}
                     onChange={(e) => {
                       setCnpjInput(aplicarMascaraCnpj(e.target.value));
@@ -450,7 +448,7 @@ function ClientesPage() {
                     ) : (
                       <Search className="h-4 w-4" />
                     )}
-                    Buscar
+                    {t("dialog.search")}
                   </Button>
                 </div>
                 {erroCnpj && (
@@ -486,41 +484,41 @@ function ClientesPage() {
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div className="space-y-1">
                       <Label htmlFor="cli-apelido" className="text-xs">
-                        Apelido (opcional)
+                        {t("cnpjFields.apelido")}
                       </Label>
                       <Input
                         id="cli-apelido"
                         value={apelidoCnpj}
                         onChange={(e) => setApelidoCnpj(e.target.value)}
-                        placeholder="Como você chama no dia a dia"
+                        placeholder={t("cnpjFields.apelidoPlaceholder")}
                       />
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="cli-tel" className="text-xs">
-                        Telefone (opcional)
+                        {t("cnpjFields.telefone")}
                       </Label>
                       <Input
                         id="cli-tel"
                         value={telefoneCnpj}
                         onChange={(e) => setTelefoneCnpj(e.target.value)}
-                        placeholder="(00) 00000-0000"
+                        placeholder={t("cnpjFields.telefonePlaceholder")}
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
                       <Label htmlFor="cli-email" className="text-xs">
-                        E-mail (opcional)
+                        {t("cnpjFields.email")}
                       </Label>
                       <Input
                         id="cli-email"
                         type="email"
                         value={emailCnpj}
                         onChange={(e) => setEmailCnpj(e.target.value)}
-                        placeholder="contato@cliente.com"
+                        placeholder={t("cnpjFields.emailPlaceholder")}
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
                       <Label htmlFor="cli-obs" className="text-xs">
-                        Observações (opcional)
+                        {t("cnpjFields.obs")}
                       </Label>
                       <Textarea
                         id="cli-obs"
@@ -546,7 +544,7 @@ function ClientesPage() {
                   onClick={() => setNovoAberto(false)}
                   disabled={salvando}
                 >
-                  Cancelar
+                  {t("dialog.cancel")}
                 </Button>
                 <Button
                   onClick={() => void salvarPorCnpj()}
@@ -558,24 +556,24 @@ function ClientesPage() {
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
                   )}
-                  Salvar cliente
+                  {t("dialog.save")}
                 </Button>
               </DialogFooter>
             </TabsContent>
 
             <TabsContent value="manual" className="mt-4 space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="man-nome">Nome do cliente *</Label>
+                <Label htmlFor="man-nome">{t("manual.nome")}</Label>
                 <Input
                   id="man-nome"
                   value={manNome}
                   onChange={(e) => setManNome(e.target.value)}
-                  placeholder="Ex.: Maria Silva"
+                  placeholder={t("manual.nomePlaceholder")}
                 />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="man-apelido">Apelido (opcional)</Label>
+                  <Label htmlFor="man-apelido">{t("manual.apelido")}</Label>
                   <Input
                     id="man-apelido"
                     value={manApelido}
@@ -583,7 +581,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="man-tel">Telefone (opcional)</Label>
+                  <Label htmlFor="man-tel">{t("manual.telefone")}</Label>
                   <Input
                     id="man-tel"
                     value={manTelefone}
@@ -591,7 +589,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="man-email">E-mail (opcional)</Label>
+                  <Label htmlFor="man-email">{t("manual.email")}</Label>
                   <Input
                     id="man-email"
                     type="email"
@@ -600,7 +598,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="man-obs">Observações (opcional)</Label>
+                  <Label htmlFor="man-obs">{t("manual.obs")}</Label>
                   <Textarea
                     id="man-obs"
                     rows={2}
@@ -616,7 +614,7 @@ function ClientesPage() {
                   onClick={() => setNovoAberto(false)}
                   disabled={salvando}
                 >
-                  Cancelar
+                  {t("dialog.cancel")}
                 </Button>
                 <Button
                   onClick={() => void salvarManual()}
@@ -628,7 +626,7 @@ function ClientesPage() {
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
                   )}
-                  Salvar cliente
+                  {t("dialog.save")}
                 </Button>
               </DialogFooter>
             </TabsContent>
@@ -645,14 +643,14 @@ function ClientesPage() {
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar cliente</DialogTitle>
+            <DialogTitle>{t("edit.title")}</DialogTitle>
             <DialogDescription>
-              Atualize os dados de contato e observações.
+              {t("edit.desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-nome">Nome *</Label>
+              <Label htmlFor="edit-nome">{t("edit.nome")}</Label>
               <Input
                 id="edit-nome"
                 value={editNome}
@@ -661,7 +659,7 @@ function ClientesPage() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-apelido">Apelido</Label>
+                <Label htmlFor="edit-apelido">{t("edit.apelido")}</Label>
                 <Input
                   id="edit-apelido"
                   value={editApelido}
@@ -669,7 +667,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-tel">Telefone</Label>
+                <Label htmlFor="edit-tel">{t("edit.telefone")}</Label>
                 <Input
                   id="edit-tel"
                   value={editTelefone}
@@ -677,7 +675,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="edit-email">E-mail</Label>
+                <Label htmlFor="edit-email">{t("edit.email")}</Label>
                 <Input
                   id="edit-email"
                   type="email"
@@ -686,7 +684,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="edit-obs">Observações</Label>
+                <Label htmlFor="edit-obs">{t("edit.obs")}</Label>
                 <Textarea
                   id="edit-obs"
                   rows={2}
@@ -702,10 +700,10 @@ function ClientesPage() {
               onClick={() => setEditando(null)}
               disabled={salvandoEdit}
             >
-              Cancelar
+              {t("edit.cancel")}
             </Button>
             <Button onClick={() => void salvarEdicao()} disabled={salvandoEdit}>
-              {salvandoEdit ? "Salvando…" : "Salvar alterações"}
+              {salvandoEdit ? t("edit.saving") : t("edit.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -719,14 +717,13 @@ function ClientesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover cliente?</AlertDialogTitle>
+            <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Este cliente será apagado da sua conta. Essa ação não pode ser
-              desfeita.
+              {t("remove.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removendo}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={removendo}>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -735,7 +732,7 @@ function ClientesPage() {
               disabled={removendo}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {removendo ? "Removendo…" : "Remover"}
+              {removendo ? t("remove.removing") : t("remove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -752,21 +749,21 @@ function ordenar(arr: Cliente[]): Cliente[] {
 }
 
 function EmptyState({ onNovo }: { onNovo: () => void }) {
+  const { t } = useTranslation("clientes");
   return (
     <section className="rounded-2xl border border-dashed bg-card/40 p-8 text-center">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
         <Building2 className="h-6 w-6" />
       </div>
       <h2 className="mt-3 text-base font-semibold">
-        Nenhum cliente cadastrado
+        {t("empty.title")}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Comece pelo CNPJ para preencher os dados automaticamente, ou cadastre
-        manualmente.
+        {t("empty.subtitle")}
       </p>
       <Button onClick={onNovo} className="mt-4 gap-2">
         <Plus className="h-4 w-4" />
-        Cadastrar cliente
+        {t("empty.cta")}
       </Button>
     </section>
   );
@@ -783,6 +780,7 @@ function ClienteItem({
   onAlternar: () => void;
   onRemover: () => void;
 }) {
+  const { t } = useTranslation("clientes");
   const cidadeUf = [c.municipio, c.uf].filter(Boolean).join("/");
   return (
     <li
@@ -799,7 +797,7 @@ function ClienteItem({
             </p>
             {!c.ativo && (
               <Badge variant="secondary" className="text-[10px]">
-                Inativo
+                {t("card.inactive")}
               </Badge>
             )}
             {c.situacao_cadastral && (
@@ -840,7 +838,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onEditar}
-            aria-label="Editar"
+            aria-label={t("card.editAria")}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -848,7 +846,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onAlternar}
-            aria-label={c.ativo ? "Desativar" : "Ativar"}
+            aria-label={c.ativo ? t("card.deactivate") : t("card.activate")}
           >
             {c.ativo ? (
               <PowerOff className="h-4 w-4" />
@@ -860,7 +858,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onRemover}
-            aria-label="Remover"
+            aria-label={t("card.removeAria")}
             className="text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
