@@ -234,12 +234,12 @@ function AssinaturasPage() {
     if (ativas.length === 0) return out;
     const maior = ativas.reduce((a, b) => (a.valor > b.valor ? a : b));
     out.push(
-      `Você gasta ${formatBRL(totais.mensal)} por mês em recorrências, ${formatBRL(
-        totais.anual,
-      )} por ano.`,
+      t("insights.totals", {
+        monthly: formatBRL(totais.mensal),
+        yearly: formatBRL(totais.anual),
+      }),
     );
-    out.push(`${maior.nome} é sua maior recorrência ativa.`);
-    // Cartão dominante
+    out.push(t("insights.biggest", { name: maior.nome }));
     const porCartao = new Map<string, number>();
     for (const r of ativas) {
       if (!r.cartaoId) continue;
@@ -249,25 +249,20 @@ function AssinaturasPage() {
       const [topCartao] = [...porCartao.entries()].sort((a, b) => b[1] - a[1]);
       const card = getCartaoById(topCartao[0]);
       if (card && topCartao[1] >= 2) {
-        out.push(
-          `Você tem ${topCartao[1]} recorrências cobradas no cartão ${card.nome}.`,
-        );
+        out.push(t("insights.topCard", { count: topCartao[1], card: card.nome }));
       }
     }
-    // Aumento de valor
     const aumentos = recs.filter(
       (r) => r.ultimoValor && Math.abs(r.valor - r.ultimoValor) > 0.5,
     );
     for (const r of aumentos.slice(0, 1)) {
       const diff = r.valor - (r.ultimoValor ?? 0);
       if (diff > 0) {
-        out.push(
-          `Detectamos aumento de ${formatBRL(diff)} na recorrência ${r.nome}.`,
-        );
+        out.push(t("insights.increase", { diff: formatBRL(diff), name: r.nome }));
       }
     }
     return out;
-  }, [recs, totais]);
+  }, [recs, totais, t]);
 
   // Integração com orçamento por categoria (apenas leitura/análise)
   const orcamentoAssinaturas = useMemo(() => {
