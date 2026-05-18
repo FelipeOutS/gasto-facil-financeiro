@@ -646,10 +646,10 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Insights ===== */}
-      <SectionLabel>Insights do mês</SectionLabel>
+      <SectionLabel>{t("sections.insights")}</SectionLabel>
       {insights.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-          Sem dados suficientes para gerar insights neste mês.
+          {t("insights.empty")}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
