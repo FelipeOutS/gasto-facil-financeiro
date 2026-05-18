@@ -1582,6 +1582,7 @@ function ResumoMesCard({
   contasAtrasadas: number;
   limiteTotal: number | null | undefined;
 }) {
+  const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
       buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
@@ -1600,80 +1601,70 @@ function ResumoMesCard({
   const folgaPct = totalEntradas > 0 ? saldo / totalEntradas : 0;
   const passouLimite = !!(limiteTotal && limiteTotal > 0 && totalGastos > limiteTotal);
 
-  type Estado = "ótimo" | "bom" | "apertado" | "atencao" | "critico" | "neutro";
-  let estado: Estado = "neutro";
   let emoji = "🙂";
-  let titulo = "Resumo do mês";
-  let mensagem = "Continue lançando seus dados para a gente entender melhor seu mês.";
+  let titulo = t("resumoMes.default");
+  let mensagem = t("resumoMes.defaultMsg");
   let toneCls = "border-border bg-card";
   let textCls = "text-foreground";
 
   if (semDados) {
-    estado = "neutro";
     emoji = "✨";
-    titulo = "Vamos começar?";
-    mensagem = "Adicione receitas e gastos para ver um resumo personalizado do seu mês aqui.";
+    titulo = t("resumoMes.vamosComecar");
+    mensagem = t("resumoMes.vamosComecarMsg");
   } else if (contasAtrasadas > 0) {
-    estado = "critico";
     emoji = "😬";
-    titulo = "Tem conta atrasada por aí";
-    mensagem = `Você tem ${contasAtrasadas} ${contasAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}. Resolver isso primeiro evita juros e dor de cabeça.`;
+    titulo = t("resumoMes.atrasada");
+    mensagem = t("resumoMes.atrasadaMsg", { count: contasAtrasadas });
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
   } else if (saldo < 0) {
-    estado = "critico";
     emoji = "🚨";
-    titulo = "Saldo negativo";
-    mensagem = `Os gastos passaram da receita em ${formatBRL(Math.abs(saldo))}. Vale revisar a categoria ${maiorCategoria?.nome ?? "principal"} para frear.`;
+    titulo = t("resumoMes.negativo");
+    mensagem = maiorCategoria
+      ? t("resumoMes.negativoMsg", { valor: formatBRL(Math.abs(saldo)), categoria: maiorCategoria.nome })
+      : t("resumoMes.negativoMsgSemCat", { valor: formatBRL(Math.abs(saldo)) });
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
   } else if (passouLimite) {
-    estado = "atencao";
     emoji = "⚠️";
-    titulo = "Eita, o limite foi ultrapassado";
-    mensagem = `Você passou ${formatBRL(totalGastos - (limiteTotal ?? 0))} do limite mensal. Bora desacelerar nos próximos dias?`;
+    titulo = t("resumoMes.limite");
+    mensagem = t("resumoMes.limiteMsg", { valor: formatBRL(totalGastos - (limiteTotal ?? 0)) });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (estouro.length >= 2) {
-    estado = "atencao";
     emoji = "⚠️";
-    titulo = "Algumas categorias estouraram";
-    mensagem = `${estouro.length} categorias passaram do orçamento — começando por ${critica ?? ""}.`;
+    titulo = t("resumoMes.categorias");
+    mensagem = t("resumoMes.categoriasMsg", { count: estouro.length, categoria: critica ?? "" });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (estouro.length === 1) {
-    estado = "atencao";
     emoji = "🧐";
-    titulo = "Atenção: esse mês pesou um pouco";
-    mensagem = `A categoria ${critica} passou do orçamento. As outras estão sob controle 👍`;
+    titulo = t("resumoMes.categoria");
+    mensagem = t("resumoMes.categoriaMsg", { categoria: critica });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (folgaPct >= 0.3 && totalEntradas > 0) {
-    estado = "ótimo";
     emoji = "🚀";
-    titulo = "Mandou muito bem!";
-    mensagem = `Sobrou ${formatBRL(saldo)} no mês — uma folga de ${Math.round(folgaPct * 100)}% da sua renda. Que tal direcionar pra uma meta?`;
+    titulo = t("resumoMes.otimo");
+    mensagem = t("resumoMes.otimoMsg", { valor: formatBRL(saldo), pct: Math.round(folgaPct * 100) });
     toneCls = "border-success/30 bg-success/5";
     textCls = "text-success";
   } else if (folgaPct >= 0.1 && totalEntradas > 0) {
-    estado = "bom";
     emoji = "😁";
-    titulo = "Boa! Você terminou no azul";
-    mensagem = `Sobrou ${formatBRL(saldo)} este mês. Continue assim e ainda dá pra guardar uma parte 💰`;
+    titulo = t("resumoMes.bom");
+    mensagem = t("resumoMes.bomMsg", { valor: formatBRL(saldo) });
     toneCls = "border-success/30 bg-success/5";
     textCls = "text-success";
   } else if (saldo > 0) {
-    estado = "apertado";
     emoji = "🙂";
-    titulo = "Fechou positivo, mas com pouca folga";
-    mensagem = `Sobrou ${formatBRL(saldo)} no fim do mês. Tá apertado — qualquer imprevisto pode virar o jogo.`;
+    titulo = t("resumoMes.apertado");
+    mensagem = t("resumoMes.apertadoMsg", { valor: formatBRL(saldo) });
     toneCls = "border-warning/20 bg-warning/5";
     textCls = "text-foreground";
   } else {
-    estado = "neutro";
     emoji = "🙂";
-    titulo = "Mês equilibrado";
-    mensagem = "Entradas e gastos no mesmo patamar. Vale tentar abrir uma folguinha pro próximo mês.";
+    titulo = t("resumoMes.equilibrado");
+    mensagem = t("resumoMes.equilibradoMsg");
   }
 
   return (
@@ -1684,7 +1675,7 @@ function ResumoMesCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Resumo do mês
+            {t("resumoMes.eyebrow")}
           </p>
           <h3 className={cn("text-base font-bold leading-tight", textCls)}>{titulo}</h3>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{mensagem}</p>
@@ -1694,15 +1685,15 @@ function ResumoMesCard({
       {!semDados && (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Maior categoria</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.maiorCategoria")}</p>
             <p className="mt-0.5 truncate text-sm font-semibold">
               {maiorCategoria ? `${maiorCategoria.nome} · ${Math.round(maiorCategoria.pct)}%` : "—"}
             </p>
           </div>
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Orçamento</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.orcamento")}</p>
             <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
-              {critica ? `Estourou: ${critica}` : estouro.length === 0 && linhas.length > 0 ? "Tudo no controle" : "Sem limite"}
+              {critica ? t("resumoMes.estourou", { categoria: critica }) : estouro.length === 0 && linhas.length > 0 ? t("resumoMes.tudoControle") : t("resumoMes.semLimite")}
             </p>
           </div>
         </div>
@@ -1713,7 +1704,7 @@ function ResumoMesCard({
         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm font-medium transition-all hover:bg-accent active:scale-[0.98]"
       >
         <Sparkles className="h-3.5 w-3.5 text-brand" />
-        Ver relatório completo
+        {t("resumoMes.verRelatorio")}
       </Link>
     </section>
   );
