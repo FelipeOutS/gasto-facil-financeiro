@@ -618,9 +618,9 @@ function MeuPlanoPage() {
             <button key={m} type="button" onClick={() => setMetodoPagamento(m)}
               className={cn("rounded-2xl border p-3 text-center transition-colors",
                 active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}>
-              <p className="text-sm font-semibold">{m === "pix" ? "Pix" : "Cartão de crédito"}</p>
+              <p className="text-sm font-semibold">{m === "pix" ? tp("methods.pix") : tp("methods.card")}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {m === "pix" ? "QR Code instantâneo" : "Até 12x no Checkout Pro"}
+                {m === "pix" ? tp("methods.pixDesc") : tp("methods.cardDesc")}
               </p>
             </button>
           );
@@ -758,33 +758,31 @@ function MeuPlanoPage() {
         <div className="flex flex-col gap-2 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-bold">Investimentos</p>
+              <p className="text-sm font-bold">{tp("investments.title")}</p>
               <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                Em breve
+                {tp("investments.soon")}
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Estrutura preparada para acompanhar investimentos pessoais e
-              empresariais nos planos Premium, MEI e Empresa.
+              {tp("investments.desc")}
             </p>
           </div>
         </div>
       </section>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
-        Pagamentos via Pix pelo Mercado Pago. Seu plano é ativado automaticamente
-        após a confirmação do pagamento.
+        {tp("footer")}
       </p>
 
       {/* ===== Histórico de pagamentos ===== */}
       {!isAdminMaster && (
         <section className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Histórico de pagamentos
+            {tp("sections.history")}
           </h3>
           {historico.length === 0 ? (
             <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
-              Nenhum pagamento encontrado ainda.
+              {tp("history.empty")}
             </div>
           ) : (
             <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
@@ -799,7 +797,7 @@ function MeuPlanoPage() {
                         : s.tone === "danger"
                           ? "bg-destructive/10 text-destructive border-destructive/30"
                           : "bg-muted text-muted-foreground border-border";
-                  const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
+                  const label = planName(h.plano as PlanTier) ?? h.plano;
                   const dt = h.paid_at ?? h.created_at;
                   return (
                     <li key={h.id} className="flex items-center gap-3 p-3">
@@ -809,13 +807,13 @@ function MeuPlanoPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{label}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
+                          {formatDate(dt)} ·{" "}
                           {h.method.toUpperCase()} ·{" "}
-                          {(h.amount_cents / 100).toLocaleString("pt-BR", {
+                          {(h.amount_cents / 100).toLocaleString(isEnglish ? "en-US" : "pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           })}
-                          {h.periodicidade ? ` · ${getPeriodicidade(h.periodicidade as Periodicidade).label}` : ""}
+                          {h.periodicidade ? tp("card.perFreq", { value: periodLabel(h.periodicidade as Periodicidade) }) : ""}
                         </p>
                       </div>
                       <span
@@ -838,7 +836,7 @@ function MeuPlanoPage() {
       {/* ===== Conta e privacidade ===== */}
       <section className="mt-8">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Conta e privacidade
+          {tp("sections.accountPrivacy")}
         </p>
         <ZonaDeRiscoCard />
       </section>
