@@ -425,12 +425,12 @@ function ClientesPage() {
 
             <TabsContent value="cnpj" className="mt-4 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cli-cnpj">CNPJ</Label>
+                <Label htmlFor="cli-cnpj">{t("dialog.cnpj")}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="cli-cnpj"
                     inputMode="numeric"
-                    placeholder="00.000.000/0000-00"
+                    placeholder={t("dialog.cnpjPlaceholder")}
                     value={cnpjInput}
                     onChange={(e) => {
                       setCnpjInput(aplicarMascaraCnpj(e.target.value));
@@ -448,7 +448,7 @@ function ClientesPage() {
                     ) : (
                       <Search className="h-4 w-4" />
                     )}
-                    Buscar
+                    {t("dialog.search")}
                   </Button>
                 </div>
                 {erroCnpj && (
@@ -484,41 +484,41 @@ function ClientesPage() {
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div className="space-y-1">
                       <Label htmlFor="cli-apelido" className="text-xs">
-                        Apelido (opcional)
+                        {t("cnpjFields.apelido")}
                       </Label>
                       <Input
                         id="cli-apelido"
                         value={apelidoCnpj}
                         onChange={(e) => setApelidoCnpj(e.target.value)}
-                        placeholder="Como você chama no dia a dia"
+                        placeholder={t("cnpjFields.apelidoPlaceholder")}
                       />
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="cli-tel" className="text-xs">
-                        Telefone (opcional)
+                        {t("cnpjFields.telefone")}
                       </Label>
                       <Input
                         id="cli-tel"
                         value={telefoneCnpj}
                         onChange={(e) => setTelefoneCnpj(e.target.value)}
-                        placeholder="(00) 00000-0000"
+                        placeholder={t("cnpjFields.telefonePlaceholder")}
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
                       <Label htmlFor="cli-email" className="text-xs">
-                        E-mail (opcional)
+                        {t("cnpjFields.email")}
                       </Label>
                       <Input
                         id="cli-email"
                         type="email"
                         value={emailCnpj}
                         onChange={(e) => setEmailCnpj(e.target.value)}
-                        placeholder="contato@cliente.com"
+                        placeholder={t("cnpjFields.emailPlaceholder")}
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
                       <Label htmlFor="cli-obs" className="text-xs">
-                        Observações (opcional)
+                        {t("cnpjFields.obs")}
                       </Label>
                       <Textarea
                         id="cli-obs"
@@ -544,7 +544,7 @@ function ClientesPage() {
                   onClick={() => setNovoAberto(false)}
                   disabled={salvando}
                 >
-                  Cancelar
+                  {t("dialog.cancel")}
                 </Button>
                 <Button
                   onClick={() => void salvarPorCnpj()}
@@ -556,24 +556,24 @@ function ClientesPage() {
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
                   )}
-                  Salvar cliente
+                  {t("dialog.save")}
                 </Button>
               </DialogFooter>
             </TabsContent>
 
             <TabsContent value="manual" className="mt-4 space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="man-nome">Nome do cliente *</Label>
+                <Label htmlFor="man-nome">{t("manual.nome")}</Label>
                 <Input
                   id="man-nome"
                   value={manNome}
                   onChange={(e) => setManNome(e.target.value)}
-                  placeholder="Ex.: Maria Silva"
+                  placeholder={t("manual.nomePlaceholder")}
                 />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="man-apelido">Apelido (opcional)</Label>
+                  <Label htmlFor="man-apelido">{t("manual.apelido")}</Label>
                   <Input
                     id="man-apelido"
                     value={manApelido}
@@ -581,7 +581,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="man-tel">Telefone (opcional)</Label>
+                  <Label htmlFor="man-tel">{t("manual.telefone")}</Label>
                   <Input
                     id="man-tel"
                     value={manTelefone}
@@ -589,7 +589,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="man-email">E-mail (opcional)</Label>
+                  <Label htmlFor="man-email">{t("manual.email")}</Label>
                   <Input
                     id="man-email"
                     type="email"
@@ -598,7 +598,7 @@ function ClientesPage() {
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="man-obs">Observações (opcional)</Label>
+                  <Label htmlFor="man-obs">{t("manual.obs")}</Label>
                   <Textarea
                     id="man-obs"
                     rows={2}
@@ -614,7 +614,7 @@ function ClientesPage() {
                   onClick={() => setNovoAberto(false)}
                   disabled={salvando}
                 >
-                  Cancelar
+                  {t("dialog.cancel")}
                 </Button>
                 <Button
                   onClick={() => void salvarManual()}
@@ -626,7 +626,7 @@ function ClientesPage() {
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
                   )}
-                  Salvar cliente
+                  {t("dialog.save")}
                 </Button>
               </DialogFooter>
             </TabsContent>
@@ -643,14 +643,14 @@ function ClientesPage() {
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar cliente</DialogTitle>
+            <DialogTitle>{t("edit.title")}</DialogTitle>
             <DialogDescription>
-              Atualize os dados de contato e observações.
+              {t("edit.desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-nome">Nome *</Label>
+              <Label htmlFor="edit-nome">{t("edit.nome")}</Label>
               <Input
                 id="edit-nome"
                 value={editNome}
@@ -659,7 +659,7 @@ function ClientesPage() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-apelido">Apelido</Label>
+                <Label htmlFor="edit-apelido">{t("edit.apelido")}</Label>
                 <Input
                   id="edit-apelido"
                   value={editApelido}
@@ -667,7 +667,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-tel">Telefone</Label>
+                <Label htmlFor="edit-tel">{t("edit.telefone")}</Label>
                 <Input
                   id="edit-tel"
                   value={editTelefone}
@@ -675,7 +675,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="edit-email">E-mail</Label>
+                <Label htmlFor="edit-email">{t("edit.email")}</Label>
                 <Input
                   id="edit-email"
                   type="email"
@@ -684,7 +684,7 @@ function ClientesPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="edit-obs">Observações</Label>
+                <Label htmlFor="edit-obs">{t("edit.obs")}</Label>
                 <Textarea
                   id="edit-obs"
                   rows={2}
@@ -700,10 +700,10 @@ function ClientesPage() {
               onClick={() => setEditando(null)}
               disabled={salvandoEdit}
             >
-              Cancelar
+              {t("edit.cancel")}
             </Button>
             <Button onClick={() => void salvarEdicao()} disabled={salvandoEdit}>
-              {salvandoEdit ? "Salvando…" : "Salvar alterações"}
+              {salvandoEdit ? t("edit.saving") : t("edit.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -717,14 +717,13 @@ function ClientesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover cliente?</AlertDialogTitle>
+            <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Este cliente será apagado da sua conta. Essa ação não pode ser
-              desfeita.
+              {t("remove.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removendo}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={removendo}>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -733,7 +732,7 @@ function ClientesPage() {
               disabled={removendo}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {removendo ? "Removendo…" : "Remover"}
+              {removendo ? t("remove.removing") : t("remove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
