@@ -1,0 +1,222 @@
+{
+  "meta": {
+    "title": "Bills to pay — Gasto Inteligente"
+  },
+  "header": {
+    "back": "Back",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "summary": {
+    "pendingMonth": "Total pending this month",
+    "paidMonth": "Total paid this month",
+    "nextDue": "Next due",
+    "dueOn": "Due on {{date}}"
+  },
+  "pills": {
+    "pending": "Pending",
+    "overdue": "Overdue",
+    "paid": "Paid"
+  },
+  "stats": {
+    "pending": "Total pending",
+    "overdue": "Total overdue",
+    "next7": "Next 7 days",
+    "paid": "Total paid",
+    "billCount_one": "{{count}} bill",
+    "billCount_other": "{{count}} bills"
+  },
+  "friendly": {
+    "overdue_one": "1 overdue bill needs attention.",
+    "overdue_other": "{{count}} overdue bills need attention.",
+    "soon_one": "1 bill is due in the next few days.",
+    "soon_other": "{{count}} bills are due in the next few days.",
+    "noneEver": "No bills chasing you for now.",
+    "allPaid": "All caught up. 🎉",
+    "next7Clear": "Nice! Nothing due in the next 7 days."
+  },
+  "cta": {
+    "new": "New bill",
+    "import": "Import bill"
+  },
+  "filters": {
+    "label": "Filter bills",
+    "todas": "All",
+    "pendentes": "Pending",
+    "proximas": "Upcoming",
+    "atrasadas": "Overdue",
+    "pagas": "Paid",
+    "recorrentes": "Recurring"
+  },
+  "search": {
+    "placeholder": "Search by name, category, amount or due date",
+    "label": "Search bills",
+    "clear": "Clear search",
+    "noResults": "Nothing found for \"{{query}}\".",
+    "emptyFilter": "Nothing in this filter."
+  },
+  "empty": {
+    "title": "No bills chasing you for now",
+    "subtitle": "Add a bill and let the app remind you before it's due.",
+    "addFirst": "Add first bill"
+  },
+  "card": {
+    "dueShort": "Due {{date}}",
+    "recurringFallback": "Recurring",
+    "supplier": "Supplier:",
+    "edit": "Edit",
+    "delete": "Delete",
+    "markPaid": "Mark as paid",
+    "undoPaid": "Unmark"
+  },
+  "status": {
+    "paid": "Paid",
+    "overdueDays": "Overdue {{days}}d",
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "dueInDays": "In {{days}}d",
+    "pendingDays": "Pending · {{days}}d"
+  },
+  "copy": {
+    "boletoLabel": "Boleto code",
+    "pixCopyLabel": "Pix copy & paste",
+    "pixKeyLabel": "Pix key",
+    "copyButton": "Copy {{label}}",
+    "copied": "{{label}} copied.",
+    "copyError": "Couldn't copy. Please copy manually."
+  },
+  "delete": {
+    "title": "Delete this bill?",
+    "descPaid": "\"{{name}}\" was paid and created a linked expense. How do you want to delete it?",
+    "desc": "Are you sure you want to delete \"{{name}}\"? This can't be undone.",
+    "cancel": "Cancel",
+    "onlyBill": "Delete bill only",
+    "billAndExpense": "Delete bill and expense",
+    "confirm": "Delete",
+    "toastKept": "Bill deleted. Expense kept.",
+    "toastBoth": "Bill and expense deleted.",
+    "toastOnly": "Bill deleted."
+  },
+  "undo": {
+    "title": "Undo payment?",
+    "descPaid": "\"{{name}}\" will go back to pending. The linked expense in Expenses will also be removed.",
+    "desc": "\"{{name}}\" will go back to pending.",
+    "cancel": "Cancel",
+    "confirm": "Undo payment",
+    "toastSuccess": "Bill is pending again.",
+    "toastError": "Couldn't undo the payment."
+  },
+  "deleteRec": {
+    "title": "Delete recurring bill",
+    "desc": "\"{{name}}\" repeats across several months. What do you want to delete?",
+    "single": "Only this occurrence",
+    "future": "This and future ones",
+    "all": "Delete the whole series",
+    "cancel": "Cancel",
+    "toastSingle": "Only this occurrence was deleted.",
+    "toastFuture": "This and the future occurrences were deleted.",
+    "toastAll": "The whole series was deleted."
+  },
+  "form": {
+    "editTitle": "Edit bill",
+    "newTitle": "New bill to pay",
+    "editDesc": "Update the bill details.",
+    "newDesc": "Add this bill and we'll remind you before it's due.",
+    "name": "Bill name",
+    "namePlaceholder": "E.g.: Rent, Internet, Power…",
+    "value": "Amount",
+    "dueDate": "Due date",
+    "category": "Category",
+    "select": "Select",
+    "noCategory": "No category",
+    "monthRef": "Reference month",
+    "monthRefPlaceholder": "Reference month",
+    "monthRefHint": "Month this bill belongs to (e.g.: May invoice paid in June → May).",
+    "obs": "Notes (optional)",
+    "obsPlaceholder": "Additional details",
+    "moreDetails": "More details (optional)",
+    "moreDetailsHint": "Beneficiary, payment method, boleto/Pix code",
+    "beneficiary": "Beneficiary",
+    "beneficiaryPlaceholder": "Who receives the payment",
+    "supplier": "Supplier (optional)",
+    "noSupplier": "No supplier",
+    "noSuppliersTitle": "You don't have any suppliers yet.",
+    "registerSupplier": "Add supplier",
+    "paymentMethod": "Payment method",
+    "issuingBank": "Issuing bank",
+    "issuingBankPlaceholder": "E.g.: Itaú, Nubank…",
+    "boletoCode": "Boleto code",
+    "boletoCodePlaceholder": "Boleto typeable line",
+    "pixCopy": "Pix copy & paste",
+    "pixCopyPlaceholder": "Pix BR Code",
+    "pixKey": "Pix key",
+    "pixKeyPlaceholder": "CPF, email, phone or random",
+    "recurring": "Recurring bill",
+    "recurringHint": "Automatically generates the next occurrences",
+    "frequency": "Frequency",
+    "howManyYears": "How many years?",
+    "howManyWeeks": "How many weeks?",
+    "howManyFortnights": "How many fortnights?",
+    "howManyMonths": "How many months?",
+    "syncTitle": "Update linked expense",
+    "syncHint": "This bill was already paid. Apply changes to the expense in \"Expenses\" too?",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Add",
+    "errName": "Give this bill a name.",
+    "errValue": "Enter a valid amount.",
+    "errDate": "Pick the due date.",
+    "toastUpdated": "Bill updated. ✅",
+    "toastUpdatedSync": "Bill and expense updated. ✅",
+    "toastCreated": "Bill saved.",
+    "toastCreatedRec": "Recurring bill created. 🔁"
+  },
+  "frequency": {
+    "semanal": "Weekly",
+    "quinzenal": "Biweekly",
+    "mensal": "Monthly",
+    "anual": "Yearly"
+  },
+  "scope": {
+    "badge": "Recurring bill",
+    "title": "How do you want to apply this change?",
+    "desc": "You're editing a recurring bill. Apply this change only to this occurrence or to the others as well?",
+    "single": "Only this bill",
+    "singleHint": "Changes only the occurrence of {{label}}.",
+    "future": "This and future ones",
+    "futureHint": "Changes this occurrence and all future ones (past history is kept).",
+    "all": "All occurrences",
+    "allHint": "Changes the entire series, including past (paid occurrences are preserved).",
+    "cancel": "Cancel",
+    "toastAll": "The whole series was updated. ✅",
+    "toastFuture": "This and the future ones were updated. ✅",
+    "toastSingle": "Bill updated. ✅"
+  },
+  "pay": {
+    "title": "Mark as paid",
+    "desc": "Review the data before confirming the payment.",
+    "name": "Description",
+    "namePlaceholder": "E.g.: Internet",
+    "value": "Amount paid",
+    "date": "Payment date",
+    "method": "Payment method",
+    "category": "Category",
+    "noCategory": "No category",
+    "obs": "Notes (optional)",
+    "obsPlaceholder": "Account used, receipt, etc.",
+    "asExpenseTitle": "Log as expense",
+    "asExpenseHintNoCats": "No categories yet — it'll go to \"Other\" in Expenses.",
+    "asExpenseHint": "Creates an entry in Expenses with the selected category.",
+    "cancel": "Cancel",
+    "confirm": "Confirm payment",
+    "errName": "Enter the bill description.",
+    "errValue": "Enter a valid amount.",
+    "toastWithExpense": "Bill paid and expense logged.",
+    "toastOnly": "Bill marked as paid.",
+    "toastError": "Couldn't save the payment. Try again."
+  },
+  "upgrade": {
+    "featureLabel": "Import boleto, Pix or bill",
+    "benefit": "Automatically detect boletos, Pix codes and bills to pay."
+  }
+}
