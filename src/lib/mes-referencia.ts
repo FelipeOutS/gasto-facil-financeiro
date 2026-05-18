@@ -90,7 +90,7 @@ export function mesReferenciaOpcoes(
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
     const ym = `${y}-${String(m).padStart(2, "0")}`;
-    opts.push({ value: ym, label: `${NOMES_MESES[m - 1]} de ${y}` });
+    opts.push({ value: ym, label: formatMesAno(m - 1, y) });
   }
   return opts;
 }
