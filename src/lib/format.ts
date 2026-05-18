@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 export function formatBRL(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
