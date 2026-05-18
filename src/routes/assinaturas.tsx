@@ -777,6 +777,7 @@ function HistoricoLista({
   rec: Recorrencia;
   gastos: ReturnType<typeof getGastos>;
 }) {
+  const { t } = useTranslation("assinaturas");
   const historico = useMemo(
     () => historicoDaRecorrencia(rec, gastos),
     [rec, gastos],
@@ -785,7 +786,7 @@ function HistoricoLista({
     <div className="space-y-2">
       {historico.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nenhum gasto vinculado encontrado ainda.
+          {t("history.empty")}
         </p>
       )}
       {historico.map((g) => (
@@ -803,7 +804,7 @@ function HistoricoLista({
             href={`/gastos?highlight=${g.id}`}
             className="text-xs text-brand hover:underline"
           >
-            Ver
+            {t("history.view")}
           </a>
         </div>
       ))}
@@ -812,11 +813,11 @@ function HistoricoLista({
           <div>
             <p className="font-medium text-brand">{formatBRL(rec.valor)}</p>
             <p className="text-xs text-muted-foreground">
-              Previsto · {parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR")}
+              {t("history.forecast", { date: parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR") ?? "" })}
             </p>
           </div>
           <Badge variant="outline" className="text-[10px]">
-            previsão
+            {t("history.forecastBadge")}
           </Badge>
         </div>
       )}
