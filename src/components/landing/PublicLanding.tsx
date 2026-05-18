@@ -4030,7 +4030,7 @@ function ContasMock() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{c.n}</p>
-                  <p className="text-[11px] text-slate-500">Vence {c.d}</p>
+                  <p className="text-[11px] text-slate-500">{t("mockup.contas.due", { date: c.d })}</p>
                 </div>
               </div>
               <div className="text-right">
