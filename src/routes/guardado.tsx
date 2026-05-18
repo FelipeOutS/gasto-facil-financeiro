@@ -136,13 +136,13 @@ function GuardadoPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Reservas</p>
-          <h1 className="text-2xl font-bold tracking-tight">Dinheiro guardado</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("kicker")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         </div>
       </header>
 
@@ -158,12 +158,17 @@ function GuardadoPage() {
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
               <ShieldCheck className="h-3 w-3 text-success" />
-              Sua reserva, protegida
+              {t("badge")}
             </div>
-            <p className="mt-3 text-xs font-medium text-muted-foreground">Total guardado</p>
+            <p className="mt-3 text-xs font-medium text-muted-foreground">{t("totalLabel")}</p>
             <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
             <p className="mt-1 text-xs text-muted-foreground">
-              {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"} em {porBanco.size} {porBanco.size === 1 ? "banco" : "bancos"}
+              {t("stats", {
+                count: guardado.length,
+                plural: guardado.length === 1 ? "" : "s",
+                banks: porBanco.size,
+                bankPlural: porBanco.size === 1 ? "" : "s",
+              })}
             </p>
           </div>
           <img
