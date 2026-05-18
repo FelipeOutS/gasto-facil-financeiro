@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bell,
   Check,
@@ -37,14 +38,18 @@ import {
   type UserAlert,
 } from "@/lib/alerts/types";
 import { filterByCategory } from "@/lib/alerts/service";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/alertas")({
-  head: () => ({
-    meta: [
-      { title: "Alertas — Gasto Inteligente" },
-      { name: "description", content: "Veja o que precisa da sua atenção." },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return {
+      meta: [
+        { title: t("alertas.metaTitle") },
+        { name: "description", content: t("alertas.metaDesc") },
+      ],
+    };
+  },
   component: AlertasPage,
 });
 
@@ -54,19 +59,11 @@ type FilterKey =
   | "importantes"
   | AlertCategory;
 
-const FILTERS: Array<{ key: FilterKey; label: string }> = [
-  { key: "todos", label: "Todos" },
-  { key: "nao_lidos", label: "Não lidos" },
-  { key: "importantes", label: "Importantes" },
-  { key: "cartoes", label: "Cartões" },
-  { key: "contas", label: "Contas" },
-  { key: "contas_receber", label: "A receber" },
-  { key: "assinaturas", label: "Assinaturas" },
-  { key: "gastos", label: "Gastos" },
-  { key: "orcamento", label: "Orçamento" },
-  { key: "investimentos", label: "Investimentos" },
-  { key: "sistema", label: "Sistema" },
+const FILTER_KEYS: FilterKey[] = [
+  "todos", "nao_lidos", "importantes", "cartoes", "contas", "contas_receber",
+  "assinaturas", "gastos", "orcamento", "investimentos", "sistema",
 ];
+
 
 function priorityTone(p: AlertPriority): { ring: string; bg: string; fg: string; dot: string } {
   switch (p) {
