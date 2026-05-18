@@ -20,6 +20,7 @@
 //    complexidade, somamos apenas movimentações de meta no mês
 //    (positivas) — é o sinal mais confiável de "guardar".
 
+import i18n from "@/i18n";
 import type { Categoria, ContaAPagar, Gasto, Receita, MovimentacaoMeta, Guardado } from "./types";
 import { parseDateLocal } from "./format";
 
@@ -104,7 +105,7 @@ function isPagamentoConta(g: Gasto): boolean {
 }
 
 function nomeCategoria(catId: string, categorias: Categoria[]): string {
-  return categorias.find((c) => c.id === catId)?.nome ?? "Outros";
+  return categorias.find((c) => c.id === catId)?.nome ?? i18n.t("relatorios:chart.emptyCategorias");
 }
 
 function pctChange(atual: number, anterior: number): number {
@@ -115,6 +116,15 @@ function pctChange(atual: number, anterior: number): number {
 function mesAnterior(mes: number, ano: number): { mes: number; ano: number } {
   if (mes === 1) return { mes: 12, ano: ano - 1 };
   return { mes: mes - 1, ano };
+}
+
+function localeBRL(v: number): string {
+  const lng = i18n.language === "en" ? "en-US" : "pt-BR";
+  return v.toLocaleString(lng, { style: "currency", currency: "BRL" });
+}
+
+function pick<T>(arr: T[], seed: number): T {
+  return arr[Math.abs(seed) % arr.length];
 }
 
 // ======================================================================
@@ -217,7 +227,7 @@ export function buildComparativo(atual: ResumoMensal, anterior: ResumoMensal): C
       nome:
         atual.porCategoria.find((c) => c.catId === id)?.nome ??
         anterior.porCategoria.find((c) => c.catId === id)?.nome ??
-        "Outros",
+        i18n.t("relatorios:chart.emptyCategorias"),
       atual: a,
       anterior: b,
       delta: a - b,
@@ -278,41 +288,41 @@ export function classificarMes(params: {
     p += 20;
     if (resumo.totalReceitas > 0 && resumo.saldo / resumo.totalReceitas > 0.2) {
       p += 10;
-      motivo.push("Sobrou mais de 20% da renda");
+      motivo.push(i18n.t("relatorios:classificacao.sobrouMais20"));
     } else {
-      motivo.push("Saldo positivo");
+      motivo.push(i18n.t("relatorios:classificacao.saldoPositivo"));
     }
   } else if (resumo.saldo < 0) {
     p -= 25;
-    motivo.push("Saldo negativo");
+    motivo.push(i18n.t("relatorios:classificacao.saldoNegativo"));
   }
 
   if (resumo.totalGuardado > 0) {
     p += 15;
-    motivo.push("Guardou dinheiro");
+    motivo.push(i18n.t("relatorios:classificacao.guardouDinheiro"));
   }
 
   if (qtdEstouroOrcamento === 0) {
     p += 10;
-    motivo.push("Nenhum orçamento estourado");
+    motivo.push(i18n.t("relatorios:classificacao.nenhumEstouro"));
   } else {
     p -= Math.min(25, qtdEstouroOrcamento * 10);
-    motivo.push(`${qtdEstouroOrcamento} orçamento(s) estourado(s)`);
+    motivo.push(i18n.t("relatorios:classificacao.estouroCount", { count: qtdEstouroOrcamento }));
   }
 
   if (resumo.qtdContasAtrasadas === 0) {
     p += 10;
   } else {
     p -= 15;
-    motivo.push(`${resumo.qtdContasAtrasadas} conta(s) atrasada(s)`);
+    motivo.push(i18n.t("relatorios:classificacao.atrasadaCount", { count: resumo.qtdContasAtrasadas }));
   }
 
   if (comparativo.saldo.delta > 0) {
     p += 10;
-    motivo.push("Saldo melhor que o mês anterior");
+    motivo.push(i18n.t("relatorios:classificacao.saldoMelhor"));
   } else if (comparativo.saldo.delta < 0) {
     p -= 10;
-    motivo.push("Saldo pior que o mês anterior");
+    motivo.push(i18n.t("relatorios:classificacao.saldoPior"));
   }
 
   p = Math.max(0, Math.min(100, p));
@@ -331,36 +341,9 @@ export function classificarMes(params: {
 // MENSAGENS VARIADAS (templates)
 // ======================================================================
 
-const FRASES_ESTADO: Record<EstadoMes, string[]> = {
-  excelente: [
-    "Você fechou o mês muito bem! 🎉 Sobrou dinheiro, deu pra controlar os gastos e ainda guardar uma parte. Bora manter esse ritmo!",
-    "Mês excelente! 🔥 Você mandou bem em quase tudo. Continua assim que o próximo vai ser ainda melhor.",
-    "Boa demais! ✨ Esse mês foi de respiro pro bolso e ainda sobrou pra guardar.",
-  ],
-  bom: [
-    "Boa! Seu mês foi positivo 😄 Você conseguiu manter um bom controle e ficou dentro do esperado na maior parte das categorias.",
-    "Mês positivo! 👏 Deu pra equilibrar entradas e saídas e ainda fechar no azul.",
-    "Mandou bem! 💪 Mês tranquilo, nada de exagero, e o saldo ficou positivo.",
-  ],
-  mediano: [
-    "Foi um mês ok 🙂 Não saiu totalmente do controle, mas dá pra ajustar alguns pontos pra sobrar mais no próximo.",
-    "Esse mês ficou no equilíbrio, nem tão ruim, nem tão incrível 😅",
-    "Mês mediano 🤔 Deu pra fechar, mas dá pra apertar uns gastos pra sobrar mais.",
-  ],
-  atencao: [
-    "Ops! Esse mês pediu mais cuidado ⚠️ Seus gastos passaram do ideal em algumas áreas.",
-    "Opa, esse mês saiu um pouco do controle 👀 Vale dar uma olhada nas categorias que mais cresceram.",
-    "Atenção! 🚧 Algumas categorias estouraram e o saldo apertou. Bora reorganizar pro próximo.",
-  ],
-  critico: [
-    "Alerta ligado 🚨 Esse mês pesou mais no bolso. Vale revisar categorias e contas pro próximo fechar melhor.",
-    "Esse mês foi puxado 😬 Saída maior que entrada e várias áreas estourando — hora de respirar e replanejar.",
-    "Mês crítico 🚨 Importante revisar onde dá pra cortar antes do próximo virar.",
-  ],
-};
-
 export function fraseDoEstado(estado: EstadoMes, seed = 0): string {
-  const arr = FRASES_ESTADO[estado];
+  const arr = i18n.t(`relatorios:estado.${estado}.frases`, { returnObjects: true }) as string[];
+  if (!Array.isArray(arr) || arr.length === 0) return "";
   return arr[Math.abs(seed) % arr.length];
 }
 
@@ -369,13 +352,7 @@ export function emojiDoEstado(estado: EstadoMes): string {
 }
 
 export function tituloDoEstado(estado: EstadoMes): string {
-  return {
-    excelente: "Excelente",
-    bom: "Bom",
-    mediano: "Mediano",
-    atencao: "Atenção",
-    critico: "Crítico",
-  }[estado];
+  return i18n.t(`relatorios:estado.${estado}.titulo`);
 }
 
 export function corDoEstado(estado: EstadoMes): {
@@ -429,38 +406,6 @@ export interface Insight {
   tom: "positivo" | "neutro" | "alerta" | "negativo";
 }
 
-const FRASES_MAIOR_GASTO = [
-  (cat: string) => `Seu maior gasto foi com ${cat}`,
-  (cat: string) => `${cat} liderou os gastos esse mês`,
-  (cat: string) => `${cat} foi quem mais pesou no bolso`,
-];
-const FRASES_GUARDOU = [
-  (v: string) => `Você guardou ${v} esse mês 🎯`,
-  (v: string) => `Boa! ${v} foram pra reserva 💰`,
-  (v: string) => `${v} foram parar no cofrinho ✨`,
-];
-const FRASES_CARTAO_ALTO = [
-  (pct: number) => `O cartão representou ${pct}% das despesas 💳`,
-  (pct: number) => `Olho no cartão: ${pct}% de tudo que você gastou foi nele 👀`,
-];
-const FRASES_SALDO_NEG = [
-  "Você teve mais saídas do que entradas neste mês 📉",
-  "Esse mês saiu mais do que entrou — vale revisar 📉",
-  "O saldo fechou no vermelho ⛔",
-];
-const FRASES_DENTRO_ORC = [
-  (n: number) => `Boa! Você ficou dentro do orçamento em ${n} categoria(s) ✅`,
-  (n: number) => `${n} categoria(s) no controle 👏`,
-];
-const FRASES_ATRASADAS = [
-  (n: number) => `Você teve ${n} conta(s) atrasada(s) neste mês 👀`,
-  (n: number) => `${n} conta(s) passaram do prazo — fica de olho ⏰`,
-];
-
-function pick<T>(arr: T[], seed: number): T {
-  return arr[Math.abs(seed) % arr.length];
-}
-
 export function gerarInsights(params: {
   resumo: ResumoMensal;
   comparativo: ComparativoMensal;
@@ -473,119 +418,112 @@ export function gerarInsights(params: {
   const insights: Insight[] = [];
 
   if (resumo.maiorCategoria) {
+    const frases = i18n.t("relatorios:insightTexts.maiorGasto", { returnObjects: true }) as string[];
     insights.push({
       id: "maior-cat",
       emoji: "🛒",
-      texto: pick(FRASES_MAIOR_GASTO, seed)(resumo.maiorCategoria.nome),
+      texto: pick(frases, seed).replace("{{categoria}}", resumo.maiorCategoria.nome),
       tom: "neutro",
     });
   }
 
   if (qtdEstouroOrcamento > 0 && estouroNomes.length > 0) {
+    const cats = estouroNomes.slice(0, 2).join(i18n.language === "en" ? " and " : " e ");
+    const mais = estouroNomes.length > 2 ? (i18n.language === "en" ? " and more" : " e mais") : "";
     insights.push({
       id: "estouro",
       emoji: "⚠️",
-      texto: `Você ultrapassou o orçamento em ${estouroNomes.slice(0, 2).join(" e ")}${
-        estouroNomes.length > 2 ? " e mais" : ""
-      }`,
+      texto: i18n.t("relatorios:insightTexts.estouroOrcamento", { categorias: cats + mais }),
       tom: "alerta",
     });
   }
 
   if (qtdDentroOrcamento > 0) {
+    const frases = i18n.t("relatorios:insightTexts.dentroOrcamento", { returnObjects: true }) as string[];
     insights.push({
       id: "dentro-orc",
       emoji: "✅",
-      texto: pick(FRASES_DENTRO_ORC, seed)(qtdDentroOrcamento),
+      texto: pick(frases, seed).replace("{{n}}", String(qtdDentroOrcamento)),
       tom: "positivo",
     });
   }
 
   if (resumo.qtdContasAtrasadas > 0) {
+    const frases = i18n.t("relatorios:insightTexts.atrasadas", { returnObjects: true }) as string[];
     insights.push({
       id: "atrasadas",
       emoji: "⏰",
-      texto: pick(FRASES_ATRASADAS, seed)(resumo.qtdContasAtrasadas),
+      texto: pick(frases, seed).replace("{{n}}", String(resumo.qtdContasAtrasadas)),
       tom: "alerta",
     });
   }
 
   if (resumo.totalGuardado > 0) {
+    const frases = i18n.t("relatorios:insightTexts.guardou", { returnObjects: true }) as string[];
+    const v = localeBRL(resumo.totalGuardado);
     insights.push({
       id: "guardou",
       emoji: "🎯",
-      texto: pick(FRASES_GUARDOU, seed)(
-        resumo.totalGuardado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      ),
+      texto: pick(frases, seed).replace("{{valor}}", v),
       tom: "positivo",
     });
   }
 
   if (resumo.totalDespesas > 0 && resumo.totalCartao / resumo.totalDespesas > 0.4) {
     const pct = Math.round((resumo.totalCartao / resumo.totalDespesas) * 100);
+    const frases = i18n.t("relatorios:insightTexts.cartaoAlto", { returnObjects: true }) as string[];
     insights.push({
       id: "cartao-alto",
       emoji: "💳",
-      texto: pick(FRASES_CARTAO_ALTO, seed)(pct),
+      texto: pick(frases, seed).replace("{{pct}}", String(pct)),
       tom: "neutro",
     });
   }
 
   if (resumo.saldo < 0) {
+    const frases = i18n.t("relatorios:insightTexts.saldoNegativo", { returnObjects: true }) as string[];
     insights.push({
       id: "saldo-neg",
       emoji: "📉",
-      texto: pick(FRASES_SALDO_NEG, seed),
+      texto: pick(frases, seed),
       tom: "negativo",
     });
   }
 
   if (comparativo.maiorAlta && comparativo.maiorAlta.delta > 0 && comparativo.maiorAlta.anterior > 0) {
-    const v = comparativo.maiorAlta.delta.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
+    const v = localeBRL(comparativo.maiorAlta.delta);
     insights.push({
       id: "alta-cat",
       emoji: "📈",
-      texto: `Sua maior alta foi em ${comparativo.maiorAlta.nome} (+${v})`,
+      texto: i18n.t("relatorios:insightTexts.altaCategoria", { categoria: comparativo.maiorAlta.nome, valor: `+${v}` }),
       tom: "alerta",
     });
   }
 
   if (comparativo.maiorReducao && comparativo.maiorReducao.delta < 0) {
-    const v = Math.abs(comparativo.maiorReducao.delta).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
+    const v = localeBRL(Math.abs(comparativo.maiorReducao.delta));
     insights.push({
       id: "reducao-cat",
       emoji: "🪙",
-      texto: `Você economizou ${v} em ${comparativo.maiorReducao.nome}`,
+      texto: i18n.t("relatorios:insightTexts.reducaoCategoria", { valor: v, categoria: comparativo.maiorReducao.nome }),
       tom: "positivo",
     });
   }
 
   if (comparativo.despesas.delta > 0 && comparativo.despesas.anterior > 0) {
-    const v = comparativo.despesas.delta.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
+    const v = localeBRL(comparativo.despesas.delta);
     insights.push({
       id: "gastou-mais",
       emoji: "💸",
-      texto: `Você gastou ${v} a mais que no mês anterior`,
+      texto: i18n.t("relatorios:insightTexts.gastouMais", { valor: v }),
       tom: "alerta",
     });
   } else if (comparativo.despesas.delta < 0) {
-    const v = Math.abs(comparativo.despesas.delta).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
+    const v = localeBRL(Math.abs(comparativo.despesas.delta));
     insights.push({
       id: "gastou-menos",
       emoji: "💪",
-      texto: `Você gastou ${v} a menos que no mês anterior`,
+      texto: i18n.t("relatorios:insightTexts.gastouMenos", { valor: v }),
       tom: "positivo",
     });
   }
@@ -598,22 +536,17 @@ export function gerarInsights(params: {
 // ======================================================================
 
 const NOMES_MES_PT = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+const NOMES_MES_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-function brl(v: number): string {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function nomeMes(mes: number): string {
+  const arr = i18n.language === "en" ? NOMES_MES_EN : NOMES_MES_PT;
+  return arr[mes - 1] ?? "";
 }
 
 export function gerarResumoTexto(params: {
@@ -621,29 +554,31 @@ export function gerarResumoTexto(params: {
   classificacao: ClassificacaoMes;
 }): string {
   const { resumo, classificacao } = params;
-  const mesNome = NOMES_MES_PT[resumo.mes - 1];
+  const mesNome = nomeMes(resumo.mes);
   const partes: string[] = [];
 
   partes.push(
-    `Em ${mesNome}, você recebeu ${brl(resumo.totalReceitas)} e gastou ${brl(
-      resumo.totalDespesas,
-    )}.`,
+    i18n.t("relatorios:resumoTexto.intro", {
+      mes: mesNome,
+      receitas: localeBRL(resumo.totalReceitas),
+      despesas: localeBRL(resumo.totalDespesas),
+    }),
   );
 
   if (resumo.saldo >= 0) {
-    partes.push(`Sobrou ${brl(resumo.saldo)} no mês 💰`);
+    partes.push(i18n.t("relatorios:resumoTexto.sobrou", { valor: localeBRL(resumo.saldo) }));
   } else {
-    partes.push(`O saldo ficou negativo em ${brl(-resumo.saldo)} 📉`);
+    partes.push(i18n.t("relatorios:resumoTexto.negativo", { valor: localeBRL(-resumo.saldo) }));
   }
 
   if (resumo.maiorCategoria) {
-    partes.push(`Seu maior gasto foi em ${resumo.maiorCategoria.nome} 🛒`);
+    partes.push(i18n.t("relatorios:resumoTexto.maiorGasto", { categoria: resumo.maiorCategoria.nome }));
   }
   if (resumo.totalGuardado > 0) {
-    partes.push(`e você ainda conseguiu guardar ${brl(resumo.totalGuardado)} 🎯`);
+    partes.push(i18n.t("relatorios:resumoTexto.guardou", { valor: localeBRL(resumo.totalGuardado) }));
   }
   if (resumo.qtdContasAtrasadas > 0) {
-    partes.push(`Atenção: ${resumo.qtdContasAtrasadas} conta(s) ficaram atrasadas ⏰`);
+    partes.push(i18n.t("relatorios:resumoTexto.atrasadas", { count: resumo.qtdContasAtrasadas }));
   }
 
   partes.push(fraseDoEstado(classificacao.estado, resumo.mes + resumo.ano));
