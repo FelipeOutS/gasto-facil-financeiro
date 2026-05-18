@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
@@ -90,14 +91,7 @@ export const Route = createFileRoute("/contas-a-pagar")({
 
 type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
 
-const FILTROS: Array<{ id: FilterId; label: string }> = [
-  { id: "todas", label: "Todas" },
-  { id: "pendentes", label: "Pendentes" },
-  { id: "proximas", label: "Próximas" },
-  { id: "atrasadas", label: "Atrasadas" },
-  { id: "pagas", label: "Pagas" },
-  { id: "recorrentes", label: "Recorrentes" },
-];
+const FILTRO_IDS: FilterId[] = ["todas", "pendentes", "proximas", "atrasadas", "pagas", "recorrentes"];
 
 function normalizar(s: string): string {
   return s
@@ -108,6 +102,7 @@ function normalizar(s: string): string {
 }
 
 function ContasAPagarPage() {
+  const { t } = useTranslation("contas-a-pagar");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
@@ -276,7 +271,7 @@ function ContasAPagarPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("header.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -292,14 +287,14 @@ function ContasAPagarPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("header.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
+            aria-label={t("header.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -309,7 +304,7 @@ function ContasAPagarPage() {
       {/* Resumo */}
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Total pendente no mês
+          {t("summary.pendingMonth")}
         </p>
         <Money
           value={totais.pendente + totais.atrasado}
@@ -317,19 +312,19 @@ function ContasAPagarPage() {
         />
         <div className="mt-4 grid grid-cols-3 gap-2">
           <StatusPill
-            label="Pendentes"
+            label={t("pills.pending")}
             count={totais.qtdPendente}
             tone="warning"
             icon={<Clock className="h-3 w-3" />}
           />
           <StatusPill
-            label="Atrasadas"
+            label={t("pills.overdue")}
             count={totais.qtdAtrasado}
             tone="destructive"
             icon={<AlertTriangle className="h-3 w-3" />}
           />
           <StatusPill
-            label="Pagas"
+            label={t("pills.paid")}
             count={totais.qtdPago}
             tone="success"
             icon={<CheckCircle2 className="h-3 w-3" />}
@@ -338,7 +333,7 @@ function ContasAPagarPage() {
 
         {(totais.pago > 0 || totais.qtdPago > 0) && (
           <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2">
-            <span className="text-[11px] text-muted-foreground">Total pago no mês</span>
+            <span className="text-[11px] text-muted-foreground">{t("summary.paidMonth")}</span>
             <span className="num text-sm font-semibold text-success">
               {formatBRL(totais.pago)}
             </span>
@@ -348,7 +343,7 @@ function ContasAPagarPage() {
         {proximaConta && (
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-3">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próxima a vencer
+              {t("summary.nextDue")}
             </p>
             <div className="mt-1 flex items-baseline justify-between gap-2">
               <p className="truncate text-sm font-semibold">{proximaConta.nome}</p>
@@ -357,7 +352,7 @@ function ContasAPagarPage() {
               </p>
             </div>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Vence em {formatDateBR(proximaConta.dataVencimento)}
+              {t("summary.dueOn", { date: formatDateBR(proximaConta.dataVencimento) })}
             </p>
           </div>
         )}
@@ -366,26 +361,26 @@ function ContasAPagarPage() {
       {/* Cards de resumo (mês) */}
       <section className="mt-3 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <ResumoCard
-          label="Total pendente"
+          label={t("stats.pending")}
           valorNum={totais.pendente}
           tone="warning"
           icon={<Clock className="h-3.5 w-3.5" />}
         />
         <ResumoCard
-          label="Total atrasado"
+          label={t("stats.overdue")}
           valorNum={totais.atrasado}
           tone="destructive"
           icon={<AlertTriangle className="h-3.5 w-3.5" />}
         />
         <ResumoCard
-          label="Próximos 7 dias"
+          label={t("stats.next7")}
           valorNum={totais.proximos7}
           tone="warning"
           icon={<CalendarDays className="h-3.5 w-3.5" />}
-          hint={`${totais.qtdProximos7} ${totais.qtdProximos7 === 1 ? "conta" : "contas"}`}
+          hint={t("stats.billCount", { count: totais.qtdProximos7 })}
         />
         <ResumoCard
-          label="Total pago"
+          label={t("stats.paid")}
           valorNum={totais.pago}
           tone="success"
           icon={<CheckCircle2 className="h-3.5 w-3.5" />}
@@ -403,7 +398,7 @@ function ContasAPagarPage() {
               : "text-muted-foreground",
         )}
       >
-        {mensagemAmigavel(totais)}
+        {mensagemAmigavel(totais, t)}
       </p>
 
       {/* CTAs */}
@@ -414,7 +409,7 @@ function ContasAPagarPage() {
           onClick={() => setCreating(true)}
         >
           <Plus className="mr-1 h-5 w-5" />
-          Nova conta
+          {t("cta.new")}
         </Button>
         <Button
           size="lg"
@@ -423,7 +418,7 @@ function ContasAPagarPage() {
           onClick={tryImportConta}
         >
           <Upload className="mr-1 h-5 w-5" />
-          Importar conta
+          {t("cta.import")}
           {!can("importar_conta") && <LockChip />}
         </Button>
       </div>
@@ -432,16 +427,16 @@ function ContasAPagarPage() {
       <div
         className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
-        aria-label="Filtrar contas"
+        aria-label={t("filters.label")}
       >
-        {FILTROS.map((f) => {
-          const active = filtro === f.id;
+        {FILTRO_IDS.map((id) => {
+          const active = filtro === id;
           return (
             <button
-              key={f.id}
+              key={id}
               role="tab"
               aria-selected={active}
-              onClick={() => setFiltro(f.id)}
+              onClick={() => setFiltro(id)}
               className={cn(
                 "card-press shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
                 active
@@ -449,7 +444,7 @@ function ContasAPagarPage() {
                   : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-brand/40",
               )}
             >
-              {f.label}
+              {t(`filters.${id}`)}
             </button>
           );
         })}
@@ -461,21 +456,22 @@ function ContasAPagarPage() {
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por nome, categoria, valor ou vencimento"
+          placeholder={t("search.placeholder")}
           className="h-10 rounded-full pl-9 pr-9"
-          aria-label="Buscar contas"
+          aria-label={t("search.label")}
         />
         {busca && (
           <button
             type="button"
             onClick={() => setBusca("")}
             className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Limpar busca"
+            aria-label={t("search.clear")}
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
+
 
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
@@ -484,8 +480,8 @@ function ContasAPagarPage() {
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
             {busca
-              ? `Nada encontrado para "${busca}".`
-              : "Nada nesse filtro por aqui."}
+              ? t("search.noResults", { query: busca })
+              : t("search.emptyFilter")}
           </div>
         ) : (
           <div className="space-y-2.5 stagger">
@@ -535,29 +531,29 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
                 ? confirmDelete.gastoId
-                  ? `"${confirmDelete.nome}" foi paga e gerou um gasto vinculado. Como deseja excluir?`
-                  : `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
+                  ? t("delete.descPaid", { name: confirmDelete.nome })
+                  : t("delete.desc", { name: confirmDelete.nome })
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             {confirmDelete?.gastoId && (
               <Button
                 variant="outline"
                 onClick={() => {
                   if (confirmDelete) {
                     deleteContaAPagar(confirmDelete.id, { excluirGastoVinculado: false });
-                    toast.success("Conta excluída. Gasto mantido.");
+                    toast.success(t("delete.toastKept"));
                   }
                   setConfirmDelete(null);
                 }}
               >
-                Excluir só a conta
+                {t("delete.onlyBill")}
               </Button>
             )}
             <AlertDialogAction
@@ -567,14 +563,14 @@ function ContasAPagarPage() {
                     excluirGastoVinculado: !!confirmDelete.gastoId,
                   });
                   toast.success(
-                    confirmDelete.gastoId ? "Conta e gasto excluídos." : "Conta excluída.",
+                    confirmDelete.gastoId ? t("delete.toastBoth") : t("delete.toastOnly"),
                   );
                 }
                 setConfirmDelete(null);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {confirmDelete?.gastoId ? "Excluir conta e gasto" : "Excluir"}
+              {confirmDelete?.gastoId ? t("delete.billAndExpense") : t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -586,15 +582,15 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Desfazer pagamento?</AlertDialogTitle>
+            <AlertDialogTitle>{t("undo.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDesmarcar?.gastoId
-                ? `"${confirmDesmarcar.nome}" voltará para pendente. O gasto vinculado em Gastos também será removido.`
-                : `"${confirmDesmarcar?.nome ?? ""}" voltará para pendente.`}
+                ? t("undo.descPaid", { name: confirmDesmarcar.nome })
+                : t("undo.desc", { name: confirmDesmarcar?.nome ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("undo.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (confirmDesmarcar) {
@@ -602,15 +598,15 @@ function ContasAPagarPage() {
                     await desmarcarContaComoPago(confirmDesmarcar.id, {
                       removerGastoVinculado: true,
                     });
-                    toast.success("Conta voltou para pendente.");
+                    toast.success(t("undo.toastSuccess"));
                   } catch {
-                    toast.error("Não foi possível desfazer o pagamento.");
+                    toast.error(t("undo.toastError"));
                   }
                 }
                 setConfirmDesmarcar(null);
               }}
             >
-              Desfazer pagamento
+              {t("undo.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -623,11 +619,9 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta recorrente</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteRec.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDeleteRec
-                ? `"${confirmDeleteRec.nome}" se repete em vários meses. O que você quer excluir?`
-                : ""}
+              {confirmDeleteRec ? t("deleteRec.desc", { name: confirmDeleteRec.nome }) : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-2">
@@ -639,12 +633,12 @@ function ContasAPagarPage() {
                   deleteContaAPagar(confirmDeleteRec.id, {
                     excluirGastoVinculado: !!confirmDeleteRec.gastoId,
                   });
-                  toast.success("Apenas esta ocorrência foi excluída.");
+                  toast.success(t("deleteRec.toastSingle"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Apenas esta ocorrência
+              {t("deleteRec.single")}
             </Button>
             <Button
               variant="outline"
@@ -656,12 +650,12 @@ function ContasAPagarPage() {
                     confirmDeleteRec.mes,
                     confirmDeleteRec.ano,
                   );
-                  toast.success("Esta e as próximas ocorrências foram excluídas.");
+                  toast.success(t("deleteRec.toastFuture"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Esta e as próximas
+              {t("deleteRec.future")}
             </Button>
             <Button
               variant="destructive"
@@ -669,16 +663,16 @@ function ContasAPagarPage() {
               onClick={() => {
                 if (confirmDeleteRec?.recorrenciaId) {
                   deleteContaRecorrencia(confirmDeleteRec.recorrenciaId);
-                  toast.success("Toda a recorrência foi excluída.");
+                  toast.success(t("deleteRec.toastAll"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Excluir toda a recorrência
+              {t("deleteRec.all")}
             </Button>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteRec.cancel")}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -696,8 +690,8 @@ function ContasAPagarPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_conta"
-        featureLabel="Importar boleto, Pix ou conta"
-        benefit="Identifique automaticamente boletos, Pix e contas a pagar."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
     </MobileShell>
   );
@@ -749,29 +743,30 @@ function ResumoCard({
   );
 }
 
-function mensagemAmigavel(t: {
-  qtdAtrasado: number;
-  qtdProximos7: number;
-  qtdPendente: number;
-  qtdPago: number;
-}): string {
-  if (t.qtdAtrasado > 0) {
-    return t.qtdAtrasado === 1
-      ? "1 conta atrasada precisa de atenção."
-      : `${t.qtdAtrasado} contas atrasadas pedem atenção.`;
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function mensagemAmigavel(
+  totals: {
+    qtdAtrasado: number;
+    qtdProximos7: number;
+    qtdPendente: number;
+    qtdPago: number;
+  },
+  t: TFn,
+): string {
+  if (totals.qtdAtrasado > 0) {
+    return t("friendly.overdue", { count: totals.qtdAtrasado });
   }
-  if (t.qtdProximos7 > 0) {
-    return t.qtdProximos7 === 1
-      ? "1 conta vence nos próximos dias."
-      : `${t.qtdProximos7} contas vencem nos próximos dias.`;
+  if (totals.qtdProximos7 > 0) {
+    return t("friendly.soon", { count: totals.qtdProximos7 });
   }
-  if (t.qtdPendente === 0 && t.qtdPago === 0) {
-    return "Sem boletos te perseguindo por enquanto.";
+  if (totals.qtdPendente === 0 && totals.qtdPago === 0) {
+    return t("friendly.noneEver");
   }
-  if (t.qtdPendente === 0) {
-    return "Tudo em dia por aqui. 🎉";
+  if (totals.qtdPendente === 0) {
+    return t("friendly.allPaid");
   }
-  return "Boa! Nada vencendo nos próximos 7 dias.";
+  return t("friendly.next7Clear");
 }
 
 function StatusPill({
@@ -808,18 +803,19 @@ function StatusPill({
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const { t } = useTranslation("contas-a-pagar");
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center animate-rise">
       <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground animate-pop">
         <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold">Sem boletos te perseguindo por enquanto</p>
+      <p className="text-sm font-semibold">{t("empty.title")}</p>
       <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-        Cadastre uma conta e deixe o app lembrar por você antes de vencer.
+        {t("empty.subtitle")}
       </p>
       <Button size="sm" className="card-press rounded-full mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
-        Adicionar primeira conta
+        {t("empty.addFirst")}
       </Button>
     </div>
   );
