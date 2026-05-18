@@ -522,10 +522,10 @@ function GastosPage() {
       const ids = Array.from(selected);
       const n = await bulkDeleteGastos(ids);
       if (n > 0) {
-        toast.success(`${n} ${n === 1 ? "gasto removido" : "gastos removidos"}.`);
+        toast.success(n === 1 ? t("bulk.deletedOne", { count: n }) : t("bulk.deletedMany", { count: n }));
         clearSelection();
       } else {
-        toast.error("Não foi possível excluir os gastos selecionados.");
+        toast.error(t("bulk.deleteError"));
       }
       setConfirmBulk(false);
     } finally {
@@ -549,14 +549,15 @@ function GastosPage() {
     if (periodo === "todos") return null;
     if (periodo === "personalizado") {
       if (customFrom && customTo) {
-        return `${formatDateBR(toISODate(customFrom))} → ${formatDateBR(toISODate(customTo))}`;
+        return t("periodo.fromTo", { from: formatDateBR(toISODate(customFrom)), to: formatDateBR(toISODate(customTo)) });
       }
-      if (customFrom) return `A partir de ${formatDateBR(toISODate(customFrom))}`;
-      if (customTo) return `Até ${formatDateBR(toISODate(customTo))}`;
-      return "Personalizado";
+      if (customFrom) return t("periodo.from", { from: formatDateBR(toISODate(customFrom)) });
+      if (customTo) return t("periodo.to", { from: "", to: formatDateBR(toISODate(customTo)) });
+      return t("periodo.personalizado");
     }
-    return PERIODO_LABEL[periodo];
-  }, [periodo, customFrom, customTo]);
+    return t(`periodo.${PERIODO_KEYS[periodo]}`);
+  }, [periodo, customFrom, customTo, t]);
+
 
   const hasAnyFilter =
     !!periodoChipLabel ||
