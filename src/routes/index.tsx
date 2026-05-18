@@ -974,20 +974,22 @@ function MinhaRendaCard({
 }
 
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
+  const { t, i18n } = useTranslation("dashboard");
+  const dateLocale = i18n.language === "en" ? "en-US" : "pt-BR";
   return (
     <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Atividade
+            {t("atividade.eyebrow")}
           </p>
-          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">Transações recentes</h2>
+          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("atividade.title")}</h2>
         </div>
         <Link
           to="/gastos"
           className="text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
-          Ver tudo →
+          {t("atividade.verTudo")}
         </Link>
       </div>
       <div className="mt-3">
@@ -995,10 +997,10 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
-              Tudo vazio por aqui ainda.
+              {t("atividade.vazio")}
             </p>
             <Link to="/adicionar" className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors">
-              Lançar o primeiro gasto
+              {t("atividade.primeiro")}
             </Link>
           </div>
         ) : (
@@ -1016,8 +1018,8 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
-                      {cat?.nome ?? "Outros"} ·{" "}
-                      {new Date(g.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {cat?.nome ?? t("atividade.outros")} ·{" "}
+                      {new Date(g.data + "T00:00:00").toLocaleDateString(dateLocale)}
                     </p>
                   </div>
                   <p className="num shrink-0 text-sm font-semibold text-destructive">
