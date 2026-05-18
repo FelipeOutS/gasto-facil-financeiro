@@ -52,15 +52,6 @@ export const Route = createFileRoute("/meu-plano")({
   component: MeuPlanoPage,
 });
 
-const STATUS_LABEL: Record<string, string> = {
-  ativo: "Ativo",
-  teste: "Em teste",
-  aguardando_pagamento: "Aguardando pagamento",
-  expirado: "Expirado",
-  cancelado: "Cancelado",
-  sem_assinatura: "Sem assinatura",
-};
-
 const STATUS_TONE: Record<string, string> = {
   ativo: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
   teste: "border-primary/30 bg-primary/10 text-primary",
