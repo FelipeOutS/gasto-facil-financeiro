@@ -531,29 +531,29 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete
                 ? confirmDelete.gastoId
-                  ? `"${confirmDelete.nome}" foi paga e gerou um gasto vinculado. Como deseja excluir?`
-                  : `Tem certeza que quer excluir "${confirmDelete.nome}"? Essa ação não pode ser desfeita.`
+                  ? t("delete.descPaid", { name: confirmDelete.nome })
+                  : t("delete.desc", { name: confirmDelete.nome })
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             {confirmDelete?.gastoId && (
               <Button
                 variant="outline"
                 onClick={() => {
                   if (confirmDelete) {
                     deleteContaAPagar(confirmDelete.id, { excluirGastoVinculado: false });
-                    toast.success("Conta excluída. Gasto mantido.");
+                    toast.success(t("delete.toastKept"));
                   }
                   setConfirmDelete(null);
                 }}
               >
-                Excluir só a conta
+                {t("delete.onlyBill")}
               </Button>
             )}
             <AlertDialogAction
@@ -563,14 +563,14 @@ function ContasAPagarPage() {
                     excluirGastoVinculado: !!confirmDelete.gastoId,
                   });
                   toast.success(
-                    confirmDelete.gastoId ? "Conta e gasto excluídos." : "Conta excluída.",
+                    confirmDelete.gastoId ? t("delete.toastBoth") : t("delete.toastOnly"),
                   );
                 }
                 setConfirmDelete(null);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {confirmDelete?.gastoId ? "Excluir conta e gasto" : "Excluir"}
+              {confirmDelete?.gastoId ? t("delete.billAndExpense") : t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -582,15 +582,15 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Desfazer pagamento?</AlertDialogTitle>
+            <AlertDialogTitle>{t("undo.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDesmarcar?.gastoId
-                ? `"${confirmDesmarcar.nome}" voltará para pendente. O gasto vinculado em Gastos também será removido.`
-                : `"${confirmDesmarcar?.nome ?? ""}" voltará para pendente.`}
+                ? t("undo.descPaid", { name: confirmDesmarcar.nome })
+                : t("undo.desc", { name: confirmDesmarcar?.nome ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("undo.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (confirmDesmarcar) {
@@ -598,15 +598,15 @@ function ContasAPagarPage() {
                     await desmarcarContaComoPago(confirmDesmarcar.id, {
                       removerGastoVinculado: true,
                     });
-                    toast.success("Conta voltou para pendente.");
+                    toast.success(t("undo.toastSuccess"));
                   } catch {
-                    toast.error("Não foi possível desfazer o pagamento.");
+                    toast.error(t("undo.toastError"));
                   }
                 }
                 setConfirmDesmarcar(null);
               }}
             >
-              Desfazer pagamento
+              {t("undo.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -619,11 +619,9 @@ function ContasAPagarPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta recorrente</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteRec.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDeleteRec
-                ? `"${confirmDeleteRec.nome}" se repete em vários meses. O que você quer excluir?`
-                : ""}
+              {confirmDeleteRec ? t("deleteRec.desc", { name: confirmDeleteRec.nome }) : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-2">
@@ -635,12 +633,12 @@ function ContasAPagarPage() {
                   deleteContaAPagar(confirmDeleteRec.id, {
                     excluirGastoVinculado: !!confirmDeleteRec.gastoId,
                   });
-                  toast.success("Apenas esta ocorrência foi excluída.");
+                  toast.success(t("deleteRec.toastSingle"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Apenas esta ocorrência
+              {t("deleteRec.single")}
             </Button>
             <Button
               variant="outline"
@@ -652,12 +650,12 @@ function ContasAPagarPage() {
                     confirmDeleteRec.mes,
                     confirmDeleteRec.ano,
                   );
-                  toast.success("Esta e as próximas ocorrências foram excluídas.");
+                  toast.success(t("deleteRec.toastFuture"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Esta e as próximas
+              {t("deleteRec.future")}
             </Button>
             <Button
               variant="destructive"
@@ -665,16 +663,16 @@ function ContasAPagarPage() {
               onClick={() => {
                 if (confirmDeleteRec?.recorrenciaId) {
                   deleteContaRecorrencia(confirmDeleteRec.recorrenciaId);
-                  toast.success("Toda a recorrência foi excluída.");
+                  toast.success(t("deleteRec.toastAll"));
                 }
                 setConfirmDeleteRec(null);
               }}
             >
-              Excluir toda a recorrência
+              {t("deleteRec.all")}
             </Button>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteRec.cancel")}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -692,8 +690,8 @@ function ContasAPagarPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_conta"
-        featureLabel="Importar boleto, Pix ou conta"
-        benefit="Identifique automaticamente boletos, Pix e contas a pagar."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
     </MobileShell>
   );
