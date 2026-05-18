@@ -396,10 +396,13 @@ function ContaCard({
   onCancel: () => void;
   clienteNome?: string;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const eff = statusEfetivo(conta);
   const isRecebido = eff === "recebido";
   const isCancelado = conta.status === "cancelado";
-  const tipoLabel = TIPOS_RECEBIMENTO.find((t) => t.id === conta.tipo_recebimento)?.label ?? conta.tipo_recebimento;
+  const tipoLabel = TIPOS_RECEBIMENTO.find((x) => x.id === conta.tipo_recebimento)
+    ? t(`tipos.${conta.tipo_recebimento}` as const, { defaultValue: conta.tipo_recebimento })
+    : conta.tipo_recebimento;
   return (
     <div
       className={cn(
@@ -415,15 +418,19 @@ function ContaCard({
           </div>
           <h3 className="mt-1 truncate text-sm font-semibold">{conta.titulo}</h3>
           {conta.pagador_nome && (
-            <p className="truncate text-[12px] text-muted-foreground">de {conta.pagador_nome}</p>
+            <p className="truncate text-[12px] text-muted-foreground">
+              {t("card.from", { name: conta.pagador_nome })}
+            </p>
           )}
           {clienteNome && (
-            <p className="truncate text-[11px] text-muted-foreground">Cliente: {clienteNome}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {t("card.client", { name: clienteNome })}
+            </p>
           )}
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Previsto: {formatDateBR(conta.data_prevista)}
+            {t("card.expectedOn", { date: formatDateBR(conta.data_prevista) })}
             {conta.data_recebimento && (
-              <> · Recebido em {formatDateBR(conta.data_recebimento)}</>
+              <> · {t("card.receivedOn", { date: formatDateBR(conta.data_recebimento) })}</>
             )}
           </p>
         </div>
@@ -431,12 +438,12 @@ function ContaCard({
           <Money value={Number(conta.valor_total)} className="num text-sm font-bold" />
           {Number(conta.valor_recebido) > 0 && Number(conta.valor_recebido) < Number(conta.valor_total) && (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              Recebido {formatBRL(Number(conta.valor_recebido))}
+              {t("card.receivedAmount", { amount: formatBRL(Number(conta.valor_recebido)) })}
             </p>
           )}
           {!isRecebido && !isCancelado && Number(conta.valor_restante) > 0 && (
             <p className="num mt-0.5 text-[10px] text-success">
-              Restante {formatBRL(Number(conta.valor_restante))}
+              {t("card.remainingAmount", { amount: formatBRL(Number(conta.valor_restante)) })}
             </p>
           )}
         </div>
@@ -446,23 +453,23 @@ function ContaCard({
         {!isCancelado && !isRecebido && (
           <Button size="sm" variant="default" className="h-8 rounded-lg" onClick={onMarcar}>
             <Check className="mr-1 h-3.5 w-3.5" />
-            Marcar recebido
+            {t("card.markReceived")}
           </Button>
         )}
         {!isCancelado && isRecebido && (
           <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onDesmarcar}>
             <Clock className="mr-1 h-3.5 w-3.5" />
-            Desmarcar
+            {t("card.unmark")}
           </Button>
         )}
         <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onEdit}>
           <Pencil className="mr-1 h-3.5 w-3.5" />
-          Editar
+          {t("card.edit")}
         </Button>
         {!isCancelado && (
           <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onCancel}>
             <Ban className="mr-1 h-3.5 w-3.5" />
-            Cancelar
+            {t("card.cancel")}
           </Button>
         )}
         <Button
