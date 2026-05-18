@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/orcamento")({
   head: () => ({
@@ -62,16 +63,6 @@ export const Route = createFileRoute("/orcamento")({
   }),
   component: OrcamentoPage,
 });
-
-function statusLabel(s: StatusOrcamento): string {
-  return s === "ok"
-    ? "Dentro do controle"
-    : s === "atencao"
-      ? "Atenção: chegando no limite"
-      : s === "estouro"
-        ? "Limite estourado"
-        : "Sem limite";
-}
 
 function OrcamentoPage() {
   const ready = useBootstrap();
