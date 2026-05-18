@@ -1460,6 +1460,7 @@ function EditReceitaDialog({
   receita: Receita | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("renda");
   const open = !!receita;
   const [descricao, setDescricao] = useState("");
   const [valorStr, setValorStr] = useState("");
@@ -1484,7 +1485,7 @@ function EditReceitaDialog({
     if (!receita) return;
     const valor = parseBRLInput(valorStr);
     if (!valor || !descricao.trim()) {
-      toast.error("Preencha a descrição e o valor.");
+      toast.error(t("toast.fillFields"));
       return;
     }
     updateReceita(
@@ -1492,7 +1493,7 @@ function EditReceitaDialog({
       { descricao: descricao.trim(), valor, data, tipo, clienteId },
       receita.recorrente && receita.recorrenciaId ? scope : "single",
     );
-    toast.success("Renda atualizada. ✅");
+    toast.success(t("toast.updated"));
     onClose();
   }
 
@@ -1500,12 +1501,12 @@ function EditReceitaDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar renda</DialogTitle>
-          <DialogDescription>Altere os detalhes desta entrada.</DialogDescription>
+          <DialogTitle>{t("dialog.editTitle")}</DialogTitle>
+          <DialogDescription>{t("dialog.editDescription")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs text-muted-foreground">Descrição</Label>
+            <Label className="text-xs text-muted-foreground">{t("dialog.fields.descricao")}</Label>
             <Input
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -1514,7 +1515,7 @@ function EditReceitaDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.valor")}</Label>
               <Input
                 inputMode="decimal"
                 value={valorStr}
@@ -1523,7 +1524,7 @@ function EditReceitaDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Data</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.data")}</Label>
               <Input
                 type="date"
                 value={data}
@@ -1533,14 +1534,14 @@ function EditReceitaDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Tipo</Label>
+            <Label className="text-xs text-muted-foreground">{t("dialog.fields.tipo")}</Label>
             <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
               <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_RECEITA.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                {TIPOS_RECEITA.map((tp) => (
+                  <SelectItem key={tp.id} value={tp.id}>{t(`tipo.${tp.id}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1554,7 +1555,7 @@ function EditReceitaDialog({
           {receita?.recorrente && receita.recorrenciaId && (
             <div className="rounded-xl border border-border bg-card-elevated p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                Esta é uma renda recorrente. Como aplicar a alteração?
+                {t("dialog.scopeTitle")}
               </p>
               <RadioGroup
                 value={scope}
@@ -1564,40 +1565,40 @@ function EditReceitaDialog({
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="single" id="scope-single" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar somente este mês</span>
+                    <span className="block font-medium">{t("dialog.scope.single")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Não muda os outros meses.
+                      {t("dialog.scope.singleHint")}
                     </span>
                   </span>
                 </label>
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="forward" id="scope-forward" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar este mês e os próximos</span>
+                    <span className="block font-medium">{t("dialog.scope.forward")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Preserva o histórico anterior.
+                      {t("dialog.scope.forwardHint")}
                     </span>
                   </span>
                 </label>
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="all" id="scope-all" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar toda a recorrência</span>
+                    <span className="block font-medium">{t("dialog.scope.all")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Atualiza todos os meses ligados a esta renda.
+                      {t("dialog.scope.allHint")}
                     </span>
                   </span>
                 </label>
               </RadioGroup>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                A nova data informada acima só é aplicada nesta receita.
+                {t("dialog.scopeDateNote")}
               </p>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave}>Salvar</Button>
+          <Button variant="outline" onClick={onClose}>{t("dialog.cancel")}</Button>
+          <Button onClick={handleSave}>{t("dialog.saveEdit")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
