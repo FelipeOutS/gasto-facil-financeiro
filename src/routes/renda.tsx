@@ -1277,6 +1277,7 @@ function MiniStat({
   footer?: string;
   total?: number;
 }) {
+  const { t } = useTranslation("renda");
   const pct = total && total > 0 ? Math.min(100, (value / total) * 100) : null;
   return (
     <div className="group min-w-0 overflow-hidden rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
@@ -1293,7 +1294,7 @@ function MiniStat({
           <p className="truncate text-[10px] text-muted-foreground">{footer}</p>
         ) : pct !== null ? (
           <p className="truncate text-[10px] font-medium text-muted-foreground tabular-nums">
-            {pct.toFixed(0)}% do mês
+            {t("miniStat.pctMonth", { pct: pct.toFixed(0) })}
           </p>
         ) : <span />}
       </div>
@@ -1334,13 +1335,15 @@ function EmptyRenda({
   title,
   subtitle,
   onAction,
-  actionLabel = "Adicionar renda",
+  actionLabel,
 }: {
   title: string;
   subtitle: string;
   onAction?: () => void;
   actionLabel?: string;
 }) {
+  const { t } = useTranslation("renda");
+  const exampleKeys = ["salario", "freelance", "comissao", "aluguel", "vendas"] as const;
   return (
     <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
       <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-success/15 text-success animate-pop">
@@ -1349,16 +1352,16 @@ function EmptyRenda({
       <p className="font-semibold text-foreground">{title}</p>
       <p className="mx-auto mt-1 max-w-sm text-xs">{subtitle}</p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-        {["Salário", "Freelance", "Comissão", "Aluguel", "Vendas"].map((s) => (
-          <Badge key={s} variant="outline" className="rounded-full text-[10px] font-normal">
-            {s}
+        {exampleKeys.map((k) => (
+          <Badge key={k} variant="outline" className="rounded-full text-[10px] font-normal">
+            {t(`empty.examples.${k}`)}
           </Badge>
         ))}
       </div>
       {onAction && (
         <div className="mt-4">
           <Button size="sm" onClick={onAction} className="card-press rounded-full">
-            <Plus className="mr-1 h-4 w-4" /> {actionLabel}
+            <Plus className="mr-1 h-4 w-4" /> {actionLabel ?? t("empty.defaultAction")}
           </Button>
         </div>
       )}
