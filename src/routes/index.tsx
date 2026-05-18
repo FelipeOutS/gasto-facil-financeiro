@@ -1764,12 +1764,12 @@ function ContasAReceberCard() {
     dias === null
       ? ""
       : dias < 0
-        ? `${Math.abs(dias)} dia(s) atrasado`
+        ? t("contasReceber.atrasada", { dias: Math.abs(dias) })
         : dias === 0
-          ? "vence hoje"
+          ? t("contasReceber.venceHoje")
           : dias === 1
-            ? "vence amanhã"
-            : `vence em ${dias} dia(s)`;
+            ? t("contasReceber.venceAmanha")
+            : t("contasReceber.venceEm", { dias });
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
@@ -1780,10 +1780,10 @@ function ContasAReceberCard() {
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              A receber
+              {t("contasReceber.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
-              {formatBRL(resumo.totalAberto)} em aberto
+              {t("contasReceber.emAberto", { valor: formatBRL(resumo.totalAberto) })}
             </h2>
           </div>
         </div>
@@ -1791,14 +1791,14 @@ function ContasAReceberCard() {
           to="/contas-a-receber"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contasReceber.ver")}
         </Link>
       </div>
 
       {resumo.proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima entrada
+            {t("contasReceber.proximaEntrada")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.titulo}</p>
@@ -1823,13 +1823,13 @@ function ContasAReceberCard() {
 
       <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="num">
-          {resumo.countAbertas} aberta(s)
+          {t(resumo.countAbertas === 1 ? "contasReceber.abertasSing" : "contasReceber.abertasPlur", { count: resumo.countAbertas })}
         </span>
         {resumo.countAtrasadas > 0 && (
           <>
             <span>·</span>
             <span className="num text-destructive font-medium">
-              {resumo.countAtrasadas} atrasada(s)
+              {t(resumo.countAtrasadas === 1 ? "contasReceber.atrasadasSing" : "contasReceber.atrasadasPlur", { count: resumo.countAtrasadas })}
             </span>
           </>
         )}
