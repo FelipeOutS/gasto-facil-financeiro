@@ -1994,7 +1994,7 @@ function CartaoFormDialog({
               <div className="space-y-5 animate-rise">
                 <section>
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Prévia
+                    {t("form.previewTitle")}
                   </h3>
                   <div
                     className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-[background] duration-500 ease-out"
