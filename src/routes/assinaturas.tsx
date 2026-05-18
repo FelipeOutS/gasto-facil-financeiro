@@ -838,6 +838,7 @@ function RecorrenciaDialog({
   userId: string | null;
   onSaved: () => void;
 }) {
+  const { t, freqLabel, statusLabel } = useLabels();
   const categorias = useStore(getCategorias);
   const cartoes = useStore(getCartoes);
   const [nome, setNome] = useState("");
