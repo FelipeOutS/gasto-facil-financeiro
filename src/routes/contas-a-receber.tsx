@@ -753,6 +753,7 @@ function ReceberDialog({
   onClose: () => void;
   onConfirmed: () => void;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const [valorAgora, setValorAgora] = useState("");
   const [data, setData] = useState(todayISO());
   const [forma, setForma] = useState<string>("");
@@ -782,18 +783,18 @@ function ReceberDialog({
       if (parcial) {
         const v = parseBRLInput(valorAgora);
         if (!v || v <= 0) {
-          toast.error("Informe o valor recebido");
+          toast.error(t("receive.errAmount"));
           setSaving(false);
           return;
         }
         opts.valor_recebido_agora = v;
       }
       await marcarRecebida(conta.id, opts);
-      toast.success("Recebimento registrado");
+      toast.success(t("receive.toastSuccess"));
       onConfirmed();
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao registrar");
+      toast.error(t("receive.toastError"));
     } finally {
       setSaving(false);
     }
@@ -803,9 +804,9 @@ function ReceberDialog({
     <Dialog open={!!conta} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Registrar recebimento</DialogTitle>
+          <DialogTitle>{t("receive.title")}</DialogTitle>
           <DialogDescription>
-            {conta.titulo} · restante {formatBRL(restante)}
+            {t("receive.desc", { name: conta.titulo, amount: formatBRL(restante) })}
           </DialogDescription>
         </DialogHeader>
 
@@ -817,12 +818,12 @@ function ReceberDialog({
               onChange={(e) => setParcial(e.target.checked)}
               className="h-4 w-4"
             />
-            Recebimento parcial
+            {t("receive.partial")}
           </label>
 
           {parcial && (
             <div className="space-y-1.5">
-              <Label>Valor recebido agora</Label>
+              <Label>{t("receive.amountNow")}</Label>
               <Input
                 inputMode="decimal"
                 value={valorAgora}
@@ -834,20 +835,20 @@ function ReceberDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{t("receive.date")}</Label>
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Forma</Label>
+              <Label>{t("receive.forma")}</Label>
               <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder={t("receive.none")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none">—</SelectItem>
+                  <SelectItem value="__none">{t("receive.none")}</SelectItem>
                   {FORMAS_RECEBIMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {t(`formas.${f.id}` as const, { defaultValue: f.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -858,11 +859,11 @@ function ReceberDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {t("receive.cancel")}
           </Button>
           <Button onClick={handleConfirm} disabled={saving}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar
+            {t("receive.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
