@@ -606,7 +606,7 @@ const CartaoCard = memo(function CartaoCard({
     () => resumoFaturaPorMes(cartao.id, fatRef.mes, fatRef.ano),
     [cartao.id, fatRef.mes, fatRef.ano, r.usadoMes],
   );
-  const badge = statusBadgeStyle(faturaStatus);
+  const badge = statusBadgeStyle(faturaStatus, t);
 
   // Datas formatadas (dd/mm) — vencimento real da fatura aberta.
   const vencDate = useMemo(() => proximoVencimentoFaturaAberta(cartao), [cartao]);
