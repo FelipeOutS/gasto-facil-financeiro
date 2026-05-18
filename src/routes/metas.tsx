@@ -103,6 +103,7 @@ type DialogMode =
   | { kind: "remove"; meta: Meta };
 
 function MetasPage() {
+  const { t } = useTranslation("metas");
   const ready = useBootstrap();
   const metas = useStore(() => getMetas());
   const bancos = useStore(() => getBancos());
@@ -127,19 +128,23 @@ function MetasPage() {
 
   if (!ready) return <PageSkeleton />;
 
+  const countLabel = metas.length === 1
+    ? t("summary.countOne", { count: metas.length })
+    : t("summary.countOther", { count: metas.length });
+
   return (
     <MobileShell>
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Objetivos</p>
-          <h1 className="text-2xl font-bold tracking-tight">Metas financeiras</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("eyebrow")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         </div>
       </header>
 
@@ -148,12 +153,13 @@ function MetasPage() {
           <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
             <Target className="h-3.5 w-3.5" />
           </span>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Total em progresso nas metas</p>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("summary.label")}</p>
         </div>
         <Money value={totalAcumulado} className="num mt-2 block text-4xl font-extrabold tracking-tight" />
-        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}. Esse valor representa o progresso acumulado nas metas e <strong className="text-foreground/80">não</strong> o saldo em banco.
-        </p>
+        <p
+          className="mt-1.5 text-xs leading-relaxed text-muted-foreground"
+          dangerouslySetInnerHTML={{ __html: countLabel + t("summary.hint") }}
+        />
       </section>
 
       <Button
@@ -162,7 +168,7 @@ function MetasPage() {
         onClick={() => setDialog({ kind: "create" })}
       >
         <Plus className="mr-1 h-5 w-5" />
-        Nova meta
+        {t("newGoal")}
       </Button>
 
       <section className="mt-5 space-y-3">
@@ -172,10 +178,10 @@ function MetasPage() {
               <Target className="h-6 w-6" />
             </span>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              Escolha uma meta e acompanhe cada passo até chegar lá.
+              {t("empty.title")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Viagem, reserva, troca de carro — qualquer objetivo que valha a pena.
+              {t("empty.subtitle")}
             </p>
             <Button
               size="sm"
@@ -183,7 +189,7 @@ function MetasPage() {
               onClick={() => setDialog({ kind: "create" })}
             >
               <Plus className="mr-1 h-4 w-4" />
-              Criar primeira meta
+              {t("empty.cta")}
             </Button>
           </div>
         ) : (
@@ -212,23 +218,25 @@ function MetasPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
-            <AlertDialogDescription>
-              A meta <strong>{confirmDelete?.nome}</strong> será removida. As reservas em Guardado vinculadas a ela <strong>não serão apagadas</strong> — vão continuar em Guardado como "sem meta vinculada".
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
+            <AlertDialogDescription
+              dangerouslySetInnerHTML={{
+                __html: t("delete.description", { name: confirmDelete?.nome ?? "" }),
+              }}
+            />
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteMeta(confirmDelete.id);
-                  toast.success("Meta excluída.");
+                  toast.success(t("delete.toast"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Excluir
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
