@@ -617,7 +617,7 @@ function RelatoriosPage() {
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
         <>
-          <SectionLabel>Top 5 maiores despesas</SectionLabel>
+          <SectionLabel>{t("sections.topDespesas")}</SectionLabel>
           <ul className="space-y-2">
             {resumo.topGastos.map((g, i) => {
               const cat = getCategoriaById(g.categoriaId);
