@@ -102,6 +102,7 @@ function normalizar(s: string): string {
 }
 
 function ContasAPagarPage() {
+  const { t } = useTranslation("contas-a-pagar");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
