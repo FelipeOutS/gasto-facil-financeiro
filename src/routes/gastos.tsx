@@ -92,6 +92,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Trans, useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/gastos")({
   head: () => ({ meta: [{ title: "Gastos — Gasto Inteligente" }] }),
