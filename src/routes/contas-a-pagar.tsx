@@ -745,29 +745,30 @@ function ResumoCard({
   );
 }
 
-function mensagemAmigavel(t: {
-  qtdAtrasado: number;
-  qtdProximos7: number;
-  qtdPendente: number;
-  qtdPago: number;
-}): string {
-  if (t.qtdAtrasado > 0) {
-    return t.qtdAtrasado === 1
-      ? "1 conta atrasada precisa de atenção."
-      : `${t.qtdAtrasado} contas atrasadas pedem atenção.`;
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function mensagemAmigavel(
+  totals: {
+    qtdAtrasado: number;
+    qtdProximos7: number;
+    qtdPendente: number;
+    qtdPago: number;
+  },
+  t: TFn,
+): string {
+  if (totals.qtdAtrasado > 0) {
+    return t("friendly.overdue", { count: totals.qtdAtrasado });
   }
-  if (t.qtdProximos7 > 0) {
-    return t.qtdProximos7 === 1
-      ? "1 conta vence nos próximos dias."
-      : `${t.qtdProximos7} contas vencem nos próximos dias.`;
+  if (totals.qtdProximos7 > 0) {
+    return t("friendly.soon", { count: totals.qtdProximos7 });
   }
-  if (t.qtdPendente === 0 && t.qtdPago === 0) {
-    return "Sem boletos te perseguindo por enquanto.";
+  if (totals.qtdPendente === 0 && totals.qtdPago === 0) {
+    return t("friendly.noneEver");
   }
-  if (t.qtdPendente === 0) {
-    return "Tudo em dia por aqui. 🎉";
+  if (totals.qtdPendente === 0) {
+    return t("friendly.allPaid");
   }
-  return "Boa! Nada vencendo nos próximos 7 dias.";
+  return t("friendly.next7Clear");
 }
 
 function StatusPill({
