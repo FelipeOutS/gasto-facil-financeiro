@@ -32,6 +32,7 @@ type TFn = ReturnType<typeof useTranslation>["t"];
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 function OnboardingPage() {
+  const { t } = useTranslation("onboarding");
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
   const { state, loading, save } = useOnboarding();
@@ -113,7 +114,7 @@ function OnboardingPage() {
   }
 
   if (authLoading || loading) {
-    return <BrandLoader message="Preparando sua configuração…" />;
+    return <BrandLoader message={t("loading")} />;
   }
 
   return (
@@ -126,7 +127,7 @@ function OnboardingPage() {
               <Wallet className="h-5 w-5 text-foreground" />
             </span>
             <span className="text-base font-extrabold tracking-tight">
-              Gasto Inteligente
+              {t("brand")}
             </span>
           </div>
           {step > 0 && step < 5 && (
@@ -135,7 +136,7 @@ function OnboardingPage() {
               onClick={skipAll}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              Pular por enquanto
+              {t("skip")}
             </button>
           )}
         </div>
@@ -157,7 +158,7 @@ function OnboardingPage() {
 
         {/* Steps */}
         {step === 0 && (
-          <StepWelcome onStart={() => setStep(1)} onSkip={skipAll} />
+          <StepWelcome onStart={() => setStep(1)} onSkip={skipAll} t={t} />
         )}
 
         {step === 1 && (
@@ -165,6 +166,7 @@ function OnboardingPage() {
             value={accountType}
             onChange={setAccountType}
             onNext={next}
+            t={t}
           />
         )}
 
@@ -174,6 +176,7 @@ function OnboardingPage() {
             onToggle={toggleGoal}
             onBack={back}
             onNext={next}
+            t={t}
           />
         )}
 
@@ -183,6 +186,7 @@ function OnboardingPage() {
             onToggle={toggleModule}
             onBack={back}
             onNext={next}
+            t={t}
           />
         )}
 
@@ -199,6 +203,7 @@ function OnboardingPage() {
               void navigate({ to: "/meu-plano" });
             }}
             saving={saving}
+            t={t}
           />
         )}
 
@@ -206,6 +211,7 @@ function OnboardingPage() {
           <StepDone
             modules={modules}
             onGoDashboard={() => navigate({ to: "/" })}
+            t={t}
           />
         )}
       </div>
