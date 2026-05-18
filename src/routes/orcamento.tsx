@@ -64,6 +64,7 @@ export const Route = createFileRoute("/orcamento")({
 });
 
 function OrcamentoPage() {
+  const { t } = useTranslation("orcamento");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
@@ -122,13 +123,13 @@ function OrcamentoPage() {
     if (!editing) return;
     const v = parseBRLInput(editing.valor);
     setLimite(editing.id, v, ym.mes, ym.ano);
-    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
+    toast.success(v > 0 ? t("toasts.saved", { value: formatBRL(v) }) : t("toasts.removed"));
     setEditing(null);
   }
 
   function removerLimite(catId: string, nome: string) {
     setLimite(catId, 0, ym.mes, ym.ano);
-    toast.success(`Orçamento de ${nome} removido.`);
+    toast.success(t("toasts.categoryRemoved", { name: nome }));
   }
 
   function copiarMesAnterior() {
@@ -137,12 +138,11 @@ function OrcamentoPage() {
     const aa = anterior.getFullYear();
     const limitesAnteriores = getLimites().filter((l) => l.mes === ma && l.ano === aa);
     if (limitesAnteriores.length === 0) {
-      toast.error("O mês anterior não tem orçamento para copiar.");
+      toast.error(t("toasts.noPrev"));
       return;
     }
     let copiados = 0;
     for (const l of limitesAnteriores) {
-      // Só copia se o mês atual ainda não tem aquele tipo configurado
       const atual = getLimite(l.tipo, ym.mes, ym.ano);
       if (!atual || atual <= 0) {
         setLimite(l.tipo, l.valor, ym.mes, ym.ano);
@@ -151,8 +151,8 @@ function OrcamentoPage() {
     }
     toast.success(
       copiados > 0
-        ? `${copiados} limite(s) copiado(s) do mês anterior.`
-        : "Os limites do mês anterior já estavam aplicados.",
+        ? t("toasts.copied", { count: copiados })
+        : t("toasts.alreadyApplied"),
     );
   }
 
