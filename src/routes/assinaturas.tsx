@@ -86,13 +86,23 @@ export const Route = createFileRoute("/assinaturas")({
   component: AssinaturasPage,
 });
 
-const FREQ_LABEL: Record<FrequenciaRecorrencia, string> = {
-  mensal: "Mensal",
-  semanal: "Semanal",
-  quinzenal: "Quinzenal",
-  anual: "Anual",
-  personalizada: "Personalizada",
-};
+const FREQ_KEYS: FrequenciaRecorrencia[] = [
+  "mensal",
+  "semanal",
+  "quinzenal",
+  "anual",
+  "personalizada",
+];
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function useLabels() {
+  const { t } = useTranslation("assinaturas");
+  const freqLabel = (f: FrequenciaRecorrencia) => t(`freq.${f}`);
+  const statusLabel = (s: StatusRecorrencia) => t(`status.${s}`);
+  const tipoLabel = (k: TipoRecorrencia) => t(`tipo.${k}`);
+  return { t, freqLabel, statusLabel, tipoLabel };
+}
 
 const STATUS_BADGE: Record<StatusRecorrencia, string> = {
   ativa: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
@@ -100,19 +110,6 @@ const STATUS_BADGE: Record<StatusRecorrencia, string> = {
   cancelada: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
   suspeita: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   aguardando: "border-violet-500/40 text-violet-400 bg-violet-500/10",
-};
-
-const STATUS_LABEL: Record<StatusRecorrencia, string> = {
-  ativa: "Ativa",
-  pausada: "Pausada",
-  cancelada: "Cancelada",
-  suspeita: "Suspeita",
-  aguardando: "Aguardando confirmação",
-};
-
-const TIPO_LABEL: Record<TipoRecorrencia, string> = {
-  assinatura: "Assinatura",
-  recorrencia_fixa: "Recorrência fixa",
 };
 
 function diasAteHoje(iso?: string | null): number | null {
@@ -125,14 +122,17 @@ function diasAteHoje(iso?: string | null): number | null {
   return diff;
 }
 
-function descrevePrazo(iso?: string | null): string {
+function describePrazo(t: TFn, iso?: string | null, locale = "pt-BR"): string {
   const d = diasAteHoje(iso);
-  if (d == null) return "—";
-  if (d < 0) return `há ${Math.abs(d)} ${Math.abs(d) === 1 ? "dia" : "dias"}`;
-  if (d === 0) return "hoje";
-  if (d === 1) return "amanhã";
-  if (d < 30) return `em ${d} dias`;
-  return parseDateLocal(iso!)!.toLocaleDateString("pt-BR");
+  if (d == null) return t("prazo.dash");
+  if (d < 0) {
+    const n = Math.abs(d);
+    return n === 1 ? t("prazo.agoOne", { count: n }) : t("prazo.agoOther", { count: n });
+  }
+  if (d === 0) return t("prazo.today");
+  if (d === 1) return t("prazo.tomorrow");
+  if (d < 30) return t("prazo.inDays", { count: d });
+  return parseDateLocal(iso!)!.toLocaleDateString(locale);
 }
 
 function AssinaturasPage() {
