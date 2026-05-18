@@ -69,9 +69,8 @@ function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="password">Nova senha</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             required
             value={password}
