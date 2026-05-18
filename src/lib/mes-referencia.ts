@@ -1,7 +1,9 @@
 // Helpers compartilhados para o campo "Mês de referência" (YYYY-MM).
-// Mostra sempre como "Abril de 2026" no UI, salva como "2026-04" no banco.
+// Locale-aware: usa Intl com o idioma ativo do i18n (pt-BR ou en).
 
-const NOMES_MESES = [
+import i18n from "@/i18n";
+
+const NOMES_MESES_PT = [
   "Janeiro",
   "Fevereiro",
   "Março",
@@ -16,16 +18,47 @@ const NOMES_MESES = [
   "Dezembro",
 ];
 
+const NOMES_MESES_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function isEn(): boolean {
+  try {
+    return (i18n?.language ?? "pt").toLowerCase().startsWith("en");
+  } catch {
+    return false;
+  }
+}
+
+function monthName(monthIdx0: number): string {
+  return isEn() ? NOMES_MESES_EN[monthIdx0] : NOMES_MESES_PT[monthIdx0];
+}
+
+function formatMesAno(monthIdx0: number, ano: number): string {
+  return isEn() ? `${monthName(monthIdx0)} ${ano}` : `${monthName(monthIdx0)} de ${ano}`;
+}
+
 export function ymToLabel(ym: string | undefined | null): string {
   if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return "";
   const [y, m] = ym.split("-").map(Number);
   if (!m || m < 1 || m > 12) return "";
-  return `${NOMES_MESES[m - 1]} de ${y}`;
+  return formatMesAno(m - 1, y);
 }
 
 export function mesAnoToLabel(mes: number, ano: number): string {
   if (!mes || mes < 1 || mes > 12) return "";
-  return `${NOMES_MESES[mes - 1]} de ${ano}`;
+  return formatMesAno(mes - 1, ano);
 }
 
 export function ymFromDate(iso?: string): string {
@@ -57,7 +90,7 @@ export function mesReferenciaOpcoes(
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
     const ym = `${y}-${String(m).padStart(2, "0")}`;
-    opts.push({ value: ym, label: `${NOMES_MESES[m - 1]} de ${y}` });
+    opts.push({ value: ym, label: formatMesAno(m - 1, y) });
   }
   return opts;
 }

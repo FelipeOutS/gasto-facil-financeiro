@@ -7,6 +7,7 @@ import ptAuth from "./locales/pt/auth.json";
 import ptAccount from "./locales/pt/account.json";
 import ptNav from "./locales/pt/nav.json";
 import ptDashboard from "./locales/pt/dashboard.json";
+import ptGastos from "./locales/pt/gastos.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -14,6 +15,7 @@ import enAuth from "./locales/en/auth.json";
 import enAccount from "./locales/en/account.json";
 import enNav from "./locales/en/nav.json";
 import enDashboard from "./locales/en/dashboard.json";
+import enGastos from "./locales/en/gastos.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -45,8 +47,8 @@ function detectInitialLocale(): Locale {
 }
 
 const resources = {
-  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard },
-  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard },
+  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos },
+  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos },
 };
 
 if (!i18n.isInitialized) {
@@ -55,7 +57,7 @@ if (!i18n.isInitialized) {
     lng: detectInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,
     defaultNS: "common",
-    ns: ["common", "landing", "auth", "account", "nav", "dashboard"],
+    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos"],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });

@@ -1,0 +1,155 @@
+{
+  "hero": {
+    "eyebrow": "Painel financeiro",
+    "title": "Gastos",
+    "subtitle": "Visualize, organize e entenda para onde seu dinheiro está indo.",
+    "back": "Voltar"
+  },
+  "actions": {
+    "reclassify": "Reclassificar",
+    "reclassifyTitle": "Reclassificar categorias",
+    "review": "Revisar",
+    "importedStatements": "Extratos importados",
+    "statements": "Extratos",
+    "import": "Importar extrato",
+    "importShort": "Importar"
+  },
+  "monthRef": {
+    "label": "Mês de referência",
+    "help": "Mês ao qual o gasto pertence — mesmo que pago em outro mês.",
+    "all": "Todos os meses",
+    "prev": "Mês anterior",
+    "next": "Próximo mês",
+    "captionAll": "Mostrando todos os gastos cadastrados",
+    "caption": "Mostrando gastos referentes a {{month}}"
+  },
+  "search": {
+    "placeholder": "Buscar por mercado, Uber, aluguel...",
+    "clear": "Limpar busca"
+  },
+  "periodo": {
+    "todos": "Todos",
+    "hoje": "Hoje",
+    "ontem": "Ontem",
+    "7d": "7 dias",
+    "30d": "30 dias",
+    "mes": "Este mês",
+    "mesPassado": "Mês passado",
+    "3m": "3 meses",
+    "6m": "6 meses",
+    "ano": "Este ano",
+    "personalizado": "Personalizado",
+    "morePlaceholder": "Mais períodos",
+    "3mLong": "Últimos 3 meses",
+    "6mLong": "Últimos 6 meses",
+    "fromTo": "{{from}} → {{to}}",
+    "from": "A partir de {{from}}",
+    "to": "Até {{to}}",
+    "startDate": "Data inicial",
+    "endDate": "Data final"
+  },
+  "filters": {
+    "advanced": "Filtros avançados",
+    "collapse": "Recolher",
+    "expand": "Expandir",
+    "category": "Categoria",
+    "payment": "Pagamento",
+    "order": "Ordenar",
+    "minValue": "Valor mínimo (R$)",
+    "maxValue": "Valor máximo (R$)",
+    "allCategories": "Todas categorias",
+    "allPayments": "Todos pagamentos",
+    "orderRecent": "Mais recente",
+    "orderOldest": "Mais antigo",
+    "orderHighest": "Maior valor",
+    "orderLowest": "Menor valor",
+    "active": {
+      "category": "Categoria: {{name}}",
+      "payment": "Pagamento: {{name}}",
+      "above": "Acima de {{value}}",
+      "below": "Até {{value}}",
+      "search": "Busca: \"{{q}}\"",
+      "order": "Ordem: {{name}}",
+      "remove": "Remover {{label}}"
+    },
+    "clear": "Limpar filtros"
+  },
+  "summary": {
+    "found": "Encontrados",
+    "foundHintPeriod": "no período",
+    "total": "Total",
+    "totalHint": "somatório dos itens",
+    "avg": "Média por gasto",
+    "avgHint": "{{count}} itens",
+    "topCategory": "Top categoria",
+    "noData": "sem dados",
+    "noValue": "—"
+  },
+  "bulk": {
+    "selectAll": "Selecionar todos",
+    "allSelected": "Todos selecionados ({{count}})",
+    "selected_one": "{{count}} selecionado",
+    "selected_other": "{{count}} selecionados",
+    "selectFiltered": "Selecionar todos filtrados ({{count}})",
+    "selectAllN": "Selecionar todos ({{count}})",
+    "total": "Total: {{value}}",
+    "clear": "Limpar",
+    "moveToMonth": "Mover p/ mês",
+    "delete": "Excluir selecionados",
+    "moved": "{{count}} gasto(s) movido(s) para {{month}}.",
+    "moveError": "Não foi possível mover os gastos.",
+    "deletedOne": "{{count}} gasto removido.",
+    "deletedMany": "{{count}} gastos removidos.",
+    "deleteError": "Não foi possível excluir os gastos selecionados.",
+    "confirmTitle": "Excluir gastos selecionados?",
+    "confirmDescOne": "Você está prestes a excluir <1>{{count}}</1> gasto, totalizando <3>{{value}}</3>. Essa ação não poderá ser desfeita. Apenas gastos serão removidos — receitas, contas e outros dados não serão afetados.",
+    "confirmDescMany": "Você está prestes a excluir <1>{{count}}</1> gastos, totalizando <3>{{value}}</3>. Essa ação não poderá ser desfeita. Apenas gastos serão removidos — receitas, contas e outros dados não serão afetados.",
+    "cancel": "Cancelar",
+    "deleting": "Excluindo…",
+    "deleteBtn": "Excluir"
+  },
+  "empty": {
+    "filteredTitle": "Nada encontrado nesse filtro",
+    "filteredSub": "Tenta mudar o período, categoria ou forma de pagamento.",
+    "clearFilters": "Limpar filtros",
+    "monthTitle": "Nada por aqui ainda",
+    "monthSub": "Seus gastos de {{month}} aparecerão aqui.",
+    "monthCta": "Adicionar gasto em {{month}}",
+    "noneTitle": "Nenhum gasto por aqui ainda",
+    "noneSub": "Quando você lançar um gasto, ele aparece aqui bonitinho pra você acompanhar.",
+    "noneCta": "Adicionar meu primeiro gasto"
+  },
+  "item": {
+    "at": "às",
+    "recurring": "recorrente",
+    "supplier": "Fornecedor: {{name}}",
+    "edit": "Editar gasto",
+    "more": "Mais ações",
+    "delete": "Excluir gasto",
+    "select": "Selecionar gasto",
+    "deleted": "Gasto removido.",
+    "otherCategory": "Outros"
+  },
+  "toast": {
+    "reclassified_one": "{{count}} gasto reclassificado.",
+    "reclassified_other": "{{count}} gasto(s) reclassificado(s).",
+    "reclassifyEmpty": "Categorias já estavam atualizadas.",
+    "reclassifyError": "Não foi possível reclassificar agora."
+  },
+  "upgrade": {
+    "premium": "Premium",
+    "featureLabel": "Importar extrato bancário",
+    "benefit": "Importe seu extrato em PDF/CSV e o app categoriza tudo automaticamente."
+  },
+  "pagamento": {
+    "pix": "Pix",
+    "dinheiro": "Dinheiro",
+    "debito": "Cartão de débito",
+    "credito": "Cartão de crédito",
+    "boleto": "Boleto",
+    "transferencia": "Transferência",
+    "vale_alimentacao": "Vale-alimentação",
+    "vale_refeicao": "Vale-refeição",
+    "outro": "Outro"
+  }
+}

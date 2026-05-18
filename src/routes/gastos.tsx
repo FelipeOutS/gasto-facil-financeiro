@@ -92,6 +92,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Trans, useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/gastos")({
   head: () => ({ meta: [{ title: "Gastos — Gasto Inteligente" }] }),
@@ -111,18 +112,18 @@ type PeriodoId =
   | "ano"
   | "personalizado";
 
-const PERIODO_LABEL: Record<PeriodoId, string> = {
-  todos: "Todos",
-  hoje: "Hoje",
-  ontem: "Ontem",
-  "7d": "7 dias",
-  "30d": "30 dias",
-  mes: "Este mês",
-  mesPassado: "Mês passado",
-  "3m": "3 meses",
-  "6m": "6 meses",
-  ano: "Este ano",
-  personalizado: "Personalizado",
+const PERIODO_KEYS: Record<PeriodoId, string> = {
+  todos: "todos",
+  hoje: "hoje",
+  ontem: "ontem",
+  "7d": "7d",
+  "30d": "30d",
+  mes: "mes",
+  mesPassado: "mesPassado",
+  "3m": "3m",
+  "6m": "6m",
+  ano: "ano",
+  personalizado: "personalizado",
 };
 
 const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
@@ -217,12 +218,15 @@ function getRange(
 }
 
 function GastosPage() {
+  const { t } = useTranslation("gastos");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
   const { porId: fornecedoresPorId } = useFornecedores();
+
+  const tPag = (id: string, fallback: string) => t(`pagamento.${id}`, { defaultValue: fallback });
 
   // Refetch gastos ao entrar na página: pega registros criados fora do
   // cliente (ex: webhook do WhatsApp) que não passaram pelo cache local.
@@ -343,10 +347,14 @@ function GastosPage() {
     try {
       const count = await reclassificarCategoriasExistentes();
       await refreshGastos();
-      toast.success(count > 0 ? `${count} gasto(s) reclassificado(s).` : "Categorias já estavam atualizadas.");
+      toast.success(
+        count > 0
+          ? t("toast.reclassified", { count, defaultValue: `${count} gasto(s) reclassificado(s).` })
+          : t("toast.reclassifyEmpty"),
+      );
     } catch (error) {
       console.error(error);
-      toast.error("Não foi possível reclassificar agora.");
+      toast.error(t("toast.reclassifyError"));
     } finally {
       setReclassificando(false);
     }
@@ -443,8 +451,8 @@ function GastosPage() {
   }, [gastos, mesRef]);
 
   const referenceMonthCaption = mesRef === MES_REF_ALL
-    ? "Mostrando todos os gastos cadastrados"
-    : `Mostrando gastos referentes a ${ymToLabel(mesRef)}`;
+    ? t("monthRef.captionAll")
+    : t("monthRef.caption", { month: ymToLabel(mesRef) });
 
   const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
   function shiftMes(delta: number) {
@@ -514,10 +522,10 @@ function GastosPage() {
       const ids = Array.from(selected);
       const n = await bulkDeleteGastos(ids);
       if (n > 0) {
-        toast.success(`${n} ${n === 1 ? "gasto removido" : "gastos removidos"}.`);
+        toast.success(n === 1 ? t("bulk.deletedOne", { count: n }) : t("bulk.deletedMany", { count: n }));
         clearSelection();
       } else {
-        toast.error("Não foi possível excluir os gastos selecionados.");
+        toast.error(t("bulk.deleteError"));
       }
       setConfirmBulk(false);
     } finally {
@@ -541,14 +549,15 @@ function GastosPage() {
     if (periodo === "todos") return null;
     if (periodo === "personalizado") {
       if (customFrom && customTo) {
-        return `${formatDateBR(toISODate(customFrom))} → ${formatDateBR(toISODate(customTo))}`;
+        return t("periodo.fromTo", { from: formatDateBR(toISODate(customFrom)), to: formatDateBR(toISODate(customTo)) });
       }
-      if (customFrom) return `A partir de ${formatDateBR(toISODate(customFrom))}`;
-      if (customTo) return `Até ${formatDateBR(toISODate(customTo))}`;
-      return "Personalizado";
+      if (customFrom) return t("periodo.from", { from: formatDateBR(toISODate(customFrom)) });
+      if (customTo) return t("periodo.to", { from: "", to: formatDateBR(toISODate(customTo)) });
+      return t("periodo.personalizado");
     }
-    return PERIODO_LABEL[periodo];
-  }, [periodo, customFrom, customTo]);
+    return t(`periodo.${PERIODO_KEYS[periodo]}`);
+  }, [periodo, customFrom, customTo, t]);
+
 
   const hasAnyFilter =
     !!periodoChipLabel ||
@@ -593,19 +602,19 @@ function GastosPage() {
           <Link
             to="/"
             className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/70 backdrop-blur text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Voltar"
+            aria-label={t("hero.back")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-              Painel financeiro
+              {t("hero.eyebrow")}
             </p>
             <h1 className="mt-0.5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              {vocab.gastosTitle}
+              {t("hero.title", { defaultValue: vocab.gastosTitle })}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
-              Visualize, organize e entenda para onde seu dinheiro está indo.
+              {t("hero.subtitle")}
             </p>
           </div>
           {/* Ilustração animada (SVG leve) — finanças/gráfico */}
@@ -622,10 +631,10 @@ function GastosPage() {
             className="h-9 rounded-full"
             variant="outline"
             disabled={reclassificando}
-            title="Reclassificar categorias"
+            title={t("actions.reclassifyTitle")}
           >
             <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-            Reclassificar
+            {t("actions.reclassify")}
           </Button>
           <Button
             type="button"
@@ -634,7 +643,7 @@ function GastosPage() {
             variant="outline"
           >
             <History className="h-4 w-4" />
-            Extratos importados
+            {t("actions.importedStatements")}
           </Button>
           <Button
             type="button"
@@ -643,7 +652,7 @@ function GastosPage() {
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
-            Importar extrato
+            {t("actions.import")}
             {!can("importar_extrato") && <LockChip />}
           </Button>
         </div>
@@ -658,10 +667,10 @@ function GastosPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-                Mês de referência
+                {t("monthRef.label")}
               </p>
               <p className="text-xs text-muted-foreground/90 hidden sm:block">
-                Mês ao qual o gasto pertence — mesmo que pago em outro mês.
+                {t("monthRef.help")}
               </p>
             </div>
           </div>
@@ -670,14 +679,14 @@ function GastosPage() {
               onClick={() => shiftMes(-1)}
               disabled={mesRef === "todos" || mesRefIdx <= 0}
               className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              aria-label="Mês anterior"
+              aria-label={t("monthRef.prev")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <Select value={mesRef} onValueChange={setMesRef}>
               <SelectTrigger className="h-9 min-w-[190px] rounded-full border-brand/30 bg-brand-soft/70 font-semibold text-sm text-foreground shadow-sm ring-1 ring-brand/10">
                 <SelectValue>
-                  {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
+                  {mesRef === "todos" ? t("monthRef.all") : ymToLabel(mesRef)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-72">
@@ -686,14 +695,14 @@ function GastosPage() {
                     {ymToLabel(ym)}
                   </SelectItem>
                 ))}
-                <SelectItem value="todos">Todos os meses</SelectItem>
+                <SelectItem value="todos">{t("monthRef.all")}</SelectItem>
               </SelectContent>
             </Select>
             <button
               onClick={() => shiftMes(1)}
               disabled={mesRef === "todos" || mesRefIdx >= mesesDisponiveis.length - 1}
               className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              aria-label="Próximo mês"
+              aria-label={t("monthRef.next")}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -716,7 +725,7 @@ function GastosPage() {
             disabled={reclassificando}
           >
             <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-            Revisar
+            {t("actions.review")}
           </Button>
           <Button
             type="button"
@@ -725,10 +734,10 @@ function GastosPage() {
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
-            Importar
+            {t("actions.importShort")}
             {!can("importar_extrato") && (
               <span
-                aria-label="Premium"
+                aria-label={t("upgrade.premium")}
                 className="absolute -top-1.5 -right-1.5 grid h-4 w-4 place-items-center rounded-full border border-background bg-amber-500 text-[9px] font-bold text-amber-950"
               >
                 ★
@@ -742,7 +751,7 @@ function GastosPage() {
             variant="outline"
           >
             <History className="h-4 w-4" />
-            Extratos
+            {t("actions.statements")}
           </Button>
         </div>
       </div>
@@ -753,15 +762,15 @@ function GastosPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_extrato"
-        featureLabel="Importar extrato bancário"
-        benefit="Importe seu extrato em PDF/CSV e o app categoriza tudo automaticamente."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
 
       {/* Busca grande */}
       <div className="mt-4 relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por mercado, Uber, aluguel..."
+          placeholder={t("search.placeholder")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="h-12 rounded-2xl border-border bg-card pl-11 text-sm"
@@ -770,7 +779,7 @@ function GastosPage() {
           <button
             onClick={() => setQ("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated"
-            aria-label="Limpar busca"
+            aria-label={t("search.clear")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -794,12 +803,12 @@ function GastosPage() {
                     )}
                   >
                     <CalendarIcon className="h-3.5 w-3.5" />
-                    Personalizado
+                    {t("periodo.personalizado")}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 space-y-3" align="start">
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data inicial</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.startDate")}</p>
                     <Calendar
                       mode="single"
                       selected={customFrom}
@@ -811,7 +820,7 @@ function GastosPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data final</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.endDate")}</p>
                     <Calendar
                       mode="single"
                       selected={customTo}
@@ -837,7 +846,7 @@ function GastosPage() {
                   : "border-border bg-card hover:bg-card-elevated",
               )}
             >
-              {PERIODO_LABEL[p]}
+              {t(`periodo.${PERIODO_KEYS[p]}`)}
             </button>
           );
         })}
@@ -847,17 +856,18 @@ function GastosPage() {
           onValueChange={(v) => setPeriodo(v as PeriodoId)}
         >
           <SelectTrigger className="h-8 shrink-0 w-auto gap-1 rounded-full border-border bg-card px-3 text-xs">
-            <SelectValue placeholder="Mais períodos" />
+            <SelectValue placeholder={t("periodo.morePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ontem">Ontem</SelectItem>
-            <SelectItem value="mesPassado">Mês passado</SelectItem>
-            <SelectItem value="3m">Últimos 3 meses</SelectItem>
-            <SelectItem value="6m">Últimos 6 meses</SelectItem>
-            <SelectItem value="ano">Este ano</SelectItem>
+            <SelectItem value="ontem">{t("periodo.ontem")}</SelectItem>
+            <SelectItem value="mesPassado">{t("periodo.mesPassado")}</SelectItem>
+            <SelectItem value="3m">{t("periodo.3mLong")}</SelectItem>
+            <SelectItem value="6m">{t("periodo.6mLong")}</SelectItem>
+            <SelectItem value="ano">{t("periodo.ano")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
 
       {/* Filtros avançados */}
       <Collapsible open={advOpen} onOpenChange={setAdvOpen} className="mt-3">
@@ -865,23 +875,23 @@ function GastosPage() {
           <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium hover:bg-card-elevated transition-colors">
             <span className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Filtros avançados
+              {t("filters.advanced")}
             </span>
             <span className="text-xs text-muted-foreground">
-              {advOpen ? "Recolher" : "Expandir"}
+              {advOpen ? t("filters.collapse") : t("filters.expand")}
             </span>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-fade-in">
           <div className="mt-2 grid gap-3 rounded-2xl border border-border bg-card p-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="text-xs text-muted-foreground">Categoria</label>
+              <label className="text-xs text-muted-foreground">{t("filters.category")}</label>
               <Select value={catFilter} onValueChange={setCatFilter}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas categorias</SelectItem>
+                  <SelectItem value="todas">{t("filters.allCategories")}</SelectItem>
                   {categorias.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -891,37 +901,37 @@ function GastosPage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Pagamento</label>
+              <label className="text-xs text-muted-foreground">{t("filters.payment")}</label>
               <Select value={pagFilter} onValueChange={setPagFilter}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todos pagamentos</SelectItem>
+                  <SelectItem value="todas">{t("filters.allPayments")}</SelectItem>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {tPag(f.id, f.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Ordenar</label>
+              <label className="text-xs text-muted-foreground">{t("filters.order")}</label>
               <Select value={order} onValueChange={setOrder}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recente">Mais recente</SelectItem>
-                  <SelectItem value="antigo">Mais antigo</SelectItem>
-                  <SelectItem value="maior">Maior valor</SelectItem>
-                  <SelectItem value="menor">Menor valor</SelectItem>
+                  <SelectItem value="recente">{t("filters.orderRecent")}</SelectItem>
+                  <SelectItem value="antigo">{t("filters.orderOldest")}</SelectItem>
+                  <SelectItem value="maior">{t("filters.orderHighest")}</SelectItem>
+                  <SelectItem value="menor">{t("filters.orderLowest")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor mínimo (R$)</label>
+              <label className="text-xs text-muted-foreground">{t("filters.minValue")}</label>
               <Input
                 inputMode="decimal"
                 placeholder="0,00"
@@ -931,7 +941,7 @@ function GastosPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor máximo (R$)</label>
+              <label className="text-xs text-muted-foreground">{t("filters.maxValue")}</label>
               <Input
                 inputMode="decimal"
                 placeholder="0,00"
@@ -955,41 +965,48 @@ function GastosPage() {
                 setCustomFrom(undefined);
                 setCustomTo(undefined);
               }}
+              removeLabel={t("filters.active.remove", { label: periodoChipLabel })}
             />
           )}
           {categoriaAtiva && (
             <ActiveChip
-              label={`Categoria: ${categoriaAtiva.nome}`}
+              label={t("filters.active.category", { name: categoriaAtiva.nome })}
               onRemove={() => setCatFilter("todas")}
+              removeLabel={t("filters.active.remove", { label: categoriaAtiva.nome })}
             />
           )}
           {pagamentoAtivo && (
             <ActiveChip
-              label={`Pagamento: ${pagamentoAtivo.label}`}
+              label={t("filters.active.payment", { name: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
               onRemove={() => setPagFilter("todas")}
+              removeLabel={t("filters.active.remove", { label: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
             />
           )}
           {hasMin && (
             <ActiveChip
-              label={`Acima de ${formatBRL(minNum)}`}
+              label={t("filters.active.above", { value: formatBRL(minNum) })}
               onRemove={() => setValorMin("")}
             />
           )}
           {hasMax && (
             <ActiveChip
-              label={`Até ${formatBRL(maxNum)}`}
+              label={t("filters.active.below", { value: formatBRL(maxNum) })}
               onRemove={() => setValorMax("")}
             />
           )}
           {q.trim() && (
-            <ActiveChip label={`Busca: "${q.trim()}"`} onRemove={() => setQ("")} />
+            <ActiveChip
+              label={t("filters.active.search", { q: q.trim() })}
+              onRemove={() => setQ("")}
+            />
           )}
           {order !== "recente" && (
             <ActiveChip
-              label={`Ordem: ${
-                { antigo: "Mais antigo", maior: "Maior valor", menor: "Menor valor" }[order] ??
-                order
-              }`}
+              label={t("filters.active.order", {
+                name: t(
+                  `filters.order${order === "antigo" ? "Oldest" : order === "maior" ? "Highest" : order === "menor" ? "Lowest" : "Recent"}`,
+                ),
+              })}
               onRemove={() => setOrder("recente")}
             />
           )}
@@ -999,7 +1016,7 @@ function GastosPage() {
             onClick={clearAll}
             className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
           >
-            Limpar filtros
+            {t("filters.clear")}
           </Button>
         </div>
       )}
@@ -1009,37 +1026,37 @@ function GastosPage() {
         <SummaryStat
           icon={<Hash className="h-4 w-4" />}
           tone="neutral"
-          label="Encontrados"
+          label={t("summary.found")}
           value={<CountNumber value={filtered.length} />}
-          hint={mesRef === "todos" ? "no período" : ymToLabel(mesRef)}
+          hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
         />
         <SummaryStat
           icon={<Wallet className="h-4 w-4" />}
           tone="brand"
-          label="Total"
+          label={t("summary.total")}
           value={<Money value={total} />}
-          hint="somatório dos itens"
+          hint={t("summary.totalHint")}
           highlight
         />
         <SummaryStat
           icon={<TrendingUp className="h-4 w-4" />}
           tone="info"
-          label="Média por gasto"
+          label={t("summary.avg")}
           value={<Money value={media} />}
-          hint={filtered.length ? `${filtered.length} itens` : "—"}
+          hint={filtered.length ? t("summary.avgHint", { count: filtered.length }) : t("summary.noValue")}
         />
         <SummaryStat
           icon={<Tag className="h-4 w-4" />}
           tone="success"
-          label="Top categoria"
+          label={t("summary.topCategory")}
           value={
             topCategoria ? (
               <span className="truncate block">{topCategoria.nome}</span>
             ) : (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">{t("summary.noValue")}</span>
             )
           }
-          hint={topCategoria ? formatBRL(topCategoria.valor) : "sem dados"}
+          hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
         />
       </div>
 
@@ -1050,22 +1067,22 @@ function GastosPage() {
             <Checkbox
               checked={allSelected ? true : someSelected ? "indeterminate" : false}
               onCheckedChange={() => toggleAllVisible()}
-              aria-label="Selecionar todos"
+              aria-label={t("bulk.selectAll")}
             />
             <span>
               {allSelected
-                ? `Todos selecionados (${filtered.length})`
+                ? t("bulk.allSelected", { count: filtered.length })
                 : selected.size > 0
-                  ? `${selected.size} selecionado${selected.size === 1 ? "" : "s"}`
+                  ? t("bulk.selected", { count: selected.size })
                   : hasAnyFilter
-                    ? `Selecionar todos filtrados (${filtered.length})`
-                    : `Selecionar todos (${filtered.length})`}
+                    ? t("bulk.selectFiltered", { count: filtered.length })
+                    : t("bulk.selectAllN", { count: filtered.length })}
             </span>
           </label>
           {selected.size > 0 && (
             <div className="flex items-center gap-2">
               <span className="num text-xs text-muted-foreground">
-                Total: {formatBRL(valorSelecionado)}
+                {t("bulk.total", { value: formatBRL(valorSelecionado) })}
               </span>
               <Button
                 size="sm"
@@ -1073,13 +1090,13 @@ function GastosPage() {
                 className="h-8 rounded-full px-3 text-xs"
                 onClick={clearSelection}
               >
-                Limpar
+                {t("bulk.clear")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-xs">
                     <CalendarIcon className="mr-1 h-3.5 w-3.5" />
-                    Mover p/ mês
+                    {t("bulk.moveToMonth")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
@@ -1090,10 +1107,10 @@ function GastosPage() {
                         const ids = Array.from(selected);
                         const n = await bulkSetMesReferencia(ids, o.value);
                         if (n > 0) {
-                          toast.success(`${n} gasto(s) movido(s) para ${o.label}.`);
+                          toast.success(t("bulk.moved", { count: n, month: o.label }));
                           clearSelection();
                         } else {
-                          toast.error("Não foi possível mover os gastos.");
+                          toast.error(t("bulk.moveError"));
                         }
                       }}
                     >
@@ -1109,7 +1126,7 @@ function GastosPage() {
                 onClick={() => setConfirmBulk(true)}
               >
                 <Trash2 className="mr-1 h-3.5 w-3.5" />
-                Excluir selecionados
+                {t("bulk.delete")}
               </Button>
             </div>
           )}
@@ -1121,42 +1138,40 @@ function GastosPage() {
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
           {hasAnyFilter ? (
             <>
-              <p className="font-medium text-foreground">Nada encontrado nesse filtro</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Tenta mudar o período, categoria ou forma de pagamento.
-              </p>
+              <p className="font-medium text-foreground">{t("empty.filteredTitle")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("empty.filteredSub")}</p>
               <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
-                Limpar filtros
+                {t("empty.clearFilters")}
               </Button>
             </>
           ) : mesRef !== "todos" ? (
             <>
-              <p className="font-medium text-foreground">Nada por aqui ainda</p>
+              <p className="font-medium text-foreground">{t("empty.monthTitle")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Seus gastos de {ymToLabel(mesRef)} aparecerão aqui.
+                {t("empty.monthSub", { month: ymToLabel(mesRef) })}
               </p>
               <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">Adicionar gasto em {ymToLabel(mesRef)}</Link>
+                <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
               </Button>
             </>
           ) : (
             <>
-              <p className="font-medium text-foreground">Nenhum gasto por aqui ainda</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Quando você lançar um gasto, ele aparece aqui bonitinho pra você acompanhar.
-              </p>
+              <p className="font-medium text-foreground">{t("empty.noneTitle")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("empty.noneSub")}</p>
               <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">Adicionar meu primeiro gasto</Link>
+                <Link to="/adicionar">{t("empty.noneCta")}</Link>
               </Button>
             </>
           )}
         </div>
       ) : (
+
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
               const cat = getCategoriaById(g.categoriaId);
-              const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
+              const formaInfo = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento);
+              const pag = formaInfo ? tPag(formaInfo.id, formaInfo.label) : undefined;
               return (
                 <motion.li
                   key={g.id}
@@ -1182,7 +1197,7 @@ function GastosPage() {
                   <Checkbox
                     checked={selected.has(g.id)}
                     onCheckedChange={() => toggleOne(g.id)}
-                    aria-label="Selecionar gasto"
+                    aria-label={t("item.select")}
                     className="shrink-0"
                   />
                   <div className="relative shrink-0">
@@ -1197,21 +1212,23 @@ function GastosPage() {
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {formatDateBR(g.data)}
-                      {g.horario ? ` às ${g.horario}` : ""} · {pag}
+                      {cat?.nome ?? t("item.otherCategory")} · {formatDateBR(g.data)}
+                      {g.horario ? ` ${t("item.at")} ${g.horario}` : ""} · {pag}
                       {g.tipoGasto === "parcelado" && g.totalParcelas
                         ? ` · ${g.parcelaAtual}/${g.totalParcelas}`
                         : g.tipoGasto === "recorrente"
-                          ? " · recorrente"
+                          ? ` · ${t("item.recurring")}`
                           : ""}
                     </p>
                     {g.fornecedorId && fornecedoresPorId[g.fornecedorId] ? (
                       <p className="truncate text-[11px] text-muted-foreground/80">
-                        Fornecedor:{" "}
-                        {fornecedoresPorId[g.fornecedorId].apelido ||
-                          fornecedoresPorId[g.fornecedorId].nome_fantasia ||
-                          fornecedoresPorId[g.fornecedorId].razao_social ||
-                          fornecedoresPorId[g.fornecedorId].nome}
+                        {t("item.supplier", {
+                          name:
+                            fornecedoresPorId[g.fornecedorId].apelido ||
+                            fornecedoresPorId[g.fornecedorId].nome_fantasia ||
+                            fornecedoresPorId[g.fornecedorId].razao_social ||
+                            fornecedoresPorId[g.fornecedorId].nome,
+                        })}
                       </p>
                     ) : null}
                     {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) ? (
@@ -1232,7 +1249,7 @@ function GastosPage() {
                       <button
                         onClick={() => setEditing(g)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label="Editar gasto"
+                        aria-label={t("item.edit")}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -1240,7 +1257,7 @@ function GastosPage() {
                         <DropdownMenuTrigger asChild>
                           <button
                             className="text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Mais ações"
+                            aria-label={t("item.more")}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -1248,18 +1265,18 @@ function GastosPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditing(g)}>
                             <Pencil className="mr-2 h-4 w-4" />
-                            Editar gasto
+                            {t("item.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => {
                               deleteGasto(g.id);
-                              toast.success("Gasto removido.");
+                              toast.success(t("item.deleted"));
                             }}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir gasto
+                            {t("item.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1283,16 +1300,18 @@ function GastosPage() {
       <AlertDialog open={confirmBulk} onOpenChange={(o) => !o && !excluindoBulk && setConfirmBulk(false)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir gastos selecionados?</AlertDialogTitle>
+            <AlertDialogTitle>{t("bulk.confirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a excluir <strong>{selected.size}</strong>{" "}
-              {selected.size === 1 ? "gasto" : "gastos"}, totalizando{" "}
-              <strong>{formatBRL(valorSelecionado)}</strong>. Essa ação não poderá ser desfeita.
-              Apenas gastos serão removidos — receitas, contas e outros dados não serão afetados.
+              <Trans
+                t={t}
+                i18nKey={selected.size === 1 ? "bulk.confirmDescOne" : "bulk.confirmDescMany"}
+                values={{ count: selected.size, value: formatBRL(valorSelecionado) }}
+                components={{ 1: <strong />, 3: <strong /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={excluindoBulk}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={excluindoBulk}>{t("bulk.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -1301,7 +1320,7 @@ function GastosPage() {
               disabled={excluindoBulk}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {excluindoBulk ? "Excluindo…" : "Excluir"}
+              {excluindoBulk ? t("bulk.deleting") : t("bulk.deleteBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1310,14 +1329,14 @@ function GastosPage() {
   );
 }
 
-function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function ActiveChip({ label, onRemove, removeLabel }: { label: string; onRemove: () => void; removeLabel?: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3 py-1 text-xs font-medium animate-fade-in">
       {label}
       <button
         onClick={onRemove}
         className="grid h-4 w-4 place-items-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
-        aria-label={`Remover ${label}`}
+        aria-label={removeLabel ?? label}
       >
         <X className="h-3 w-3" />
       </button>

@@ -1,0 +1,155 @@
+{
+  "hero": {
+    "eyebrow": "Financial dashboard",
+    "title": "Expenses",
+    "subtitle": "See, organize and understand where your money is going.",
+    "back": "Back"
+  },
+  "actions": {
+    "reclassify": "Reclassify",
+    "reclassifyTitle": "Reclassify categories",
+    "review": "Review",
+    "importedStatements": "Imported statements",
+    "statements": "Statements",
+    "import": "Import statement",
+    "importShort": "Import"
+  },
+  "monthRef": {
+    "label": "Reference month",
+    "help": "The month the expense belongs to — even if paid in another month.",
+    "all": "All months",
+    "prev": "Previous month",
+    "next": "Next month",
+    "captionAll": "Showing every saved expense",
+    "caption": "Showing expenses for {{month}}"
+  },
+  "search": {
+    "placeholder": "Search grocery, Uber, rent...",
+    "clear": "Clear search"
+  },
+  "periodo": {
+    "todos": "All",
+    "hoje": "Today",
+    "ontem": "Yesterday",
+    "7d": "7 days",
+    "30d": "30 days",
+    "mes": "This month",
+    "mesPassado": "Last month",
+    "3m": "3 months",
+    "6m": "6 months",
+    "ano": "This year",
+    "personalizado": "Custom",
+    "morePlaceholder": "More periods",
+    "3mLong": "Last 3 months",
+    "6mLong": "Last 6 months",
+    "fromTo": "{{from}} → {{to}}",
+    "from": "From {{from}}",
+    "to": "Until {{to}}",
+    "startDate": "Start date",
+    "endDate": "End date"
+  },
+  "filters": {
+    "advanced": "Advanced filters",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "category": "Category",
+    "payment": "Payment",
+    "order": "Sort by",
+    "minValue": "Min amount (R$)",
+    "maxValue": "Max amount (R$)",
+    "allCategories": "All categories",
+    "allPayments": "All payments",
+    "orderRecent": "Most recent",
+    "orderOldest": "Oldest",
+    "orderHighest": "Highest amount",
+    "orderLowest": "Lowest amount",
+    "active": {
+      "category": "Category: {{name}}",
+      "payment": "Payment: {{name}}",
+      "above": "Above {{value}}",
+      "below": "Up to {{value}}",
+      "search": "Search: \"{{q}}\"",
+      "order": "Sort: {{name}}",
+      "remove": "Remove {{label}}"
+    },
+    "clear": "Clear filters"
+  },
+  "summary": {
+    "found": "Found",
+    "foundHintPeriod": "in the period",
+    "total": "Total",
+    "totalHint": "sum of items",
+    "avg": "Average per expense",
+    "avgHint": "{{count}} items",
+    "topCategory": "Top category",
+    "noData": "no data",
+    "noValue": "—"
+  },
+  "bulk": {
+    "selectAll": "Select all",
+    "allSelected": "All selected ({{count}})",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "selectFiltered": "Select all filtered ({{count}})",
+    "selectAllN": "Select all ({{count}})",
+    "total": "Total: {{value}}",
+    "clear": "Clear",
+    "moveToMonth": "Move to month",
+    "delete": "Delete selected",
+    "moved": "{{count}} expense(s) moved to {{month}}.",
+    "moveError": "Could not move the expenses.",
+    "deletedOne": "{{count}} expense removed.",
+    "deletedMany": "{{count}} expenses removed.",
+    "deleteError": "Could not delete the selected expenses.",
+    "confirmTitle": "Delete the selected expenses?",
+    "confirmDescOne": "You are about to delete <1>{{count}}</1> expense, totaling <3>{{value}}</3>. This action cannot be undone. Only expenses will be removed — income, bills and other data are not affected.",
+    "confirmDescMany": "You are about to delete <1>{{count}}</1> expenses, totaling <3>{{value}}</3>. This action cannot be undone. Only expenses will be removed — income, bills and other data are not affected.",
+    "cancel": "Cancel",
+    "deleting": "Deleting…",
+    "deleteBtn": "Delete"
+  },
+  "empty": {
+    "filteredTitle": "Nothing matches this filter",
+    "filteredSub": "Try changing the period, category or payment method.",
+    "clearFilters": "Clear filters",
+    "monthTitle": "Nothing here yet",
+    "monthSub": "Your expenses for {{month}} will show up here.",
+    "monthCta": "Add expense in {{month}}",
+    "noneTitle": "No expenses yet",
+    "noneSub": "When you log an expense, it shows up here nicely for you to track.",
+    "noneCta": "Add my first expense"
+  },
+  "item": {
+    "at": "at",
+    "recurring": "recurring",
+    "supplier": "Supplier: {{name}}",
+    "edit": "Edit expense",
+    "more": "More actions",
+    "delete": "Delete expense",
+    "select": "Select expense",
+    "deleted": "Expense removed.",
+    "otherCategory": "Other"
+  },
+  "toast": {
+    "reclassified_one": "{{count}} expense reclassified.",
+    "reclassified_other": "{{count}} expenses reclassified.",
+    "reclassifyEmpty": "Categories were already up to date.",
+    "reclassifyError": "Could not reclassify right now."
+  },
+  "upgrade": {
+    "premium": "Premium",
+    "featureLabel": "Import bank statement",
+    "benefit": "Import your statement in PDF/CSV and the app categorizes everything automatically."
+  },
+  "pagamento": {
+    "pix": "Pix",
+    "dinheiro": "Cash",
+    "debito": "Debit card",
+    "credito": "Credit card",
+    "boleto": "Bank slip",
+    "transferencia": "Transfer",
+    "vale_alimentacao": "Food voucher",
+    "vale_refeicao": "Meal voucher",
+    "outro": "Other"
+  }
+}

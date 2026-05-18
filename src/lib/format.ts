@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 export function formatBRL(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -82,15 +84,25 @@ export function toLocalISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function currentDateLocale(): string {
+  try {
+    const lng = i18n?.language;
+    if (lng && lng.toLowerCase().startsWith("en")) return "en-US";
+  } catch {
+    /* noop */
+  }
+  return "pt-BR";
+}
+
 export function formatDateBR(iso: string | Date): string {
   const d = parseDateLocal(iso);
   if (!d) return "";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString(currentDateLocale(), { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function formatMonthYear(year: number, month: number): string {
   const d = new Date(year, month - 1, 1);
-  return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return d.toLocaleDateString(currentDateLocale(), { month: "long", year: "numeric" });
 }
 
 export function todayISO(): string {
