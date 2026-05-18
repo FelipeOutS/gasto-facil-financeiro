@@ -103,6 +103,7 @@ function IndexGate() {
 }
 
 function Index() {
+  const { t } = useTranslation("dashboard");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const today = new Date();
