@@ -84,9 +84,10 @@ export function toLocalISODate(d: Date): string {
 
 function currentDateLocale(): string {
   try {
-    // Avoid hard import cycle by reading from i18next if available at runtime.
-    const w = globalThis as { i18next?: { language?: string } };
-    const lng = w.i18next?.language ?? (typeof document !== "undefined" ? document.documentElement.lang : "");
+    // Lazy import to avoid touching i18n on the server bootstrap path.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require("@/i18n") as { default?: { language?: string } };
+    const lng = mod?.default?.language;
     if (lng && lng.toLowerCase().startsWith("en")) return "en-US";
   } catch {
     /* noop */
