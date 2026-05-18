@@ -918,7 +918,7 @@ function RecorrenciaDialog({
     if (!userId) return;
     const valorNum = parseBRLInput(valor);
     if (!nome.trim() || valorNum <= 0) {
-      toast.error("Informe nome e valor válidos");
+      toast.error(t("toasts.invalid"));
       return;
     }
     setSaving(true);
@@ -938,7 +938,7 @@ function RecorrenciaDialog({
           moeda,
           valorOriginal: valorOriginalNum,
         });
-        toast.success("Recorrência atualizada");
+        toast.success(t("toasts.updated"));
       } else {
         await criarRecorrencia(userId, {
           nome: nome.trim(),
@@ -954,7 +954,7 @@ function RecorrenciaDialog({
           moeda,
           valorOriginal: valorOriginalNum,
         });
-        toast.success("Recorrência criada");
+        toast.success(t("toasts.created"));
       }
       onSaved();
     } finally {
