@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "Smart Company — Gasto Inteligente",
+    "description": "Look up your CNPJ and keep your company's data organized in Gasto Inteligente.",
+    "ogTitle": "Smart Company — Gasto Inteligente",
+    "ogDescription": "For sole proprietors and companies: register your business data by CNPJ."
+  },
+  "header": {
+    "title": "Smart Company",
+    "subtitle": "Look up your CNPJ and keep your company's data organized in Gasto Inteligente."
+  },
+  "sources": {
+    "brasilapi": "Federal Revenue (via BrasilAPI)",
+    "cnpjws": "Federal Revenue (via CNPJ.ws)",
+    "cache": "Last saved lookup"
+  },
+  "saved": {
+    "title": "My Company",
+    "addressDash": "—",
+    "lastUpdate": "Last data update: {{when}}",
+    "activity": "Main activity",
+    "address": "Address",
+    "cnaeSuffix": " (CNAE {{code}})",
+    "actions": {
+      "update": "Refresh CNPJ data",
+      "change": "Change company",
+      "remove": "Remove company"
+    }
+  },
+  "search": {
+    "title": "My Company",
+    "subtitle": "Enter your CNPJ to fetch your company's public data automatically.",
+    "label": "CNPJ",
+    "placeholder": "00.000.000/0000-00",
+    "submit": "Look up CNPJ"
+  },
+  "result": {
+    "title": "Data found",
+    "subtitle": "Review the data before saving as your company.",
+    "badgeStale": "Last available information",
+    "badgeCache": "From cache (up to date)",
+    "badgeFresh": "Updated now",
+    "fields": {
+      "cnpj": "CNPJ",
+      "razaoSocial": "Legal name",
+      "nomeFantasia": "Trade name",
+      "situacao": "Registration status",
+      "abertura": "Opening date",
+      "porte": "Size",
+      "natureza": "Legal nature",
+      "atividade": "Main activity",
+      "endereco": "Address",
+      "cep": "ZIP {{cep}}"
+    },
+    "source": "Source: {{source}}",
+    "saveAsCompany": "Save as my company",
+    "updateCompany": "Update my company",
+    "searchOther": "Look up another CNPJ",
+    "cancel": "Cancel",
+    "errors": {
+      "invalid": "Invalid CNPJ",
+      "notFound": "Company not found",
+      "generic": "Could not look it up",
+      "fallback": "We couldn't look up this CNPJ right now. Try again in a few minutes."
+    }
+  },
+  "groups": {
+    "cadastro": "Registry",
+    "relatorios": "Reports",
+    "contador": "Accountant"
+  },
+  "shortcuts": {
+    "fornecedores": { "title": "Suppliers", "desc": "Register suppliers by CNPJ and organize your business expenses better.", "cta": "Open" },
+    "clientes": { "title": "Clients", "desc": "Register clients by CNPJ and prepare your revenue reports.", "cta": "Open" },
+    "fornecedoresRelatorio": { "title": "Report by supplier", "desc": "Track how much you move with each supplier.", "cta": "View report" },
+    "clientesRelatorio": { "title": "Report by client", "desc": "See which clients your company received the most from and what is still open.", "cta": "View report" },
+    "contador": { "title": "Accountant package", "desc": "Generate a monthly summary with revenue, expenses, clients, suppliers and pending items.", "cta": "Generate package" }
+  },
+  "about": {
+    "title": "About the lookup",
+    "body": "We fetch your company's public data directly from official sources tied to the Federal Revenue. No data is saved to your account without your confirmation."
+  },
+  "remove": {
+    "title": "Remove company?",
+    "description": "Your company's data will be deleted from Gasto Inteligente. You can register again whenever you want.",
+    "cancel": "Cancel",
+    "confirm": "Remove",
+    "loading": "Removing…"
+  },
+  "toasts": {
+    "updated": "Company data updated.",
+    "saved": "Company saved as yours.",
+    "duplicate": "You already have a company registered. Use 'Refresh data'.",
+    "saveError": "We couldn't save it now. Try again.",
+    "removed": "Company removed.",
+    "removeError": "We couldn't remove it now. Try again.",
+    "consultError": "We couldn't look up this CNPJ right now. Try again in a few minutes."
+  },
+  "dash": "—"
+}
