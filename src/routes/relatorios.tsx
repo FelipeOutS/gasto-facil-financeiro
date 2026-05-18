@@ -673,7 +673,7 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Fechamento do mês ===== */}
-      <SectionLabel>Fechamento do mês</SectionLabel>
+      <SectionLabel>{t("sections.fechamento")}</SectionLabel>
       <section
         className={cn(
           "rounded-2xl border bg-card p-5 ring-1 transition-shadow animate-rise",
