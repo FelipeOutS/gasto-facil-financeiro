@@ -194,9 +194,9 @@ function AssinaturasPage() {
       });
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
-          `${r.criadas} recorrências detectadas${
-            r.suspeitas ? `, ${r.suspeitas} suspeitas` : ""
-          }`,
+          r.suspeitas
+            ? t("toasts.detectedWithSuspects", { criadas: r.criadas, suspeitas: r.suspeitas })
+            : t("toasts.detected", { criadas: r.criadas }),
         );
       }
     })();
