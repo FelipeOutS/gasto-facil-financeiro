@@ -392,21 +392,21 @@ function RelatoriosPage() {
         <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Totais do período</p>
-              <p className="text-sm font-medium">{periodoLabel} · {historicoMeses.length} meses</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{t("totals.title")}</p>
+              <p className="text-sm font-medium">{t("totals.monthsCount", { period: periodoLabel, count: historicoMeses.length })}</p>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receitas</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.receitas")}</p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Despesas</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.despesas")}</p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">{formatBRL(totaisPeriodo.despesas)}</p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.saldo")}</p>
               <p className={cn("mt-0.5 text-lg font-bold tabular-nums", totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand")}>
                 {formatBRL(totaisPeriodo.saldo)}
               </p>
@@ -416,28 +416,28 @@ function RelatoriosPage() {
       )}
 
       {/* ===== KPIs principais ===== */}
-      <SectionLabel>Resumo do mês</SectionLabel>
+      <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <Kpi label="Receitas" valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
-        <Kpi label="Despesas" valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
+        <Kpi label={t("kpi.receitas")} valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
+        <Kpi label={t("kpi.despesas")} valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
         <Kpi
-          label="Saldo"
+          label={t("kpi.saldo")}
           valor={resumo.saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={resumo.saldo < 0 ? "destructive" : "brand"}
         />
-        <Kpi label="No cartão" valor={resumo.totalCartao} icon={<CreditCard className="h-4 w-4" />} tone="warning" />
-        <Kpi label="Pago em contas" valor={resumo.totalPagoContas} icon={<CalendarClock className="h-4 w-4" />} tone="muted" />
-        <Kpi label="Guardado" valor={resumo.totalGuardado} icon={<Target className="h-4 w-4" />} tone="success" />
+        <Kpi label={t("kpi.cartao")} valor={resumo.totalCartao} icon={<CreditCard className="h-4 w-4" />} tone="warning" />
+        <Kpi label={t("kpi.contas")} valor={resumo.totalPagoContas} icon={<CalendarClock className="h-4 w-4" />} tone="muted" />
+        <Kpi label={t("kpi.guardado")} valor={resumo.totalGuardado} icon={<Target className="h-4 w-4" />} tone="success" />
         <Kpi
-          label="Maior gasto"
+          label={t("kpi.maiorGasto")}
           valor={resumo.maiorGasto?.valor ?? 0}
           icon={<Trophy className="h-4 w-4" />}
           tone="muted"
           hint={resumo.maiorGasto?.descricao}
         />
         <Kpi
-          label="Estouros"
+          label={t("kpi.estouros")}
           valor={resOrc.qtdEstouro}
           icon={<AlertTriangle className="h-4 w-4" />}
           tone={resOrc.qtdEstouro > 0 ? "destructive" : "muted"}
@@ -446,24 +446,24 @@ function RelatoriosPage() {
       </section>
 
       {/* ===== Comparativo ===== */}
-      <SectionLabel>Comparativo com o mês anterior</SectionLabel>
+      <SectionLabel>{t("sections.comparativo")}</SectionLabel>
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <ComparativoCard
-          label="Receitas"
+          label={t("kpi.receitas")}
           atual={comparativo.receitas.atual}
           anterior={comparativo.receitas.anterior}
           delta={comparativo.receitas.delta}
           inverter={false}
         />
         <ComparativoCard
-          label="Despesas"
+          label={t("kpi.despesas")}
           atual={comparativo.despesas.atual}
           anterior={comparativo.despesas.anterior}
           delta={comparativo.despesas.delta}
           inverter={true}
         />
         <ComparativoCard
-          label="Saldo"
+          label={t("kpi.saldo")}
           atual={comparativo.saldo.atual}
           anterior={comparativo.saldo.anterior}
           delta={comparativo.saldo.delta}
@@ -475,7 +475,7 @@ function RelatoriosPage() {
         <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2 animate-fade-in">
           {comparativo.maiorAlta && comparativo.maiorAlta.delta > 0 && (
             <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm">
-              <span className="font-medium">📈 Maior alta:</span>{" "}
+              <span className="font-medium">{t("comparativo.maiorAlta")}:</span>{" "}
               <span className="text-foreground/90">
                 {comparativo.maiorAlta.nome} (+{formatBRL(comparativo.maiorAlta.delta)})
               </span>
@@ -483,7 +483,7 @@ function RelatoriosPage() {
           )}
           {comparativo.maiorReducao && comparativo.maiorReducao.delta < 0 && (
             <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-sm">
-              <span className="font-medium">📉 Maior redução:</span>{" "}
+              <span className="font-medium">{t("comparativo.maiorReducao")}:</span>{" "}
               <span className="text-foreground/90">
                 {comparativo.maiorReducao.nome} ({formatBRL(comparativo.maiorReducao.delta)})
               </span>
@@ -493,11 +493,11 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Gráficos ===== */}
-      <SectionLabel>Gráficos</SectionLabel>
+      <SectionLabel>{t("sections.graficos")}</SectionLabel>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <ChartCard title="Gastos por categoria" icon={<PieChartIcon className="h-4 w-4" />}>
+        <ChartCard title={t("chart.gastosCategoria")} icon={<PieChartIcon className="h-4 w-4" />}>
           {resumo.porCategoria.length === 0 ? (
-            <EmptyChart label="Sem gastos no mês." />
+            <EmptyChart label={t("chart.emptyGastos")} />
           ) : (
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
