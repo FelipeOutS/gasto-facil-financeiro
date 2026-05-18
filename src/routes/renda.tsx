@@ -497,9 +497,7 @@ function RendaPage() {
         if (matchMes || matchAno) return g;
         const itens = g.itens.filter((r) => {
           const desc = normalizeDescricao(r.descricao);
-          const tipoLabel = normalizeDescricao(
-            TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label ?? "",
-          );
+          const tLabel = normalizeDescricao(tipoLabel(r.tipo));
           if (desc.includes(q)) return true;
           if (tipoLabel.includes(q)) return true;
           if (Number.isFinite(qNum) && qNum > 0 && Math.abs(r.valor - qNum) < 0.01) return true;
