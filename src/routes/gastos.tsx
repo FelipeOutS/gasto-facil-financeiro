@@ -602,19 +602,19 @@ function GastosPage() {
           <Link
             to="/"
             className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/70 backdrop-blur text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Voltar"
+            aria-label={t("hero.back")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-              Painel financeiro
+              {t("hero.eyebrow")}
             </p>
             <h1 className="mt-0.5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              {vocab.gastosTitle}
+              {t("hero.title", { defaultValue: vocab.gastosTitle })}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
-              Visualize, organize e entenda para onde seu dinheiro está indo.
+              {t("hero.subtitle")}
             </p>
           </div>
           {/* Ilustração animada (SVG leve) — finanças/gráfico */}
@@ -631,10 +631,10 @@ function GastosPage() {
             className="h-9 rounded-full"
             variant="outline"
             disabled={reclassificando}
-            title="Reclassificar categorias"
+            title={t("actions.reclassifyTitle")}
           >
             <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-            Reclassificar
+            {t("actions.reclassify")}
           </Button>
           <Button
             type="button"
@@ -643,7 +643,7 @@ function GastosPage() {
             variant="outline"
           >
             <History className="h-4 w-4" />
-            Extratos importados
+            {t("actions.importedStatements")}
           </Button>
           <Button
             type="button"
@@ -652,7 +652,7 @@ function GastosPage() {
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
-            Importar extrato
+            {t("actions.import")}
             {!can("importar_extrato") && <LockChip />}
           </Button>
         </div>
@@ -667,10 +667,10 @@ function GastosPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-                Mês de referência
+                {t("monthRef.label")}
               </p>
               <p className="text-xs text-muted-foreground/90 hidden sm:block">
-                Mês ao qual o gasto pertence — mesmo que pago em outro mês.
+                {t("monthRef.help")}
               </p>
             </div>
           </div>
@@ -679,14 +679,14 @@ function GastosPage() {
               onClick={() => shiftMes(-1)}
               disabled={mesRef === "todos" || mesRefIdx <= 0}
               className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              aria-label="Mês anterior"
+              aria-label={t("monthRef.prev")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <Select value={mesRef} onValueChange={setMesRef}>
               <SelectTrigger className="h-9 min-w-[190px] rounded-full border-brand/30 bg-brand-soft/70 font-semibold text-sm text-foreground shadow-sm ring-1 ring-brand/10">
                 <SelectValue>
-                  {mesRef === "todos" ? "Todos os meses" : ymToLabel(mesRef)}
+                  {mesRef === "todos" ? t("monthRef.all") : ymToLabel(mesRef)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-72">
@@ -695,14 +695,14 @@ function GastosPage() {
                     {ymToLabel(ym)}
                   </SelectItem>
                 ))}
-                <SelectItem value="todos">Todos os meses</SelectItem>
+                <SelectItem value="todos">{t("monthRef.all")}</SelectItem>
               </SelectContent>
             </Select>
             <button
               onClick={() => shiftMes(1)}
               disabled={mesRef === "todos" || mesRefIdx >= mesesDisponiveis.length - 1}
               className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card-elevated hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              aria-label="Próximo mês"
+              aria-label={t("monthRef.next")}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -725,7 +725,7 @@ function GastosPage() {
             disabled={reclassificando}
           >
             <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-            Revisar
+            {t("actions.review")}
           </Button>
           <Button
             type="button"
@@ -734,10 +734,10 @@ function GastosPage() {
             variant="secondary"
           >
             <Upload className="h-4 w-4" />
-            Importar
+            {t("actions.importShort")}
             {!can("importar_extrato") && (
               <span
-                aria-label="Premium"
+                aria-label={t("upgrade.premium")}
                 className="absolute -top-1.5 -right-1.5 grid h-4 w-4 place-items-center rounded-full border border-background bg-amber-500 text-[9px] font-bold text-amber-950"
               >
                 ★
@@ -751,7 +751,7 @@ function GastosPage() {
             variant="outline"
           >
             <History className="h-4 w-4" />
-            Extratos
+            {t("actions.statements")}
           </Button>
         </div>
       </div>
@@ -762,15 +762,15 @@ function GastosPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_extrato"
-        featureLabel="Importar extrato bancário"
-        benefit="Importe seu extrato em PDF/CSV e o app categoriza tudo automaticamente."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
 
       {/* Busca grande */}
       <div className="mt-4 relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por mercado, Uber, aluguel..."
+          placeholder={t("search.placeholder")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="h-12 rounded-2xl border-border bg-card pl-11 text-sm"
@@ -779,7 +779,7 @@ function GastosPage() {
           <button
             onClick={() => setQ("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated"
-            aria-label="Limpar busca"
+            aria-label={t("search.clear")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -803,12 +803,12 @@ function GastosPage() {
                     )}
                   >
                     <CalendarIcon className="h-3.5 w-3.5" />
-                    Personalizado
+                    {t("periodo.personalizado")}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 space-y-3" align="start">
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data inicial</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.startDate")}</p>
                     <Calendar
                       mode="single"
                       selected={customFrom}
@@ -820,7 +820,7 @@ function GastosPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">Data final</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.endDate")}</p>
                     <Calendar
                       mode="single"
                       selected={customTo}
@@ -846,7 +846,7 @@ function GastosPage() {
                   : "border-border bg-card hover:bg-card-elevated",
               )}
             >
-              {PERIODO_LABEL[p]}
+              {t(`periodo.${PERIODO_KEYS[p]}`)}
             </button>
           );
         })}
@@ -856,17 +856,18 @@ function GastosPage() {
           onValueChange={(v) => setPeriodo(v as PeriodoId)}
         >
           <SelectTrigger className="h-8 shrink-0 w-auto gap-1 rounded-full border-border bg-card px-3 text-xs">
-            <SelectValue placeholder="Mais períodos" />
+            <SelectValue placeholder={t("periodo.morePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ontem">Ontem</SelectItem>
-            <SelectItem value="mesPassado">Mês passado</SelectItem>
-            <SelectItem value="3m">Últimos 3 meses</SelectItem>
-            <SelectItem value="6m">Últimos 6 meses</SelectItem>
-            <SelectItem value="ano">Este ano</SelectItem>
+            <SelectItem value="ontem">{t("periodo.ontem")}</SelectItem>
+            <SelectItem value="mesPassado">{t("periodo.mesPassado")}</SelectItem>
+            <SelectItem value="3m">{t("periodo.3mLong")}</SelectItem>
+            <SelectItem value="6m">{t("periodo.6mLong")}</SelectItem>
+            <SelectItem value="ano">{t("periodo.ano")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
 
       {/* Filtros avançados */}
       <Collapsible open={advOpen} onOpenChange={setAdvOpen} className="mt-3">
