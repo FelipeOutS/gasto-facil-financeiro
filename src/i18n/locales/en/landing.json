@@ -75,37 +75,91 @@
     "guardado": "Savings",
     "guardadoDesc": "Record amounts set aside in banks or wallets and track exactly how much you have saved.",
     "highlights": {
-      "dashboard": ["Balance, income and expenses", "Monthly cash flow chart", "Smart limit", "Alerts and calendar"],
-      "gastos": ["Filter by reference month", "Categories and payment methods", "Monthly total and average", "Clear and organized list"],
-      "cartoes": ["Visual card with limit", "Open statement and due date", "Purchases and installments", "Mark statement as paid"],
-      "metas": ["Visual goal cover", "Animated progress", "How much is left", "Contribution history"],
-      "investimentos": ["Total portfolio and change", "Growth chart", "Distribution by class", "Quick visual summary"],
-      "guardado": ["Total saved", "Amount per bank and wallet", "Clean, secure visual", "Monthly tracking"]
+      "dashboard": [
+        "Balance, income and expenses",
+        "Monthly cash flow chart",
+        "Smart limit",
+        "Alerts and calendar"
+      ],
+      "gastos": [
+        "Filter by reference month",
+        "Categories and payment methods",
+        "Monthly total and average",
+        "Clear and organized list"
+      ],
+      "cartoes": [
+        "Visual card with limit",
+        "Open statement and due date",
+        "Purchases and installments",
+        "Mark statement as paid"
+      ],
+      "metas": [
+        "Visual goal cover",
+        "Animated progress",
+        "How much is left",
+        "Contribution history"
+      ],
+      "investimentos": [
+        "Total portfolio and change",
+        "Growth chart",
+        "Distribution by class",
+        "Quick visual summary"
+      ],
+      "guardado": [
+        "Total saved",
+        "Amount per bank and wallet",
+        "Clean, secure visual",
+        "Monthly tracking"
+      ]
     }
   },
   "dashboardShowcase": {
     "eyebrow": "Dashboard",
     "title": "Your financial month in one simple view.",
     "text": "The Dashboard brings together the most important information so you can quickly understand your situation: income, expenses, bills, balance, alerts and smart limit.",
-    "bullets": ["Monthly balance", "Income and expenses", "Bills to pay", "Important alerts", "Smart limit"]
+    "bullets": [
+      "Monthly balance",
+      "Income and expenses",
+      "Bills to pay",
+      "Important alerts",
+      "Smart limit"
+    ]
   },
   "gastosSplit": {
     "eyebrow": "Expenses",
     "title": "Understand where your money is going.",
     "text": "Filter by month, category, period and payment method. Separate current month expenses, prior-month bills and card transactions with more clarity. The system uses a reference month: you decide which month each expense belongs to.",
-    "bullets": ["Filter by reference month", "Smart categories", "Monthly total and average", "Payment method"]
+    "bullets": [
+      "Filter by reference month",
+      "Smart categories",
+      "Monthly total and average",
+      "Payment method"
+    ]
   },
   "cartoesSplit": {
     "eyebrow": "Cards and statements",
     "title": "Manage your statements without confusion.",
     "text": "Track available limit, credit purchases, due dates and statement status on a simple, visual and organized screen. When a statement is paid, it disappears from pending automatically.",
-    "bullets": ["Real-time available limit", "Closing and due date", "Status: open, paid or overdue", "Mark statement paid in 1 click", "Import statement via PDF", "Upcoming due dates in the side panel"]
+    "bullets": [
+      "Real-time available limit",
+      "Closing and due date",
+      "Status: open, paid or overdue",
+      "Mark statement paid in 1 click",
+      "Import statement via PDF",
+      "Upcoming due dates in the side panel"
+    ]
   },
   "contasSplit": {
     "eyebrow": "Bills and organization",
     "title": "Bills to pay, to receive and income in one place.",
     "text": "Set up recurring bills, get alerts before they're due, mark them as paid and see your consolidated monthly income. Everything talks to the dashboard and smart limit.",
-    "bullets": ["Recurring bills to pay", "Bills to receive", "My monthly income", "Financial calendar", "Due-date alerts"]
+    "bullets": [
+      "Recurring bills to pay",
+      "Bills to receive",
+      "My monthly income",
+      "Financial calendar",
+      "Due-date alerts"
+    ]
   },
   "more": {
     "eyebrow": "More features",
@@ -152,9 +206,24 @@
     "eyebrow": "Who it's for",
     "title": "Made for anyone who wants to see their money more clearly.",
     "subtitle": "From personal control to small financial routines, Gasto Inteligente was built for you.",
-    "items": ["Individuals", "Freelancers", "Small businesses", "Self-employed", "Anyone tired of financial chaos", "Anyone trading spreadsheets for a visual tool"]
+    "items": [
+      "Individuals",
+      "Freelancers",
+      "Small businesses",
+      "Self-employed",
+      "Anyone tired of financial chaos",
+      "Anyone trading spreadsheets for a visual tool"
+    ]
   },
-  "trustPoints": ["No hassle", "Easy-to-read visuals", "Monthly organization", "Category-based control", "Ideal for personal and freelancer routines", "Browser access", "Built for daily use"],
+  "trustPoints": [
+    "No hassle",
+    "Easy-to-read visuals",
+    "Monthly organization",
+    "Category-based control",
+    "Ideal for personal and freelancer routines",
+    "Browser access",
+    "Built for daily use"
+  ],
   "plans": {
     "eyebrow": "Plans",
     "title": "Pick the plan that fits your financial routine.",
@@ -272,9 +341,21 @@
     "trust2": "+10k people in control",
     "trust3": "4.9 average",
     "items": [
-      { "name": "Camila R.", "role": "Designer · Individual", "text": "I finally stopped getting lost in spreadsheets. Within a week I had clarity on where my money was going." },
-      { "name": "Rafael M.", "role": "Freelancer · Confectionery", "text": "Separating personal and business became simple. The goals and alerts help me close every month in the black. I now know exactly how much is left to reinvest in the business without strain." },
-      { "name": "Juliana A.", "role": "Self-employed", "text": "The monthly view is amazing. I can understand what to pay, what to defer and what's left to save." }
+      {
+        "name": "Camila R.",
+        "role": "Designer · Individual",
+        "text": "I finally stopped getting lost in spreadsheets. Within a week I had clarity on where my money was going."
+      },
+      {
+        "name": "Rafael M.",
+        "role": "Freelancer · Confectionery",
+        "text": "Separating personal and business became simple. The goals and alerts help me close every month in the black. I now know exactly how much is left to reinvest in the business without strain."
+      },
+      {
+        "name": "Juliana A.",
+        "role": "Self-employed",
+        "text": "The monthly view is amazing. I can understand what to pay, what to defer and what's left to save."
+      }
     ]
   },
   "faq": {
@@ -282,18 +363,54 @@
     "title": "Frequently asked questions",
     "subtitle": "If you still have any doubts, talk to us.",
     "items": [
-      { "q": "What is Gasto Inteligente?", "a": "It's a financial control platform that helps you organize expenses, cards, bills, goals, income and investments in one place, with a simple and easy-to-understand view." },
-      { "q": "Do I need to understand finance to use it?", "a": "No. The system was designed to be simple and visual, even for people who don't understand much about finance." },
-      { "q": "Can I manage cards and statements?", "a": "Yes. You track purchases, statements, due dates, used limit and statement payment all in one place." },
-      { "q": "Can I separate expenses by reference month?", "a": "Yes. The system uses a reference month, so you decide which month each expense belongs to — perfect for statements and bills paid in one month but referring to another." },
-      { "q": "Does the system help with financial goals?", "a": "Yes. You create goals, track how much has been set aside, how much is left and visualize your progress toward each objective." },
-      { "q": "Is there a plan for freelancers?", "a": "Yes. We have Essential and Complete plans for freelancers, with language and features built for your business, plus the Business plan for those who need more control." },
-      { "q": "What's in the Smart Business area?", "a": "You register your company by tax ID, register clients and suppliers, link income, expenses and bills to each one, view reports per client and per supplier, and generate the Accountant Package with the monthly summary." },
-      { "q": "Does the Accountant Package replace my accountant?", "a": "No. It organizes monthly information for you to send to your accountant — with income, expenses, pending items and comparison with the previous month. Accounting is still done by the professional." },
-      { "q": "What is the Economic Radar?", "a": "It's a quick panel with USD, EUR, Selic and IPCA so you can follow the scenario and understand the economy's impact on your money." },
-      { "q": "Can I access it from my phone?", "a": "Yes. Gasto Inteligente is fully responsive and works great on phone, tablet and computer, directly from the browser." },
-      { "q": "Is there a dark mode?", "a": "Dark/light mode is available inside the user's logged area. The public landing page uses a light visual to ease readability." },
-      { "q": "How do I get started?", "a": "Click \"Get started\" at the top of the page, create your account for free and choose the plan that suits you." }
+      {
+        "q": "What is Gasto Inteligente?",
+        "a": "It's a financial control platform that helps you organize expenses, cards, bills, goals, income and investments in one place, with a simple and easy-to-understand view."
+      },
+      {
+        "q": "Do I need to understand finance to use it?",
+        "a": "No. The system was designed to be simple and visual, even for people who don't understand much about finance."
+      },
+      {
+        "q": "Can I manage cards and statements?",
+        "a": "Yes. You track purchases, statements, due dates, used limit and statement payment all in one place."
+      },
+      {
+        "q": "Can I separate expenses by reference month?",
+        "a": "Yes. The system uses a reference month, so you decide which month each expense belongs to — perfect for statements and bills paid in one month but referring to another."
+      },
+      {
+        "q": "Does the system help with financial goals?",
+        "a": "Yes. You create goals, track how much has been set aside, how much is left and visualize your progress toward each objective."
+      },
+      {
+        "q": "Is there a plan for freelancers?",
+        "a": "Yes. We have Essential and Complete plans for freelancers, with language and features built for your business, plus the Business plan for those who need more control."
+      },
+      {
+        "q": "What's in the Smart Business area?",
+        "a": "You register your company by tax ID, register clients and suppliers, link income, expenses and bills to each one, view reports per client and per supplier, and generate the Accountant Package with the monthly summary."
+      },
+      {
+        "q": "Does the Accountant Package replace my accountant?",
+        "a": "No. It organizes monthly information for you to send to your accountant — with income, expenses, pending items and comparison with the previous month. Accounting is still done by the professional."
+      },
+      {
+        "q": "What is the Economic Radar?",
+        "a": "It's a quick panel with USD, EUR, Selic and IPCA so you can follow the scenario and understand the economy's impact on your money."
+      },
+      {
+        "q": "Can I access it from my phone?",
+        "a": "Yes. Gasto Inteligente is fully responsive and works great on phone, tablet and computer, directly from the browser."
+      },
+      {
+        "q": "Is there a dark mode?",
+        "a": "Dark/light mode is available inside the user's logged area. The public landing page uses a light visual to ease readability."
+      },
+      {
+        "q": "How do I get started?",
+        "a": "Click \"Get started\" at the top of the page, create your account for free and choose the plan that suits you."
+      }
     ]
   },
   "finalCta": {
@@ -308,10 +425,24 @@
   },
   "billing": {
     "periods": {
-      "mensal": { "label": "Monthly", "suffix": "/month" },
-      "trimestral": { "label": "Quarterly", "suffix": "every 3 months" },
-      "semestral": { "label": "Semiannual", "suffix": "every 6 months", "badge": "More savings" },
-      "anual": { "label": "Annual", "suffix": "per year", "badge": "Best value" }
+      "mensal": {
+        "label": "Monthly",
+        "suffix": "/month"
+      },
+      "trimestral": {
+        "label": "Quarterly",
+        "suffix": "every 3 months"
+      },
+      "semestral": {
+        "label": "Semiannual",
+        "suffix": "every 6 months",
+        "badge": "More savings"
+      },
+      "anual": {
+        "label": "Annual",
+        "suffix": "per year",
+        "badge": "Best value"
+      }
     },
     "noDiscount": "no discount",
     "save": "Save {{value}} ({{percent}}% off)",
@@ -355,7 +486,14 @@
     "tag": "Gasto AI",
     "title": "Talk to your financial life.",
     "text": "Ask about your expenses, statements, goals and bills. Gasto AI analyzes only the data you've registered and delivers clear answers — no guessing, no rough estimates.",
-    "bullets": ["Monthly summary in seconds", "Period-to-period comparison", "Statements, due dates and cards", "Where you can save", "Goal status", "Bills payable and receivable"],
+    "bullets": [
+      "Monthly summary in seconds",
+      "Period-to-period comparison",
+      "Statements, due dates and cards",
+      "Where you can save",
+      "Goal status",
+      "Bills payable and receivable"
+    ],
     "cta": "Try Gasto AI",
     "chatTitle": "Gasto AI",
     "chatStatus": "Connected to your data",
@@ -363,7 +501,12 @@
     "msg2": "In November you spent R$ 842.30 on groceries — 18% less than October (R$ 1,027.90). The largest purchase was on the 14th, R$ 312.40.",
     "msg3": "And the Nubank statement, is it closed yet?",
     "msg4": "The statement closes on 11/28 and is due on 12/05. Today it's at R$ 1,247.80 — within the average of the last 3 months.",
-    "chips": ["Monthly summary", "Largest expense", "Upcoming bills", "How can I save?"],
+    "chips": [
+      "Monthly summary",
+      "Largest expense",
+      "Upcoming bills",
+      "How can I save?"
+    ],
     "inputPlaceholder": "Ask about your expenses…"
   },
   "mockup": {
@@ -490,6 +633,95 @@
         "in9": "In 9 days",
         "toReceive": "To receive"
       }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "expenses": "Expenses",
+      "alerts": "Alerts",
+      "cards": "Cards",
+      "subscriptions": "Subscriptions",
+      "investments": "Investments",
+      "income": "My income",
+      "billsToPay": "Bills to pay",
+      "billsToReceive": "Bills to receive",
+      "budget": "Budget",
+      "reports": "Reports",
+      "savings": "Savings",
+      "goals": "Goals",
+      "more": "More"
+    },
+    "sidebar": {
+      "tagline": "Financial control",
+      "addExpense": "Add expense",
+      "monthSummary": "Your monthly summary",
+      "exampleMonth": "May 2026",
+      "exampleSubtitle": "See where your money went."
+    },
+    "alerts": {
+      "title": "Important alerts",
+      "allClear": "Everything's fine here.",
+      "nothingUrgent": "Nothing urgent on the radar."
+    },
+    "radar": {
+      "title": "Everything on the radar",
+      "balance": "BALANCE",
+      "balanceHint": "this month",
+      "income": "INCOME",
+      "incomeHint": "2 entries",
+      "expenses": "EXPENSES",
+      "expensesHint": "14 entries",
+      "toPay": "TO PAY",
+      "toPayHint": "2 pending"
+    },
+    "smartLimit": {
+      "title": "Your smart limit",
+      "titleShort": "Your smart\nlimit",
+      "watchPace": "WATCH YOUR PACE",
+      "perDay": "/ day",
+      "keepBelow": "Keep spending below {{value}} per day.",
+      "goalLabel": "Goal",
+      "goalUsed": "Of goal used",
+      "variable": "VARIABLE",
+      "remaining": "REMAINING",
+      "daysLeft": "DAYS LEFT",
+      "ignoresFixed": "Ignores fixed bills and paid statements.",
+      "onlyVariable": "Variable expenses only"
+    },
+    "contasConectadas": {
+      "title": "Connected accounts",
+      "peopleCount": "{{n}} people",
+      "withAccess": "with access to your account",
+      "invite": "+ Invite",
+      "namesAccountant": "Accountant",
+      "levels": {
+        "admin": "Administrator",
+        "viewAndAdd": "View and add",
+        "viewOnly": "View only"
+      },
+      "statuses": {
+        "accepted": "Accepted",
+        "pending": "Pending"
+      }
+    },
+    "empresaFloating": {
+      "radarTitle": "Radar",
+      "monthSummary": "Monthly summary",
+      "incomeLabel": "Income",
+      "expensesLabel": "Expenses",
+      "balanceLabel": "Balance",
+      "toReceive": "To receive",
+      "openTitles": "8 open invoices",
+      "accountantPackage": "Accountant Package",
+      "packageReady": "Ready",
+      "packageDesc": "Monthly summary ready to send to your accountant."
+    },
+    "finalCtaPreview": {
+      "overview": "Overview",
+      "thisMonth": "+12% this month",
+      "goalLabel": "Goal",
+      "goalDone": "68% complete",
+      "toPayLabel": "To pay",
+      "apartmentGoal": "Apartment · 11%"
     }
   }
 }
