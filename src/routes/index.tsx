@@ -376,7 +376,7 @@ function Index() {
       <button
         onClick={() => changeMonth(1)}
         className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label="Próximo mês"
+        aria-label={t("monthSwitcher.next")}
       >
         <ChevronRight className="h-4 w-4" />
       </button>
