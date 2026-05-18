@@ -1657,10 +1657,10 @@ function FaturaSheet({
           <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
             <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
               <DialogTitle className="text-xl font-bold tracking-tight">
-                Nova compra no cartão
+                {t("sheet.newPurchaseTitle")}
               </DialogTitle>
               <DialogDescription>
-                Será adicionada à fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)} no crédito.
+                {t("sheet.newPurchaseDesc", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4">
