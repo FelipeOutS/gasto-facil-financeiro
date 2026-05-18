@@ -554,7 +554,7 @@ function RelatoriosPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Evolução do saldo" icon={<Sparkles className="h-4 w-4" />}>
+        <ChartCard title={t("chart.evolucaoSaldo")} icon={<Sparkles className="h-4 w-4" />}>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={historicoMeses} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
