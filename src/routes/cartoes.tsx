@@ -817,22 +817,22 @@ function ProximaFaturaCard({
   valor: number;
   temCartoes?: boolean;
 }) {
+  const { t } = useTranslation("cartoes");
   if (!cartao) {
-    // Quando há cartões cadastrados mas nenhuma fatura pendente: paga/quitada.
     if (temCartoes) {
       return (
         <div className="hover-lift card-press rounded-2xl border border-success/30 bg-success/5 p-3.5 animate-rise">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próxima fatura
+              {t("summary.nextInvoice")}
             </p>
             <span className="grid h-7 w-7 place-items-center rounded-full bg-success/15 text-success">
               <CheckCircle2 className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 truncate text-sm font-bold text-success">Fatura paga</p>
+          <p className="mt-2 truncate text-sm font-bold text-success">{t("summary.invoicePaid")}</p>
           <p className="num mt-0.5 text-[11px] text-muted-foreground">
-            Nenhuma cobrança pendente
+            {t("summary.noPending")}
           </p>
           <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(0)}</p>
         </div>
@@ -842,7 +842,7 @@ function ProximaFaturaCard({
       <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima fatura
+            {t("summary.nextInvoice")}
           </p>
           <span className="grid h-7 w-7 place-items-center rounded-full bg-card-elevated text-muted-foreground">
             <CalendarDays className="h-4 w-4" />
@@ -866,7 +866,7 @@ function ProximaFaturaCard({
     <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Próxima fatura
+          {t("summary.nextInvoice")}
         </p>
         <span className={cn("grid h-7 w-7 place-items-center rounded-full", tone)}>
           <CalendarDays className="h-4 w-4" />
@@ -878,7 +878,7 @@ function ProximaFaturaCard({
         {dias !== null && (
           <>
             {" · "}
-            {dias === 0 ? "vence hoje" : `${dias} ${dias === 1 ? "dia" : "dias"}`}
+            {dias === 0 ? t("summary.dueToday") : t("summary.dueDays", { count: dias })}
           </>
         )}
       </p>
@@ -898,6 +898,7 @@ function ProximosVencimentos({
 }: {
   items: Array<{ cartao: Cartao; dias: number }>;
 }) {
+  const { t } = useTranslation("cartoes");
   if (items.length === 0) {
     return (
       <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
@@ -906,8 +907,8 @@ function ProximosVencimentos({
             <CheckCircle2 className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
-            <p className="text-[11px] text-muted-foreground">Nenhuma fatura pendente no momento.</p>
+            <h3 className="text-sm font-semibold tracking-tight">{t("upcoming.title")}</h3>
+            <p className="text-[11px] text-muted-foreground">{t("upcoming.none")}</p>
           </div>
         </div>
       </section>
@@ -920,8 +921,8 @@ function ProximosVencimentos({
           <Clock className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
-          <p className="text-[11px] text-muted-foreground">Fique de olho nas datas</p>
+          <h3 className="text-sm font-semibold tracking-tight">{t("upcoming.title")}</h3>
+          <p className="text-[11px] text-muted-foreground">{t("upcoming.watchDates")}</p>
         </div>
       </div>
       <ul className="mt-3 space-y-2">
@@ -935,7 +936,7 @@ function ProximosVencimentos({
               ? "text-warning"
               : "text-muted-foreground";
           const label =
-            dias === 0 ? "hoje" : dias === 1 ? "amanhã" : `${dias}d`;
+            dias === 0 ? t("upcoming.today") : dias === 1 ? t("upcoming.tomorrow") : t("upcoming.daysShort", { count: dias });
           return (
             <li
               key={cartao.id}
@@ -961,7 +962,7 @@ function ProximosVencimentos({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {formatBanco(cartao.banco) || "Cartão"} · vence dia {cartao.diaVencimento}
+                  {formatBanco(cartao.banco) || t("upcoming.cardFallback")} · {t("upcoming.dueDay", { day: cartao.diaVencimento })}
                 </p>
               </div>
               <span
@@ -993,6 +994,7 @@ function UltimasCompras({
   cartoes: Cartao[];
   hasMore?: boolean;
 }) {
+  const { t } = useTranslation("cartoes");
   const cartaoMap = useMemo(() => {
     const m = new Map<string, Cartao>();
     for (const c of cartoes) m.set(c.id, c);
@@ -1006,9 +1008,9 @@ function UltimasCompras({
           <Receipt className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold tracking-tight">Últimas compras no crédito</h3>
+          <h3 className="text-sm font-semibold tracking-tight">{t("recent.title")}</h3>
           <p className="text-[11px] text-muted-foreground">
-            {gastos.length === 0 ? "Nada por aqui ainda" : "Movimentações recentes"}
+            {gastos.length === 0 ? t("recent.empty") : t("recent.recentMoves")}
           </p>
         </div>
       </div>
@@ -1016,7 +1018,7 @@ function UltimasCompras({
       {gastos.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Quando você lançar uma compra no crédito vinculada a um cartão, ela aparece aqui.
+            {t("recent.emptyHint")}
           </p>
         </div>
       ) : (
@@ -1039,11 +1041,11 @@ function UltimasCompras({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
-                    {g.descricao || g.estabelecimento || "Compra"}
+                    {g.descricao || g.estabelecimento || t("recent.purchase")}
                   </p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {c?.nome || "Cartão"} · {dtStr}
-                    {g.horario ? ` às ${g.horario}` : ""}
+                    {c?.nome || t("recent.cardFallback")} · {dtStr}
+                    {g.horario ? ` ${t("recent.atTime", { time: g.horario })}` : ""}
                     {g.tipoGasto === "parcelado" && g.totalParcelas
                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                       : ""}
@@ -1063,7 +1065,7 @@ function UltimasCompras({
             to="/gastos"
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-brand-on-soft transition-colors hover:bg-brand-soft"
           >
-            Ver todas
+            {t("recent.seeAll")}
             <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
