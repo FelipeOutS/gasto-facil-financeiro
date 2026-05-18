@@ -483,29 +483,31 @@ function AssinaturasPage() {
       {/* Insights */}
       {insights.length > 0 && (
         <section className="mt-5 rounded-2xl border border-border/60 bg-card/40 p-4">
-          <h2 className="text-sm font-semibold">Insights</h2>
+          <h2 className="text-sm font-semibold">{t("insights.title")}</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-            {insights.map((t, i) => (
+            {insights.map((line, i) => (
               <li key={i} className="flex gap-2">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
-                <span>{t}</span>
+                <span>{line}</span>
               </li>
             ))}
           </ul>
           {orcamentoAssinaturas && (
             <div className="mt-3 rounded-xl border border-border/40 bg-background/40 p-3 text-xs">
               <p className="font-medium text-foreground">
-                Orçamento de Assinaturas
+                {t("insights.budgetTitle")}
               </p>
               <p className="text-muted-foreground">
-                Limite: {formatBRL(orcamentoAssinaturas.limite)} · Recorrências
-                previstas: {formatBRL(orcamentoAssinaturas.totalRec)}
+                {t("insights.budgetLine", {
+                  limit: formatBRL(orcamentoAssinaturas.limite),
+                  total: formatBRL(orcamentoAssinaturas.totalRec),
+                })}
               </p>
               {orcamentoAssinaturas.totalRec >
                 orcamentoAssinaturas.limite * 0.8 && (
                 <p className="mt-1 flex items-center gap-1 text-amber-400">
                   <AlertTriangle className="h-3 w-3" />
-                  Suas assinaturas consomem mais de 80% do orçamento.
+                  {t("insights.budgetWarn")}
                 </p>
               )}
             </div>
@@ -527,7 +529,7 @@ function AssinaturasPage() {
                   : "border-border/60 text-muted-foreground hover:bg-accent/40"
               }`}
             >
-              {s === "todas" ? "Todas" : STATUS_LABEL[s]}
+              {s === "todas" ? t("status.all") : statusLabel(s)}
             </button>
           ),
         )}
@@ -539,21 +541,23 @@ function AssinaturasPage() {
           <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-8 text-center">
             <CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm font-medium">
-              Nenhuma recorrência {filtroStatus === "todas" ? "" : STATUS_LABEL[filtroStatus as StatusRecorrencia].toLowerCase()}
+              {filtroStatus === "todas"
+                ? t("empty.none")
+                : t("empty.noneStatus", { status: statusLabel(filtroStatus as StatusRecorrencia).toLowerCase() })}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui.
+              {t("empty.hint")}
             </p>
             {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
               <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
-                <p>Gastos encontrados: {debugAnalise.gastos}</p>
-                <p>Gastos analisados: {debugAnalise.analisados}</p>
-                <p>Palavras-chave/recorrências encontradas: {debugAnalise.encontradas}</p>
-                <p>Ativas criadas: {debugAnalise.criadas}</p>
-                <p>Suspeitas criadas: {debugAnalise.suspeitas}</p>
-                <p>Assinaturas: {debugAnalise.assinaturas}</p>
-                <p>Recorrências fixas: {debugAnalise.fixas}</p>
-                <p className="mt-2 truncate">Amostra: {debugAnalise.nomes.join(", ") || "—"}</p>
+                <p>{t("debug.found", { n: debugAnalise.gastos })}</p>
+                <p>{t("debug.analyzed", { n: debugAnalise.analisados })}</p>
+                <p>{t("debug.matched", { n: debugAnalise.encontradas })}</p>
+                <p>{t("debug.created", { n: debugAnalise.criadas })}</p>
+                <p>{t("debug.suspects", { n: debugAnalise.suspeitas })}</p>
+                <p>{t("debug.subs", { n: debugAnalise.assinaturas })}</p>
+                <p>{t("debug.fixed", { n: debugAnalise.fixas })}</p>
+                <p className="mt-2 truncate">{t("debug.sample", { names: debugAnalise.nomes.join(", ") || t("prazo.dash") })}</p>
               </div>
             )}
           </div>
