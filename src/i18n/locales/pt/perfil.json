@@ -1,0 +1,55 @@
+{
+  "back": "Voltar",
+  "title": "Meu perfil",
+  "subtitle": "Personalize sua experiência escolhendo seu tipo de cadastro.",
+  "avatar": {
+    "title": "Foto de perfil",
+    "desc": "Aparece no menu, na sua conta e nas mensagens do chat."
+  },
+  "tipo": {
+    "title": "Tipo de cadastro",
+    "subtitle": "Escolha a opção que melhor descreve você.",
+    "pessoa_fisica": "Pessoa física",
+    "pessoa_fisicaDesc": "Uso pessoal, com CPF",
+    "mei": "MEI",
+    "meiDesc": "Microempreendedor, com CNPJ",
+    "empresa": "Empresa",
+    "empresaDesc": "Empresa com CNPJ",
+    "naoDefinido": "Não definido"
+  },
+  "data": {
+    "sectionTitle": "Dados do {{tipo}}",
+    "nome": "Nome completo",
+    "nomePlaceholder": "Como aparece nos documentos",
+    "cpf": "CPF",
+    "responsavelNome": "Nome completo do responsável",
+    "responsavelPlaceholderMEI": "Quem assina pelo MEI",
+    "nomeFantasia": "Nome fantasia",
+    "optional": "Opcional",
+    "cnpj": "CNPJ",
+    "razaoSocial": "Razão social",
+    "razaoPlaceholder": "Nome registrado da empresa",
+    "responsavelNomeOpt": "Nome do responsável",
+    "responsavelPlaceholderEmpresa": "Quem responde pela empresa",
+    "email": "E-mail",
+    "telefone": "Telefone",
+    "telefonePlaceholder": "(11) 90000-0000",
+    "privacy": "Esses dados são usados apenas para identificar seu perfil no app e personalizar sua experiência."
+  },
+  "validation": {
+    "nome": "Preencha seu nome completo.",
+    "cpf": "CPF inválido. Confira os números digitados.",
+    "responsavel": "Preencha o nome do responsável.",
+    "cnpj": "CNPJ inválido. Confira os números digitados.",
+    "razao": "Preencha a razão social.",
+    "chooseTipo": "Escolha um tipo de cadastro para continuar."
+  },
+  "actions": {
+    "save": "Salvar perfil",
+    "saving": "Salvando…"
+  },
+  "toasts": {
+    "saveError": "Não foi possível salvar agora. Tente novamente.",
+    "saved": "Perfil atualizado com sucesso! 🎉"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "back": "Back",
+  "title": "My profile",
+  "subtitle": "Personalize your experience by choosing your account type.",
+  "avatar": {
+    "title": "Profile picture",
+    "desc": "Appears in the menu, on your account and in chat messages."
+  },
+  "tipo": {
+    "title": "Account type",
+    "subtitle": "Pick the option that best describes you.",
+    "pessoa_fisica": "Individual",
+    "pessoa_fisicaDesc": "Personal use, with CPF/Tax ID",
+    "mei": "Sole proprietor",
+    "meiDesc": "Self-employed, with CNPJ",
+    "empresa": "Company",
+    "empresaDesc": "Company with CNPJ",
+    "naoDefinido": "Not defined"
+  },
+  "data": {
+    "sectionTitle": "{{tipo}} details",
+    "nome": "Full name",
+    "nomePlaceholder": "As it appears on your ID",
+    "cpf": "Tax ID (CPF)",
+    "responsavelNome": "Owner's full name",
+    "responsavelPlaceholderMEI": "Who signs on behalf of the business",
+    "nomeFantasia": "Trade name",
+    "optional": "Optional",
+    "cnpj": "Tax ID (CNPJ)",
+    "razaoSocial": "Legal name",
+    "razaoPlaceholder": "Registered company name",
+    "responsavelNomeOpt": "Contact name",
+    "responsavelPlaceholderEmpresa": "Who responds for the company",
+    "email": "Email",
+    "telefone": "Phone",
+    "telefonePlaceholder": "(11) 90000-0000",
+    "privacy": "This data is used only to identify your profile in the app and personalize your experience."
+  },
+  "validation": {
+    "nome": "Enter your full name.",
+    "cpf": "Invalid Tax ID. Please check the digits.",
+    "responsavel": "Enter the owner's name.",
+    "cnpj": "Invalid Tax ID (CNPJ). Please check the digits.",
+    "razao": "Enter the legal name.",
+    "chooseTipo": "Choose an account type to continue."
+  },
+  "actions": {
+    "save": "Save profile",
+    "saving": "Saving…"
+  },
+  "toasts": {
+    "saveError": "Couldn't save right now. Please try again.",
+    "saved": "Profile updated successfully! 🎉"
+  }
+}
