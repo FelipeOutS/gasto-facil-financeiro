@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 import { Sparkles, Send, Trash2, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -11,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import i18n from "@/i18n";
 import {
   sendChatMessage,
   getChatHistory,
@@ -21,33 +23,23 @@ export const Route = createFileRoute("/gasto-ai")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : undefined,
   }),
-  head: () => ({
-    meta: [
-      { title: "Gasto Inteligente AI — Assistente financeiro com IA" },
-      {
-        name: "description",
-        content:
-          "Converse com a IA sobre seus gastos, metas e organização financeira em linguagem simples.",
-      },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return {
+      meta: [
+        { title: t("ai.metaTitle") },
+        { name: "description", content: t("ai.metaDesc") },
+      ],
+    };
+  },
   component: GastoAIPage,
 });
-
-const SUGESTOES = [
-  "Como estão meus gastos este mês?",
-  "Qual foi minha maior despesa?",
-  "Como está minha fatura do cartão?",
-  "Quanto veio minha fatura?",
-  "Qual cartão eu mais usei?",
-  "Onde posso economizar?",
-  "Tenho contas vencidas?",
-  "Minhas metas estão indo bem?",
-];
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string; created_at: string };
 
 function GastoAIPage() {
+  const { t } = useTranslation("misc");
+  const SUGESTOES = useMemo(() => t("ai.suggestions", { returnObjects: true }) as string[], [t]);
   const { user, profile } = useAuth();
   const { q: seededQ } = Route.useSearch();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
