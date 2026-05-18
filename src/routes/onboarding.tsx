@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, ArrowRight, Check, Sparkles, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -16,13 +17,17 @@ import {
 import { useOnboarding } from "@/lib/onboarding/use-onboarding";
 import { commercialPlanByTier, PLAN_LABEL, type PlanTier } from "@/lib/plans";
 import { BrandLoader } from "@/components/BrandLoader";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/onboarding")({
-  head: () => ({
-    meta: [{ title: "Configuração inicial — Gasto Inteligente" }],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(null, "onboarding");
+    return { meta: [{ title: t("meta.title") }] };
+  },
   component: OnboardingPage,
 });
+
+type TFn = ReturnType<typeof useTranslation>["t"];
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
