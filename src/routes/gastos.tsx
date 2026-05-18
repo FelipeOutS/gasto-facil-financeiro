@@ -1197,7 +1197,7 @@ function GastosPage() {
                   <Checkbox
                     checked={selected.has(g.id)}
                     onCheckedChange={() => toggleOne(g.id)}
-                    aria-label="Selecionar gasto"
+                    aria-label={t("item.select")}
                     className="shrink-0"
                   />
                   <div className="relative shrink-0">
@@ -1212,21 +1212,23 @@ function GastosPage() {
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {formatDateBR(g.data)}
-                      {g.horario ? ` às ${g.horario}` : ""} · {pag}
+                      {cat?.nome ?? t("item.otherCategory")} · {formatDateBR(g.data)}
+                      {g.horario ? ` ${t("item.at")} ${g.horario}` : ""} · {pag}
                       {g.tipoGasto === "parcelado" && g.totalParcelas
                         ? ` · ${g.parcelaAtual}/${g.totalParcelas}`
                         : g.tipoGasto === "recorrente"
-                          ? " · recorrente"
+                          ? ` · ${t("item.recurring")}`
                           : ""}
                     </p>
                     {g.fornecedorId && fornecedoresPorId[g.fornecedorId] ? (
                       <p className="truncate text-[11px] text-muted-foreground/80">
-                        Fornecedor:{" "}
-                        {fornecedoresPorId[g.fornecedorId].apelido ||
-                          fornecedoresPorId[g.fornecedorId].nome_fantasia ||
-                          fornecedoresPorId[g.fornecedorId].razao_social ||
-                          fornecedoresPorId[g.fornecedorId].nome}
+                        {t("item.supplier", {
+                          name:
+                            fornecedoresPorId[g.fornecedorId].apelido ||
+                            fornecedoresPorId[g.fornecedorId].nome_fantasia ||
+                            fornecedoresPorId[g.fornecedorId].razao_social ||
+                            fornecedoresPorId[g.fornecedorId].nome,
+                        })}
                       </p>
                     ) : null}
                     {g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth) ? (
