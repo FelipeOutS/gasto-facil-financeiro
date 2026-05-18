@@ -1958,7 +1958,7 @@ function CartaoFormDialog({
                     </div>
                     <div>
                       <Label htmlFor="venc" className="text-xs text-muted-foreground">
-                        Dia de vencimento
+                        {t("form.dueDay")}
                       </Label>
                       <Input
                         id="venc"
