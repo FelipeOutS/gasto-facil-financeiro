@@ -24,21 +24,20 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
 
-/** Detects the initial language from URL search > localStorage > browser. */
+/**
+ * Detects the initial language. Para evitar hydration mismatch entre SSR e cliente,
+ * usamos APENAS sinais que existem nos dois lados (URL search `?lang=` ou prefixo de rota).
+ * O fallback do localStorage / navigator é aplicado depois da hidratação pelo hook useLocale.
+ */
 function detectInitialLocale(): Locale {
-  if (typeof window === "undefined") return DEFAULT_LOCALE;
   try {
-    const url = new URL(window.location.href);
-    const fromUrl = url.searchParams.get("lang");
-    if (isLocale(fromUrl)) return fromUrl;
-    // /pt/... or /en/... path prefix
-    const seg = url.pathname.split("/").filter(Boolean)[0];
-    if (isLocale(seg)) return seg;
-    const fromStorage = window.localStorage.getItem(LANG_STORAGE_KEY);
-    if (isLocale(fromStorage)) return fromStorage;
-    const nav = (window.navigator.language || "").toLowerCase();
-    if (nav.startsWith("pt")) return "pt";
-    if (nav.startsWith("en")) return "en";
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const fromUrl = url.searchParams.get("lang");
+      if (isLocale(fromUrl)) return fromUrl;
+      const seg = url.pathname.split("/").filter(Boolean)[0];
+      if (isLocale(seg)) return seg;
+    }
   } catch {
     // ignore
   }
