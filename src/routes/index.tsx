@@ -1241,6 +1241,7 @@ function DashboardSkeleton() {
  * Esconde-se silenciosamente se não houver nenhum alerta nem próxima conta.
  */
 function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
+  const { t } = useTranslation("dashboard");
   const resumo = useMemo(() => buildResumoAlertas(contas), [contas]);
   const proxima = resumo.todos[0];
   const totalAtrasadas = resumo.atrasadas.length;
@@ -1284,16 +1285,16 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Alertas financeiros
+              {t("alertasContas.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
               {totalAtrasadas > 0
-                ? `${totalAtrasadas} ${totalAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}`
+                ? t(totalAtrasadas === 1 ? "alertasContas.atrasadasSing" : "alertasContas.atrasadasPlur", { count: totalAtrasadas })
                 : totalHoje > 0
-                  ? `${totalHoje} ${totalHoje === 1 ? "conta vence" : "contas vencem"} hoje`
+                  ? t(totalHoje === 1 ? "alertasContas.hojeSing" : "alertasContas.hojePlur", { count: totalHoje })
                   : totalAmanha > 0
-                    ? `${totalAmanha} ${totalAmanha === 1 ? "conta vence" : "contas vencem"} amanhã`
-                    : `${totalEm7} ${totalEm7 === 1 ? "conta vence" : "contas vencem"} nos próximos dias`}
+                    ? t(totalAmanha === 1 ? "alertasContas.amanhaSing" : "alertasContas.amanhaPlur", { count: totalAmanha })
+                    : t(totalEm7 === 1 ? "alertasContas.proxSing" : "alertasContas.proxPlur", { count: totalEm7 })}
             </h2>
           </div>
         </div>
@@ -1301,25 +1302,25 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
           to="/contas-a-pagar"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contas.ver")}
         </Link>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <AlertaPill
-          label="Atrasadas"
+          label={t("alertasContas.pillAtrasadas")}
           count={totalAtrasadas}
           tone="destructive"
           icon={<AlertTriangle className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Hoje/amanhã"
+          label={t("alertasContas.pillHojeAmanha")}
           count={totalHoje + totalAmanha}
           tone="warning"
           icon={<Clock className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Próx. 7 dias"
+          label={t("alertasContas.pillProx7")}
           count={totalEm7}
           tone="brand"
           icon={<CalendarClock className="h-3 w-3" />}
@@ -1329,7 +1330,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
       {proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima a vencer
+            {t("contas.proximaVencer")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{proxima.conta.nome}</p>
@@ -1348,12 +1349,12 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
             )}
           >
             {proxima.severidade === "atrasada"
-              ? `Vencida há ${Math.abs(proxima.dias)}d`
+              ? t("alertasContas.vencidaHa", { dias: Math.abs(proxima.dias) })
               : proxima.severidade === "hoje"
-                ? "Vence hoje"
+                ? t("alertasContas.venceHoje")
                 : proxima.severidade === "amanha"
-                  ? "Vence amanhã"
-                  : `Vence em ${proxima.dias}d`}
+                  ? t("alertasContas.venceAmanha")
+                  : t("alertasContas.venceEm", { dias: proxima.dias })}
           </p>
         </div>
       )}
