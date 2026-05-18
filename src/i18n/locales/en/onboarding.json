@@ -1,0 +1,82 @@
+{
+  "meta": { "title": "Initial setup — Gasto Inteligente" },
+  "brand": "Gasto Inteligente",
+  "loading": "Preparing your setup…",
+  "skip": "Skip for now",
+  "common": {
+    "continue": "Continue",
+    "back": "Back",
+    "start": "Get started"
+  },
+  "welcome": {
+    "title": "Let's set up your financial control",
+    "subtitle": "Answer a few quick questions to tailor the app to you."
+  },
+  "accountType": {
+    "title": "How do you plan to use it?",
+    "subtitle": "Pick the profile that fits you best.",
+    "items": {
+      "pessoa_fisica": {
+        "title": "Individual",
+        "description": "To manage my personal financial life."
+      },
+      "mei": {
+        "title": "Sole proprietor",
+        "description": "To organize my personal money and my business finances."
+      },
+      "empresa": {
+        "title": "Company",
+        "description": "To track revenue, expenses, bills and company reports."
+      }
+    }
+  },
+  "goals": {
+    "title": "What do you want to solve the most?",
+    "subtitle": "You can pick more than one.",
+    "items": {
+      "controlar_gastos": "Control monthly spending",
+      "organizar_cartoes": "Organize cards and invoices",
+      "contas_a_pagar": "Never forget bills to pay",
+      "contas_a_receber": "Track amounts to receive",
+      "investimentos": "Follow investments",
+      "orcamento": "Create a budget by category",
+      "assinaturas": "Spot subscriptions and recurrences",
+      "alertas": "Get smart alerts"
+    }
+  },
+  "modules": {
+    "title": "Which areas do you want in your app?",
+    "subtitle": "We'll highlight these first. You can use all of them later.",
+    "items": {
+      "gastos": "Expenses",
+      "cartoes": "Cards",
+      "contas_a_pagar": "Bills to pay",
+      "contas_a_receber": "To receive",
+      "orcamento": "Budget",
+      "assinaturas": "Subscriptions",
+      "investimentos": "Investments",
+      "alertas": "Alerts",
+      "relatorios": "Reports"
+    }
+  },
+  "plan": {
+    "title": "Recommended plan for you",
+    "subtitle": "You can stay on your current plan and change whenever you want.",
+    "recommendedTag": "Recommended",
+    "seePlan": "See plan",
+    "keepCurrent": "Stay on current plan"
+  },
+  "done": {
+    "title": "All set",
+    "subtitle": "Your app is configured. Where would you like to start?",
+    "goDashboard": "Go to dashboard",
+    "shortcuts": {
+      "gastos": "Add your first expense",
+      "cartoes": "Add a card",
+      "contas_a_pagar": "Create a bill to pay",
+      "contas_a_receber": "Create a bill to receive",
+      "orcamento": "Set up budget",
+      "investimentos": "Add investment"
+    }
+  }
+}
