@@ -161,6 +161,7 @@ function formatBanco(banco?: string): string {
 }
 
 function CartoesPage() {
+  const { t } = useTranslation("cartoes");
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
   const { abrir } = Route.useSearch();
