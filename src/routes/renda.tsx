@@ -1383,7 +1383,8 @@ function ReceitaItem({
   onDelete: () => void;
   clienteNome?: string;
 }) {
-  const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
+  const { t } = useTranslation("renda");
+  const tipoText = t(`tipo.${r.tipo}`);
   const Icon = tipoIcon(r.tipo);
   const isFuturo = r.data > todayISO();
   return (
@@ -1392,7 +1393,7 @@ function ReceitaItem({
         type="button"
         onClick={onEdit}
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        aria-label={`Editar ${r.descricao}`}
+        aria-label={t("item.editAria", { name: r.descricao })}
       >
         <span
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
@@ -1405,21 +1406,21 @@ function ReceitaItem({
             <p className="truncate text-sm font-medium">{r.descricao}</p>
             {r.recorrente && (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-[color:var(--cat-trabalho)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--cat-trabalho)]">
-                <Repeat className="h-2.5 w-2.5" /> rec
+                <Repeat className="h-2.5 w-2.5" /> {t("item.rec")}
               </span>
             )}
             {isFuturo && (
               <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-warning">
-                futuro
+                {t("item.future")}
               </span>
             )}
           </div>
           <p className="truncate text-xs text-muted-foreground">
-            {tipoLabel} · {formatDateBR(r.data)}
+            {tipoText} · {formatDateBR(r.data)}
           </p>
           {clienteNome ? (
             <p className="truncate text-[11px] text-muted-foreground">
-              Cliente: {clienteNome}
+              {t("item.client", { name: clienteNome })}
             </p>
           ) : null}
           <p className="num mt-0.5 text-sm font-semibold text-success">
@@ -1432,7 +1433,7 @@ function ReceitaItem({
           type="button"
           onClick={onEdit}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Editar"
+          aria-label={t("item.edit")}
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -1440,7 +1441,7 @@ function ReceitaItem({
           type="button"
           onClick={onDelete}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-destructive active:scale-95"
-          aria-label="Excluir"
+          aria-label={t("item.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </button>
