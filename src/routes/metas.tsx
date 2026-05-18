@@ -83,18 +83,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const META_COLORS = [
   "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#fb923c",
   "#fde047", "#22d3ee", "#f87171", "#e879f9", "#94a3b8",
 ];
-
-const STATUS_LABEL = {
-  nao_iniciada: "Não iniciada",
-  em_andamento: "Em andamento",
-  quase: "Quase concluída",
-  concluida: "Concluída",
-} as const;
 
 export const Route = createFileRoute("/metas")({
   head: () => ({ meta: [{ title: "Metas financeiras — Gasto Inteligente" }] }),
