@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Building2, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
@@ -14,7 +15,6 @@ import {
   maskCNPJ,
   maskTelefone,
   onlyDigits,
-  tipoCadastroLabel,
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ const EMPTY: FormState = {
 };
 
 function PerfilPage() {
+  const { t } = useTranslation("perfil");
   const { profile, user, updateProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -69,31 +70,33 @@ function PerfilPage() {
   }, [profile]);
 
   const tipo = form.tipo_cadastro;
+  const tipoLabel = (k: TipoCadastro) =>
+    k ? t(`tipo.${k}`) : t("tipo.naoDefinido");
 
   const erroValidacao = useMemo<string | null>(() => {
-    if (!tipo) return null; // pode salvar parcial sem tipo? Exigimos tipo só ao salvar.
+    if (!tipo) return null;
     if (tipo === "pessoa_fisica") {
-      if (!form.nome.trim()) return "Preencha seu nome completo.";
-      if (form.cpf && !isValidCPF(form.cpf)) return "CPF inválido. Confira os números digitados.";
+      if (!form.nome.trim()) return t("validation.nome");
+      if (form.cpf && !isValidCPF(form.cpf)) return t("validation.cpf");
     }
     if (tipo === "mei") {
       if (!form.responsavel_nome.trim() && !form.nome.trim())
-        return "Preencha o nome do responsável.";
+        return t("validation.responsavel");
       if (form.cnpj && !isValidCNPJ(form.cnpj))
-        return "CNPJ inválido. Confira os números digitados.";
+        return t("validation.cnpj");
     }
     if (tipo === "empresa") {
-      if (!form.razao_social.trim()) return "Preencha a razão social.";
+      if (!form.razao_social.trim()) return t("validation.razao");
       if (form.cnpj && !isValidCNPJ(form.cnpj))
-        return "CNPJ inválido. Confira os números digitados.";
+        return t("validation.cnpj");
     }
     return null;
-  }, [tipo, form]);
+  }, [tipo, form, t]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!tipo) {
-      toast.error("Escolha um tipo de cadastro para continuar.");
+      toast.error(t("validation.chooseTipo"));
       return;
     }
     if (erroValidacao) {
@@ -119,10 +122,10 @@ function PerfilPage() {
     const { error } = await updateProfile(payload);
     setSaving(false);
     if (error) {
-      toast.error("Não foi possível salvar agora. Tente novamente.");
+      toast.error(t("toasts.saveError"));
       return;
     }
-    toast.success("Perfil atualizado com sucesso! 🎉");
+    toast.success(t("toasts.saved"));
     void navigate({ to: "/conta" });
   }
 
@@ -132,14 +135,14 @@ function PerfilPage() {
         <Link
           to="/conta"
           className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Meu perfil</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-xs text-muted-foreground">
-            Personalize sua experiência escolhendo seu tipo de cadastro.
+            {t("subtitle")}
           </p>
         </div>
       </header>
@@ -147,9 +150,9 @@ function PerfilPage() {
       <form onSubmit={handleSubmit} className="mt-5 space-y-5 animate-fade-in">
         {/* Foto de perfil */}
         <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
-          <h2 className="text-sm font-semibold">Foto de perfil</h2>
+          <h2 className="text-sm font-semibold">{t("avatar.title")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Aparece no menu, na sua conta e nas mensagens do chat.
+            {t("avatar.desc")}
           </p>
           <div className="mt-4">
             <AvatarUpload />
@@ -158,29 +161,29 @@ function PerfilPage() {
 
         {/* Tipo de cadastro */}
         <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
-          <h2 className="text-sm font-semibold">Tipo de cadastro</h2>
+          <h2 className="text-sm font-semibold">{t("tipo.title")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Escolha a opção que melhor descreve você.
+            {t("tipo.subtitle")}
           </p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <TipoCard
               icon={<UserIcon className="h-4 w-4" />}
-              label="Pessoa física"
-              description="Uso pessoal, com CPF"
+              label={t("tipo.pessoa_fisica")}
+              description={t("tipo.pessoa_fisicaDesc")}
               selected={tipo === "pessoa_fisica"}
               onClick={() => setForm((f) => ({ ...f, tipo_cadastro: "pessoa_fisica" }))}
             />
             <TipoCard
               icon={<Briefcase className="h-4 w-4" />}
-              label="MEI"
-              description="Microempreendedor, com CNPJ"
+              label={t("tipo.mei")}
+              description={t("tipo.meiDesc")}
               selected={tipo === "mei"}
               onClick={() => setForm((f) => ({ ...f, tipo_cadastro: "mei" }))}
             />
             <TipoCard
               icon={<Building2 className="h-4 w-4" />}
-              label="Empresa"
-              description="Empresa com CNPJ"
+              label={t("tipo.empresa")}
+              description={t("tipo.empresaDesc")}
               selected={tipo === "empresa"}
               onClick={() => setForm((f) => ({ ...f, tipo_cadastro: "empresa" }))}
             />
@@ -191,19 +194,19 @@ function PerfilPage() {
         {tipo && (
           <section className="rounded-3xl border border-border bg-card p-4 shadow-card space-y-3">
             <h2 className="text-sm font-semibold">
-              Dados do {tipoCadastroLabel(tipo).toLowerCase()}
+              {t("data.sectionTitle", { tipo: tipoLabel(tipo).toLowerCase() })}
             </h2>
 
             {tipo === "pessoa_fisica" && (
               <>
-                <Field label="Nome completo" required>
+                <Field label={t("data.nome")} required>
                   <Input
                     value={form.nome}
                     onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                    placeholder="Como aparece nos documentos"
+                    placeholder={t("data.nomePlaceholder")}
                   />
                 </Field>
-                <Field label="CPF">
+                <Field label={t("data.cpf")}>
                   <Input
                     inputMode="numeric"
                     value={form.cpf}
@@ -219,25 +222,25 @@ function PerfilPage() {
 
             {tipo === "mei" && (
               <>
-                <Field label="Nome completo do responsável" required>
+                <Field label={t("data.responsavelNome")} required>
                   <Input
                     value={form.responsavel_nome}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, responsavel_nome: e.target.value }))
                     }
-                    placeholder="Quem assina pelo MEI"
+                    placeholder={t("data.responsavelPlaceholderMEI")}
                   />
                 </Field>
-                <Field label="Nome fantasia">
+                <Field label={t("data.nomeFantasia")}>
                   <Input
                     value={form.nome_fantasia}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, nome_fantasia: e.target.value }))
                     }
-                    placeholder="Opcional"
+                    placeholder={t("data.optional")}
                   />
                 </Field>
-                <Field label="CNPJ">
+                <Field label={t("data.cnpj")}>
                   <Input
                     inputMode="numeric"
                     value={form.cnpj}
@@ -253,34 +256,34 @@ function PerfilPage() {
 
             {tipo === "empresa" && (
               <>
-                <Field label="Razão social" required>
+                <Field label={t("data.razaoSocial")} required>
                   <Input
                     value={form.razao_social}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, razao_social: e.target.value }))
                     }
-                    placeholder="Nome registrado da empresa"
+                    placeholder={t("data.razaoPlaceholder")}
                   />
                 </Field>
-                <Field label="Nome fantasia">
+                <Field label={t("data.nomeFantasia")}>
                   <Input
                     value={form.nome_fantasia}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, nome_fantasia: e.target.value }))
                     }
-                    placeholder="Opcional"
+                    placeholder={t("data.optional")}
                   />
                 </Field>
-                <Field label="Nome do responsável">
+                <Field label={t("data.responsavelNomeOpt")}>
                   <Input
                     value={form.responsavel_nome}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, responsavel_nome: e.target.value }))
                     }
-                    placeholder="Quem responde pela empresa"
+                    placeholder={t("data.responsavelPlaceholderEmpresa")}
                   />
                 </Field>
-                <Field label="CNPJ">
+                <Field label={t("data.cnpj")}>
                   <Input
                     inputMode="numeric"
                     value={form.cnpj}
@@ -294,25 +297,24 @@ function PerfilPage() {
               </>
             )}
 
-            <Field label="E-mail">
+            <Field label={t("data.email")}>
               <Input value={user?.email ?? ""} disabled />
             </Field>
 
-            <Field label="Telefone">
+            <Field label={t("data.telefone")}>
               <Input
                 inputMode="numeric"
                 value={form.telefone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, telefone: maskTelefone(e.target.value) }))
                 }
-                placeholder="(11) 90000-0000"
+                placeholder={t("data.telefonePlaceholder")}
               />
             </Field>
 
             <p className="flex items-start gap-2 rounded-2xl bg-muted/40 p-3 text-[11px] leading-snug text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none" />
-              Esses dados são usados apenas para identificar seu perfil no app e
-              personalizar sua experiência.
+              {t("data.privacy")}
             </p>
 
             {erroValidacao && (
@@ -329,7 +331,7 @@ function PerfilPage() {
             className="h-12 w-full rounded-2xl text-base font-semibold"
           >
             <Save className="mr-2 h-4 w-4" />
-            {saving ? "Salvando…" : "Salvar perfil"}
+            {saving ? t("actions.saving") : t("actions.save")}
           </Button>
         </div>
       </form>
