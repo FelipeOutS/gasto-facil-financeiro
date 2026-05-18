@@ -1,0 +1,152 @@
+{
+  "head": {
+    "title": "Assinaturas e recorrências — Gasto Inteligente",
+    "description": "Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento."
+  },
+  "title": "Assinaturas e recorrências",
+  "subtitle": "Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento.",
+  "actions": {
+    "reanalyze": "Reanalisar",
+    "new": "Nova recorrência",
+    "edit": "Editar",
+    "ignore": "Ignorar",
+    "confirm": "Confirmar",
+    "history": "Histórico",
+    "pause": "Pausar",
+    "reactivate": "Reativar",
+    "generateExpense": "Gerar gasto",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "save": "Salvar",
+    "create": "Criar",
+    "saving": "Salvando..."
+  },
+  "summary": {
+    "monthly": "Total mensal confirmado",
+    "possible": "Possíveis recorrências",
+    "active": "Recorrências ativas",
+    "suspect": "Suspeitas"
+  },
+  "freq": {
+    "mensal": "Mensal",
+    "semanal": "Semanal",
+    "quinzenal": "Quinzenal",
+    "anual": "Anual",
+    "personalizada": "Personalizada",
+    "monthShort": "mês"
+  },
+  "status": {
+    "ativa": "Ativa",
+    "pausada": "Pausada",
+    "cancelada": "Cancelada",
+    "suspeita": "Suspeita",
+    "aguardando": "Aguardando confirmação",
+    "all": "Todas"
+  },
+  "tipo": {
+    "assinatura": "Assinatura",
+    "recorrencia_fixa": "Recorrência fixa"
+  },
+  "prazo": {
+    "today": "hoje",
+    "tomorrow": "amanhã",
+    "agoOne": "há {{count}} dia",
+    "agoOther": "há {{count}} dias",
+    "inDays": "em {{count}} dias",
+    "dash": "—"
+  },
+  "suspects": {
+    "heading_one": "Detectamos {{count}} possível recorrência",
+    "heading_other": "Detectamos {{count}} possíveis recorrências",
+    "hint": "Confirme para começar a acompanhar.",
+    "noCategory": "Sem categoria"
+  },
+  "insights": {
+    "title": "Insights",
+    "totals": "Você gasta {{monthly}} por mês em recorrências, {{yearly}} por ano.",
+    "biggest": "{{name}} é sua maior recorrência ativa.",
+    "topCard": "Você tem {{count}} recorrências cobradas no cartão {{card}}.",
+    "increase": "Detectamos aumento de {{diff}} na recorrência {{name}}.",
+    "budgetTitle": "Orçamento de Assinaturas",
+    "budgetLine": "Limite: {{limit}} · Recorrências previstas: {{total}}",
+    "budgetWarn": "Suas assinaturas consomem mais de 80% do orçamento."
+  },
+  "empty": {
+    "none": "Nenhuma recorrência",
+    "noneStatus": "Nenhuma recorrência {{status}}",
+    "hint": "Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui."
+  },
+  "debug": {
+    "found": "Gastos encontrados: {{n}}",
+    "analyzed": "Gastos analisados: {{n}}",
+    "matched": "Palavras-chave/recorrências encontradas: {{n}}",
+    "created": "Ativas criadas: {{n}}",
+    "suspects": "Suspeitas criadas: {{n}}",
+    "subs": "Assinaturas: {{n}}",
+    "fixed": "Recorrências fixas: {{n}}",
+    "sample": "Amostra: {{names}}"
+  },
+  "card": {
+    "noCategory": "Sem categoria",
+    "nextLabel": "próxima {{when}}",
+    "increased": "Aumento de {{diff}} desde a última cobrança"
+  },
+  "history": {
+    "title": "Histórico de cobranças",
+    "empty": "Nenhum gasto vinculado encontrado ainda.",
+    "view": "Ver",
+    "forecast": "Previsto · {{date}}",
+    "forecastBadge": "previsão"
+  },
+  "dialog": {
+    "titleNew": "Nova recorrência",
+    "titleEdit": "Editar recorrência",
+    "descNew": "Cadastre uma nova assinatura ou despesa que se repete.",
+    "descEdit": "Ajuste os dados da assinatura ou recorrência.",
+    "name": "Nome",
+    "namePlaceholder": "Ex: Spotify, Aluguel",
+    "currency": "Moeda",
+    "currencyBRL": "🇧🇷 Real (BRL)",
+    "currencyUSD": "🇺🇸 Dólar (USD)",
+    "currencyEUR": "🇪🇺 Euro (EUR)",
+    "valueInUSD": "Valor em dólares",
+    "valueInEUR": "Valor em euros",
+    "phUSD": "Ex: 9,99",
+    "phEUR": "Ex: 12,50",
+    "currentRate": "Cotação atual",
+    "estimateHint": "Estimativa em reais já com IOF e spread médios. O valor final pode variar a cada cobrança.",
+    "valueBRL": "Valor (R$)",
+    "estimateBRL": "Estimativa em reais",
+    "frequency": "Frequência",
+    "next": "Próxima cobrança",
+    "category": "Categoria",
+    "categorySelect": "Selecionar",
+    "noCategory": "Sem categoria",
+    "payment": "Forma de pagamento",
+    "paymentNone": "Não definida",
+    "card": "Cartão",
+    "noCard": "Nenhum",
+    "status": "Status",
+    "note": "Observação"
+  },
+  "toasts": {
+    "syncDone": "Análise concluída: {{ativas}} ativas, {{suspeitas}} suspeitas",
+    "detected": "{{criadas}} recorrências detectadas",
+    "detectedWithSuspects": "{{criadas}} recorrências detectadas, {{suspeitas}} suspeitas",
+    "confirmed": "{{name}} confirmada como recorrência",
+    "ignored": "{{name}} ignorada",
+    "paused": "{{name}} pausada",
+    "reactivated": "{{name}} reativada",
+    "canceled": "Recorrência cancelada",
+    "deleted": "Recorrência excluída",
+    "expenseCreated": "Gasto criado a partir da recorrência",
+    "expenseError": "Não foi possível criar o gasto",
+    "invalid": "Informe nome e valor válidos",
+    "updated": "Recorrência atualizada",
+    "created": "Recorrência criada"
+  },
+  "confirms": {
+    "cancel": "Cancelar a recorrência \"{{name}}\"?",
+    "delete": "Excluir a recorrência \"{{name}}\"? Essa ação não pode ser desfeita."
+  }
+}
