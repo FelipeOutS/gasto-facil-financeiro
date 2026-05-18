@@ -1206,10 +1206,10 @@ function ContaFormDialog({
 
     toast.success(
       scope === "all"
-        ? "Toda a recorrência foi atualizada. ✅"
+        ? t("scope.toastAll")
         : scope === "future"
-        ? "Esta e as próximas foram atualizadas. ✅"
-        : "Conta atualizada. ✅",
+        ? t("scope.toastFuture")
+        : t("scope.toastSingle"),
     );
     setEditScopeFields(null);
     onSaved();
@@ -1219,17 +1219,15 @@ function ContaFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar conta" : "Nova conta a pagar"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Atualize os dados da conta."
-              : "Cadastre essa conta e a gente te avisa antes do vencimento."}
+            {isEdit ? t("form.editDesc") : t("form.newDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="conta-nome">Nome da conta</Label>
+            <Label htmlFor="conta-nome">{t("form.name")}</Label>
             <Input
               id="conta-nome"
               value={nome}
