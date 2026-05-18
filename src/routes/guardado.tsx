@@ -271,7 +271,6 @@ function GuardadoPage() {
           <ul className="mt-3 space-y-2 stagger">
             {guardado.map((g) => {
               const banco = bancos.find((b) => b.id === g.bancoId);
-              const tipoLabel = TIPOS_RESERVA.find((t) => t.id === g.tipoReserva)?.label;
               return (
                 <li key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift">
                   <span
@@ -283,10 +282,10 @@ function GuardadoPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{banco?.nome ?? "Banco"}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {tipoLabel} · atualizado {formatDateBR(g.dataAtualizacao)}
+                      {tipoLabel(g.tipoReserva, t)} · {t("reserves.updatedAt", { date: formatDateBR(g.dataAtualizacao) })}
                       {g.metaId ? (
                         <>
-                          {" "}· <span className="font-semibold text-primary">Meta: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
+                          {" "}· <span className="font-semibold text-primary">{t("reserves.metaLabel")}: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
                         </>
                       ) : null}
                     </p>
@@ -296,7 +295,7 @@ function GuardadoPage() {
                     <DropdownMenuTrigger asChild>
                       <button
                         className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
-                        aria-label="Mais ações"
+                        aria-label={t("reserves.actionsLabel")}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -304,7 +303,7 @@ function GuardadoPage() {
                     <DropdownMenuContent align="end" className="w-44">
                       <DropdownMenuItem onSelect={() => setDialog({ kind: "edit", reserva: g })}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        Editar reserva
+                        {t("reserves.edit")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -312,7 +311,7 @@ function GuardadoPage() {
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
+                        {t("reserves.delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
