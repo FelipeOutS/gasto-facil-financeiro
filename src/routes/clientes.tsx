@@ -355,7 +355,7 @@ function ClientesPage() {
           className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Empresa Inteligente
+          {t("header.back")}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -363,10 +363,9 @@ function ClientesPage() {
               <Contact className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-2xl font-semibold">Clientes</h1>
+              <h1 className="text-2xl font-semibold">{t("header.title")}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Cadastre clientes por CNPJ e organize melhor suas receitas
-                empresariais.
+                {t("header.subtitle")}
               </p>
             </div>
           </div>
@@ -374,12 +373,12 @@ function ClientesPage() {
             <Button asChild variant="outline" className="gap-2">
               <Link to="/clientes/relatorio">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Relatório</span>
+                <span className="hidden sm:inline">{t("header.report")}</span>
               </Link>
             </Button>
             <Button onClick={abrirNovo} className="gap-2">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Novo</span>
+              <span className="hidden sm:inline">{t("header.new")}</span>
             </Button>
           </div>
         </div>
