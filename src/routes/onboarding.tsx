@@ -224,9 +224,11 @@ function OnboardingPage() {
 function StepWelcome({
   onStart,
   onSkip,
+  t,
 }: {
   onStart: () => void;
   onSkip: () => void;
+  t: TFn;
 }) {
   return (
     <div className="space-y-6">
@@ -235,15 +237,15 @@ function StepWelcome({
       </div>
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">
-          Vamos configurar seu controle financeiro
+          {t("welcome.title")}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Responda algumas perguntas rápidas para deixar o app do seu jeito.
+          {t("welcome.subtitle")}
         </p>
       </div>
       <div className="space-y-3 pt-4">
         <Button size="lg" className="w-full" onClick={onStart}>
-          Começar
+          {t("common.start")}
         </Button>
         <Button
           size="lg"
@@ -251,7 +253,7 @@ function StepWelcome({
           className="w-full"
           onClick={onSkip}
         >
-          Pular por enquanto
+          {t("skip")}
         </Button>
       </div>
     </div>
@@ -262,29 +264,31 @@ function StepAccountType({
   value,
   onChange,
   onNext,
+  t,
 }: {
   value: AccountType | null;
   onChange: (v: AccountType) => void;
   onNext: () => void;
+  t: TFn;
 }) {
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">
-          Como você pretende usar?
+          {t("accountType.title")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Escolha o perfil que mais combina com você.
+          {t("accountType.subtitle")}
         </p>
       </div>
       <div className="space-y-3">
-        {ACCOUNT_TYPES.map((t) => {
-          const active = value === t.key;
+        {ACCOUNT_TYPES.map((at) => {
+          const active = value === at.key;
           return (
             <button
-              key={t.key}
+              key={at.key}
               type="button"
-              onClick={() => onChange(t.key)}
+              onClick={() => onChange(at.key)}
               className={cn(
                 "w-full rounded-2xl border p-4 text-left transition-all",
                 active
@@ -294,9 +298,11 @@ function StepAccountType({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-base font-semibold">{t.title}</div>
+                  <div className="text-base font-semibold">
+                    {t(`accountType.items.${at.key}.title` as const)}
+                  </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {t.description}
+                    {t(`accountType.items.${at.key}.description` as const)}
                   </div>
                 </div>
                 {active && (
@@ -315,7 +321,7 @@ function StepAccountType({
         disabled={!value}
         onClick={onNext}
       >
-        Continuar <ArrowRight className="ml-1 h-4 w-4" />
+        {t("common.continue")} <ArrowRight className="ml-1 h-4 w-4" />
       </Button>
     </div>
   );
@@ -326,20 +332,22 @@ function StepGoals({
   onToggle,
   onBack,
   onNext,
+  t,
 }: {
   value: GoalKey[];
   onToggle: (g: GoalKey) => void;
   onBack: () => void;
   onNext: () => void;
+  t: TFn;
 }) {
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">
-          O que você mais quer resolver?
+          {t("goals.title")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pode marcar mais de uma opção.
+          {t("goals.subtitle")}
         </p>
       </div>
       <div className="grid grid-cols-1 gap-2">
@@ -357,7 +365,7 @@ function StepGoals({
                   : "border-border bg-card hover:border-primary/40",
               )}
             >
-              <span>{g.label}</span>
+              <span>{t(`goals.items.${g.key}` as const)}</span>
               {active && (
                 <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
                   <Check className="h-3 w-3" />
@@ -374,10 +382,10 @@ function StepGoals({
           className="flex-1"
           onClick={onBack}
         >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+          <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
         <Button size="lg" className="flex-1" onClick={onNext}>
-          Continuar <ArrowRight className="ml-1 h-4 w-4" />
+          {t("common.continue")} <ArrowRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -389,20 +397,22 @@ function StepModules({
   onToggle,
   onBack,
   onNext,
+  t,
 }: {
   value: ModuleKey[];
   onToggle: (m: ModuleKey) => void;
   onBack: () => void;
   onNext: () => void;
+  t: TFn;
 }) {
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">
-          Quais áreas quer ver no seu app?
+          {t("modules.title")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Vamos destacar isso primeiro. Você pode usar todas depois.
+          {t("modules.subtitle")}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -421,7 +431,7 @@ function StepModules({
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <span>{m.label}</span>
+                <span>{t(`modules.items.${m.key}` as const)}</span>
                 {active && (
                   <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
                     <Check className="h-3 w-3" />
@@ -439,10 +449,10 @@ function StepModules({
           className="flex-1"
           onClick={onBack}
         >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+          <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
         <Button size="lg" className="flex-1" onClick={onNext}>
-          Continuar <ArrowRight className="ml-1 h-4 w-4" />
+          {t("common.continue")} <ArrowRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -457,6 +467,7 @@ function StepPlan({
   onContinue,
   onSeePlan,
   saving,
+  t,
 }: {
   recommended: PlanTier;
   recommendedLabel: string;
@@ -466,15 +477,16 @@ function StepPlan({
   onContinue: () => void;
   onSeePlan: () => void;
   saving: boolean;
+  t: TFn;
 }) {
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">
-          Plano recomendado para você
+          {t("plan.title")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Você pode continuar no plano atual e mudar quando quiser.
+          {t("plan.subtitle")}
         </p>
       </div>
 
@@ -482,7 +494,7 @@ function StepPlan({
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Recomendado
+            {t("plan.recommendedTag")}
           </span>
         </div>
         <h3 className="mt-2 text-xl font-extrabold">{recommendedLabel}</h3>
@@ -506,7 +518,7 @@ function StepPlan({
           onClick={onSeePlan}
           disabled={saving}
         >
-          Ver plano
+          {t("plan.seePlan")}
         </Button>
         <Button
           size="lg"
@@ -515,7 +527,7 @@ function StepPlan({
           onClick={onContinue}
           disabled={saving}
         >
-          Continuar no plano atual
+          {t("plan.keepCurrent")}
         </Button>
         <Button
           size="sm"
@@ -524,7 +536,7 @@ function StepPlan({
           onClick={onBack}
           disabled={saving}
         >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+          <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
       </div>
     </div>
@@ -534,22 +546,24 @@ function StepPlan({
 function StepDone({
   modules,
   onGoDashboard,
+  t,
 }: {
   modules: ModuleKey[];
   onGoDashboard: () => void;
+  t: TFn;
 }) {
   const shortcuts = useMemo(() => {
     const all: { key: ModuleKey; label: string; to: string }[] = [
-      { key: "gastos", label: "Adicionar primeiro gasto", to: "/adicionar" },
-      { key: "cartoes", label: "Cadastrar cartão", to: "/cartoes" },
-      { key: "contas_a_pagar", label: "Criar conta a pagar", to: "/contas-a-pagar" },
-      { key: "contas_a_receber", label: "Criar conta a receber", to: "/contas-a-receber" },
-      { key: "orcamento", label: "Definir orçamento", to: "/orcamento" },
-      { key: "investimentos", label: "Cadastrar investimento", to: "/investimentos" },
+      { key: "gastos", label: t("done.shortcuts.gastos"), to: "/adicionar" },
+      { key: "cartoes", label: t("done.shortcuts.cartoes"), to: "/cartoes" },
+      { key: "contas_a_pagar", label: t("done.shortcuts.contas_a_pagar"), to: "/contas-a-pagar" },
+      { key: "contas_a_receber", label: t("done.shortcuts.contas_a_receber"), to: "/contas-a-receber" },
+      { key: "orcamento", label: t("done.shortcuts.orcamento"), to: "/orcamento" },
+      { key: "investimentos", label: t("done.shortcuts.investimentos"), to: "/investimentos" },
     ];
     if (modules.length === 0) return all.slice(0, 4);
     return all.filter((s) => modules.includes(s.key));
-  }, [modules]);
+  }, [modules, t]);
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -557,9 +571,9 @@ function StepDone({
         <Check className="h-8 w-8 text-emerald-400" />
       </div>
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">Tudo pronto</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("done.title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Seu app está configurado. Por onde quer começar?
+          {t("done.subtitle")}
         </p>
       </div>
 
@@ -579,8 +593,9 @@ function StepDone({
       )}
 
       <Button size="lg" className="w-full" onClick={onGoDashboard}>
-        Ir para o dashboard
+        {t("done.goDashboard")}
       </Button>
     </div>
   );
 }
+
