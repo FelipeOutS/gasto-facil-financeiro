@@ -4052,13 +4052,13 @@ function ContasMock() {
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            A pagar
+            {t("mockup.contas.summary.toPay")}
           </p>
           <p className="text-sm font-bold tabular-nums text-rose-700">R$ 368,20</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            A receber
+            {t("mockup.contas.summary.toReceive")}
           </p>
           <p className="text-sm font-bold tabular-nums text-emerald-700">R$ 1.800,00</p>
         </div>
