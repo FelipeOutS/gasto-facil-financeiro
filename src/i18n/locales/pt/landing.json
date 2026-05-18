@@ -75,37 +75,91 @@
     "guardado": "Guardado",
     "guardadoDesc": "Registre valores reservados em bancos ou carteiras e acompanhe quanto você realmente tem guardado.",
     "highlights": {
-      "dashboard": ["Saldo, receitas e despesas", "Fluxo do mês em gráfico", "Limite inteligente", "Alertas e calendário"],
-      "gastos": ["Filtro por mês de referência", "Categorias e formas de pagamento", "Total e média do mês", "Lista clara e organizada"],
-      "cartoes": ["Cartão visual com limite", "Fatura aberta e vencimento", "Compras e parcelas", "Marcar fatura como paga"],
-      "metas": ["Capa visual da meta", "Progresso animado", "Quanto falta para concluir", "Histórico de aportes"],
-      "investimentos": ["Carteira total e variação", "Gráfico de crescimento", "Distribuição por classe", "Resumo visual rápido"],
-      "guardado": ["Total reservado", "Valor por banco e carteira", "Visual seguro e limpo", "Acompanhamento mensal"]
+      "dashboard": [
+        "Saldo, receitas e despesas",
+        "Fluxo do mês em gráfico",
+        "Limite inteligente",
+        "Alertas e calendário"
+      ],
+      "gastos": [
+        "Filtro por mês de referência",
+        "Categorias e formas de pagamento",
+        "Total e média do mês",
+        "Lista clara e organizada"
+      ],
+      "cartoes": [
+        "Cartão visual com limite",
+        "Fatura aberta e vencimento",
+        "Compras e parcelas",
+        "Marcar fatura como paga"
+      ],
+      "metas": [
+        "Capa visual da meta",
+        "Progresso animado",
+        "Quanto falta para concluir",
+        "Histórico de aportes"
+      ],
+      "investimentos": [
+        "Carteira total e variação",
+        "Gráfico de crescimento",
+        "Distribuição por classe",
+        "Resumo visual rápido"
+      ],
+      "guardado": [
+        "Total reservado",
+        "Valor por banco e carteira",
+        "Visual seguro e limpo",
+        "Acompanhamento mensal"
+      ]
     }
   },
   "dashboardShowcase": {
     "eyebrow": "Dashboard",
     "title": "Seu mês financeiro em uma visão simples.",
     "text": "O Dashboard reúne as informações mais importantes para você entender rapidamente sua situação: receitas, despesas, contas, saldo, alertas e limite inteligente.",
-    "bullets": ["Saldo do mês", "Receitas e despesas", "Contas a pagar", "Alertas importantes", "Limite inteligente"]
+    "bullets": [
+      "Saldo do mês",
+      "Receitas e despesas",
+      "Contas a pagar",
+      "Alertas importantes",
+      "Limite inteligente"
+    ]
   },
   "gastosSplit": {
     "eyebrow": "Gastos",
     "title": "Entenda para onde seu dinheiro está indo.",
     "text": "Filtre por mês, categoria, período e forma de pagamento. Separe gastos do mês atual, contas de meses anteriores e lançamentos do cartão com mais clareza. O sistema trabalha com mês de referência: você define a qual mês cada gasto pertence.",
-    "bullets": ["Filtro por mês de referência", "Categorias inteligentes", "Total e média do mês", "Forma de pagamento"]
+    "bullets": [
+      "Filtro por mês de referência",
+      "Categorias inteligentes",
+      "Total e média do mês",
+      "Forma de pagamento"
+    ]
   },
   "cartoesSplit": {
     "eyebrow": "Cartões e faturas",
     "title": "Controle suas faturas sem confusão.",
     "text": "Acompanhe limite disponível, compras no crédito, vencimentos e status da fatura em uma tela simples, visual e organizada. Quando a fatura está paga, ela some das pendências automaticamente.",
-    "bullets": ["Limite disponível em tempo real", "Fechamento e vencimento", "Status: aberta, paga ou vencida", "Marcar fatura como paga em 1 clique", "Importar fatura por PDF", "Próximos vencimentos no aside"]
+    "bullets": [
+      "Limite disponível em tempo real",
+      "Fechamento e vencimento",
+      "Status: aberta, paga ou vencida",
+      "Marcar fatura como paga em 1 clique",
+      "Importar fatura por PDF",
+      "Próximos vencimentos no aside"
+    ]
   },
   "contasSplit": {
     "eyebrow": "Contas e organização",
     "title": "Contas a pagar, a receber e renda no mesmo lugar.",
     "text": "Cadastre contas recorrentes, receba alertas antes do vencimento, marque como pagas e veja sua renda mensal consolidada. Tudo conversando com o dashboard e o limite inteligente.",
-    "bullets": ["Contas a pagar com recorrência", "Contas a receber", "Minha renda mensal", "Calendário financeiro", "Alertas de vencimento"]
+    "bullets": [
+      "Contas a pagar com recorrência",
+      "Contas a receber",
+      "Minha renda mensal",
+      "Calendário financeiro",
+      "Alertas de vencimento"
+    ]
   },
   "more": {
     "eyebrow": "Mais recursos",
@@ -152,9 +206,24 @@
     "eyebrow": "Para quem é",
     "title": "Feito para quem quer enxergar melhor o próprio dinheiro.",
     "subtitle": "Do controle pessoal ao acompanhamento de pequenas rotinas financeiras, o Gasto Inteligente foi pensado para você.",
-    "items": ["Pessoa física", "MEI", "Pequenas empresas", "Autônomos", "Quem quer sair da bagunça financeira", "Quem quer trocar planilhas por uma ferramenta visual"]
+    "items": [
+      "Pessoa física",
+      "MEI",
+      "Pequenas empresas",
+      "Autônomos",
+      "Quem quer sair da bagunça financeira",
+      "Quem quer trocar planilhas por uma ferramenta visual"
+    ]
   },
-  "trustPoints": ["Sem complicação", "Visual fácil de entender", "Organização mensal", "Controle por categorias", "Ideal para rotina pessoal e MEI", "Acesso pelo navegador", "Pensado para uso diário"],
+  "trustPoints": [
+    "Sem complicação",
+    "Visual fácil de entender",
+    "Organização mensal",
+    "Controle por categorias",
+    "Ideal para rotina pessoal e MEI",
+    "Acesso pelo navegador",
+    "Pensado para uso diário"
+  ],
   "plans": {
     "eyebrow": "Planos",
     "title": "Escolha o plano ideal para sua rotina financeira.",
@@ -272,9 +341,21 @@
     "trust2": "+10 mil pessoas no controle",
     "trust3": "4.9 de média",
     "items": [
-      { "name": "Camila R.", "role": "Designer · Pessoa Física", "text": "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo." },
-      { "name": "Rafael M.", "role": "MEI · Confeitaria", "text": "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto." },
-      { "name": "Juliana A.", "role": "Autônoma", "text": "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar." }
+      {
+        "name": "Camila R.",
+        "role": "Designer · Pessoa Física",
+        "text": "Finalmente parei de me perder com planilhas. Em uma semana já tinha clareza de para onde meu dinheiro estava indo."
+      },
+      {
+        "name": "Rafael M.",
+        "role": "MEI · Confeitaria",
+        "text": "Separar pessoal e negócio ficou simples. As metas e os alertas me ajudam a fechar o mês no azul — todo mês. Hoje sei exatamente quanto sobra para reinvestir no negócio sem aperto."
+      },
+      {
+        "name": "Juliana A.",
+        "role": "Autônoma",
+        "text": "A visão do mês é incrível. Consigo entender o que pagar, o que adiar e o que sobra para guardar."
+      }
     ]
   },
   "faq": {
@@ -282,18 +363,54 @@
     "title": "Perguntas frequentes",
     "subtitle": "Se ainda restou alguma dúvida, fale com a gente.",
     "items": [
-      { "q": "O que é o Gasto Inteligente?", "a": "É uma plataforma de controle financeiro que ajuda você a organizar gastos, cartões, contas, metas, renda e investimentos em um só lugar, com uma visão simples e fácil de entender." },
-      { "q": "Preciso entender de finanças para usar?", "a": "Não. O sistema foi pensado para ser simples e visual, mesmo para quem não entende muito de finanças." },
-      { "q": "Posso controlar cartões e faturas?", "a": "Sim. Você acompanha compras, faturas, vencimentos, limite usado e pagamento da fatura em um só lugar." },
-      { "q": "Consigo separar gastos por mês de referência?", "a": "Sim. O sistema trabalha com mês de referência, então você define a qual mês cada gasto pertence — perfeito para faturas e contas que pagam um mês mas se referem a outro." },
-      { "q": "O sistema ajuda com metas financeiras?", "a": "Sim. Você cria metas, acompanha quanto já foi reservado, quanto falta e visualiza a evolução até o objetivo." },
-      { "q": "Existe plano para MEI?", "a": "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle." },
-      { "q": "O que tem na área Empresa Inteligente?", "a": "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês." },
-      { "q": "O Pacote para Contador substitui meu contador?", "a": "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional." },
-      { "q": "O que é o Radar Econômico?", "a": "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro." },
-      { "q": "Posso acessar pelo celular?", "a": "Sim. O Gasto Inteligente é totalmente responsivo e funciona muito bem no celular, tablet e computador, direto pelo navegador." },
-      { "q": "O modo dark existe?", "a": "O modo dark/light fica disponível dentro da área logada do usuário. A página pública de apresentação usa visual claro para facilitar a leitura." },
-      { "q": "Como faço para começar?", "a": "Clique em \"Começar agora\" no topo da página, crie sua conta gratuitamente e escolha o plano que combina com você." }
+      {
+        "q": "O que é o Gasto Inteligente?",
+        "a": "É uma plataforma de controle financeiro que ajuda você a organizar gastos, cartões, contas, metas, renda e investimentos em um só lugar, com uma visão simples e fácil de entender."
+      },
+      {
+        "q": "Preciso entender de finanças para usar?",
+        "a": "Não. O sistema foi pensado para ser simples e visual, mesmo para quem não entende muito de finanças."
+      },
+      {
+        "q": "Posso controlar cartões e faturas?",
+        "a": "Sim. Você acompanha compras, faturas, vencimentos, limite usado e pagamento da fatura em um só lugar."
+      },
+      {
+        "q": "Consigo separar gastos por mês de referência?",
+        "a": "Sim. O sistema trabalha com mês de referência, então você define a qual mês cada gasto pertence — perfeito para faturas e contas que pagam um mês mas se referem a outro."
+      },
+      {
+        "q": "O sistema ajuda com metas financeiras?",
+        "a": "Sim. Você cria metas, acompanha quanto já foi reservado, quanto falta e visualiza a evolução até o objetivo."
+      },
+      {
+        "q": "Existe plano para MEI?",
+        "a": "Sim. Temos os planos Essencial para MEI e MEI Completo, com linguagem e recursos pensados para o seu negócio, além do plano Empresa para quem precisa de mais controle."
+      },
+      {
+        "q": "O que tem na área Empresa Inteligente?",
+        "a": "Você cadastra a Minha Empresa por CNPJ, registra clientes e fornecedores, vincula receitas, gastos e contas a cada um, vê relatórios por cliente e por fornecedor e gera o Pacote para Contador com o resumo do mês."
+      },
+      {
+        "q": "O Pacote para Contador substitui meu contador?",
+        "a": "Não. Ele organiza as informações do mês para você enviar ao seu contador — com receitas, despesas, pendências e comparativo com o mês anterior. A contabilidade continua sendo feita pelo profissional."
+      },
+      {
+        "q": "O que é o Radar Econômico?",
+        "a": "É um painel rápido com dólar, euro, Selic e IPCA para você acompanhar o cenário e entender o impacto da economia no seu dinheiro."
+      },
+      {
+        "q": "Posso acessar pelo celular?",
+        "a": "Sim. O Gasto Inteligente é totalmente responsivo e funciona muito bem no celular, tablet e computador, direto pelo navegador."
+      },
+      {
+        "q": "O modo dark existe?",
+        "a": "O modo dark/light fica disponível dentro da área logada do usuário. A página pública de apresentação usa visual claro para facilitar a leitura."
+      },
+      {
+        "q": "Como faço para começar?",
+        "a": "Clique em \"Começar agora\" no topo da página, crie sua conta gratuitamente e escolha o plano que combina com você."
+      }
     ]
   },
   "finalCta": {
@@ -308,10 +425,24 @@
   },
   "billing": {
     "periods": {
-      "mensal": { "label": "Mensal", "suffix": "/mês" },
-      "trimestral": { "label": "Trimestral", "suffix": "a cada 3 meses" },
-      "semestral": { "label": "Semestral", "suffix": "a cada 6 meses", "badge": "Mais economia" },
-      "anual": { "label": "Anual", "suffix": "por ano", "badge": "Melhor custo-benefício" }
+      "mensal": {
+        "label": "Mensal",
+        "suffix": "/mês"
+      },
+      "trimestral": {
+        "label": "Trimestral",
+        "suffix": "a cada 3 meses"
+      },
+      "semestral": {
+        "label": "Semestral",
+        "suffix": "a cada 6 meses",
+        "badge": "Mais economia"
+      },
+      "anual": {
+        "label": "Anual",
+        "suffix": "por ano",
+        "badge": "Melhor custo-benefício"
+      }
     },
     "noDiscount": "sem desconto",
     "save": "Economize {{value}} ({{percent}}% off)",
@@ -355,7 +486,14 @@
     "tag": "Gasto AI",
     "title": "Converse com sua vida financeira.",
     "text": "Pergunte sobre seus gastos, faturas, metas e contas. O Gasto AI analisa apenas os dados que você cadastrou e entrega respostas claras — sem chute, sem estimativa solta.",
-    "bullets": ["Resumo do mês em segundos", "Comparação entre períodos", "Faturas, vencimentos e cartões", "Onde dá pra economizar", "Status das metas", "Contas a pagar e a receber"],
+    "bullets": [
+      "Resumo do mês em segundos",
+      "Comparação entre períodos",
+      "Faturas, vencimentos e cartões",
+      "Onde dá pra economizar",
+      "Status das metas",
+      "Contas a pagar e a receber"
+    ],
     "cta": "Experimentar o Gasto AI",
     "chatTitle": "Gasto AI",
     "chatStatus": "Conectado aos seus dados",
@@ -363,7 +501,12 @@
     "msg2": "Em novembro você gastou R$ 842,30 em mercado — 18% a menos que outubro (R$ 1.027,90). A maior compra foi no dia 14, R$ 312,40.",
     "msg3": "E a fatura do Nubank, já está fechada?",
     "msg4": "A fatura fecha em 28/11 e vence em 05/12. Hoje ela está em R$ 1.247,80 — dentro da média dos últimos 3 meses.",
-    "chips": ["Resumo do mês", "Maior gasto", "Próximas contas", "Como economizar?"],
+    "chips": [
+      "Resumo do mês",
+      "Maior gasto",
+      "Próximas contas",
+      "Como economizar?"
+    ],
     "inputPlaceholder": "Pergunte sobre seus gastos…"
   },
   "mockup": {
@@ -490,6 +633,95 @@
         "in9": "Em 9 dias",
         "toReceive": "A receber"
       }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "expenses": "Gastos",
+      "alerts": "Alertas",
+      "cards": "Cartões",
+      "subscriptions": "Assinaturas",
+      "investments": "Investimentos",
+      "income": "Minha renda",
+      "billsToPay": "Contas a pagar",
+      "billsToReceive": "Contas a receber",
+      "budget": "Orçamento",
+      "reports": "Relatórios",
+      "savings": "Guardado",
+      "goals": "Metas",
+      "more": "Mais"
+    },
+    "sidebar": {
+      "tagline": "Controle financeiro",
+      "addExpense": "Adicionar gasto",
+      "monthSummary": "Resumo do seu mês",
+      "exampleMonth": "Maio De 2026",
+      "exampleSubtitle": "Entenda para onde seu dinheiro foi."
+    },
+    "alerts": {
+      "title": "Alertas importantes",
+      "allClear": "Tudo certo por aqui.",
+      "nothingUrgent": "Nada urgente no radar."
+    },
+    "radar": {
+      "title": "Tá tudo no radar",
+      "balance": "SALDO",
+      "balanceHint": "no mês atual",
+      "income": "RECEITAS",
+      "incomeHint": "2 entradas",
+      "expenses": "DESPESAS",
+      "expensesHint": "14 lançamentos",
+      "toPay": "A PAGAR",
+      "toPayHint": "2 pendentes"
+    },
+    "smartLimit": {
+      "title": "Seu limite inteligente",
+      "titleShort": "Seu limite\ninteligente",
+      "watchPace": "ATENÇÃO AO RITMO",
+      "perDay": "/ dia",
+      "keepBelow": "Mantenha os gastos abaixo de {{value}} por dia.",
+      "goalLabel": "Meta",
+      "goalUsed": "Da meta usado",
+      "variable": "VARIÁVEIS",
+      "remaining": "RESTANTE",
+      "daysLeft": "DIAS REST.",
+      "ignoresFixed": "Ignora contas fixas e faturas já pagas.",
+      "onlyVariable": "Somente gastos variáveis"
+    },
+    "contasConectadas": {
+      "title": "Contas conectadas",
+      "peopleCount": "{{n}} pessoas",
+      "withAccess": "com acesso à sua conta",
+      "invite": "+ Convidar",
+      "namesAccountant": "Contador",
+      "levels": {
+        "admin": "Administrador",
+        "viewAndAdd": "Ver e lançar",
+        "viewOnly": "Somente ver"
+      },
+      "statuses": {
+        "accepted": "Aceito",
+        "pending": "Pendente"
+      }
+    },
+    "empresaFloating": {
+      "radarTitle": "Radar",
+      "monthSummary": "Resumo do mês",
+      "incomeLabel": "Receitas",
+      "expensesLabel": "Despesas",
+      "balanceLabel": "Saldo",
+      "toReceive": "A receber",
+      "openTitles": "8 títulos em aberto",
+      "accountantPackage": "Pacote para Contador",
+      "packageReady": "Pronto",
+      "packageDesc": "Resumo mensal pronto para enviar ao contador."
+    },
+    "finalCtaPreview": {
+      "overview": "Visão geral",
+      "thisMonth": "+12% este mês",
+      "goalLabel": "Meta",
+      "goalDone": "68% concluída",
+      "toPayLabel": "A pagar",
+      "apartmentGoal": "Apartamento · 11%"
     }
   }
 }
