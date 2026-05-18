@@ -24,16 +24,20 @@ import {
   displayCNPJ,
   getVocab,
   maskTelefone,
-  tipoCadastroLabel,
   type TipoCadastro,
 } from "@/lib/profile-utils";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/conta")({
-  head: () => ({ meta: [{ title: "Minha conta — Gasto Inteligente" }] }),
+  head: () => {
+    const t = i18n.getFixedT(null, "account");
+    return { meta: [{ title: t("meta.title") }] };
+  },
   component: ContaPage,
 });
 
 function ContaPage() {
+  const { t } = useTranslation("account");
   const { user, profile, signOut } = useAuth();
   const { isOwner, isAdmin } = useRoles();
   const navigate = useNavigate();
@@ -46,10 +50,14 @@ function ContaPage() {
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
 
+  const tipoLabel = tipo
+    ? t(`tipo.${tipo}` as const)
+    : t("tipo.naoDefinido");
+
   const nomeExibicao =
     tipo === "empresa"
-      ? profile?.razao_social || profile?.nome_fantasia || profile?.nome || "—"
-      : profile?.nome || profile?.responsavel_nome || "Usuário";
+      ? profile?.razao_social || profile?.nome_fantasia || profile?.nome || t("dash")
+      : profile?.nome || profile?.responsavel_nome || t("defaultUser");
 
   return (
     <MobileShell>
@@ -57,11 +65,11 @@ function ContaPage() {
         <Link
           to="/categorias"
           className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-xl font-bold tracking-tight">Minha conta</h1>
+        <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
       </header>
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
@@ -79,12 +87,12 @@ function ContaPage() {
           <div className="flex shrink-0 flex-col items-end gap-1">
             {isOwner && (
               <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-500">
-                Acesso total
+                {t("fullAccess")}
               </span>
             )}
             {!isOwner && isAdmin && (
               <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                Admin
+                {t("admin")}
               </span>
             )}
             {vocab.tagLabel && (
@@ -99,12 +107,12 @@ function ContaPage() {
       {/* Aviso para completar perfil (usuários antigos) */}
       {!tipo && (
         <section className="mt-4 rounded-3xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-sm font-semibold">Complete seu perfil</p>
+          <p className="text-sm font-semibold">{t("completeProfile")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Personalize sua experiência escolhendo entre Pessoa física, MEI ou Empresa.
+            {t("completeProfileDesc")}
           </p>
           <Button asChild size="sm" className="mt-3 rounded-xl">
-            <Link to="/perfil">Completar perfil</Link>
+            <Link to="/perfil">{t("completeBtn")}</Link>
           </Button>
         </section>
       )}
@@ -112,27 +120,27 @@ function ContaPage() {
       <section className="mt-4 space-y-2">
         <InfoLine
           icon={<IdCard className="h-4 w-4" />}
-          label="Tipo de cadastro"
-          value={tipoCadastroLabel(tipo)}
+          label={t("fields.type")}
+          value={tipoLabel}
         />
         {tipo === "pessoa_fisica" && (
           <InfoLine
             icon={<UserIcon className="h-4 w-4" />}
-            label="Nome completo"
-            value={profile?.nome ?? "—"}
+            label={t("fields.fullName")}
+            value={profile?.nome ?? t("dash")}
           />
         )}
         {tipo === "mei" && (
           <>
             <InfoLine
               icon={<UserIcon className="h-4 w-4" />}
-              label="Responsável"
-              value={profile?.responsavel_nome ?? "—"}
+              label={t("fields.responsible")}
+              value={profile?.responsavel_nome ?? t("dash")}
             />
             {profile?.nome_fantasia && (
               <InfoLine
                 icon={<Briefcase className="h-4 w-4" />}
-                label="Nome fantasia"
+                label={t("fields.fantasyName")}
                 value={profile.nome_fantasia}
               />
             )}
@@ -142,20 +150,20 @@ function ContaPage() {
           <>
             <InfoLine
               icon={<Building2 className="h-4 w-4" />}
-              label="Razão social"
-              value={profile?.razao_social ?? "—"}
+              label={t("fields.razaoSocial")}
+              value={profile?.razao_social ?? t("dash")}
             />
             {profile?.nome_fantasia && (
               <InfoLine
                 icon={<Briefcase className="h-4 w-4" />}
-                label="Nome fantasia"
+                label={t("fields.fantasyName")}
                 value={profile.nome_fantasia}
               />
             )}
             {profile?.responsavel_nome && (
               <InfoLine
                 icon={<UserIcon className="h-4 w-4" />}
-                label="Responsável"
+                label={t("fields.responsible")}
                 value={profile.responsavel_nome}
               />
             )}
@@ -164,22 +172,22 @@ function ContaPage() {
         {tipo === "pessoa_fisica" && profile?.cpf && (
           <InfoLine
             icon={<IdCard className="h-4 w-4" />}
-            label="CPF"
+            label={t("fields.cpf")}
             value={displayCPF(profile.cpf)}
           />
         )}
         {(tipo === "mei" || tipo === "empresa") && profile?.cnpj && (
           <InfoLine
             icon={<IdCard className="h-4 w-4" />}
-            label="CNPJ"
+            label={t("fields.cnpj")}
             value={displayCNPJ(profile.cnpj)}
           />
         )}
-        <InfoLine icon={<Mail className="h-4 w-4" />} label="E-mail" value={user?.email ?? "—"} />
+        <InfoLine icon={<Mail className="h-4 w-4" />} label={t("fields.email")} value={user?.email ?? t("dash")} />
         {profile?.telefone && (
           <InfoLine
             icon={<Phone className="h-4 w-4" />}
-            label="Telefone"
+            label={t("fields.phone")}
             value={maskTelefone(profile.telefone)}
           />
         )}
@@ -189,13 +197,13 @@ function ContaPage() {
         <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
           <Link to="/perfil">
             <Pencil className="mr-2 h-4 w-4" />
-            Editar perfil
+            {t("actions.edit")}
           </Link>
         </Button>
         <Button asChild size="lg" className="h-11 w-full rounded-2xl">
           <Link to="/meu-plano">
             <Sparkles className="mr-2 h-4 w-4" />
-            Meu plano
+            {t("actions.myPlan")}
           </Link>
         </Button>
       </div>
@@ -204,7 +212,7 @@ function ContaPage() {
         <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
           <Link to="/onboarding">
             <Settings2 className="mr-2 h-4 w-4" />
-            Refazer configuração inicial
+            {t("actions.redoOnboarding")}
           </Link>
         </Button>
       </div>
@@ -219,7 +227,7 @@ function ContaPage() {
           className="h-12 w-full rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Sair da conta
+          {t("actions.logout")}
         </Button>
       </div>
     </MobileShell>
