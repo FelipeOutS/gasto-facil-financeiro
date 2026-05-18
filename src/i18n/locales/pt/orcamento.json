@@ -1,0 +1,75 @@
+{
+  "head": {
+    "title": "Orçamento — Gasto Inteligente",
+    "description": "Acompanhe seu orçamento mensal por categoria."
+  },
+  "back": "Voltar",
+  "prevMonth": "Mês anterior",
+  "nextMonth": "Próximo mês",
+  "empty": {
+    "title": "Crie seu primeiro orçamento",
+    "subtitle": "Defina limites por categoria e acompanhe para onde seu dinheiro está indo.",
+    "create": "Criar orçamento",
+    "copyPrev": "Copiar do mês anterior"
+  },
+  "summary": {
+    "planned": "Planejado",
+    "spent": "Gasto",
+    "categoriesCount": "{{count}} categoria(s)",
+    "pctOfPlan": "{{value}}% do plano",
+    "remaining": "Restante",
+    "excess": "Excesso",
+    "belowPlan": "abaixo do plano",
+    "abovePlan": "acima do plano",
+    "status": "Status",
+    "outOfPlan": "Fora do plano",
+    "attention": "Atenção",
+    "allGood": "Tudo certo",
+    "statusBreakdown": "{{ok}} ok · {{attention}} atenção · {{exceeded}} estourada(s)"
+  },
+  "totalLimit": {
+    "title": "Limite mensal total",
+    "copyPrev": "Copiar mês anterior",
+    "edit": "Editar",
+    "of": "de {{value}}",
+    "none": "Sem limite total este mês. Você pode definir só por categoria, se preferir."
+  },
+  "list": {
+    "title": "Por categoria",
+    "categoryOne": "{{count}} categoria",
+    "categoryOther": "{{count}} categorias",
+    "overBy": "Estourou em {{value}}",
+    "remaining": "Restam {{value}}",
+    "edit": "Editar",
+    "remove": "Remover",
+    "removeAria": "Remover orçamento de {{name}}"
+  },
+  "noLimit": {
+    "title": "Categorias sem limite definido",
+    "info": "{{value}} gastos · sem limite definido",
+    "setLimit": "Definir limite"
+  },
+  "addMore": {
+    "title": "Adicionar mais uma categoria",
+    "subtitle": "Defina limites para outras categorias para acompanhar tudo."
+  },
+  "footer": "Defina um limite e acompanhe sem dor de cabeça — você pode planejar diferente a cada mês.",
+  "dialog": {
+    "totalTitle": "Limite mensal total",
+    "categoryTitle": "Limite — {{name}}",
+    "descTotal": "Defina quanto pretende gastar com tudo em {{period}}. Deixe em branco para remover.",
+    "descCategory": "Defina quanto pretende gastar com esta categoria em {{period}}. Deixe em branco para remover.",
+    "value": "Valor",
+    "cancel": "Cancelar",
+    "save": "Salvar"
+  },
+  "toasts": {
+    "saved": "Limite de {{value}} salvo. ✅",
+    "removed": "Limite removido.",
+    "categoryRemoved": "Orçamento de {{name}} removido.",
+    "noPrev": "O mês anterior não tem orçamento para copiar.",
+    "copied": "{{count}} limite(s) copiado(s) do mês anterior.",
+    "alreadyApplied": "Os limites do mês anterior já estavam aplicados."
+  },
+  "totalLimitName": "Limite total"
+}
