@@ -1324,14 +1324,14 @@ function GastosPage() {
   );
 }
 
-function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function ActiveChip({ label, onRemove, removeLabel }: { label: string; onRemove: () => void; removeLabel?: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3 py-1 text-xs font-medium animate-fade-in">
       {label}
       <button
         onClick={onRemove}
         className="grid h-4 w-4 place-items-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
-        aria-label={`Remover ${label}`}
+        aria-label={removeLabel ?? label}
       >
         <X className="h-3 w-3" />
       </button>
