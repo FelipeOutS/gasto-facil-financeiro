@@ -729,8 +729,8 @@ const CartaoCard = memo(function CartaoCard({
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px] text-white/80">
-          <span className="num">{formatPctLimite(r.usadoMes, r.limite)} do limite</span>
-          <span className="num">{formatBRL(r.disponivel)} disponível</span>
+          <span className="num">{t("card.limitOf", { pct: formatPctLimite(r.usadoMes, r.limite, t("card.lessThan1")) })}</span>
+          <span className="num">{t("card.availableValue", { value: formatBRL(r.disponivel) })}</span>
         </div>
       </div>
 
