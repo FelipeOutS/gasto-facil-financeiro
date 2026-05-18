@@ -1225,28 +1225,31 @@ function RendaPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Renda parecida encontrada</AlertDialogTitle>
+            <AlertDialogTitle>{t("duplicate.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Já existe uma renda parecida neste mês:{" "}
-              <span className="font-medium text-foreground">
-                {confirmDup?.parecida.descricao}
-              </span>{" "}
-              de{" "}
-              <span className="num font-medium text-foreground">
-                {confirmDup ? formatBRL(confirmDup.parecida.valor) : ""}
-              </span>
-              . Deseja salvar mesmo assim?
+              <Trans
+                i18nKey="duplicate.body"
+                t={t}
+                values={{
+                  descricao: confirmDup?.parecida.descricao ?? "",
+                  valor: confirmDup ? formatBRL(confirmDup.parecida.valor) : "",
+                }}
+                components={[
+                  <span key="0" className="font-medium text-foreground" />,
+                  <span key="1" className="num font-medium text-foreground" />,
+                ]}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("duplicate.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDup) persistNova(confirmDup.payload);
                 setConfirmDup(null);
               }}
             >
-              Salvar mesmo assim
+              {t("duplicate.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
