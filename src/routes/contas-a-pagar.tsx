@@ -1062,6 +1062,7 @@ function ContaFormDialog({
   onSaved: () => void;
   defaultDate?: string;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const isEdit = !!conta;
   const isPaga = conta?.status === "pago";
   const categorias = useStore(() => getCategorias());
