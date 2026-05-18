@@ -477,7 +477,7 @@ function Index() {
       {saldo < 0 && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
+          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
         </p>
       )}
 
@@ -488,7 +488,7 @@ function Index() {
           className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
         >
           <Plus className="mr-1 h-5 w-5" />
-          Lançar gasto
+          {t("ctaLancar")}
         </Button>
       </Link>
 
