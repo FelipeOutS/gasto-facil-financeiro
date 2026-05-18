@@ -2053,7 +2053,7 @@ function CartaoFormDialog({
                           key={c}
                           type="button"
                           onClick={() => setCor(c)}
-                          aria-label={`Cor ${c}`}
+                          aria-label={t("form.colorLabel", { color: c })}
                           aria-pressed={active}
                           className={cn(
                             "relative h-10 w-10 rounded-full border-2 transition-all duration-200",
