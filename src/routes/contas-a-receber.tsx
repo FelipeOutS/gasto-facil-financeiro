@@ -222,9 +222,7 @@ function ContasAReceberPage() {
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
             <HandCoins className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              {lista.length === 0
-                ? "Nenhuma conta a receber cadastrada ainda."
-                : "Nenhum resultado para os filtros."}
+              {lista.length === 0 ? t("empty.none") : t("empty.noResults")}
             </p>
             {lista.length === 0 && (
               <Button
@@ -236,7 +234,7 @@ function ContasAReceberPage() {
                 }}
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Adicionar primeira conta
+                {t("empty.addFirst")}
               </Button>
             )}
           </div>
@@ -250,11 +248,11 @@ function ContasAReceberPage() {
               onDesmarcar={async () => {
                 try {
                   await desmarcarRecebida(c.id);
-                  toast.success("Marcada como pendente");
+                  toast.success(t("unmark.toastSuccess"));
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao desmarcar");
+                  toast.error(t("unmark.toastError"));
                 }
               }}
               onEdit={() => {
