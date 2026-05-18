@@ -37,6 +37,7 @@ import enMetas from "./locales/en/metas.json";
 import enOrcamento from "./locales/en/orcamento.json";
 import enRelatorios from "./locales/en/relatorios.json";
 import enAdicionar from "./locales/en/adicionar.json";
+import enGuardado from "./locales/en/guardado.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
