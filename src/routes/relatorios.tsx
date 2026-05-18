@@ -634,7 +634,7 @@ function RelatoriosPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{g.descricao}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {parseDateLocal(g.data)?.toLocaleDateString("pt-BR")}
+                      {cat?.nome ?? "Outros"} · {parseDateLocal(g.data)?.toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR")}
                     </p>
                   </div>
                   <span className="tabular-nums text-sm font-semibold">{formatBRL(g.valor)}</span>
