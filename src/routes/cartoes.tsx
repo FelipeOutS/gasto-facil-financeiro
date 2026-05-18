@@ -317,35 +317,35 @@ function CartoesPage() {
     <MobileShell wide>
       <header className="pt-2 animate-rise">
         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-          Cartões
+          {t("hero.eyebrow")}
         </p>
         <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
             <CreditCard className="h-4 w-4" />
           </span>
-          Seus cartões
+          {t("hero.title")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Limites, faturas e gastos no crédito num lugar só.
+          {t("hero.subtitle")}
         </p>
       </header>
 
       {/* Resumo */}
       <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <ResumoCard
-          label="Limite total"
+          label={t("summary.limitTotal")}
           valueNum={resumo.limiteTotal}
           icon={<CreditCard className="h-4 w-4" />}
           tone="brand"
         />
         <ResumoCard
-          label="Usado no mês"
+          label={t("summary.usedMonth")}
           valueNum={resumo.usado}
           icon={<Wallet className="h-4 w-4" />}
           tone="warning"
         />
         <ResumoCard
-          label="Disponível"
+          label={t("summary.available")}
           valueNum={resumo.disponivel}
           icon={<Sparkles className="h-4 w-4" />}
           tone="success"
@@ -364,12 +364,12 @@ function CartoesPage() {
         <div>
           <h2 className="text-sm font-semibold tracking-tight">
             {cartoes.length === 0
-              ? "Comece por aqui"
-              : `${cartoes.length} ${cartoes.length === 1 ? "cartão" : "cartões"}`}
+              ? t("list.startHere")
+              : t("list.count", { count: cartoes.length })}
           </h2>
           {cartoes.length > 0 && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Toque em um cartão para ver detalhes da fatura.
+              {t("list.tapHint")}
             </p>
           )}
         </div>
@@ -382,7 +382,7 @@ function CartoesPage() {
               className="card-press rounded-full text-sm font-semibold"
             >
               <FileUp className="mr-1 h-4 w-4" />
-              Importar fatura
+              {t("list.importInvoice")}
             </Button>
             <Button
               size="sm"
@@ -390,7 +390,7 @@ function CartoesPage() {
               className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-4 w-4" />
-              Novo cartão
+              {t("list.newCard")}
             </Button>
           </div>
         )}
@@ -435,7 +435,7 @@ function CartoesPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Aqui só nome, banco/emissor, limite, fechamento e vencimento. Nada de número, CVV ou senha.
+        {t("security")}
       </p>
 
       {/* Form modal */}
@@ -451,25 +451,29 @@ function CartoesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover cartão?</AlertDialogTitle>
+            <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover{" "}
-              <strong>{confirmDelete?.nome}</strong>? Os gastos já lançados
-              continuam no seu histórico.
+              <Trans
+                t={t}
+                i18nKey="remove.description"
+                values={{ name: confirmDelete?.nome ?? "" }}
+                defaults="Tem certeza que deseja remover <1>{{name}}</1>? Os gastos já lançados continuam no seu histórico."
+                components={{ 1: <strong /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteCartao(confirmDelete.id);
-                  toast.success("Cartão removido.");
+                  toast.success(t("remove.success"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Remover
+              {t("remove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -498,8 +502,8 @@ function CartoesPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_fatura"
-        featureLabel="Importar fatura de cartão"
-        benefit="Importe a fatura em PDF/imagem e categorize tudo automaticamente."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
     </MobileShell>
   );
