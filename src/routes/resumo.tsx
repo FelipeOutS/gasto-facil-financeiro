@@ -82,21 +82,21 @@ function ResumoPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("resumo.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Análise</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("resumo.kicker")}</p>
           <h1 className="text-2xl font-bold tracking-tight capitalize">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
-          <button onClick={() => changeMonth(-1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Mês anterior">
+          <button onClick={() => changeMonth(-1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("resumo.prevMonth")}>
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => changeMonth(1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Próximo mês">
+          <button onClick={() => changeMonth(1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("resumo.nextMonth")}>
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -106,7 +106,7 @@ function ResumoPage() {
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated">
         {porCategoria.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground animate-fade-in">
-            Nenhum gasto neste mês ainda.
+            {t("resumo.empty")}
           </p>
         ) : (
           <>
@@ -140,7 +140,7 @@ function ResumoPage() {
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
                 <div className="text-center">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total</p>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.total")}</p>
                   <p className="num text-xl font-bold">{formatBRLCompact(total)}</p>
                 </div>
               </div>
@@ -170,7 +170,7 @@ function ResumoPage() {
         <section className="mt-5 rounded-3xl border border-border bg-card p-5">
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-warning" />
-            <h2 className="text-sm font-semibold">Maiores gastos do mês</h2>
+            <h2 className="text-sm font-semibold">{t("resumo.topTitle")}</h2>
           </div>
           <ul className="mt-3 space-y-2">
             {maioresGastos.map((g, i) => {
@@ -185,7 +185,7 @@ function ResumoPage() {
                     <p className="truncate text-sm font-medium">
                       {g.estabelecimento || g.descricao}
                     </p>
-                    <p className="text-xs text-muted-foreground">{cat?.nome ?? "Outros"}</p>
+                    <p className="text-xs text-muted-foreground">{cat?.nome ?? t("resumo.outros")}</p>
                   </div>
                   <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
                 </li>
@@ -197,14 +197,14 @@ function ResumoPage() {
 
       {/* Comparison */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">Comparação com o mês anterior</h2>
+        <h2 className="text-sm font-semibold">{t("resumo.compare.title")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mês atual</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.compare.current")}</p>
             <p className="num mt-1 text-lg font-semibold">{formatBRL(total)}</p>
           </div>
           <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mês anterior</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.compare.previous")}</p>
             <p className="num mt-1 text-lg font-semibold">{formatBRL(totalAnt)}</p>
           </div>
         </div>
@@ -223,7 +223,7 @@ function ResumoPage() {
                 <span className="num text-muted-foreground">({diffPct.toFixed(0)}%)</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Mesmo valor que no mês anterior.</span>
+              <span className="text-muted-foreground">{t("resumo.compare.same")}</span>
             )}
           </p>
         )}
