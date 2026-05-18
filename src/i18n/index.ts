@@ -9,6 +9,7 @@ import ptNav from "./locales/pt/nav.json";
 import ptDashboard from "./locales/pt/dashboard.json";
 import ptGastos from "./locales/pt/gastos.json";
 import ptCartoes from "./locales/pt/cartoes.json";
+import ptContasAPagar from "./locales/pt/contas-a-pagar.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -18,6 +19,7 @@ import enNav from "./locales/en/nav.json";
 import enDashboard from "./locales/en/dashboard.json";
 import enGastos from "./locales/en/gastos.json";
 import enCartoes from "./locales/en/cartoes.json";
+import enContasAPagar from "./locales/en/contas-a-pagar.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
