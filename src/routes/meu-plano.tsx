@@ -65,6 +65,7 @@ const STATUS_TONE: Record<string, string> = {
 
 function MeuPlanoPage() {
   const { t, i18n } = useTranslation("landing");
+  const { t: tp } = useTranslation("meu-plano");
   const { profile, user } = useAuth();
   const {
     plan,
@@ -124,11 +125,11 @@ function MeuPlanoPage() {
     const st = params.get("status");
     if (!st) return;
     if (st === "success") {
-      toast.success("Pagamento aprovado! Seu plano será liberado em instantes.");
+      toast.success(tp("toasts.paymentApproved"));
     } else if (st === "pending") {
-      toast.info("Pagamento em análise. Avisaremos assim que for aprovado.");
+      toast.info(tp("toasts.paymentPending"));
     } else if (st === "failure") {
-      toast.error("Pagamento não concluído. Você pode tentar novamente.");
+      toast.error(tp("toasts.paymentFailure"));
     }
     // limpa a URL para não disparar novamente
     params.delete("status");
