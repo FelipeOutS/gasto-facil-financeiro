@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   ImageUp,
@@ -11,6 +12,7 @@ import {
   Check,
   PencilLine,
 } from "lucide-react";
+import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { GastoForm } from "@/components/GastoForm";
@@ -38,7 +40,10 @@ import type { FormaPagamento } from "@/lib/types";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 
 export const Route = createFileRoute("/confirmar")({
-  head: () => ({ meta: [{ title: "Confirmar gasto — Gasto Inteligente" }] }),
+  head: () => {
+    const t = i18n.getFixedT(null, "confirmar");
+    return { meta: [{ title: t("metaTitle") }] };
+  },
   component: Confirmar,
 });
 
@@ -56,6 +61,7 @@ type AIResult = {
 };
 
 function Confirmar() {
+  const { t, i18n: i18nInst } = useTranslation("confirmar");
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const categorias = useStore(() => getCategorias());
@@ -68,7 +74,6 @@ function Confirmar() {
   const [pending, setPending] = useState<null | (() => void)>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Recupera imagem vinda da tela /adicionar (se houver) — só uma vez.
   useEffect(() => {
     const img = sessionStorage.getItem("gf:pendingImage") ?? undefined;
     if (img) {
@@ -80,11 +85,11 @@ function Confirmar() {
   function onPickFile(file?: File | null) {
     if (!file) return;
     if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
-      toast.error("Use uma imagem PNG, JPG ou WEBP.");
+      toast.error(t("errors.fileType"));
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Tente uma menor que 8 MB.");
+      toast.error(t("errors.fileSize"));
       return;
     }
     const reader = new FileReader();
@@ -109,7 +114,7 @@ function Confirmar() {
       });
       const data = await resp.json();
       if (!resp.ok) {
-        setErro(data?.error ?? "Não consegui ler tudo dessa imagem.");
+        setErro(data?.error ?? t("errors.ocrFallback"));
         setStep("erro");
         return;
       }
@@ -117,12 +122,11 @@ function Confirmar() {
       setStep("revisao");
     } catch (err) {
       console.error(err);
-      setErro("Não consegui conectar agora. Tenta de novo em instantes.");
+      setErro(t("errors.network"));
       setStep("erro");
     }
   }
 
-  // Mapeia categoria sugerida pela IA para o id real existente no store.
   const categoriaIdSugerida = useMemo(() => {
     if (!result?.categoriaSugerida) return undefined;
     const found = categorias.find((c) => c.id === result.categoriaSugerida);
@@ -144,39 +148,41 @@ function Confirmar() {
       }
     : undefined;
 
+  const currencyLocale = i18nInst.language === "en" ? "en-US" : "pt-BR";
+  const currencyCode = i18nInst.language === "en" ? "USD" : "BRL";
+
   return (
     <MobileShell>
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/adicionar"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Leitura por imagem
+            {t("eyebrow")}
           </p>
           <h1 className="text-xl font-bold tracking-tight">
-            {step === "sucesso" ? "Pronto!" : "Comprovante"}
+            {step === "sucesso" ? t("headerDone") : t("header")}
           </h1>
         </div>
       </header>
 
-      {/* SUCESSO */}
       {step === "sucesso" && (
         <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center animate-rise">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success animate-pop">
             <Check className="h-8 w-8" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold">Pronto, gasto salvo!</h2>
+          <h2 className="mt-4 text-lg font-semibold">{t("success.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Já coloquei esse gasto no seu histórico.
+            {t("success.subtitle")}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl card-press">
-              Ver em Gastos
+              {t("success.view")}
             </Button>
             <Button
               variant="outline"
@@ -188,17 +194,16 @@ function Confirmar() {
               }}
               className="rounded-xl card-press"
             >
-              Adicionar outro
+              {t("success.another")}
             </Button>
           </div>
         </div>
       )}
 
-      {/* UPLOAD / ANÁLISE */}
       {(step === "upload" || step === "analisando" || step === "erro") && (
         <>
           <p className="mt-3 text-sm text-muted-foreground">
-            Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.
+            {t("intro")}
           </p>
 
           <input
@@ -214,7 +219,7 @@ function Confirmar() {
               <div className="relative">
                 <img
                   src={imagem}
-                  alt="Comprovante enviado"
+                  alt={t("review.imageAlt")}
                   className="max-h-72 w-full object-contain bg-card-elevated"
                 />
                 <button
@@ -226,7 +231,7 @@ function Confirmar() {
                     setStep("upload");
                   }}
                   className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
-                  aria-label="Remover imagem"
+                  aria-label={t("upload.remove")}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -239,9 +244,9 @@ function Confirmar() {
               >
                 <ImageUp className="h-7 w-7" />
                 <p className="text-sm font-medium text-foreground">
-                  Toque para enviar uma imagem
+                  {t("upload.cta")}
                 </p>
-                <p className="text-xs">PNG, JPG ou WEBP</p>
+                <p className="text-xs">{t("upload.formats")}</p>
               </button>
             )}
           </div>
@@ -251,29 +256,28 @@ function Confirmar() {
               <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-breathe">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-              <p className="mt-3 font-semibold">Lendo seu comprovante...</p>
+              <p className="mt-3 font-semibold">{t("analyzing.title")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Estou procurando valor, data e descrição. Você confere tudo antes de salvar.
+                {t("analyzing.subtitle")}
               </p>
               <div className="mt-4 mx-auto flex max-w-xs items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" />
-                <span>Detectando valores</span>
+                <span>{t("analyzing.values")}</span>
                 <span className="mx-1 text-border">·</span>
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/60 animate-pulse-soft" style={{ animationDelay: "0.3s" }} />
-                <span>Lendo data</span>
+                <span>{t("analyzing.date")}</span>
                 <span className="mx-1 text-border">·</span>
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/40 animate-pulse-soft" style={{ animationDelay: "0.6s" }} />
-                <span>Categoria</span>
+                <span>{t("analyzing.category")}</span>
               </div>
             </div>
           )}
 
           {step === "erro" && (
             <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 animate-fade-in">
-              <p className="font-semibold">Não consegui ler tudo dessa imagem</p>
+              <p className="font-semibold">{t("error.title")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {erro ||
-                  "Pode acontecer com prints cortados, imagem tremida ou comprovante com pouco contraste. Você ainda pode preencher manualmente."}
+                {erro || t("error.fallback")}
               </p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Button
@@ -282,12 +286,12 @@ function Confirmar() {
                   className="rounded-xl"
                 >
                   <RefreshCcw className="mr-1.5 h-4 w-4" />
-                  Tentar outra imagem
+                  {t("error.retry")}
                 </Button>
                 <Button asChild className="rounded-xl">
                   <Link to="/manual">
                     <PencilLine className="mr-1.5 h-4 w-4" />
-                    Preencher manualmente
+                    {t("error.manual")}
                   </Link>
                 </Button>
               </div>
@@ -302,7 +306,7 @@ function Confirmar() {
                 className="h-12 flex-1 rounded-2xl text-base font-semibold"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                Analisar imagem
+                {t("upload.analyze")}
               </Button>
               {!imagem && (
                 <Button
@@ -310,7 +314,7 @@ function Confirmar() {
                   variant="outline"
                   className="h-12 rounded-2xl text-base font-semibold"
                 >
-                  <Link to="/manual">Preencher manualmente</Link>
+                  <Link to="/manual">{t("upload.manual")}</Link>
                 </Button>
               )}
             </div>
@@ -318,7 +322,6 @@ function Confirmar() {
         </>
       )}
 
-      {/* REVISÃO */}
       {step === "revisao" && result && (
         <div className="mt-4 space-y-4 animate-rise">
           <div className="rounded-3xl border border-border bg-card p-5">
@@ -329,22 +332,22 @@ function Confirmar() {
               <div className="flex-1 min-w-0">
                 <h2 className="text-base font-semibold">
                   {result.valoresEncontrados.length > 1
-                    ? "Encontrei alguns valores"
-                    : "Encontrei um valor"}
+                    ? t("review.foundMany")
+                    : t("review.foundOne")}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {result.valoresEncontrados.length > 1
-                    ? "Escolha qual deles é o valor principal do gasto."
-                    : "Confere se está certo antes de salvar."}
+                    ? t("review.subMany")
+                    : t("review.subOne")}
                 </p>
               </div>
-              <ConfiancaBadge nivel={result.confianca} />
+              <ConfiancaBadge nivel={result.confianca} label={t(`confidence.${result.confianca}`)} />
             </div>
 
             {imagem && (
               <img
                 src={imagem}
-                alt="Comprovante"
+                alt={t("review.imageAlt")}
                 className="mt-3 max-h-40 w-full rounded-2xl object-contain bg-card-elevated"
               />
             )}
@@ -352,7 +355,7 @@ function Confirmar() {
             {result.valoresEncontrados.length > 1 && (
               <div className="mt-4">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Valores encontrados — toque para usar
+                  {t("review.valuesLabel")}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2 stagger">
                   {result.valoresEncontrados.map((v, idx) => {
@@ -370,9 +373,9 @@ function Confirmar() {
                             : "border-border bg-card-elevated hover:border-brand/40",
                         )}
                       >
-                        {new Intl.NumberFormat("pt-BR", {
+                        {new Intl.NumberFormat(currencyLocale, {
                           style: "currency",
-                          currency: "BRL",
+                          currency: currencyCode,
                         }).format(v)}
                       </button>
                     );
@@ -391,7 +394,7 @@ function Confirmar() {
           <GastoForm
             key={`${valorEscolhido ?? 0}-${result.data ?? ""}`}
             initial={initialForm}
-            submitLabel="Salvar gasto"
+            submitLabel={t("review.submit")}
             onSubmit={(data) => {
               const dup = findPossibleDuplicate(
                 data.valor,
@@ -400,11 +403,11 @@ function Confirmar() {
               );
               const save = () => {
                 if (!canWrite) {
-                  requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                  requireSubscription(t("guard"));
                   return;
                 }
                 addGasto(data);
-                toast.success("Pronto, gasto salvo!");
+                toast.success(t("success.toast"));
                 setStep("sucesso");
               };
               if (dup) {
@@ -416,7 +419,7 @@ function Confirmar() {
           />
 
           <p className="text-center text-xs text-muted-foreground">
-            Dá uma conferida e salva quando quiser.
+            {t("review.tip")}
           </p>
         </div>
       )}
@@ -424,20 +427,20 @@ function Confirmar() {
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Possível gasto duplicado</AlertDialogTitle>
+            <AlertDialogTitle>{t("dup.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esse gasto parece já ter sido cadastrado. Deseja salvar mesmo assim?
+              {t("dup.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("dup.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 pending?.();
                 setPending(null);
               }}
             >
-              Salvar mesmo assim
+              {t("dup.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -446,16 +449,15 @@ function Confirmar() {
   );
 }
 
-function ConfiancaBadge({ nivel }: { nivel: "alta" | "media" | "baixa" }) {
-  const map = {
-    alta: { label: "Confiança alta", cls: "bg-success/15 text-success" },
-    media: { label: "Confiança média", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
-    baixa: { label: "Confiança baixa", cls: "bg-destructive/15 text-destructive" },
-  } as const;
-  const it = map[nivel];
+function ConfiancaBadge({ nivel, label }: { nivel: "alta" | "media" | "baixa"; label: string }) {
+  const cls = {
+    alta: "bg-success/15 text-success",
+    media: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    baixa: "bg-destructive/15 text-destructive",
+  }[nivel];
   return (
-    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", it.cls)}>
-      {it.label}
+    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", cls)}>
+      {label}
     </span>
   );
 }
