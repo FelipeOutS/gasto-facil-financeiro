@@ -730,11 +730,11 @@ function RelatoriosPage() {
             className="gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Gerar resumo do mês
+            {t("actions.generateSummary")}
           </Button>
           {showResumo && (
             <Button variant="ghost" size="sm" onClick={() => setResumoSeed((s) => s + 1)} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" /> Outra versão
+              <RefreshCw className="h-3.5 w-3.5" /> {t("actions.anotherVersion")}
             </Button>
           )}
         </div>
