@@ -620,10 +620,10 @@ const CartaoCard = memo(function CartaoCard({
       await marcarFaturaPaga(cartao.id, fatRef.mes, fatRef.ano, {
         valorPago: faturaResumo.total,
       });
-      toast.success("Fatura marcada como paga! ✅");
+      toast.success(t("toast.markedPaid"));
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível atualizar a fatura.");
+      toast.error(t("toast.updateError"));
     }
   }
 
