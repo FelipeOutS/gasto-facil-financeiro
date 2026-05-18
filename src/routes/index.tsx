@@ -424,13 +424,13 @@ function Index() {
           className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Complete seu perfil</p>
+            <p className="text-sm font-semibold">{t("completeProfile.title")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Personalize sua experiência: Pessoa física, MEI ou Empresa.
+              {t("completeProfile.subtitle")}
             </p>
           </div>
           <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-            Completar
+            {t("completeProfile.cta")}
           </span>
         </Link>
       )}
