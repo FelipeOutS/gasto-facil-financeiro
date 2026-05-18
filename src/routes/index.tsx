@@ -436,40 +436,40 @@ function Index() {
       )}
 
       {/* ===== 1. KPIs — Tá tudo no radar ===== */}
-      <SectionLabel>Tá tudo no radar</SectionLabel>
+      <SectionLabel>{t("sections.radar")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
-          label="Saldo"
+          label={t("kpi.saldo")}
           valueNum={saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={saldo < 0 ? "destructive" : "brand"}
-          hint={saldo < 0 ? `${formatBRL(-saldo)} a mais que recebeu` : "no mês atual"}
+          hint={saldo < 0 ? t("kpi.saldoNegativoHint", { valor: formatBRL(-saldo) }) : t("kpi.saldoNoMes")}
         />
         <KpiCard
-          label="Receitas"
+          label={t("kpi.receitas")}
           valueNum={totalEntradas}
           icon={<ArrowUp className="h-4 w-4" />}
           tone="success"
-          hint={`${receitasMes.length} ${receitasMes.length === 1 ? "entrada" : "entradas"}`}
+          hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
         />
         <KpiCard
-          label="Despesas"
+          label={t("kpi.despesas")}
           valueNum={total}
           icon={<ArrowDown className="h-4 w-4" />}
           tone="destructive"
-          hint={`${doMes.length} ${doMes.length === 1 ? "lançamento" : "lançamentos"}`}
+          hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
         />
         <KpiCard
-          label="A pagar"
+          label={t("kpi.aPagar")}
           valueNum={contasResumo.pendente}
           icon={<CalendarClock className="h-4 w-4" />}
           tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
           hint={
             contasResumo.atrasadasCount > 0
-              ? `${contasResumo.atrasadasCount} atrasada(s)`
+              ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
               : contasResumo.pendentesCount > 0
-                ? `${contasResumo.pendentesCount} pendente(s)`
-                : "tudo em dia"
+                ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
+                : t("kpi.tudoEmDia")
           }
         />
       </section>
