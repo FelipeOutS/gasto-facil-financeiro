@@ -232,27 +232,25 @@ function RelatoriosPage() {
     if (periodo === "custom" && customRange.from && customRange.to) {
       return `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`;
     }
-    if (periodo === "trimestre") return "Últimos 3 meses";
-    if (periodo === "semestre") return "Últimos 6 meses";
-    if (periodo === "ano") return "Últimos 12 meses";
-    if (periodo === "3m") return "Últimos 3 meses";
-    if (periodo === "6m") return "Últimos 6 meses";
+    if (periodo === "trimestre" || periodo === "3m") return t("period.label3m");
+    if (periodo === "semestre" || periodo === "6m") return t("period.label6m");
+    if (periodo === "ano") return t("period.label12m");
     return formatMonthYear(ym.ano, ym.mes);
-  }, [periodo, customRange, ym]);
+  }, [periodo, customRange, ym, t]);
 
   function exportCSV() {
     const rows: string[] = [];
-    rows.push("Período;" + periodoLabel);
+    rows.push(t("export.period") + ";" + periodoLabel);
     rows.push("");
-    rows.push("Mês;Receitas;Despesas;Saldo");
+    rows.push(`${t("export.month")};${t("export.receitas")};${t("export.despesas")};${t("export.saldo")}`);
     for (const m of historicoMeses) {
       rows.push(`${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`);
     }
     rows.push("");
-    rows.push("Totais;" + totaisPeriodo.receitas.toFixed(2) + ";" + totaisPeriodo.despesas.toFixed(2) + ";" + totaisPeriodo.saldo.toFixed(2));
+    rows.push(`${t("export.totals")};${totaisPeriodo.receitas.toFixed(2)};${totaisPeriodo.despesas.toFixed(2)};${totaisPeriodo.saldo.toFixed(2)}`);
     rows.push("");
-    rows.push("Gastos por categoria (mês de referência)");
-    rows.push("Categoria;Valor;%");
+    rows.push(t("export.gastosCategoria"));
+    rows.push(`${t("export.categoria")};${t("export.valor")};${t("export.pct")}`);
     for (const c of resumo.porCategoria) {
       rows.push(`${c.nome};${c.valor.toFixed(2)};${c.pct.toFixed(1)}`);
     }
