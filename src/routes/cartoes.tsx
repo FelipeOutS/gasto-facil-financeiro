@@ -1588,10 +1588,10 @@ function FaturaSheet({
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold">
-                                    {g.descricao || g.estabelecimento || "Compra"}
+                                    {g.descricao || g.estabelecimento || t("sheet.purchaseDefault")}
                                   </p>
                                   <p className="truncate text-[11px] text-muted-foreground">
-                                    {cat?.nome ?? "Sem categoria"}
+                                    {cat?.nome ?? t("sheet.uncategorized")}
                                     {g.tipoGasto === "parcelado" && g.totalParcelas
                                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                                       : ""}
@@ -1608,7 +1608,7 @@ function FaturaSheet({
                                         tabIndex={0}
                                         onClick={(e) => e.stopPropagation()}
                                         className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-card focus:outline-none"
-                                        aria-label="Opções da compra"
+                                        aria-label={t("sheet.purchaseOptions")}
                                       >
                                         <MoreHorizontal className="h-4 w-4" />
                                       </span>
@@ -1619,7 +1619,7 @@ function FaturaSheet({
                                     >
                                       <DropdownMenuItem onClick={() => setEditingGasto(g)}>
                                         <Pencil className="mr-2 h-4 w-4" />
-                                        Editar
+                                        {t("sheet.editItem")}
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
@@ -1627,7 +1627,7 @@ function FaturaSheet({
                                         className="text-destructive focus:text-destructive"
                                       >
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Excluir
+                                        {t("sheet.deleteItem")}
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
@@ -1657,10 +1657,10 @@ function FaturaSheet({
           <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
             <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
               <DialogTitle className="text-xl font-bold tracking-tight">
-                Nova compra no cartão
+                {t("sheet.newPurchaseTitle")}
               </DialogTitle>
               <DialogDescription>
-                Será adicionada à fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)} no crédito.
+                {t("sheet.newPurchaseDesc", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4">
@@ -1670,7 +1670,7 @@ function FaturaSheet({
                   cartaoId: cartao.id,
                   data: toISODateLocal(new Date()),
                 }}
-                submitLabel="Adicionar compra"
+                submitLabel={t("sheet.submitPurchase")}
                 onSubmit={handleAddCompra}
               />
             </div>
@@ -1684,18 +1684,18 @@ function FaturaSheet({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir esta compra?</AlertDialogTitle>
+              <AlertDialogTitle>{t("sheet.deletePurchaseTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                A compra será removida da fatura. Esta ação não pode ser desfeita.
+                {t("sheet.deletePurchaseDesc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteCompra}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir
+                {t("sheet.deleteItem")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1705,19 +1705,18 @@ function FaturaSheet({
         <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir esta importação?</AlertDialogTitle>
+              <AlertDialogTitle>{t("sheet.deleteBatchTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Apenas as compras importadas neste lote serão removidas. Gastos manuais da
-                mesma fatura serão preservados. Esta ação não pode ser desfeita.
+                {t("sheet.deleteBatchDesc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteLote}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir importação
+                {t("sheet.deleteBatchConfirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1789,6 +1788,7 @@ function CartaoFormDialog({
   onOpenChange: (o: boolean) => void;
   editing: Cartao | null;
 }) {
+  const { t } = useTranslation("cartoes");
   const [nome, setNome] = useState(editing?.nome ?? "");
   const [banco, setBanco] = useState(editing?.banco ?? "");
   const [limiteStr, setLimiteStr] = useState(
@@ -1823,7 +1823,7 @@ function CartaoFormDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) {
-      toast.error("Confira os campos do cartão.");
+      toast.error(t("toast.checkFields"));
       return;
     }
     const payload: NovoCartaoInput = {
@@ -1837,10 +1837,10 @@ function CartaoFormDialog({
     };
     if (editing) {
       updateCartao(editing.id, payload);
-      toast.success("Cartão atualizado com sucesso.");
+      toast.success(t("toast.cardUpdated"));
     } else {
       addCartao(payload);
-      toast.success("Cartão cadastrado! Agora ficou mais fácil acompanhar sua fatura. 🎉");
+      toast.success(t("toast.cardCreated"));
     }
     onOpenChange(false);
   }
@@ -1855,11 +1855,10 @@ function CartaoFormDialog({
       >
         <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6 text-left">
           <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
-            {editing ? "Editar cartão" : "Novo cartão"}
+            {editing ? t("form.editTitle") : t("form.newTitle")}
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Cadastre só o necessário para controlar sua fatura. Nada de número,
-            CVV ou dados sensíveis.
+            {t("form.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -1873,18 +1872,18 @@ function CartaoFormDialog({
               <div className="space-y-5 animate-rise">
                 <section className="space-y-4">
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Dados do cartão
+                    {t("form.dataSection")}
                   </h3>
 
                   <div>
                     <Label htmlFor="nome" className="text-xs text-muted-foreground">
-                      Nome do cartão *
+                      {t("form.nameLabel")}
                     </Label>
                     <Input
                       id="nome"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      placeholder="Ex.: Nubank Roxinho"
+                      placeholder={t("form.namePlaceholder")}
                       maxLength={40}
                       className="mt-1.5 h-11"
                     />
@@ -1892,7 +1891,7 @@ function CartaoFormDialog({
 
                   <div>
                     <Label className="text-xs text-muted-foreground">
-                      Banco / emissor
+                      {t("form.bankLabel")}
                     </Label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {BANCOS_CARTAO_PADRAO.map((b) => {
@@ -1920,7 +1919,7 @@ function CartaoFormDialog({
                     <Input
                       value={banco}
                       onChange={(e) => setBanco(e.target.value)}
-                      placeholder="Ou digite outro emissor"
+                      placeholder={t("form.bankPlaceholder")}
                       maxLength={30}
                       className="mt-2.5 h-10"
                     />
@@ -1928,14 +1927,14 @@ function CartaoFormDialog({
 
                   <div>
                     <Label htmlFor="limite" className="text-xs text-muted-foreground">
-                      Limite total (R$)
+                      {t("form.limitLabel")}
                     </Label>
                     <Input
                       id="limite"
                       inputMode="decimal"
                       value={limiteStr}
                       onChange={(e) => setLimiteStr(e.target.value)}
-                      placeholder="0,00"
+                      placeholder={t("form.limitPlaceholder")}
                       className="num mt-1.5 h-11"
                     />
                   </div>
@@ -1943,7 +1942,7 @@ function CartaoFormDialog({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="fech" className="text-xs text-muted-foreground">
-                        Dia de fechamento
+                        {t("form.closingDay")}
                       </Label>
                       <Input
                         id="fech"
@@ -1959,7 +1958,7 @@ function CartaoFormDialog({
                     </div>
                     <div>
                       <Label htmlFor="venc" className="text-xs text-muted-foreground">
-                        Dia de vencimento
+                        {t("form.dueDay")}
                       </Label>
                       <Input
                         id="venc"
@@ -1977,13 +1976,13 @@ function CartaoFormDialog({
 
                   <div>
                     <Label htmlFor="obs" className="text-xs text-muted-foreground">
-                      Observação (opcional)
+                      {t("form.obsLabel")}
                     </Label>
                     <Textarea
                       id="obs"
                       value={obs}
                       onChange={(e) => setObs(e.target.value)}
-                      placeholder="Ex.: cartão adicional, uso só em viagens…"
+                      placeholder={t("form.obsPlaceholder")}
                       maxLength={200}
                       className="mt-1.5 min-h-[72px]"
                     />
@@ -1995,7 +1994,7 @@ function CartaoFormDialog({
               <div className="space-y-5 animate-rise">
                 <section>
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Prévia
+                    {t("form.previewTitle")}
                   </h3>
                   <div
                     className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-[background] duration-500 ease-out"
@@ -2019,19 +2018,19 @@ function CartaoFormDialog({
                       </div>
                       <div>
                         <p className="truncate text-lg font-bold leading-tight">
-                          {nome || "Seu cartão"}
+                          {nome || t("form.previewDefaultName")}
                         </p>
                         <div className="mt-2 flex items-end justify-between gap-2">
                           <div>
                             <p className="text-[9px] uppercase tracking-widest text-white/70">
-                              Limite
+                              {t("form.previewLimit")}
                             </p>
                             <p className="num text-sm font-semibold">
                               {formatBRL(limite || 0)}
                             </p>
                           </div>
                           <span className="text-[10px] uppercase tracking-widest text-white/70">
-                            Crédito
+                            {t("form.previewType")}
                           </span>
                         </div>
                       </div>
@@ -2041,10 +2040,10 @@ function CartaoFormDialog({
 
                 <section>
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Aparência
+                    {t("form.appearanceTitle")}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Escolha uma cor para identificar seu cartão.
+                    {t("form.appearanceHint")}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2.5">
                     {CORES_CARTAO.map((c) => {
@@ -2054,7 +2053,7 @@ function CartaoFormDialog({
                           key={c}
                           type="button"
                           onClick={() => setCor(c)}
-                          aria-label={`Cor ${c}`}
+                          aria-label={t("form.colorLabel", { color: c })}
                           aria-pressed={active}
                           className={cn(
                             "relative h-10 w-10 rounded-full border-2 transition-all duration-200",
@@ -2097,14 +2096,14 @@ function CartaoFormDialog({
               onClick={() => onOpenChange(false)}
               className="card-press"
             >
-              Cancelar
+              {t("form.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!valid}
               className="card-press bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
             >
-              Salvar cartão
+              {t("form.save")}
             </Button>
           </DialogFooter>
         </form>
