@@ -81,8 +81,8 @@ function detectInitialLocale(): Locale {
 }
 
 const resources = {
-  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda, assinaturas: ptAssinaturas, "meu-plano": ptMeuPlano, perfil: ptPerfil, empresa: ptEmpresa },
-  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda, assinaturas: enAssinaturas, "meu-plano": enMeuPlano, perfil: enPerfil, empresa: enEmpresa },
+  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda, assinaturas: ptAssinaturas, "meu-plano": ptMeuPlano, perfil: ptPerfil, empresa: ptEmpresa, onboarding: ptOnboarding },
+  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda, assinaturas: enAssinaturas, "meu-plano": enMeuPlano, perfil: enPerfil, empresa: enEmpresa, onboarding: enOnboarding },
 };
 
 if (!i18n.isInitialized) {
@@ -91,7 +91,7 @@ if (!i18n.isInitialized) {
     lng: detectInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,
     defaultNS: "common",
-    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa"],
+    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding"],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
