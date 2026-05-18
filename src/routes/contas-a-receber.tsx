@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Plus,
@@ -76,6 +77,7 @@ export const Route = createFileRoute("/contas-a-receber")({
 type FilterStatus = "todas" | "pendente" | "atrasado" | "parcial" | "recebido" | "cancelado";
 
 function ContasAReceberPage() {
+  const { t } = useTranslation("contas-a-receber");
   const { user } = useAuth();
   const userId = user?.id;
   const [lista, setLista] = useState<ContaReceber[]>([]);
@@ -96,7 +98,7 @@ function ContasAReceberPage() {
       setLista(data);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao carregar contas a receber");
+      toast.error(t("errors.loadFailed"));
     }
   }
 
@@ -107,10 +109,10 @@ function ContasAReceberPage() {
       .then(setLista)
       .catch((e) => {
         console.error(e);
-        toast.error("Erro ao carregar contas a receber");
+        toast.error(t("errors.loadFailed"));
       })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [userId, t]);
 
   const resumo = useMemo(() => calcularResumo(lista), [lista]);
 
@@ -136,15 +138,15 @@ function ContasAReceberPage() {
           <Link
             to="/"
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
-            aria-label="Voltar"
+            aria-label={t("header.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Entradas previstas
+              {t("header.eyebrow")}
             </p>
-            <h1 className="text-lg font-bold tracking-tight">Contas a receber</h1>
+            <h1 className="text-lg font-bold tracking-tight">{t("header.title")}</h1>
           </div>
         </div>
         <Button
@@ -156,35 +158,35 @@ function ContasAReceberPage() {
           }}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Nova
+          {t("header.new")}
         </Button>
       </header>
 
       {/* Resumo */}
       <section className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <ResumoCard
-          label="A receber"
+          label={t("summary.toReceive")}
           valor={resumo.totalPendente + resumo.totalAtrasado}
           tone="brand"
-          subtitle={`${resumo.countPendentes + resumo.countAtrasadas} aberta(s)`}
+          subtitle={t("summary.toReceiveSub", { count: resumo.countPendentes + resumo.countAtrasadas })}
         />
         <ResumoCard
-          label="Atrasadas"
+          label={t("summary.overdue")}
           valor={resumo.totalAtrasado}
           tone="destructive"
-          subtitle={`${resumo.countAtrasadas} conta(s)`}
+          subtitle={t("summary.overdueSub", { count: resumo.countAtrasadas })}
         />
         <ResumoCard
-          label="Recebido"
+          label={t("summary.received")}
           valor={resumo.totalRecebido}
           tone="success"
-          subtitle={`${resumo.countRecebidas} quitada(s)`}
+          subtitle={t("summary.receivedSub", { count: resumo.countRecebidas })}
         />
         <ResumoCard
-          label="Total previsto"
+          label={t("summary.expected")}
           valor={resumo.totalPrevisto}
           tone="muted"
-          subtitle={`${resumo.total} no total`}
+          subtitle={t("summary.expectedSub", { count: resumo.total })}
         />
       </section>
 
@@ -195,7 +197,7 @@ function ContasAReceberPage() {
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar título, pagador ou categoria"
+            placeholder={t("filters.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -204,12 +206,12 @@ function ContasAReceberPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas</SelectItem>
-            <SelectItem value="pendente">Pendentes</SelectItem>
-            <SelectItem value="atrasado">Atrasadas</SelectItem>
-            <SelectItem value="parcial">Parciais</SelectItem>
-            <SelectItem value="recebido">Recebidas</SelectItem>
-            <SelectItem value="cancelado">Canceladas</SelectItem>
+            <SelectItem value="todas">{t("filters.todas")}</SelectItem>
+            <SelectItem value="pendente">{t("filters.pendente")}</SelectItem>
+            <SelectItem value="atrasado">{t("filters.atrasado")}</SelectItem>
+            <SelectItem value="parcial">{t("filters.parcial")}</SelectItem>
+            <SelectItem value="recebido">{t("filters.recebido")}</SelectItem>
+            <SelectItem value="cancelado">{t("filters.cancelado")}</SelectItem>
           </SelectContent>
         </Select>
       </section>
@@ -220,9 +222,7 @@ function ContasAReceberPage() {
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
             <HandCoins className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              {lista.length === 0
-                ? "Nenhuma conta a receber cadastrada ainda."
-                : "Nenhum resultado para os filtros."}
+              {lista.length === 0 ? t("empty.none") : t("empty.noResults")}
             </p>
             {lista.length === 0 && (
               <Button
@@ -234,7 +234,7 @@ function ContasAReceberPage() {
                 }}
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Adicionar primeira conta
+                {t("empty.addFirst")}
               </Button>
             )}
           </div>
@@ -248,11 +248,11 @@ function ContasAReceberPage() {
               onDesmarcar={async () => {
                 try {
                   await desmarcarRecebida(c.id);
-                  toast.success("Marcada como pendente");
+                  toast.success(t("unmark.toastSuccess"));
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao desmarcar");
+                  toast.error(t("unmark.toastError"));
                 }
               }}
               onEdit={() => {
@@ -290,29 +290,29 @@ function ContasAReceberPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A conta "{confirmDelete?.titulo}" será removida.
+              {t("delete.desc", { name: confirmDelete?.titulo ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (!confirmDelete) return;
                 try {
                   await excluirContaReceber(confirmDelete.id);
-                  toast.success("Conta excluída");
+                  toast.success(t("delete.toastSuccess"));
                   setConfirmDelete(null);
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao excluir");
+                  toast.error(t("delete.toastError"));
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -321,29 +321,28 @@ function ContasAReceberPage() {
       <AlertDialog open={!!confirmCancel} onOpenChange={(o) => !o && setConfirmCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cancel.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              A conta "{confirmCancel?.titulo}" ficará marcada como cancelada e sairá dos totais a receber.
-              Você poderá excluí-la depois, se quiser.
+              {t("cancel.desc", { name: confirmCancel?.titulo ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel.back")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (!confirmCancel) return;
                 try {
                   await cancelarContaReceber(confirmCancel.id);
-                  toast.success("Conta cancelada");
+                  toast.success(t("cancel.toastSuccess"));
                   setConfirmCancel(null);
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao cancelar");
+                  toast.error(t("cancel.toastError"));
                 }
               }}
             >
-              Cancelar conta
+              {t("cancel.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -397,10 +396,13 @@ function ContaCard({
   onCancel: () => void;
   clienteNome?: string;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const eff = statusEfetivo(conta);
   const isRecebido = eff === "recebido";
   const isCancelado = conta.status === "cancelado";
-  const tipoLabel = TIPOS_RECEBIMENTO.find((t) => t.id === conta.tipo_recebimento)?.label ?? conta.tipo_recebimento;
+  const tipoLabel = TIPOS_RECEBIMENTO.find((x) => x.id === conta.tipo_recebimento)
+    ? t(`tipos.${conta.tipo_recebimento}` as const, { defaultValue: conta.tipo_recebimento })
+    : conta.tipo_recebimento;
   return (
     <div
       className={cn(
@@ -416,15 +418,19 @@ function ContaCard({
           </div>
           <h3 className="mt-1 truncate text-sm font-semibold">{conta.titulo}</h3>
           {conta.pagador_nome && (
-            <p className="truncate text-[12px] text-muted-foreground">de {conta.pagador_nome}</p>
+            <p className="truncate text-[12px] text-muted-foreground">
+              {t("card.from", { name: conta.pagador_nome })}
+            </p>
           )}
           {clienteNome && (
-            <p className="truncate text-[11px] text-muted-foreground">Cliente: {clienteNome}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {t("card.client", { name: clienteNome })}
+            </p>
           )}
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Previsto: {formatDateBR(conta.data_prevista)}
+            {t("card.expectedOn", { date: formatDateBR(conta.data_prevista) })}
             {conta.data_recebimento && (
-              <> · Recebido em {formatDateBR(conta.data_recebimento)}</>
+              <> · {t("card.receivedOn", { date: formatDateBR(conta.data_recebimento) })}</>
             )}
           </p>
         </div>
@@ -432,12 +438,12 @@ function ContaCard({
           <Money value={Number(conta.valor_total)} className="num text-sm font-bold" />
           {Number(conta.valor_recebido) > 0 && Number(conta.valor_recebido) < Number(conta.valor_total) && (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              Recebido {formatBRL(Number(conta.valor_recebido))}
+              {t("card.receivedAmount", { amount: formatBRL(Number(conta.valor_recebido)) })}
             </p>
           )}
           {!isRecebido && !isCancelado && Number(conta.valor_restante) > 0 && (
             <p className="num mt-0.5 text-[10px] text-success">
-              Restante {formatBRL(Number(conta.valor_restante))}
+              {t("card.remainingAmount", { amount: formatBRL(Number(conta.valor_restante)) })}
             </p>
           )}
         </div>
@@ -447,23 +453,23 @@ function ContaCard({
         {!isCancelado && !isRecebido && (
           <Button size="sm" variant="default" className="h-8 rounded-lg" onClick={onMarcar}>
             <Check className="mr-1 h-3.5 w-3.5" />
-            Marcar recebido
+            {t("card.markReceived")}
           </Button>
         )}
         {!isCancelado && isRecebido && (
           <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onDesmarcar}>
             <Clock className="mr-1 h-3.5 w-3.5" />
-            Desmarcar
+            {t("card.unmark")}
           </Button>
         )}
         <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onEdit}>
           <Pencil className="mr-1 h-3.5 w-3.5" />
-          Editar
+          {t("card.edit")}
         </Button>
         {!isCancelado && (
           <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onCancel}>
             <Ban className="mr-1 h-3.5 w-3.5" />
-            Cancelar
+            {t("card.cancel")}
           </Button>
         )}
         <Button
@@ -480,37 +486,38 @@ function ContaCard({
 }
 
 function StatusBadge({ status, cancelado }: { status: StatusContaReceber; cancelado: boolean }) {
+  const { t } = useTranslation("contas-a-receber");
   if (cancelado) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-        <Ban className="h-3 w-3" /> Cancelado
+        <Ban className="h-3 w-3" /> {t("status.cancelado")}
       </span>
     );
   }
   if (status === "recebido") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
-        <CheckCircle2 className="h-3 w-3" /> Recebido
+        <CheckCircle2 className="h-3 w-3" /> {t("status.recebido")}
       </span>
     );
   }
   if (status === "atrasado") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
-        <AlertTriangle className="h-3 w-3" /> Atrasado
+        <AlertTriangle className="h-3 w-3" /> {t("status.atrasado")}
       </span>
     );
   }
   if (status === "parcial") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
-        <Clock className="h-3 w-3" /> Parcial
+        <Clock className="h-3 w-3" /> {t("status.parcial")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-medium text-brand">
-      <Clock className="h-3 w-3" /> Pendente
+      <Clock className="h-3 w-3" /> {t("status.pendente")}
     </span>
   );
 }
@@ -528,6 +535,7 @@ function ContaReceberFormDialog({
   userId: string | undefined;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const [titulo, setTitulo] = useState("");
   const [pagador, setPagador] = useState("");
   const [tipo, setTipo] = useState<string>("cliente");
@@ -569,16 +577,16 @@ function ContaReceberFormDialog({
     if (!userId) return;
     const tituloTrim = titulo.trim();
     if (!tituloTrim) {
-      toast.error("Informe um título");
+      toast.error(t("form.errTitle"));
       return;
     }
     const valorNum = parseBRLInput(valor);
     if (!valorNum || valorNum <= 0) {
-      toast.error("Informe um valor válido");
+      toast.error(t("form.errValue"));
       return;
     }
     if (!dataPrevista) {
-      toast.error("Informe a data prevista");
+      toast.error(t("form.errDate"));
       return;
     }
 
@@ -597,15 +605,15 @@ function ContaReceberFormDialog({
       };
       if (editing) {
         await atualizarContaReceber(editing.id, payload);
-        toast.success("Conta atualizada");
+        toast.success(t("form.toastUpdated"));
       } else {
         await criarContaReceber(userId, payload);
-        toast.success("Conta criada");
+        toast.success(t("form.toastCreated"));
       }
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao salvar");
+      toast.error(t("form.toastError"));
     } finally {
       setSaving(false);
     }
@@ -615,36 +623,34 @@ function ContaReceberFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar conta a receber" : "Nova conta a receber"}</DialogTitle>
-          <DialogDescription>
-            Cadastre uma entrada prevista para acompanhar o que você ainda tem a receber.
-          </DialogDescription>
+          <DialogTitle>{editing ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
+          <DialogDescription>{t("form.desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cr-titulo">Título *</Label>
+            <Label htmlFor="cr-titulo">{t("form.titleLabel")}</Label>
             <Input
               id="cr-titulo"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex: Projeto site João"
+              placeholder={t("form.titlePlaceholder")}
               maxLength={120}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="cr-valor">Valor *</Label>
+              <Label htmlFor="cr-valor">{t("form.value")}</Label>
               <Input
                 id="cr-valor"
                 inputMode="decimal"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
+                placeholder={t("form.valuePlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cr-data">Data prevista *</Label>
+              <Label htmlFor="cr-data">{t("form.expectedDate")}</Label>
               <Input
                 id="cr-data"
                 type="date"
@@ -655,31 +661,31 @@ function ContaReceberFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>{t("form.tipo")}</Label>
               <Select value={tipo} onValueChange={setTipo}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RECEBIMENTO.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label}
+                  {TIPOS_RECEBIMENTO.map((tp) => (
+                    <SelectItem key={tp.id} value={tp.id}>
+                      {t(`tipos.${tp.id}` as const, { defaultValue: tp.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Forma prevista</Label>
+              <Label>{t("form.forma")}</Label>
               <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder={t("form.none")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none">—</SelectItem>
+                  <SelectItem value="__none">{t("form.none")}</SelectItem>
                   {FORMAS_RECEBIMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {t(`formas.${f.id}` as const, { defaultValue: f.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -687,12 +693,12 @@ function ContaReceberFormDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cr-pagador">Pagador (opcional)</Label>
+            <Label htmlFor="cr-pagador">{t("form.payer")}</Label>
             <Input
               id="cr-pagador"
               value={pagador}
               onChange={(e) => setPagador(e.target.value)}
-              placeholder="Nome de quem vai pagar"
+              placeholder={t("form.payerPlaceholder")}
               maxLength={120}
             />
           </div>
@@ -702,17 +708,17 @@ function ContaReceberFormDialog({
             clientesAtivos={clientesAtivos}
           />
           <div className="space-y-1.5">
-            <Label htmlFor="cr-categoria">Categoria (opcional)</Label>
+            <Label htmlFor="cr-categoria">{t("form.category")}</Label>
             <Input
               id="cr-categoria"
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-              placeholder="Ex: Serviços, Aluguel"
+              placeholder={t("form.categoryPlaceholder")}
               maxLength={60}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cr-obs">Observação</Label>
+            <Label htmlFor="cr-obs">{t("form.obs")}</Label>
             <Textarea
               id="cr-obs"
               value={observacao}
@@ -726,11 +732,11 @@ function ContaReceberFormDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             <X className="mr-1 h-4 w-4" />
-            Cancelar
+            {t("form.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             <Check className="mr-1 h-4 w-4" />
-            {editing ? "Salvar alterações" : "Criar conta"}
+            {editing ? t("form.save") : t("form.create")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -747,6 +753,7 @@ function ReceberDialog({
   onClose: () => void;
   onConfirmed: () => void;
 }) {
+  const { t } = useTranslation("contas-a-receber");
   const [valorAgora, setValorAgora] = useState("");
   const [data, setData] = useState(todayISO());
   const [forma, setForma] = useState<string>("");
@@ -776,18 +783,18 @@ function ReceberDialog({
       if (parcial) {
         const v = parseBRLInput(valorAgora);
         if (!v || v <= 0) {
-          toast.error("Informe o valor recebido");
+          toast.error(t("receive.errAmount"));
           setSaving(false);
           return;
         }
         opts.valor_recebido_agora = v;
       }
       await marcarRecebida(conta.id, opts);
-      toast.success("Recebimento registrado");
+      toast.success(t("receive.toastSuccess"));
       onConfirmed();
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao registrar");
+      toast.error(t("receive.toastError"));
     } finally {
       setSaving(false);
     }
@@ -797,9 +804,9 @@ function ReceberDialog({
     <Dialog open={!!conta} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Registrar recebimento</DialogTitle>
+          <DialogTitle>{t("receive.title")}</DialogTitle>
           <DialogDescription>
-            {conta.titulo} · restante {formatBRL(restante)}
+            {t("receive.desc", { name: conta.titulo, amount: formatBRL(restante) })}
           </DialogDescription>
         </DialogHeader>
 
@@ -811,12 +818,12 @@ function ReceberDialog({
               onChange={(e) => setParcial(e.target.checked)}
               className="h-4 w-4"
             />
-            Recebimento parcial
+            {t("receive.partial")}
           </label>
 
           {parcial && (
             <div className="space-y-1.5">
-              <Label>Valor recebido agora</Label>
+              <Label>{t("receive.amountNow")}</Label>
               <Input
                 inputMode="decimal"
                 value={valorAgora}
@@ -828,20 +835,20 @@ function ReceberDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{t("receive.date")}</Label>
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Forma</Label>
+              <Label>{t("receive.forma")}</Label>
               <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder={t("receive.none")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none">—</SelectItem>
+                  <SelectItem value="__none">{t("receive.none")}</SelectItem>
                   {FORMAS_RECEBIMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {t(`formas.${f.id}` as const, { defaultValue: f.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -852,11 +859,11 @@ function ReceberDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {t("receive.cancel")}
           </Button>
           <Button onClick={handleConfirm} disabled={saving}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar
+            {t("receive.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,0 +1,137 @@
+{
+  "header": {
+    "back": "Back",
+    "eyebrow": "Expected income",
+    "title": "Receivables",
+    "new": "New"
+  },
+  "summary": {
+    "toReceive": "To receive",
+    "toReceiveSub_one": "{{count}} open",
+    "toReceiveSub_other": "{{count}} open",
+    "overdue": "Overdue",
+    "overdueSub_one": "{{count}} bill",
+    "overdueSub_other": "{{count}} bills",
+    "received": "Received",
+    "receivedSub_one": "{{count}} settled",
+    "receivedSub_other": "{{count}} settled",
+    "expected": "Total expected",
+    "expectedSub_one": "{{count}} total",
+    "expectedSub_other": "{{count}} total"
+  },
+  "filters": {
+    "searchPlaceholder": "Search title, payer or category",
+    "todas": "All",
+    "pendente": "Pending",
+    "atrasado": "Overdue",
+    "parcial": "Partial",
+    "recebido": "Received",
+    "cancelado": "Cancelled"
+  },
+  "empty": {
+    "none": "No receivables added yet.",
+    "noResults": "No results for these filters.",
+    "addFirst": "Add first receivable"
+  },
+  "card": {
+    "from": "from {{name}}",
+    "client": "Client: {{name}}",
+    "expectedOn": "Expected: {{date}}",
+    "receivedOn": "Received on {{date}}",
+    "receivedAmount": "Received {{amount}}",
+    "remainingAmount": "Remaining {{amount}}",
+    "markReceived": "Mark received",
+    "unmark": "Unmark",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "status": {
+    "cancelado": "Cancelled",
+    "recebido": "Received",
+    "atrasado": "Overdue",
+    "parcial": "Partial",
+    "pendente": "Pending"
+  },
+  "tipos": {
+    "cliente": "Client",
+    "venda": "Sale",
+    "freelance": "Freelance / Service",
+    "salario": "Salary",
+    "aluguel": "Rent",
+    "reembolso": "Reimbursement",
+    "outro": "Other"
+  },
+  "formas": {
+    "pix": "Pix",
+    "boleto": "Boleto",
+    "transferencia": "Transfer",
+    "dinheiro": "Cash",
+    "cartao": "Card",
+    "outro": "Other"
+  },
+  "delete": {
+    "title": "Delete this receivable?",
+    "desc": "This action can't be undone. \"{{name}}\" will be removed.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "toastSuccess": "Receivable deleted",
+    "toastError": "Couldn't delete"
+  },
+  "cancel": {
+    "title": "Cancel this receivable?",
+    "desc": "\"{{name}}\" will be marked as cancelled and removed from the totals. You can delete it later if you want.",
+    "back": "Back",
+    "confirm": "Cancel receivable",
+    "toastSuccess": "Receivable cancelled",
+    "toastError": "Couldn't cancel"
+  },
+  "unmark": {
+    "toastSuccess": "Marked as pending",
+    "toastError": "Couldn't unmark"
+  },
+  "form": {
+    "editTitle": "Edit receivable",
+    "newTitle": "New receivable",
+    "desc": "Add an expected income to track what's still due to you.",
+    "titleLabel": "Title *",
+    "titlePlaceholder": "E.g.: John's website project",
+    "value": "Amount *",
+    "valuePlaceholder": "0.00",
+    "expectedDate": "Expected date *",
+    "tipo": "Type",
+    "forma": "Expected method",
+    "none": "—",
+    "payer": "Payer (optional)",
+    "payerPlaceholder": "Who's going to pay",
+    "category": "Category (optional)",
+    "categoryPlaceholder": "E.g.: Services, Rent",
+    "obs": "Notes",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "create": "Create",
+    "errTitle": "Enter a title",
+    "errValue": "Enter a valid amount",
+    "errDate": "Enter the expected date",
+    "toastUpdated": "Receivable updated",
+    "toastCreated": "Receivable created",
+    "toastError": "Couldn't save"
+  },
+  "receive": {
+    "title": "Log receipt",
+    "desc": "{{name}} · remaining {{amount}}",
+    "partial": "Partial receipt",
+    "amountNow": "Amount received now",
+    "date": "Date",
+    "forma": "Method",
+    "none": "—",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "errAmount": "Enter the amount received",
+    "toastSuccess": "Receipt logged",
+    "toastError": "Couldn't log it"
+  },
+  "errors": {
+    "loadFailed": "Couldn't load receivables"
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "header": {
+    "back": "Voltar",
+    "eyebrow": "Entradas previstas",
+    "title": "Contas a receber",
+    "new": "Nova"
+  },
+  "summary": {
+    "toReceive": "A receber",
+    "toReceiveSub_one": "{{count}} aberta",
+    "toReceiveSub_other": "{{count}} aberta(s)",
+    "overdue": "Atrasadas",
+    "overdueSub_one": "{{count}} conta",
+    "overdueSub_other": "{{count}} conta(s)",
+    "received": "Recebido",
+    "receivedSub_one": "{{count}} quitada",
+    "receivedSub_other": "{{count}} quitada(s)",
+    "expected": "Total previsto",
+    "expectedSub_one": "{{count}} no total",
+    "expectedSub_other": "{{count}} no total"
+  },
+  "filters": {
+    "searchPlaceholder": "Buscar título, pagador ou categoria",
+    "todas": "Todas",
+    "pendente": "Pendentes",
+    "atrasado": "Atrasadas",
+    "parcial": "Parciais",
+    "recebido": "Recebidas",
+    "cancelado": "Canceladas"
+  },
+  "empty": {
+    "none": "Nenhuma conta a receber cadastrada ainda.",
+    "noResults": "Nenhum resultado para os filtros.",
+    "addFirst": "Adicionar primeira conta"
+  },
+  "card": {
+    "from": "de {{name}}",
+    "client": "Cliente: {{name}}",
+    "expectedOn": "Previsto: {{date}}",
+    "receivedOn": "Recebido em {{date}}",
+    "receivedAmount": "Recebido {{amount}}",
+    "remainingAmount": "Restante {{amount}}",
+    "markReceived": "Marcar recebido",
+    "unmark": "Desmarcar",
+    "edit": "Editar",
+    "cancel": "Cancelar",
+    "delete": "Excluir"
+  },
+  "status": {
+    "cancelado": "Cancelado",
+    "recebido": "Recebido",
+    "atrasado": "Atrasado",
+    "parcial": "Parcial",
+    "pendente": "Pendente"
+  },
+  "tipos": {
+    "cliente": "Cliente",
+    "venda": "Venda",
+    "freelance": "Freelance / Serviço",
+    "salario": "Salário",
+    "aluguel": "Aluguel",
+    "reembolso": "Reembolso",
+    "outro": "Outro"
+  },
+  "formas": {
+    "pix": "PIX",
+    "boleto": "Boleto",
+    "transferencia": "Transferência",
+    "dinheiro": "Dinheiro",
+    "cartao": "Cartão",
+    "outro": "Outro"
+  },
+  "delete": {
+    "title": "Excluir esta conta?",
+    "desc": "Esta ação não pode ser desfeita. A conta \"{{name}}\" será removida.",
+    "cancel": "Cancelar",
+    "confirm": "Excluir",
+    "toastSuccess": "Conta excluída",
+    "toastError": "Erro ao excluir"
+  },
+  "cancel": {
+    "title": "Cancelar esta conta?",
+    "desc": "A conta \"{{name}}\" ficará marcada como cancelada e sairá dos totais a receber. Você poderá excluí-la depois, se quiser.",
+    "back": "Voltar",
+    "confirm": "Cancelar conta",
+    "toastSuccess": "Conta cancelada",
+    "toastError": "Erro ao cancelar"
+  },
+  "unmark": {
+    "toastSuccess": "Marcada como pendente",
+    "toastError": "Erro ao desmarcar"
+  },
+  "form": {
+    "editTitle": "Editar conta a receber",
+    "newTitle": "Nova conta a receber",
+    "desc": "Cadastre uma entrada prevista para acompanhar o que você ainda tem a receber.",
+    "titleLabel": "Título *",
+    "titlePlaceholder": "Ex: Projeto site João",
+    "value": "Valor *",
+    "valuePlaceholder": "0,00",
+    "expectedDate": "Data prevista *",
+    "tipo": "Tipo",
+    "forma": "Forma prevista",
+    "none": "—",
+    "payer": "Pagador (opcional)",
+    "payerPlaceholder": "Nome de quem vai pagar",
+    "category": "Categoria (opcional)",
+    "categoryPlaceholder": "Ex: Serviços, Aluguel",
+    "obs": "Observação",
+    "cancel": "Cancelar",
+    "save": "Salvar alterações",
+    "create": "Criar conta",
+    "errTitle": "Informe um título",
+    "errValue": "Informe um valor válido",
+    "errDate": "Informe a data prevista",
+    "toastUpdated": "Conta atualizada",
+    "toastCreated": "Conta criada",
+    "toastError": "Erro ao salvar"
+  },
+  "receive": {
+    "title": "Registrar recebimento",
+    "desc": "{{name}} · restante {{amount}}",
+    "partial": "Recebimento parcial",
+    "amountNow": "Valor recebido agora",
+    "date": "Data",
+    "forma": "Forma",
+    "none": "—",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "errAmount": "Informe o valor recebido",
+    "toastSuccess": "Recebimento registrado",
+    "toastError": "Erro ao registrar"
+  },
+  "errors": {
+    "loadFailed": "Erro ao carregar contas a receber"
+  }
+}
