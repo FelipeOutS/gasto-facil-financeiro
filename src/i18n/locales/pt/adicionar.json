@@ -1,0 +1,26 @@
+{
+  "meta": { "title": "Adicionar gasto — Gasto Inteligente" },
+  "header": { "kicker": "Novo", "title": "Adicionar gasto", "back": "Voltar" },
+  "subtitle": "Manda o print, tira foto ou digita. Eu adianto, você confere antes de salvar.",
+  "options": {
+    "photo": { "title": "Tirar foto", "desc": "Comprovante, nota, recibo" },
+    "gallery": { "title": "Enviar print da galeria", "desc": "Pix, boleto, fatura, screenshot" },
+    "whatsapp": { "title": "Colar mensagem do WhatsApp", "desc": "Ex.: \"Spotify 19,90 Nubank\"" },
+    "manual": { "title": "Cadastrar manualmente", "desc": "Digite os dados do gasto" }
+  },
+  "hint": "✨ A leitura por foto/print usa IA pra identificar valor, data e descrição. Você confere e edita tudo antes de salvar.",
+  "cancel": "Cancelar",
+  "requirePlan": "Para adicionar gastos, escolha um plano ativo.",
+  "manual": {
+    "meta": { "title": "Cadastrar manualmente — Gasto Inteligente" },
+    "kicker": "Manual",
+    "title": "Novo gasto",
+    "toastSaved": "Gasto registrado. ✅",
+    "dup": {
+      "title": "Possível gasto duplicado",
+      "desc": "Esse gasto parece já ter sido cadastrado. Deseja salvar mesmo assim?",
+      "cancel": "Cancelar",
+      "confirm": "Salvar mesmo assim"
+    }
+  }
+}

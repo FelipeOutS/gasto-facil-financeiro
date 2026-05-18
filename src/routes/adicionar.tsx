@@ -1,17 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Camera, ImageUp, PencilLine, ArrowLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import { WhatsAppExpenseDialog } from "@/components/WhatsAppExpenseDialog";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/adicionar")({
-  head: () => ({ meta: [{ title: "Adicionar gasto — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.t("adicionar:meta.title") }] }),
   component: Adicionar,
 });
 
 function Adicionar() {
+  const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [busy, setBusy] = useState(false);
@@ -19,13 +22,13 @@ function Adicionar() {
 
   useEffect(() => {
     if (!canWrite) {
-      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      requireSubscription(t("requirePlan"));
     }
-  }, [canWrite, requireSubscription]);
+  }, [canWrite, requireSubscription, t]);
 
   function pickImage(camera: boolean) {
     if (!canWrite) {
-      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      requireSubscription(t("requirePlan"));
       return;
     }
     const input = document.createElement("input");
@@ -53,19 +56,17 @@ function Adicionar() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("header.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Novo</p>
-          <h1 className="text-2xl font-bold tracking-tight">Adicionar gasto</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("header.kicker")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("header.title")}</h1>
         </div>
       </header>
 
-      <p className="mt-3 text-sm text-muted-foreground">
-        Manda o print, tira foto ou digita. Eu adianto, você confere antes de salvar.
-      </p>
+      <p className="mt-3 text-sm text-muted-foreground">{t("subtitle")}</p>
 
       <div className="mt-6 space-y-3 stagger">
         <button
@@ -77,8 +78,8 @@ function Adicionar() {
             <Camera className="h-6 w-6" />
           </span>
           <span className="flex-1">
-            <span className="block text-base font-semibold">Tirar foto</span>
-            <span className="block text-xs text-muted-foreground">Comprovante, nota, recibo</span>
+            <span className="block text-base font-semibold">{t("options.photo.title")}</span>
+            <span className="block text-xs text-muted-foreground">{t("options.photo.desc")}</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
@@ -92,8 +93,8 @@ function Adicionar() {
             <ImageUp className="h-6 w-6" />
           </span>
           <span className="flex-1">
-            <span className="block text-base font-semibold">Enviar print da galeria</span>
-            <span className="block text-xs text-muted-foreground">Pix, boleto, fatura, screenshot</span>
+            <span className="block text-base font-semibold">{t("options.gallery.title")}</span>
+            <span className="block text-xs text-muted-foreground">{t("options.gallery.desc")}</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
@@ -101,7 +102,7 @@ function Adicionar() {
         <button
           onClick={() => {
             if (!canWrite) {
-              requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+              requireSubscription(t("requirePlan"));
               return;
             }
             setWaOpen(true);
@@ -112,8 +113,8 @@ function Adicionar() {
             <MessageCircle className="h-6 w-6" />
           </span>
           <span className="flex-1">
-            <span className="block text-base font-semibold">Colar mensagem do WhatsApp</span>
-            <span className="block text-xs text-muted-foreground">Ex.: "Spotify 19,90 Nubank"</span>
+            <span className="block text-base font-semibold">{t("options.whatsapp.title")}</span>
+            <span className="block text-xs text-muted-foreground">{t("options.whatsapp.desc")}</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
@@ -121,7 +122,7 @@ function Adicionar() {
         <button
           onClick={() => {
             if (!canWrite) {
-              requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+              requireSubscription(t("requirePlan"));
               return;
             }
             navigate({ to: "/manual" });
@@ -132,20 +133,20 @@ function Adicionar() {
             <PencilLine className="h-6 w-6" />
           </span>
           <span className="flex-1">
-            <span className="block text-base font-semibold">Cadastrar manualmente</span>
-            <span className="block text-xs text-muted-foreground">Digite os dados do gasto</span>
+            <span className="block text-base font-semibold">{t("options.manual.title")}</span>
+            <span className="block text-xs text-muted-foreground">{t("options.manual.desc")}</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>
       </div>
 
       <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground animate-fade-in">
-        ✨ A leitura por foto/print usa IA pra identificar valor, data e descrição. Você confere e edita tudo antes de salvar.
+        {t("hint")}
       </div>
 
       <div className="mt-6">
         <Button asChild variant="outline" className="w-full">
-          <Link to="/">Cancelar</Link>
+          <Link to="/">{t("cancel")}</Link>
         </Button>
       </div>
 

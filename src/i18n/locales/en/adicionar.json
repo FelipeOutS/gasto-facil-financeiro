@@ -1,0 +1,26 @@
+{
+  "meta": { "title": "Add expense — Gasto Inteligente" },
+  "header": { "kicker": "New", "title": "Add expense", "back": "Back" },
+  "subtitle": "Send a screenshot, take a photo, or type it. I'll do the work, you review before saving.",
+  "options": {
+    "photo": { "title": "Take a photo", "desc": "Receipt, invoice, slip" },
+    "gallery": { "title": "Upload from gallery", "desc": "Pix, bill, invoice, screenshot" },
+    "whatsapp": { "title": "Paste WhatsApp message", "desc": "e.g. \"Spotify 19.90 Nubank\"" },
+    "manual": { "title": "Enter manually", "desc": "Type the expense details" }
+  },
+  "hint": "✨ Photo/screenshot reading uses AI to identify amount, date and description. You review and edit everything before saving.",
+  "cancel": "Cancel",
+  "requirePlan": "To add expenses, choose an active plan.",
+  "manual": {
+    "meta": { "title": "Add manually — Gasto Inteligente" },
+    "kicker": "Manual",
+    "title": "New expense",
+    "toastSaved": "Expense saved. ✅",
+    "dup": {
+      "title": "Possible duplicate",
+      "desc": "This expense looks like it was already saved. Save anyway?",
+      "cancel": "Cancel",
+      "confirm": "Save anyway"
+    }
+  }
+}
