@@ -1855,11 +1855,10 @@ function CartaoFormDialog({
       >
         <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6 text-left">
           <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
-            {editing ? "Editar cartão" : "Novo cartão"}
+            {editing ? t("form.editTitle") : t("form.newTitle")}
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Cadastre só o necessário para controlar sua fatura. Nada de número,
-            CVV ou dados sensíveis.
+            {t("form.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
