@@ -585,9 +585,9 @@ function RelatoriosPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Top 5 categorias" icon={<Trophy className="h-4 w-4" />}>
+        <ChartCard title={t("chart.topCategorias")} icon={<Trophy className="h-4 w-4" />}>
           {resumo.porCategoria.length === 0 ? (
-            <EmptyChart label="Sem categorias no mês." />
+            <EmptyChart label={t("chart.emptyCategorias")} />
           ) : (
             <ul className="space-y-2.5">
               {resumo.porCategoria.slice(0, 5).map((c) => {
