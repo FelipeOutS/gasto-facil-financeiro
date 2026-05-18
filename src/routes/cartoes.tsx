@@ -1823,7 +1823,7 @@ function CartaoFormDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) {
-      toast.error("Confira os campos do cartão.");
+      toast.error(t("toast.checkFields"));
       return;
     }
     const payload: NovoCartaoInput = {
