@@ -307,14 +307,14 @@ function RelatoriosPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("aria.previousMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
+            aria-label={t("aria.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
