@@ -75,7 +75,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const Route = createFileRoute("/guardado")({
-  head: () => ({ meta: [{ title: "Dinheiro guardado — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.t("guardado:meta.title", { lng: i18n.language }) }] }),
   component: GuardadoPage,
 });
 
