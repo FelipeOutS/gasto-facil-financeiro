@@ -138,15 +138,15 @@ function ContasAReceberPage() {
           <Link
             to="/"
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
-            aria-label="Voltar"
+            aria-label={t("header.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Entradas previstas
+              {t("header.eyebrow")}
             </p>
-            <h1 className="text-lg font-bold tracking-tight">Contas a receber</h1>
+            <h1 className="text-lg font-bold tracking-tight">{t("header.title")}</h1>
           </div>
         </div>
         <Button
@@ -158,35 +158,35 @@ function ContasAReceberPage() {
           }}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Nova
+          {t("header.new")}
         </Button>
       </header>
 
       {/* Resumo */}
       <section className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <ResumoCard
-          label="A receber"
+          label={t("summary.toReceive")}
           valor={resumo.totalPendente + resumo.totalAtrasado}
           tone="brand"
-          subtitle={`${resumo.countPendentes + resumo.countAtrasadas} aberta(s)`}
+          subtitle={t("summary.toReceiveSub", { count: resumo.countPendentes + resumo.countAtrasadas })}
         />
         <ResumoCard
-          label="Atrasadas"
+          label={t("summary.overdue")}
           valor={resumo.totalAtrasado}
           tone="destructive"
-          subtitle={`${resumo.countAtrasadas} conta(s)`}
+          subtitle={t("summary.overdueSub", { count: resumo.countAtrasadas })}
         />
         <ResumoCard
-          label="Recebido"
+          label={t("summary.received")}
           valor={resumo.totalRecebido}
           tone="success"
-          subtitle={`${resumo.countRecebidas} quitada(s)`}
+          subtitle={t("summary.receivedSub", { count: resumo.countRecebidas })}
         />
         <ResumoCard
-          label="Total previsto"
+          label={t("summary.expected")}
           valor={resumo.totalPrevisto}
           tone="muted"
-          subtitle={`${resumo.total} no total`}
+          subtitle={t("summary.expectedSub", { count: resumo.total })}
         />
       </section>
 
@@ -197,7 +197,7 @@ function ContasAReceberPage() {
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar título, pagador ou categoria"
+            placeholder={t("filters.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -206,12 +206,12 @@ function ContasAReceberPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas</SelectItem>
-            <SelectItem value="pendente">Pendentes</SelectItem>
-            <SelectItem value="atrasado">Atrasadas</SelectItem>
-            <SelectItem value="parcial">Parciais</SelectItem>
-            <SelectItem value="recebido">Recebidas</SelectItem>
-            <SelectItem value="cancelado">Canceladas</SelectItem>
+            <SelectItem value="todas">{t("filters.todas")}</SelectItem>
+            <SelectItem value="pendente">{t("filters.pendente")}</SelectItem>
+            <SelectItem value="atrasado">{t("filters.atrasado")}</SelectItem>
+            <SelectItem value="parcial">{t("filters.parcial")}</SelectItem>
+            <SelectItem value="recebido">{t("filters.recebido")}</SelectItem>
+            <SelectItem value="cancelado">{t("filters.cancelado")}</SelectItem>
           </SelectContent>
         </Select>
       </section>
