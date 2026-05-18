@@ -1320,32 +1320,32 @@ function FaturaSheet({
               {cartao.nome}
             </SheetTitle>
             <SheetDescription className="text-white/80">
-              Fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)}
-              {status === "aberta" ? " · em aberto" : ""}.
+              {t("sheet.invoiceOf", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
+              {status === "aberta" ? t("sheet.openSuffix") : ""}.
             </SheetDescription>
           </SheetHeader>
 
-          {/* Navegação de mês (mês de referência das compras) */}
+          {/* Navegação de mês */}
           <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
             <button
               type="button"
               onClick={() => navMes(-1)}
               className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label="Mês anterior"
+              aria-label={t("sheet.prevMonth")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold tracking-tight">
               {(() => {
                 const r = mesReferenciaFatura(cartao, ref.mes, ref.ano);
-                return `${MESES_ABBR[r.mes - 1]}/${r.ano}`;
+                return `${monthsAbbr(t)[r.mes - 1]}/${r.ano}`;
               })()}
             </span>
             <button
               type="button"
               onClick={() => navMes(1)}
               className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label="Próximo mês"
+              aria-label={t("sheet.nextMonth")}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -1354,7 +1354,7 @@ function FaturaSheet({
           {/* Total da fatura */}
           <div className="relative mt-4">
             <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
-              Total da fatura
+              {t("sheet.totalInvoice")}
             </p>
             <p className="num mt-1 text-3xl font-bold tracking-tight">
               {formatBRL(resumo.total)}
@@ -1362,24 +1362,24 @@ function FaturaSheet({
             {status !== "paga" && status !== "aberta" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
               <p className="mt-1 text-[11px] text-white/80">
                 {diasParaVencer === 0
-                  ? "⚠️ Vence hoje"
-                  : `Vence em ${diasParaVencer} ${diasParaVencer === 1 ? "dia" : "dias"}`}
+                  ? t("sheet.dueToday")
+                  : t("sheet.dueIn", { count: diasParaVencer })}
               </p>
             )}
             {status === "paga" && registroFatura?.dataPagamento && (
               <p className="mt-1 text-[11px] text-white/80">
-                Paga em {(() => {
+                {t("sheet.paidOn", { date: (() => {
                   const d = new Date(registroFatura.dataPagamento + "T00:00:00");
                   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-                })()}
+                })() })}
               </p>
             )}
           </div>
 
           <div className="relative mt-4 grid grid-cols-3 gap-2">
-            <MiniStat label="Limite" value={formatBRL(resumo.limite)} />
-            <MiniStat label="Disponível" value={formatBRL(resumo.disponivel)} />
-            <MiniStat label="Uso" value={`${Math.round(resumo.pct)}%`} />
+            <MiniStat label={t("sheet.limit")} value={formatBRL(resumo.limite)} />
+            <MiniStat label={t("sheet.available")} value={formatBRL(resumo.disponivel)} />
+            <MiniStat label={t("sheet.usage")} value={`${Math.round(resumo.pct)}%`} />
           </div>
 
           <div className="relative mt-3">
@@ -1394,14 +1394,13 @@ function FaturaSheet({
 
         {/* Corpo */}
         <div className="space-y-5 p-5">
-          {/* Cards informativos */}
           <div className="grid grid-cols-3 gap-2.5">
-            <InfoCard label="Fechamento" value={`Dia ${cartao.diaFechamento ?? "—"}`} />
-            <InfoCard label="Vencimento" value={vencStr} />
+            <InfoCard label={t("sheet.closing")} value={t("sheet.closingDayValue", { day: cartao.diaFechamento ?? "—" })} />
+            <InfoCard label={t("sheet.due")} value={vencStr} />
             <InfoCard
-              label="Lançamentos"
+              label={t("sheet.entries")}
               value={String(resumo.qtd)}
-              hint={resumo.qtd === 1 ? "compra" : "compras"}
+              hint={t("sheet.purchase", { count: resumo.qtd })}
             />
           </div>
 
@@ -1413,7 +1412,7 @@ function FaturaSheet({
               onClick={() => setOpenAdd(true)}
             >
               <Plus className="mr-1.5 h-4 w-4" />
-              Compra
+              {t("sheet.addPurchase")}
             </Button>
             <Button
               size="sm"
@@ -1425,12 +1424,12 @@ function FaturaSheet({
               {status === "paga" ? (
                 <>
                   <RotateCcw className="mr-1.5 h-4 w-4" />
-                  Reabrir
+                  {t("sheet.reopen")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                  Marcar paga
+                  {t("sheet.markPaidShort")}
                 </>
               )}
             </Button>
@@ -1441,7 +1440,7 @@ function FaturaSheet({
               onClick={() => onImport(cartao)}
             >
               <FileUp className="mr-1.5 h-4 w-4" />
-              Importar
+              {t("sheet.import")}
             </Button>
             <Button
               size="sm"
@@ -1450,7 +1449,7 @@ function FaturaSheet({
               onClick={() => onEdit(cartao)}
             >
               <Pencil className="mr-1.5 h-4 w-4" />
-              Editar
+              {t("sheet.edit")}
             </Button>
           </div>
 
@@ -1460,7 +1459,7 @@ function FaturaSheet({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por descrição ou estabelecimento"
+              placeholder={t("sheet.searchPlaceholder")}
               className="h-10 pl-9 pr-9"
             />
             {search && (
@@ -1468,7 +1467,7 @@ function FaturaSheet({
                 type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-card-elevated"
-                aria-label="Limpar busca"
+                aria-label={t("sheet.clearSearch")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -1488,7 +1487,7 @@ function FaturaSheet({
                     : "border-border bg-card hover:bg-card-elevated",
                 )}
               >
-                Todas · {formatBRL(resumo.total)}
+                {t("sheet.all")} · {formatBRL(resumo.total)}
               </button>
               {totaisPorCategoria.map((c) => {
                 const active = catFilter === c.id;
@@ -1514,16 +1513,16 @@ function FaturaSheet({
           {lotes.length > 0 && (
             <section className="rounded-2xl border border-border bg-card p-3">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Importações nesta fatura
+                {t("sheet.imports")}
               </p>
               <ul className="space-y-1.5">
                 {lotes.map((l) => (
                   <li key={l.batchId} className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium">
-                        {l.origem ?? "Importação"} · {l.qtd} {l.qtd === 1 ? "compra" : "compras"}
+                        {l.origem ?? t("sheet.importOriginDefault")} · {t("sheet.purchases", { count: l.qtd })}
                       </p>
-                      <p className="num text-[11px] text-muted-foreground">Total {formatBRL(l.total)}</p>
+                      <p className="num text-[11px] text-muted-foreground">{t("sheet.totalValue", { value: formatBRL(l.total) })}</p>
                     </div>
                     <Button
                       size="sm"
@@ -1532,7 +1531,7 @@ function FaturaSheet({
                       onClick={() => setConfirmLote(l.batchId)}
                     >
                       <Trash2 className="mr-1 h-3.5 w-3.5" />
-                      Excluir lote
+                      {t("sheet.deleteBatch")}
                     </Button>
                   </li>
                 ))}
@@ -1547,13 +1546,13 @@ function FaturaSheet({
                 <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
                 <p className="mt-2 text-sm font-semibold">
                   {compras.length === 0
-                    ? "Nenhuma compra nesta fatura"
-                    : "Nenhuma compra encontrada com esses filtros"}
+                    ? t("sheet.emptyTitle")
+                    : t("sheet.emptyFilteredTitle")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {compras.length === 0
-                    ? "Adicione uma compra ou importe a fatura para começar."
-                    : "Tente limpar a busca ou os filtros."}
+                    ? t("sheet.emptyHint")
+                    : t("sheet.emptyFilteredHint")}
                 </p>
               </div>
             ) : (
@@ -1561,7 +1560,7 @@ function FaturaSheet({
                 {gruposPorData.map(([data, items]) => {
                   const dt = new Date(data + "T00:00:00");
                   const totalDia = items.reduce((s, g) => s + g.valor, 0);
-                  const dtLabel = `${String(dt.getDate()).padStart(2, "0")} de ${MESES_FULL[dt.getMonth()]}`;
+                  const dtLabel = t("sheet.dayLabel", { day: String(dt.getDate()).padStart(2, "0"), month: monthsFull(t)[dt.getMonth()] });
                   return (
                     <div key={data}>
                       <div className="mb-1.5 flex items-center justify-between px-2">
