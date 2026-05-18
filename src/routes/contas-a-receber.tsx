@@ -290,29 +290,29 @@ function ContasAReceberPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A conta "{confirmDelete?.titulo}" será removida.
+              {t("delete.desc", { name: confirmDelete?.titulo ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (!confirmDelete) return;
                 try {
                   await excluirContaReceber(confirmDelete.id);
-                  toast.success("Conta excluída");
+                  toast.success(t("delete.toastSuccess"));
                   setConfirmDelete(null);
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao excluir");
+                  toast.error(t("delete.toastError"));
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -321,29 +321,28 @@ function ContasAReceberPage() {
       <AlertDialog open={!!confirmCancel} onOpenChange={(o) => !o && setConfirmCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar esta conta?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cancel.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              A conta "{confirmCancel?.titulo}" ficará marcada como cancelada e sairá dos totais a receber.
-              Você poderá excluí-la depois, se quiser.
+              {t("cancel.desc", { name: confirmCancel?.titulo ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel.back")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (!confirmCancel) return;
                 try {
                   await cancelarContaReceber(confirmCancel.id);
-                  toast.success("Conta cancelada");
+                  toast.success(t("cancel.toastSuccess"));
                   setConfirmCancel(null);
                   recarregar();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Erro ao cancelar");
+                  toast.error(t("cancel.toastError"));
                 }
               }}
             >
-              Cancelar conta
+              {t("cancel.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
