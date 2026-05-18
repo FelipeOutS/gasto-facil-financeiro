@@ -831,7 +831,7 @@ function RendaPage() {
                     borderRadius: 12,
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => [formatBRL(v), "Renda"]}
+                  formatter={(v: number) => [formatBRL(v), t("charts.incomeLabel")]}
                   labelStyle={{ color: "oklch(0.78 0.005 260)" }}
                 />
                 <Area
@@ -852,14 +852,14 @@ function RendaPage() {
           <div className="mb-2 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Composição
+                {t("charts.compositionKicker")}
               </p>
-              <h3 className="text-sm font-bold">Por tipo de renda</h3>
+              <h3 className="text-sm font-bold">{t("charts.compositionTitle")}</h3>
             </div>
           </div>
           {composicao.length === 0 ? (
             <div className="grid h-44 place-items-center text-xs text-muted-foreground">
-              Sem dados neste mês.
+              {t("charts.noData")}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
