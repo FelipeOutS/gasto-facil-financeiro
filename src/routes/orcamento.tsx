@@ -164,7 +164,7 @@ function OrcamentoPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -183,14 +183,14 @@ function OrcamentoPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
+            aria-label={t("nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -203,17 +203,17 @@ function OrcamentoPage() {
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-soft text-brand">
             <PieChartIcon className="h-6 w-6" />
           </div>
-          <h2 className="mt-4 text-lg font-bold">Crie seu primeiro orçamento</h2>
+          <h2 className="mt-4 text-lg font-bold">{t("empty.title")}</h2>
           <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
-            Defina limites por categoria e acompanhe para onde seu dinheiro está indo.
+            {t("empty.subtitle")}
           </p>
           <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
             <Button
-              onClick={() => openEdit("total", "Limite total")}
+              onClick={() => openEdit("total", t("totalLimitName"))}
               className="h-11 rounded-full px-5"
             >
               <Plus className="mr-1 h-4 w-4" />
-              Criar orçamento
+              {t("empty.create")}
             </Button>
             <Button
               variant="outline"
@@ -221,7 +221,7 @@ function OrcamentoPage() {
               className="h-11 rounded-full px-5"
             >
               <Copy className="mr-1 h-4 w-4" />
-              Copiar do mês anterior
+              {t("empty.copyPrev")}
             </Button>
           </div>
         </section>
@@ -232,19 +232,19 @@ function OrcamentoPage() {
         <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Planejado
+              {t("summary.planned")}
             </p>
             <Money
               value={totalPlanejado}
               className="num mt-1.5 block text-lg font-bold lg:text-xl"
             />
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {comLimite.length} categoria(s)
+              {t("summary.categoriesCount", { count: comLimite.length })}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Gasto
+              {t("summary.spent")}
             </p>
             <Money
               value={totalRealizado}
@@ -252,13 +252,13 @@ function OrcamentoPage() {
             />
             {totalPlanejado > 0 && (
               <p className="num mt-0.5 text-[10px] text-muted-foreground">
-                {Math.round(pctGeral)}% do plano
+                {t("summary.pctOfPlan", { value: Math.round(pctGeral) })}
               </p>
             )}
           </div>
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {diff >= 0 ? "Restante" : "Excesso"}
+              {diff >= 0 ? t("summary.remaining") : t("summary.excess")}
             </p>
             <Money
               value={Math.abs(diff)}
@@ -268,7 +268,7 @@ function OrcamentoPage() {
               )}
             />
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {diff >= 0 ? "abaixo do plano" : "acima do plano"}
+              {diff >= 0 ? t("summary.belowPlan") : t("summary.abovePlan")}
             </p>
           </div>
           <div
@@ -282,7 +282,7 @@ function OrcamentoPage() {
             )}
           >
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Status
+              {t("summary.status")}
             </p>
             <div className="mt-1.5 flex items-center gap-1.5">
               {qtdEstouro > 0 ? (
@@ -294,14 +294,14 @@ function OrcamentoPage() {
               )}
               <p className="text-sm font-semibold">
                 {qtdEstouro > 0
-                  ? "Fora do plano"
+                  ? t("summary.outOfPlan")
                   : qtdAtencao > 0
-                    ? "Atenção"
-                    : "Tudo certo"}
+                    ? t("summary.attention")
+                    : t("summary.allGood")}
               </p>
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {qtdOk} ok · {qtdAtencao} atenção · {qtdEstouro} estourada(s)
+              {t("summary.statusBreakdown", { ok: qtdOk, attention: qtdAtencao, exceeded: qtdEstouro })}
             </p>
           </div>
         </section>
@@ -313,7 +313,7 @@ function OrcamentoPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Limite mensal total</h2>
+              <h2 className="text-sm font-semibold">{t("totalLimit.title")}</h2>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -322,15 +322,15 @@ function OrcamentoPage() {
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 <Copy className="h-3 w-3" />
-                Copiar mês anterior
+                {t("totalLimit.copyPrev")}
               </button>
               <button
                 type="button"
-                onClick={() => openEdit("total", "Limite total")}
+                onClick={() => openEdit("total", t("totalLimitName"))}
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="h-3 w-3" />
-                Editar
+                {t("totalLimit.edit")}
               </button>
             </div>
           </div>
@@ -339,7 +339,7 @@ function OrcamentoPage() {
               <div className="mt-3 flex items-baseline justify-between">
                 <p className="num text-xl font-bold">{formatBRL(totalRealizado)}</p>
                 <p className="num text-xs text-muted-foreground">
-                  de {formatBRL(limiteTotal)}
+                  {t("totalLimit.of", { value: formatBRL(limiteTotal) })}
                 </p>
               </div>
               <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
@@ -360,7 +360,7 @@ function OrcamentoPage() {
             </>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">
-              Sem limite total este mês. Você pode definir só por categoria, se preferir.
+              {t("totalLimit.none")}
             </p>
           )}
         </section>
@@ -371,11 +371,12 @@ function OrcamentoPage() {
         <section className="mt-4">
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Por categoria
+              {t("list.title")}
             </h2>
             <span className="text-[11px] text-muted-foreground">
-              {comLimite.length}{" "}
-              {comLimite.length === 1 ? "categoria" : "categorias"}
+              {comLimite.length === 1
+                ? t("list.categoryOne", { count: comLimite.length })
+                : t("list.categoryOther", { count: comLimite.length })}
             </span>
           </div>
 
