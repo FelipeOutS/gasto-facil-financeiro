@@ -749,21 +749,21 @@ function ordenar(arr: Cliente[]): Cliente[] {
 }
 
 function EmptyState({ onNovo }: { onNovo: () => void }) {
+  const { t } = useTranslation("clientes");
   return (
     <section className="rounded-2xl border border-dashed bg-card/40 p-8 text-center">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
         <Building2 className="h-6 w-6" />
       </div>
       <h2 className="mt-3 text-base font-semibold">
-        Nenhum cliente cadastrado
+        {t("empty.title")}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Comece pelo CNPJ para preencher os dados automaticamente, ou cadastre
-        manualmente.
+        {t("empty.subtitle")}
       </p>
       <Button onClick={onNovo} className="mt-4 gap-2">
         <Plus className="h-4 w-4" />
-        Cadastrar cliente
+        {t("empty.cta")}
       </Button>
     </section>
   );
@@ -780,6 +780,7 @@ function ClienteItem({
   onAlternar: () => void;
   onRemover: () => void;
 }) {
+  const { t } = useTranslation("clientes");
   const cidadeUf = [c.municipio, c.uf].filter(Boolean).join("/");
   return (
     <li
@@ -796,7 +797,7 @@ function ClienteItem({
             </p>
             {!c.ativo && (
               <Badge variant="secondary" className="text-[10px]">
-                Inativo
+                {t("card.inactive")}
               </Badge>
             )}
             {c.situacao_cadastral && (
@@ -837,7 +838,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onEditar}
-            aria-label="Editar"
+            aria-label={t("card.editAria")}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -845,7 +846,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onAlternar}
-            aria-label={c.ativo ? "Desativar" : "Ativar"}
+            aria-label={c.ativo ? t("card.deactivate") : t("card.activate")}
           >
             {c.ativo ? (
               <PowerOff className="h-4 w-4" />
@@ -857,7 +858,7 @@ function ClienteItem({
             size="icon"
             variant="ghost"
             onClick={onRemover}
-            aria-label="Remover"
+            aria-label={t("card.removeAria")}
             className="text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
