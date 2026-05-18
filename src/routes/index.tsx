@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
@@ -102,6 +103,7 @@ function IndexGate() {
 }
 
 function Index() {
+  const { t } = useTranslation("dashboard");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const today = new Date();
@@ -422,52 +424,52 @@ function Index() {
           className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Complete seu perfil</p>
+            <p className="text-sm font-semibold">{t("completeProfile.title")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Personalize sua experiência: Pessoa física, MEI ou Empresa.
+              {t("completeProfile.subtitle")}
             </p>
           </div>
           <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-            Completar
+            {t("completeProfile.cta")}
           </span>
         </Link>
       )}
 
       {/* ===== 1. KPIs — Tá tudo no radar ===== */}
-      <SectionLabel>Tá tudo no radar</SectionLabel>
+      <SectionLabel>{t("sections.radar")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
-          label="Saldo"
+          label={t("kpi.saldo")}
           valueNum={saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={saldo < 0 ? "destructive" : "brand"}
-          hint={saldo < 0 ? `${formatBRL(-saldo)} a mais que recebeu` : "no mês atual"}
+          hint={saldo < 0 ? t("kpi.saldoNegativoHint", { valor: formatBRL(-saldo) }) : t("kpi.saldoNoMes")}
         />
         <KpiCard
-          label="Receitas"
+          label={t("kpi.receitas")}
           valueNum={totalEntradas}
           icon={<ArrowUp className="h-4 w-4" />}
           tone="success"
-          hint={`${receitasMes.length} ${receitasMes.length === 1 ? "entrada" : "entradas"}`}
+          hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
         />
         <KpiCard
-          label="Despesas"
+          label={t("kpi.despesas")}
           valueNum={total}
           icon={<ArrowDown className="h-4 w-4" />}
           tone="destructive"
-          hint={`${doMes.length} ${doMes.length === 1 ? "lançamento" : "lançamentos"}`}
+          hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
         />
         <KpiCard
-          label="A pagar"
+          label={t("kpi.aPagar")}
           valueNum={contasResumo.pendente}
           icon={<CalendarClock className="h-4 w-4" />}
           tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
           hint={
             contasResumo.atrasadasCount > 0
-              ? `${contasResumo.atrasadasCount} atrasada(s)`
+              ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
               : contasResumo.pendentesCount > 0
-                ? `${contasResumo.pendentesCount} pendente(s)`
-                : "tudo em dia"
+                ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
+                : t("kpi.tudoEmDia")
           }
         />
       </section>
@@ -475,7 +477,7 @@ function Index() {
       {saldo < 0 && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Ops, você passou {formatBRL(-saldo)} do que recebeu este mês.
+          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
         </p>
       )}
 
@@ -486,12 +488,12 @@ function Index() {
           className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
         >
           <Plus className="mr-1 h-5 w-5" />
-          Lançar gasto
+          {t("ctaLancar")}
         </Button>
       </Link>
 
       {/* ===== 2. Visão financeira + Calendário ===== */}
-      <SectionLabel>Visão financeira</SectionLabel>
+      <SectionLabel>{t("sections.visao")}</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className="flex min-w-0 lg:col-span-7">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
@@ -507,7 +509,7 @@ function Index() {
       </section>
 
       {/* ===== 3. Resumo e próximas ações ===== */}
-      <SectionLabel>Resumo e próximas ações</SectionLabel>
+      <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section
         className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5"
       >
@@ -622,7 +624,7 @@ function Index() {
       {/* ===== 7. Insights secundários: Categorias + Cartões ===== */}
       {porCategoria.length > 0 && (
         <>
-          <SectionLabel>Categorias e cartões</SectionLabel>
+          <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
           <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -706,7 +708,7 @@ function Index() {
       />
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
-      <SectionLabel>Resumo e orçamento</SectionLabel>
+      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
           <div className="flex w-full">
@@ -768,7 +770,7 @@ function Index() {
       </section>
 
       {/* Atalhos secundários */}
-      <SectionLabel>Controle financeiro</SectionLabel>
+      <SectionLabel>{t("sections.controle")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <Link
           to="/orcamento"
