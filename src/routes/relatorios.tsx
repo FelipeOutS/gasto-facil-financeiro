@@ -708,16 +708,16 @@ function RelatoriosPage() {
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-          <FechRow label="Entradas" valor={resumo.totalReceitas} />
-          <FechRow label="Saídas" valor={resumo.totalDespesas} />
-          <FechRow label="Saldo final" valor={resumo.saldo} highlight />
-          <FechRow label="Guardado" valor={resumo.totalGuardado} />
-          <FechRow label="Contas pagas" valor={resumo.qtdContasPagas} isCount />
-          <FechRow label="Contas pendentes" valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas} isCount />
-          <FechRow label="Orçamentos estourados" valor={resOrc.qtdEstouro} isCount />
+          <FechRow label={t("fechamento.entradas")} valor={resumo.totalReceitas} />
+          <FechRow label={t("fechamento.saidas")} valor={resumo.totalDespesas} />
+          <FechRow label={t("fechamento.saldoFinal")} valor={resumo.saldo} highlight />
+          <FechRow label={t("fechamento.guardado")} valor={resumo.totalGuardado} />
+          <FechRow label={t("fechamento.contasPagas")} valor={resumo.qtdContasPagas} isCount />
+          <FechRow label={t("fechamento.contasPendentes")} valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas} isCount />
+          <FechRow label={t("fechamento.orcEstourados")} valor={resOrc.qtdEstouro} isCount />
           <FechRow
-            label="Melhor categoria"
-            text={resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ?? "—"}
+            label={t("fechamento.melhorCategoria")}
+            text={resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ?? t("fechamento.none")}
           />
         </div>
 
