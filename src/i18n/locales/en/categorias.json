@@ -1,0 +1,61 @@
+{
+  "meta": { "title": "Settings — Gasto Inteligente" },
+  "header": {
+    "back": "Back",
+    "eyebrow": "Settings",
+    "title": "Categories & limits"
+  },
+  "account": {
+    "title": "My account",
+    "subtitle": "Profile, sign out"
+  },
+  "budgetShortcut": {
+    "title": "Monthly budget",
+    "subtitle": "Limits by category and progress"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "desc": "Pick how the app should look for you.",
+    "themes": { "light": "Light", "dark": "Dark", "system": "System" },
+    "accentTitle": "Accent color",
+    "accentDesc": "Changes buttons, icons, charts, active tabs and adds a subtle tint to the app background."
+  },
+  "limit": {
+    "title": "Total monthly limit",
+    "desc": "Get warnings when you're close to it or go over.",
+    "placeholder": "0.00",
+    "save": "Save",
+    "savedToast": "Limit of {{value}} saved. ✅",
+    "removedToast": "Limit removed."
+  },
+  "categories": {
+    "title": "Your categories",
+    "new": "New",
+    "dialogTitle": "New category",
+    "dialogDesc": "Customize icon and color.",
+    "name": "Name",
+    "namePlaceholder": "E.g.: Personal care",
+    "color": "Color",
+    "icon": "Icon",
+    "cancel": "Cancel",
+    "create": "Create",
+    "createdToast": "Category created. 🎨",
+    "deletedToast": "Category removed.",
+    "deleteAria": "Delete category"
+  },
+  "colors": {
+    "Verde": "Green",
+    "Laranja": "Orange",
+    "Rosa": "Pink",
+    "Roxo": "Purple",
+    "Amarelo": "Yellow",
+    "Azul": "Blue",
+    "Vermelho": "Red",
+    "Cinza": "Gray",
+    "Magenta": "Magenta",
+    "Marrom": "Brown"
+  },
+  "privacy": {
+    "eyebrow": "Account & privacy"
+  }
+}

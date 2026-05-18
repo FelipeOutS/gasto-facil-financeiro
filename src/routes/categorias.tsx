@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart, Check } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -54,6 +55,7 @@ export const Route = createFileRoute("/categorias")({
 });
 
 function CategoriasPage() {
+  const { t } = useTranslation("categorias");
   const ready = useBootstrap();
   const { theme, setTheme } = useTheme();
   const { accent, setAccent } = useAccent();
@@ -78,13 +80,13 @@ function CategoriasPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("header.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Ajustes</p>
-          <h1 className="text-2xl font-bold tracking-tight">Categorias e limites</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("header.eyebrow")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("header.title")}</h1>
         </div>
       </header>
 
@@ -97,8 +99,8 @@ function CategoriasPage() {
           <UserIcon className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Minha conta</p>
-          <p className="truncate text-xs text-muted-foreground">Perfil, sair da conta</p>
+          <p className="text-sm font-medium">{t("account.title")}</p>
+          <p className="truncate text-xs text-muted-foreground">{t("account.subtitle")}</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
@@ -112,9 +114,9 @@ function CategoriasPage() {
           <PieChart className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Orçamento mensal</p>
+          <p className="text-sm font-medium">{t("budgetShortcut.title")}</p>
           <p className="truncate text-xs text-muted-foreground">
-            Limites por categoria e progresso
+            {t("budgetShortcut.subtitle")}
           </p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -122,17 +124,17 @@ function CategoriasPage() {
 
       {/* Aparência */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5 animate-rise">
-        <h2 className="text-sm font-semibold">Aparência</h2>
+        <h2 className="text-sm font-semibold">{t("appearance.title")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Escolha como o app deve aparecer pra você.
+          {t("appearance.desc")}
         </p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {([
-            { id: "light", label: "Claro", Icon: Sun },
-            { id: "dark", label: "Escuro", Icon: Moon },
-            { id: "system", label: "Sistema", Icon: Monitor },
-          ] as { id: ThemeChoice; label: string; Icon: typeof Sun }[]).map(
-            ({ id, label, Icon }) => {
+            { id: "light", labelKey: "light", Icon: Sun },
+            { id: "dark", labelKey: "dark", Icon: Moon },
+            { id: "system", labelKey: "system", Icon: Monitor },
+          ] as { id: ThemeChoice; labelKey: "light" | "dark" | "system"; Icon: typeof Sun }[]).map(
+            ({ id, labelKey, Icon }) => {
               const active = theme === id;
               return (
                 <button
@@ -148,7 +150,7 @@ function CategoriasPage() {
                   aria-pressed={active}
                 >
                   <Icon className={cn("h-4 w-4", active && "text-brand")} />
-                  {label}
+                  {t(`appearance.themes.${labelKey}`)}
                 </button>
               );
             },
@@ -156,9 +158,9 @@ function CategoriasPage() {
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-medium text-foreground">Cor de destaque</p>
+          <p className="text-xs font-medium text-foreground">{t("appearance.accentTitle")}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Muda botões, ícones, gráficos, tabs ativas e dá um leve toque da cor no fundo do app.
+            {t("appearance.accentDesc")}
           </p>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
             {ACCENTS.map((a) => {
@@ -209,9 +211,9 @@ function CategoriasPage() {
 
       {/* Limite mensal */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">Limite mensal total</h2>
+        <h2 className="text-sm font-semibold">{t("limit.title")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Receba avisos quando se aproximar ou ultrapassar.
+          {t("limit.desc")}
         </p>
         <div className="mt-3 flex gap-2">
           <div className="flex flex-1 items-baseline gap-2 rounded-xl bg-card-elevated px-3">
@@ -220,7 +222,7 @@ function CategoriasPage() {
               inputMode="decimal"
               value={limiteStr}
               onChange={(e) => setLimiteStr(e.target.value)}
-              placeholder="0,00"
+              placeholder={t("limit.placeholder")}
               className="num h-11 border-0 bg-transparent p-0 text-lg font-semibold !ring-0 focus-visible:!ring-0"
             />
           </div>
@@ -229,11 +231,11 @@ function CategoriasPage() {
             onClick={() => {
               const v = parseBRLInput(limiteStr);
               setLimite("total", v, mes, ano);
-              toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
+              toast.success(v > 0 ? t("limit.savedToast", { value: formatBRL(v) }) : t("limit.removedToast"));
             }}
             className="h-11 rounded-xl"
           >
-            Salvar
+            {t("limit.save")}
           </Button>
         </div>
       </section>
@@ -241,31 +243,31 @@ function CategoriasPage() {
       {/* Categorias */}
       <section className="mt-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Suas categorias</h2>
+          <h2 className="text-sm font-semibold">{t("categories.title")}</h2>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 rounded-full">
                 <Plus className="mr-1 h-4 w-4" />
-                Nova
+                {t("categories.new")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nova categoria</DialogTitle>
-                <DialogDescription>Personalize ícone e cor.</DialogDescription>
+                <DialogTitle>{t("categories.dialogTitle")}</DialogTitle>
+                <DialogDescription>{t("categories.dialogDesc")}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Nome</Label>
+                  <Label className="text-xs text-muted-foreground">{t("categories.name")}</Label>
                   <Input
-                    placeholder="Ex.: Cuidados pessoais"
+                    placeholder={t("categories.namePlaceholder")}
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     className="mt-1 h-11 bg-card-elevated"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Cor</Label>
+                  <Label className="text-xs text-muted-foreground">{t("categories.color")}</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {COLOR_OPTIONS.map((c) => (
                       <button
@@ -279,13 +281,13 @@ function CategoriasPage() {
                             : "border-transparent",
                         )}
                         style={{ background: c.hex }}
-                        aria-label={c.name}
+                        aria-label={t(`colors.${c.name}` as const, { defaultValue: c.name })}
                       />
                     ))}
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Ícone</Label>
+                  <Label className="text-xs text-muted-foreground">{t("categories.icon")}</Label>
                   <div className="mt-2 grid grid-cols-6 gap-2">
                     {ICON_OPTIONS.map((name) => {
                       const Icon = ICON_MAP[name];
@@ -312,7 +314,7 @@ function CategoriasPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>
-                  Cancelar
+                  {t("categories.cancel")}
                 </Button>
                 <Button
                   disabled={!nome.trim()}
@@ -322,12 +324,12 @@ function CategoriasPage() {
                       iconName,
                       colorHex,
                     });
-                    toast.success("Categoria criada. 🎨");
+                    toast.success(t("categories.createdToast"));
                     setNome("");
                     setOpen(false);
                   }}
                 >
-                  Criar
+                  {t("categories.create")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -346,10 +348,10 @@ function CategoriasPage() {
                 <button
                   onClick={() => {
                     deleteCategoria(c.id);
-                    toast.success("Categoria removida.");
+                    toast.success(t("categories.deletedToast"));
                   }}
                   className="text-muted-foreground hover:text-destructive"
-                  aria-label="Excluir categoria"
+                  aria-label={t("categories.deleteAria")}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -362,7 +364,7 @@ function CategoriasPage() {
       {/* ===== Conta e privacidade ===== */}
       <section className="mt-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Conta e privacidade
+          {t("privacy.eyebrow")}
         </p>
         <ZonaDeRiscoCard />
       </section>

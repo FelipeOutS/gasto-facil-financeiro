@@ -1,0 +1,61 @@
+{
+  "meta": { "title": "Ajustes — Gasto Inteligente" },
+  "header": {
+    "back": "Voltar",
+    "eyebrow": "Ajustes",
+    "title": "Categorias e limites"
+  },
+  "account": {
+    "title": "Minha conta",
+    "subtitle": "Perfil, sair da conta"
+  },
+  "budgetShortcut": {
+    "title": "Orçamento mensal",
+    "subtitle": "Limites por categoria e progresso"
+  },
+  "appearance": {
+    "title": "Aparência",
+    "desc": "Escolha como o app deve aparecer pra você.",
+    "themes": { "light": "Claro", "dark": "Escuro", "system": "Sistema" },
+    "accentTitle": "Cor de destaque",
+    "accentDesc": "Muda botões, ícones, gráficos, tabs ativas e dá um leve toque da cor no fundo do app."
+  },
+  "limit": {
+    "title": "Limite mensal total",
+    "desc": "Receba avisos quando se aproximar ou ultrapassar.",
+    "placeholder": "0,00",
+    "save": "Salvar",
+    "savedToast": "Limite de {{value}} salvo. ✅",
+    "removedToast": "Limite removido."
+  },
+  "categories": {
+    "title": "Suas categorias",
+    "new": "Nova",
+    "dialogTitle": "Nova categoria",
+    "dialogDesc": "Personalize ícone e cor.",
+    "name": "Nome",
+    "namePlaceholder": "Ex.: Cuidados pessoais",
+    "color": "Cor",
+    "icon": "Ícone",
+    "cancel": "Cancelar",
+    "create": "Criar",
+    "createdToast": "Categoria criada. 🎨",
+    "deletedToast": "Categoria removida.",
+    "deleteAria": "Excluir categoria"
+  },
+  "colors": {
+    "Verde": "Verde",
+    "Laranja": "Laranja",
+    "Rosa": "Rosa",
+    "Roxo": "Roxo",
+    "Amarelo": "Amarelo",
+    "Azul": "Azul",
+    "Vermelho": "Vermelho",
+    "Cinza": "Cinza",
+    "Magenta": "Magenta",
+    "Marrom": "Marrom"
+  },
+  "privacy": {
+    "eyebrow": "Conta e privacidade"
+  }
+}
