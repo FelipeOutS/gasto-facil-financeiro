@@ -1,0 +1,85 @@
+{
+  "meta": { "title": "Dinheiro guardado — Gasto Inteligente" },
+  "back": "Voltar",
+  "kicker": "Reservas",
+  "title": "Dinheiro guardado",
+  "badge": "Sua reserva, protegida",
+  "totalLabel": "Total guardado",
+  "stats": "{{count}} reserva{{plural}} em {{banks}} banco{{bankPlural}}",
+  "actions": {
+    "newReserve": "Nova reserva",
+    "newBank": "Novo banco"
+  },
+  "bankDialog": {
+    "title": "Adicionar banco",
+    "desc": "Crie um banco personalizado.",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Ex.: Carteira",
+    "colorLabel": "Cor",
+    "cancel": "Cancelar",
+    "add": "Adicionar"
+  },
+  "reserves": {
+    "title": "Suas reservas",
+    "emptyTitle": "Comece sua reserva e veja seu dinheiro separado por objetivo.",
+    "emptyDesc": "Cadastre onde você guarda dinheiro e acompanhe tudo em um lugar só.",
+    "firstReserve": "Cadastrar primeira reserva",
+    "updatedAt": "atualizado {{date}}",
+    "metaLabel": "Meta",
+    "actionsLabel": "Mais ações",
+    "edit": "Editar reserva",
+    "delete": "Excluir"
+  },
+  "tipo": {
+    "emergencia": "Reserva de emergência",
+    "investimento": "Investimento",
+    "parado": "Dinheiro parado na conta",
+    "caixinha": "Caixinha",
+    "objetivo": "Objetivo específico",
+    "outros": "Outros"
+  },
+  "banks": {
+    "title": "Bancos cadastrados",
+    "deleteLabel": "Excluir banco",
+    "removed": "Banco removido."
+  },
+  "deleteReserveDialog": {
+    "title": "Excluir reserva?",
+    "desc": "Essa reserva será removida do total guardado. Não dá para desfazer.",
+    "cancel": "Cancelar",
+    "confirm": "Excluir",
+    "toast": "Reserva removida."
+  },
+  "similarDialog": {
+    "title": "Já existe uma reserva parecida",
+    "desc": "Você já tem uma reserva nesse banco com o mesmo tipo. Quer atualizar o valor da existente em vez de criar outra?",
+    "createAnother": "Criar outra",
+    "updateExisting": "Atualizar a existente",
+    "toastCreated": "Reserva criada.",
+    "toastUpdated": "Boa, sua reserva foi ajustada."
+  },
+  "form": {
+    "createTitle": "Cadastrar reserva",
+    "editTitle": "Editar reserva",
+    "createDesc": "Em qual banco e quanto está guardado.",
+    "editDesc": "Atualize os dados da sua reserva.",
+    "bankLabel": "Banco",
+    "bankPlaceholder": "Selecione",
+    "valueLabel": "Valor",
+    "typeLabel": "Tipo",
+    "metaLabel": "Vincular a uma meta (opcional)",
+    "metaNone": "Nenhuma — só guardar",
+    "metaHelp": "Se vincular, o valor entra no progresso da meta — sem duplicar.",
+    "obsLabel": "Observação",
+    "obsPlaceholder": "Opcional",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saveEdit": "Salvar alterações"
+  },
+  "toasts": {
+    "bankNameRequired": "Dá um nome pro banco antes de salvar.",
+    "bankAdded": "Banco adicionado.",
+    "valueSaved": "Valor guardado. Seu futuro agradece. 💚",
+    "reserveAdjusted": "Boa, sua reserva foi ajustada."
+  }
+}

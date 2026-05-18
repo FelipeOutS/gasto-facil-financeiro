@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   ArrowLeft,
   Plus,
@@ -74,7 +76,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const Route = createFileRoute("/guardado")({
-  head: () => ({ meta: [{ title: "Dinheiro guardado — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.t("guardado:meta.title", { lng: i18n.language }) }] }),
   component: GuardadoPage,
 });
 
@@ -83,7 +85,12 @@ type DialogMode =
   | { kind: "create" }
   | { kind: "edit"; reserva: Guardado };
 
+function tipoLabel(tipo: TipoReserva, t: (k: string) => string) {
+  return t("tipo." + tipo) || TIPOS_RESERVA.find((x) => x.id === tipo)?.label || tipo;
+}
+
 function GuardadoPage() {
+  const { t } = useTranslation("guardado");
   const ready = useBootstrap();
   const bancos = useStore(() => getBancos());
   const guardado = useStore(() => getGuardado());
@@ -112,11 +119,11 @@ function GuardadoPage() {
 
   function handleSaveBanco() {
     if (!novoBancoNome.trim()) {
-      toast.error("Dá um nome pro banco antes de salvar.");
+      toast.error(t("toasts.bankNameRequired"));
       return;
     }
     addBanco({ nome: novoBancoNome.trim(), colorHex: novoBancoCor });
-    toast.success("Banco adicionado.");
+    toast.success(t("toasts.bankAdded"));
     setNovoBancoNome("");
     setOpenB(false);
   }
@@ -129,13 +136,13 @@ function GuardadoPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Reservas</p>
-          <h1 className="text-2xl font-bold tracking-tight">Dinheiro guardado</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("kicker")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         </div>
       </header>
 
@@ -151,12 +158,17 @@ function GuardadoPage() {
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
               <ShieldCheck className="h-3 w-3 text-success" />
-              Sua reserva, protegida
+              {t("badge")}
             </div>
-            <p className="mt-3 text-xs font-medium text-muted-foreground">Total guardado</p>
+            <p className="mt-3 text-xs font-medium text-muted-foreground">{t("totalLabel")}</p>
             <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
             <p className="mt-1 text-xs text-muted-foreground">
-              {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"} em {porBanco.size} {porBanco.size === 1 ? "banco" : "bancos"}
+              {t("stats", {
+                count: guardado.length,
+                plural: guardado.length === 1 ? "" : "s",
+                banks: porBanco.size,
+                bankPlural: porBanco.size === 1 ? "" : "s",
+              })}
             </p>
           </div>
           <img
@@ -178,7 +190,7 @@ function GuardadoPage() {
           onClick={() => setDialog({ kind: "create" })}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Nova reserva
+          {t("actions.newReserve")}
         </Button>
 
         <Dialog open={openB} onOpenChange={setOpenB}>
@@ -189,25 +201,25 @@ function GuardadoPage() {
             onClick={() => setOpenB(true)}
           >
             <Building2 className="mr-1 h-4 w-4" />
-            Novo banco
+            {t("actions.newBank")}
           </Button>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Adicionar banco</DialogTitle>
-              <DialogDescription>Crie um banco personalizado.</DialogDescription>
+              <DialogTitle>{t("bankDialog.title")}</DialogTitle>
+              <DialogDescription>{t("bankDialog.desc")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Nome</Label>
+                <Label className="text-xs text-muted-foreground">{t("bankDialog.nameLabel")}</Label>
                 <Input
                   value={novoBancoNome}
                   onChange={(e) => setNovoBancoNome(e.target.value)}
-                  placeholder="Ex.: Carteira"
+                  placeholder={t("bankDialog.namePlaceholder")}
                   className="mt-1 h-11 bg-card-elevated"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Cor</Label>
+                <Label className="text-xs text-muted-foreground">{t("bankDialog.colorLabel")}</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {COLOR_OPTIONS.map((c) => (
                     <button
@@ -226,25 +238,25 @@ function GuardadoPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenB(false)}>Cancelar</Button>
-              <Button onClick={handleSaveBanco}>Adicionar</Button>
+              <Button variant="outline" onClick={() => setOpenB(false)}>{t("bankDialog.cancel")}</Button>
+              <Button onClick={handleSaveBanco}>{t("bankDialog.add")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
       <section className="mt-5">
-        <h2 className="text-sm font-semibold">Suas reservas</h2>
+        <h2 className="text-sm font-semibold">{t("reserves.title")}</h2>
         {guardado.length === 0 ? (
           <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-rise">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
               <Wallet className="h-6 w-6" />
             </span>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              Comece sua reserva e veja seu dinheiro separado por objetivo.
+              {t("reserves.emptyTitle")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre onde você guarda dinheiro e acompanhe tudo em um lugar só.
+              {t("reserves.emptyDesc")}
             </p>
             <Button
               size="sm"
@@ -252,14 +264,13 @@ function GuardadoPage() {
               onClick={() => setDialog({ kind: "create" })}
             >
               <Plus className="mr-1 h-4 w-4" />
-              Cadastrar primeira reserva
+              {t("reserves.firstReserve")}
             </Button>
           </div>
         ) : (
           <ul className="mt-3 space-y-2 stagger">
             {guardado.map((g) => {
               const banco = bancos.find((b) => b.id === g.bancoId);
-              const tipoLabel = TIPOS_RESERVA.find((t) => t.id === g.tipoReserva)?.label;
               return (
                 <li key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift">
                   <span
@@ -271,10 +282,10 @@ function GuardadoPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{banco?.nome ?? "Banco"}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {tipoLabel} · atualizado {formatDateBR(g.dataAtualizacao)}
+                      {tipoLabel(g.tipoReserva, t)} · {t("reserves.updatedAt", { date: formatDateBR(g.dataAtualizacao) })}
                       {g.metaId ? (
                         <>
-                          {" "}· <span className="font-semibold text-primary">Meta: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
+                          {" "}· <span className="font-semibold text-primary">{t("reserves.metaLabel")}: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
                         </>
                       ) : null}
                     </p>
@@ -284,7 +295,7 @@ function GuardadoPage() {
                     <DropdownMenuTrigger asChild>
                       <button
                         className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated hover:text-foreground"
-                        aria-label="Mais ações"
+                        aria-label={t("reserves.actionsLabel")}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -292,7 +303,7 @@ function GuardadoPage() {
                     <DropdownMenuContent align="end" className="w-44">
                       <DropdownMenuItem onSelect={() => setDialog({ kind: "edit", reserva: g })}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        Editar reserva
+                        {t("reserves.edit")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -300,7 +311,7 @@ function GuardadoPage() {
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
+                        {t("reserves.delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -312,7 +323,7 @@ function GuardadoPage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold">Bancos cadastrados</h2>
+        <h2 className="text-sm font-semibold">{t("banks.title")}</h2>
         <ul className="mt-3 grid grid-cols-2 gap-2">
           {bancos.map((b) => {
             const valorTotal = porBanco.get(b.id) ?? 0;
@@ -325,9 +336,9 @@ function GuardadoPage() {
                 </div>
                 {b.criadoPeloUsuario && (
                   <button
-                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido."); }}
+                    onClick={() => { deleteBanco(b.id); toast.success(t("banks.removed")); }}
                     className="text-muted-foreground hover:text-destructive"
-                    aria-label="Excluir banco"
+                    aria-label={t("banks.deleteLabel")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -339,6 +350,8 @@ function GuardadoPage() {
       </section>
 
       <ReservaFormDialog
+        t={t}
+        tipoLabel={tipoLabel}
         mode={dialog}
         bancos={bancos}
         onClose={() => setDialog({ kind: "closed" })}
@@ -350,23 +363,23 @@ function GuardadoPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir reserva?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteReserveDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa reserva será removida do total guardado. Não dá para desfazer.
+              {t("deleteReserveDialog.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteReserveDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteGuardado(confirmDelete.id);
-                  toast.success("Reserva removida.");
+                  toast.success(t("deleteReserveDialog.toast"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Excluir
+              {t("deleteReserveDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -378,16 +391,14 @@ function GuardadoPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Já existe uma reserva parecida</AlertDialogTitle>
+            <AlertDialogTitle>{t("similarDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você já tem uma reserva nesse banco com o mesmo tipo. Quer atualizar
-              o valor da existente em vez de criar outra?
+              {t("similarDialog.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                // Criar mesmo assim
                 if (pendingSimilar) {
                   const { existente, valorNovo } = pendingSimilar;
                   addGuardado({
@@ -395,26 +406,26 @@ function GuardadoPage() {
                     valor: valorNovo,
                     tipoReserva: existente.tipoReserva,
                   });
-                  toast.success("Reserva criada.");
+                  toast.success(t("similarDialog.toastCreated"));
                 }
                 setPendingSimilar(null);
                 setDialog({ kind: "closed" });
               }}
             >
-              Criar outra
+              {t("similarDialog.createAnother")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (pendingSimilar) {
                   const { existente, valorNovo } = pendingSimilar;
                   updateGuardado(existente.id, { valor: valorNovo });
-                  toast.success("Boa, sua reserva foi ajustada.");
+                  toast.success(t("similarDialog.toastUpdated"));
                 }
                 setPendingSimilar(null);
                 setDialog({ kind: "closed" });
               }}
             >
-              Atualizar a existente
+              {t("similarDialog.updateExisting")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -424,11 +435,15 @@ function GuardadoPage() {
 }
 
 function ReservaFormDialog({
+  t,
+  tipoLabel,
   mode,
   bancos,
   onClose,
   onDuplicateDetected,
 }: {
+  t: (key: string, options?: Record<string, unknown>) => string;
+  tipoLabel: (tipo: TipoReserva, t: (key: string) => string) => string;
   mode: DialogMode;
   bancos: ReturnType<typeof getBancos>;
   onClose: () => void;
@@ -466,7 +481,7 @@ function ReservaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!valor || !bancoId) {
-      toast.error("Selecione o banco e informe um valor.");
+      toast.error(t("toasts.bankNameRequired"));
       return;
     }
     const metaIdFinal = metaId === "nenhuma" ? undefined : metaId;
@@ -477,7 +492,7 @@ function ReservaFormDialog({
         return;
       }
       addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined, metaId: metaIdFinal });
-      toast.success("Valor guardado. Seu futuro agradece. 💚");
+      toast.success(t("toasts.valueSaved"));
       onClose();
       return;
     }
@@ -489,7 +504,7 @@ function ReservaFormDialog({
         observacao: obs.trim() || undefined,
         metaId: metaIdFinal,
       });
-      toast.success("Boa, sua reserva foi ajustada.");
+      toast.success(t("toasts.reserveAdjusted"));
       onClose();
     }
   }
@@ -498,19 +513,17 @@ function ReservaFormDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isCreate ? "Cadastrar reserva" : "Editar reserva"}</DialogTitle>
+          <DialogTitle>{isCreate ? t("form.createTitle") : t("form.editTitle")}</DialogTitle>
           <DialogDescription>
-            {isCreate
-              ? "Em qual banco e quanto está guardado."
-              : "Atualize os dados da sua reserva."}
+            {isCreate ? t("form.createDesc") : t("form.editDesc")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs text-muted-foreground">Banco</Label>
+            <Label className="text-xs text-muted-foreground">{t("form.bankLabel")}</Label>
             <Select value={bancoId} onValueChange={setBancoId}>
               <SelectTrigger className="mt-1 h-11 bg-card-elevated">
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={t("form.bankPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {bancos.map((b) => (
@@ -521,7 +534,7 @@ function ReservaFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Label className="text-xs text-muted-foreground">{t("form.valueLabel")}</Label>
               <Input
                 inputMode="decimal"
                 value={valorStr}
@@ -531,49 +544,49 @@ function ReservaFormDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Tipo</Label>
+              <Label className="text-xs text-muted-foreground">{t("form.typeLabel")}</Label>
               <Select value={tipoReserva} onValueChange={(v) => setTipoReserva(v as TipoReserva)}>
                 <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RESERVA.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  {TIPOS_RESERVA.map((tr) => (
+                    <SelectItem key={tr.id} value={tr.id}>{tipoLabel(tr.id, t)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Vincular a uma meta (opcional)</Label>
+            <Label className="text-xs text-muted-foreground">{t("form.metaLabel")}</Label>
             <Select value={metaId} onValueChange={setMetaId}>
               <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="nenhuma">Nenhuma — só guardar</SelectItem>
+                <SelectItem value="nenhuma">{t("form.metaNone")}</SelectItem>
                 {metas.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Se vincular, o valor entra no progresso da meta — sem duplicar.
+              {t("form.metaHelp")}
             </p>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Observação</Label>
+            <Label className="text-xs text-muted-foreground">{t("form.obsLabel")}</Label>
             <Textarea
               value={obs}
               onChange={(e) => setObs(e.target.value)}
-              placeholder="Opcional"
+              placeholder={t("form.obsPlaceholder")}
               className="mt-1 min-h-[60px] bg-card-elevated"
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave}>{isCreate ? "Salvar" : "Salvar alterações"}</Button>
+          <Button variant="outline" onClick={onClose}>{t("form.cancel")}</Button>
+          <Button onClick={handleSave}>{isCreate ? t("form.save") : t("form.saveEdit")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

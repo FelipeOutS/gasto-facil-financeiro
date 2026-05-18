@@ -1,0 +1,85 @@
+{
+  "meta": { "title": "Savings — Gasto Inteligente" },
+  "back": "Back",
+  "kicker": "Savings",
+  "title": "Money saved",
+  "badge": "Your savings, protected",
+  "totalLabel": "Total saved",
+  "stats": "{{count}} reserve{{plural}} across {{banks}} bank{{bankPlural}}",
+  "actions": {
+    "newReserve": "New reserve",
+    "newBank": "New bank"
+  },
+  "bankDialog": {
+    "title": "Add bank",
+    "desc": "Create a custom bank.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Ex: Wallet",
+    "colorLabel": "Color",
+    "cancel": "Cancel",
+    "add": "Add"
+  },
+  "reserves": {
+    "title": "Your reserves",
+    "emptyTitle": "Start your reserve and see your money separated by goal.",
+    "emptyDesc": "Register where you keep money and track everything in one place.",
+    "firstReserve": "Register first reserve",
+    "updatedAt": "updated {{date}}",
+    "metaLabel": "Goal",
+    "actionsLabel": "More actions",
+    "edit": "Edit reserve",
+    "delete": "Delete"
+  },
+  "tipo": {
+    "emergencia": "Emergency fund",
+    "investimento": "Investment",
+    "parado": "Idle money in account",
+    "caixinha": "Savings jar",
+    "objetivo": "Specific goal",
+    "outros": "Other"
+  },
+  "banks": {
+    "title": "Registered banks",
+    "deleteLabel": "Delete bank",
+    "removed": "Bank removed."
+  },
+  "deleteReserveDialog": {
+    "title": "Delete reserve?",
+    "desc": "This reserve will be removed from your total savings. This cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "toast": "Reserve removed."
+  },
+  "similarDialog": {
+    "title": "A similar reserve already exists",
+    "desc": "You already have a reserve at this bank with the same type. Do you want to update the existing value instead of creating another?",
+    "createAnother": "Create another",
+    "updateExisting": "Update existing",
+    "toastCreated": "Reserve created.",
+    "toastUpdated": "Great, your reserve has been adjusted."
+  },
+  "form": {
+    "createTitle": "Register reserve",
+    "editTitle": "Edit reserve",
+    "createDesc": "Which bank and how much is saved.",
+    "editDesc": "Update your reserve details.",
+    "bankLabel": "Bank",
+    "bankPlaceholder": "Select",
+    "valueLabel": "Value",
+    "typeLabel": "Type",
+    "metaLabel": "Link to a goal (optional)",
+    "metaNone": "None — just save",
+    "metaHelp": "If linked, the value counts toward the goal progress — no duplication.",
+    "obsLabel": "Note",
+    "obsPlaceholder": "Optional",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saveEdit": "Save changes"
+  },
+  "toasts": {
+    "bankNameRequired": "Give the bank a name before saving.",
+    "bankAdded": "Bank added.",
+    "valueSaved": "Value saved. Your future thanks you. 💚",
+    "reserveAdjusted": "Great, your reserve has been adjusted."
+  }
+}
