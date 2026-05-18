@@ -1129,6 +1129,8 @@ function FaturaSheet({
   onEdit: (c: Cartao) => void;
   onImport: (c: Cartao) => void;
 }) {
+  const { t } = useTranslation("cartoes");
+
   const hoje = new Date();
   const initialRef = cartao
     ? faturaCorrente(cartao, hoje)
@@ -1162,7 +1164,7 @@ function FaturaSheet({
   const status = statusEfetivoFatura(cartao, ref.mes, ref.ano, hoje);
   const registroFatura = getFatura(cartao.id, ref.mes, ref.ano);
   const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
-  const badge = statusBadgeStyle(status);
+  const badge = statusBadgeStyle(status, t);
 
   // Categorias presentes na fatura, com totais
   const totaisPorCategoria = (() => {
@@ -1173,7 +1175,7 @@ function FaturaSheet({
       if (g.categoriaId) {
         const cat = getCategoriaById(g.categoriaId);
         const id = g.categoriaId;
-        const nome = cat?.nome ?? "Categoria";
+        const nome = cat?.nome ?? t("sheet.categoryFallback");
         const cur = map.get(id) ?? { id, nome, total: 0, count: 0 };
         cur.total += g.valor;
         cur.count += 1;
@@ -1185,7 +1187,7 @@ function FaturaSheet({
     }
     const arr = Array.from(map.values()).sort((a, b) => b.total - a.total);
     if (semCatCount > 0) {
-      arr.push({ id: "__sem__", nome: "Sem categoria", total: semCat, count: semCatCount });
+      arr.push({ id: "__sem__", nome: t("sheet.uncategorized"), total: semCat, count: semCatCount });
     }
     return arr;
   })();
@@ -1245,28 +1247,28 @@ function FaturaSheet({
     try {
       if (status === "paga") {
         await desmarcarFaturaPaga(cartao!.id, ref.mes, ref.ano);
-        toast.success("Fatura marcada como em aberto.");
+        toast.success(t("toast.markedOpen"));
       } else {
         await marcarFaturaPaga(cartao!.id, ref.mes, ref.ano, { valorPago: resumo.total });
-        toast.success("Fatura marcada como paga! ✅");
+        toast.success(t("toast.markedPaid"));
       }
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível atualizar a fatura.");
+      toast.error(t("toast.updateError"));
     }
   }
 
   function handleAddCompra(data: NovoGastoInput) {
     const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
     addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
-    toast.success("Compra adicionada à fatura.");
+    toast.success(t("toast.purchaseAdded"));
     setOpenAdd(false);
   }
 
   function handleDeleteCompra() {
     if (!confirmDelete) return;
     deleteGasto(confirmDelete.id);
-    toast.success("Compra removida.");
+    toast.success(t("toast.purchaseRemoved"));
     setConfirmDelete(null);
   }
 
@@ -1275,8 +1277,8 @@ function FaturaSheet({
     if (!confirmLote) return;
     const n = await deleteGastosDoLote(confirmLote);
     setConfirmLote(null);
-    if (n > 0) toast.success(`Importação removida (${n} ${n === 1 ? "compra" : "compras"}). Gastos manuais foram preservados.`);
-    else toast.error("Não foi possível remover a importação.");
+    if (n > 0) toast.success(t("toast.batchRemoved", { count: n }));
+    else toast.error(t("toast.batchRemoveError"));
   }
 
   return (
