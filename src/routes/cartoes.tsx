@@ -2096,14 +2096,14 @@ function CartaoFormDialog({
               onClick={() => onOpenChange(false)}
               className="card-press"
             >
-              Cancelar
+              {t("form.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!valid}
               className="card-press bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
             >
-              Salvar cartão
+              {t("form.save")}
             </Button>
           </DialogFooter>
         </form>
