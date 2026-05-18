@@ -263,7 +263,7 @@ function RendaPage() {
         .reduce((s, r) => s + r.valor, 0);
       arr.push({
         key: `${a}-${m}`,
-        label: MONTH_SHORT[m - 1],
+        label: monthShort[m - 1],
         total,
       });
     }
