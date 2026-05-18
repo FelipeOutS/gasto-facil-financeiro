@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bell,
   Check,
@@ -37,14 +38,18 @@ import {
   type UserAlert,
 } from "@/lib/alerts/types";
 import { filterByCategory } from "@/lib/alerts/service";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/alertas")({
-  head: () => ({
-    meta: [
-      { title: "Alertas — Gasto Inteligente" },
-      { name: "description", content: "Veja o que precisa da sua atenção." },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return {
+      meta: [
+        { title: t("alertas.metaTitle") },
+        { name: "description", content: t("alertas.metaDesc") },
+      ],
+    };
+  },
   component: AlertasPage,
 });
 
@@ -54,19 +59,11 @@ type FilterKey =
   | "importantes"
   | AlertCategory;
 
-const FILTERS: Array<{ key: FilterKey; label: string }> = [
-  { key: "todos", label: "Todos" },
-  { key: "nao_lidos", label: "Não lidos" },
-  { key: "importantes", label: "Importantes" },
-  { key: "cartoes", label: "Cartões" },
-  { key: "contas", label: "Contas" },
-  { key: "contas_receber", label: "A receber" },
-  { key: "assinaturas", label: "Assinaturas" },
-  { key: "gastos", label: "Gastos" },
-  { key: "orcamento", label: "Orçamento" },
-  { key: "investimentos", label: "Investimentos" },
-  { key: "sistema", label: "Sistema" },
+const FILTER_KEYS: FilterKey[] = [
+  "todos", "nao_lidos", "importantes", "cartoes", "contas", "contas_receber",
+  "assinaturas", "gastos", "orcamento", "investimentos", "sistema",
 ];
+
 
 function priorityTone(p: AlertPriority): { ring: string; bg: string; fg: string; dot: string } {
   switch (p) {
@@ -127,18 +124,22 @@ function iconForType(type: string): LucideIcon {
   }
 }
 
-function formatRelativo(iso: string): string {
-  const d = new Date(iso);
-  const diff = Date.now() - d.getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "agora";
-  if (mins < 60) return `há ${mins}min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `há ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `há ${days}d`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+function useFormatRelativo() {
+  const { t, i18n: i18nInst } = useTranslation("misc");
+  return (iso: string): string => {
+    const d = new Date(iso);
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1) return t("alertas.rel.now");
+    if (mins < 60) return t("alertas.rel.min", { n: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("alertas.rel.hour", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return t("alertas.rel.day", { n: days });
+    return d.toLocaleDateString(i18nInst.language === "en" ? "en-US" : "pt-BR", { day: "2-digit", month: "short" });
+  };
 }
+
 
 function AlertCard({
   alert,
@@ -153,6 +154,8 @@ function AlertCard({
   onIgnore: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation("misc");
+  const formatRelativo = useFormatRelativo();
   const tone = priorityTone(alert.priority);
   const Icon = iconForType(alert.type);
   const isUnread = alert.status === "unread";
@@ -180,7 +183,7 @@ function AlertCard({
                       "ml-2 inline-block h-2 w-2 rounded-full align-middle",
                       tone.dot,
                     )}
-                    aria-label="Não lido"
+                    aria-label={t("alertas.unread")}
                   />
                 )}
               </h3>
@@ -209,46 +212,31 @@ function AlertCard({
             {alert.action_url && (
               <Button asChild size="sm" variant="default" className="h-8 px-3 text-xs">
                 <Link to={alert.action_url}>
-                  {alert.action_label || "Ver"}
+                  {alert.action_label || t("alertas.see")}
                   <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                 </Link>
               </Button>
             )}
             {isUnread && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onMarkRead}
-                className="h-8 px-2.5 text-xs"
-              >
+              <Button size="sm" variant="ghost" onClick={onMarkRead} className="h-8 px-2.5 text-xs">
                 <Eye className="mr-1 h-3.5 w-3.5" />
-                Marcar como lido
+                {t("alertas.markRead")}
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onResolve}
-              className="h-8 px-2.5 text-xs"
-            >
+            <Button size="sm" variant="ghost" onClick={onResolve} className="h-8 px-2.5 text-xs">
               <Check className="mr-1 h-3.5 w-3.5" />
-              Resolver
+              {t("alertas.resolve")}
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onIgnore}
-              className="h-8 px-2.5 text-xs text-muted-foreground"
-            >
+            <Button size="sm" variant="ghost" onClick={onIgnore} className="h-8 px-2.5 text-xs text-muted-foreground">
               <EyeOff className="mr-1 h-3.5 w-3.5" />
-              Ignorar
+              {t("alertas.ignore")}
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={onDelete}
               className="ml-auto h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-              aria-label="Excluir alerta"
+              aria-label={t("alertas.delete")}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -260,6 +248,7 @@ function AlertCard({
 }
 
 function AlertasPage() {
+  const { t } = useTranslation("misc");
   const { visible, loading, syncing, setStatus, markAllRead, remove, unreadCount } = useAlerts();
   const [filter, setFilter] = useState<FilterKey>("todos");
 
@@ -271,23 +260,18 @@ function AlertasPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-              Central de alertas
+              {t("alertas.kicker")}
             </p>
-            <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">Alertas</h1>
+            <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">{t("alertas.title")}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              Veja o que precisa da sua atenção.
+              {t("alertas.subtitle")}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllRead}
-                className="h-9 px-3 text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={markAllRead} className="h-9 px-3 text-xs">
                 <CheckCheck className="mr-1.5 h-4 w-4" />
-                Marcar tudo
+                {t("alertas.markAll")}
               </Button>
             )}
           </div>
@@ -298,13 +282,13 @@ function AlertasPage() {
       <div className="mt-4 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 overflow-x-auto">
         <div className="flex w-max items-center gap-2 pb-1">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          {FILTERS.map((f) => {
-            const active = filter === f.key;
+          {FILTER_KEYS.map((k) => {
+            const active = filter === k;
             return (
               <button
-                key={f.key}
+                key={k}
                 type="button"
-                onClick={() => setFilter(f.key)}
+                onClick={() => setFilter(k)}
                 className={cn(
                   "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
@@ -312,7 +296,7 @@ function AlertasPage() {
                     : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground",
                 )}
               >
-                {f.label}
+                {t(`alertas.filters.${k}`)}
               </button>
             );
           })}
@@ -332,10 +316,10 @@ function AlertasPage() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
               <Sparkles className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h2 className="mt-4 text-base font-semibold">Tudo certo por aqui.</h2>
+            <h2 className="mt-4 text-base font-semibold">{t("alertas.emptyTitle")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Nada urgente para te avisar agora.
-              {syncing && " Estamos checando..."}
+              {t("alertas.emptyDesc")}
+              {syncing && t("alertas.checking")}
             </p>
           </div>
         ) : (

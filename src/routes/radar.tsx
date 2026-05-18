@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation, Trans } from "react-i18next";
 import {
   TrendingUp,
   TrendingDown,
@@ -19,24 +20,20 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import { getEconomicRadar } from "@/server/radar.functions";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/radar")({
-  head: () => ({
-    meta: [
-      { title: "Radar Econômico — Gasto Inteligente" },
-      {
-        name: "description",
-        content:
-          "Acompanhe Selic, IPCA, dólar e euro e entenda o impacto no seu bolso, suas metas e compras internacionais.",
-      },
-      { property: "og:title", content: "Radar Econômico — Gasto Inteligente" },
-      {
-        property: "og:description",
-        content:
-          "Indicadores econômicos oficiais explicados de forma simples para ajudar nas suas decisões.",
-      },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return {
+      meta: [
+        { title: t("radar.metaTitle") },
+        { name: "description", content: t("radar.metaDesc") },
+        { property: "og:title", content: t("radar.ogTitle") },
+        { property: "og:description", content: t("radar.ogDesc") },
+      ],
+    };
+  },
   component: RadarPage,
 });
 
@@ -70,11 +67,11 @@ function formatPct(v: number | null | undefined, digits = 2): string {
   return `${sign}${v.toFixed(digits).replace(".", ",")}%`;
 }
 
-function formatHora(iso: string): string {
+function formatHora(iso: string, lang: string): string {
   try {
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime()) || d.getTime() === 0) return "—";
-    return d.toLocaleString("pt-BR", {
+    return d.toLocaleString(lang === "en" ? "en-US" : "pt-BR", {
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
@@ -85,18 +82,19 @@ function formatHora(iso: string): string {
   }
 }
 
-function formatMesRef(iso?: string | null): string | null {
+function formatMesRef(iso: string | null | undefined, lang: string): string | null {
   if (!iso) return null;
   try {
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return null;
-    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return d.toLocaleDateString(lang === "en" ? "en-US" : "pt-BR", { month: "long", year: "numeric" });
   } catch {
     return null;
   }
 }
 
 function RadarPage() {
+  const { t } = useTranslation("misc");
   const fetchRadar = useServerFn(getEconomicRadar);
   const [data, setData] = useState<RadarResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,8 +110,7 @@ function RadarPage() {
         indicators: [],
         status: "desatualizado",
         fetchedAt: new Date(0).toISOString(),
-        message:
-          "Não conseguimos carregar os indicadores agora. Tente novamente em instantes.",
+        message: t("radar.errorMessage"),
       });
     } finally {
       setLoading(false);
@@ -137,11 +134,8 @@ function RadarPage() {
       <header className="pt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold">Radar Econômico</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Indicadores oficiais para você entender o contexto da economia e o
-              impacto no seu bolso.
-            </p>
+            <h1 className="text-2xl font-semibold">{t("radar.title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("radar.subtitle")}</p>
           </div>
           <Button
             variant="ghost"
@@ -151,16 +145,13 @@ function RadarPage() {
             className="h-8 px-2 text-xs"
           >
             <RefreshCw className={cn("mr-1 h-3 w-3", loading && "animate-spin")} />
-            Atualizar
+            {t("radar.refresh")}
           </Button>
         </div>
         {stale && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              {data?.message ??
-                "Alguns indicadores não puderam ser atualizados agora. Mostrando os últimos valores conhecidos."}
-            </span>
+            <span>{data?.message ?? t("radar.staleFallback")}</span>
           </div>
         )}
       </header>
@@ -169,83 +160,61 @@ function RadarPage() {
         <IndicadorCard
           loading={loading}
           ind={selic}
-          fallbackKey="SELIC"
-          titulo="Selic (meta)"
+          titulo={t("radar.selic.title")}
           icone={<Percent className="h-4 w-4" />}
           formato="percent-anual"
-          referencia="Banco Central"
-          mensagem="Com a Selic neste patamar, sua reserva pode render mais em aplicações conservadoras. Vale revisar onde seu dinheiro está parado."
-          variationLabel="vs. leitura anterior"
+          referencia={t("radar.selic.ref")}
+          mensagem={t("radar.selic.msg")}
+          variationLabel={t("radar.selic.varLabel")}
         />
         <IndicadorCard
           loading={loading}
           ind={ipca}
-          fallbackKey="IPCA"
-          titulo="IPCA (mensal)"
+          titulo={t("radar.ipca.title")}
           icone={<LineChart className="h-4 w-4" />}
           formato="percent-mensal"
-          referencia="IBGE · via Banco Central"
-          mensagem="O IPCA mede a alta dos preços no mês. Compare com a evolução dos seus gastos para entender se você está acima ou abaixo da inflação."
-          variationLabel="vs. mês anterior"
+          referencia={t("radar.ipca.ref")}
+          mensagem={t("radar.ipca.msg")}
+          variationLabel={t("radar.ipca.varLabel")}
         />
         <IndicadorCard
           loading={loading}
           ind={usd}
-          fallbackKey="USD_BRL"
-          titulo="Dólar Comercial"
+          titulo={t("radar.usd.title")}
           icone={<DollarSign className="h-4 w-4" />}
           formato="brl"
-          referencia="AwesomeAPI"
-          mensagem="O dólar pode impactar compras internacionais e assinaturas em moeda estrangeira. Acompanhe antes de fechar a fatura."
+          referencia={t("radar.usd.ref")}
+          mensagem={t("radar.usd.msg")}
           onClick={() => setOpen(true)}
-          actionLabel="Abrir conversor"
+          actionLabel={t("radar.openConverter")}
         />
         <IndicadorCard
           loading={loading}
           ind={eur}
-          fallbackKey="EUR_BRL"
-          titulo="Euro"
+          titulo={t("radar.eur.title")}
           icone={<Euro className="h-4 w-4" />}
           formato="brl"
-          referencia="AwesomeAPI"
-          mensagem="O euro influencia viagens e compras na Europa. Se subir, planeje com folga antes de comprar passagens ou reservar hospedagem."
+          referencia={t("radar.eur.ref")}
+          mensagem={t("radar.eur.msg")}
           onClick={() => setOpen(true)}
-          actionLabel="Abrir conversor"
+          actionLabel={t("radar.openConverter")}
         />
       </section>
 
       <section className="mt-6 rounded-2xl border bg-card p-4">
-        <h2 className="text-sm font-semibold">O que significa cada um</h2>
+        <h2 className="text-sm font-semibold">{t("radar.explainTitle")}</h2>
         <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-          <li>
-            <span className="font-medium text-foreground">Selic:</span> taxa
-            básica de juros da economia. Influencia rendimentos da poupança,
-            CDB, Tesouro e o custo do crédito.
-          </li>
-          <li>
-            <span className="font-medium text-foreground">IPCA:</span> índice
-            oficial de inflação. Mostra quanto os preços subiram no mês — útil
-            para comparar com a evolução dos seus próprios gastos.
-          </li>
-          <li>
-            <span className="font-medium text-foreground">Dólar e Euro:</span>{" "}
-            usados em compras internacionais, assinaturas em moeda estrangeira e
-            viagens.
-          </li>
+          <li><Trans i18nKey="radar.explainSelic" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
+          <li><Trans i18nKey="radar.explainIpca" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
+          <li><Trans i18nKey="radar.explainCurr" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
         </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-          Os valores aqui são apenas informativos. Nenhuma informação nesta tela
-          é recomendação de investimento.
-        </p>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">{t("radar.disclaimer")}</p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-dashed bg-muted/30 p-4">
-        <h2 className="text-sm font-semibold">Em breve</h2>
+        <h2 className="text-sm font-semibold">{t("radar.soonTitle")}</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-          <li>Comparação dos seus gastos com o IPCA do período</li>
-          <li>Projeção de metas considerando a Selic atual</li>
-          <li>Histórico e gráficos dos indicadores</li>
-          <li>Alertas quando um indicador variar mais do que você definir</li>
+          {(t("radar.soon", { returnObjects: true }) as string[]).map((s) => <li key={s}>{s}</li>)}
         </ul>
       </section>
 
@@ -263,7 +232,6 @@ function RadarPage() {
 interface IndicadorCardProps {
   loading: boolean;
   ind: Indicator | undefined;
-  fallbackKey: string;
   titulo: string;
   icone: React.ReactNode;
   formato: "brl" | "percent-anual" | "percent-mensal";
@@ -275,6 +243,7 @@ interface IndicadorCardProps {
 }
 
 function IndicadorCard(props: IndicadorCardProps) {
+  const { t, i18n: i18nInst } = useTranslation("misc");
   const {
     loading,
     ind,
@@ -293,18 +262,18 @@ function IndicadorCard(props: IndicadorCardProps) {
     ? formato === "brl"
       ? formatBRL(ind.value)
       : formato === "percent-anual"
-        ? `${ind.value.toFixed(2).replace(".", ",")}% a.a.`
-        : `${ind.value.toFixed(2).replace(".", ",")}% no mês`
+        ? `${ind.value.toFixed(2).replace(".", ",")}${t("radar.perYear")}`
+        : `${ind.value.toFixed(2).replace(".", ",")}${t("radar.perMonth")}`
     : "—";
 
-  const mesRef = formatMesRef(ind?.referenceDate ?? null);
+  const mesRef = formatMesRef(ind?.referenceDate ?? null, i18nInst.language);
 
   const Wrapper: React.ElementType = onClick ? "button" : "div";
 
   return (
     <Wrapper
       {...(onClick
-        ? { type: "button", onClick, "aria-label": `Abrir detalhes de ${titulo}` }
+        ? { type: "button", onClick, "aria-label": t("radar.openDetails", { title: titulo }) }
         : {})}
       className={cn(
         "group flex w-full flex-col gap-2 rounded-2xl border bg-card p-4 text-left shadow-sm transition-all",
@@ -313,9 +282,7 @@ function IndicadorCard(props: IndicadorCardProps) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="rounded-lg bg-primary/10 p-1.5 text-primary">
-            {icone}
-          </span>
+          <span className="rounded-lg bg-primary/10 p-1.5 text-primary">{icone}</span>
           <div>
             <h3 className="text-sm font-semibold leading-tight">{titulo}</h3>
             <p className="text-[11px] text-muted-foreground">{referencia}</p>
@@ -324,7 +291,7 @@ function IndicadorCard(props: IndicadorCardProps) {
         {stale && (
           <span
             className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
-            title="Não atualizado agora"
+            title={t("radar.notUpdated")}
           >
             <AlertCircle className="h-3 w-3" />
           </span>
@@ -337,27 +304,19 @@ function IndicadorCard(props: IndicadorCardProps) {
         ) : (
           <span className="text-2xl font-semibold tabular-nums">{valorTexto}</span>
         )}
-        <VariationPill
-          pct={ind?.variationPercent ?? null}
-          formato={formato}
-          label={variationLabel}
-        />
+        <VariationPill pct={ind?.variationPercent ?? null} formato={formato} label={variationLabel} />
       </div>
 
       {mesRef && (
-        <p className="text-[11px] text-muted-foreground">Referência: {mesRef}</p>
+        <p className="text-[11px] text-muted-foreground">{t("radar.reference", { when: mesRef })}</p>
       )}
 
       <p className="text-xs leading-relaxed text-muted-foreground">{mensagem}</p>
 
       <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>
-          {ind ? `Atualizado em ${formatHora(ind.fetchedAt)}` : "—"}
-        </span>
+        <span>{ind ? t("radar.updatedAt", { when: formatHora(ind.fetchedAt, i18nInst.language) }) : "—"}</span>
         {onClick && actionLabel && (
-          <span className="font-medium text-primary group-hover:underline">
-            {actionLabel} →
-          </span>
+          <span className="font-medium text-primary group-hover:underline">{actionLabel} →</span>
         )}
       </div>
     </Wrapper>
@@ -373,6 +332,7 @@ function VariationPill({
   formato: "brl" | "percent-anual" | "percent-mensal";
   label?: string;
 }) {
+  const { t } = useTranslation("misc");
   if (pct === null || !Number.isFinite(pct)) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -381,8 +341,6 @@ function VariationPill({
     );
   }
   const positivo = pct >= 0;
-  // Para moeda: variação alta é "ruim" (encarece). Para Selic/IPCA mantemos
-  // um tom neutro/atenção, mas o sinal já comunica direção.
   const isMoeda = formato === "brl";
   const cor = isMoeda
     ? positivo
@@ -392,7 +350,6 @@ function VariationPill({
       ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
       : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
 
-  // Para Selic/IPCA exibimos em pontos percentuais (pp).
   const texto =
     formato === "brl"
       ? formatPct(pct)
@@ -404,13 +361,9 @@ function VariationPill({
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
         cor,
       )}
-      title={label ?? (positivo ? "Variação positiva" : "Variação negativa")}
+      title={label ?? (positivo ? t("radar.varPositive") : t("radar.varNegative"))}
     >
-      {positivo ? (
-        <TrendingUp className="h-3 w-3" />
-      ) : (
-        <TrendingDown className="h-3 w-3" />
-      )}
+      {positivo ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
       {texto}
     </span>
   );
