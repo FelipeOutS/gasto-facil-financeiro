@@ -968,12 +968,13 @@ function ContaCard({
 }
 
 function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
+  const { t } = useTranslation("contas-a-pagar");
   async function copiar() {
     try {
       await navigator.clipboard.writeText(valor);
-      toast.success(`${label} copiado.`);
+      toast.success(t("copy.copied", { label }));
     } catch {
-      toast.error("Não consegui copiar. Copie manualmente.");
+      toast.error(t("copy.copyError"));
     }
   }
   return (
@@ -989,7 +990,7 @@ function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
         size="icon"
         className="h-7 w-7 shrink-0"
         onClick={copiar}
-        aria-label={`Copiar ${label}`}
+        aria-label={t("copy.copyButton", { label })}
       >
         <Copy className="h-3.5 w-3.5" />
       </Button>
@@ -998,11 +999,12 @@ function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
 }
 
 function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
+  const { t } = useTranslation("contas-a-pagar");
   if (status === "pago") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
         <CheckCircle2 className="h-2.5 w-2.5" />
-        Paga
+        {t("status.paid")}
       </span>
     );
   }
@@ -1010,7 +1012,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
         <AlertTriangle className="h-2.5 w-2.5" />
-        Atrasada {Math.abs(dias)}d
+        {t("status.overdueDays", { days: Math.abs(dias) })}
       </span>
     );
   }
@@ -1018,7 +1020,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Vence hoje
+        {t("status.dueToday")}
       </span>
     );
   }
@@ -1026,7 +1028,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Vence amanhã
+        {t("status.dueTomorrow")}
       </span>
     );
   }
@@ -1034,13 +1036,13 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Em {dias}d
+        {t("status.dueInDays", { days: dias })}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-      Pendente · {dias}d
+      {t("status.pendingDays", { days: dias })}
     </span>
   );
 }
