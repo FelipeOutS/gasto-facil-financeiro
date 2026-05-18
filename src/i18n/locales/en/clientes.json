@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Clients — Gasto Inteligente",
+    "description": "Register clients by CNPJ and organize your business income."
+  },
+  "header": {
+    "back": "Smart Business",
+    "title": "Clients",
+    "subtitle": "Register clients by CNPJ and organize your business income.",
+    "report": "Report",
+    "new": "New"
+  },
+  "empty": {
+    "title": "No clients yet",
+    "subtitle": "Start with the CNPJ to auto-fill the data, or add manually.",
+    "cta": "Add client"
+  },
+  "dialog": {
+    "newTitle": "New client",
+    "newDesc": "Add by CNPJ to fetch the data automatically, or enter manually.",
+    "tabCnpj": "By CNPJ",
+    "tabManual": "Manual",
+    "cnpj": "CNPJ",
+    "cnpjPlaceholder": "00.000.000/0000-00",
+    "search": "Search",
+    "save": "Save client",
+    "cancel": "Cancel"
+  },
+  "cnpjFields": {
+    "apelido": "Nickname (optional)",
+    "apelidoPlaceholder": "How you call them day-to-day",
+    "telefone": "Phone (optional)",
+    "telefonePlaceholder": "(00) 00000-0000",
+    "email": "Email (optional)",
+    "emailPlaceholder": "contact@client.com",
+    "obs": "Notes (optional)"
+  },
+  "manual": {
+    "nome": "Client name *",
+    "nomePlaceholder": "E.g.: Mary Smith",
+    "apelido": "Nickname (optional)",
+    "telefone": "Phone (optional)",
+    "email": "Email (optional)",
+    "obs": "Notes (optional)"
+  },
+  "edit": {
+    "title": "Edit client",
+    "desc": "Update contact info and notes.",
+    "nome": "Name *",
+    "apelido": "Nickname",
+    "telefone": "Phone",
+    "email": "Email",
+    "obs": "Notes",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "saving": "Saving…"
+  },
+  "remove": {
+    "title": "Remove client?",
+    "desc": "This client will be removed from your account. This can't be undone.",
+    "cancel": "Cancel",
+    "confirm": "Remove",
+    "removing": "Removing…"
+  },
+  "card": {
+    "inactive": "Inactive",
+    "editAria": "Edit",
+    "removeAria": "Remove",
+    "activate": "Activate",
+    "deactivate": "Deactivate"
+  },
+  "toasts": {
+    "loadError": "Couldn't load your clients.",
+    "duplicate": "This client is already in your account.",
+    "cnpjError": "Couldn't look up this CNPJ right now. Try again in a few minutes.",
+    "saved": "Client saved.",
+    "saveError": "Couldn't save right now. Try again.",
+    "nameRequired": "Enter the client's name.",
+    "updated": "Client updated.",
+    "updateError": "Couldn't update right now. Try again.",
+    "activated": "Client activated.",
+    "deactivated": "Client deactivated.",
+    "toggleError": "Couldn't update right now.",
+    "removed": "Client removed.",
+    "removeError": "Couldn't remove right now."
+  }
+}

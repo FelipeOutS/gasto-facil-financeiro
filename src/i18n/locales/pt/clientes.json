@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Clientes — Gasto Inteligente",
+    "description": "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais."
+  },
+  "header": {
+    "back": "Empresa Inteligente",
+    "title": "Clientes",
+    "subtitle": "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais.",
+    "report": "Relatório",
+    "new": "Novo"
+  },
+  "empty": {
+    "title": "Nenhum cliente cadastrado",
+    "subtitle": "Comece pelo CNPJ para preencher os dados automaticamente, ou cadastre manualmente.",
+    "cta": "Cadastrar cliente"
+  },
+  "dialog": {
+    "newTitle": "Novo cliente",
+    "newDesc": "Cadastre por CNPJ para preencher os dados automaticamente ou adicione manualmente.",
+    "tabCnpj": "Por CNPJ",
+    "tabManual": "Manualmente",
+    "cnpj": "CNPJ",
+    "cnpjPlaceholder": "00.000.000/0000-00",
+    "search": "Buscar",
+    "save": "Salvar cliente",
+    "cancel": "Cancelar"
+  },
+  "cnpjFields": {
+    "apelido": "Apelido (opcional)",
+    "apelidoPlaceholder": "Como você chama no dia a dia",
+    "telefone": "Telefone (opcional)",
+    "telefonePlaceholder": "(00) 00000-0000",
+    "email": "E-mail (opcional)",
+    "emailPlaceholder": "contato@cliente.com",
+    "obs": "Observações (opcional)"
+  },
+  "manual": {
+    "nome": "Nome do cliente *",
+    "nomePlaceholder": "Ex.: Maria Silva",
+    "apelido": "Apelido (opcional)",
+    "telefone": "Telefone (opcional)",
+    "email": "E-mail (opcional)",
+    "obs": "Observações (opcional)"
+  },
+  "edit": {
+    "title": "Editar cliente",
+    "desc": "Atualize os dados de contato e observações.",
+    "nome": "Nome *",
+    "apelido": "Apelido",
+    "telefone": "Telefone",
+    "email": "E-mail",
+    "obs": "Observações",
+    "cancel": "Cancelar",
+    "save": "Salvar alterações",
+    "saving": "Salvando…"
+  },
+  "remove": {
+    "title": "Remover cliente?",
+    "desc": "Este cliente será apagado da sua conta. Essa ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "confirm": "Remover",
+    "removing": "Removendo…"
+  },
+  "card": {
+    "inactive": "Inativo",
+    "editAria": "Editar",
+    "removeAria": "Remover",
+    "activate": "Ativar",
+    "deactivate": "Desativar"
+  },
+  "toasts": {
+    "loadError": "Não conseguimos carregar seus clientes.",
+    "duplicate": "Este cliente já está cadastrado na sua conta.",
+    "cnpjError": "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
+    "saved": "Cliente cadastrado.",
+    "saveError": "Não conseguimos salvar agora. Tente novamente.",
+    "nameRequired": "Informe o nome do cliente.",
+    "updated": "Cliente atualizado.",
+    "updateError": "Não conseguimos atualizar agora. Tente novamente.",
+    "activated": "Cliente ativado.",
+    "deactivated": "Cliente desativado.",
+    "toggleError": "Não conseguimos atualizar agora.",
+    "removed": "Cliente removido.",
+    "removeError": "Não conseguimos remover agora."
+  }
+}
