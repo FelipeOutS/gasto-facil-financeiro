@@ -493,7 +493,7 @@ function Index() {
       </Link>
 
       {/* ===== 2. Visão financeira + Calendário ===== */}
-      <SectionLabel>Visão financeira</SectionLabel>
+      <SectionLabel>{t("sections.visao")}</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className="flex min-w-0 lg:col-span-7">
           <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
@@ -509,7 +509,7 @@ function Index() {
       </section>
 
       {/* ===== 3. Resumo e próximas ações ===== */}
-      <SectionLabel>Resumo e próximas ações</SectionLabel>
+      <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section
         className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5"
       >
@@ -624,7 +624,7 @@ function Index() {
       {/* ===== 7. Insights secundários: Categorias + Cartões ===== */}
       {porCategoria.length > 0 && (
         <>
-          <SectionLabel>Categorias e cartões</SectionLabel>
+          <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
           <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ function Index() {
       />
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
-      <SectionLabel>Resumo e orçamento</SectionLabel>
+      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
           <div className="flex w-full">
@@ -770,7 +770,7 @@ function Index() {
       </section>
 
       {/* Atalhos secundários */}
-      <SectionLabel>Controle financeiro</SectionLabel>
+      <SectionLabel>{t("sections.controle")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <Link
           to="/orcamento"
