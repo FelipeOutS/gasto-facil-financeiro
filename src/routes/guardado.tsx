@@ -238,25 +238,25 @@ function GuardadoPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenB(false)}>Cancelar</Button>
-              <Button onClick={handleSaveBanco}>Adicionar</Button>
+              <Button variant="outline" onClick={() => setOpenB(false)}>{t("bankDialog.cancel")}</Button>
+              <Button onClick={handleSaveBanco}>{t("bankDialog.add")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
       <section className="mt-5">
-        <h2 className="text-sm font-semibold">Suas reservas</h2>
+        <h2 className="text-sm font-semibold">{t("reserves.title")}</h2>
         {guardado.length === 0 ? (
           <div className="mt-3 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-rise">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
               <Wallet className="h-6 w-6" />
             </span>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              Comece sua reserva e veja seu dinheiro separado por objetivo.
+              {t("reserves.emptyTitle")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre onde você guarda dinheiro e acompanhe tudo em um lugar só.
+              {t("reserves.emptyDesc")}
             </p>
             <Button
               size="sm"
@@ -264,7 +264,7 @@ function GuardadoPage() {
               onClick={() => setDialog({ kind: "create" })}
             >
               <Plus className="mr-1 h-4 w-4" />
-              Cadastrar primeira reserva
+              {t("reserves.firstReserve")}
             </Button>
           </div>
         ) : (
