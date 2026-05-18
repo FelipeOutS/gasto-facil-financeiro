@@ -21,6 +21,8 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   Plus,
   CreditCard,
