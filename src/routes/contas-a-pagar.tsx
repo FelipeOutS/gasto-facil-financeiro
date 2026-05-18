@@ -1117,15 +1117,15 @@ function ContaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) {
-      toast.error("Dá um nome pra essa conta.");
+      toast.error(t("form.errName"));
       return;
     }
     if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(t("form.errValue"));
       return;
     }
     if (!dataVenc) {
-      toast.error("Escolha a data de vencimento.");
+      toast.error(t("form.errDate"));
       return;
     }
 
@@ -1154,8 +1154,8 @@ function ContaFormDialog({
       updateContaAPagar(conta.id, fields);
       toast.success(
         isPaga && sincronizarGasto
-          ? "Conta e gasto atualizados. ✅"
-          : "Conta atualizada. ✅",
+          ? t("form.toastUpdatedSync")
+          : t("form.toastUpdated"),
       );
     } else {
       addContaAPagar({
@@ -1176,7 +1176,7 @@ function ContaFormDialog({
         chavePix: chavePix.trim() || undefined,
         fornecedorId: fornecedorId || null,
       });
-      toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
+      toast.success(recorrente ? t("form.toastCreatedRec") : t("form.toastCreated"));
     }
     onSaved();
   }
