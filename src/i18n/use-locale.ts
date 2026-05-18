@@ -18,8 +18,23 @@ export function useLocale() {
   // URL → i18n
   useEffect(() => {
     const fromUrl = search.lang;
-    if (isLocale(fromUrl) && fromUrl !== i18n.language) {
-      void i18n.changeLanguage(fromUrl);
+    if (isLocale(fromUrl)) {
+      if (fromUrl !== i18n.language) void i18n.changeLanguage(fromUrl);
+      return;
+    }
+    // Sem ?lang= na URL: aplica fallback persistente (localStorage > navegador)
+    // só depois da hidratação para não causar mismatch SSR/cliente.
+    try {
+      const fromStorage = window.localStorage.getItem(LANG_STORAGE_KEY);
+      if (isLocale(fromStorage) && fromStorage !== i18n.language) {
+        void i18n.changeLanguage(fromStorage);
+        return;
+      }
+      const nav = (window.navigator.language || "").toLowerCase();
+      const guess: Locale | null = nav.startsWith("en") ? "en" : nav.startsWith("pt") ? "pt" : null;
+      if (guess && guess !== i18n.language) void i18n.changeLanguage(guess);
+    } catch {
+      // ignore
     }
   }, [search.lang, i18n]);
 
