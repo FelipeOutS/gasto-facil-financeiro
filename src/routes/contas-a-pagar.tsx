@@ -271,7 +271,7 @@ function ContasAPagarPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("header.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
