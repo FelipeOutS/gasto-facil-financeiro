@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Plus,
@@ -27,7 +28,7 @@ import {
   useStore,
 } from "@/lib/store";
 import { TIPOS_RESERVA, type TipoReserva, type Guardado } from "@/lib/types";
-import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
+import { formatBRL, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
