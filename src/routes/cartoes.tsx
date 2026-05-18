@@ -1619,7 +1619,7 @@ function FaturaSheet({
                                     >
                                       <DropdownMenuItem onClick={() => setEditingGasto(g)}>
                                         <Pencil className="mr-2 h-4 w-4" />
-                                        Editar
+                                        {t("sheet.editItem")}
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
@@ -1627,7 +1627,7 @@ function FaturaSheet({
                                         className="text-destructive focus:text-destructive"
                                       >
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Excluir
+                                        {t("sheet.deleteItem")}
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
