@@ -528,7 +528,7 @@ function RelatoriosPage() {
           )}
         </ChartCard>
 
-        <ChartCard title="Receitas vs Despesas" icon={<TrendingUp className="h-4 w-4" />}>
+        <ChartCard title={t("chart.receitasDespesas")} icon={<TrendingUp className="h-4 w-4" />}>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={historicoMeses} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
