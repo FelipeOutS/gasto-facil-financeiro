@@ -1,0 +1,75 @@
+{
+  "head": {
+    "title": "Budget — Gasto Inteligente",
+    "description": "Track your monthly budget by category."
+  },
+  "back": "Back",
+  "prevMonth": "Previous month",
+  "nextMonth": "Next month",
+  "empty": {
+    "title": "Create your first budget",
+    "subtitle": "Set limits per category and track where your money is going.",
+    "create": "Create budget",
+    "copyPrev": "Copy from previous month"
+  },
+  "summary": {
+    "planned": "Planned",
+    "spent": "Spent",
+    "categoriesCount": "{{count}} category(ies)",
+    "pctOfPlan": "{{value}}% of plan",
+    "remaining": "Remaining",
+    "excess": "Excess",
+    "belowPlan": "below plan",
+    "abovePlan": "above plan",
+    "status": "Status",
+    "outOfPlan": "Out of plan",
+    "attention": "Attention",
+    "allGood": "All good",
+    "statusBreakdown": "{{ok}} ok · {{attention}} attention · {{exceeded}} over"
+  },
+  "totalLimit": {
+    "title": "Total monthly limit",
+    "copyPrev": "Copy previous month",
+    "edit": "Edit",
+    "of": "of {{value}}",
+    "none": "No total limit this month. You can set only by category if you prefer."
+  },
+  "list": {
+    "title": "By category",
+    "categoryOne": "{{count}} category",
+    "categoryOther": "{{count}} categories",
+    "overBy": "Over by {{value}}",
+    "remaining": "{{value}} left",
+    "edit": "Edit",
+    "remove": "Remove",
+    "removeAria": "Remove budget for {{name}}"
+  },
+  "noLimit": {
+    "title": "Categories without a defined limit",
+    "info": "{{value}} spent · no limit defined",
+    "setLimit": "Set limit"
+  },
+  "addMore": {
+    "title": "Add another category",
+    "subtitle": "Set limits for other categories to track everything."
+  },
+  "footer": "Set a limit and track without stress — you can plan differently each month.",
+  "dialog": {
+    "totalTitle": "Total monthly limit",
+    "categoryTitle": "Limit — {{name}}",
+    "descTotal": "Set how much you plan to spend on everything in {{period}}. Leave blank to remove.",
+    "descCategory": "Set how much you plan to spend on this category in {{period}}. Leave blank to remove.",
+    "value": "Value",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "toasts": {
+    "saved": "Limit of {{value}} saved. ✅",
+    "removed": "Limit removed.",
+    "categoryRemoved": "Budget for {{name}} removed.",
+    "noPrev": "The previous month has no budget to copy.",
+    "copied": "{{count}} limit(s) copied from previous month.",
+    "alreadyApplied": "Previous month limits were already applied."
+  },
+  "totalLimitName": "Total limit"
+}

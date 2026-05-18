@@ -32,7 +32,6 @@ import {
 import {
   buildLinhasOrcamento,
   resumirOrcamento,
-  type StatusOrcamento,
 } from "@/lib/orcamento";
 import { formatBRL, formatMonthYear, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
@@ -49,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/orcamento")({
   head: () => ({
@@ -63,17 +63,8 @@ export const Route = createFileRoute("/orcamento")({
   component: OrcamentoPage,
 });
 
-function statusLabel(s: StatusOrcamento): string {
-  return s === "ok"
-    ? "Dentro do controle"
-    : s === "atencao"
-      ? "Atenção: chegando no limite"
-      : s === "estouro"
-        ? "Limite estourado"
-        : "Sem limite";
-}
-
 function OrcamentoPage() {
+  const { t } = useTranslation("orcamento");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
@@ -132,13 +123,13 @@ function OrcamentoPage() {
     if (!editing) return;
     const v = parseBRLInput(editing.valor);
     setLimite(editing.id, v, ym.mes, ym.ano);
-    toast.success(v > 0 ? `Limite de ${formatBRL(v)} salvo. ✅` : "Limite removido.");
+    toast.success(v > 0 ? t("toasts.saved", { value: formatBRL(v) }) : t("toasts.removed"));
     setEditing(null);
   }
 
   function removerLimite(catId: string, nome: string) {
     setLimite(catId, 0, ym.mes, ym.ano);
-    toast.success(`Orçamento de ${nome} removido.`);
+    toast.success(t("toasts.categoryRemoved", { name: nome }));
   }
 
   function copiarMesAnterior() {
@@ -147,12 +138,11 @@ function OrcamentoPage() {
     const aa = anterior.getFullYear();
     const limitesAnteriores = getLimites().filter((l) => l.mes === ma && l.ano === aa);
     if (limitesAnteriores.length === 0) {
-      toast.error("O mês anterior não tem orçamento para copiar.");
+      toast.error(t("toasts.noPrev"));
       return;
     }
     let copiados = 0;
     for (const l of limitesAnteriores) {
-      // Só copia se o mês atual ainda não tem aquele tipo configurado
       const atual = getLimite(l.tipo, ym.mes, ym.ano);
       if (!atual || atual <= 0) {
         setLimite(l.tipo, l.valor, ym.mes, ym.ano);
@@ -161,8 +151,8 @@ function OrcamentoPage() {
     }
     toast.success(
       copiados > 0
-        ? `${copiados} limite(s) copiado(s) do mês anterior.`
-        : "Os limites do mês anterior já estavam aplicados.",
+        ? t("toasts.copied", { count: copiados })
+        : t("toasts.alreadyApplied"),
     );
   }
 
@@ -174,7 +164,7 @@ function OrcamentoPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -193,14 +183,14 @@ function OrcamentoPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
+            aria-label={t("nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -213,17 +203,17 @@ function OrcamentoPage() {
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-soft text-brand">
             <PieChartIcon className="h-6 w-6" />
           </div>
-          <h2 className="mt-4 text-lg font-bold">Crie seu primeiro orçamento</h2>
+          <h2 className="mt-4 text-lg font-bold">{t("empty.title")}</h2>
           <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
-            Defina limites por categoria e acompanhe para onde seu dinheiro está indo.
+            {t("empty.subtitle")}
           </p>
           <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
             <Button
-              onClick={() => openEdit("total", "Limite total")}
+              onClick={() => openEdit("total", t("totalLimitName"))}
               className="h-11 rounded-full px-5"
             >
               <Plus className="mr-1 h-4 w-4" />
-              Criar orçamento
+              {t("empty.create")}
             </Button>
             <Button
               variant="outline"
@@ -231,7 +221,7 @@ function OrcamentoPage() {
               className="h-11 rounded-full px-5"
             >
               <Copy className="mr-1 h-4 w-4" />
-              Copiar do mês anterior
+              {t("empty.copyPrev")}
             </Button>
           </div>
         </section>
@@ -242,19 +232,19 @@ function OrcamentoPage() {
         <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Planejado
+              {t("summary.planned")}
             </p>
             <Money
               value={totalPlanejado}
               className="num mt-1.5 block text-lg font-bold lg:text-xl"
             />
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {comLimite.length} categoria(s)
+              {t("summary.categoriesCount", { count: comLimite.length })}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Gasto
+              {t("summary.spent")}
             </p>
             <Money
               value={totalRealizado}
@@ -262,13 +252,13 @@ function OrcamentoPage() {
             />
             {totalPlanejado > 0 && (
               <p className="num mt-0.5 text-[10px] text-muted-foreground">
-                {Math.round(pctGeral)}% do plano
+                {t("summary.pctOfPlan", { value: Math.round(pctGeral) })}
               </p>
             )}
           </div>
           <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {diff >= 0 ? "Restante" : "Excesso"}
+              {diff >= 0 ? t("summary.remaining") : t("summary.excess")}
             </p>
             <Money
               value={Math.abs(diff)}
@@ -278,7 +268,7 @@ function OrcamentoPage() {
               )}
             />
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {diff >= 0 ? "abaixo do plano" : "acima do plano"}
+              {diff >= 0 ? t("summary.belowPlan") : t("summary.abovePlan")}
             </p>
           </div>
           <div
@@ -292,7 +282,7 @@ function OrcamentoPage() {
             )}
           >
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Status
+              {t("summary.status")}
             </p>
             <div className="mt-1.5 flex items-center gap-1.5">
               {qtdEstouro > 0 ? (
@@ -304,14 +294,14 @@ function OrcamentoPage() {
               )}
               <p className="text-sm font-semibold">
                 {qtdEstouro > 0
-                  ? "Fora do plano"
+                  ? t("summary.outOfPlan")
                   : qtdAtencao > 0
-                    ? "Atenção"
-                    : "Tudo certo"}
+                    ? t("summary.attention")
+                    : t("summary.allGood")}
               </p>
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {qtdOk} ok · {qtdAtencao} atenção · {qtdEstouro} estourada(s)
+              {t("summary.statusBreakdown", { ok: qtdOk, attention: qtdAtencao, exceeded: qtdEstouro })}
             </p>
           </div>
         </section>
@@ -323,7 +313,7 @@ function OrcamentoPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Limite mensal total</h2>
+              <h2 className="text-sm font-semibold">{t("totalLimit.title")}</h2>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -332,15 +322,15 @@ function OrcamentoPage() {
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 <Copy className="h-3 w-3" />
-                Copiar mês anterior
+                {t("totalLimit.copyPrev")}
               </button>
               <button
                 type="button"
-                onClick={() => openEdit("total", "Limite total")}
+                onClick={() => openEdit("total", t("totalLimitName"))}
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="h-3 w-3" />
-                Editar
+                {t("totalLimit.edit")}
               </button>
             </div>
           </div>
@@ -349,7 +339,7 @@ function OrcamentoPage() {
               <div className="mt-3 flex items-baseline justify-between">
                 <p className="num text-xl font-bold">{formatBRL(totalRealizado)}</p>
                 <p className="num text-xs text-muted-foreground">
-                  de {formatBRL(limiteTotal)}
+                  {t("totalLimit.of", { value: formatBRL(limiteTotal) })}
                 </p>
               </div>
               <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
@@ -370,7 +360,7 @@ function OrcamentoPage() {
             </>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">
-              Sem limite total este mês. Você pode definir só por categoria, se preferir.
+              {t("totalLimit.none")}
             </p>
           )}
         </section>
@@ -381,11 +371,12 @@ function OrcamentoPage() {
         <section className="mt-4">
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Por categoria
+              {t("list.title")}
             </h2>
             <span className="text-[11px] text-muted-foreground">
-              {comLimite.length}{" "}
-              {comLimite.length === 1 ? "categoria" : "categorias"}
+              {comLimite.length === 1
+                ? t("list.categoryOne", { count: comLimite.length })
+                : t("list.categoryOther", { count: comLimite.length })}
             </span>
           </div>
 
@@ -446,10 +437,8 @@ function OrcamentoPage() {
                           )}
                         >
                           {l.status === "estouro"
-                            ? `Estourou em ${formatBRL(Math.abs(l.restante))}`
-                            : l.status === "atencao"
-                              ? `Restam ${formatBRL(l.restante)}`
-                              : `Restam ${formatBRL(l.restante)}`}
+                            ? t("list.overBy", { value: formatBRL(Math.abs(l.restante)) })
+                            : t("list.remaining", { value: formatBRL(l.restante) })}
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -458,16 +447,16 @@ function OrcamentoPage() {
                             className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand transition-colors"
                           >
                             <Pencil className="h-3 w-3" />
-                            Editar
+                            {t("list.edit")}
                           </button>
                           <button
                             type="button"
                             onClick={() => removerLimite(l.cat.id, l.cat.nome)}
                             className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                            aria-label={`Remover orçamento de ${l.cat.nome}`}
+                            aria-label={t("list.removeAria", { name: l.cat.nome })}
                           >
                             <Trash2 className="h-3 w-3" />
-                            Remover
+                            {t("list.remove")}
                           </button>
                         </div>
                       </div>
@@ -485,7 +474,7 @@ function OrcamentoPage() {
         <section className="mt-5">
           <div className="mb-2 flex items-center justify-between px-1">
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Categorias sem limite definido
+              {t("noLimit.title")}
             </h2>
             <span className="text-[11px] text-muted-foreground">
               {semLimiteComGasto.length}
@@ -501,7 +490,7 @@ function OrcamentoPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{l.cat.nome}</p>
                   <p className="num text-[11px] text-muted-foreground">
-                    {formatBRL(l.realizado)} gastos · sem limite definido
+                    {t("noLimit.info", { value: formatBRL(l.realizado) })}
                   </p>
                 </div>
                 <Button
@@ -511,7 +500,7 @@ function OrcamentoPage() {
                   onClick={() => openEdit(l.cat.id, l.cat.nome)}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  Definir limite
+                  {t("noLimit.setLimit")}
                 </Button>
               </li>
             ))}
@@ -527,9 +516,9 @@ function OrcamentoPage() {
               <Sparkles className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">Adicionar mais uma categoria</p>
+              <p className="text-sm font-semibold">{t("addMore.title")}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Defina limites para outras categorias para acompanhar tudo.
+                {t("addMore.subtitle")}
               </p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {linhas
@@ -554,7 +543,7 @@ function OrcamentoPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <TrendingUp className="h-3 w-3" />
-        Defina um limite e acompanhe sem dor de cabeça — você pode planejar diferente a cada mês.
+        {t("footer")}
       </p>
 
       {/* Dialog editar limite */}
@@ -562,16 +551,18 @@ function OrcamentoPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing?.id === "total" ? "Limite mensal total" : `Limite — ${editing?.nome}`}
+              {editing?.id === "total"
+                ? t("dialog.totalTitle")
+                : t("dialog.categoryTitle", { name: editing?.nome ?? "" })}
             </DialogTitle>
             <DialogDescription>
-              Defina quanto pretende gastar com{" "}
-              {editing?.id === "total" ? "tudo" : "esta categoria"} em{" "}
-              {formatMonthYear(ym.ano, ym.mes)}. Deixe em branco para remover.
+              {editing?.id === "total"
+                ? t("dialog.descTotal", { period: formatMonthYear(ym.ano, ym.mes) })
+                : t("dialog.descCategory", { period: formatMonthYear(ym.ano, ym.mes) })}
             </DialogDescription>
           </DialogHeader>
           <div>
-            <Label className="text-xs text-muted-foreground">Valor</Label>
+            <Label className="text-xs text-muted-foreground">{t("dialog.value")}</Label>
             <div className="mt-1 flex items-baseline gap-2 rounded-xl bg-card-elevated px-3">
               <span className="text-sm font-semibold text-muted-foreground">R$</span>
               <Input
@@ -588,9 +579,9 @@ function OrcamentoPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>
-              Cancelar
+              {t("dialog.cancel")}
             </Button>
-            <Button onClick={saveEdit}>Salvar</Button>
+            <Button onClick={saveEdit}>{t("dialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
