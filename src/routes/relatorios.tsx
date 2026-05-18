@@ -99,9 +99,10 @@ export const Route = createFileRoute("/relatorios")({
 type Periodo = "mes" | "anterior" | "3m" | "6m" | "trimestre" | "semestre" | "ano" | "custom";
 
 function RelatoriosPage() {
+  const { t } = useTranslation("relatorios");
   const ready = useBootstrap();
   const { profile } = useAuth();
-  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
+  const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
