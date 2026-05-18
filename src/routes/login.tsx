@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,10 @@ import { traduzirErroAuth } from "@/lib/auth-messages";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — Gasto Inteligente" }] }),
+  head: () => {
+    const t = i18n.getFixedT(null, "auth");
+    return { meta: [{ title: t("metaTitleLogin") }] };
+  },
   component: LoginPage,
 });
 
@@ -25,6 +30,7 @@ function LoginPage() {
 }
 
 function LoginForm() {
+  const { t } = useTranslation("auth");
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -41,32 +47,32 @@ function LoginForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("Que bom te ver de novo! 👋");
+    toast.success(t("login.welcomeBack"));
     void navigate({ to: "/" });
   }
 
   return (
     <AuthShell
-      title="Bem-vindo de volta"
-      subtitle="Seus gastos, metas e o que você guardou — tudo num lugar só."
+      title={t("login.title")}
+      subtitle={t("login.subtitle")}
       footer={
         <div className="flex flex-col items-center gap-2">
           <span className="text-muted-foreground">
-            Ainda não tem conta?{" "}
+            {t("login.noAccount")}{" "}
             <Link to="/cadastro" className="font-semibold text-primary hover:underline">
-              Criar conta
+              {t("login.create")}
             </Link>
           </span>
         </div>
       }
     >
       <div className="mb-5 animate-fade-in">
-        <GoogleAuthButton label="Entrar com Google" separatorText="ou entre com e-mail" />
+        <GoogleAuthButton label={t("login.googleLabel")} separatorText={t("login.separator")} />
       </div>
       <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            E-mail
+            {t("login.email")}
           </Label>
           <Input
             id="email"
@@ -75,20 +81,20 @@ function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="voce@email.com"
+            placeholder={t("emailPlaceholder")}
             className="h-12 rounded-xl border-border/70 bg-background px-4 text-base shadow-sm focus-visible:ring-2 focus-visible:ring-primary/40"
           />
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Senha
+              {t("login.password")}
             </Label>
             <Link
               to="/recuperar-senha"
               className="text-xs font-medium text-primary hover:underline"
             >
-              Esqueci minha senha
+              {t("login.forgot")}
             </Link>
           </div>
           <PasswordInput
@@ -98,7 +104,7 @@ function LoginForm() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder={t("passwordPlaceholderShort")}
             className="h-12 rounded-xl border-border/70 bg-background px-4 text-base shadow-sm focus-visible:ring-2 focus-visible:ring-primary/40"
           />
         </div>
@@ -107,7 +113,7 @@ function LoginForm() {
             checked={remember}
             onCheckedChange={(v) => setRemember(v === true)}
           />
-          Manter-me conectado
+          {t("login.remember")}
         </label>
         <Button
           type="submit"
@@ -115,7 +121,7 @@ function LoginForm() {
           className="h-12 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/20 transition-transform active:scale-[0.98]"
           disabled={submitting}
         >
-          {submitting ? "Entrando…" : "Entrar"}
+          {submitting ? t("login.submitting") : t("login.submit")}
         </Button>
       </form>
     </AuthShell>
