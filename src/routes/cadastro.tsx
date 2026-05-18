@@ -5,6 +5,7 @@ import { MailCheck, RefreshCw } from "lucide-react";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
