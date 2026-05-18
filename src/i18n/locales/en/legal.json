@@ -1,0 +1,62 @@
+{
+  "updatedAt": "May 12, 2026",
+  "termos": {
+    "metaTitle": "Terms of use — Gasto Inteligente",
+    "metaDesc": "Terms of use of Gasto Inteligente — general rules for using the financial control platform.",
+    "ogDesc": "Terms of use of the Gasto Inteligente platform.",
+    "title": "Terms of use",
+    "intro": "These Terms of use describe, in simple language, the general conditions for using the <1>Gasto Inteligente</1> platform (\"platform\", \"service\" or \"app\"). By creating an account or using the service, you agree to this document.",
+    "s1": { "h": "1. About the service", "p1": "Gasto Inteligente is a financial control platform for personal use and for small businesses (sole proprietors and companies). It helps you organize expenses, cards, payables and receivables, goals, income and reports in one place, with a simple and visual view.", "p2": "The service is a financial organization tool and <1>does not replace</1> an accountant, lawyer or financial advisor." },
+    "s2": { "h": "2. User account", "i1": "You are responsible for the information registered in your account.", "i2": "Keep your password safe and don't share access.", "i3": "In case of misuse, contact us by email." },
+    "s3": { "h": "3. Plans and payments", "p": "Commercial plans are listed on the plans page of the platform. You can upgrade, downgrade or cancel your plan at any time. There is no mandatory loyalty period." },
+    "s4": { "h": "4. Proper use", "p": "You agree to use the platform in good faith, with no attempts of fraud, reverse engineering, API abuse or harm to third parties. We reserve the right to suspend accounts that violate these rules." },
+    "s5": { "h": "5. Availability", "p": "The service is provided \"as is\" and may go through updates, maintenance and improvements. We aim for the highest possible availability, but we do not guarantee uninterrupted operation." },
+    "s6": { "h": "6. Changes to these terms", "p": "These terms may be updated to reflect service improvements or legal requirements. Relevant changes will be communicated through the platform or via email." },
+    "s7": { "h": "7. Contact", "p": "For questions about these terms, write to <1>contato@gastointeligente.com.br</1>." }
+  },
+  "privacidade": {
+    "metaTitle": "Privacy policy — Gasto Inteligente",
+    "metaDesc": "How Gasto Inteligente collects, uses and protects your personal and financial data.",
+    "ogDesc": "How we take care of your data at Gasto Inteligente.",
+    "title": "Privacy policy",
+    "intro": "This Policy explains, in a clear way, how <1>Gasto Inteligente</1> collects, uses and protects the information of platform users. This is initial informational content and may be updated as the service evolves.",
+    "s1": { "h": "1. What data we collect", "i1Strong": "Registration data:", "i1": "name, email and basic data you provide.", "i2Strong": "Financial data you enter:", "i2": "expenses, income, accounts, goals, cards, clients, suppliers and other information you record on the platform.", "i3Strong": "Technical data:", "i3": "access information (date, device, browser) used for security and service improvement." },
+    "s2": { "h": "2. How we use your data", "i1": "To provide the financial organization service.", "i2": "To generate reports, charts and views you request.", "i3": "To send important communications about your account.", "i4": "To ensure the security and proper functioning of the platform." },
+    "s3": { "h": "3. Sharing", "p": "We do not sell your data. We may share information only with technology providers necessary for the operation of the service (such as hosting, email and payment processing), always within the minimum necessary." },
+    "s4": { "h": "4. Security", "p": "We adopt good security practices, such as encrypted connection (HTTPS), authentication-based access control and automatic backups. No system is 100% immune, but we work continuously to protect your data." },
+    "s5": { "h": "5. Your rights", "i1": "Access and correct your personal data.", "i2": "Request deletion of your account at any time.", "i3": "Ask for clarifications about the use of your data." },
+    "s6": { "h": "6. Cookies", "p": "We use only essential cookies to keep your session active and ensure the basic functioning of the platform." },
+    "s7": { "h": "7. Contact", "p": "To exercise your rights or ask questions, contact us at <1>contato@gastointeligente.com.br</1>." }
+  },
+  "lgpd": {
+    "metaTitle": "LGPD — Gasto Inteligente",
+    "metaDesc": "How Gasto Inteligente handles personal data under Brazil's General Data Protection Law.",
+    "ogDesc": "Gasto Inteligente's commitment to LGPD.",
+    "title": "LGPD — Brazilian General Data Protection Law",
+    "intro": "<1>Gasto Inteligente</1> respects Brazil's General Data Protection Law (Law nº 13.709/2018) and seeks to apply good privacy and security practices in the handling of user information. This content is an initial informational summary.",
+    "s1": { "h": "1. Principles we follow", "i1Strong": "Purpose:", "i1": "we use your data only for the purposes described in the Privacy policy.", "i2Strong": "Necessity:", "i2": "we collect only what is necessary to provide the service.", "i3Strong": "Transparency:", "i3": "we explain in a simple way how we handle your data.", "i4Strong": "Security:", "i4": "we apply technical and organizational measures to protect the information." },
+    "s2": { "h": "2. Data subject rights", "p": "As the data subject, you can request:", "i1": "Confirmation of the existence of data processing.", "i2": "Access and correction of information.", "i3": "Deletion of the account and personal data.", "i4": "Information about use and sharing." },
+    "s3": { "h": "3. How to exercise your rights", "p": "Send an email to <1>contato@gastointeligente.com.br</1> with the subject \"LGPD\" and the request. We will respond as soon as possible." },
+    "s4": { "h": "4. Data officer", "p": "The contact for data protection matters is the email above. As the operation evolves, we will formally designate a data officer (DPO) and update this page." }
+  },
+  "status": {
+    "metaTitle": "System status — Gasto Inteligente",
+    "metaDesc": "Current status of Gasto Inteligente services. Track the platform's availability.",
+    "ogDesc": "Availability of Gasto Inteligente services.",
+    "title": "System status",
+    "eyebrow": "Availability",
+    "allOk": "All services operating normally.",
+    "noIncidents": "No incidents reported at the moment.",
+    "operational": "Operational",
+    "servicesHeader": "Monitored services",
+    "services": {
+      "web": "Web platform",
+      "auth": "Sign-in and authentication",
+      "imports": "Statement and invoice imports",
+      "accountant": "Accountant package",
+      "radar": "Economic Radar"
+    },
+    "incidentsHeader": "Incident communication",
+    "incidentsBody": "If any instability or scheduled maintenance occurs, we will communicate through our official channels and update this page."
+  }
+}
