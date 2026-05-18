@@ -124,18 +124,22 @@ function iconForType(type: string): LucideIcon {
   }
 }
 
-function formatRelativo(iso: string): string {
-  const d = new Date(iso);
-  const diff = Date.now() - d.getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "agora";
-  if (mins < 60) return `há ${mins}min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `há ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `há ${days}d`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+function useFormatRelativo() {
+  const { t, i18n: i18nInst } = useTranslation("misc");
+  return (iso: string): string => {
+    const d = new Date(iso);
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1) return t("alertas.rel.now");
+    if (mins < 60) return t("alertas.rel.min", { n: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("alertas.rel.hour", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return t("alertas.rel.day", { n: days });
+    return d.toLocaleDateString(i18nInst.language === "en" ? "en-US" : "pt-BR", { day: "2-digit", month: "short" });
+  };
 }
+
 
 function AlertCard({
   alert,
