@@ -369,14 +369,14 @@ function Index() {
       <button
         onClick={() => changeMonth(-1)}
         className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label="Mês anterior"
+        aria-label={t("monthSwitcher.prev")}
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
       <button
         onClick={() => changeMonth(1)}
         className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label="Próximo mês"
+        aria-label={t("monthSwitcher.next")}
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -901,12 +901,13 @@ function LimiteMensalCard({
   passouLimite: boolean;
   proximoLimite: boolean;
 }) {
+  const { t } = useTranslation("dashboard");
   return (
     <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Limite mensal
+            {t("limiteMensal.eyebrow")}
           </p>
           <p className="num mt-1 text-sm font-semibold">
             {formatBRL(total)} <span className="font-normal text-muted-foreground">/ {formatBRL(limiteTotal)}</span>
@@ -926,16 +927,16 @@ function LimiteMensalCard({
       {passouLimite ? (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Limite ultrapassado em {formatBRL(total - limiteTotal)}
+          {t("limiteMensal.ultrapassado", { valor: formatBRL(total - limiteTotal) })}
         </p>
       ) : proximoLimite ? (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
+          {t("limiteMensal.quase", { pct: Math.round((total / limiteTotal) * 100) })}
         </p>
       ) : (
         <p className="num mt-2 text-[11px] text-muted-foreground">
-          {Math.round((total / limiteTotal) * 100)}% usado
+          {t("limiteMensal.usado", { pct: Math.round((total / limiteTotal) * 100) })}
         </p>
       )}
     </section>
@@ -951,6 +952,7 @@ function MinhaRendaCard({
   ano: number;
   mes: number;
 }) {
+  const { t } = useTranslation("dashboard");
   return (
     <Link
       to="/renda"
@@ -961,9 +963,9 @@ function MinhaRendaCard({
         <ArrowUp className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium">Minha renda</p>
+        <p className="truncate text-sm font-medium">{t("minhaRenda.title")}</p>
         <p className="num truncate text-[11px] text-muted-foreground">
-          {formatBRL(totalEntradas)} este mês
+          {t("minhaRenda.esteMes", { valor: formatBRL(totalEntradas) })}
         </p>
       </div>
       <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
@@ -972,20 +974,22 @@ function MinhaRendaCard({
 }
 
 function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Gasto[] }) {
+  const { t, i18n } = useTranslation("dashboard");
+  const dateLocale = i18n.language === "en" ? "en-US" : "pt-BR";
   return (
     <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Atividade
+            {t("atividade.eyebrow")}
           </p>
-          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">Transações recentes</h2>
+          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("atividade.title")}</h2>
         </div>
         <Link
           to="/gastos"
           className="text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
-          Ver tudo →
+          {t("atividade.verTudo")}
         </Link>
       </div>
       <div className="mt-3">
@@ -993,10 +997,10 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
             <p className="mt-2 text-xs text-muted-foreground">
-              Tudo vazio por aqui ainda.
+              {t("atividade.vazio")}
             </p>
             <Link to="/adicionar" className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors">
-              Lançar o primeiro gasto
+              {t("atividade.primeiro")}
             </Link>
           </div>
         ) : (
@@ -1014,8 +1018,8 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
-                      {cat?.nome ?? "Outros"} ·{" "}
-                      {new Date(g.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {cat?.nome ?? t("atividade.outros")} ·{" "}
+                      {new Date(g.data + "T00:00:00").toLocaleDateString(dateLocale)}
                     </p>
                   </div>
                   <p className="num shrink-0 text-sm font-semibold text-destructive">
@@ -1084,6 +1088,7 @@ function ContasCard({
   resumo: ContasResumo;
   variant?: "default" | "sideTop";
 }) {
+  const { t } = useTranslation("dashboard");
   const hasAtrasada = resumo.atrasadasCount > 0;
   const hasPendentes = resumo.pendentesCount > 0 || hasAtrasada;
   const tudoPago = resumo.total > 0 && !hasPendentes;
@@ -1093,10 +1098,10 @@ function ContasCard({
   function vencimentoLabel(): string {
     const d = resumo.diasParaProxima;
     if (d === null) return "";
-    if (d < 0) return `vencida há ${Math.abs(d)}d`;
-    if (d === 0) return "vence hoje";
-    if (d === 1) return "vence amanhã";
-    return `vence em ${d}d`;
+    if (d < 0) return t("contas.vencimento.atrasada", { dias: Math.abs(d) });
+    if (d === 0) return t("contas.vencimento.hoje");
+    if (d === 1) return t("contas.vencimento.amanha");
+    return t("contas.vencimento.futuro", { dias: d });
   }
 
   return (
@@ -1123,14 +1128,14 @@ function ContasCard({
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próximas contas
+              {t("contas.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
               {semContas
-                ? "Cadastre suas contas e não perca nenhum vencimento"
+                ? t("contas.semContas")
                 : tudoPago
-                  ? "Tudo pago neste mês 🎉"
-                  : `${formatBRL(resumo.pendente)} pendentes`}
+                  ? t("contas.tudoPago")
+                  : t("contas.pendentes", { valor: formatBRL(resumo.pendente) })}
             </h2>
           </div>
         </div>
@@ -1138,14 +1143,14 @@ function ContasCard({
           to="/contas-a-pagar"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contas.ver")}
         </Link>
       </div>
 
       {!semContas && !tudoPago && resumo.proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima a vencer
+            {t("contas.proximaVencer")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.nome}</p>
@@ -1172,12 +1177,12 @@ function ContasCard({
         <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="num">
             {resumo.pendentesCount}{" "}
-            {resumo.pendentesCount === 1 ? "pendente" : "pendentes"}
+            {resumo.pendentesCount === 1 ? t("contas.pendenteSing") : t("contas.pendentePlur")}
           </span>
           <span>·</span>
           <span className={cn("num", hasAtrasada && "text-destructive font-medium")}>
             {resumo.atrasadasCount}{" "}
-            {resumo.atrasadasCount === 1 ? "atrasada" : "atrasadas"}
+            {resumo.atrasadasCount === 1 ? t("contas.atrasadaSing") : t("contas.atrasadaPlur")}
           </span>
         </div>
       )}
@@ -1186,7 +1191,7 @@ function ContasCard({
         <Link to="/contas-a-pagar" className="mt-3 block">
           <Button variant="outline" size="sm" className="w-full">
             <Plus className="mr-1 h-4 w-4" />
-            Adicionar conta
+            {t("contas.adicionar")}
           </Button>
         </Link>
       )}
@@ -1236,6 +1241,7 @@ function DashboardSkeleton() {
  * Esconde-se silenciosamente se não houver nenhum alerta nem próxima conta.
  */
 function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
+  const { t } = useTranslation("dashboard");
   const resumo = useMemo(() => buildResumoAlertas(contas), [contas]);
   const proxima = resumo.todos[0];
   const totalAtrasadas = resumo.atrasadas.length;
@@ -1279,16 +1285,16 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Alertas financeiros
+              {t("alertasContas.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
               {totalAtrasadas > 0
-                ? `${totalAtrasadas} ${totalAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}`
+                ? t(totalAtrasadas === 1 ? "alertasContas.atrasadasSing" : "alertasContas.atrasadasPlur", { count: totalAtrasadas })
                 : totalHoje > 0
-                  ? `${totalHoje} ${totalHoje === 1 ? "conta vence" : "contas vencem"} hoje`
+                  ? t(totalHoje === 1 ? "alertasContas.hojeSing" : "alertasContas.hojePlur", { count: totalHoje })
                   : totalAmanha > 0
-                    ? `${totalAmanha} ${totalAmanha === 1 ? "conta vence" : "contas vencem"} amanhã`
-                    : `${totalEm7} ${totalEm7 === 1 ? "conta vence" : "contas vencem"} nos próximos dias`}
+                    ? t(totalAmanha === 1 ? "alertasContas.amanhaSing" : "alertasContas.amanhaPlur", { count: totalAmanha })
+                    : t(totalEm7 === 1 ? "alertasContas.proxSing" : "alertasContas.proxPlur", { count: totalEm7 })}
             </h2>
           </div>
         </div>
@@ -1296,25 +1302,25 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
           to="/contas-a-pagar"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contas.ver")}
         </Link>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <AlertaPill
-          label="Atrasadas"
+          label={t("alertasContas.pillAtrasadas")}
           count={totalAtrasadas}
           tone="destructive"
           icon={<AlertTriangle className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Hoje/amanhã"
+          label={t("alertasContas.pillHojeAmanha")}
           count={totalHoje + totalAmanha}
           tone="warning"
           icon={<Clock className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Próx. 7 dias"
+          label={t("alertasContas.pillProx7")}
           count={totalEm7}
           tone="brand"
           icon={<CalendarClock className="h-3 w-3" />}
@@ -1324,7 +1330,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
       {proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima a vencer
+            {t("contas.proximaVencer")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{proxima.conta.nome}</p>
@@ -1343,12 +1349,12 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
             )}
           >
             {proxima.severidade === "atrasada"
-              ? `Vencida há ${Math.abs(proxima.dias)}d`
+              ? t("alertasContas.vencidaHa", { dias: Math.abs(proxima.dias) })
               : proxima.severidade === "hoje"
-                ? "Vence hoje"
+                ? t("alertasContas.venceHoje")
                 : proxima.severidade === "amanha"
-                  ? "Vence amanhã"
-                  : `Vence em ${proxima.dias}d`}
+                  ? t("alertasContas.venceAmanha")
+                  : t("alertasContas.venceEm", { dias: proxima.dias })}
           </p>
         </div>
       )}
@@ -1405,6 +1411,7 @@ function OrcamentoCard({
   mes: number;
   ano: number;
 }) {
+  const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
       buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
@@ -1448,7 +1455,7 @@ function OrcamentoCard({
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Orçamento do mês
+              {t("orcamentoCard.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold num">
               {formatBRL(totalRealizado)}
@@ -1459,7 +1466,7 @@ function OrcamentoCard({
           </div>
         </div>
         <Link to="/orcamento" className="text-xs text-muted-foreground hover:text-foreground">
-          Ver →
+          {t("orcamentoCard.ver")}
         </Link>
       </div>
 
@@ -1477,24 +1484,24 @@ function OrcamentoCard({
         />
       </div>
       <p className="num mt-1 text-[10px] text-muted-foreground">
-        {Math.round(pctGeral)}% usado
+        {t("orcamentoCard.usado", { pct: Math.round(pctGeral) })}
       </p>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <AlertaPill
-          label="Dentro"
+          label={t("orcamentoCard.pillDentro")}
           count={qtdOk}
           tone="brand"
           icon={<PieChartIcon className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Atenção"
+          label={t("orcamentoCard.pillAtencao")}
           count={qtdAtencao}
           tone="warning"
           icon={<AlertTriangle className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Estourou"
+          label={t("orcamentoCard.pillEstourou")}
           count={qtdEstouro}
           tone="destructive"
           icon={<AlertTriangle className="h-3 w-3" />}
@@ -1504,7 +1511,7 @@ function OrcamentoCard({
       {top3.length > 0 && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Maior uso no mês
+            {t("orcamentoCard.maiorUso")}
           </p>
           <ul className="mt-1.5 space-y-1.5">
             {top3.map((l) => {
@@ -1575,6 +1582,7 @@ function ResumoMesCard({
   contasAtrasadas: number;
   limiteTotal: number | null | undefined;
 }) {
+  const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
       buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
@@ -1593,80 +1601,70 @@ function ResumoMesCard({
   const folgaPct = totalEntradas > 0 ? saldo / totalEntradas : 0;
   const passouLimite = !!(limiteTotal && limiteTotal > 0 && totalGastos > limiteTotal);
 
-  type Estado = "ótimo" | "bom" | "apertado" | "atencao" | "critico" | "neutro";
-  let estado: Estado = "neutro";
   let emoji = "🙂";
-  let titulo = "Resumo do mês";
-  let mensagem = "Continue lançando seus dados para a gente entender melhor seu mês.";
+  let titulo = t("resumoMes.default");
+  let mensagem = t("resumoMes.defaultMsg");
   let toneCls = "border-border bg-card";
   let textCls = "text-foreground";
 
   if (semDados) {
-    estado = "neutro";
     emoji = "✨";
-    titulo = "Vamos começar?";
-    mensagem = "Adicione receitas e gastos para ver um resumo personalizado do seu mês aqui.";
+    titulo = t("resumoMes.vamosComecar");
+    mensagem = t("resumoMes.vamosComecarMsg");
   } else if (contasAtrasadas > 0) {
-    estado = "critico";
     emoji = "😬";
-    titulo = "Tem conta atrasada por aí";
-    mensagem = `Você tem ${contasAtrasadas} ${contasAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"}. Resolver isso primeiro evita juros e dor de cabeça.`;
+    titulo = t("resumoMes.atrasada");
+    mensagem = t("resumoMes.atrasadaMsg", { count: contasAtrasadas });
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
   } else if (saldo < 0) {
-    estado = "critico";
     emoji = "🚨";
-    titulo = "Saldo negativo";
-    mensagem = `Os gastos passaram da receita em ${formatBRL(Math.abs(saldo))}. Vale revisar a categoria ${maiorCategoria?.nome ?? "principal"} para frear.`;
+    titulo = t("resumoMes.negativo");
+    mensagem = maiorCategoria
+      ? t("resumoMes.negativoMsg", { valor: formatBRL(Math.abs(saldo)), categoria: maiorCategoria.nome })
+      : t("resumoMes.negativoMsgSemCat", { valor: formatBRL(Math.abs(saldo)) });
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
   } else if (passouLimite) {
-    estado = "atencao";
     emoji = "⚠️";
-    titulo = "Eita, o limite foi ultrapassado";
-    mensagem = `Você passou ${formatBRL(totalGastos - (limiteTotal ?? 0))} do limite mensal. Bora desacelerar nos próximos dias?`;
+    titulo = t("resumoMes.limite");
+    mensagem = t("resumoMes.limiteMsg", { valor: formatBRL(totalGastos - (limiteTotal ?? 0)) });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (estouro.length >= 2) {
-    estado = "atencao";
     emoji = "⚠️";
-    titulo = "Algumas categorias estouraram";
-    mensagem = `${estouro.length} categorias passaram do orçamento — começando por ${critica ?? ""}.`;
+    titulo = t("resumoMes.categorias");
+    mensagem = t("resumoMes.categoriasMsg", { count: estouro.length, categoria: critica ?? "" });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (estouro.length === 1) {
-    estado = "atencao";
     emoji = "🧐";
-    titulo = "Atenção: esse mês pesou um pouco";
-    mensagem = `A categoria ${critica} passou do orçamento. As outras estão sob controle 👍`;
+    titulo = t("resumoMes.categoria");
+    mensagem = t("resumoMes.categoriaMsg", { categoria: critica });
     toneCls = "border-warning/30 bg-warning/5";
     textCls = "text-warning";
   } else if (folgaPct >= 0.3 && totalEntradas > 0) {
-    estado = "ótimo";
     emoji = "🚀";
-    titulo = "Mandou muito bem!";
-    mensagem = `Sobrou ${formatBRL(saldo)} no mês — uma folga de ${Math.round(folgaPct * 100)}% da sua renda. Que tal direcionar pra uma meta?`;
+    titulo = t("resumoMes.otimo");
+    mensagem = t("resumoMes.otimoMsg", { valor: formatBRL(saldo), pct: Math.round(folgaPct * 100) });
     toneCls = "border-success/30 bg-success/5";
     textCls = "text-success";
   } else if (folgaPct >= 0.1 && totalEntradas > 0) {
-    estado = "bom";
     emoji = "😁";
-    titulo = "Boa! Você terminou no azul";
-    mensagem = `Sobrou ${formatBRL(saldo)} este mês. Continue assim e ainda dá pra guardar uma parte 💰`;
+    titulo = t("resumoMes.bom");
+    mensagem = t("resumoMes.bomMsg", { valor: formatBRL(saldo) });
     toneCls = "border-success/30 bg-success/5";
     textCls = "text-success";
   } else if (saldo > 0) {
-    estado = "apertado";
     emoji = "🙂";
-    titulo = "Fechou positivo, mas com pouca folga";
-    mensagem = `Sobrou ${formatBRL(saldo)} no fim do mês. Tá apertado — qualquer imprevisto pode virar o jogo.`;
+    titulo = t("resumoMes.apertado");
+    mensagem = t("resumoMes.apertadoMsg", { valor: formatBRL(saldo) });
     toneCls = "border-warning/20 bg-warning/5";
     textCls = "text-foreground";
   } else {
-    estado = "neutro";
     emoji = "🙂";
-    titulo = "Mês equilibrado";
-    mensagem = "Entradas e gastos no mesmo patamar. Vale tentar abrir uma folguinha pro próximo mês.";
+    titulo = t("resumoMes.equilibrado");
+    mensagem = t("resumoMes.equilibradoMsg");
   }
 
   return (
@@ -1677,7 +1675,7 @@ function ResumoMesCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Resumo do mês
+            {t("resumoMes.eyebrow")}
           </p>
           <h3 className={cn("text-base font-bold leading-tight", textCls)}>{titulo}</h3>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{mensagem}</p>
@@ -1687,15 +1685,15 @@ function ResumoMesCard({
       {!semDados && (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Maior categoria</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.maiorCategoria")}</p>
             <p className="mt-0.5 truncate text-sm font-semibold">
               {maiorCategoria ? `${maiorCategoria.nome} · ${Math.round(maiorCategoria.pct)}%` : "—"}
             </p>
           </div>
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Orçamento</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.orcamento")}</p>
             <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
-              {critica ? `Estourou: ${critica}` : estouro.length === 0 && linhas.length > 0 ? "Tudo no controle" : "Sem limite"}
+              {critica ? t("resumoMes.estourou", { categoria: critica }) : estouro.length === 0 && linhas.length > 0 ? t("resumoMes.tudoControle") : t("resumoMes.semLimite")}
             </p>
           </div>
         </div>
@@ -1706,7 +1704,7 @@ function ResumoMesCard({
         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm font-medium transition-all hover:bg-accent active:scale-[0.98]"
       >
         <Sparkles className="h-3.5 w-3.5 text-brand" />
-        Ver relatório completo
+        {t("resumoMes.verRelatorio")}
       </Link>
     </section>
   );
@@ -1715,6 +1713,7 @@ function ResumoMesCard({
 
 
 function ContasAReceberCard() {
+  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const userId = user?.id;
   const [resumo, setResumo] = useState<{
@@ -1765,12 +1764,12 @@ function ContasAReceberCard() {
     dias === null
       ? ""
       : dias < 0
-        ? `${Math.abs(dias)} dia(s) atrasado`
+        ? t("contasReceber.atrasada", { dias: Math.abs(dias) })
         : dias === 0
-          ? "vence hoje"
+          ? t("contasReceber.venceHoje")
           : dias === 1
-            ? "vence amanhã"
-            : `vence em ${dias} dia(s)`;
+            ? t("contasReceber.venceAmanha")
+            : t("contasReceber.venceEm", { dias });
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
@@ -1781,10 +1780,10 @@ function ContasAReceberCard() {
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              A receber
+              {t("contasReceber.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
-              {formatBRL(resumo.totalAberto)} em aberto
+              {t("contasReceber.emAberto", { valor: formatBRL(resumo.totalAberto) })}
             </h2>
           </div>
         </div>
@@ -1792,14 +1791,14 @@ function ContasAReceberCard() {
           to="/contas-a-receber"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contasReceber.ver")}
         </Link>
       </div>
 
       {resumo.proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima entrada
+            {t("contasReceber.proximaEntrada")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.titulo}</p>
@@ -1824,13 +1823,13 @@ function ContasAReceberCard() {
 
       <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="num">
-          {resumo.countAbertas} aberta(s)
+          {t(resumo.countAbertas === 1 ? "contasReceber.abertasSing" : "contasReceber.abertasPlur", { count: resumo.countAbertas })}
         </span>
         {resumo.countAtrasadas > 0 && (
           <>
             <span>·</span>
             <span className="num text-destructive font-medium">
-              {resumo.countAtrasadas} atrasada(s)
+              {t(resumo.countAtrasadas === 1 ? "contasReceber.atrasadasSing" : "contasReceber.atrasadasPlur", { count: resumo.countAtrasadas })}
             </span>
           </>
         )}
@@ -1840,6 +1839,7 @@ function ContasAReceberCard() {
 }
 
 function AssinaturasMoedaEstrangeiraBanner() {
+  const { t } = useTranslation("dashboard");
   const recs = useRecorrencias();
   const ativas = recs.filter(
     (r) => r.status === "ativa" && r.moeda && r.moeda !== "BRL",
@@ -1847,8 +1847,8 @@ function AssinaturasMoedaEstrangeiraBanner() {
   if (ativas.length === 0) return null;
   const moedas = Array.from(new Set(ativas.map((r) => r.moeda)));
   const moedaLabel = moedas.length === 1
-    ? moedas[0] === "USD" ? "dólar" : "euro"
-    : "moeda estrangeira";
+    ? moedas[0] === "USD" ? t("moedaEstrangeira.dolar") : t("moedaEstrangeira.euro")
+    : t("moedaEstrangeira.moedaEstrangeira");
   return (
     <Link
       to="/assinaturas"
@@ -1859,10 +1859,10 @@ function AssinaturasMoedaEstrangeiraBanner() {
       </span>
       <div className="min-w-0 text-sm">
         <p className="font-semibold">
-          Você possui {ativas.length === 1 ? "uma assinatura" : `${ativas.length} assinaturas`} em {moedaLabel}.
+          {t(ativas.length === 1 ? "moedaEstrangeira.umaSing" : "moedaEstrangeira.umaPlur", { count: ativas.length, moeda: moedaLabel })}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          A variação do câmbio pode alterar o valor da próxima fatura. Toque para revisar.
+          {t("moedaEstrangeira.subtitle")}
         </p>
       </div>
     </Link>
