@@ -952,6 +952,7 @@ function MinhaRendaCard({
   ano: number;
   mes: number;
 }) {
+  const { t } = useTranslation("dashboard");
   return (
     <Link
       to="/renda"
@@ -962,9 +963,9 @@ function MinhaRendaCard({
         <ArrowUp className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium">Minha renda</p>
+        <p className="truncate text-sm font-medium">{t("minhaRenda.title")}</p>
         <p className="num truncate text-[11px] text-muted-foreground">
-          {formatBRL(totalEntradas)} este mês
+          {t("minhaRenda.esteMes", { valor: formatBRL(totalEntradas) })}
         </p>
       </div>
       <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
