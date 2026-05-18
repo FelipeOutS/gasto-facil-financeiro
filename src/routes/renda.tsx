@@ -280,7 +280,7 @@ function RendaPage() {
       .map(([tipo, valor]) => ({
         tipo,
         valor,
-        label: TIPOS_RECEITA.find((t) => t.id === tipo)?.label ?? tipo,
+        label: tipoLabel(tipo),
         cor: TIPO_COLORS[tipo],
       }))
       .sort((a, b) => b.valor - a.valor);
@@ -290,23 +290,19 @@ function RendaPage() {
   const insights = useMemo(() => {
     const out: { icon: typeof Sparkles; text: string; tone: "good" | "neutral" | "warn" }[] = [];
     if (totalMes === 0) {
-      out.push({
-        icon: Sparkles,
-        text: "Você ainda não cadastrou entradas neste mês. Que tal começar agora?",
-        tone: "neutral",
-      });
+      out.push({ icon: Sparkles, text: t("insights.empty"), tone: "neutral" });
     }
     if (variacaoPct !== null) {
       if (variacaoPct > 1) {
         out.push({
           icon: TrendingUp,
-          text: `Sua renda subiu ${variacaoPct.toFixed(1)}% em relação ao mês anterior.`,
+          text: t("insights.up", { pct: variacaoPct.toFixed(1) }),
           tone: "good",
         });
       } else if (variacaoPct < -1) {
         out.push({
           icon: TrendingDown,
-          text: `Sua renda caiu ${Math.abs(variacaoPct).toFixed(1)}% em relação ao mês anterior.`,
+          text: t("insights.down", { pct: Math.abs(variacaoPct).toFixed(1) }),
           tone: "warn",
         });
       }
@@ -316,14 +312,14 @@ function RendaPage() {
       const pct = (maior.valor / totalMes) * 100;
       out.push({
         icon: Wallet,
-        text: `${pct.toFixed(0)}% da sua renda vem de ${maior.label.toLowerCase()}.`,
+        text: t("insights.topSource", { pct: pct.toFixed(0), label: maior.label.toLowerCase() }),
         tone: "neutral",
       });
     }
     if (recorrentesMes.length > 0) {
       out.push({
         icon: Repeat,
-        text: `Você tem ${recorrentesMes.length} entrada${recorrentesMes.length > 1 ? "s" : ""} recorrente${recorrentesMes.length > 1 ? "s" : ""} este mês (${formatBRL(recorrentesValor)}).`,
+        text: t("insights.recurring", { count: recorrentesMes.length, value: formatBRL(recorrentesValor) }),
         tone: "good",
       });
     }
@@ -331,18 +327,14 @@ function RendaPage() {
       const pct = (extraMes / totalMes) * 100;
       out.push({
         icon: Sparkles,
-        text: `Sua renda extra representa ${pct.toFixed(0)}% do total do mês.`,
+        text: t("insights.extraShare", { pct: pct.toFixed(0) }),
         tone: "neutral",
       });
     } else if (totalMes > 0 && extraMes === 0) {
-      out.push({
-        icon: Sparkles,
-        text: "Você ainda não cadastrou renda extra este mês.",
-        tone: "neutral",
-      });
+      out.push({ icon: Sparkles, text: t("insights.noExtra"), tone: "neutral" });
     }
     return out.slice(0, 4);
-  }, [totalMes, variacaoPct, composicao, recorrentesMes.length, recorrentesValor, extraMes]);
+  }, [t, totalMes, variacaoPct, composicao, recorrentesMes.length, recorrentesValor, extraMes]);
 
   // Próximas recorrências (3 meses à frente)
   const proximasRecorrencias = useMemo(() => {
@@ -433,7 +425,7 @@ function RendaPage() {
 
   function persistNova(payload: NovaPayload) {
     addReceita(payload);
-    toast.success("Renda adicionada. Boa! 💸");
+    toast.success(t("toast.added"));
     setOpen(false);
     reset();
   }
@@ -450,7 +442,7 @@ function RendaPage() {
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
-      toast.error("Preencha a descrição e o valor.");
+      toast.error(t("toast.fillFields"));
       return;
     }
     const dt = new Date(data + "T12:00:00");
