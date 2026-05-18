@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -107,7 +108,7 @@ const MONTH_NAMES_PT = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-const MONTH_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MONTH_SHORT_FALLBACK = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 function normalizeDescricao(s: string): string {
   return s
