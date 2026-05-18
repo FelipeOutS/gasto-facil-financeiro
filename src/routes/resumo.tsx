@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, ChevronLeft, ChevronRight, Trophy, TrendingDown, TrendingUp } from "lucide-react";
 import {
   PieChart,
@@ -13,13 +14,15 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { getCategoriaById, getGastos, useBootstrap, useStore } from "@/lib/store";
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/resumo")({
-  head: () => ({ meta: [{ title: "Resumo por categoria — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.getFixedT(i18n.language, "misc")("resumo.metaTitle") }] }),
   component: ResumoPage,
 });
 
 function ResumoPage() {
+  const { t } = useTranslation("misc");
   const ready = useBootstrap();
   const today = new Date();
   const [ym, setYm] = useState({ ano: today.getFullYear(), mes: today.getMonth() + 1 });
