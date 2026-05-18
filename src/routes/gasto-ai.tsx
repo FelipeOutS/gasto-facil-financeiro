@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 import { Sparkles, Send, Trash2, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -11,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import i18n from "@/i18n";
 import {
   sendChatMessage,
   getChatHistory,
@@ -21,33 +23,23 @@ export const Route = createFileRoute("/gasto-ai")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : undefined,
   }),
-  head: () => ({
-    meta: [
-      { title: "Gasto Inteligente AI — Assistente financeiro com IA" },
-      {
-        name: "description",
-        content:
-          "Converse com a IA sobre seus gastos, metas e organização financeira em linguagem simples.",
-      },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return {
+      meta: [
+        { title: t("ai.metaTitle") },
+        { name: "description", content: t("ai.metaDesc") },
+      ],
+    };
+  },
   component: GastoAIPage,
 });
-
-const SUGESTOES = [
-  "Como estão meus gastos este mês?",
-  "Qual foi minha maior despesa?",
-  "Como está minha fatura do cartão?",
-  "Quanto veio minha fatura?",
-  "Qual cartão eu mais usei?",
-  "Onde posso economizar?",
-  "Tenho contas vencidas?",
-  "Minhas metas estão indo bem?",
-];
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string; created_at: string };
 
 function GastoAIPage() {
+  const { t } = useTranslation("misc");
+  const SUGESTOES = useMemo(() => t("ai.suggestions", { returnObjects: true }) as string[], [t]);
   const { user, profile } = useAuth();
   const { q: seededQ } = Route.useSearch();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -92,7 +84,7 @@ function GastoAIPage() {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     if (trimmed.length > 1500) {
-      toast.error("Mensagem muito longa. Tente algo mais curto.");
+      toast.error(t("ai.toastTooLong"));
       return;
     }
     setSending(true);
@@ -119,7 +111,7 @@ function GastoAIPage() {
       const msg =
         typeof e?.message === "string" && e.message
           ? e.message
-          : "Não consegui responder agora. Tente novamente em alguns instantes.";
+          : t("ai.toastError");
       toast.error(msg);
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     } finally {
@@ -133,13 +125,13 @@ function GastoAIPage() {
   }
 
   async function handleClear() {
-    if (!confirm("Apagar todo o histórico desta conversa?")) return;
+    if (!confirm(t("ai.confirmClear"))) return;
     try {
       await clearFn();
       setMessages([]);
-      toast.success("Histórico apagado.");
+      toast.success(t("ai.toastCleared"));
     } catch {
-      toast.error("Não consegui limpar o histórico.");
+      toast.error(t("ai.toastClearError"));
     }
   }
 
@@ -155,16 +147,16 @@ function GastoAIPage() {
               <Sparkles className="h-5 w-5 text-primary" />
             </span>
             <div>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Gasto Inteligente AI</h1>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("ai.title")}</h1>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Pergunte sobre seus gastos, metas e organização financeira.
+                {t("ai.subtitle")}
               </p>
             </div>
           </div>
           {messages.length > 0 && (
             <Button variant="ghost" size="sm" onClick={handleClear} className="rounded-full">
               <Trash2 className="mr-2 h-4 w-4" />
-              Limpar
+              {t("ai.clear")}
             </Button>
           )}
         </header>
@@ -192,7 +184,7 @@ function GastoAIPage() {
             {loadingHistory ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Carregando conversa…
+                {t("ai.loading")}
               </div>
             ) : empty ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
@@ -200,9 +192,9 @@ function GastoAIPage() {
                   <Bot className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">Bora olhar seu financeiro juntos?</p>
+                  <p className="text-sm font-semibold">{t("ai.emptyTitle")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Escolha uma sugestão acima ou escreva sua pergunta.
+                    {t("ai.emptyDesc")}
                   </p>
                 </div>
               </div>
@@ -273,7 +265,7 @@ function GastoAIPage() {
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte algo sobre seus gastos, metas, contas…"
+                placeholder={t("ai.placeholder")}
                 rows={1}
                 maxLength={1500}
                 disabled={sending}
@@ -289,14 +281,13 @@ function GastoAIPage() {
                 type="submit"
                 disabled={sending || !input.trim()}
                 className="h-11 w-11 shrink-0 rounded-2xl bg-brand-grad p-0"
-                aria-label="Enviar"
+                aria-label={t("ai.send")}
               >
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              A IA usa apenas seus dados financeiros e nunca compartilha com outros usuários. As
-              respostas são orientações gerais — não constituem recomendação de investimento.
+              {t("ai.disclaimer")}
             </p>
           </div>
         </div>

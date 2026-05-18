@@ -1,0 +1,61 @@
+{
+  "invite": {
+    "metaTitle": "Aceitar convite — Gasto Inteligente",
+    "loading": "Carregando convite…",
+    "notFound": { "title": "Convite não encontrado", "desc": "O link pode ter expirado ou já foi utilizado.", "home": "Ir para o início" },
+    "already": { "title": "Convite já respondido", "desc": "Este convite não está mais pendente.", "back": "Voltar" },
+    "needLogin": { "title": "Você foi convidado a conectar sua conta", "desc": "Para aceitar, faça login com o e-mail <strong>{{email}}</strong>.", "cta": "Fazer login" },
+    "wrongAccount": { "title": "Conta diferente", "desc": "Este convite é para <strong>{{email}}</strong>. Faça login com esse e-mail para aceitar." },
+    "review": {
+      "title": "Você foi convidado a conectar sua conta",
+      "desc": "Ao aceitar, a pessoa que convidou poderá acompanhar suas informações financeiras conforme o nível abaixo. Você pode remover o acesso a qualquer momento.",
+      "level": "Nível de acesso",
+      "refuse": "Recusar",
+      "accept": "Aceitar"
+    },
+    "toastAccepted": "Convite aceito! A pessoa agora pode acompanhar sua conta.",
+    "toastAcceptError": "Não foi possível aceitar.",
+    "toastRefused": "Convite recusado.",
+    "toastRefuseError": "Erro ao recusar."
+  },
+  "resumo": {
+    "metaTitle": "Resumo por categoria — Gasto Inteligente",
+    "kicker": "Análise",
+    "back": "Voltar",
+    "prevMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
+    "empty": "Nenhum gasto neste mês ainda.",
+    "total": "Total",
+    "topTitle": "Maiores gastos do mês",
+    "outros": "Outros",
+    "compare": { "title": "Comparação com o mês anterior", "current": "Mês atual", "previous": "Mês anterior", "same": "Mesmo valor que no mês anterior." }
+  },
+  "ai": {
+    "metaTitle": "Gasto Inteligente AI — Assistente financeiro com IA",
+    "metaDesc": "Converse com a IA sobre seus gastos, metas e organização financeira em linguagem simples.",
+    "title": "Gasto Inteligente AI",
+    "subtitle": "Pergunte sobre seus gastos, metas e organização financeira.",
+    "clear": "Limpar",
+    "confirmClear": "Apagar todo o histórico desta conversa?",
+    "toastCleared": "Histórico apagado.",
+    "toastClearError": "Não consegui limpar o histórico.",
+    "toastTooLong": "Mensagem muito longa. Tente algo mais curto.",
+    "toastError": "Não consegui responder agora. Tente novamente em alguns instantes.",
+    "loading": "Carregando conversa…",
+    "emptyTitle": "Bora olhar seu financeiro juntos?",
+    "emptyDesc": "Escolha uma sugestão acima ou escreva sua pergunta.",
+    "placeholder": "Pergunte algo sobre seus gastos, metas, contas…",
+    "send": "Enviar",
+    "disclaimer": "A IA usa apenas seus dados financeiros e nunca compartilha com outros usuários. As respostas são orientações gerais — não constituem recomendação de investimento.",
+    "suggestions": [
+      "Como estão meus gastos este mês?",
+      "Qual foi minha maior despesa?",
+      "Como está minha fatura do cartão?",
+      "Quanto veio minha fatura?",
+      "Qual cartão eu mais usei?",
+      "Onde posso economizar?",
+      "Tenho contas vencidas?",
+      "Minhas metas estão indo bem?"
+    ]
+  }
+}

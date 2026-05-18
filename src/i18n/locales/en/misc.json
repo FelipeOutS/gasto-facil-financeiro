@@ -1,0 +1,61 @@
+{
+  "invite": {
+    "metaTitle": "Accept invite — Gasto Inteligente",
+    "loading": "Loading invite…",
+    "notFound": { "title": "Invite not found", "desc": "The link may have expired or already been used.", "home": "Go home" },
+    "already": { "title": "Invite already answered", "desc": "This invite is no longer pending.", "back": "Back" },
+    "needLogin": { "title": "You have been invited to connect your account", "desc": "To accept, sign in with the email <strong>{{email}}</strong>.", "cta": "Sign in" },
+    "wrongAccount": { "title": "Different account", "desc": "This invite is for <strong>{{email}}</strong>. Sign in with that email to accept." },
+    "review": {
+      "title": "You have been invited to connect your account",
+      "desc": "By accepting, the person who invited you will be able to view your financial information according to the level below. You can revoke access at any time.",
+      "level": "Access level",
+      "refuse": "Decline",
+      "accept": "Accept"
+    },
+    "toastAccepted": "Invite accepted! They can now follow your account.",
+    "toastAcceptError": "Could not accept.",
+    "toastRefused": "Invite declined.",
+    "toastRefuseError": "Error declining."
+  },
+  "resumo": {
+    "metaTitle": "Category summary — Gasto Inteligente",
+    "kicker": "Analysis",
+    "back": "Back",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "empty": "No expenses this month yet.",
+    "total": "Total",
+    "topTitle": "Top expenses this month",
+    "outros": "Other",
+    "compare": { "title": "Comparison with previous month", "current": "Current month", "previous": "Previous month", "same": "Same as last month." }
+  },
+  "ai": {
+    "metaTitle": "Gasto Inteligente AI — AI financial assistant",
+    "metaDesc": "Chat with AI about your expenses, goals and financial organization in plain language.",
+    "title": "Gasto Inteligente AI",
+    "subtitle": "Ask about your expenses, goals and financial organization.",
+    "clear": "Clear",
+    "confirmClear": "Delete the entire conversation history?",
+    "toastCleared": "History cleared.",
+    "toastClearError": "Could not clear history.",
+    "toastTooLong": "Message too long. Try something shorter.",
+    "toastError": "I couldn't reply right now. Please try again in a moment.",
+    "loading": "Loading conversation…",
+    "emptyTitle": "Let's review your finances together?",
+    "emptyDesc": "Pick a suggestion above or type your question.",
+    "placeholder": "Ask about your expenses, goals, bills…",
+    "send": "Send",
+    "disclaimer": "The AI uses only your financial data and never shares it with other users. Responses are general guidance — not investment advice.",
+    "suggestions": [
+      "How are my expenses this month?",
+      "What was my biggest expense?",
+      "How is my credit card bill?",
+      "How much is my card bill?",
+      "Which card did I use the most?",
+      "Where can I save?",
+      "Do I have overdue bills?",
+      "Are my goals on track?"
+    ]
+  }
+}
