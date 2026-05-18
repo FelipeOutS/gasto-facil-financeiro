@@ -1891,7 +1891,7 @@ function CartaoFormDialog({
 
                   <div>
                     <Label className="text-xs text-muted-foreground">
-                      Banco / emissor
+                      {t("form.bankLabel")}
                     </Label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {BANCOS_CARTAO_PADRAO.map((b) => {
