@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Users, Plus, Mail, Copy, Check, Trash2, Pencil, UserPlus, Shield, Eye, Edit3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Users, Plus, Mail, Copy, Check, Trash2, UserPlus, Shield, Eye, Edit3 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
   ACCESS_LEVEL_INFO,
@@ -21,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import i18n from "@/i18n";
 
 async function sendInviteEmail(to: string, token: string, inviterName: string | null, accessLevel: AccessLevel) {
   await sendTransactionalEmail({
@@ -36,11 +38,12 @@ async function sendInviteEmail(to: string, token: string, inviterName: string | 
 }
 
 export const Route = createFileRoute("/contas-conectadas")({
-  head: () => ({ meta: [{ title: "Contas conectadas — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.getFixedT(i18n.language, "misc")("connected.metaTitle") }] }),
   component: ContasConectadasPage,
 });
 
 function ContasConectadasPage() {
+  const { t } = useTranslation("misc");
   const { user } = useAuth();
   const [outgoing, setOutgoing] = useState<ConnectedAccount[]>([]);
   const [incoming, setIncoming] = useState<ConnectedAccount[]>([]);
@@ -59,7 +62,7 @@ function ContasConectadasPage() {
       setOutgoing(out);
       setIncoming(inc.filter((c) => c.viewer_user_id !== user.id));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao carregar contas conectadas.");
+      toast.error(e instanceof Error ? e.message : t("connected.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -69,13 +72,13 @@ function ContasConectadasPage() {
 
   async function handleRemove(id: string) {
     if (!user) return;
-    if (!confirm("Remover esta conexão? A pessoa perderá o acesso imediatamente.")) return;
+    if (!confirm(t("connected.confirmRemove"))) return;
     try {
       await removeConnection(id, user.id);
-      toast.success("Conexão removida.");
+      toast.success(t("connected.removed"));
       void refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao remover.");
+      toast.error(e instanceof Error ? e.message : t("connected.errRemove"));
     }
   }
 
@@ -84,23 +87,21 @@ function ContasConectadasPage() {
     <div className="mx-auto w-full max-w-5xl space-y-8 py-6 lg:py-10">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Contas conectadas</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Convide outra pessoa por e-mail e acompanhe a conta dela com autorização.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("connected.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("connected.subtitle")}</p>
         </div>
         <Button onClick={() => setInviteOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Conectar nova conta
+          <Plus className="h-4 w-4" /> {t("connected.newConnection")}
         </Button>
       </header>
 
       {/* Contas que EU acompanho */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Contas que você acompanha
+          {t("connected.youFollow")}
         </h2>
         {loading ? (
-          <div className="rounded-2xl border border-border/60 bg-card/40 p-6 text-sm text-muted-foreground">Carregando…</div>
+          <div className="rounded-2xl border border-border/60 bg-card/40 p-6 text-sm text-muted-foreground">{t("connected.loading")}</div>
         ) : outgoing.length === 0 ? (
           <EmptyState onInvite={() => setInviteOpen(true)} />
         ) : (
@@ -121,11 +122,11 @@ function ContasConectadasPage() {
       {/* Quem tem acesso à MINHA conta */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Quem pode ver minha conta
+          {t("connected.whoSeesYou")}
         </h2>
         {incoming.length === 0 ? (
           <div className="rounded-2xl border border-border/60 bg-card/40 p-6 text-sm text-muted-foreground">
-            Ninguém tem acesso à sua conta no momento.
+            {t("connected.nooneHasAccess")}
           </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
@@ -157,20 +158,19 @@ function ContasConectadasPage() {
 /* ============================== Components ============================== */
 
 function EmptyState({ onInvite }: { onInvite: () => void }) {
+  const { t } = useTranslation("misc");
   return (
     <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-card to-card/40 p-8 text-center shadow-sm">
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
         <Users className="h-7 w-7" />
       </div>
-      <h3 className="mt-4 text-lg font-bold">Conecte outra conta ao seu controle financeiro</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Convide uma pessoa pelo e-mail e acompanhe as informações financeiras dela com autorização.
-      </p>
+      <h3 className="mt-4 text-lg font-bold">{t("connected.empty.title")}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{t("connected.empty.desc")}</p>
       <Button onClick={onInvite} className="mt-5 gap-2">
-        <Plus className="h-4 w-4" /> Conectar nova conta
+        <Plus className="h-4 w-4" /> {t("connected.newConnection")}
       </Button>
       <p className="mx-auto mt-4 max-w-md rounded-xl bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
-        A outra pessoa precisa aceitar o convite antes que você possa visualizar os dados.
+        {t("connected.empty.hint")}
       </p>
     </div>
   );
@@ -189,6 +189,7 @@ function ConnectionCard({
   onShare?: () => void;
   showShare?: boolean;
 }) {
+  const { t } = useTranslation("misc");
   const access = ACCESS_LEVEL_INFO[account.access_level];
   const statusTone =
     account.status === "accepted"
@@ -220,11 +221,11 @@ function ConnectionCard({
       <div className="mt-3 flex flex-wrap gap-2">
         {showShare && onShare && (
           <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={onShare}>
-            <Copy className="h-3.5 w-3.5" /> Link do convite
+            <Copy className="h-3.5 w-3.5" /> {t("connected.card.inviteLink")}
           </Button>
         )}
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-destructive hover:text-destructive" onClick={onRemove}>
-          <Trash2 className="h-3.5 w-3.5" /> {incoming ? "Remover acesso" : "Remover conexão"}
+          <Trash2 className="h-3.5 w-3.5" /> {incoming ? t("connected.card.removeAccess") : t("connected.card.removeConnection")}
         </Button>
       </div>
     </li>
@@ -234,6 +235,7 @@ function ConnectionCard({
 function InviteDialog({
   open, onOpenChange, viewerUserId, onCreated,
 }: { open: boolean; onOpenChange: (v: boolean) => void; viewerUserId: string; onCreated: (token: string) => void }) {
+  const { t } = useTranslation("misc");
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [level, setLevel] = useState<AccessLevel>("view");
@@ -248,14 +250,14 @@ function InviteDialog({
       const created = await createInvite({ viewerUserId, invitedEmail: email, nickname, accessLevel: level });
       try {
         await sendInviteEmail(created.invited_email, created.invite_token, nickname || null, level);
-        toast.success("Convite enviado por e-mail!");
+        toast.success(t("connected.dialog.sentOk"));
       } catch {
-        toast.success("Convite criado. Não foi possível enviar o e-mail agora — copie o link manualmente.");
+        toast.success(t("connected.dialog.createdNoEmail"));
       }
       reset();
       onCreated(created.invite_token);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível criar o convite.");
+      toast.error(e instanceof Error ? e.message : t("connected.dialog.errCreate"));
     } finally { setSubmitting(false); }
   }
 
@@ -263,20 +265,20 @@ function InviteDialog({
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Conectar nova conta</DialogTitle>
-          <DialogDescription>Envie um convite para acompanhar a conta de outra pessoa.</DialogDescription>
+          <DialogTitle>{t("connected.dialog.title")}</DialogTitle>
+          <DialogDescription>{t("connected.dialog.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="ic-email">E-mail da pessoa</Label>
-            <Input id="ic-email" type="email" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Label htmlFor="ic-email">{t("connected.dialog.email")}</Label>
+            <Input id="ic-email" type="email" placeholder={t("connected.dialog.emailPh")} value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ic-nick">Nome ou apelido <span className="text-xs text-muted-foreground">(opcional)</span></Label>
-            <Input id="ic-nick" placeholder="Ex: Filho, Esposa, Sócio, Empresa…" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+            <Label htmlFor="ic-nick">{t("connected.dialog.nick")} <span className="text-xs text-muted-foreground">{t("connected.dialog.optional")}</span></Label>
+            <Input id="ic-nick" placeholder={t("connected.dialog.nickPh")} value={nickname} onChange={(e) => setNickname(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Tipo de acesso</Label>
+            <Label>{t("connected.dialog.level")}</Label>
             <div className="grid gap-2">
               {(["view", "view_create", "admin"] as AccessLevel[]).map((opt) => {
                 const info = ACCESS_LEVEL_INFO[opt];
@@ -306,9 +308,9 @@ function InviteDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{t("connected.dialog.cancel")}</Button>
           <Button onClick={submit} disabled={submitting || !email}>
-            <Mail className="mr-1.5 h-4 w-4" /> {submitting ? "Enviando…" : "Enviar convite"}
+            <Mail className="mr-1.5 h-4 w-4" /> {submitting ? t("connected.dialog.sending") : t("connected.dialog.send")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -317,6 +319,7 @@ function InviteDialog({
 }
 
 function ShareInviteDialog({ token, onClose }: { token: string | null; onClose: () => void }) {
+  const { t } = useTranslation("misc");
   const [copied, setCopied] = useState(false);
   const url = token ? buildInviteUrl(token) : "";
 
@@ -325,9 +328,9 @@ function ShareInviteDialog({ token, onClose }: { token: string | null; onClose: 
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
-      toast.success("Link copiado!");
+      toast.success(t("connected.share.copyOk"));
     } catch {
-      toast.error("Não foi possível copiar.");
+      toast.error(t("connected.share.copyErr"));
     }
   }
 
@@ -335,17 +338,15 @@ function ShareInviteDialog({ token, onClose }: { token: string | null; onClose: 
     <Dialog open={!!token} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Convite criado com sucesso</DialogTitle>
-          <DialogDescription>
-            Envie este link para a pessoa por WhatsApp, e-mail ou outro canal. A conexão só será ativada após ela aceitar.
-          </DialogDescription>
+          <DialogTitle>{t("connected.share.title")}</DialogTitle>
+          <DialogDescription>{t("connected.share.desc")}</DialogDescription>
         </DialogHeader>
         <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-xs break-all">{url}</div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Fechar</Button>
+          <Button variant="ghost" onClick={onClose}>{t("connected.share.close")}</Button>
           <Button onClick={copy} className="gap-1.5">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copiado" : "Copiar link"}
+            {copied ? t("connected.share.copied") : t("connected.share.copy")}
           </Button>
         </DialogFooter>
       </DialogContent>
