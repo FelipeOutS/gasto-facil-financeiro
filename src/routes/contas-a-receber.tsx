@@ -486,37 +486,38 @@ function ContaCard({
 }
 
 function StatusBadge({ status, cancelado }: { status: StatusContaReceber; cancelado: boolean }) {
+  const { t } = useTranslation("contas-a-receber");
   if (cancelado) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-        <Ban className="h-3 w-3" /> Cancelado
+        <Ban className="h-3 w-3" /> {t("status.cancelado")}
       </span>
     );
   }
   if (status === "recebido") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
-        <CheckCircle2 className="h-3 w-3" /> Recebido
+        <CheckCircle2 className="h-3 w-3" /> {t("status.recebido")}
       </span>
     );
   }
   if (status === "atrasado") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
-        <AlertTriangle className="h-3 w-3" /> Atrasado
+        <AlertTriangle className="h-3 w-3" /> {t("status.atrasado")}
       </span>
     );
   }
   if (status === "parcial") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
-        <Clock className="h-3 w-3" /> Parcial
+        <Clock className="h-3 w-3" /> {t("status.parcial")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-medium text-brand">
-      <Clock className="h-3 w-3" /> Pendente
+      <Clock className="h-3 w-3" /> {t("status.pendente")}
     </span>
   );
 }
