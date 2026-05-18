@@ -1615,6 +1615,7 @@ function DeleteReceitaDialog({
   receita: Receita | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("renda");
   const open = !!receita;
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
@@ -1633,7 +1634,7 @@ function DeleteReceitaDialog({
     } else {
       deleteReceita(receita.id);
     }
-    toast.success("Renda removida.");
+    toast.success(t("toast.removed"));
     onClose();
   }
 
@@ -1641,16 +1642,16 @@ function DeleteReceitaDialog({
     <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir renda?</AlertDialogTitle>
+          <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir esta renda? Esta ação não pode ser desfeita.
+            {t("delete.body")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {receita?.recorrente && receita.recorrenciaId && (
           <div className="rounded-xl border border-border bg-card-elevated p-3">
             <p className="text-xs font-medium text-muted-foreground">
-              Esta renda é recorrente. O que excluir?
+              {t("delete.recurringQuestion")}
             </p>
             <RadioGroup
               value={scope}
@@ -1659,27 +1660,27 @@ function DeleteReceitaDialog({
             >
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="single" id="del-single" className="mt-0.5" />
-                <span className="font-medium">Somente este mês</span>
+                <span className="font-medium">{t("delete.scope.single")}</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="forward" id="del-forward" className="mt-0.5" />
-                <span className="font-medium">Este mês e os próximos</span>
+                <span className="font-medium">{t("delete.scope.forward")}</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="all" id="del-all" className="mt-0.5" />
-                <span className="font-medium">Toda a recorrência</span>
+                <span className="font-medium">{t("delete.scope.all")}</span>
               </label>
             </RadioGroup>
           </div>
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Excluir
+            {t("delete.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
