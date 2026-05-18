@@ -306,7 +306,7 @@ function AssinaturasPage() {
         nomes: nomes.slice(0, 20),
       });
       toast.success(
-        `Análise concluída: ${r.criadas} ativas, ${r.suspeitas} suspeitas`,
+        t("toasts.syncDone", { ativas: r.criadas, suspeitas: r.suspeitas }),
       );
     } finally {
       setSyncing(false);
@@ -315,39 +315,42 @@ function AssinaturasPage() {
 
   async function handleConfirmarSuspeita(r: Recorrencia) {
     await atualizarRecorrencia(r.id, { status: "ativa" });
-    toast.success(`${r.nome} confirmada como recorrência`);
+    toast.success(t("toasts.confirmed", { name: r.nome }));
   }
 
   async function handleIgnorar(r: Recorrencia) {
     await atualizarRecorrencia(r.id, { status: "cancelada" });
-    toast(`${r.nome} ignorada`);
+    toast(t("toasts.ignored", { name: r.nome }));
   }
 
   async function handleTogglePause(r: Recorrencia) {
     const novo: StatusRecorrencia = r.status === "pausada" ? "ativa" : "pausada";
     await atualizarRecorrencia(r.id, { status: novo });
-    toast.success(`${r.nome} ${novo === "pausada" ? "pausada" : "reativada"}`);
+    toast.success(
+      novo === "pausada"
+        ? t("toasts.paused", { name: r.nome })
+        : t("toasts.reactivated", { name: r.nome }),
+    );
   }
 
   async function handleCancelar(r: Recorrencia) {
-    if (!confirm(`Cancelar a recorrência "${r.nome}"?`)) return;
+    if (!confirm(t("confirms.cancel", { name: r.nome }))) return;
     await atualizarRecorrencia(r.id, { status: "cancelada" });
-    toast.success("Recorrência cancelada");
+    toast.success(t("toasts.canceled"));
   }
 
   async function handleExcluir(r: Recorrencia) {
-    if (!confirm(`Excluir a recorrência "${r.nome}"? Essa ação não pode ser desfeita.`))
-      return;
+    if (!confirm(t("confirms.delete", { name: r.nome }))) return;
     await excluirRecorrencia(r.id);
-    toast.success("Recorrência excluída");
+    toast.success(t("toasts.deleted"));
   }
 
   async function handleGerarGasto(r: Recorrencia) {
     const res = await gerarGastoDoMes(r);
     if (res.ok) {
-      toast.success("Gasto criado a partir da recorrência");
+      toast.success(t("toasts.expenseCreated"));
     } else {
-      toast.error("Não foi possível criar o gasto");
+      toast.error(t("toasts.expenseError"));
     }
   }
 
