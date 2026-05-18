@@ -325,11 +325,11 @@ function RelatoriosPage() {
         <div className="-mx-1 flex w-full flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
           {(
             [
-              { id: "mes", label: "Mês atual" },
-              { id: "anterior", label: "Mês anterior" },
-              { id: "trimestre", label: "Trimestre" },
-              { id: "semestre", label: "Semestre" },
-              { id: "ano", label: "Ano" },
+              { id: "mes", label: t("period.mes") },
+              { id: "anterior", label: t("period.anterior") },
+              { id: "trimestre", label: t("period.trimestre") },
+              { id: "semestre", label: t("period.semestre") },
+              { id: "ano", label: t("period.ano") },
             ] as Array<{ id: Periodo; label: string }>
           ).map((p) => (
             <button
@@ -358,13 +358,13 @@ function RelatoriosPage() {
                 <CalendarRange className="h-3.5 w-3.5" />
                 {periodo === "custom" && customRange.from && customRange.to
                   ? `${format(customRange.from, "dd/MM")} – ${format(customRange.to, "dd/MM")}`
-                  : "Personalizado"}
+                  : t("period.custom")}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="range"
-                locale={ptBR}
+                locale={i18n.language === "en" ? enUS : ptBR}
                 selected={customRange as any}
                 onSelect={(r: any) => {
                   setCustomRange(r ?? {});
@@ -378,10 +378,10 @@ function RelatoriosPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
-            <Download className="h-3.5 w-3.5" /> CSV
+            <Download className="h-3.5 w-3.5" /> {t("actions.csv")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
-            <Printer className="h-3.5 w-3.5" /> Imprimir
+            <Printer className="h-3.5 w-3.5" /> {t("actions.print")}
           </Button>
         </div>
       </div>
