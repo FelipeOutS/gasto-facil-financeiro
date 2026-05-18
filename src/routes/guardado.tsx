@@ -391,16 +391,14 @@ function GuardadoPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Já existe uma reserva parecida</AlertDialogTitle>
+            <AlertDialogTitle>{t("similarDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você já tem uma reserva nesse banco com o mesmo tipo. Quer atualizar
-              o valor da existente em vez de criar outra?
+              {t("similarDialog.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                // Criar mesmo assim
                 if (pendingSimilar) {
                   const { existente, valorNovo } = pendingSimilar;
                   addGuardado({
@@ -408,26 +406,26 @@ function GuardadoPage() {
                     valor: valorNovo,
                     tipoReserva: existente.tipoReserva,
                   });
-                  toast.success("Reserva criada.");
+                  toast.success(t("similarDialog.toastCreated"));
                 }
                 setPendingSimilar(null);
                 setDialog({ kind: "closed" });
               }}
             >
-              Criar outra
+              {t("similarDialog.createAnother")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (pendingSimilar) {
                   const { existente, valorNovo } = pendingSimilar;
                   updateGuardado(existente.id, { valor: valorNovo });
-                  toast.success("Boa, sua reserva foi ajustada.");
+                  toast.success(t("similarDialog.toastUpdated"));
                 }
                 setPendingSimilar(null);
                 setDialog({ kind: "closed" });
               }}
             >
-              Atualizar a existente
+              {t("similarDialog.updateExisting")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
