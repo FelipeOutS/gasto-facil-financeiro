@@ -1,10 +1,19 @@
 {
   "title": "My account",
+  "back": "Back",
+  "defaultUser": "User",
+  "dash": "—",
   "fullAccess": "Full access",
   "admin": "Admin",
   "completeProfile": "Complete your profile",
   "completeProfileDesc": "Personalize your experience by choosing between Individual, MEI or Company.",
   "completeBtn": "Complete profile",
+  "tipo": {
+    "pessoa_fisica": "Individual",
+    "mei": "Sole proprietor",
+    "empresa": "Company",
+    "naoDefinido": "Not defined"
+  },
   "fields": {
     "type": "Account type",
     "fullName": "Full name",
@@ -25,5 +34,9 @@
   "language": {
     "title": "App language",
     "description": "Choose the interface language. Your preference is saved and used on future visits."
+  },
+  "meta": {
+    "title": "My account — Gasto Inteligente"
   }
 }
+
