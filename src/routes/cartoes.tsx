@@ -21,6 +21,8 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useMemo, useState, memo } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   Plus,
   CreditCard,
@@ -116,11 +118,10 @@ export const Route = createFileRoute("/cartoes")({
   }),
   head: () => ({
     meta: [
-      { title: "Cartões — Gasto Inteligente" },
+      { title: i18n.t("cartoes:meta.title") },
       {
         name: "description",
-        content:
-          "Cadastre seus cartões de crédito e acompanhe limites, fechamento e vencimento da fatura sem dor de cabeça.",
+        content: i18n.t("cartoes:meta.description"),
       },
     ],
   }),
@@ -141,14 +142,14 @@ function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
 
 
 /** Formata o % de uso do limite evitando "0%" quando há gasto. */
-function formatPctLimite(usado: number, limite: number): string {
+function formatPctLimite(usado: number, limite: number, lessThan1Label: string): string {
   if (!limite || limite <= 0) return "—";
   if (usado <= 0) return "0%";
   const pct = (usado / limite) * 100;
   if (pct >= 100) return "100%";
   if (pct >= 1) return `${Math.round(pct)}%`;
   if (pct >= 0.005) return `${pct.toFixed(2).replace(".", ",")}%`;
-  return "menos de 1%";
+  return lessThan1Label;
 }
 
 /** Normaliza nome do banco/emissor para exibição (ex.: Mercado Pago). */
@@ -160,6 +161,7 @@ function formatBanco(banco?: string): string {
 }
 
 function CartoesPage() {
+  const { t } = useTranslation("cartoes");
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
   const { abrir } = Route.useSearch();
@@ -315,35 +317,35 @@ function CartoesPage() {
     <MobileShell wide>
       <header className="pt-2 animate-rise">
         <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-          Cartões
+          {t("hero.eyebrow")}
         </p>
         <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
             <CreditCard className="h-4 w-4" />
           </span>
-          Seus cartões
+          {t("hero.title")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Limites, faturas e gastos no crédito num lugar só.
+          {t("hero.subtitle")}
         </p>
       </header>
 
       {/* Resumo */}
       <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <ResumoCard
-          label="Limite total"
+          label={t("summary.limitTotal")}
           valueNum={resumo.limiteTotal}
           icon={<CreditCard className="h-4 w-4" />}
           tone="brand"
         />
         <ResumoCard
-          label="Usado no mês"
+          label={t("summary.usedMonth")}
           valueNum={resumo.usado}
           icon={<Wallet className="h-4 w-4" />}
           tone="warning"
         />
         <ResumoCard
-          label="Disponível"
+          label={t("summary.available")}
           valueNum={resumo.disponivel}
           icon={<Sparkles className="h-4 w-4" />}
           tone="success"
@@ -362,12 +364,12 @@ function CartoesPage() {
         <div>
           <h2 className="text-sm font-semibold tracking-tight">
             {cartoes.length === 0
-              ? "Comece por aqui"
-              : `${cartoes.length} ${cartoes.length === 1 ? "cartão" : "cartões"}`}
+              ? t("list.startHere")
+              : t("list.count", { count: cartoes.length })}
           </h2>
           {cartoes.length > 0 && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Toque em um cartão para ver detalhes da fatura.
+              {t("list.tapHint")}
             </p>
           )}
         </div>
@@ -380,7 +382,7 @@ function CartoesPage() {
               className="card-press rounded-full text-sm font-semibold"
             >
               <FileUp className="mr-1 h-4 w-4" />
-              Importar fatura
+              {t("list.importInvoice")}
             </Button>
             <Button
               size="sm"
@@ -388,7 +390,7 @@ function CartoesPage() {
               className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-4 w-4" />
-              Novo cartão
+              {t("list.newCard")}
             </Button>
           </div>
         )}
@@ -433,7 +435,7 @@ function CartoesPage() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground animate-fade-in">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Aqui só nome, banco/emissor, limite, fechamento e vencimento. Nada de número, CVV ou senha.
+        {t("security")}
       </p>
 
       {/* Form modal */}
@@ -449,25 +451,29 @@ function CartoesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover cartão?</AlertDialogTitle>
+            <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover{" "}
-              <strong>{confirmDelete?.nome}</strong>? Os gastos já lançados
-              continuam no seu histórico.
+              <Trans
+                t={t}
+                i18nKey="remove.description"
+                values={{ name: confirmDelete?.nome ?? "" }}
+                defaults="Tem certeza que deseja remover <1>{{name}}</1>? Os gastos já lançados continuam no seu histórico."
+                components={{ 1: <strong /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteCartao(confirmDelete.id);
-                  toast.success("Cartão removido.");
+                  toast.success(t("remove.success"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Remover
+              {t("remove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -496,8 +502,8 @@ function CartoesPage() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="importar_fatura"
-        featureLabel="Importar fatura de cartão"
-        benefit="Importe a fatura em PDF/imagem e categorize tudo automaticamente."
+        featureLabel={t("upgrade.featureLabel")}
+        benefit={t("upgrade.benefit")}
       />
     </MobileShell>
   );
@@ -546,21 +552,22 @@ function ResumoCard({
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const { t } = useTranslation("cartoes");
   return (
     <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-8 text-center animate-rise">
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft animate-pop">
         <CreditCard className="h-6 w-6" />
       </div>
-      <h3 className="mt-3 text-base font-semibold">Nenhum cartão por aqui ainda</h3>
+      <h3 className="mt-3 text-base font-semibold">{t("empty.title")}</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Cadastre seu primeiro cartão e pare de tentar lembrar fechamento e vencimento de cabeça.
+        {t("empty.subtitle")}
       </p>
       <Button
         onClick={onAdd}
         className="card-press mt-4 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
       >
         <Plus className="mr-1 h-4 w-4" />
-        Adicionar primeiro cartão
+        {t("empty.addFirst")}
       </Button>
     </div>
   );
@@ -581,6 +588,7 @@ const CartaoCard = memo(function CartaoCard({
   onImport: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation("cartoes");
   // Usa o resumo pré-calculado quando disponível para evitar recomputar
   // ao tocar/abrir o cartão.
   const r = resumo ?? resumoFaturaCartao(cartao.id);
@@ -599,7 +607,7 @@ const CartaoCard = memo(function CartaoCard({
     () => resumoFaturaPorMes(cartao.id, fatRef.mes, fatRef.ano),
     [cartao.id, fatRef.mes, fatRef.ano, r.usadoMes],
   );
-  const badge = statusBadgeStyle(faturaStatus);
+  const badge = statusBadgeStyle(faturaStatus, t);
 
   // Datas formatadas (dd/mm) — vencimento real da fatura aberta.
   const vencDate = useMemo(() => proximoVencimentoFaturaAberta(cartao), [cartao]);
@@ -613,10 +621,10 @@ const CartaoCard = memo(function CartaoCard({
       await marcarFaturaPaga(cartao.id, fatRef.mes, fatRef.ano, {
         valorPago: faturaResumo.total,
       });
-      toast.success("Fatura marcada como paga! ✅");
+      toast.success(t("toast.markedPaid"));
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível atualizar a fatura.");
+      toast.error(t("toast.updateError"));
     }
   }
 
@@ -651,7 +659,7 @@ const CartaoCard = memo(function CartaoCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              aria-label="Mais ações"
+              aria-label={t("card.moreActions")}
               onClick={(e) => e.stopPropagation()}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
             >
@@ -665,11 +673,11 @@ const CartaoCard = memo(function CartaoCard({
           >
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
-              Editar cartão
+              {t("card.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onImport}>
               <FileUp className="mr-2 h-4 w-4" />
-              Importar fatura
+              {t("card.import")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -677,7 +685,7 @@ const CartaoCard = memo(function CartaoCard({
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Remover cartão
+              {t("card.remove")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -700,7 +708,7 @@ const CartaoCard = memo(function CartaoCard({
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Usado no mês
+              {t("card.usedMonth")}
             </p>
             <p className="num mt-0.5 truncate text-2xl font-bold">
               {formatBRL(r.usadoMes)}
@@ -708,7 +716,7 @@ const CartaoCard = memo(function CartaoCard({
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Limite total
+              {t("card.limitTotal")}
             </p>
             <p className="num mt-0.5 text-sm font-semibold text-white/90">
               {formatBRL(r.limite)}
@@ -723,17 +731,17 @@ const CartaoCard = memo(function CartaoCard({
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px] text-white/80">
-          <span className="num">{formatPctLimite(r.usadoMes, r.limite)} do limite</span>
-          <span className="num">{formatBRL(r.disponivel)} disponível</span>
+          <span className="num">{t("card.limitOf", { pct: formatPctLimite(r.usadoMes, r.limite, t("card.lessThan1")) })}</span>
+          <span className="num">{t("card.availableValue", { value: formatBRL(r.disponivel) })}</span>
         </div>
       </div>
 
-      {/* Fatura atual — bloco translúcido com valor, datas, status e ações */}
+      {/* Fatura atual */}
       <div className="relative mt-3.5 rounded-2xl bg-white/10 p-3 backdrop-blur-sm">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Fatura atual
+              {t("card.currentInvoice")}
             </p>
             <p className="num mt-0.5 truncate text-base font-bold">
               {formatBRL(faturaResumo.total)}
@@ -752,16 +760,16 @@ const CartaoCard = memo(function CartaoCard({
             )}
           >
             {badge.icon}
-            {semCompras && faturaStatus === "aberta" ? "Sem compras" : badge.label}
+            {semCompras && faturaStatus === "aberta" ? t("card.noPurchases") : badge.label}
           </span>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-white/85">
           <div>
-            <span className="text-white/60">Fecha </span>
+            <span className="text-white/60">{t("card.closes")} </span>
             <span className="num font-semibold text-white/95">{fmtDM(fechDate)}</span>
           </div>
           <div className="text-right">
-            <span className="text-white/60">Vence </span>
+            <span className="text-white/60">{t("card.dueOn")} </span>
             <span className="num font-semibold text-white/95">{fmtDM(vencDate)}</span>
           </div>
         </div>
@@ -775,7 +783,7 @@ const CartaoCard = memo(function CartaoCard({
             className="inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-3 text-[11px] font-semibold text-foreground transition-colors hover:bg-white"
           >
             <Receipt className="h-3 w-3" />
-            Ver fatura
+            {t("card.viewInvoice")}
           </button>
           {(faturaStatus === "fechada" || faturaStatus === "vencida") &&
             faturaResumo.total > 0 && (
@@ -785,7 +793,7 @@ const CartaoCard = memo(function CartaoCard({
                 className="inline-flex h-7 items-center gap-1 rounded-full border border-white/40 bg-white/10 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-white/20"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                Marcar como paga
+                {t("card.markPaid")}
               </button>
             )}
         </div>
@@ -809,22 +817,22 @@ function ProximaFaturaCard({
   valor: number;
   temCartoes?: boolean;
 }) {
+  const { t } = useTranslation("cartoes");
   if (!cartao) {
-    // Quando há cartões cadastrados mas nenhuma fatura pendente: paga/quitada.
     if (temCartoes) {
       return (
         <div className="hover-lift card-press rounded-2xl border border-success/30 bg-success/5 p-3.5 animate-rise">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próxima fatura
+              {t("summary.nextInvoice")}
             </p>
             <span className="grid h-7 w-7 place-items-center rounded-full bg-success/15 text-success">
               <CheckCircle2 className="h-4 w-4" />
             </span>
           </div>
-          <p className="mt-2 truncate text-sm font-bold text-success">Fatura paga</p>
+          <p className="mt-2 truncate text-sm font-bold text-success">{t("summary.invoicePaid")}</p>
           <p className="num mt-0.5 text-[11px] text-muted-foreground">
-            Nenhuma cobrança pendente
+            {t("summary.noPending")}
           </p>
           <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(0)}</p>
         </div>
@@ -834,7 +842,7 @@ function ProximaFaturaCard({
       <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima fatura
+            {t("summary.nextInvoice")}
           </p>
           <span className="grid h-7 w-7 place-items-center rounded-full bg-card-elevated text-muted-foreground">
             <CalendarDays className="h-4 w-4" />
@@ -858,7 +866,7 @@ function ProximaFaturaCard({
     <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Próxima fatura
+          {t("summary.nextInvoice")}
         </p>
         <span className={cn("grid h-7 w-7 place-items-center rounded-full", tone)}>
           <CalendarDays className="h-4 w-4" />
@@ -870,7 +878,7 @@ function ProximaFaturaCard({
         {dias !== null && (
           <>
             {" · "}
-            {dias === 0 ? "vence hoje" : `${dias} ${dias === 1 ? "dia" : "dias"}`}
+            {dias === 0 ? t("summary.dueToday") : t("summary.dueDays", { count: dias })}
           </>
         )}
       </p>
@@ -890,6 +898,7 @@ function ProximosVencimentos({
 }: {
   items: Array<{ cartao: Cartao; dias: number }>;
 }) {
+  const { t } = useTranslation("cartoes");
   if (items.length === 0) {
     return (
       <section className="rounded-2xl border border-border bg-card p-4 animate-rise">
@@ -898,8 +907,8 @@ function ProximosVencimentos({
             <CheckCircle2 className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
-            <p className="text-[11px] text-muted-foreground">Nenhuma fatura pendente no momento.</p>
+            <h3 className="text-sm font-semibold tracking-tight">{t("upcoming.title")}</h3>
+            <p className="text-[11px] text-muted-foreground">{t("upcoming.none")}</p>
           </div>
         </div>
       </section>
@@ -912,8 +921,8 @@ function ProximosVencimentos({
           <Clock className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold tracking-tight">Próximos vencimentos</h3>
-          <p className="text-[11px] text-muted-foreground">Fique de olho nas datas</p>
+          <h3 className="text-sm font-semibold tracking-tight">{t("upcoming.title")}</h3>
+          <p className="text-[11px] text-muted-foreground">{t("upcoming.watchDates")}</p>
         </div>
       </div>
       <ul className="mt-3 space-y-2">
@@ -927,7 +936,7 @@ function ProximosVencimentos({
               ? "text-warning"
               : "text-muted-foreground";
           const label =
-            dias === 0 ? "hoje" : dias === 1 ? "amanhã" : `${dias}d`;
+            dias === 0 ? t("upcoming.today") : dias === 1 ? t("upcoming.tomorrow") : t("upcoming.daysShort", { count: dias });
           return (
             <li
               key={cartao.id}
@@ -953,7 +962,7 @@ function ProximosVencimentos({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {formatBanco(cartao.banco) || "Cartão"} · vence dia {cartao.diaVencimento}
+                  {formatBanco(cartao.banco) || t("upcoming.cardFallback")} · {t("upcoming.dueDay", { day: cartao.diaVencimento })}
                 </p>
               </div>
               <span
@@ -985,6 +994,7 @@ function UltimasCompras({
   cartoes: Cartao[];
   hasMore?: boolean;
 }) {
+  const { t } = useTranslation("cartoes");
   const cartaoMap = useMemo(() => {
     const m = new Map<string, Cartao>();
     for (const c of cartoes) m.set(c.id, c);
@@ -998,9 +1008,9 @@ function UltimasCompras({
           <Receipt className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold tracking-tight">Últimas compras no crédito</h3>
+          <h3 className="text-sm font-semibold tracking-tight">{t("recent.title")}</h3>
           <p className="text-[11px] text-muted-foreground">
-            {gastos.length === 0 ? "Nada por aqui ainda" : "Movimentações recentes"}
+            {gastos.length === 0 ? t("recent.empty") : t("recent.recentMoves")}
           </p>
         </div>
       </div>
@@ -1008,7 +1018,7 @@ function UltimasCompras({
       {gastos.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Quando você lançar uma compra no crédito vinculada a um cartão, ela aparece aqui.
+            {t("recent.emptyHint")}
           </p>
         </div>
       ) : (
@@ -1031,11 +1041,11 @@ function UltimasCompras({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
-                    {g.descricao || g.estabelecimento || "Compra"}
+                    {g.descricao || g.estabelecimento || t("recent.purchase")}
                   </p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {c?.nome || "Cartão"} · {dtStr}
-                    {g.horario ? ` às ${g.horario}` : ""}
+                    {c?.nome || t("recent.cardFallback")} · {dtStr}
+                    {g.horario ? ` ${t("recent.atTime", { time: g.horario })}` : ""}
                     {g.tipoGasto === "parcelado" && g.totalParcelas
                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                       : ""}
@@ -1055,7 +1065,7 @@ function UltimasCompras({
             to="/gastos"
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-brand-on-soft transition-colors hover:bg-brand-soft"
           >
-            Ver todas
+            {t("recent.seeAll")}
             <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -1066,32 +1076,43 @@ function UltimasCompras({
 
 /* =============== Fatura Sheet (detalhe do cartão) =============== */
 
-const MESES_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const MESES_FULL = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-function statusBadgeStyle(status: StatusFatura): { label: string; cls: string; icon: React.ReactNode } {
+
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function monthsAbbr(t: TFn): string[] {
+  const arr = i18n.t("cartoes:months.abbr", { returnObjects: true }) as unknown;
+  return Array.isArray(arr) ? (arr as string[]) : ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+}
+function monthsFull(t: TFn): string[] {
+  const arr = i18n.t("cartoes:months.full", { returnObjects: true }) as unknown;
+  return Array.isArray(arr) ? (arr as string[]) : ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+}
+
+function statusBadgeStyle(status: StatusFatura, t: TFn): { label: string; cls: string; icon: React.ReactNode } {
   switch (status) {
     case "paga":
       return {
-        label: "Paga",
+        label: t("status.paid"),
         cls: "bg-success/20 text-success border-success/30",
         icon: <CheckCircle2 className="h-3 w-3" />,
       };
     case "vencida":
       return {
-        label: "Vencida",
+        label: t("status.overdue"),
         cls: "bg-destructive/20 text-destructive border-destructive/30",
         icon: <AlertTriangle className="h-3 w-3" />,
       };
     case "fechada":
       return {
-        label: "Fechada",
+        label: t("status.closed"),
         cls: "bg-warning/20 text-warning border-warning/30",
         icon: <Lock className="h-3 w-3" />,
       };
     default:
       return {
-        label: "Aberta",
+        label: t("status.open"),
         cls: "bg-brand-soft text-brand-on-soft border-brand/20",
         icon: <Sparkles className="h-3 w-3" />,
       };
@@ -1111,6 +1132,8 @@ function FaturaSheet({
   onEdit: (c: Cartao) => void;
   onImport: (c: Cartao) => void;
 }) {
+  const { t } = useTranslation("cartoes");
+
   const hoje = new Date();
   const initialRef = cartao
     ? faturaCorrente(cartao, hoje)
@@ -1144,7 +1167,7 @@ function FaturaSheet({
   const status = statusEfetivoFatura(cartao, ref.mes, ref.ano, hoje);
   const registroFatura = getFatura(cartao.id, ref.mes, ref.ano);
   const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
-  const badge = statusBadgeStyle(status);
+  const badge = statusBadgeStyle(status, t);
 
   // Categorias presentes na fatura, com totais
   const totaisPorCategoria = (() => {
@@ -1155,7 +1178,7 @@ function FaturaSheet({
       if (g.categoriaId) {
         const cat = getCategoriaById(g.categoriaId);
         const id = g.categoriaId;
-        const nome = cat?.nome ?? "Categoria";
+        const nome = cat?.nome ?? t("sheet.categoryFallback");
         const cur = map.get(id) ?? { id, nome, total: 0, count: 0 };
         cur.total += g.valor;
         cur.count += 1;
@@ -1167,7 +1190,7 @@ function FaturaSheet({
     }
     const arr = Array.from(map.values()).sort((a, b) => b.total - a.total);
     if (semCatCount > 0) {
-      arr.push({ id: "__sem__", nome: "Sem categoria", total: semCat, count: semCatCount });
+      arr.push({ id: "__sem__", nome: t("sheet.uncategorized"), total: semCat, count: semCatCount });
     }
     return arr;
   })();
@@ -1227,28 +1250,28 @@ function FaturaSheet({
     try {
       if (status === "paga") {
         await desmarcarFaturaPaga(cartao!.id, ref.mes, ref.ano);
-        toast.success("Fatura marcada como em aberto.");
+        toast.success(t("toast.markedOpen"));
       } else {
         await marcarFaturaPaga(cartao!.id, ref.mes, ref.ano, { valorPago: resumo.total });
-        toast.success("Fatura marcada como paga! ✅");
+        toast.success(t("toast.markedPaid"));
       }
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível atualizar a fatura.");
+      toast.error(t("toast.updateError"));
     }
   }
 
   function handleAddCompra(data: NovoGastoInput) {
     const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
     addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
-    toast.success("Compra adicionada à fatura.");
+    toast.success(t("toast.purchaseAdded"));
     setOpenAdd(false);
   }
 
   function handleDeleteCompra() {
     if (!confirmDelete) return;
     deleteGasto(confirmDelete.id);
-    toast.success("Compra removida.");
+    toast.success(t("toast.purchaseRemoved"));
     setConfirmDelete(null);
   }
 
@@ -1257,8 +1280,8 @@ function FaturaSheet({
     if (!confirmLote) return;
     const n = await deleteGastosDoLote(confirmLote);
     setConfirmLote(null);
-    if (n > 0) toast.success(`Importação removida (${n} ${n === 1 ? "compra" : "compras"}). Gastos manuais foram preservados.`);
-    else toast.error("Não foi possível remover a importação.");
+    if (n > 0) toast.success(t("toast.batchRemoved", { count: n }));
+    else toast.error(t("toast.batchRemoveError"));
   }
 
   return (
@@ -1297,32 +1320,32 @@ function FaturaSheet({
               {cartao.nome}
             </SheetTitle>
             <SheetDescription className="text-white/80">
-              Fatura de {mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano)}
-              {status === "aberta" ? " · em aberto" : ""}.
+              {t("sheet.invoiceOf", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
+              {status === "aberta" ? t("sheet.openSuffix") : ""}.
             </SheetDescription>
           </SheetHeader>
 
-          {/* Navegação de mês (mês de referência das compras) */}
+          {/* Navegação de mês */}
           <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
             <button
               type="button"
               onClick={() => navMes(-1)}
               className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label="Mês anterior"
+              aria-label={t("sheet.prevMonth")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-sm font-semibold tracking-tight">
               {(() => {
                 const r = mesReferenciaFatura(cartao, ref.mes, ref.ano);
-                return `${MESES_ABBR[r.mes - 1]}/${r.ano}`;
+                return `${monthsAbbr(t)[r.mes - 1]}/${r.ano}`;
               })()}
             </span>
             <button
               type="button"
               onClick={() => navMes(1)}
               className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label="Próximo mês"
+              aria-label={t("sheet.nextMonth")}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -1331,7 +1354,7 @@ function FaturaSheet({
           {/* Total da fatura */}
           <div className="relative mt-4">
             <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
-              Total da fatura
+              {t("sheet.totalInvoice")}
             </p>
             <p className="num mt-1 text-3xl font-bold tracking-tight">
               {formatBRL(resumo.total)}
@@ -1339,24 +1362,24 @@ function FaturaSheet({
             {status !== "paga" && status !== "aberta" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
               <p className="mt-1 text-[11px] text-white/80">
                 {diasParaVencer === 0
-                  ? "⚠️ Vence hoje"
-                  : `Vence em ${diasParaVencer} ${diasParaVencer === 1 ? "dia" : "dias"}`}
+                  ? t("sheet.dueToday")
+                  : t("sheet.dueIn", { count: diasParaVencer })}
               </p>
             )}
             {status === "paga" && registroFatura?.dataPagamento && (
               <p className="mt-1 text-[11px] text-white/80">
-                Paga em {(() => {
+                {t("sheet.paidOn", { date: (() => {
                   const d = new Date(registroFatura.dataPagamento + "T00:00:00");
                   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-                })()}
+                })() })}
               </p>
             )}
           </div>
 
           <div className="relative mt-4 grid grid-cols-3 gap-2">
-            <MiniStat label="Limite" value={formatBRL(resumo.limite)} />
-            <MiniStat label="Disponível" value={formatBRL(resumo.disponivel)} />
-            <MiniStat label="Uso" value={`${Math.round(resumo.pct)}%`} />
+            <MiniStat label={t("sheet.limit")} value={formatBRL(resumo.limite)} />
+            <MiniStat label={t("sheet.available")} value={formatBRL(resumo.disponivel)} />
+            <MiniStat label={t("sheet.usage")} value={`${Math.round(resumo.pct)}%`} />
           </div>
 
           <div className="relative mt-3">
@@ -1371,14 +1394,13 @@ function FaturaSheet({
 
         {/* Corpo */}
         <div className="space-y-5 p-5">
-          {/* Cards informativos */}
           <div className="grid grid-cols-3 gap-2.5">
-            <InfoCard label="Fechamento" value={`Dia ${cartao.diaFechamento ?? "—"}`} />
-            <InfoCard label="Vencimento" value={vencStr} />
+            <InfoCard label={t("sheet.closing")} value={t("sheet.closingDayValue", { day: cartao.diaFechamento ?? "—" })} />
+            <InfoCard label={t("sheet.due")} value={vencStr} />
             <InfoCard
-              label="Lançamentos"
+              label={t("sheet.entries")}
               value={String(resumo.qtd)}
-              hint={resumo.qtd === 1 ? "compra" : "compras"}
+              hint={t("sheet.purchase", { count: resumo.qtd })}
             />
           </div>
 
@@ -1390,7 +1412,7 @@ function FaturaSheet({
               onClick={() => setOpenAdd(true)}
             >
               <Plus className="mr-1.5 h-4 w-4" />
-              Compra
+              {t("sheet.addPurchase")}
             </Button>
             <Button
               size="sm"
@@ -1402,12 +1424,12 @@ function FaturaSheet({
               {status === "paga" ? (
                 <>
                   <RotateCcw className="mr-1.5 h-4 w-4" />
-                  Reabrir
+                  {t("sheet.reopen")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                  Marcar paga
+                  {t("sheet.markPaidShort")}
                 </>
               )}
             </Button>
@@ -1418,7 +1440,7 @@ function FaturaSheet({
               onClick={() => onImport(cartao)}
             >
               <FileUp className="mr-1.5 h-4 w-4" />
-              Importar
+              {t("sheet.import")}
             </Button>
             <Button
               size="sm"
@@ -1427,7 +1449,7 @@ function FaturaSheet({
               onClick={() => onEdit(cartao)}
             >
               <Pencil className="mr-1.5 h-4 w-4" />
-              Editar
+              {t("sheet.edit")}
             </Button>
           </div>
 
@@ -1437,7 +1459,7 @@ function FaturaSheet({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por descrição ou estabelecimento"
+              placeholder={t("sheet.searchPlaceholder")}
               className="h-10 pl-9 pr-9"
             />
             {search && (
@@ -1445,7 +1467,7 @@ function FaturaSheet({
                 type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-card-elevated"
-                aria-label="Limpar busca"
+                aria-label={t("sheet.clearSearch")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -1465,7 +1487,7 @@ function FaturaSheet({
                     : "border-border bg-card hover:bg-card-elevated",
                 )}
               >
-                Todas · {formatBRL(resumo.total)}
+                {t("sheet.all")} · {formatBRL(resumo.total)}
               </button>
               {totaisPorCategoria.map((c) => {
                 const active = catFilter === c.id;
@@ -1491,16 +1513,16 @@ function FaturaSheet({
           {lotes.length > 0 && (
             <section className="rounded-2xl border border-border bg-card p-3">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Importações nesta fatura
+                {t("sheet.imports")}
               </p>
               <ul className="space-y-1.5">
                 {lotes.map((l) => (
                   <li key={l.batchId} className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium">
-                        {l.origem ?? "Importação"} · {l.qtd} {l.qtd === 1 ? "compra" : "compras"}
+                        {l.origem ?? t("sheet.importOriginDefault")} · {t("sheet.purchases", { count: l.qtd })}
                       </p>
-                      <p className="num text-[11px] text-muted-foreground">Total {formatBRL(l.total)}</p>
+                      <p className="num text-[11px] text-muted-foreground">{t("sheet.totalValue", { value: formatBRL(l.total) })}</p>
                     </div>
                     <Button
                       size="sm"
@@ -1509,7 +1531,7 @@ function FaturaSheet({
                       onClick={() => setConfirmLote(l.batchId)}
                     >
                       <Trash2 className="mr-1 h-3.5 w-3.5" />
-                      Excluir lote
+                      {t("sheet.deleteBatch")}
                     </Button>
                   </li>
                 ))}
@@ -1524,13 +1546,13 @@ function FaturaSheet({
                 <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
                 <p className="mt-2 text-sm font-semibold">
                   {compras.length === 0
-                    ? "Nenhuma compra nesta fatura"
-                    : "Nenhuma compra encontrada com esses filtros"}
+                    ? t("sheet.emptyTitle")
+                    : t("sheet.emptyFilteredTitle")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {compras.length === 0
-                    ? "Adicione uma compra ou importe a fatura para começar."
-                    : "Tente limpar a busca ou os filtros."}
+                    ? t("sheet.emptyHint")
+                    : t("sheet.emptyFilteredHint")}
                 </p>
               </div>
             ) : (
@@ -1538,7 +1560,7 @@ function FaturaSheet({
                 {gruposPorData.map(([data, items]) => {
                   const dt = new Date(data + "T00:00:00");
                   const totalDia = items.reduce((s, g) => s + g.valor, 0);
-                  const dtLabel = `${String(dt.getDate()).padStart(2, "0")} de ${MESES_FULL[dt.getMonth()]}`;
+                  const dtLabel = t("sheet.dayLabel", { day: String(dt.getDate()).padStart(2, "0"), month: monthsFull(t)[dt.getMonth()] });
                   return (
                     <div key={data}>
                       <div className="mb-1.5 flex items-center justify-between px-2">
