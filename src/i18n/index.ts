@@ -17,6 +17,7 @@ import ptFornecedores from "./locales/pt/fornecedores.json";
 import ptMetas from "./locales/pt/metas.json";
 import ptOrcamento from "./locales/pt/orcamento.json";
 import ptRelatorios from "./locales/pt/relatorios.json";
+import ptAdicionar from "./locales/pt/adicionar.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
