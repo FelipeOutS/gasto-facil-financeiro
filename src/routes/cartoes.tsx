@@ -1976,13 +1976,13 @@ function CartaoFormDialog({
 
                   <div>
                     <Label htmlFor="obs" className="text-xs text-muted-foreground">
-                      Observação (opcional)
+                      {t("form.obsLabel")}
                     </Label>
                     <Textarea
                       id="obs"
                       value={obs}
                       onChange={(e) => setObs(e.target.value)}
-                      placeholder="Ex.: cartão adicional, uso só em viagens…"
+                      placeholder={t("form.obsPlaceholder")}
                       maxLength={200}
                       className="mt-1.5 min-h-[72px]"
                     />
