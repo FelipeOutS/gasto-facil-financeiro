@@ -1837,10 +1837,10 @@ function CartaoFormDialog({
     };
     if (editing) {
       updateCartao(editing.id, payload);
-      toast.success("Cartão atualizado com sucesso.");
+      toast.success(t("toast.cardUpdated"));
     } else {
       addCartao(payload);
-      toast.success("Cartão cadastrado! Agora ficou mais fácil acompanhar sua fatura. 🎉");
+      toast.success(t("toast.cardCreated"));
     }
     onOpenChange(false);
   }
