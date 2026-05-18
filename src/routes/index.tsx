@@ -1455,7 +1455,7 @@ function OrcamentoCard({
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Orçamento do mês
+              {t("orcamentoCard.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold num">
               {formatBRL(totalRealizado)}
@@ -1466,7 +1466,7 @@ function OrcamentoCard({
           </div>
         </div>
         <Link to="/orcamento" className="text-xs text-muted-foreground hover:text-foreground">
-          Ver →
+          {t("orcamentoCard.ver")}
         </Link>
       </div>
 
@@ -1484,24 +1484,24 @@ function OrcamentoCard({
         />
       </div>
       <p className="num mt-1 text-[10px] text-muted-foreground">
-        {Math.round(pctGeral)}% usado
+        {t("orcamentoCard.usado", { pct: Math.round(pctGeral) })}
       </p>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <AlertaPill
-          label="Dentro"
+          label={t("orcamentoCard.pillDentro")}
           count={qtdOk}
           tone="brand"
           icon={<PieChartIcon className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Atenção"
+          label={t("orcamentoCard.pillAtencao")}
           count={qtdAtencao}
           tone="warning"
           icon={<AlertTriangle className="h-3 w-3" />}
         />
         <AlertaPill
-          label="Estourou"
+          label={t("orcamentoCard.pillEstourou")}
           count={qtdEstouro}
           tone="destructive"
           icon={<AlertTriangle className="h-3 w-3" />}
@@ -1511,7 +1511,7 @@ function OrcamentoCard({
       {top3.length > 0 && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Maior uso no mês
+            {t("orcamentoCard.maiorUso")}
           </p>
           <ul className="mt-1.5 space-y-1.5">
             {top3.map((l) => {
