@@ -66,7 +66,7 @@
     "topCategorias": "Top 5 categorias",
     "emptyGastos": "Sem gastos no mês.",
     "emptyCategorias": "Sem categorias no mês.",
-    "pctDoMes": "% do mês"
+    "pctDoMes": "{{pct}}% do mês"
   },
   "comparativo": {
     "anterior": "Anterior: {{valor}}",

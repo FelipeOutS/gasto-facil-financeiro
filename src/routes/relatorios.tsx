@@ -206,7 +206,7 @@ function RelatoriosPage() {
     return stack.map((s) => {
       const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
       return {
-        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
+        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
         mes: s.mes,
         ano: s.ano,
         receitas: r.totalReceitas,
@@ -307,14 +307,14 @@ function RelatoriosPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("aria.previousMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Próximo mês"
+            aria-label={t("aria.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -392,21 +392,21 @@ function RelatoriosPage() {
         <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Totais do período</p>
-              <p className="text-sm font-medium">{periodoLabel} · {historicoMeses.length} meses</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{t("totals.title")}</p>
+              <p className="text-sm font-medium">{t("totals.monthsCount", { period: periodoLabel, count: historicoMeses.length })}</p>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Receitas</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.receitas")}</p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Despesas</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.despesas")}</p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">{formatBRL(totaisPeriodo.despesas)}</p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.saldo")}</p>
               <p className={cn("mt-0.5 text-lg font-bold tabular-nums", totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand")}>
                 {formatBRL(totaisPeriodo.saldo)}
               </p>
@@ -416,28 +416,28 @@ function RelatoriosPage() {
       )}
 
       {/* ===== KPIs principais ===== */}
-      <SectionLabel>Resumo do mês</SectionLabel>
+      <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <Kpi label="Receitas" valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
-        <Kpi label="Despesas" valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
+        <Kpi label={t("kpi.receitas")} valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
+        <Kpi label={t("kpi.despesas")} valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
         <Kpi
-          label="Saldo"
+          label={t("kpi.saldo")}
           valor={resumo.saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={resumo.saldo < 0 ? "destructive" : "brand"}
         />
-        <Kpi label="No cartão" valor={resumo.totalCartao} icon={<CreditCard className="h-4 w-4" />} tone="warning" />
-        <Kpi label="Pago em contas" valor={resumo.totalPagoContas} icon={<CalendarClock className="h-4 w-4" />} tone="muted" />
-        <Kpi label="Guardado" valor={resumo.totalGuardado} icon={<Target className="h-4 w-4" />} tone="success" />
+        <Kpi label={t("kpi.cartao")} valor={resumo.totalCartao} icon={<CreditCard className="h-4 w-4" />} tone="warning" />
+        <Kpi label={t("kpi.contas")} valor={resumo.totalPagoContas} icon={<CalendarClock className="h-4 w-4" />} tone="muted" />
+        <Kpi label={t("kpi.guardado")} valor={resumo.totalGuardado} icon={<Target className="h-4 w-4" />} tone="success" />
         <Kpi
-          label="Maior gasto"
+          label={t("kpi.maiorGasto")}
           valor={resumo.maiorGasto?.valor ?? 0}
           icon={<Trophy className="h-4 w-4" />}
           tone="muted"
           hint={resumo.maiorGasto?.descricao}
         />
         <Kpi
-          label="Estouros"
+          label={t("kpi.estouros")}
           valor={resOrc.qtdEstouro}
           icon={<AlertTriangle className="h-4 w-4" />}
           tone={resOrc.qtdEstouro > 0 ? "destructive" : "muted"}
@@ -446,24 +446,24 @@ function RelatoriosPage() {
       </section>
 
       {/* ===== Comparativo ===== */}
-      <SectionLabel>Comparativo com o mês anterior</SectionLabel>
+      <SectionLabel>{t("sections.comparativo")}</SectionLabel>
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <ComparativoCard
-          label="Receitas"
+          label={t("kpi.receitas")}
           atual={comparativo.receitas.atual}
           anterior={comparativo.receitas.anterior}
           delta={comparativo.receitas.delta}
           inverter={false}
         />
         <ComparativoCard
-          label="Despesas"
+          label={t("kpi.despesas")}
           atual={comparativo.despesas.atual}
           anterior={comparativo.despesas.anterior}
           delta={comparativo.despesas.delta}
           inverter={true}
         />
         <ComparativoCard
-          label="Saldo"
+          label={t("kpi.saldo")}
           atual={comparativo.saldo.atual}
           anterior={comparativo.saldo.anterior}
           delta={comparativo.saldo.delta}
@@ -475,7 +475,7 @@ function RelatoriosPage() {
         <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2 animate-fade-in">
           {comparativo.maiorAlta && comparativo.maiorAlta.delta > 0 && (
             <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm">
-              <span className="font-medium">📈 Maior alta:</span>{" "}
+              <span className="font-medium">{t("comparativo.maiorAlta")}:</span>{" "}
               <span className="text-foreground/90">
                 {comparativo.maiorAlta.nome} (+{formatBRL(comparativo.maiorAlta.delta)})
               </span>
@@ -483,7 +483,7 @@ function RelatoriosPage() {
           )}
           {comparativo.maiorReducao && comparativo.maiorReducao.delta < 0 && (
             <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-sm">
-              <span className="font-medium">📉 Maior redução:</span>{" "}
+              <span className="font-medium">{t("comparativo.maiorReducao")}:</span>{" "}
               <span className="text-foreground/90">
                 {comparativo.maiorReducao.nome} ({formatBRL(comparativo.maiorReducao.delta)})
               </span>
@@ -493,11 +493,11 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Gráficos ===== */}
-      <SectionLabel>Gráficos</SectionLabel>
+      <SectionLabel>{t("sections.graficos")}</SectionLabel>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <ChartCard title="Gastos por categoria" icon={<PieChartIcon className="h-4 w-4" />}>
+        <ChartCard title={t("chart.gastosCategoria")} icon={<PieChartIcon className="h-4 w-4" />}>
           {resumo.porCategoria.length === 0 ? (
-            <EmptyChart label="Sem gastos no mês." />
+            <EmptyChart label={t("chart.emptyGastos")} />
           ) : (
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -528,7 +528,7 @@ function RelatoriosPage() {
           )}
         </ChartCard>
 
-        <ChartCard title="Receitas vs Despesas" icon={<TrendingUp className="h-4 w-4" />}>
+        <ChartCard title={t("chart.receitasDespesas")} icon={<TrendingUp className="h-4 w-4" />}>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={historicoMeses} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
@@ -547,14 +547,14 @@ function RelatoriosPage() {
                   formatter={(v: number) => formatBRL(v)}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="receitas" name="Receitas" fill="var(--success)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="despesas" name="Despesas" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="receitas" name={t("kpi.receitas")} fill="var(--success)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="despesas" name={t("kpi.despesas")} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
-        <ChartCard title="Evolução do saldo" icon={<Sparkles className="h-4 w-4" />}>
+        <ChartCard title={t("chart.evolucaoSaldo")} icon={<Sparkles className="h-4 w-4" />}>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={historicoMeses} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
@@ -585,9 +585,9 @@ function RelatoriosPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Top 5 categorias" icon={<Trophy className="h-4 w-4" />}>
+        <ChartCard title={t("chart.topCategorias")} icon={<Trophy className="h-4 w-4" />}>
           {resumo.porCategoria.length === 0 ? (
-            <EmptyChart label="Sem categorias no mês." />
+            <EmptyChart label={t("chart.emptyCategorias")} />
           ) : (
             <ul className="space-y-2.5">
               {resumo.porCategoria.slice(0, 5).map((c) => {
@@ -605,7 +605,7 @@ function RelatoriosPage() {
                         style={{ width: `${Math.min(100, c.pct)}%`, background: categoryColor(cat) }}
                       />
                     </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">{c.pct.toFixed(0)}% do mês</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">{t("chart.pctDoMes", { pct: c.pct.toFixed(0) })}</div>
                   </li>
                 );
               })}
@@ -617,7 +617,7 @@ function RelatoriosPage() {
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
         <>
-          <SectionLabel>Top 5 maiores despesas</SectionLabel>
+          <SectionLabel>{t("sections.topDespesas")}</SectionLabel>
           <ul className="space-y-2">
             {resumo.topGastos.map((g, i) => {
               const cat = getCategoriaById(g.categoriaId);
@@ -634,7 +634,7 @@ function RelatoriosPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{g.descricao}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {parseDateLocal(g.data)?.toLocaleDateString("pt-BR")}
+                      {cat?.nome ?? "Outros"} · {parseDateLocal(g.data)?.toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR")}
                     </p>
                   </div>
                   <span className="tabular-nums text-sm font-semibold">{formatBRL(g.valor)}</span>
@@ -646,10 +646,10 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Insights ===== */}
-      <SectionLabel>Insights do mês</SectionLabel>
+      <SectionLabel>{t("sections.insights")}</SectionLabel>
       {insights.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
-          Sem dados suficientes para gerar insights neste mês.
+          {t("insights.empty")}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
@@ -673,7 +673,7 @@ function RelatoriosPage() {
       )}
 
       {/* ===== Fechamento do mês ===== */}
-      <SectionLabel>Fechamento do mês</SectionLabel>
+      <SectionLabel>{t("sections.fechamento")}</SectionLabel>
       <section
         className={cn(
           "rounded-2xl border bg-card p-5 ring-1 transition-shadow animate-rise",
@@ -694,12 +694,12 @@ function RelatoriosPage() {
           </div>
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Estado do mês
+              {t("fechamento.estadoMes")}
             </p>
             <h3 className={cn("text-2xl font-bold leading-tight", cores.text)}>
               {tituloDoEstado(classificacao.estado)}
             </h3>
-            <p className="text-xs text-muted-foreground">Pontuação: {classificacao.pontuacao}/100</p>
+            <p className="text-xs text-muted-foreground">{t("fechamento.pontuacao", { pontuacao: classificacao.pontuacao })}</p>
           </div>
         </div>
 
@@ -708,16 +708,16 @@ function RelatoriosPage() {
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-          <FechRow label="Entradas" valor={resumo.totalReceitas} />
-          <FechRow label="Saídas" valor={resumo.totalDespesas} />
-          <FechRow label="Saldo final" valor={resumo.saldo} highlight />
-          <FechRow label="Guardado" valor={resumo.totalGuardado} />
-          <FechRow label="Contas pagas" valor={resumo.qtdContasPagas} isCount />
-          <FechRow label="Contas pendentes" valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas} isCount />
-          <FechRow label="Orçamentos estourados" valor={resOrc.qtdEstouro} isCount />
+          <FechRow label={t("fechamento.entradas")} valor={resumo.totalReceitas} />
+          <FechRow label={t("fechamento.saidas")} valor={resumo.totalDespesas} />
+          <FechRow label={t("fechamento.saldoFinal")} valor={resumo.saldo} highlight />
+          <FechRow label={t("fechamento.guardado")} valor={resumo.totalGuardado} />
+          <FechRow label={t("fechamento.contasPagas")} valor={resumo.qtdContasPagas} isCount />
+          <FechRow label={t("fechamento.contasPendentes")} valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas} isCount />
+          <FechRow label={t("fechamento.orcEstourados")} valor={resOrc.qtdEstouro} isCount />
           <FechRow
-            label="Melhor categoria"
-            text={resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ?? "—"}
+            label={t("fechamento.melhorCategoria")}
+            text={resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ?? t("fechamento.none")}
           />
         </div>
 
@@ -730,11 +730,11 @@ function RelatoriosPage() {
             className="gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Gerar resumo do mês
+            {t("actions.generateSummary")}
           </Button>
           {showResumo && (
             <Button variant="ghost" size="sm" onClick={() => setResumoSeed((s) => s + 1)} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" /> Outra versão
+              <RefreshCw className="h-3.5 w-3.5" /> {t("actions.anotherVersion")}
             </Button>
           )}
         </div>
@@ -815,6 +815,7 @@ function ComparativoCard({
   delta: number;
   inverter: boolean; // se true, alta = ruim (despesas)
 }) {
+  const { t } = useTranslation("relatorios");
   const subiu = delta > 0;
   // Para despesas: subiu = ruim. Para receitas/saldo: subiu = bom.
   const positivo = inverter ? !subiu : subiu;
@@ -836,11 +837,11 @@ function ComparativoCard({
     <div className="rounded-2xl border border-border bg-card p-4 animate-rise">
       <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-1 text-2xl font-bold tabular-nums">{formatBRL(atual)}</div>
-      <p className="mt-0.5 text-xs text-muted-foreground">Anterior: {formatBRL(anterior)}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{t("comparativo.anterior", { valor: formatBRL(anterior) })}</p>
       <div className={cn("mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", toneCls)}>
         <Icon className="h-3.5 w-3.5" />
         {delta === 0
-          ? "Sem variação"
+          ? t("comparativo.noChange")
           : `${subiu ? "+" : ""}${formatBRL(delta)}${pct !== null ? ` · ${subiu ? "+" : ""}${pct.toFixed(1)}%` : ""}`}
       </div>
     </div>
