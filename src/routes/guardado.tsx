@@ -363,23 +363,23 @@ function GuardadoPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir reserva?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteReserveDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa reserva será removida do total guardado. Não dá para desfazer.
+              {t("deleteReserveDialog.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteReserveDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteGuardado(confirmDelete.id);
-                  toast.success("Reserva removida.");
+                  toast.success(t("deleteReserveDialog.toast"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Excluir
+              {t("deleteReserveDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
