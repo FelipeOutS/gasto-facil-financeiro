@@ -1919,7 +1919,7 @@ function CartaoFormDialog({
                     <Input
                       value={banco}
                       onChange={(e) => setBanco(e.target.value)}
-                      placeholder="Ou digite outro emissor"
+                      placeholder={t("form.bankPlaceholder")}
                       maxLength={30}
                       className="mt-2.5 h-10"
                     />
