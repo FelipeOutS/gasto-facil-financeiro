@@ -154,7 +154,7 @@ const TIPO_COLORS: Record<TipoReceita, string> = {
 const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
 
 export const Route = createFileRoute("/renda")({
-  head: () => ({ meta: [{ title: "Minha renda — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: "Renda — Gasto Inteligente" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
     const ano = Number(search.ano);
     const mes = Number(search.mes);
@@ -167,6 +167,13 @@ export const Route = createFileRoute("/renda")({
 });
 
 function RendaPage() {
+  const { t, i18n } = useTranslation("renda");
+  const monthShort = useMemo(() => {
+    const raw = t("months", { returnObjects: true }) as unknown;
+    return Array.isArray(raw) && raw.length === 12 ? (raw as string[]) : MONTH_SHORT_FALLBACK;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
+  const tipoLabel = (id: TipoReceita) => t(`tipo.${id}`);
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
