@@ -437,11 +437,15 @@ function GuardadoPage() {
 }
 
 function ReservaFormDialog({
+  t,
+  tipoLabel,
   mode,
   bancos,
   onClose,
   onDuplicateDetected,
 }: {
+  t: (key: string, options?: Record<string, unknown>) => string;
+  tipoLabel: (tipo: TipoReserva, t: (key: string) => string) => string;
   mode: DialogMode;
   bancos: ReturnType<typeof getBancos>;
   onClose: () => void;
