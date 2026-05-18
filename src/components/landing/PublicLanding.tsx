@@ -853,6 +853,8 @@ function DesktopDashboardMock() {
 }
 
 function TabletDashboardMock() {
+  const { t } = useTranslation("landing");
+  const radarKpis = useRadarKpis();
   return (
     <div className="relative flex h-full w-full flex-col bg-slate-50/60 text-slate-900">
       <div className="flex-1 overflow-hidden px-3 pt-3 pb-7">
@@ -877,9 +879,9 @@ function TabletDashboardMock() {
 
         {/* header */}
         <div className="mt-2">
-          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">Resumo do seu mês</p>
-          <p className="text-[14px] font-bold leading-tight text-slate-900">Maio De 2026</p>
-          <p className="text-[6.5px] text-slate-500">Entenda para onde seu dinheiro foi.</p>
+          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.sidebar.monthSummary")}</p>
+          <p className="text-[14px] font-bold leading-tight text-slate-900">{t("mockup.sidebar.exampleMonth")}</p>
+          <p className="text-[6.5px] text-slate-500">{t("mockup.sidebar.exampleSubtitle")}</p>
         </div>
 
         {/* Alertas */}
@@ -887,19 +889,19 @@ function TabletDashboardMock() {
           <div className="flex items-center gap-1.5">
             <Bell className="h-2.5 w-2.5 text-slate-700" />
             <div>
-              <p className="text-[7px] font-bold text-slate-900">Alertas importantes</p>
-              <p className="text-[5.5px] text-slate-500">Tudo certo por aqui.</p>
+              <p className="text-[7px] font-bold text-slate-900">{t("mockup.alerts.title")}</p>
+              <p className="text-[5.5px] text-slate-500">{t("mockup.alerts.allClear")}</p>
             </div>
           </div>
           <div className="mt-1 flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[5.5px] font-medium text-emerald-700">
-            <Sparkles className="h-1.5 w-1.5" /> Nada urgente no radar.
+            <Sparkles className="h-1.5 w-1.5" /> {t("mockup.alerts.nothingUrgent")}
           </div>
         </div>
 
         {/* radar */}
-        <p className="mt-2 text-[5.5px] font-semibold uppercase tracking-widest text-slate-400">Tá tudo no radar</p>
+        <p className="mt-2 text-[5.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.radar.title")}</p>
         <div className="mt-1 grid grid-cols-2 gap-1.5">
-          {RADAR_KPIS.map((k) => (
+          {radarKpis.map((k) => (
             <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
               <div className="flex items-center justify-between">
                 <p className="text-[5.5px] font-semibold tracking-wider text-slate-500">{k.l}</p>
@@ -918,22 +920,22 @@ function TabletDashboardMock() {
               <span className="grid h-3 w-3 place-items-center rounded-full bg-amber-100">
                 <Sparkles className="h-1.5 w-1.5 text-amber-600" />
               </span>
-              <p className="text-[6px] font-bold uppercase tracking-wider text-amber-700">Seu limite inteligente</p>
+              <p className="text-[6px] font-bold uppercase tracking-wider text-amber-700">{t("mockup.smartLimit.title")}</p>
             </div>
             <span className="flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[5.5px] font-semibold text-amber-700">
-              <Gauge className="h-1.5 w-1.5" /> ATENÇÃO AO RITMO
+              <Gauge className="h-1.5 w-1.5" /> {t("mockup.smartLimit.watchPace")}
             </span>
           </div>
-          <p className="mt-1 text-[6px] font-semibold text-amber-800">Ignora contas fixas e faturas já pagas.</p>
+          <p className="mt-1 text-[6px] font-semibold text-amber-800">{t("mockup.smartLimit.ignoresFixed")}</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white px-1.5 py-0.5 text-[5.5px] font-semibold text-amber-700">
-            <SlidersHorizontal className="h-1.5 w-1.5" /> Somente gastos variáveis
+            <SlidersHorizontal className="h-1.5 w-1.5" /> {t("mockup.smartLimit.onlyVariable")}
           </span>
           <div className="mt-1 flex items-baseline gap-1">
             <p className="text-[16px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
-            <span className="text-[7px] font-semibold text-amber-600">/ dia</span>
+            <span className="text-[7px] font-semibold text-amber-600">{t("mockup.smartLimit.perDay")}</span>
           </div>
           <p className="mt-0.5 text-[5.5px] leading-snug text-amber-800/80">
-            Mantenha os gastos abaixo de R$ 13,73 por dia.
+            {t("mockup.smartLimit.keepBelow", { value: "R$ 13,73" })}
           </p>
         </div>
       </div>
@@ -942,11 +944,11 @@ function TabletDashboardMock() {
       <div className="absolute inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pt-1 pb-1.5">
         <div className="flex items-center justify-around">
           {[
-            { i: LayoutDashboard, l: "Dashboard", active: true },
-            { i: Receipt, l: "Gastos" },
-            { i: CreditCard, l: "Cartões" },
-            { i: Target, l: "Metas" },
-            { i: LayoutGrid, l: "Mais" },
+            { i: LayoutDashboard, l: t("mockup.nav.dashboard"), active: true },
+            { i: Receipt, l: t("mockup.nav.expenses") },
+            { i: CreditCard, l: t("mockup.nav.cards") },
+            { i: Target, l: t("mockup.nav.goals") },
+            { i: LayoutGrid, l: t("mockup.nav.more") },
           ].map(({ i: Icon, l, active }) => (
             <div key={l} className="flex flex-col items-center gap-0.5">
               <Icon className={cn("h-2.5 w-2.5", active ? "text-slate-900" : "text-slate-400")} strokeWidth={active ? 2.4 : 1.8} />
