@@ -1232,14 +1232,14 @@ function ContaFormDialog({
               id="conta-nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex.: Aluguel, Internet, Luz…"
+              placeholder={t("form.namePlaceholder")}
               autoFocus={!isEdit}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="conta-valor">Valor</Label>
+              <Label htmlFor="conta-valor">{t("form.value")}</Label>
               <Input
                 id="conta-valor"
                 inputMode="decimal"
@@ -1249,7 +1249,7 @@ function ContaFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="conta-data">Vencimento</Label>
+              <Label htmlFor="conta-data">{t("form.dueDate")}</Label>
               <Input
                 id="conta-data"
                 type="date"
@@ -1260,13 +1260,13 @@ function ContaFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Categoria</Label>
+            <Label>{t("form.category")}</Label>
             <Select value={categoriaId || "_none"} onValueChange={(v) => setCategoriaId(v === "_none" ? "" : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={t("form.select")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="_none">Sem categoria</SelectItem>
+                <SelectItem value="_none">{t("form.noCategory")}</SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -1277,10 +1277,10 @@ function ContaFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="conta-mes-ref">Mês de referência</Label>
+            <Label htmlFor="conta-mes-ref">{t("form.monthRef")}</Label>
             <Select value={mesReferencia} onValueChange={setMesReferencia}>
               <SelectTrigger id="conta-mes-ref">
-                <SelectValue placeholder="Mês de competência" />
+                <SelectValue placeholder={t("form.monthRefPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
@@ -1291,18 +1291,18 @@ function ContaFormDialog({
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
-              Mês ao qual esta conta pertence (ex.: fatura de Maio paga em Junho → Maio).
+              {t("form.monthRefHint")}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="conta-obs">Observação (opcional)</Label>
+            <Label htmlFor="conta-obs">{t("form.obs")}</Label>
             <Textarea
               id="conta-obs"
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               rows={2}
-              placeholder="Detalhes adicionais"
+              placeholder={t("form.obsPlaceholder")}
             />
           </div>
 
@@ -1314,9 +1314,9 @@ function ContaFormDialog({
               className="flex w-full items-center justify-between text-left"
             >
               <div>
-                <p className="text-sm font-medium">Mais detalhes (opcional)</p>
+                <p className="text-sm font-medium">{t("form.moreDetails")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Beneficiário, forma de pagamento, código de boleto/Pix
+                  {t("form.moreDetailsHint")}
                 </p>
               </div>
               <ChevronRight
@@ -1330,12 +1330,12 @@ function ContaFormDialog({
             {mostrarExtras && (
               <div className="mt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-benef">Beneficiário</Label>
+                  <Label htmlFor="conta-benef">{t("form.beneficiary")}</Label>
                   <Input
                     id="conta-benef"
                     value={beneficiario}
                     onChange={(e) => setBeneficiario(e.target.value)}
-                    placeholder="Quem recebe o pagamento"
+                    placeholder={t("form.beneficiaryPlaceholder")}
                   />
                 </div>
 
