@@ -1705,19 +1705,18 @@ function FaturaSheet({
         <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir esta importação?</AlertDialogTitle>
+              <AlertDialogTitle>{t("sheet.deleteBatchTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Apenas as compras importadas neste lote serão removidas. Gastos manuais da
-                mesma fatura serão preservados. Esta ação não pode ser desfeita.
+                {t("sheet.deleteBatchDesc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteLote}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir importação
+                {t("sheet.deleteBatchConfirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
