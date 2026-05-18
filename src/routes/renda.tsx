@@ -618,7 +618,6 @@ function RendaPage() {
               icon={Briefcase}
               accent="text-success"
               total={totalMes}
-              t={t}
             />
             <MiniStat
               label={t("miniStat.extra")}
@@ -626,7 +625,6 @@ function RendaPage() {
               icon={Coins}
               accent="text-[color:var(--cat-pix)]"
               total={totalMes}
-              t={t}
             />
             <MiniStat
               label={t("miniStat.recorrentes")}
@@ -634,7 +632,6 @@ function RendaPage() {
               icon={Repeat}
               accent="text-[color:var(--cat-trabalho)]"
               footer={t("miniStat.entries", { count: recorrentesMes.length })}
-              t={t}
             />
             <MiniStat
               label={t("miniStat.outras")}
@@ -642,7 +639,6 @@ function RendaPage() {
               icon={Wallet}
               accent="text-[color:var(--cat-presentes)]"
               total={totalMes}
-              t={t}
             />
           </div>
         </motion.section>
