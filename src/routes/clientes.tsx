@@ -411,17 +411,16 @@ function ClientesPage() {
       <Dialog open={novoAberto} onOpenChange={setNovoAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Novo cliente</DialogTitle>
+            <DialogTitle>{t("dialog.newTitle")}</DialogTitle>
             <DialogDescription>
-              Cadastre por CNPJ para preencher os dados automaticamente ou
-              adicione manualmente.
+              {t("dialog.newDesc")}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as "cnpj" | "manual")}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="cnpj">Por CNPJ</TabsTrigger>
-              <TabsTrigger value="manual">Manualmente</TabsTrigger>
+              <TabsTrigger value="cnpj">{t("dialog.tabCnpj")}</TabsTrigger>
+              <TabsTrigger value="manual">{t("dialog.tabManual")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cnpj" className="mt-4 space-y-4">
