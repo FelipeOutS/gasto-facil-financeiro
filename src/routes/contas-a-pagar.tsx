@@ -847,6 +847,7 @@ function ContaCard({
   onPagar: () => void;
   onDesmarcar: () => void;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const status = statusContaEfetivo(conta, hojeISO);
   const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
   const { porId: fornecedoresPorId } = useFornecedores();
@@ -893,18 +894,20 @@ function ContaCard({
             </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-            <span className="num">Vence {formatDateBR(conta.dataVencimento)}</span>
+            <span className="num">{t("card.dueShort", { date: formatDateBR(conta.dataVencimento) })}</span>
             {conta.recorrente && (
               <span className="inline-flex items-center gap-1">
                 <Repeat className="h-3 w-3" />
-                {FREQUENCIAS_RECORRENCIA.find((f) => f.id === conta.frequenciaRecorrencia)?.label ?? "Recorrente"}
+                {conta.frequenciaRecorrencia
+                  ? t(`frequency.${conta.frequenciaRecorrencia}`, { defaultValue: t("card.recurringFallback") })
+                  : t("card.recurringFallback")}
               </span>
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
           </div>
           {conta.fornecedorId && fornecedorNome && (
             <p className="mt-1 truncate text-[11px] text-muted-foreground">
-              Fornecedor: <span className="text-foreground/80">{fornecedorNome}</span>
+              {t("card.supplier")} <span className="text-foreground/80">{fornecedorNome}</span>
             </p>
           )}
         </div>
@@ -913,13 +916,13 @@ function ContaCard({
       {(conta.codigoBoleto || conta.codigoPix || conta.chavePix) && (
         <div className="mt-3 space-y-1.5">
           {conta.codigoBoleto && (
-            <CodigoCopiavel label="Código de boleto" valor={conta.codigoBoleto} />
+            <CodigoCopiavel label={t("copy.boletoLabel")} valor={conta.codigoBoleto} />
           )}
           {conta.codigoPix && (
-            <CodigoCopiavel label="Pix copia e cola" valor={conta.codigoPix} />
+            <CodigoCopiavel label={t("copy.pixCopyLabel")} valor={conta.codigoPix} />
           )}
           {conta.chavePix && (
-            <CodigoCopiavel label="Chave Pix" valor={conta.chavePix} />
+            <CodigoCopiavel label={t("copy.pixKeyLabel")} valor={conta.chavePix} />
           )}
         </div>
       )}
@@ -933,12 +936,12 @@ function ContaCard({
             onClick={onDesmarcar}
           >
             <RotateCcw className="mr-1 h-3.5 w-3.5" />
-            Desmarcar
+            {t("card.undoPaid")}
           </Button>
         ) : (
           <Button size="sm" className="flex-1" onClick={onPagar}>
             <Check className="mr-1 h-3.5 w-3.5" />
-            Marcar como pago
+            {t("card.markPaid")}
           </Button>
         )}
         <Button
@@ -946,7 +949,7 @@ function ContaCard({
           size="icon"
           className="shrink-0"
           onClick={onEdit}
-          aria-label="Editar"
+          aria-label={t("card.edit")}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -955,7 +958,7 @@ function ContaCard({
           size="icon"
           className="shrink-0 text-destructive hover:text-destructive"
           onClick={onDelete}
-          aria-label="Excluir"
+          aria-label={t("card.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -965,12 +968,13 @@ function ContaCard({
 }
 
 function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
+  const { t } = useTranslation("contas-a-pagar");
   async function copiar() {
     try {
       await navigator.clipboard.writeText(valor);
-      toast.success(`${label} copiado.`);
+      toast.success(t("copy.copied", { label }));
     } catch {
-      toast.error("Não consegui copiar. Copie manualmente.");
+      toast.error(t("copy.copyError"));
     }
   }
   return (
@@ -986,7 +990,7 @@ function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
         size="icon"
         className="h-7 w-7 shrink-0"
         onClick={copiar}
-        aria-label={`Copiar ${label}`}
+        aria-label={t("copy.copyButton", { label })}
       >
         <Copy className="h-3.5 w-3.5" />
       </Button>
@@ -995,11 +999,12 @@ function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
 }
 
 function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
+  const { t } = useTranslation("contas-a-pagar");
   if (status === "pago") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
         <CheckCircle2 className="h-2.5 w-2.5" />
-        Paga
+        {t("status.paid")}
       </span>
     );
   }
@@ -1007,7 +1012,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
         <AlertTriangle className="h-2.5 w-2.5" />
-        Atrasada {Math.abs(dias)}d
+        {t("status.overdueDays", { days: Math.abs(dias) })}
       </span>
     );
   }
@@ -1015,7 +1020,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Vence hoje
+        {t("status.dueToday")}
       </span>
     );
   }
@@ -1023,7 +1028,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Vence amanhã
+        {t("status.dueTomorrow")}
       </span>
     );
   }
@@ -1031,13 +1036,13 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
         <Clock className="h-2.5 w-2.5" />
-        Em {dias}d
+        {t("status.dueInDays", { days: dias })}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-      Pendente · {dias}d
+      {t("status.pendingDays", { days: dias })}
     </span>
   );
 }
@@ -1057,6 +1062,7 @@ function ContaFormDialog({
   onSaved: () => void;
   defaultDate?: string;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const isEdit = !!conta;
   const isPaga = conta?.status === "pago";
   const categorias = useStore(() => getCategorias());
@@ -1111,15 +1117,15 @@ function ContaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) {
-      toast.error("Dá um nome pra essa conta.");
+      toast.error(t("form.errName"));
       return;
     }
     if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(t("form.errValue"));
       return;
     }
     if (!dataVenc) {
-      toast.error("Escolha a data de vencimento.");
+      toast.error(t("form.errDate"));
       return;
     }
 
@@ -1148,8 +1154,8 @@ function ContaFormDialog({
       updateContaAPagar(conta.id, fields);
       toast.success(
         isPaga && sincronizarGasto
-          ? "Conta e gasto atualizados. ✅"
-          : "Conta atualizada. ✅",
+          ? t("form.toastUpdatedSync")
+          : t("form.toastUpdated"),
       );
     } else {
       addContaAPagar({
@@ -1170,7 +1176,7 @@ function ContaFormDialog({
         chavePix: chavePix.trim() || undefined,
         fornecedorId: fornecedorId || null,
       });
-      toast.success(recorrente ? "Conta recorrente criada. 🔁" : "Conta cadastrada.");
+      toast.success(recorrente ? t("form.toastCreatedRec") : t("form.toastCreated"));
     }
     onSaved();
   }
@@ -1200,10 +1206,10 @@ function ContaFormDialog({
 
     toast.success(
       scope === "all"
-        ? "Toda a recorrência foi atualizada. ✅"
+        ? t("scope.toastAll")
         : scope === "future"
-        ? "Esta e as próximas foram atualizadas. ✅"
-        : "Conta atualizada. ✅",
+        ? t("scope.toastFuture")
+        : t("scope.toastSingle"),
     );
     setEditScopeFields(null);
     onSaved();
@@ -1213,29 +1219,27 @@ function ContaFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar conta" : "Nova conta a pagar"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Atualize os dados da conta."
-              : "Cadastre essa conta e a gente te avisa antes do vencimento."}
+            {isEdit ? t("form.editDesc") : t("form.newDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="conta-nome">Nome da conta</Label>
+            <Label htmlFor="conta-nome">{t("form.name")}</Label>
             <Input
               id="conta-nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex.: Aluguel, Internet, Luz…"
+              placeholder={t("form.namePlaceholder")}
               autoFocus={!isEdit}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="conta-valor">Valor</Label>
+              <Label htmlFor="conta-valor">{t("form.value")}</Label>
               <Input
                 id="conta-valor"
                 inputMode="decimal"
@@ -1245,7 +1249,7 @@ function ContaFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="conta-data">Vencimento</Label>
+              <Label htmlFor="conta-data">{t("form.dueDate")}</Label>
               <Input
                 id="conta-data"
                 type="date"
@@ -1256,13 +1260,13 @@ function ContaFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Categoria</Label>
+            <Label>{t("form.category")}</Label>
             <Select value={categoriaId || "_none"} onValueChange={(v) => setCategoriaId(v === "_none" ? "" : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={t("form.select")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="_none">Sem categoria</SelectItem>
+                <SelectItem value="_none">{t("form.noCategory")}</SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -1273,10 +1277,10 @@ function ContaFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="conta-mes-ref">Mês de referência</Label>
+            <Label htmlFor="conta-mes-ref">{t("form.monthRef")}</Label>
             <Select value={mesReferencia} onValueChange={setMesReferencia}>
               <SelectTrigger id="conta-mes-ref">
-                <SelectValue placeholder="Mês de competência" />
+                <SelectValue placeholder={t("form.monthRefPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
@@ -1287,18 +1291,18 @@ function ContaFormDialog({
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
-              Mês ao qual esta conta pertence (ex.: fatura de Maio paga em Junho → Maio).
+              {t("form.monthRefHint")}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="conta-obs">Observação (opcional)</Label>
+            <Label htmlFor="conta-obs">{t("form.obs")}</Label>
             <Textarea
               id="conta-obs"
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               rows={2}
-              placeholder="Detalhes adicionais"
+              placeholder={t("form.obsPlaceholder")}
             />
           </div>
 
@@ -1310,9 +1314,9 @@ function ContaFormDialog({
               className="flex w-full items-center justify-between text-left"
             >
               <div>
-                <p className="text-sm font-medium">Mais detalhes (opcional)</p>
+                <p className="text-sm font-medium">{t("form.moreDetails")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Beneficiário, forma de pagamento, código de boleto/Pix
+                  {t("form.moreDetailsHint")}
                 </p>
               </div>
               <ChevronRight
@@ -1326,27 +1330,27 @@ function ContaFormDialog({
             {mostrarExtras && (
               <div className="mt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-benef">Beneficiário</Label>
+                  <Label htmlFor="conta-benef">{t("form.beneficiary")}</Label>
                   <Input
                     id="conta-benef"
                     value={beneficiario}
                     onChange={(e) => setBeneficiario(e.target.value)}
-                    placeholder="Quem recebe o pagamento"
+                    placeholder={t("form.beneficiaryPlaceholder")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Fornecedor (opcional)</Label>
+                  <Label>{t("form.supplier")}</Label>
                   {fornecedoresAtivos.length > 0 ? (
                     <Select
                       value={fornecedorId || "_none"}
                       onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Sem fornecedor" />
+                        <SelectValue placeholder={t("form.noSupplier")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="_none">Sem fornecedor</SelectItem>
+                        <SelectItem value="_none">{t("form.noSupplier")}</SelectItem>
                         {fornecedoresAtivos.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
                             {f.apelido || f.nome_fantasia || f.razao_social || f.nome}
@@ -1356,12 +1360,12 @@ function ContaFormDialog({
                     </Select>
                   ) : (
                     <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-                      Você ainda não tem fornecedores cadastrados.{" "}
+                      {t("form.noSuppliersTitle")}{" "}
                       <Link
                         to="/fornecedores"
                         className="font-medium text-primary underline-offset-2 hover:underline"
                       >
-                        Cadastrar fornecedor
+                        {t("form.registerSupplier")}
                       </Link>
                     </div>
                   )}
@@ -1369,7 +1373,7 @@ function ContaFormDialog({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Forma de pagamento</Label>
+                    <Label>{t("form.paymentMethod")}</Label>
                     <Select
                       value={formaPagamento || "_none"}
                       onValueChange={(v) =>
@@ -1377,7 +1381,7 @@ function ContaFormDialog({
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder={t("form.select")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">—</SelectItem>
@@ -1390,47 +1394,47 @@ function ContaFormDialog({
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="conta-banco">Banco emissor</Label>
+                    <Label htmlFor="conta-banco">{t("form.issuingBank")}</Label>
                     <Input
                       id="conta-banco"
                       value={bancoEmissor}
                       onChange={(e) => setBancoEmissor(e.target.value)}
-                      placeholder="Ex.: Itaú, Nubank…"
+                      placeholder={t("form.issuingBankPlaceholder")}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-boleto">Código de boleto</Label>
+                  <Label htmlFor="conta-boleto">{t("form.boletoCode")}</Label>
                   <Textarea
                     id="conta-boleto"
                     value={codigoBoleto}
                     onChange={(e) => setCodigoBoleto(e.target.value)}
                     rows={2}
-                    placeholder="Linha digitável do boleto"
+                    placeholder={t("form.boletoCodePlaceholder")}
                     className="font-mono text-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-pix-cc">Pix copia e cola</Label>
+                  <Label htmlFor="conta-pix-cc">{t("form.pixCopy")}</Label>
                   <Textarea
                     id="conta-pix-cc"
                     value={codigoPix}
                     onChange={(e) => setCodigoPix(e.target.value)}
                     rows={2}
-                    placeholder="Código BR Code do Pix"
+                    placeholder={t("form.pixCopyPlaceholder")}
                     className="font-mono text-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-chave">Chave Pix</Label>
+                  <Label htmlFor="conta-chave">{t("form.pixKey")}</Label>
                   <Input
                     id="conta-chave"
                     value={chavePix}
                     onChange={(e) => setChavePix(e.target.value)}
-                    placeholder="CPF, e-mail, telefone ou aleatória"
+                    placeholder={t("form.pixKeyPlaceholder")}
                   />
                 </div>
               </div>
@@ -1441,9 +1445,9 @@ function ContaFormDialog({
             <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Conta recorrente</p>
+                  <p className="text-sm font-medium">{t("form.recurring")}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Gera as próximas ocorrências automaticamente
+                    {t("form.recurringHint")}
                   </p>
                 </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
@@ -1451,7 +1455,7 @@ function ContaFormDialog({
             {recorrente && (
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-freq">Frequência</Label>
+                  <Label htmlFor="conta-freq">{t("form.frequency")}</Label>
                   <Select
                     value={frequencia}
                     onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
@@ -1462,7 +1466,7 @@ function ContaFormDialog({
                     <SelectContent>
                       {FREQUENCIAS_RECORRENCIA.map((f) => (
                         <SelectItem key={f.id} value={f.id}>
-                          {f.label}
+                          {t(`frequency.${f.id}`, { defaultValue: f.label })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1471,12 +1475,12 @@ function ContaFormDialog({
                 <div className="space-y-1.5">
                   <Label htmlFor="conta-meses">
                     {frequencia === "anual"
-                      ? "Quantos anos?"
+                      ? t("form.howManyYears")
                       : frequencia === "semanal"
-                      ? "Quantas semanas?"
+                      ? t("form.howManyWeeks")
                       : frequencia === "quinzenal"
-                      ? "Quantas quinzenas?"
-                      : "Quantos meses?"}
+                      ? t("form.howManyFortnights")
+                      : t("form.howManyMonths")}
                   </Label>
                   <Input
                     id="conta-meses"
@@ -1496,9 +1500,9 @@ function ContaFormDialog({
             <div className="rounded-xl border border-warning/40 bg-warning/10 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">Atualizar gasto vinculado</p>
+                  <p className="text-sm font-medium">{t("form.syncTitle")}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Esta conta já foi paga. Quer aplicar as mudanças no gasto criado em "Gastos"?
+                    {t("form.syncHint")}
                   </p>
                 </div>
                 <Switch
@@ -1512,9 +1516,9 @@ function ContaFormDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t("form.cancel")}
           </Button>
-          <Button onClick={handleSave}>{isEdit ? "Salvar" : "Cadastrar"}</Button>
+          <Button onClick={handleSave}>{isEdit ? t("form.save") : t("form.create")}</Button>
         </DialogFooter>
       </DialogContent>
 
@@ -1527,12 +1531,11 @@ function ContaFormDialog({
           <AlertDialogHeader>
             <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">
               <Repeat className="h-3.5 w-3.5" />
-              Conta recorrente
+              {t("scope.badge")}
             </div>
-            <AlertDialogTitle>Como deseja aplicar esta alteração?</AlertDialogTitle>
+            <AlertDialogTitle>{t("scope.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está editando uma conta recorrente. Deseja aplicar esta alteração
-              somente nesta conta ou também nas demais recorrências?
+              {t("scope.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -1542,9 +1545,9 @@ function ContaFormDialog({
               onClick={() => applyEditScope("single")}
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
             >
-              <p className="text-sm font-semibold">Somente esta conta</p>
+              <p className="text-sm font-semibold">{t("scope.single")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera apenas a ocorrência de {formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0)}.
+                {t("scope.singleHint", { label: formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0) })}
               </p>
             </button>
             <button
@@ -1552,9 +1555,9 @@ function ContaFormDialog({
               onClick={() => applyEditScope("future")}
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
             >
-              <p className="text-sm font-semibold">Esta e as próximas</p>
+              <p className="text-sm font-semibold">{t("scope.future")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera esta ocorrência e todas as futuras (mantém o histórico passado).
+                {t("scope.futureHint")}
               </p>
             </button>
             <button
@@ -1562,15 +1565,15 @@ function ContaFormDialog({
               onClick={() => applyEditScope("all")}
               className="w-full rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10"
             >
-              <p className="text-sm font-semibold">Todas as recorrências</p>
+              <p className="text-sm font-semibold">{t("scope.all")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera toda a série, incluindo passadas (ocorrências já pagas são preservadas).
+                {t("scope.allHint")}
               </p>
             </button>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("scope.cancel")}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1589,6 +1592,7 @@ function PagarDialog({
   onClose: () => void;
   categoriasCount: number;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const categorias = getCategorias();
   const [nome, setNome] = useState(conta.nome);
   const [valorStr, setValorStr] = useState(
@@ -1603,12 +1607,12 @@ function PagarDialog({
   async function handlePagar() {
     const nomeTrim = nome.trim();
     if (!nomeTrim) {
-      toast.error("Informe a descrição da conta.");
+      toast.error(t("pay.errName"));
       return;
     }
     const valorNum = parseBRLInput(valorStr);
     if (!valorNum || valorNum <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(t("pay.errValue"));
       return;
     }
     try {
@@ -1623,12 +1627,12 @@ function PagarDialog({
       });
       toast.success(
         criarGasto
-          ? "Conta paga e gasto registrado."
-          : "Conta marcada como paga.",
+          ? t("pay.toastWithExpense")
+          : t("pay.toastOnly"),
       );
       onClose();
     } catch {
-      toast.error("Não foi possível salvar o pagamento. Tente novamente.");
+      toast.error(t("pay.toastError"));
     }
   }
 
@@ -1636,26 +1640,26 @@ function PagarDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Marcar como paga</DialogTitle>
+          <DialogTitle>{t("pay.title")}</DialogTitle>
           <DialogDescription>
-            Revise os dados antes de confirmar o pagamento.
+            {t("pay.desc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="pag-nome">Descrição</Label>
+            <Label htmlFor="pag-nome">{t("pay.name")}</Label>
             <Input
               id="pag-nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Internet"
+              placeholder={t("pay.namePlaceholder")}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="pag-valor">Valor pago</Label>
+              <Label htmlFor="pag-valor">{t("pay.value")}</Label>
               <Input
                 id="pag-valor"
                 inputMode="decimal"
@@ -1665,7 +1669,7 @@ function PagarDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pag-data">Data do pagamento</Label>
+              <Label htmlFor="pag-data">{t("pay.date")}</Label>
               <Input
                 id="pag-data"
                 type="date"
@@ -1677,7 +1681,7 @@ function PagarDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Forma de pagamento</Label>
+              <Label>{t("pay.method")}</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1692,16 +1696,16 @@ function PagarDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Categoria</Label>
+              <Label>{t("pay.category")}</Label>
               <Select
                 value={categoriaId || "__none__"}
                 onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sem categoria" />
+                  <SelectValue placeholder={t("pay.noCategory")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Sem categoria</SelectItem>
+                  <SelectItem value="__none__">{t("pay.noCategory")}</SelectItem>
                   {categorias.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -1713,24 +1717,24 @@ function PagarDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pag-obs">Observação (opcional)</Label>
+            <Label htmlFor="pag-obs">{t("pay.obs")}</Label>
             <Textarea
               id="pag-obs"
               value={obs}
               onChange={(e) => setObs(e.target.value)}
               rows={2}
-              placeholder="Conta usada, comprovante, etc."
+              placeholder={t("pay.obsPlaceholder")}
             />
           </div>
 
           <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium">Registrar como gasto</p>
+                <p className="text-sm font-medium">{t("pay.asExpenseTitle")}</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
                   {categoriasCount === 0
-                    ? "Sem categorias cadastradas — vai para “Outros” em Gastos."
-                    : "Cria um lançamento em Gastos com a categoria selecionada."}
+                    ? t("pay.asExpenseHintNoCats")
+                    : t("pay.asExpenseHint")}
                 </p>
               </div>
               <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />
@@ -1740,11 +1744,11 @@ function PagarDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {t("pay.cancel")}
           </Button>
           <Button onClick={handlePagar}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar pagamento
+            {t("pay.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
