@@ -3960,20 +3960,21 @@ function OrcamentoMock() {
 /* ============================== CONTAS MOCK ============================== */
 
 function ContasMock() {
+  const { t } = useTranslation("landing");
   const contas = [
-    { n: "Aluguel", v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: "Pago" },
-    { n: "Internet", v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: "Em 3 dias" },
-    { n: "Energia", v: "R$ 248,30", d: "18/12", tone: "info" as const, label: "Em 9 dias" },
-    { n: "Cliente — projeto", v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: "A receber" },
+    { n: t("mockup.contas.items.rent"), v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: t("mockup.contas.labels.paid") },
+    { n: t("mockup.contas.items.internet"), v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: t("mockup.contas.labels.in3") },
+    { n: t("mockup.contas.items.energy"), v: "R$ 248,30", d: "18/12", tone: "info" as const, label: t("mockup.contas.labels.in9") },
+    { n: t("mockup.contas.items.client"), v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: t("mockup.contas.labels.toReceive") },
   ];
   return (
     <MockShell>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            Contas · dezembro
+            {t("mockup.contas.eyebrow")}
           </p>
-          <p className="text-base font-bold text-slate-900">R$ 1.818,20 em aberto</p>
+          <p className="text-base font-bold text-slate-900">{t("mockup.contas.open")}</p>
         </div>
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 text-amber-700">
           <CalendarClock className="h-5 w-5" />
@@ -4029,7 +4030,7 @@ function ContasMock() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{c.n}</p>
-                  <p className="text-[11px] text-slate-500">Vence {c.d}</p>
+                  <p className="text-[11px] text-slate-500">{t("mockup.contas.due", { date: c.d })}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -4051,13 +4052,13 @@ function ContasMock() {
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            A pagar
+            {t("mockup.contas.summary.toPay")}
           </p>
           <p className="text-sm font-bold tabular-nums text-rose-700">R$ 368,20</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            A receber
+            {t("mockup.contas.summary.toReceive")}
           </p>
           <p className="text-sm font-bold tabular-nums text-emerald-700">R$ 1.800,00</p>
         </div>

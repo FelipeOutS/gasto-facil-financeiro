@@ -632,6 +632,10 @@
         "in3": "In 3 days",
         "in9": "In 9 days",
         "toReceive": "To receive"
+      },
+      "summary": {
+        "toPay": "To pay",
+        "toReceive": "To receive"
       }
     },
     "nav": {
