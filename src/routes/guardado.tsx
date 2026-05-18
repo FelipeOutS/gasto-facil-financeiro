@@ -190,7 +190,7 @@ function GuardadoPage() {
           onClick={() => setDialog({ kind: "create" })}
         >
           <Plus className="mr-1 h-4 w-4" />
-          Nova reserva
+          {t("actions.newReserve")}
         </Button>
 
         <Dialog open={openB} onOpenChange={setOpenB}>
@@ -201,25 +201,25 @@ function GuardadoPage() {
             onClick={() => setOpenB(true)}
           >
             <Building2 className="mr-1 h-4 w-4" />
-            Novo banco
+            {t("actions.newBank")}
           </Button>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Adicionar banco</DialogTitle>
-              <DialogDescription>Crie um banco personalizado.</DialogDescription>
+              <DialogTitle>{t("bankDialog.title")}</DialogTitle>
+              <DialogDescription>{t("bankDialog.desc")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Nome</Label>
+                <Label className="text-xs text-muted-foreground">{t("bankDialog.nameLabel")}</Label>
                 <Input
                   value={novoBancoNome}
                   onChange={(e) => setNovoBancoNome(e.target.value)}
-                  placeholder="Ex.: Carteira"
+                  placeholder={t("bankDialog.namePlaceholder")}
                   className="mt-1 h-11 bg-card-elevated"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Cor</Label>
+                <Label className="text-xs text-muted-foreground">{t("bankDialog.colorLabel")}</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {COLOR_OPTIONS.map((c) => (
                     <button
