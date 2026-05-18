@@ -118,11 +118,10 @@ export const Route = createFileRoute("/cartoes")({
   }),
   head: () => ({
     meta: [
-      { title: "Cartões — Gasto Inteligente" },
+      { title: i18n.t("cartoes:meta.title") },
       {
         name: "description",
-        content:
-          "Cadastre seus cartões de crédito e acompanhe limites, fechamento e vencimento da fatura sem dor de cabeça.",
+        content: i18n.t("cartoes:meta.description"),
       },
     ],
   }),
@@ -143,14 +142,14 @@ function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
 
 
 /** Formata o % de uso do limite evitando "0%" quando há gasto. */
-function formatPctLimite(usado: number, limite: number): string {
+function formatPctLimite(usado: number, limite: number, lessThan1Label: string): string {
   if (!limite || limite <= 0) return "—";
   if (usado <= 0) return "0%";
   const pct = (usado / limite) * 100;
   if (pct >= 100) return "100%";
   if (pct >= 1) return `${Math.round(pct)}%`;
   if (pct >= 0.005) return `${pct.toFixed(2).replace(".", ",")}%`;
-  return "menos de 1%";
+  return lessThan1Label;
 }
 
 /** Normaliza nome do banco/emissor para exibição (ex.: Mercado Pago). */
