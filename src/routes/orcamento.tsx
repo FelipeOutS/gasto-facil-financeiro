@@ -32,7 +32,6 @@ import {
 import {
   buildLinhasOrcamento,
   resumirOrcamento,
-  type StatusOrcamento,
 } from "@/lib/orcamento";
 import { formatBRL, formatMonthYear, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
