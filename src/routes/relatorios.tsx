@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
