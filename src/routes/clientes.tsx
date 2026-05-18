@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -97,6 +98,7 @@ function aplicarMascaraCnpj(v: string): string {
 }
 
 function ClientesPage() {
+  const { t } = useTranslation("clientes");
   const { user } = useAuth();
   const consultarFn = useServerFn(consultarCnpj);
 
