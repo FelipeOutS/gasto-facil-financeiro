@@ -2018,19 +2018,19 @@ function CartaoFormDialog({
                       </div>
                       <div>
                         <p className="truncate text-lg font-bold leading-tight">
-                          {nome || "Seu cartão"}
+                          {nome || t("form.previewDefaultName")}
                         </p>
                         <div className="mt-2 flex items-end justify-between gap-2">
                           <div>
                             <p className="text-[9px] uppercase tracking-widest text-white/70">
-                              Limite
+                              {t("form.previewLimit")}
                             </p>
                             <p className="num text-sm font-semibold">
                               {formatBRL(limite || 0)}
                             </p>
                           </div>
                           <span className="text-[10px] uppercase tracking-widest text-white/70">
-                            Crédito
+                            {t("form.previewType")}
                           </span>
                         </div>
                       </div>
