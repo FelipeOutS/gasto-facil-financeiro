@@ -1340,17 +1340,17 @@ function ContaFormDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Fornecedor (opcional)</Label>
+                  <Label>{t("form.supplier")}</Label>
                   {fornecedoresAtivos.length > 0 ? (
                     <Select
                       value={fornecedorId || "_none"}
                       onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Sem fornecedor" />
+                        <SelectValue placeholder={t("form.noSupplier")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="_none">Sem fornecedor</SelectItem>
+                        <SelectItem value="_none">{t("form.noSupplier")}</SelectItem>
                         {fornecedoresAtivos.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
                             {f.apelido || f.nome_fantasia || f.razao_social || f.nome}
@@ -1360,12 +1360,12 @@ function ContaFormDialog({
                     </Select>
                   ) : (
                     <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-                      Você ainda não tem fornecedores cadastrados.{" "}
+                      {t("form.noSuppliersTitle")}{" "}
                       <Link
                         to="/fornecedores"
                         className="font-medium text-primary underline-offset-2 hover:underline"
                       >
-                        Cadastrar fornecedor
+                        {t("form.registerSupplier")}
                       </Link>
                     </div>
                   )}
@@ -1373,7 +1373,7 @@ function ContaFormDialog({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Forma de pagamento</Label>
+                    <Label>{t("form.paymentMethod")}</Label>
                     <Select
                       value={formaPagamento || "_none"}
                       onValueChange={(v) =>
@@ -1381,7 +1381,7 @@ function ContaFormDialog({
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder={t("form.select")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">—</SelectItem>
@@ -1394,47 +1394,47 @@ function ContaFormDialog({
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="conta-banco">Banco emissor</Label>
+                    <Label htmlFor="conta-banco">{t("form.issuingBank")}</Label>
                     <Input
                       id="conta-banco"
                       value={bancoEmissor}
                       onChange={(e) => setBancoEmissor(e.target.value)}
-                      placeholder="Ex.: Itaú, Nubank…"
+                      placeholder={t("form.issuingBankPlaceholder")}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-boleto">Código de boleto</Label>
+                  <Label htmlFor="conta-boleto">{t("form.boletoCode")}</Label>
                   <Textarea
                     id="conta-boleto"
                     value={codigoBoleto}
                     onChange={(e) => setCodigoBoleto(e.target.value)}
                     rows={2}
-                    placeholder="Linha digitável do boleto"
+                    placeholder={t("form.boletoCodePlaceholder")}
                     className="font-mono text-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-pix-cc">Pix copia e cola</Label>
+                  <Label htmlFor="conta-pix-cc">{t("form.pixCopy")}</Label>
                   <Textarea
                     id="conta-pix-cc"
                     value={codigoPix}
                     onChange={(e) => setCodigoPix(e.target.value)}
                     rows={2}
-                    placeholder="Código BR Code do Pix"
+                    placeholder={t("form.pixCopyPlaceholder")}
                     className="font-mono text-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-chave">Chave Pix</Label>
+                  <Label htmlFor="conta-chave">{t("form.pixKey")}</Label>
                   <Input
                     id="conta-chave"
                     value={chavePix}
                     onChange={(e) => setChavePix(e.target.value)}
-                    placeholder="CPF, e-mail, telefone ou aleatória"
+                    placeholder={t("form.pixKeyPlaceholder")}
                   />
                 </div>
               </div>
@@ -1445,9 +1445,9 @@ function ContaFormDialog({
             <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Conta recorrente</p>
+                  <p className="text-sm font-medium">{t("form.recurring")}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Gera as próximas ocorrências automaticamente
+                    {t("form.recurringHint")}
                   </p>
                 </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
@@ -1455,7 +1455,7 @@ function ContaFormDialog({
             {recorrente && (
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-freq">Frequência</Label>
+                  <Label htmlFor="conta-freq">{t("form.frequency")}</Label>
                   <Select
                     value={frequencia}
                     onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
@@ -1466,7 +1466,7 @@ function ContaFormDialog({
                     <SelectContent>
                       {FREQUENCIAS_RECORRENCIA.map((f) => (
                         <SelectItem key={f.id} value={f.id}>
-                          {f.label}
+                          {t(`frequency.${f.id}`, { defaultValue: f.label })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1475,12 +1475,12 @@ function ContaFormDialog({
                 <div className="space-y-1.5">
                   <Label htmlFor="conta-meses">
                     {frequencia === "anual"
-                      ? "Quantos anos?"
+                      ? t("form.howManyYears")
                       : frequencia === "semanal"
-                      ? "Quantas semanas?"
+                      ? t("form.howManyWeeks")
                       : frequencia === "quinzenal"
-                      ? "Quantas quinzenas?"
-                      : "Quantos meses?"}
+                      ? t("form.howManyFortnights")
+                      : t("form.howManyMonths")}
                   </Label>
                   <Input
                     id="conta-meses"
@@ -1500,9 +1500,9 @@ function ContaFormDialog({
             <div className="rounded-xl border border-warning/40 bg-warning/10 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">Atualizar gasto vinculado</p>
+                  <p className="text-sm font-medium">{t("form.syncTitle")}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Esta conta já foi paga. Quer aplicar as mudanças no gasto criado em "Gastos"?
+                    {t("form.syncHint")}
                   </p>
                 </div>
                 <Switch
@@ -1516,9 +1516,9 @@ function ContaFormDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t("form.cancel")}
           </Button>
-          <Button onClick={handleSave}>{isEdit ? "Salvar" : "Cadastrar"}</Button>
+          <Button onClick={handleSave}>{isEdit ? t("form.save") : t("form.create")}</Button>
         </DialogFooter>
       </DialogContent>
 
