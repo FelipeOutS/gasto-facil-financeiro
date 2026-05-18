@@ -1,0 +1,222 @@
+{
+  "meta": {
+    "title": "Contas a pagar — Gasto Inteligente"
+  },
+  "header": {
+    "back": "Voltar",
+    "prevMonth": "Mês anterior",
+    "nextMonth": "Próximo mês"
+  },
+  "summary": {
+    "pendingMonth": "Total pendente no mês",
+    "paidMonth": "Total pago no mês",
+    "nextDue": "Próxima a vencer",
+    "dueOn": "Vence em {{date}}"
+  },
+  "pills": {
+    "pending": "Pendentes",
+    "overdue": "Atrasadas",
+    "paid": "Pagas"
+  },
+  "stats": {
+    "pending": "Total pendente",
+    "overdue": "Total atrasado",
+    "next7": "Próximos 7 dias",
+    "paid": "Total pago",
+    "billCount_one": "{{count}} conta",
+    "billCount_other": "{{count}} contas"
+  },
+  "friendly": {
+    "overdue_one": "1 conta atrasada precisa de atenção.",
+    "overdue_other": "{{count}} contas atrasadas pedem atenção.",
+    "soon_one": "1 conta vence nos próximos dias.",
+    "soon_other": "{{count}} contas vencem nos próximos dias.",
+    "noneEver": "Sem boletos te perseguindo por enquanto.",
+    "allPaid": "Tudo em dia por aqui. 🎉",
+    "next7Clear": "Boa! Nada vencendo nos próximos 7 dias."
+  },
+  "cta": {
+    "new": "Nova conta",
+    "import": "Importar conta"
+  },
+  "filters": {
+    "label": "Filtrar contas",
+    "todas": "Todas",
+    "pendentes": "Pendentes",
+    "proximas": "Próximas",
+    "atrasadas": "Atrasadas",
+    "pagas": "Pagas",
+    "recorrentes": "Recorrentes"
+  },
+  "search": {
+    "placeholder": "Buscar por nome, categoria, valor ou vencimento",
+    "label": "Buscar contas",
+    "clear": "Limpar busca",
+    "noResults": "Nada encontrado para \"{{query}}\".",
+    "emptyFilter": "Nada nesse filtro por aqui."
+  },
+  "empty": {
+    "title": "Sem boletos te perseguindo por enquanto",
+    "subtitle": "Cadastre uma conta e deixe o app lembrar por você antes de vencer.",
+    "addFirst": "Adicionar primeira conta"
+  },
+  "card": {
+    "dueShort": "Vence {{date}}",
+    "recurringFallback": "Recorrente",
+    "supplier": "Fornecedor:",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "markPaid": "Marcar como pago",
+    "undoPaid": "Desmarcar"
+  },
+  "status": {
+    "paid": "Paga",
+    "overdueDays": "Atrasada {{days}}d",
+    "dueToday": "Vence hoje",
+    "dueTomorrow": "Vence amanhã",
+    "dueInDays": "Em {{days}}d",
+    "pendingDays": "Pendente · {{days}}d"
+  },
+  "copy": {
+    "boletoLabel": "Código de boleto",
+    "pixCopyLabel": "Pix copia e cola",
+    "pixKeyLabel": "Chave Pix",
+    "copyButton": "Copiar {{label}}",
+    "copied": "{{label}} copiado.",
+    "copyError": "Não consegui copiar. Copie manualmente."
+  },
+  "delete": {
+    "title": "Excluir esta conta?",
+    "descPaid": "\"{{name}}\" foi paga e gerou um gasto vinculado. Como deseja excluir?",
+    "desc": "Tem certeza que quer excluir \"{{name}}\"? Essa ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "onlyBill": "Excluir só a conta",
+    "billAndExpense": "Excluir conta e gasto",
+    "confirm": "Excluir",
+    "toastKept": "Conta excluída. Gasto mantido.",
+    "toastBoth": "Conta e gasto excluídos.",
+    "toastOnly": "Conta excluída."
+  },
+  "undo": {
+    "title": "Desfazer pagamento?",
+    "descPaid": "\"{{name}}\" voltará para pendente. O gasto vinculado em Gastos também será removido.",
+    "desc": "\"{{name}}\" voltará para pendente.",
+    "cancel": "Cancelar",
+    "confirm": "Desfazer pagamento",
+    "toastSuccess": "Conta voltou para pendente.",
+    "toastError": "Não foi possível desfazer o pagamento."
+  },
+  "deleteRec": {
+    "title": "Excluir conta recorrente",
+    "desc": "\"{{name}}\" se repete em vários meses. O que você quer excluir?",
+    "single": "Apenas esta ocorrência",
+    "future": "Esta e as próximas",
+    "all": "Excluir toda a recorrência",
+    "cancel": "Cancelar",
+    "toastSingle": "Apenas esta ocorrência foi excluída.",
+    "toastFuture": "Esta e as próximas ocorrências foram excluídas.",
+    "toastAll": "Toda a recorrência foi excluída."
+  },
+  "form": {
+    "editTitle": "Editar conta",
+    "newTitle": "Nova conta a pagar",
+    "editDesc": "Atualize os dados da conta.",
+    "newDesc": "Cadastre essa conta e a gente te avisa antes do vencimento.",
+    "name": "Nome da conta",
+    "namePlaceholder": "Ex.: Aluguel, Internet, Luz…",
+    "value": "Valor",
+    "dueDate": "Vencimento",
+    "category": "Categoria",
+    "select": "Selecione",
+    "noCategory": "Sem categoria",
+    "monthRef": "Mês de referência",
+    "monthRefPlaceholder": "Mês de competência",
+    "monthRefHint": "Mês ao qual esta conta pertence (ex.: fatura de Maio paga em Junho → Maio).",
+    "obs": "Observação (opcional)",
+    "obsPlaceholder": "Detalhes adicionais",
+    "moreDetails": "Mais detalhes (opcional)",
+    "moreDetailsHint": "Beneficiário, forma de pagamento, código de boleto/Pix",
+    "beneficiary": "Beneficiário",
+    "beneficiaryPlaceholder": "Quem recebe o pagamento",
+    "supplier": "Fornecedor (opcional)",
+    "noSupplier": "Sem fornecedor",
+    "noSuppliersTitle": "Você ainda não tem fornecedores cadastrados.",
+    "registerSupplier": "Cadastrar fornecedor",
+    "paymentMethod": "Forma de pagamento",
+    "issuingBank": "Banco emissor",
+    "issuingBankPlaceholder": "Ex.: Itaú, Nubank…",
+    "boletoCode": "Código de boleto",
+    "boletoCodePlaceholder": "Linha digitável do boleto",
+    "pixCopy": "Pix copia e cola",
+    "pixCopyPlaceholder": "Código BR Code do Pix",
+    "pixKey": "Chave Pix",
+    "pixKeyPlaceholder": "CPF, e-mail, telefone ou aleatória",
+    "recurring": "Conta recorrente",
+    "recurringHint": "Gera as próximas ocorrências automaticamente",
+    "frequency": "Frequência",
+    "howManyYears": "Quantos anos?",
+    "howManyWeeks": "Quantas semanas?",
+    "howManyFortnights": "Quantas quinzenas?",
+    "howManyMonths": "Quantos meses?",
+    "syncTitle": "Atualizar gasto vinculado",
+    "syncHint": "Esta conta já foi paga. Quer aplicar as mudanças no gasto criado em \"Gastos\"?",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "create": "Cadastrar",
+    "errName": "Dá um nome pra essa conta.",
+    "errValue": "Informe um valor válido.",
+    "errDate": "Escolha a data de vencimento.",
+    "toastUpdated": "Conta atualizada. ✅",
+    "toastUpdatedSync": "Conta e gasto atualizados. ✅",
+    "toastCreated": "Conta cadastrada.",
+    "toastCreatedRec": "Conta recorrente criada. 🔁"
+  },
+  "frequency": {
+    "semanal": "Semanal",
+    "quinzenal": "Quinzenal",
+    "mensal": "Mensal",
+    "anual": "Anual"
+  },
+  "scope": {
+    "badge": "Conta recorrente",
+    "title": "Como deseja aplicar esta alteração?",
+    "desc": "Você está editando uma conta recorrente. Deseja aplicar esta alteração somente nesta conta ou também nas demais recorrências?",
+    "single": "Somente esta conta",
+    "singleHint": "Altera apenas a ocorrência de {{label}}.",
+    "future": "Esta e as próximas",
+    "futureHint": "Altera esta ocorrência e todas as futuras (mantém o histórico passado).",
+    "all": "Todas as recorrências",
+    "allHint": "Altera toda a série, incluindo passadas (ocorrências já pagas são preservadas).",
+    "cancel": "Cancelar",
+    "toastAll": "Toda a recorrência foi atualizada. ✅",
+    "toastFuture": "Esta e as próximas foram atualizadas. ✅",
+    "toastSingle": "Conta atualizada. ✅"
+  },
+  "pay": {
+    "title": "Marcar como paga",
+    "desc": "Revise os dados antes de confirmar o pagamento.",
+    "name": "Descrição",
+    "namePlaceholder": "Ex: Internet",
+    "value": "Valor pago",
+    "date": "Data do pagamento",
+    "method": "Forma de pagamento",
+    "category": "Categoria",
+    "noCategory": "Sem categoria",
+    "obs": "Observação (opcional)",
+    "obsPlaceholder": "Conta usada, comprovante, etc.",
+    "asExpenseTitle": "Registrar como gasto",
+    "asExpenseHintNoCats": "Sem categorias cadastradas — vai para \"Outros\" em Gastos.",
+    "asExpenseHint": "Cria um lançamento em Gastos com a categoria selecionada.",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar pagamento",
+    "errName": "Informe a descrição da conta.",
+    "errValue": "Informe um valor válido.",
+    "toastWithExpense": "Conta paga e gasto registrado.",
+    "toastOnly": "Conta marcada como paga.",
+    "toastError": "Não foi possível salvar o pagamento. Tente novamente."
+  },
+  "upgrade": {
+    "featureLabel": "Importar boleto, Pix ou conta",
+    "benefit": "Identifique automaticamente boletos, Pix e contas a pagar."
+  }
+}
