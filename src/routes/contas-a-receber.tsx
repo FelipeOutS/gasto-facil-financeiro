@@ -77,6 +77,7 @@ export const Route = createFileRoute("/contas-a-receber")({
 type FilterStatus = "todas" | "pendente" | "atrasado" | "parcial" | "recebido" | "cancelado";
 
 function ContasAReceberPage() {
+  const { t } = useTranslation("contas-a-receber");
   const { user } = useAuth();
   const userId = user?.id;
   const [lista, setLista] = useState<ContaReceber[]>([]);
@@ -97,7 +98,7 @@ function ContasAReceberPage() {
       setLista(data);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao carregar contas a receber");
+      toast.error(t("errors.loadFailed"));
     }
   }
 
@@ -108,10 +109,10 @@ function ContasAReceberPage() {
       .then(setLista)
       .catch((e) => {
         console.error(e);
-        toast.error("Erro ao carregar contas a receber");
+        toast.error(t("errors.loadFailed"));
       })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [userId, t]);
 
   const resumo = useMemo(() => calcularResumo(lista), [lista]);
 
