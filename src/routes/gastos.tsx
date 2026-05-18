@@ -1249,7 +1249,7 @@ function GastosPage() {
                       <button
                         onClick={() => setEditing(g)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label="Editar gasto"
+                        aria-label={t("item.edit")}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -1257,7 +1257,7 @@ function GastosPage() {
                         <DropdownMenuTrigger asChild>
                           <button
                             className="text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Mais ações"
+                            aria-label={t("item.more")}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -1265,18 +1265,18 @@ function GastosPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditing(g)}>
                             <Pencil className="mr-2 h-4 w-4" />
-                            Editar gasto
+                            {t("item.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => {
                               deleteGasto(g.id);
-                              toast.success("Gasto removido.");
+                              toast.success(t("item.deleted"));
                             }}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir gasto
+                            {t("item.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
