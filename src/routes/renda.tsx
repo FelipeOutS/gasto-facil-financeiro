@@ -522,17 +522,17 @@ function RendaPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Suas entradas
+            {t("header.kicker")}
           </p>
           <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
           <p className="text-xs text-muted-foreground">
-            Visão completa do que entra todo mês.
+            {t("header.subtitle")}
           </p>
         </div>
       </header>
@@ -542,7 +542,7 @@ function RendaPage() {
         <button
           onClick={() => changeMonth(-1)}
           className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Mês anterior"
+          aria-label={t("nav.prev")}
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -552,7 +552,7 @@ function RendaPage() {
         <button
           onClick={() => changeMonth(1)}
           className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Próximo mês"
+          aria-label={t("nav.next")}
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -583,12 +583,12 @@ function RendaPage() {
           <div className="relative flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Total de entradas no mês
+                {t("summary.totalLabel")}
               </p>
               <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight sm:text-5xl" />
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  {doMes.length} {doMes.length === 1 ? "entrada" : "entradas"} registrada{doMes.length === 1 ? "" : "s"}
+                  {t("summary.entries", { count: doMes.length })}
                 </span>
                 {variacaoPct !== null && (
                   <span
@@ -600,8 +600,7 @@ function RendaPage() {
                     )}
                   >
                     {variacaoPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {variacaoPct >= 0 ? "+" : ""}
-                    {variacaoPct.toFixed(1)}% vs mês anterior
+                    {t("summary.variation", { sign: variacaoPct >= 0 ? "+" : "", value: variacaoPct.toFixed(1) })}
                   </span>
                 )}
               </div>
@@ -614,32 +613,36 @@ function RendaPage() {
           {/* mini barras grid 4 */}
           <div className="relative mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             <MiniStat
-              label="Salário"
+              label={t("miniStat.salario")}
               value={salarioMes}
               icon={Briefcase}
               accent="text-success"
               total={totalMes}
+              t={t}
             />
             <MiniStat
-              label="Renda extra"
+              label={t("miniStat.extra")}
               value={extraMes}
               icon={Coins}
               accent="text-[color:var(--cat-pix)]"
               total={totalMes}
+              t={t}
             />
             <MiniStat
-              label="Recorrentes"
+              label={t("miniStat.recorrentes")}
               value={recorrentesValor}
               icon={Repeat}
               accent="text-[color:var(--cat-trabalho)]"
-              footer={`${recorrentesMes.length} entrada${recorrentesMes.length === 1 ? "" : "s"}`}
+              footer={t("miniStat.entries", { count: recorrentesMes.length })}
+              t={t}
             />
             <MiniStat
-              label="Outras"
+              label={t("miniStat.outras")}
               value={outrasMes}
               icon={Wallet}
               accent="text-[color:var(--cat-presentes)]"
               total={totalMes}
+              t={t}
             />
           </div>
         </motion.section>
@@ -686,35 +689,35 @@ function RendaPage() {
               className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-5 w-5" />
-              Nova entrada
+              {t("cta.new")}
             </Button>
           </DialogTrigger>
           <div className="flex flex-wrap gap-1.5">
-            <QuickAction icon={Briefcase} label="Salário" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
-            <QuickAction icon={Coins} label="Freela" onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
-            <QuickAction icon={Repeat} label="Recorrente" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
-            <QuickAction icon={Receipt} label="Avulsa" onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
+            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
+            <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Receipt} label={t("cta.quick.avulsa")} onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
           </div>
         </div>
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova entrada de dinheiro</DialogTitle>
-            <DialogDescription>Salário, freelance, comissão e mais.</DialogDescription>
+            <DialogTitle>{t("dialog.newTitle")}</DialogTitle>
+            <DialogDescription>{t("dialog.newDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Descrição</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.descricao")}</Label>
               <Input
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Ex.: Salário do mês"
+                placeholder={t("dialog.fields.descricaoPlaceholder")}
                 className="mt-1 h-11 bg-card-elevated"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Valor</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.valor")}</Label>
                 <Input
                   inputMode="decimal"
                   value={valorStr}
@@ -724,7 +727,7 @@ function RendaPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Data</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.data")}</Label>
                 <Input
                   type="date"
                   value={data}
@@ -734,14 +737,14 @@ function RendaPage() {
               </div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Tipo</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.tipo")}</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
                 <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RECEITA.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  {TIPOS_RECEITA.map((tp) => (
+                    <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -753,14 +756,14 @@ function RendaPage() {
             />
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
-                <p className="text-sm font-medium">Repetir todo mês</p>
-                <p className="text-xs text-muted-foreground">Entrada recorrente</p>
+                <p className="text-sm font-medium">{t("dialog.fields.repeat")}</p>
+                <p className="text-xs text-muted-foreground">{t("dialog.fields.repeatHint")}</p>
               </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
             {recorrente && (
               <div>
-                <Label className="text-xs text-muted-foreground">Repetir por (meses)</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -773,8 +776,8 @@ function RendaPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>Cadastrar</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("dialog.cancel")}</Button>
+            <Button onClick={handleSave}>{t("dialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
