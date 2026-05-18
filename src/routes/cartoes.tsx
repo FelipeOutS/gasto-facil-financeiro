@@ -1872,18 +1872,18 @@ function CartaoFormDialog({
               <div className="space-y-5 animate-rise">
                 <section className="space-y-4">
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Dados do cartão
+                    {t("form.dataSection")}
                   </h3>
 
                   <div>
                     <Label htmlFor="nome" className="text-xs text-muted-foreground">
-                      Nome do cartão *
+                      {t("form.nameLabel")}
                     </Label>
                     <Input
                       id="nome"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      placeholder="Ex.: Nubank Roxinho"
+                      placeholder={t("form.namePlaceholder")}
                       maxLength={40}
                       className="mt-1.5 h-11"
                     />
