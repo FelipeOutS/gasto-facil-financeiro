@@ -2615,7 +2615,7 @@ function EmpresaVisual() {
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Radar
+            {t("mockup.empresaFloating.radarTitle")}
           </span>
           <Activity className="h-3 w-3 text-slate-400" />
         </div>
@@ -2656,16 +2656,16 @@ function EmpresaVisual() {
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Resumo do mês
+            {t("mockup.empresaFloating.monthSummary")}
           </span>
           <LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />
         </div>
         <div className="mt-3 space-y-2 text-sm">
-          <Row label="Receitas" value="R$ 28.560" trend="up" delta="+12%" />
-          <Row label="Despesas" value="R$ 16.230" trend="down" delta="-4%" />
+          <Row label={t("mockup.empresaFloating.incomeLabel")} value="R$ 28.560" trend="up" delta="+12%" />
+          <Row label={t("mockup.empresaFloating.expensesLabel")} value="R$ 16.230" trend="down" delta="-4%" />
           <div className="my-2 border-t border-dashed border-slate-200" />
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Saldo</span>
+            <span className="text-slate-600">{t("mockup.empresaFloating.balanceLabel")}</span>
             <span className="font-bold text-emerald-600">R$ 12.330</span>
           </div>
         </div>
@@ -2681,12 +2681,12 @@ function EmpresaVisual() {
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">
-            A receber
+            {t("mockup.empresaFloating.toReceive")}
           </span>
           <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
         </div>
         <p className="mt-2 text-lg font-bold text-slate-900">R$ 14.980</p>
-        <p className="text-xs text-slate-500">8 títulos em aberto</p>
+        <p className="text-xs text-slate-500">{t("mockup.empresaFloating.openTitles")}</p>
         <MiniChart color="emerald" points={[6, 9, 7, 12, 10, 14, 13, 16]} />
       </motion.div>
 
@@ -2704,16 +2704,16 @@ function EmpresaVisual() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Pacote para Contador
+              {t("mockup.empresaFloating.accountantPackage")}
             </p>
             <p className="text-sm font-semibold text-slate-900">Outubro/2025</p>
           </div>
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
-            Pronto
+            {t("mockup.empresaFloating.packageReady")}
           </span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-slate-500">
-          Resumo mensal pronto para enviar ao contador.
+          {t("mockup.empresaFloating.packageDesc")}
         </p>
       </motion.div>
     </div>
