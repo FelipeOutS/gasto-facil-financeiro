@@ -218,12 +218,15 @@ function getRange(
 }
 
 function GastosPage() {
+  const { t } = useTranslation("gastos");
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
   const { porId: fornecedoresPorId } = useFornecedores();
+
+  const tPag = (id: string, fallback: string) => t(`pagamento.${id}`, { defaultValue: fallback });
 
   // Refetch gastos ao entrar na página: pega registros criados fora do
   // cliente (ex: webhook do WhatsApp) que não passaram pelo cache local.
