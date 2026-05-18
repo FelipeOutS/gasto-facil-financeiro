@@ -967,25 +967,23 @@ function RecorrenciaDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Editar recorrência" : "Nova recorrência"}
+            {editing ? t("dialog.titleEdit") : t("dialog.titleNew")}
           </DialogTitle>
           <DialogDescription>
-            {editing
-              ? "Ajuste os dados da assinatura ou recorrência."
-              : "Cadastre uma nova assinatura ou despesa que se repete."}
+            {editing ? t("dialog.descEdit") : t("dialog.descNew")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-xs font-medium">Nome</label>
+            <label className="text-xs font-medium">{t("dialog.name")}</label>
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Spotify, Aluguel"
+              placeholder={t("dialog.namePlaceholder")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium">Moeda</label>
+            <label className="text-xs font-medium">{t("dialog.currency")}</label>
             <Select
               value={moeda}
               onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
@@ -994,9 +992,9 @@ function RecorrenciaDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BRL">🇧🇷 Real (BRL)</SelectItem>
-                <SelectItem value="USD">🇺🇸 Dólar (USD)</SelectItem>
-                <SelectItem value="EUR">🇪🇺 Euro (EUR)</SelectItem>
+                <SelectItem value="BRL">{t("dialog.currencyBRL")}</SelectItem>
+                <SelectItem value="USD">{t("dialog.currencyUSD")}</SelectItem>
+                <SelectItem value="EUR">{t("dialog.currencyEUR")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1004,17 +1002,17 @@ function RecorrenciaDialog({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium">
-                  Valor em {moeda === "USD" ? "dólares" : "euros"}
+                  {moeda === "USD" ? t("dialog.valueInUSD") : t("dialog.valueInEUR")}
                 </label>
                 <Input
                   value={valorOriginal}
                   onChange={(e) => setValorOriginal(e.target.value)}
                   inputMode="decimal"
-                  placeholder={moeda === "USD" ? "Ex: 9,99" : "Ex: 12,50"}
+                  placeholder={moeda === "USD" ? t("dialog.phUSD") : t("dialog.phEUR")}
                 />
               </div>
               <div>
-                <label className="text-xs font-medium">Cotação atual</label>
+                <label className="text-xs font-medium">{t("dialog.currentRate")}</label>
                 <Input
                   readOnly
                   value={
@@ -1028,15 +1026,14 @@ function RecorrenciaDialog({
                 />
               </div>
               <p className="col-span-2 rounded-md bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                Estimativa em reais já com IOF e spread médios. O valor final
-                pode variar a cada cobrança.
+                {t("dialog.estimateHint")}
               </p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium">
-                {moeda === "BRL" ? "Valor (R$)" : "Estimativa em reais"}
+                {moeda === "BRL" ? t("dialog.valueBRL") : t("dialog.estimateBRL")}
               </label>
               <Input
                 value={valor}
@@ -1046,7 +1043,7 @@ function RecorrenciaDialog({
               />
             </div>
             <div>
-              <label className="text-xs font-medium">Frequência</label>
+              <label className="text-xs font-medium">{t("dialog.frequency")}</label>
               <Select
                 value={frequencia}
                 onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
@@ -1055,11 +1052,9 @@ function RecorrenciaDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(
-                    Object.keys(FREQ_LABEL) as FrequenciaRecorrencia[]
-                  ).map((f) => (
+                  {FREQ_KEYS.map((f) => (
                     <SelectItem key={f} value={f}>
-                      {FREQ_LABEL[f]}
+                      {freqLabel(f)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1067,7 +1062,7 @@ function RecorrenciaDialog({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium">Próxima cobrança</label>
+            <label className="text-xs font-medium">{t("dialog.next")}</label>
             <Input
               type="date"
               value={proximaCobranca}
@@ -1075,16 +1070,16 @@ function RecorrenciaDialog({
             />
           </div>
           <div>
-            <label className="text-xs font-medium">Categoria</label>
+            <label className="text-xs font-medium">{t("dialog.category")}</label>
             <Select
               value={categoriaId || "__none__"}
               onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar" />
+                <SelectValue placeholder={t("dialog.categorySelect")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">Sem categoria</SelectItem>
+                <SelectItem value="__none__">{t("dialog.noCategory")}</SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -1095,7 +1090,7 @@ function RecorrenciaDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium">Forma de pagamento</label>
+              <label className="text-xs font-medium">{t("dialog.payment")}</label>
               <Select
                 value={formaPagamento || "__none__"}
                 onValueChange={(v) =>
@@ -1103,10 +1098,10 @@ function RecorrenciaDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder={t("dialog.categorySelect")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Não definida</SelectItem>
+                  <SelectItem value="__none__">{t("dialog.paymentNone")}</SelectItem>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.label}
@@ -1116,7 +1111,7 @@ function RecorrenciaDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium">Cartão</label>
+              <label className="text-xs font-medium">{t("dialog.card")}</label>
               <Select
                 value={cartaoId || "__none__"}
                 onValueChange={(v) => setCartaoId(v === "__none__" ? "" : v)}
@@ -1126,7 +1121,7 @@ function RecorrenciaDialog({
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  <SelectItem value="__none__">{t("dialog.noCard")}</SelectItem>
                   {cartoes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -1137,7 +1132,7 @@ function RecorrenciaDialog({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium">Status</label>
+            <label className="text-xs font-medium">{t("dialog.status")}</label>
             <Select
               value={status}
               onValueChange={(v) => setStatus(v as StatusRecorrencia)}
@@ -1148,14 +1143,14 @@ function RecorrenciaDialog({
               <SelectContent>
                 {(["ativa", "pausada", "cancelada"] as const).map((s) => (
                   <SelectItem key={s} value={s}>
-                    {STATUS_LABEL[s]}
+                    {statusLabel(s)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium">Observação</label>
+            <label className="text-xs font-medium">{t("dialog.note")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -1168,10 +1163,10 @@ function RecorrenciaDialog({
               variant="ghost"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {t("actions.cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : editing ? "Salvar" : "Criar"}
+              {saving ? t("actions.saving") : editing ? t("actions.save") : t("actions.create")}
             </Button>
           </DialogFooter>
         </form>
