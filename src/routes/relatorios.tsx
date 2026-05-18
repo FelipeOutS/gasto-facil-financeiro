@@ -547,8 +547,8 @@ function RelatoriosPage() {
                   formatter={(v: number) => formatBRL(v)}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="receitas" name="Receitas" fill="var(--success)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="despesas" name="Despesas" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="receitas" name={t("kpi.receitas")} fill="var(--success)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="despesas" name={t("kpi.despesas")} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
