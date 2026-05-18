@@ -24,7 +24,6 @@ import {
   PLAN_LABEL,
   commercialPlanByTier,
   formatBRL,
-  getPeriodicidade,
   planAllowsFeature,
   priceForPeriod,
   suggestedUpgrade,
@@ -52,15 +51,6 @@ export const Route = createFileRoute("/meu-plano")({
   component: MeuPlanoPage,
 });
 
-const STATUS_LABEL: Record<string, string> = {
-  ativo: "Ativo",
-  teste: "Em teste",
-  aguardando_pagamento: "Aguardando pagamento",
-  expirado: "Expirado",
-  cancelado: "Cancelado",
-  sem_assinatura: "Sem assinatura",
-};
-
 const STATUS_TONE: Record<string, string> = {
   ativo: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
   teste: "border-primary/30 bg-primary/10 text-primary",
@@ -74,6 +64,7 @@ const STATUS_TONE: Record<string, string> = {
 
 function MeuPlanoPage() {
   const { t, i18n } = useTranslation("landing");
+  const { t: tp } = useTranslation("meu-plano");
   const { profile, user } = useAuth();
   const {
     plan,
@@ -133,11 +124,11 @@ function MeuPlanoPage() {
     const st = params.get("status");
     if (!st) return;
     if (st === "success") {
-      toast.success("Pagamento aprovado! Seu plano será liberado em instantes.");
+      toast.success(tp("toasts.paymentApproved"));
     } else if (st === "pending") {
-      toast.info("Pagamento em análise. Avisaremos assim que for aprovado.");
+      toast.info(tp("toasts.paymentPending"));
     } else if (st === "failure") {
-      toast.error("Pagamento não concluído. Você pode tentar novamente.");
+      toast.error(tp("toasts.paymentFailure"));
     }
     // limpa a URL para não disparar novamente
     params.delete("status");
@@ -189,7 +180,7 @@ function MeuPlanoPage() {
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
     if (!user?.id) {
-      toast.error("Faça login para assinar.");
+      toast.error(tp("toasts.loginToSubscribe"));
       return;
     }
     setSubmitting(tier);
@@ -206,7 +197,7 @@ function MeuPlanoPage() {
         return;
       }
       if (res.method === "card") {
-        toast.success("Redirecionando para o pagamento seguro do Mercado Pago…");
+        toast.success(tp("toasts.redirectingCard"));
         setPixCharge(null);
         await refresh();
         void listarPagamentos(user.id).then(setHistorico);
@@ -219,11 +210,11 @@ function MeuPlanoPage() {
         qr_code_base64: res.payment.qr_code_base64,
         ticket_url: res.payment.ticket_url,
       });
-      toast.success("Cobrança Pix gerada. Pague para ativar o plano.");
+      toast.success(tp("toasts.pixGenerated"));
       await refresh();
       void listarPagamentos(user.id).then(setHistorico);
     } catch {
-      toast.error("Erro ao iniciar pagamento.");
+      toast.error(tp("toasts.startPaymentError"));
     } finally {
       setSubmitting(null);
     }
@@ -240,12 +231,12 @@ function MeuPlanoPage() {
         return;
       }
       if (r.status === "approved") {
-        toast.success("Pagamento aprovado! Plano ativado.");
+        toast.success(tp("toasts.approvedActivated"));
         setPixCharge(null);
       } else if (["rejected", "cancelled", "expired"].includes(r.status)) {
-        toast.error("Pagamento recusado. Tente novamente.");
+        toast.error(tp("toasts.rejectedTryAgain"));
       } else {
-        toast.info("Pagamento ainda em análise. Tente novamente em instantes.");
+        toast.info(tp("toasts.stillAnalyzing"));
       }
       await refresh();
       void listarPagamentos(user.id).then(setHistorico);
@@ -257,11 +248,11 @@ function MeuPlanoPage() {
   async function iniciarTeste(tier: PlanTier) {
     if (isAdminMaster) return;
     if (!user?.id) {
-      toast.error("Faça login para iniciar o teste.");
+      toast.error(tp("toasts.loginToTrial"));
       return;
     }
     if (trialUsed) {
-      toast.error("Você já utilizou o teste gratuito.");
+      toast.error(tp("toasts.trialUsed"));
       return;
     }
     setSubmitting(tier);
@@ -272,10 +263,10 @@ function MeuPlanoPage() {
         toast.error(res.reason);
         return;
       }
-      toast.success(`Teste grátis ativado! ${PLAN_LABEL[tier]} liberado por 10 dias.`);
+      toast.success(tp("toasts.trialActivated", { plan: PLAN_LABEL[tier] }));
       await refresh();
     } catch {
-      toast.error("Erro ao iniciar o teste.");
+      toast.error(tp("toasts.trialError"));
     } finally {
       setSubmitting(null);
     }
@@ -287,13 +278,13 @@ function MeuPlanoPage() {
         <Link
           to="/conta"
           className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label="Voltar"
+          aria-label={tp("back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            Meu plano
+            {tp("eyebrow")}
           </p>
           <h1 className="text-xl font-bold tracking-tight">{vocab.controle}</h1>
         </div>
@@ -315,7 +306,7 @@ function MeuPlanoPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-              {isAdminMaster ? "Acesso" : "Plano atual"}
+              {isAdminMaster ? tp("card.accessLabel") : tp("card.currentPlanLabel")}
             </p>
             <div className="mt-1 flex items-center gap-2">
               {loading ? (
@@ -329,63 +320,62 @@ function MeuPlanoPage() {
               )}
               <h2 className="text-2xl font-bold">
                 {loading
-                  ? "Verificando assinatura…"
+                  ? tp("card.checking")
                   : isAdminMaster
-                    ? "Acesso total"
+                    ? tp("card.totalAccess")
                     : aguardando
-                      ? "Aguardando pagamento"
+                      ? tp("card.awaitingPayment")
                       : ativoPago
-                        ? PLAN_LABEL[plan]
+                        ? planName(plan)
                         : semAssinatura
-                          ? "Sem assinatura ativa"
-                          : PLAN_LABEL[plan]}
+                          ? tp("card.noActiveSubscription")
+                          : planName(plan)}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Tipo:{" "}
-              {isAdminMaster ? "Admin Master" : tipoCadastroLabel(tipo)}
+              {tp("card.type", { value: isAdminMaster ? tp("card.adminMaster") : tipoCadastroLabel(tipo) })}
             </p>
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
-                {(activePeriodicidade ?? planoAtualPeriodo) ? ` · ${getPeriodicidade((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade).label}` : ""}
-                {planoAtualMetodo ? ` · ${planoAtualMetodo.toLowerCase() === "pix" ? "Pix" : planoAtualMetodo}` : ""}
-                {planoAtualTotal !== null ? ` · Total pago: ${formatBRL(planoAtualTotal)}` : ""}
+                {(activePeriodicidade ?? planoAtualPeriodo) ? tp("card.perFreq", { value: periodLabel((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade) }) : ""}
+                {planoAtualMetodo ? tp("card.method", { value: planoAtualMetodo.toLowerCase() === "pix" ? tp("methods.pix") : planoAtualMetodo }) : ""}
+                {planoAtualTotal !== null ? tp("card.totalPaid", { value: formatBRL(planoAtualTotal) }) : ""}
               </p>
             )}
             {isAdminMaster && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Usuário com acesso completo. Todos os recursos atuais e futuros
-                estão liberados — sem cobrança.
+                {tp("card.adminNote")}
               </p>
             )}
             {aguardando && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Pagamento aguardando confirmação. Finalize o Pix para liberar{" "}
-                <strong>{PLAN_LABEL[plan]}</strong>.
+                {tp("card.pendingNotePrefix")}
+                <strong>{planName(plan)}</strong>.
               </p>
             )}
             {ativoPago && currentPeriodStart && currentPeriodEnd && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Plano ativo. Início: {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} ·{" "}
-                Vencimento: {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}
-                {planoAtualPagoEm ? ` · Pago em: ${new Date(planoAtualPagoEm).toLocaleDateString("pt-BR")}` : ""}.
+                {tp("card.activePeriod", {
+                  start: formatDate(currentPeriodStart),
+                  end: formatDate(currentPeriodEnd),
+                  paid: planoAtualPagoEm ? tp("card.paidOn", { date: formatDate(planoAtualPagoEm) }) : "",
+                })}
               </p>
             )}
             {expirado && (
               <p className="mt-2 text-xs text-destructive">
-                Plano expirado. Regularize para voltar a usar os recursos
-                premium.
+                {tp("card.expiredNote")}
               </p>
             )}
             {recusado && (
               <p className="mt-2 text-xs text-destructive">
-                Pagamento recusado. Tente novamente.
+                {tp("card.rejectedNote")}
               </p>
             )}
             {!isAdminMaster && semAssinatura && !recusado && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Escolha um dos planos abaixo para liberar todos os recursos.
+                {tp("card.noSubNote")}
               </p>
             )}
           </div>
@@ -396,7 +386,7 @@ function MeuPlanoPage() {
                 STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
               )}
             >
-              {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
+              {isAdminMaster ? tp("status.ativo") : tp(`status.${status}`, { defaultValue: status })}
             </span>
           )}
         </div>
@@ -404,31 +394,30 @@ function MeuPlanoPage() {
         {!isAdminMaster && isTrialActive && (
           <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
             <p>
-              <strong>Teste grátis ativo</strong> — {PLAN_LABEL[plan]} liberado por 10 dias.
+              <strong>{tp("trial.activeTitle")}</strong>{tp("trial.activeRelease", { plan: planName(plan) })}
             </p>
             <p className="mt-0.5 text-primary/80">
-              Faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"} para o fim do teste.
+              {tp("trial.daysLeft", { count: trialDaysLeft })}
             </p>
             {trialEndsAt && (
               <p className="mt-0.5 text-[10px] text-primary/70">
-                Termina em {new Date(trialEndsAt).toLocaleDateString("pt-BR")}.
+                {tp("trial.endsOn", { date: formatDate(trialEndsAt) })}
               </p>
             )}
           </div>
         )}
         {!isAdminMaster && trialEndsAt && status !== "teste" && trialUsed && !isTrialActive && (
           <p className="mt-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Seu teste gratuito de 10 dias já foi utilizado.
+            {tp("trial.alreadyUsed")}
           </p>
         )}
         {!isAdminMaster && isCancelled && accessUntil && (
           <div className="mt-3 rounded-xl border border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             <p>
-              <strong>Assinatura cancelada.</strong> Seu acesso premium continua até{" "}
-              {new Date(accessUntil).toLocaleDateString("pt-BR")}.
+              <strong>{tp("cancelled.title")}</strong>{tp("cancelled.untilPrefix", { date: formatDate(accessUntil) })}
             </p>
             <p className="mt-0.5">
-              Depois disso, os recursos premium serão bloqueados — seus dados continuam salvos.
+              {tp("cancelled.after")}
             </p>
           </div>
         )}
@@ -437,7 +426,7 @@ function MeuPlanoPage() {
           <div className="mt-5">
             <Button className="w-full rounded-2xl" variant="outline" disabled>
               <Crown className="mr-2 h-4 w-4 text-amber-500" />
-              Acesso total liberado
+              {tp("actions.totalAccessGranted")}
             </Button>
           </div>
         ) : aguardando ? (
@@ -448,7 +437,7 @@ function MeuPlanoPage() {
               disabled={submitting !== null}
             >
               <Hourglass className="mr-2 h-4 w-4" />
-              Gerar nova cobrança Pix
+              {tp("actions.newPixCharge")}
             </Button>
           </div>
         ) : ativoPago ? (
@@ -462,7 +451,7 @@ function MeuPlanoPage() {
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Trocar plano
+              {tp("actions.changePlan")}
             </Button>
             {!isCancelled ? (
               <Button
@@ -471,11 +460,11 @@ function MeuPlanoPage() {
                 onClick={() => setCancelOpen(true)}
               >
                 <XCircle className="mr-2 h-4 w-4" />
-                Cancelar assinatura
+                {tp("actions.cancelSubscription")}
               </Button>
             ) : (
               <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
-                Já cancelada
+                {tp("actions.alreadyCancelled")}
               </Button>
             )}
           </div>
@@ -488,8 +477,8 @@ function MeuPlanoPage() {
             >
               <Zap className="mr-2 h-4 w-4" />
               {expirado || recusado
-                ? `Regularizar pagamento — ${PLAN_LABEL[recommended]}`
-                : `Assinar agora — ${PLAN_LABEL[recommended]}`}
+                ? tp("actions.regularize", { plan: planName(recommended) })
+                : tp("actions.subscribeNow", { plan: planName(recommended) })}
             </Button>
           </div>
         )}
@@ -499,20 +488,20 @@ function MeuPlanoPage() {
       {!isAdminMaster && pixCharge && (pixCharge.qr_code_base64 || pixCharge.ticket_url) && (
         <section className="mt-4 overflow-hidden rounded-3xl border border-amber-500/30 bg-amber-500/5 p-5">
           <p className="text-[11px] uppercase tracking-widest text-amber-600 dark:text-amber-400">
-            Pague com Pix
+            {tp("pix.eyebrow")}
           </p>
-          <h3 className="mt-1 text-base font-bold">Escaneie o QR Code abaixo</h3>
+          <h3 className="mt-1 text-base font-bold">{tp("pix.title")}</h3>
           {pixCharge.qr_code_base64 && (
             <img
               src={`data:image/png;base64,${pixCharge.qr_code_base64}`}
-              alt="QR Code Pix"
+              alt={tp("pix.qrAlt")}
               className="mx-auto mt-3 h-48 w-48 rounded-xl bg-white p-2"
             />
           )}
           {pixCharge.qr_code && (
             <div className="mt-3">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                Pix Copia e Cola
+                {tp("pix.copyTitle")}
               </p>
               <textarea
                 readOnly
@@ -526,10 +515,10 @@ function MeuPlanoPage() {
                 className="mt-2 w-full rounded-xl"
                 onClick={() => {
                   navigator.clipboard.writeText(pixCharge.qr_code ?? "");
-                  toast.success("Código Pix copiado!");
+                  toast.success(tp("pix.copied"));
                 }}
               >
-                Copiar código Pix
+                {tp("pix.copy")}
               </Button>
             </div>
           )}
@@ -540,7 +529,7 @@ function MeuPlanoPage() {
               rel="noopener noreferrer"
               className="mt-3 block rounded-xl border border-border bg-card px-3 py-2 text-center text-xs font-semibold hover:border-primary/40"
             >
-              Abrir página de pagamento Mercado Pago
+              {tp("pix.openMP")}
             </a>
           )}
           {pixCharge.paymentId && (
@@ -550,18 +539,18 @@ function MeuPlanoPage() {
               onClick={checarPagamento}
               disabled={verifying}
             >
-              {verifying ? "Verificando…" : "Já paguei, verificar pagamento"}
+              {verifying ? tp("pix.verifying") : tp("pix.verify")}
             </Button>
           )}
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Após o pagamento ser aprovado, seu plano é ativado automaticamente.
+            {tp("pix.afterApproval")}
           </p>
         </section>
       )}
 
       {/* Recursos */}
       <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-        Recursos
+        {tp("sections.features")}
       </h3>
       <section className="mt-3 grid gap-2 sm:grid-cols-2">
         {PLAN_FEATURES.map((f) => {
@@ -599,7 +588,7 @@ function MeuPlanoPage() {
       </section>
 
       <h3 id="planos-disponiveis" className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-        Planos disponíveis
+        {tp("sections.plans")}
       </h3>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {PERIODICIDADES.map((p) => {
@@ -628,9 +617,9 @@ function MeuPlanoPage() {
             <button key={m} type="button" onClick={() => setMetodoPagamento(m)}
               className={cn("rounded-2xl border p-3 text-center transition-colors",
                 active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}>
-              <p className="text-sm font-semibold">{m === "pix" ? "Pix" : "Cartão de crédito"}</p>
+              <p className="text-sm font-semibold">{m === "pix" ? tp("methods.pix") : tp("methods.card")}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {m === "pix" ? "QR Code instantâneo" : "Até 12x no Checkout Pro"}
+                {m === "pix" ? tp("methods.pixDesc") : tp("methods.cardDesc")}
               </p>
             </button>
           );
@@ -768,33 +757,31 @@ function MeuPlanoPage() {
         <div className="flex flex-col gap-2 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-bold">Investimentos</p>
+              <p className="text-sm font-bold">{tp("investments.title")}</p>
               <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                Em breve
+                {tp("investments.soon")}
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Estrutura preparada para acompanhar investimentos pessoais e
-              empresariais nos planos Premium, MEI e Empresa.
+              {tp("investments.desc")}
             </p>
           </div>
         </div>
       </section>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
-        Pagamentos via Pix pelo Mercado Pago. Seu plano é ativado automaticamente
-        após a confirmação do pagamento.
+        {tp("footer")}
       </p>
 
       {/* ===== Histórico de pagamentos ===== */}
       {!isAdminMaster && (
         <section className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Histórico de pagamentos
+            {tp("sections.history")}
           </h3>
           {historico.length === 0 ? (
             <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
-              Nenhum pagamento encontrado ainda.
+              {tp("history.empty")}
             </div>
           ) : (
             <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
@@ -809,7 +796,7 @@ function MeuPlanoPage() {
                         : s.tone === "danger"
                           ? "bg-destructive/10 text-destructive border-destructive/30"
                           : "bg-muted text-muted-foreground border-border";
-                  const label = PLAN_LABEL[h.plano as PlanTier] ?? h.plano;
+                  const label = planName(h.plano as PlanTier) ?? h.plano;
                   const dt = h.paid_at ?? h.created_at;
                   return (
                     <li key={h.id} className="flex items-center gap-3 p-3">
@@ -819,13 +806,13 @@ function MeuPlanoPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{label}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {new Date(dt).toLocaleDateString("pt-BR")} ·{" "}
+                          {formatDate(dt)} ·{" "}
                           {h.method.toUpperCase()} ·{" "}
-                          {(h.amount_cents / 100).toLocaleString("pt-BR", {
+                          {(h.amount_cents / 100).toLocaleString(isEnglish ? "en-US" : "pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           })}
-                          {h.periodicidade ? ` · ${getPeriodicidade(h.periodicidade as Periodicidade).label}` : ""}
+                          {h.periodicidade ? tp("card.perFreq", { value: periodLabel(h.periodicidade as Periodicidade) }) : ""}
                         </p>
                       </div>
                       <span
@@ -848,7 +835,7 @@ function MeuPlanoPage() {
       {/* ===== Conta e privacidade ===== */}
       <section className="mt-8">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Conta e privacidade
+          {tp("sections.accountPrivacy")}
         </p>
         <ZonaDeRiscoCard />
       </section>

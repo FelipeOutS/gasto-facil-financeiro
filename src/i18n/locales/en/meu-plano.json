@@ -1,0 +1,103 @@
+{
+  "back": "Back",
+  "eyebrow": "My plan",
+  "status": {
+    "ativo": "Active",
+    "teste": "On trial",
+    "aguardando_pagamento": "Awaiting payment",
+    "expirado": "Expired",
+    "cancelado": "Cancelled",
+    "sem_assinatura": "No subscription"
+  },
+  "card": {
+    "accessLabel": "Access",
+    "currentPlanLabel": "Current plan",
+    "checking": "Checking subscription…",
+    "totalAccess": "Full access",
+    "awaitingPayment": "Awaiting payment",
+    "noActiveSubscription": "No active subscription",
+    "type": "Type: {{value}}",
+    "adminMaster": "Admin Master",
+    "perFreq": " · {{value}}",
+    "method": " · {{value}}",
+    "totalPaid": " · Total paid: {{value}}",
+    "adminNote": "User with full access. All current and future features are unlocked — at no cost.",
+    "pendingNotePrefix": "Payment awaiting confirmation. Complete the Pix to unlock ",
+    "activePeriod": "Active plan. Start: {{start}} · Renewal: {{end}}{{paid}}.",
+    "paidOn": " · Paid on: {{date}}",
+    "expiredNote": "Plan expired. Renew to keep using premium features.",
+    "rejectedNote": "Payment rejected. Please try again.",
+    "noSubNote": "Pick one of the plans below to unlock every feature."
+  },
+  "trial": {
+    "activeTitle": "Free trial active",
+    "activeRelease": " — {{plan}} unlocked for 10 days.",
+    "daysLeft_one": "{{count}} day left until the trial ends.",
+    "daysLeft_other": "{{count}} days left until the trial ends.",
+    "endsOn": "Ends on {{date}}.",
+    "alreadyUsed": "Your 10-day free trial has already been used."
+  },
+  "cancelled": {
+    "title": "Subscription cancelled.",
+    "untilPrefix": " Your premium access remains until {{date}}.",
+    "after": "After that, premium features will be locked — your data stays saved."
+  },
+  "actions": {
+    "totalAccessGranted": "Full access granted",
+    "newPixCharge": "Generate new Pix charge",
+    "changePlan": "Switch plan",
+    "cancelSubscription": "Cancel subscription",
+    "alreadyCancelled": "Already cancelled",
+    "regularize": "Settle payment — {{plan}}",
+    "subscribeNow": "Subscribe now — {{plan}}"
+  },
+  "pix": {
+    "eyebrow": "Pay with Pix",
+    "title": "Scan the QR code below",
+    "qrAlt": "Pix QR code",
+    "copyTitle": "Pix Copy & Paste",
+    "copy": "Copy Pix code",
+    "copied": "Pix code copied!",
+    "openMP": "Open Mercado Pago payment page",
+    "verify": "I paid, verify payment",
+    "verifying": "Verifying…",
+    "afterApproval": "Once payment is approved, your plan is activated automatically."
+  },
+  "methods": {
+    "pix": "Pix",
+    "card": "Credit card",
+    "pixDesc": "Instant QR code",
+    "cardDesc": "Up to 12x on Checkout Pro"
+  },
+  "sections": {
+    "features": "Features",
+    "plans": "Available plans",
+    "history": "Payment history",
+    "accountPrivacy": "Account & privacy"
+  },
+  "investments": {
+    "title": "Investments",
+    "soon": "Coming soon",
+    "desc": "Infrastructure ready to track personal and business investments on Premium, MEI and Business plans."
+  },
+  "footer": "Payments via Pix through Mercado Pago. Your plan is activated automatically after payment confirmation.",
+  "history": {
+    "empty": "No payments found yet."
+  },
+  "toasts": {
+    "paymentApproved": "Payment approved! Your plan will be released shortly.",
+    "paymentPending": "Payment under review. We'll let you know once it's approved.",
+    "paymentFailure": "Payment not completed. You can try again.",
+    "loginToSubscribe": "Log in to subscribe.",
+    "redirectingCard": "Redirecting to Mercado Pago's secure payment…",
+    "pixGenerated": "Pix charge generated. Pay it to activate the plan.",
+    "startPaymentError": "Error starting payment.",
+    "approvedActivated": "Payment approved! Plan activated.",
+    "rejectedTryAgain": "Payment rejected. Please try again.",
+    "stillAnalyzing": "Payment still under review. Try again in a moment.",
+    "loginToTrial": "Log in to start the trial.",
+    "trialUsed": "You have already used the free trial.",
+    "trialActivated": "Free trial activated! {{plan}} unlocked for 10 days.",
+    "trialError": "Error starting the trial."
+  }
+}
