@@ -304,7 +304,7 @@ function ContasAPagarPage() {
       {/* Resumo */}
       <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-elevated animate-rise">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Total pendente no mês
+          {t("summary.pendingMonth")}
         </p>
         <Money
           value={totais.pendente + totais.atrasado}
@@ -312,19 +312,19 @@ function ContasAPagarPage() {
         />
         <div className="mt-4 grid grid-cols-3 gap-2">
           <StatusPill
-            label="Pendentes"
+            label={t("pills.pending")}
             count={totais.qtdPendente}
             tone="warning"
             icon={<Clock className="h-3 w-3" />}
           />
           <StatusPill
-            label="Atrasadas"
+            label={t("pills.overdue")}
             count={totais.qtdAtrasado}
             tone="destructive"
             icon={<AlertTriangle className="h-3 w-3" />}
           />
           <StatusPill
-            label="Pagas"
+            label={t("pills.paid")}
             count={totais.qtdPago}
             tone="success"
             icon={<CheckCircle2 className="h-3 w-3" />}
@@ -333,7 +333,7 @@ function ContasAPagarPage() {
 
         {(totais.pago > 0 || totais.qtdPago > 0) && (
           <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2">
-            <span className="text-[11px] text-muted-foreground">Total pago no mês</span>
+            <span className="text-[11px] text-muted-foreground">{t("summary.paidMonth")}</span>
             <span className="num text-sm font-semibold text-success">
               {formatBRL(totais.pago)}
             </span>
@@ -343,7 +343,7 @@ function ContasAPagarPage() {
         {proximaConta && (
           <div className="mt-3 rounded-xl border border-border bg-background/60 p-3">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próxima a vencer
+              {t("summary.nextDue")}
             </p>
             <div className="mt-1 flex items-baseline justify-between gap-2">
               <p className="truncate text-sm font-semibold">{proximaConta.nome}</p>
@@ -352,7 +352,7 @@ function ContasAPagarPage() {
               </p>
             </div>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Vence em {formatDateBR(proximaConta.dataVencimento)}
+              {t("summary.dueOn", { date: formatDateBR(proximaConta.dataVencimento) })}
             </p>
           </div>
         )}
@@ -361,26 +361,26 @@ function ContasAPagarPage() {
       {/* Cards de resumo (mês) */}
       <section className="mt-3 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
         <ResumoCard
-          label="Total pendente"
+          label={t("stats.pending")}
           valorNum={totais.pendente}
           tone="warning"
           icon={<Clock className="h-3.5 w-3.5" />}
         />
         <ResumoCard
-          label="Total atrasado"
+          label={t("stats.overdue")}
           valorNum={totais.atrasado}
           tone="destructive"
           icon={<AlertTriangle className="h-3.5 w-3.5" />}
         />
         <ResumoCard
-          label="Próximos 7 dias"
+          label={t("stats.next7")}
           valorNum={totais.proximos7}
           tone="warning"
           icon={<CalendarDays className="h-3.5 w-3.5" />}
-          hint={`${totais.qtdProximos7} ${totais.qtdProximos7 === 1 ? "conta" : "contas"}`}
+          hint={t("stats.billCount", { count: totais.qtdProximos7 })}
         />
         <ResumoCard
-          label="Total pago"
+          label={t("stats.paid")}
           valorNum={totais.pago}
           tone="success"
           icon={<CheckCircle2 className="h-3.5 w-3.5" />}
@@ -398,7 +398,7 @@ function ContasAPagarPage() {
               : "text-muted-foreground",
         )}
       >
-        {mensagemAmigavel(totais)}
+        {mensagemAmigavel(totais, t)}
       </p>
 
       {/* CTAs */}
@@ -409,7 +409,7 @@ function ContasAPagarPage() {
           onClick={() => setCreating(true)}
         >
           <Plus className="mr-1 h-5 w-5" />
-          Nova conta
+          {t("cta.new")}
         </Button>
         <Button
           size="lg"
@@ -418,7 +418,7 @@ function ContasAPagarPage() {
           onClick={tryImportConta}
         >
           <Upload className="mr-1 h-5 w-5" />
-          Importar conta
+          {t("cta.import")}
           {!can("importar_conta") && <LockChip />}
         </Button>
       </div>
@@ -427,16 +427,16 @@ function ContasAPagarPage() {
       <div
         className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
-        aria-label="Filtrar contas"
+        aria-label={t("filters.label")}
       >
-        {FILTROS.map((f) => {
-          const active = filtro === f.id;
+        {FILTRO_IDS.map((id) => {
+          const active = filtro === id;
           return (
             <button
-              key={f.id}
+              key={id}
               role="tab"
               aria-selected={active}
-              onClick={() => setFiltro(f.id)}
+              onClick={() => setFiltro(id)}
               className={cn(
                 "card-press shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
                 active
@@ -444,7 +444,7 @@ function ContasAPagarPage() {
                   : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-brand/40",
               )}
             >
-              {f.label}
+              {t(`filters.${id}`)}
             </button>
           );
         })}
@@ -456,21 +456,22 @@ function ContasAPagarPage() {
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por nome, categoria, valor ou vencimento"
+          placeholder={t("search.placeholder")}
           className="h-10 rounded-full pl-9 pr-9"
-          aria-label="Buscar contas"
+          aria-label={t("search.label")}
         />
         {busca && (
           <button
             type="button"
             onClick={() => setBusca("")}
             className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Limpar busca"
+            aria-label={t("search.clear")}
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
+
 
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
