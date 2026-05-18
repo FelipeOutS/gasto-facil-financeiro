@@ -1,0 +1,152 @@
+{
+  "head": {
+    "title": "Subscriptions and recurring — Gasto Inteligente",
+    "description": "See which expenses come back every month and how they weigh on your budget."
+  },
+  "title": "Subscriptions and recurring",
+  "subtitle": "See which expenses come back every month and how they weigh on your budget.",
+  "actions": {
+    "reanalyze": "Re-analyze",
+    "new": "New recurring",
+    "edit": "Edit",
+    "ignore": "Ignore",
+    "confirm": "Confirm",
+    "history": "History",
+    "pause": "Pause",
+    "reactivate": "Reactivate",
+    "generateExpense": "Create expense",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "create": "Create",
+    "saving": "Saving..."
+  },
+  "summary": {
+    "monthly": "Total monthly confirmed",
+    "possible": "Possible recurring",
+    "active": "Active recurring",
+    "suspect": "Suspect"
+  },
+  "freq": {
+    "mensal": "Monthly",
+    "semanal": "Weekly",
+    "quinzenal": "Biweekly",
+    "anual": "Yearly",
+    "personalizada": "Custom",
+    "monthShort": "mo"
+  },
+  "status": {
+    "ativa": "Active",
+    "pausada": "Paused",
+    "cancelada": "Canceled",
+    "suspeita": "Suspect",
+    "aguardando": "Awaiting confirmation",
+    "all": "All"
+  },
+  "tipo": {
+    "assinatura": "Subscription",
+    "recorrencia_fixa": "Fixed recurring"
+  },
+  "prazo": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "agoOne": "{{count}} day ago",
+    "agoOther": "{{count}} days ago",
+    "inDays": "in {{count}} days",
+    "dash": "—"
+  },
+  "suspects": {
+    "heading_one": "We detected {{count}} possible recurring",
+    "heading_other": "We detected {{count}} possible recurring",
+    "hint": "Confirm to start tracking.",
+    "noCategory": "No category"
+  },
+  "insights": {
+    "title": "Insights",
+    "totals": "You spend {{monthly}} per month on recurring, {{yearly}} per year.",
+    "biggest": "{{name}} is your biggest active recurring.",
+    "topCard": "You have {{count}} recurring charges on the {{card}} card.",
+    "increase": "We detected an increase of {{diff}} on the {{name}} recurring.",
+    "budgetTitle": "Subscriptions budget",
+    "budgetLine": "Limit: {{limit}} · Expected recurring: {{total}}",
+    "budgetWarn": "Your subscriptions consume more than 80% of the budget."
+  },
+  "empty": {
+    "none": "No recurring",
+    "noneStatus": "No {{status}} recurring",
+    "hint": "Keep logging your expenses. When something repeats, we'll suggest it here."
+  },
+  "debug": {
+    "found": "Expenses found: {{n}}",
+    "analyzed": "Expenses analyzed: {{n}}",
+    "matched": "Keywords/recurring matched: {{n}}",
+    "created": "Active created: {{n}}",
+    "suspects": "Suspect created: {{n}}",
+    "subs": "Subscriptions: {{n}}",
+    "fixed": "Fixed recurring: {{n}}",
+    "sample": "Sample: {{names}}"
+  },
+  "card": {
+    "noCategory": "No category",
+    "nextLabel": "next {{when}}",
+    "increased": "Increase of {{diff}} since last charge"
+  },
+  "history": {
+    "title": "Charges history",
+    "empty": "No linked expense found yet.",
+    "view": "View",
+    "forecast": "Expected · {{date}}",
+    "forecastBadge": "forecast"
+  },
+  "dialog": {
+    "titleNew": "New recurring",
+    "titleEdit": "Edit recurring",
+    "descNew": "Register a new subscription or recurring expense.",
+    "descEdit": "Adjust the subscription or recurring details.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Spotify, Rent",
+    "currency": "Currency",
+    "currencyBRL": "🇧🇷 Real (BRL)",
+    "currencyUSD": "🇺🇸 Dollar (USD)",
+    "currencyEUR": "🇪🇺 Euro (EUR)",
+    "valueInUSD": "Amount in dollars",
+    "valueInEUR": "Amount in euros",
+    "phUSD": "e.g. 9.99",
+    "phEUR": "e.g. 12.50",
+    "currentRate": "Current rate",
+    "estimateHint": "BRL estimate already includes average IOF and spread. The final amount may vary on each charge.",
+    "valueBRL": "Amount (R$)",
+    "estimateBRL": "BRL estimate",
+    "frequency": "Frequency",
+    "next": "Next charge",
+    "category": "Category",
+    "categorySelect": "Select",
+    "noCategory": "No category",
+    "payment": "Payment method",
+    "paymentNone": "Not set",
+    "card": "Card",
+    "noCard": "None",
+    "status": "Status",
+    "note": "Note"
+  },
+  "toasts": {
+    "syncDone": "Analysis done: {{ativas}} active, {{suspeitas}} suspect",
+    "detected": "{{criadas}} recurring detected",
+    "detectedWithSuspects": "{{criadas}} recurring detected, {{suspeitas}} suspect",
+    "confirmed": "{{name}} confirmed as recurring",
+    "ignored": "{{name}} ignored",
+    "paused": "{{name}} paused",
+    "reactivated": "{{name}} reactivated",
+    "canceled": "Recurring canceled",
+    "deleted": "Recurring deleted",
+    "expenseCreated": "Expense created from the recurring",
+    "expenseError": "Could not create the expense",
+    "invalid": "Provide a valid name and amount",
+    "updated": "Recurring updated",
+    "created": "Recurring created"
+  },
+  "confirms": {
+    "cancel": "Cancel the \"{{name}}\" recurring?",
+    "delete": "Delete the \"{{name}}\" recurring? This cannot be undone."
+  }
+}
