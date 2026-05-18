@@ -660,6 +660,7 @@ function RecorrenciaCard({
   onHistorico: () => void;
   onGerarGasto: () => void;
 }) {
+  const { t, freqLabel, statusLabel, tipoLabel } = useLabels();
   const cat = rec.categoriaId ? getCategoriaById(rec.categoriaId) : undefined;
   const cartao = rec.cartaoId ? getCartaoById(rec.cartaoId) : undefined;
   const formaLabel = rec.formaPagamento
@@ -682,7 +683,7 @@ function RecorrenciaCard({
               variant="outline"
               className={`shrink-0 text-[10px] ${STATUS_BADGE[rec.status]}`}
             >
-              {STATUS_LABEL[rec.status]}
+              {statusLabel(rec.status)}
             </Badge>
             {rec.moeda && rec.moeda !== "BRL" && (
               <Badge
@@ -701,37 +702,37 @@ function RecorrenciaCard({
               </span>
             ) : null}
             <span className="ml-1 text-xs font-normal text-muted-foreground">
-              /{rec.frequencia === "mensal" ? "mês" : FREQ_LABEL[rec.frequencia].toLowerCase()}
+              /{rec.frequencia === "mensal" ? t("freq.monthShort") : freqLabel(rec.frequencia).toLowerCase()}
             </span>
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {TIPO_LABEL[rec.tipoRecorrencia]} · {cat?.nome ?? "Sem categoria"}
+            {tipoLabel(rec.tipoRecorrencia)} · {cat?.nome ?? t("card.noCategory")}
             {formaLabel && ` · ${formaLabel}`}
             {cartao && ` · ${cartao.nome}`}
-            {rec.proximaCobranca && ` · próxima ${descrevePrazo(rec.proximaCobranca)}`}
+            {rec.proximaCobranca && ` · ${t("card.nextLabel", { when: describePrazo(t, rec.proximaCobranca) })}`}
           </p>
           {aumentou && (
             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-400">
               <AlertTriangle className="h-3 w-3" />
-              Aumento de {formatBRL(rec.valor - (rec.ultimoValor ?? 0))} desde a última cobrança
+              {t("card.increased", { diff: formatBRL(rec.valor - (rec.ultimoValor ?? 0)) })}
             </p>
           )}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/40 pt-3">
         <Button size="sm" variant="ghost" onClick={onHistorico}>
-          <History className="h-3.5 w-3.5" /> Histórico
+          <History className="h-3.5 w-3.5" /> {t("actions.history")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" /> Editar
+          <Pencil className="h-3.5 w-3.5" /> {t("actions.edit")}
         </Button>
         {rec.status === "suspeita" && (
           <>
             <Button size="sm" variant="ghost" onClick={onIgnorar}>
-              <X className="h-3.5 w-3.5" /> Ignorar
+              <X className="h-3.5 w-3.5" /> {t("actions.ignore")}
             </Button>
             <Button size="sm" variant="ghost" onClick={onConfirmar}>
-              <Check className="h-3.5 w-3.5" /> Confirmar
+              <Check className="h-3.5 w-3.5" /> {t("actions.confirm")}
             </Button>
           </>
         )}
@@ -740,19 +741,19 @@ function RecorrenciaCard({
             <Button size="sm" variant="ghost" onClick={onTogglePause}>
               {rec.status === "pausada" ? (
                 <>
-                  <Play className="h-3.5 w-3.5" /> Reativar
+                  <Play className="h-3.5 w-3.5" /> {t("actions.reactivate")}
                 </>
               ) : (
                 <>
-                  <Pause className="h-3.5 w-3.5" /> Pausar
+                  <Pause className="h-3.5 w-3.5" /> {t("actions.pause")}
                 </>
               )}
             </Button>
             <Button size="sm" variant="ghost" onClick={onGerarGasto}>
-              <CreditCard className="h-3.5 w-3.5" /> Gerar gasto
+              <CreditCard className="h-3.5 w-3.5" /> {t("actions.generateExpense")}
             </Button>
             <Button size="sm" variant="ghost" onClick={onCancelar}>
-              <X className="h-3.5 w-3.5" /> Cancelar
+              <X className="h-3.5 w-3.5" /> {t("actions.cancel")}
             </Button>
           </>
         )}
