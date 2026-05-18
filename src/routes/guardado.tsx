@@ -481,7 +481,7 @@ function ReservaFormDialog({
   function handleSave() {
     const valor = parseBRLInput(valorStr);
     if (!valor || !bancoId) {
-      toast.error("Selecione o banco e informe um valor.");
+      toast.error(t("toasts.bankNameRequired"));
       return;
     }
     const metaIdFinal = metaId === "nenhuma" ? undefined : metaId;
@@ -492,7 +492,7 @@ function ReservaFormDialog({
         return;
       }
       addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined, metaId: metaIdFinal });
-      toast.success("Valor guardado. Seu futuro agradece. 💚");
+      toast.success(t("toasts.valueSaved"));
       onClose();
       return;
     }
@@ -504,7 +504,7 @@ function ReservaFormDialog({
         observacao: obs.trim() || undefined,
         metaId: metaIdFinal,
       });
-      toast.success("Boa, sua reserva foi ajustada.");
+      toast.success(t("toasts.reserveAdjusted"));
       onClose();
     }
   }
