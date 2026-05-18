@@ -1,82 +1,61 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { LegalLayout } from "@/components/landing/LegalLayout";
 
 export const Route = createFileRoute("/lgpd")({
-  head: () => ({
-    meta: [
-      { title: "LGPD — Gasto Inteligente" },
-      {
-        name: "description",
-        content:
-          "Como o Gasto Inteligente trata os dados pessoais à luz da Lei Geral de Proteção de Dados.",
-      },
-      { property: "og:title", content: "LGPD — Gasto Inteligente" },
-      {
-        property: "og:description",
-        content: "Compromisso do Gasto Inteligente com a LGPD.",
-      },
-      { property: "og:url", content: "https://gastointeligente.com.br/lgpd" },
-    ],
-    links: [{ rel: "canonical", href: "https://gastointeligente.com.br/lgpd" }],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(null, "legal");
+    return {
+      meta: [
+        { title: t("lgpd.metaTitle") },
+        { name: "description", content: t("lgpd.metaDesc") },
+        { property: "og:title", content: t("lgpd.metaTitle") },
+        { property: "og:description", content: t("lgpd.ogDesc") },
+        { property: "og:url", content: "https://gastointeligente.com.br/lgpd" },
+      ],
+      links: [{ rel: "canonical", href: "https://gastointeligente.com.br/lgpd" }],
+    };
+  },
   component: LgpdPage,
 });
 
 function LgpdPage() {
+  const { t } = useTranslation("legal");
   return (
-    <LegalLayout title="LGPD — Lei Geral de Proteção de Dados" updatedAt="12 de maio de 2026">
+    <LegalLayout title={t("lgpd.title")} updatedAt={t("updatedAt")}>
       <p>
-        O <strong>Gasto Inteligente</strong> respeita a Lei Geral de Proteção
-        de Dados (Lei nº 13.709/2018) e busca aplicar boas práticas de
-        privacidade e segurança no tratamento das informações dos usuários.
-        Este conteúdo é um resumo informativo inicial.
+        <Trans i18nKey="lgpd.intro" ns="legal" components={[<strong key="0" />]} />
       </p>
 
-      <h2>1. Princípios que seguimos</h2>
+      <h2>{t("lgpd.s1.h")}</h2>
       <ul>
-        <li>
-          <strong>Finalidade:</strong> usamos seus dados apenas para os fins
-          descritos na Política de privacidade.
-        </li>
-        <li>
-          <strong>Necessidade:</strong> coletamos somente o que é necessário
-          para prestar o serviço.
-        </li>
-        <li>
-          <strong>Transparência:</strong> explicamos de forma simples como
-          tratamos seus dados.
-        </li>
-        <li>
-          <strong>Segurança:</strong> aplicamos medidas técnicas e
-          organizacionais para proteger as informações.
-        </li>
+        <li><strong>{t("lgpd.s1.i1Strong")}</strong> {t("lgpd.s1.i1")}</li>
+        <li><strong>{t("lgpd.s1.i2Strong")}</strong> {t("lgpd.s1.i2")}</li>
+        <li><strong>{t("lgpd.s1.i3Strong")}</strong> {t("lgpd.s1.i3")}</li>
+        <li><strong>{t("lgpd.s1.i4Strong")}</strong> {t("lgpd.s1.i4")}</li>
       </ul>
 
-      <h2>2. Direitos do titular</h2>
-      <p>Como titular dos dados, você pode solicitar:</p>
+      <h2>{t("lgpd.s2.h")}</h2>
+      <p>{t("lgpd.s2.p")}</p>
       <ul>
-        <li>Confirmação da existência de tratamento dos seus dados.</li>
-        <li>Acesso e correção das informações.</li>
-        <li>Exclusão da conta e dos dados pessoais.</li>
-        <li>Informações sobre uso e compartilhamento.</li>
+        <li>{t("lgpd.s2.i1")}</li>
+        <li>{t("lgpd.s2.i2")}</li>
+        <li>{t("lgpd.s2.i3")}</li>
+        <li>{t("lgpd.s2.i4")}</li>
       </ul>
 
-      <h2>3. Como exercer seus direitos</h2>
+      <h2>{t("lgpd.s3.h")}</h2>
       <p>
-        Envie um e-mail para{" "}
-        <a href="mailto:contato@gastointeligente.com.br">
-          contato@gastointeligente.com.br
-        </a>{" "}
-        com o assunto “LGPD” e o pedido desejado. Responderemos no menor prazo
-        possível.
+        <Trans
+          i18nKey="lgpd.s3.p"
+          ns="legal"
+          components={[<a key="0" href="mailto:contato@gastointeligente.com.br" />]}
+        />
       </p>
 
-      <h2>4. Encarregado de dados</h2>
-      <p>
-        O contato para assuntos relacionados à proteção de dados é o e-mail
-        acima. À medida que a operação evoluir, designaremos formalmente um
-        encarregado (DPO) e atualizaremos esta página.
-      </p>
+      <h2>{t("lgpd.s4.h")}</h2>
+      <p>{t("lgpd.s4.p")}</p>
     </LegalLayout>
   );
 }
