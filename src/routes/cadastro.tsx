@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MailCheck, RefreshCw } from "lucide-react";
+import i18n from "@/i18n";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +16,10 @@ import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
 export const Route = createFileRoute("/cadastro")({
-  head: () => ({ meta: [{ title: "Criar conta — Gasto Inteligente" }] }),
+  head: () => {
+    const t = i18n.getFixedT(null, "auth");
+    return { meta: [{ title: t("metaTitleSignup") }] };
+  },
   component: CadastroPage,
 });
 
@@ -27,6 +32,7 @@ function CadastroPage() {
 }
 
 function CadastroForm() {
+  const { t } = useTranslation("auth");
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
@@ -45,11 +51,11 @@ function CadastroForm() {
     e.preventDefault();
     setTouched(true);
     if (!senhaOk) {
-      toast.error("Faltam alguns requisitos para sua senha ficar segura.");
+      toast.error(t("passwordWeakToast"));
       return;
     }
     if (password !== confirm) {
-      toast.error("As senhas não coincidem. Confere aí 👀");
+      toast.error(t("passwordMismatchToast"));
       return;
     }
     setSubmitting(true);
@@ -75,17 +81,17 @@ function CadastroForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
-    toast.success("E-mail de confirmação reenviado!");
+    toast.success(t("signup.resent"));
   }
 
   if (enviado) {
     return (
       <AuthShell
-        title="Confirme seu e-mail"
-        subtitle="Enviamos um link de confirmação para você."
+        title={t("signup.checkEmail")}
+        subtitle={t("signup.checkEmailSubtitle")}
         footer={
           <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
-            Voltar para o login
+            {t("signup.backToLogin")}
           </Link>
         }
       >
@@ -95,13 +101,13 @@ function CadastroForm() {
               <MailCheck className="h-7 w-7" />
             </div>
             <p className="mt-4 text-sm text-foreground">
-              Enviamos um e-mail de confirmação para
+              {t("signup.sentTo")}
             </p>
             <p className="mt-1 break-all text-base font-semibold">{email}</p>
             <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
-              Abra a caixa de entrada e clique no link para ativar sua conta.{" "}
+              {t("signup.checkInbox")}{" "}
               <strong className="text-foreground">
-                Se não encontrar, confira a pasta de spam ou lixo eletrônico.
+                {t("signup.checkSpam")}
               </strong>
             </p>
           </div>
@@ -114,7 +120,7 @@ function CadastroForm() {
             disabled={reenviando}
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${reenviando ? "animate-spin" : ""}`} />
-            {reenviando ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+            {reenviando ? t("signup.resending") : t("signup.resend")}
           </Button>
 
           <Button
@@ -122,7 +128,7 @@ function CadastroForm() {
             className="h-12 w-full rounded-2xl text-base font-semibold"
             onClick={() => void navigate({ to: "/login" })}
           >
-            Já confirmei, ir para o login
+            {t("signup.alreadyConfirmed")}
           </Button>
         </div>
       </AuthShell>
@@ -131,30 +137,30 @@ function CadastroForm() {
 
   return (
     <AuthShell
-      title="Criar sua conta"
-      subtitle="Leva menos de 1 minuto para começar a organizar seu dinheiro."
+      title={t("signup.title")}
+      subtitle={t("signup.subtitle")}
       footer={
         <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
-          Já tenho uma conta
+          {t("signup.haveAccount")}
         </Link>
       }
     >
       <div className="mb-5 animate-fade-in">
-        <GoogleAuthButton label="Continuar com Google" separatorText="ou cadastre-se com e-mail" />
+        <GoogleAuthButton label={t("signup.googleLabel")} separatorText={t("signup.separator")} />
       </div>
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
-          <Label htmlFor="nome">Nome</Label>
+          <Label htmlFor="nome">{t("signup.name")}</Label>
           <Input
             id="nome"
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Como podemos te chamar?"
+            placeholder={t("signup.namePlaceholder")}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email">{t("signup.email")}</Label>
           <Input
             id="email"
             type="email"
@@ -162,34 +168,34 @@ function CadastroForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="voce@email.com"
+            placeholder={t("emailPlaceholder")}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Senha</Label>
+          <Label htmlFor="password">{t("signup.password")}</Label>
           <PasswordInput
             id="password"
             autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Crie uma senha forte"
+            placeholder={t("signup.passwordPlaceholder")}
           />
           {(password.length > 0 || touched) && <PasswordChecklist senha={password} />}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirm">Confirmar senha</Label>
+          <Label htmlFor="confirm">{t("signup.confirm")}</Label>
           <PasswordInput
             id="confirm"
             autoComplete="new-password"
             required
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Repita a senha"
+            placeholder={t("signup.confirmPlaceholder")}
             aria-invalid={confirm.length > 0 && !confereSenha}
           />
           {confirm.length > 0 && !confereSenha && (
-            <p className="text-xs text-destructive animate-fade-in">As senhas não coincidem.</p>
+            <p className="text-xs text-destructive animate-fade-in">{t("signup.mismatch")}</p>
           )}
         </div>
         <Button
@@ -198,7 +204,7 @@ function CadastroForm() {
           className="h-12 w-full rounded-2xl text-base font-semibold transition-transform active:scale-[0.98]"
           disabled={submitting}
         >
-          {submitting ? "Criando…" : "Criar conta"}
+          {submitting ? t("signup.submitting") : t("signup.submit")}
         </Button>
       </form>
     </AuthShell>

@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { traduzirErroAuth } from "@/lib/auth-messages";
@@ -9,7 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/recuperar-senha")({
-  head: () => ({ meta: [{ title: "Recuperar senha — Gasto Inteligente" }] }),
+  head: () => {
+    const t = i18n.getFixedT(null, "auth");
+    return { meta: [{ title: t("metaTitleRecover") }] };
+  },
   component: RecoverPage,
 });
 
@@ -22,6 +27,7 @@ function RecoverPage() {
 }
 
 function RecoverForm() {
+  const { t } = useTranslation("auth");
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -37,29 +43,29 @@ function RecoverForm() {
       return;
     }
     setSent(true);
-    toast.success("Enviamos as instruções para seu e-mail. ✉️");
+    toast.success(t("recover.toast"));
   }
 
   return (
     <AuthShell
-      title="Esqueceu a senha?"
-      subtitle="Sem stress. Mande seu e-mail que a gente te ajuda a recuperar."
+      title={t("recover.title")}
+      subtitle={t("recover.subtitle")}
       footer={
         <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
-          Voltar para o login
+          {t("signup.backToLogin")}
         </Link>
       }
     >
       {sent ? (
         <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground animate-rise">
-          Pronto! Dá uma olhada na caixa de entrada de{" "}
-          <strong className="text-foreground">{email}</strong>. O link expira em alguns minutos —
-          se não achar, confere o spam.
+          {t("recover.sent")}{" "}
+          <strong className="text-foreground">{email}</strong>
+          {t("recover.sentTail")}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail da conta</Label>
+            <Label htmlFor="email">{t("recover.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -67,7 +73,7 @@ function RecoverForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="voce@email.com"
+              placeholder={t("emailPlaceholder")}
             />
           </div>
           <Button
@@ -76,7 +82,7 @@ function RecoverForm() {
             className="card-press h-12 w-full rounded-2xl text-base font-semibold"
             disabled={submitting}
           >
-            {submitting ? "Enviando…" : "Enviar instruções"}
+            {submitting ? t("recover.submitting") : t("recover.submit")}
           </Button>
         </form>
       )}
