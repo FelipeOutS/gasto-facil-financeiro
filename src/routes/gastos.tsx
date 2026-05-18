@@ -112,18 +112,18 @@ type PeriodoId =
   | "ano"
   | "personalizado";
 
-const PERIODO_LABEL: Record<PeriodoId, string> = {
-  todos: "Todos",
-  hoje: "Hoje",
-  ontem: "Ontem",
-  "7d": "7 dias",
-  "30d": "30 dias",
-  mes: "Este mês",
-  mesPassado: "Mês passado",
-  "3m": "3 meses",
-  "6m": "6 meses",
-  ano: "Este ano",
-  personalizado: "Personalizado",
+const PERIODO_KEYS: Record<PeriodoId, string> = {
+  todos: "todos",
+  hoje: "hoje",
+  ontem: "ontem",
+  "7d": "7d",
+  "30d": "30d",
+  mes: "mes",
+  mesPassado: "mesPassado",
+  "3m": "3m",
+  "6m": "6m",
+  ano: "ano",
+  personalizado: "personalizado",
 };
 
 const PERIODOS_RAPIDOS: PeriodoId[] = ["hoje", "7d", "30d", "mes", "personalizado"];
