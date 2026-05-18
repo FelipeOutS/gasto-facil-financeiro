@@ -815,6 +815,7 @@ function ComparativoCard({
   delta: number;
   inverter: boolean; // se true, alta = ruim (despesas)
 }) {
+  const { t } = useTranslation("relatorios");
   const subiu = delta > 0;
   // Para despesas: subiu = ruim. Para receitas/saldo: subiu = bom.
   const positivo = inverter ? !subiu : subiu;
@@ -836,11 +837,11 @@ function ComparativoCard({
     <div className="rounded-2xl border border-border bg-card p-4 animate-rise">
       <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-1 text-2xl font-bold tabular-nums">{formatBRL(atual)}</div>
-      <p className="mt-0.5 text-xs text-muted-foreground">Anterior: {formatBRL(anterior)}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{t("comparativo.anterior", { valor: formatBRL(anterior) })}</p>
       <div className={cn("mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", toneCls)}>
         <Icon className="h-3.5 w-3.5" />
         {delta === 0
-          ? "Sem variação"
+          ? t("comparativo.noChange")
           : `${subiu ? "+" : ""}${formatBRL(delta)}${pct !== null ? ` · ${subiu ? "+" : ""}${pct.toFixed(1)}%` : ""}`}
       </div>
     </div>
