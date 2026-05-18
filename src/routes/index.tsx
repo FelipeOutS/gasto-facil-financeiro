@@ -1411,6 +1411,7 @@ function OrcamentoCard({
   mes: number;
   ano: number;
 }) {
+  const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
       buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
