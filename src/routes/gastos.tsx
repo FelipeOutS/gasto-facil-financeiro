@@ -347,10 +347,14 @@ function GastosPage() {
     try {
       const count = await reclassificarCategoriasExistentes();
       await refreshGastos();
-      toast.success(count > 0 ? `${count} gasto(s) reclassificado(s).` : "Categorias já estavam atualizadas.");
+      toast.success(
+        count > 0
+          ? t("toast.reclassified", { count, defaultValue: `${count} gasto(s) reclassificado(s).` })
+          : t("toast.reclassifyEmpty"),
+      );
     } catch (error) {
       console.error(error);
-      toast.error("Não foi possível reclassificar agora.");
+      toast.error(t("toast.reclassifyError"));
     } finally {
       setReclassificando(false);
     }
