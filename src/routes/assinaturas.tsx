@@ -360,10 +360,10 @@ function AssinaturasPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-              Assinaturas e recorrências
+              {t("title")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento.
+              {t("subtitle")}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -374,7 +374,7 @@ function AssinaturasPage() {
               disabled={syncing}
             >
               <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Reanalisar</span>
+              <span className="hidden sm:inline">{t("actions.reanalyze")}</span>
             </Button>
             <Button
               size="sm"
@@ -384,7 +384,7 @@ function AssinaturasPage() {
               }}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova recorrência</span>
+              <span className="hidden sm:inline">{t("actions.new")}</span>
             </Button>
           </div>
         </div>
