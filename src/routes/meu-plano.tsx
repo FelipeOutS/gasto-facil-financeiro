@@ -279,13 +279,13 @@ function MeuPlanoPage() {
         <Link
           to="/conta"
           className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label="Voltar"
+          aria-label={tp("back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            Meu plano
+            {tp("eyebrow")}
           </p>
           <h1 className="text-xl font-bold tracking-tight">{vocab.controle}</h1>
         </div>
@@ -307,7 +307,7 @@ function MeuPlanoPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-              {isAdminMaster ? "Acesso" : "Plano atual"}
+              {isAdminMaster ? tp("card.accessLabel") : tp("card.currentPlanLabel")}
             </p>
             <div className="mt-1 flex items-center gap-2">
               {loading ? (
@@ -321,63 +321,62 @@ function MeuPlanoPage() {
               )}
               <h2 className="text-2xl font-bold">
                 {loading
-                  ? "Verificando assinatura…"
+                  ? tp("card.checking")
                   : isAdminMaster
-                    ? "Acesso total"
+                    ? tp("card.totalAccess")
                     : aguardando
-                      ? "Aguardando pagamento"
+                      ? tp("card.awaitingPayment")
                       : ativoPago
-                        ? PLAN_LABEL[plan]
+                        ? planName(plan)
                         : semAssinatura
-                          ? "Sem assinatura ativa"
-                          : PLAN_LABEL[plan]}
+                          ? tp("card.noActiveSubscription")
+                          : planName(plan)}
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Tipo:{" "}
-              {isAdminMaster ? "Admin Master" : tipoCadastroLabel(tipo)}
+              {tp("card.type", { value: isAdminMaster ? tp("card.adminMaster") : tipoCadastroLabel(tipo) })}
             </p>
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
-                {(activePeriodicidade ?? planoAtualPeriodo) ? ` · ${getPeriodicidade((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade).label}` : ""}
-                {planoAtualMetodo ? ` · ${planoAtualMetodo.toLowerCase() === "pix" ? "Pix" : planoAtualMetodo}` : ""}
-                {planoAtualTotal !== null ? ` · Total pago: ${formatBRL(planoAtualTotal)}` : ""}
+                {(activePeriodicidade ?? planoAtualPeriodo) ? tp("card.perFreq", { value: periodLabel((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade) }) : ""}
+                {planoAtualMetodo ? tp("card.method", { value: planoAtualMetodo.toLowerCase() === "pix" ? tp("methods.pix") : planoAtualMetodo }) : ""}
+                {planoAtualTotal !== null ? tp("card.totalPaid", { value: formatBRL(planoAtualTotal) }) : ""}
               </p>
             )}
             {isAdminMaster && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Usuário com acesso completo. Todos os recursos atuais e futuros
-                estão liberados — sem cobrança.
+                {tp("card.adminNote")}
               </p>
             )}
             {aguardando && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Pagamento aguardando confirmação. Finalize o Pix para liberar{" "}
-                <strong>{PLAN_LABEL[plan]}</strong>.
+                {tp("card.pendingNotePrefix")}
+                <strong>{planName(plan)}</strong>.
               </p>
             )}
             {ativoPago && currentPeriodStart && currentPeriodEnd && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Plano ativo. Início: {new Date(currentPeriodStart).toLocaleDateString("pt-BR")} ·{" "}
-                Vencimento: {new Date(currentPeriodEnd).toLocaleDateString("pt-BR")}
-                {planoAtualPagoEm ? ` · Pago em: ${new Date(planoAtualPagoEm).toLocaleDateString("pt-BR")}` : ""}.
+                {tp("card.activePeriod", {
+                  start: formatDate(currentPeriodStart),
+                  end: formatDate(currentPeriodEnd),
+                  paid: planoAtualPagoEm ? tp("card.paidOn", { date: formatDate(planoAtualPagoEm) }) : "",
+                })}
               </p>
             )}
             {expirado && (
               <p className="mt-2 text-xs text-destructive">
-                Plano expirado. Regularize para voltar a usar os recursos
-                premium.
+                {tp("card.expiredNote")}
               </p>
             )}
             {recusado && (
               <p className="mt-2 text-xs text-destructive">
-                Pagamento recusado. Tente novamente.
+                {tp("card.rejectedNote")}
               </p>
             )}
             {!isAdminMaster && semAssinatura && !recusado && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Escolha um dos planos abaixo para liberar todos os recursos.
+                {tp("card.noSubNote")}
               </p>
             )}
           </div>
@@ -388,7 +387,7 @@ function MeuPlanoPage() {
                 STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
               )}
             >
-              {isAdminMaster ? "Ativo" : (STATUS_LABEL[status] ?? status)}
+              {isAdminMaster ? tp("status.ativo") : tp(`status.${status}`, { defaultValue: status })}
             </span>
           )}
         </div>
