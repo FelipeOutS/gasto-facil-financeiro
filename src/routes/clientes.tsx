@@ -151,7 +151,7 @@ function ClientesPage() {
         if (!cancelado) setList(itens);
       } catch {
         if (!cancelado)
-          toast.error("Não conseguimos carregar seus clientes.");
+          toast.error(t("toasts.loadError"));
       } finally {
         if (!cancelado) setLoading(false);
       }
@@ -159,7 +159,7 @@ function ClientesPage() {
     return () => {
       cancelado = true;
     };
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   const cnpjValido = useMemo(() => validarCnpj(cnpjInput), [cnpjInput]);
 
@@ -197,7 +197,7 @@ function ClientesPage() {
     }
     const jaExiste = await existeClienteComCnpj(user.id, limpo);
     if (jaExiste) {
-      toast.error("Este cliente já está cadastrado na sua conta.");
+      toast.error(t("toasts.duplicate"));
       return;
     }
     setErroCnpj(null);
@@ -213,9 +213,7 @@ function ClientesPage() {
       }
     } catch (err) {
       console.error("[clientes] erro na consulta:", err);
-      toast.error(
-        "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
-      );
+      toast.error(t("toasts.cnpjError"));
     } finally {
       setConsultando(false);
     }
@@ -239,7 +237,7 @@ function ClientesPage() {
         },
       );
       setList((prev) => ordenar([novo, ...prev]));
-      toast.success("Cliente cadastrado.");
+      toast.success(t("toasts.saved"));
       setNovoAberto(false);
       limparCnpjForm();
     } catch (err) {
@@ -248,9 +246,9 @@ function ClientesPage() {
         msg.toLowerCase().includes("duplicate") ||
         msg.toLowerCase().includes("unique")
       ) {
-        toast.error("Este cliente já está cadastrado na sua conta.");
+        toast.error(t("toasts.duplicate"));
       } else {
-        toast.error("Não conseguimos salvar agora. Tente novamente.");
+        toast.error(t("toasts.saveError"));
       }
     } finally {
       setSalvando(false);
@@ -261,7 +259,7 @@ function ClientesPage() {
     if (!user?.id) return;
     const nome = manNome.trim();
     if (nome.length < 2) {
-      toast.error("Informe o nome do cliente.");
+      toast.error(t("toasts.nameRequired"));
       return;
     }
     setSalvando(true);
@@ -274,11 +272,11 @@ function ClientesPage() {
         observacoes: manObs,
       });
       setList((prev) => ordenar([novo, ...prev]));
-      toast.success("Cliente cadastrado.");
+      toast.success(t("toasts.saved"));
       setNovoAberto(false);
       limparManualForm();
     } catch {
-      toast.error("Não conseguimos salvar agora. Tente novamente.");
+      toast.error(t("toasts.saveError"));
     } finally {
       setSalvando(false);
     }
@@ -296,7 +294,7 @@ function ClientesPage() {
   async function salvarEdicao() {
     if (!editando) return;
     if (editNome.trim().length < 2) {
-      toast.error("Informe o nome do cliente.");
+      toast.error(t("toasts.nameRequired"));
       return;
     }
     setSalvandoEdit(true);
@@ -311,10 +309,10 @@ function ClientesPage() {
       setList((prev) =>
         ordenar(prev.map((x) => (x.id === atualizado.id ? atualizado : x))),
       );
-      toast.success("Cliente atualizado.");
+      toast.success(t("toasts.updated"));
       setEditando(null);
     } catch {
-      toast.error("Não conseguimos atualizar agora. Tente novamente.");
+      toast.error(t("toasts.updateError"));
     } finally {
       setSalvandoEdit(false);
     }
@@ -328,9 +326,9 @@ function ClientesPage() {
           prev.map((x) => (x.id === c.id ? { ...x, ativo: !c.ativo } : x)),
         ),
       );
-      toast.success(c.ativo ? "Cliente desativado." : "Cliente ativado.");
+      toast.success(c.ativo ? t("toasts.deactivated") : t("toasts.activated"));
     } catch {
-      toast.error("Não conseguimos atualizar agora.");
+      toast.error(t("toasts.toggleError"));
     }
   }
 
@@ -340,10 +338,10 @@ function ClientesPage() {
     try {
       await removerCliente(confirmarRemover.id);
       setList((prev) => prev.filter((x) => x.id !== confirmarRemover.id));
-      toast.success("Cliente removido.");
+      toast.success(t("toasts.removed"));
       setConfirmarRemover(null);
     } catch {
-      toast.error("Não conseguimos remover agora.");
+      toast.error(t("toasts.removeError"));
     } finally {
       setRemovendo(false);
     }
