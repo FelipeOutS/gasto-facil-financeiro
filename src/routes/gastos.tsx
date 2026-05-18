@@ -1170,7 +1170,8 @@ function GastosPage() {
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
               const cat = getCategoriaById(g.categoriaId);
-              const pag = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento)?.label;
+              const formaInfo = FORMAS_PAGAMENTO.find((f) => f.id === g.formaPagamento);
+              const pag = formaInfo ? tPag(formaInfo.id, formaInfo.label) : undefined;
               return (
                 <motion.li
                   key={g.id}
