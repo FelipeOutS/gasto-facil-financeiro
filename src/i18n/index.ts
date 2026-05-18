@@ -41,6 +41,7 @@ import enRelatorios from "./locales/en/relatorios.json";
 import enAdicionar from "./locales/en/adicionar.json";
 import enGuardado from "./locales/en/guardado.json";
 import enRenda from "./locales/en/renda.json";
+import enAssinaturas from "./locales/en/assinaturas.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
