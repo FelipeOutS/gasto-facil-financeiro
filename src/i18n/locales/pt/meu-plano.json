@@ -1,0 +1,103 @@
+{
+  "back": "Voltar",
+  "eyebrow": "Meu plano",
+  "status": {
+    "ativo": "Ativo",
+    "teste": "Em teste",
+    "aguardando_pagamento": "Aguardando pagamento",
+    "expirado": "Expirado",
+    "cancelado": "Cancelado",
+    "sem_assinatura": "Sem assinatura"
+  },
+  "card": {
+    "accessLabel": "Acesso",
+    "currentPlanLabel": "Plano atual",
+    "checking": "Verificando assinatura…",
+    "totalAccess": "Acesso total",
+    "awaitingPayment": "Aguardando pagamento",
+    "noActiveSubscription": "Sem assinatura ativa",
+    "type": "Tipo: {{value}}",
+    "adminMaster": "Admin Master",
+    "perFreq": " · {{value}}",
+    "method": " · {{value}}",
+    "totalPaid": " · Total pago: {{value}}",
+    "adminNote": "Usuário com acesso completo. Todos os recursos atuais e futuros estão liberados — sem cobrança.",
+    "pendingNotePrefix": "Pagamento aguardando confirmação. Finalize o Pix para liberar ",
+    "activePeriod": "Plano ativo. Início: {{start}} · Vencimento: {{end}}{{paid}}.",
+    "paidOn": " · Pago em: {{date}}",
+    "expiredNote": "Plano expirado. Regularize para voltar a usar os recursos premium.",
+    "rejectedNote": "Pagamento recusado. Tente novamente.",
+    "noSubNote": "Escolha um dos planos abaixo para liberar todos os recursos."
+  },
+  "trial": {
+    "activeTitle": "Teste grátis ativo",
+    "activeRelease": " — {{plan}} liberado por 10 dias.",
+    "daysLeft_one": "Falta {{count}} dia para o fim do teste.",
+    "daysLeft_other": "Faltam {{count}} dias para o fim do teste.",
+    "endsOn": "Termina em {{date}}.",
+    "alreadyUsed": "Seu teste gratuito de 10 dias já foi utilizado."
+  },
+  "cancelled": {
+    "title": "Assinatura cancelada.",
+    "untilPrefix": " Seu acesso premium continua até {{date}}.",
+    "after": "Depois disso, os recursos premium serão bloqueados — seus dados continuam salvos."
+  },
+  "actions": {
+    "totalAccessGranted": "Acesso total liberado",
+    "newPixCharge": "Gerar nova cobrança Pix",
+    "changePlan": "Trocar plano",
+    "cancelSubscription": "Cancelar assinatura",
+    "alreadyCancelled": "Já cancelada",
+    "regularize": "Regularizar pagamento — {{plan}}",
+    "subscribeNow": "Assinar agora — {{plan}}"
+  },
+  "pix": {
+    "eyebrow": "Pague com Pix",
+    "title": "Escaneie o QR Code abaixo",
+    "qrAlt": "QR Code Pix",
+    "copyTitle": "Pix Copia e Cola",
+    "copy": "Copiar código Pix",
+    "copied": "Código Pix copiado!",
+    "openMP": "Abrir página de pagamento Mercado Pago",
+    "verify": "Já paguei, verificar pagamento",
+    "verifying": "Verificando…",
+    "afterApproval": "Após o pagamento ser aprovado, seu plano é ativado automaticamente."
+  },
+  "methods": {
+    "pix": "Pix",
+    "card": "Cartão de crédito",
+    "pixDesc": "QR Code instantâneo",
+    "cardDesc": "Até 12x no Checkout Pro"
+  },
+  "sections": {
+    "features": "Recursos",
+    "plans": "Planos disponíveis",
+    "history": "Histórico de pagamentos",
+    "accountPrivacy": "Conta e privacidade"
+  },
+  "investments": {
+    "title": "Investimentos",
+    "soon": "Em breve",
+    "desc": "Estrutura preparada para acompanhar investimentos pessoais e empresariais nos planos Premium, MEI e Empresa."
+  },
+  "footer": "Pagamentos via Pix pelo Mercado Pago. Seu plano é ativado automaticamente após a confirmação do pagamento.",
+  "history": {
+    "empty": "Nenhum pagamento encontrado ainda."
+  },
+  "toasts": {
+    "paymentApproved": "Pagamento aprovado! Seu plano será liberado em instantes.",
+    "paymentPending": "Pagamento em análise. Avisaremos assim que for aprovado.",
+    "paymentFailure": "Pagamento não concluído. Você pode tentar novamente.",
+    "loginToSubscribe": "Faça login para assinar.",
+    "redirectingCard": "Redirecionando para o pagamento seguro do Mercado Pago…",
+    "pixGenerated": "Cobrança Pix gerada. Pague para ativar o plano.",
+    "startPaymentError": "Erro ao iniciar pagamento.",
+    "approvedActivated": "Pagamento aprovado! Plano ativado.",
+    "rejectedTryAgain": "Pagamento recusado. Tente novamente.",
+    "stillAnalyzing": "Pagamento ainda em análise. Tente novamente em instantes.",
+    "loginToTrial": "Faça login para iniciar o teste.",
+    "trialUsed": "Você já utilizou o teste gratuito.",
+    "trialActivated": "Teste grátis ativado! {{plan}} liberado por 10 dias.",
+    "trialError": "Erro ao iniciar o teste."
+  }
+}
