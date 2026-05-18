@@ -1,0 +1,184 @@
+{
+  "back": "Back",
+  "header": {
+    "kicker": "Your income",
+    "subtitle": "Full view of what comes in every month."
+  },
+  "nav": {
+    "prev": "Previous month",
+    "next": "Next month"
+  },
+  "summary": {
+    "totalLabel": "Total income this month",
+    "entries_one": "{{count}} entry recorded",
+    "entries_other": "{{count}} entries recorded",
+    "variation": "{{sign}}{{value}}% vs last month"
+  },
+  "miniStat": {
+    "salario": "Salary",
+    "extra": "Extra income",
+    "recorrentes": "Recurring",
+    "outras": "Other",
+    "entries_one": "{{count}} entry",
+    "entries_other": "{{count}} entries",
+    "pctMonth": "{{pct}}% of month"
+  },
+  "insights": {
+    "empty": "You haven't added any income this month yet. Want to start now?",
+    "up": "Your income rose {{pct}}% compared to last month.",
+    "down": "Your income fell {{pct}}% compared to last month.",
+    "topSource": "{{pct}}% of your income comes from {{label}}.",
+    "recurring_one": "You have {{count}} recurring entry this month ({{value}}).",
+    "recurring_other": "You have {{count}} recurring entries this month ({{value}}).",
+    "extraShare": "Your extra income is {{pct}}% of the monthly total.",
+    "noExtra": "You haven't added any extra income this month yet."
+  },
+  "cta": {
+    "new": "New entry",
+    "quick": {
+      "salario": "Salary",
+      "freela": "Freelance",
+      "recorrente": "Recurring",
+      "avulsa": "One-off"
+    }
+  },
+  "dialog": {
+    "newTitle": "New income entry",
+    "newDescription": "Salary, freelance, commission and more.",
+    "editTitle": "Edit income",
+    "editDescription": "Update the details of this entry.",
+    "fields": {
+      "descricao": "Description",
+      "descricaoPlaceholder": "E.g.: Monthly salary",
+      "valor": "Amount",
+      "data": "Date",
+      "tipo": "Type",
+      "repeat": "Repeat every month",
+      "repeatHint": "Recurring entry",
+      "repeatMonths": "Repeat for (months)"
+    },
+    "cancel": "Cancel",
+    "save": "Add",
+    "saveEdit": "Save",
+    "scopeTitle": "This is a recurring income. How should the change apply?",
+    "scope": {
+      "single": "Change only this month",
+      "singleHint": "Other months are unchanged.",
+      "forward": "Change this month and future ones",
+      "forwardHint": "Past history is preserved.",
+      "all": "Change the entire series",
+      "allHint": "Updates every month tied to this income."
+    },
+    "scopeDateNote": "The new date above applies only to this entry."
+  },
+  "toast": {
+    "added": "Income added. Nice! 💸",
+    "updated": "Income updated. ✅",
+    "removed": "Income removed.",
+    "fillFields": "Please fill in the description and amount."
+  },
+  "duplicate": {
+    "title": "Similar income found",
+    "body": "There's already a similar income this month: <0>{{descricao}}</0> of <1>{{valor}}</1>. Save anyway?",
+    "confirm": "Save anyway",
+    "cancel": "Cancel"
+  },
+  "charts": {
+    "evolutionKicker": "Evolution",
+    "evolutionTitle": "Last 6 months",
+    "average": "Average:",
+    "peak": "Peak:",
+    "incomeLabel": "Income",
+    "compositionKicker": "Breakdown",
+    "compositionTitle": "By income type",
+    "noData": "No data this month."
+  },
+  "forecast": {
+    "kicker": "Forecast",
+    "titleCurrent": "Income for current month",
+    "titleSelected": "Income for selected month",
+    "received": "Received",
+    "toReceive": "To receive",
+    "total": "Total forecast:",
+    "completed": "{{pct}}% complete"
+  },
+  "upcoming": {
+    "kicker": "Upcoming",
+    "title": "Recurring entries",
+    "empty": "No upcoming recurring entries."
+  },
+  "tabs": {
+    "month": "This month",
+    "recurring": "Recurring",
+    "history": "History",
+    "forecasts": "Forecasts"
+  },
+  "filters": {
+    "search": "Search by description",
+    "allTypes": "All types",
+    "all": "All",
+    "onlyRecurring": "Recurring only",
+    "onlyUnique": "One-time only",
+    "sortRecent": "Most recent",
+    "sortValue": "Highest amount",
+    "sortType": "By type"
+  },
+  "empty": {
+    "monthTitle": "No income this month yet",
+    "monthSubtitle": "Add your first entry and see your month get clearer.",
+    "filterTitle": "No entries match these filters",
+    "filterSubtitle": "Try clearing the search or changing the filter.",
+    "recurringTitle": "No recurring entries this month yet",
+    "recurringSubtitle": "Add one and it repeats automatically.",
+    "recurringAction": "Add recurring",
+    "defaultAction": "Add income",
+    "examples": {
+      "salario": "Salary",
+      "freelance": "Freelance",
+      "comissao": "Commission",
+      "aluguel": "Rent",
+      "vendas": "Sales"
+    }
+  },
+  "history": {
+    "empty": "Your history is empty. Once you add income, it will appear here grouped by month.",
+    "search": "Search by description, type, month, year or amount",
+    "noResults": "No results for “{{query}}”.",
+    "loadMore": "Load more"
+  },
+  "forecasts": {
+    "title": "Forecast for upcoming months",
+    "subtitle": "Based on active recurring entries."
+  },
+  "item": {
+    "rec": "rec",
+    "future": "future",
+    "client": "Client: {{name}}",
+    "editAria": "Edit {{name}}",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "delete": {
+    "title": "Delete income?",
+    "body": "Are you sure you want to delete this income? This action cannot be undone.",
+    "recurringQuestion": "This income is recurring. What to delete?",
+    "scope": {
+      "single": "Only this month",
+      "forward": "This month and future ones",
+      "all": "The entire series"
+    },
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "tipo": {
+    "salario": "Salary",
+    "freelance": "Freelance",
+    "comissao": "Commission",
+    "venda": "Sale",
+    "reembolso": "Refund",
+    "pix": "Instant transfer",
+    "bonus": "Bonus",
+    "outros": "Other"
+  },
+  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+}

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -107,7 +108,7 @@ const MONTH_NAMES_PT = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-const MONTH_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MONTH_SHORT_FALLBACK = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 function normalizeDescricao(s: string): string {
   return s
@@ -153,7 +154,7 @@ const TIPO_COLORS: Record<TipoReceita, string> = {
 const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
 
 export const Route = createFileRoute("/renda")({
-  head: () => ({ meta: [{ title: "Minha renda — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: "Renda — Gasto Inteligente" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
     const ano = Number(search.ano);
     const mes = Number(search.mes);
@@ -166,6 +167,13 @@ export const Route = createFileRoute("/renda")({
 });
 
 function RendaPage() {
+  const { t, i18n } = useTranslation("renda");
+  const monthShort = useMemo(() => {
+    const raw = t("months", { returnObjects: true }) as unknown;
+    return Array.isArray(raw) && raw.length === 12 ? (raw as string[]) : MONTH_SHORT_FALLBACK;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
+  const tipoLabel = (id: TipoReceita) => t(`tipo.${id}`);
   const ready = useBootstrap();
   const { profile } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
@@ -255,7 +263,7 @@ function RendaPage() {
         .reduce((s, r) => s + r.valor, 0);
       arr.push({
         key: `${a}-${m}`,
-        label: MONTH_SHORT[m - 1],
+        label: monthShort[m - 1],
         total,
       });
     }
@@ -272,7 +280,7 @@ function RendaPage() {
       .map(([tipo, valor]) => ({
         tipo,
         valor,
-        label: TIPOS_RECEITA.find((t) => t.id === tipo)?.label ?? tipo,
+        label: tipoLabel(tipo),
         cor: TIPO_COLORS[tipo],
       }))
       .sort((a, b) => b.valor - a.valor);
@@ -282,23 +290,19 @@ function RendaPage() {
   const insights = useMemo(() => {
     const out: { icon: typeof Sparkles; text: string; tone: "good" | "neutral" | "warn" }[] = [];
     if (totalMes === 0) {
-      out.push({
-        icon: Sparkles,
-        text: "Você ainda não cadastrou entradas neste mês. Que tal começar agora?",
-        tone: "neutral",
-      });
+      out.push({ icon: Sparkles, text: t("insights.empty"), tone: "neutral" });
     }
     if (variacaoPct !== null) {
       if (variacaoPct > 1) {
         out.push({
           icon: TrendingUp,
-          text: `Sua renda subiu ${variacaoPct.toFixed(1)}% em relação ao mês anterior.`,
+          text: t("insights.up", { pct: variacaoPct.toFixed(1) }),
           tone: "good",
         });
       } else if (variacaoPct < -1) {
         out.push({
           icon: TrendingDown,
-          text: `Sua renda caiu ${Math.abs(variacaoPct).toFixed(1)}% em relação ao mês anterior.`,
+          text: t("insights.down", { pct: Math.abs(variacaoPct).toFixed(1) }),
           tone: "warn",
         });
       }
@@ -308,14 +312,14 @@ function RendaPage() {
       const pct = (maior.valor / totalMes) * 100;
       out.push({
         icon: Wallet,
-        text: `${pct.toFixed(0)}% da sua renda vem de ${maior.label.toLowerCase()}.`,
+        text: t("insights.topSource", { pct: pct.toFixed(0), label: maior.label.toLowerCase() }),
         tone: "neutral",
       });
     }
     if (recorrentesMes.length > 0) {
       out.push({
         icon: Repeat,
-        text: `Você tem ${recorrentesMes.length} entrada${recorrentesMes.length > 1 ? "s" : ""} recorrente${recorrentesMes.length > 1 ? "s" : ""} este mês (${formatBRL(recorrentesValor)}).`,
+        text: t("insights.recurring", { count: recorrentesMes.length, value: formatBRL(recorrentesValor) }),
         tone: "good",
       });
     }
@@ -323,18 +327,14 @@ function RendaPage() {
       const pct = (extraMes / totalMes) * 100;
       out.push({
         icon: Sparkles,
-        text: `Sua renda extra representa ${pct.toFixed(0)}% do total do mês.`,
+        text: t("insights.extraShare", { pct: pct.toFixed(0) }),
         tone: "neutral",
       });
     } else if (totalMes > 0 && extraMes === 0) {
-      out.push({
-        icon: Sparkles,
-        text: "Você ainda não cadastrou renda extra este mês.",
-        tone: "neutral",
-      });
+      out.push({ icon: Sparkles, text: t("insights.noExtra"), tone: "neutral" });
     }
     return out.slice(0, 4);
-  }, [totalMes, variacaoPct, composicao, recorrentesMes.length, recorrentesValor, extraMes]);
+  }, [t, totalMes, variacaoPct, composicao, recorrentesMes.length, recorrentesValor, extraMes]);
 
   // Próximas recorrências (3 meses à frente)
   const proximasRecorrencias = useMemo(() => {
@@ -425,7 +425,7 @@ function RendaPage() {
 
   function persistNova(payload: NovaPayload) {
     addReceita(payload);
-    toast.success("Renda adicionada. Boa! 💸");
+    toast.success(t("toast.added"));
     setOpen(false);
     reset();
   }
@@ -442,7 +442,7 @@ function RendaPage() {
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
-      toast.error("Preencha a descrição e o valor.");
+      toast.error(t("toast.fillFields"));
       return;
     }
     const dt = new Date(data + "T12:00:00");
@@ -497,11 +497,9 @@ function RendaPage() {
         if (matchMes || matchAno) return g;
         const itens = g.itens.filter((r) => {
           const desc = normalizeDescricao(r.descricao);
-          const tipoLabel = normalizeDescricao(
-            TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label ?? "",
-          );
+          const tLabel = normalizeDescricao(tipoLabel(r.tipo));
           if (desc.includes(q)) return true;
-          if (tipoLabel.includes(q)) return true;
+          if (tLabel.includes(q)) return true;
           if (Number.isFinite(qNum) && qNum > 0 && Math.abs(r.valor - qNum) < 0.01) return true;
           return false;
         });
@@ -524,17 +522,17 @@ function RendaPage() {
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Suas entradas
+            {t("header.kicker")}
           </p>
           <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
           <p className="text-xs text-muted-foreground">
-            Visão completa do que entra todo mês.
+            {t("header.subtitle")}
           </p>
         </div>
       </header>
@@ -544,7 +542,7 @@ function RendaPage() {
         <button
           onClick={() => changeMonth(-1)}
           className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Mês anterior"
+          aria-label={t("nav.prev")}
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -554,7 +552,7 @@ function RendaPage() {
         <button
           onClick={() => changeMonth(1)}
           className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Próximo mês"
+          aria-label={t("nav.next")}
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -585,12 +583,12 @@ function RendaPage() {
           <div className="relative flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Total de entradas no mês
+                {t("summary.totalLabel")}
               </p>
               <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight sm:text-5xl" />
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  {doMes.length} {doMes.length === 1 ? "entrada" : "entradas"} registrada{doMes.length === 1 ? "" : "s"}
+                  {t("summary.entries", { count: doMes.length })}
                 </span>
                 {variacaoPct !== null && (
                   <span
@@ -602,8 +600,7 @@ function RendaPage() {
                     )}
                   >
                     {variacaoPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {variacaoPct >= 0 ? "+" : ""}
-                    {variacaoPct.toFixed(1)}% vs mês anterior
+                    {t("summary.variation", { sign: variacaoPct >= 0 ? "+" : "", value: variacaoPct.toFixed(1) })}
                   </span>
                 )}
               </div>
@@ -616,28 +613,28 @@ function RendaPage() {
           {/* mini barras grid 4 */}
           <div className="relative mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             <MiniStat
-              label="Salário"
+              label={t("miniStat.salario")}
               value={salarioMes}
               icon={Briefcase}
               accent="text-success"
               total={totalMes}
             />
             <MiniStat
-              label="Renda extra"
+              label={t("miniStat.extra")}
               value={extraMes}
               icon={Coins}
               accent="text-[color:var(--cat-pix)]"
               total={totalMes}
             />
             <MiniStat
-              label="Recorrentes"
+              label={t("miniStat.recorrentes")}
               value={recorrentesValor}
               icon={Repeat}
               accent="text-[color:var(--cat-trabalho)]"
-              footer={`${recorrentesMes.length} entrada${recorrentesMes.length === 1 ? "" : "s"}`}
+              footer={t("miniStat.entries", { count: recorrentesMes.length })}
             />
             <MiniStat
-              label="Outras"
+              label={t("miniStat.outras")}
               value={outrasMes}
               icon={Wallet}
               accent="text-[color:var(--cat-presentes)]"
@@ -688,35 +685,35 @@ function RendaPage() {
               className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-5 w-5" />
-              Nova entrada
+              {t("cta.new")}
             </Button>
           </DialogTrigger>
           <div className="flex flex-wrap gap-1.5">
-            <QuickAction icon={Briefcase} label="Salário" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
-            <QuickAction icon={Coins} label="Freela" onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
-            <QuickAction icon={Repeat} label="Recorrente" onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
-            <QuickAction icon={Receipt} label="Avulsa" onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
+            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
+            <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Receipt} label={t("cta.quick.avulsa")} onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
           </div>
         </div>
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova entrada de dinheiro</DialogTitle>
-            <DialogDescription>Salário, freelance, comissão e mais.</DialogDescription>
+            <DialogTitle>{t("dialog.newTitle")}</DialogTitle>
+            <DialogDescription>{t("dialog.newDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Descrição</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.descricao")}</Label>
               <Input
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Ex.: Salário do mês"
+                placeholder={t("dialog.fields.descricaoPlaceholder")}
                 className="mt-1 h-11 bg-card-elevated"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Valor</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.valor")}</Label>
                 <Input
                   inputMode="decimal"
                   value={valorStr}
@@ -726,7 +723,7 @@ function RendaPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Data</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.data")}</Label>
                 <Input
                   type="date"
                   value={data}
@@ -736,14 +733,14 @@ function RendaPage() {
               </div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Tipo</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.tipo")}</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
                 <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RECEITA.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  {TIPOS_RECEITA.map((tp) => (
+                    <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -755,14 +752,14 @@ function RendaPage() {
             />
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
-                <p className="text-sm font-medium">Repetir todo mês</p>
-                <p className="text-xs text-muted-foreground">Entrada recorrente</p>
+                <p className="text-sm font-medium">{t("dialog.fields.repeat")}</p>
+                <p className="text-xs text-muted-foreground">{t("dialog.fields.repeatHint")}</p>
               </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
             {recorrente && (
               <div>
-                <Label className="text-xs text-muted-foreground">Repetir por (meses)</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -775,8 +772,8 @@ function RendaPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>Cadastrar</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("dialog.cancel")}</Button>
+            <Button onClick={handleSave}>{t("dialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -788,9 +785,9 @@ function RendaPage() {
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Evolução
+                {t("charts.evolutionKicker")}
               </p>
-              <h3 className="text-sm font-bold">Últimos 6 meses</h3>
+              <h3 className="text-sm font-bold">{t("charts.evolutionTitle")}</h3>
             </div>
             {(() => {
               const valores = evolucao6m.map((e) => e.total);
@@ -800,10 +797,10 @@ function RendaPage() {
               return (
                 <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Média: <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
+                    {t("charts.average")} <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
                   </span>
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Pico: <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
+                    {t("charts.peak")} <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
                   </span>
                 </div>
               );
@@ -834,7 +831,7 @@ function RendaPage() {
                     borderRadius: 12,
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => [formatBRL(v), "Renda"]}
+                  formatter={(v: number) => [formatBRL(v), t("charts.incomeLabel")]}
                   labelStyle={{ color: "oklch(0.78 0.005 260)" }}
                 />
                 <Area
@@ -855,14 +852,14 @@ function RendaPage() {
           <div className="mb-2 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Composição
+                {t("charts.compositionKicker")}
               </p>
-              <h3 className="text-sm font-bold">Por tipo de renda</h3>
+              <h3 className="text-sm font-bold">{t("charts.compositionTitle")}</h3>
             </div>
           </div>
           {composicao.length === 0 ? (
             <div className="grid h-44 place-items-center text-xs text-muted-foreground">
-              Sem dados neste mês.
+              {t("charts.noData")}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
@@ -919,10 +916,10 @@ function RendaPage() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Previsão
+                {t("forecast.kicker")}
               </p>
               <h3 className="text-sm font-bold">
-                {isMesAtual ? "Renda do mês atual" : "Renda do mês selecionado"}
+                {isMesAtual ? t("forecast.titleCurrent") : t("forecast.titleSelected")}
               </h3>
             </div>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -930,11 +927,11 @@ function RendaPage() {
           <div className="space-y-3">
             <div className="flex items-end justify-between gap-2">
               <div>
-                <p className="text-[11px] text-muted-foreground">Já recebido</p>
+                <p className="text-[11px] text-muted-foreground">{t("forecast.received")}</p>
                 <Money value={recebidoMes} className="num text-2xl font-bold text-success" />
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-muted-foreground">A receber</p>
+                <p className="text-[11px] text-muted-foreground">{t("forecast.toReceive")}</p>
                 <Money value={aReceberMes} className="num text-base font-semibold text-foreground" />
               </div>
             </div>
@@ -948,10 +945,10 @@ function RendaPage() {
             </div>
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span>
-                Total previsto: <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
+                {t("forecast.total")} <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
               </span>
               <span>
-                {totalMes > 0 ? `${((recebidoMes / totalMes) * 100).toFixed(0)}%` : "0%"} concluído
+                {t("forecast.completed", { pct: totalMes > 0 ? ((recebidoMes / totalMes) * 100).toFixed(0) : "0" })}
               </span>
             </div>
           </div>
@@ -961,15 +958,15 @@ function RendaPage() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Próximas
+                {t("upcoming.kicker")}
               </p>
-              <h3 className="text-sm font-bold">Entradas recorrentes</h3>
+              <h3 className="text-sm font-bold">{t("upcoming.title")}</h3>
             </div>
             <Repeat className="h-4 w-4 text-muted-foreground" />
           </div>
           {proximasRecorrencias.length === 0 ? (
             <p className="grid h-24 place-items-center rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
-              Sem recorrências futuras cadastradas.
+              {t("upcoming.empty")}
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -1004,10 +1001,10 @@ function RendaPage() {
       {/* TABS */}
       <Tabs defaultValue="mes" className="mt-5">
         <TabsList className="grid w-full grid-cols-4 bg-card">
-          <TabsTrigger value="mes">Este mês</TabsTrigger>
-          <TabsTrigger value="recorrentes">Recorrentes</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-          <TabsTrigger value="previsoes">Previsões</TabsTrigger>
+          <TabsTrigger value="mes">{t("tabs.month")}</TabsTrigger>
+          <TabsTrigger value="recorrentes">{t("tabs.recurring")}</TabsTrigger>
+          <TabsTrigger value="historico">{t("tabs.history")}</TabsTrigger>
+          <TabsTrigger value="previsoes">{t("tabs.forecasts")}</TabsTrigger>
         </TabsList>
 
         {/* ESTE MÊS */}
@@ -1019,7 +1016,7 @@ function RendaPage() {
               <Input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por descrição"
+                placeholder={t("filters.search")}
                 className="h-9 bg-card-elevated pl-9 text-sm"
               />
             </div>
@@ -1029,9 +1026,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todos os tipos</SelectItem>
-                {TIPOS_RECEITA.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                <SelectItem value="todas">{t("filters.allTypes")}</SelectItem>
+                {TIPOS_RECEITA.map((tp) => (
+                  <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1040,9 +1037,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
-                <SelectItem value="recorrente">Apenas recorrentes</SelectItem>
-                <SelectItem value="unica">Apenas únicas</SelectItem>
+                <SelectItem value="todas">{t("filters.all")}</SelectItem>
+                <SelectItem value="recorrente">{t("filters.onlyRecurring")}</SelectItem>
+                <SelectItem value="unica">{t("filters.onlyUnique")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={ordem} onValueChange={(v) => setOrdem(v as typeof ordem)}>
@@ -1050,9 +1047,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="data">Mais recentes</SelectItem>
-                <SelectItem value="valor">Maior valor</SelectItem>
-                <SelectItem value="tipo">Por tipo</SelectItem>
+                <SelectItem value="data">{t("filters.sortRecent")}</SelectItem>
+                <SelectItem value="valor">{t("filters.sortValue")}</SelectItem>
+                <SelectItem value="tipo">{t("filters.sortType")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1061,13 +1058,13 @@ function RendaPage() {
             <EmptyRenda
               title={
                 doMes.length === 0
-                  ? "Sem rendas neste mês ainda"
-                  : "Nenhuma entrada com esses filtros"
+                  ? t("empty.monthTitle")
+                  : t("empty.filterTitle")
               }
               subtitle={
                 doMes.length === 0
-                  ? "Cadastre sua primeira entrada e veja seu mês ficar mais claro."
-                  : "Tente limpar a busca ou trocar o filtro."
+                  ? t("empty.monthSubtitle")
+                  : t("empty.filterSubtitle")
               }
               onAction={doMes.length === 0 ? () => setOpen(true) : undefined}
             />
@@ -1099,10 +1096,10 @@ function RendaPage() {
         <TabsContent value="recorrentes" className="mt-3 space-y-2">
           {recorrentesMes.length === 0 ? (
             <EmptyRenda
-              title="Você ainda não tem entradas recorrentes neste mês"
-              subtitle="Cadastre uma e ela se repete automaticamente."
+              title={t("empty.recurringTitle")}
+              subtitle={t("empty.recurringSubtitle")}
               onAction={() => openWithPreset({ tipo: "salario", recorrente: true })}
-              actionLabel="Adicionar recorrente"
+              actionLabel={t("empty.recurringAction")}
             />
           ) : (
             <ul className="space-y-2">
@@ -1123,7 +1120,7 @@ function RendaPage() {
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.
+              {t("history.empty")}
             </div>
           ) : (
             <>
@@ -1135,14 +1132,14 @@ function RendaPage() {
                     setHistoricoQuery(e.target.value);
                     setHistoricoLimit(3);
                   }}
-                  placeholder="Buscar por descrição, tipo, mês, ano ou valor"
+                  placeholder={t("history.search")}
                   className="h-11 bg-card-elevated pl-9"
                 />
               </div>
 
               {historicoFiltrado.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-                  Nenhum resultado para “{historicoQuery}”.
+                  {t("history.noResults", { query: historicoQuery })}
                 </div>
               ) : (
                 <>
@@ -1181,7 +1178,7 @@ function RendaPage() {
                       className="w-full"
                       onClick={() => setHistoricoLimit((n) => n + 3)}
                     >
-                      Carregar mais
+                      {t("history.loadMore")}
                     </Button>
                   )}
                 </>
@@ -1193,9 +1190,9 @@ function RendaPage() {
         {/* PREVISÕES */}
         <TabsContent value="previsoes" className="mt-3 space-y-3">
           <div className="rounded-3xl border border-border bg-card p-4">
-            <h3 className="text-sm font-bold">Previsão dos próximos meses</h3>
+            <h3 className="text-sm font-bold">{t("forecasts.title")}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Baseado nas entradas recorrentes ativas.
+              {t("forecasts.subtitle")}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => {
@@ -1208,7 +1205,7 @@ function RendaPage() {
                 return (
                   <div key={`${a}-${m}`} className="rounded-2xl bg-card-elevated p-3">
                     <p className="text-[11px] capitalize text-muted-foreground">
-                      {MONTH_SHORT[m - 1]}/{String(a).slice(-2)}
+                      {monthShort[m - 1]}/{String(a).slice(-2)}
                     </p>
                     <Money value={previsto} className="num mt-0.5 block text-base font-bold text-success" />
                   </div>
@@ -1228,28 +1225,31 @@ function RendaPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Renda parecida encontrada</AlertDialogTitle>
+            <AlertDialogTitle>{t("duplicate.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Já existe uma renda parecida neste mês:{" "}
-              <span className="font-medium text-foreground">
-                {confirmDup?.parecida.descricao}
-              </span>{" "}
-              de{" "}
-              <span className="num font-medium text-foreground">
-                {confirmDup ? formatBRL(confirmDup.parecida.valor) : ""}
-              </span>
-              . Deseja salvar mesmo assim?
+              <Trans
+                i18nKey="duplicate.body"
+                t={t}
+                values={{
+                  descricao: confirmDup?.parecida.descricao ?? "",
+                  valor: confirmDup ? formatBRL(confirmDup.parecida.valor) : "",
+                }}
+                components={[
+                  <span key="0" className="font-medium text-foreground" />,
+                  <span key="1" className="num font-medium text-foreground" />,
+                ]}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("duplicate.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDup) persistNova(confirmDup.payload);
                 setConfirmDup(null);
               }}
             >
-              Salvar mesmo assim
+              {t("duplicate.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1277,6 +1277,7 @@ function MiniStat({
   footer?: string;
   total?: number;
 }) {
+  const { t } = useTranslation("renda");
   const pct = total && total > 0 ? Math.min(100, (value / total) * 100) : null;
   return (
     <div className="group min-w-0 overflow-hidden rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
@@ -1293,7 +1294,7 @@ function MiniStat({
           <p className="truncate text-[10px] text-muted-foreground">{footer}</p>
         ) : pct !== null ? (
           <p className="truncate text-[10px] font-medium text-muted-foreground tabular-nums">
-            {pct.toFixed(0)}% do mês
+            {t("miniStat.pctMonth", { pct: pct.toFixed(0) })}
           </p>
         ) : <span />}
       </div>
@@ -1334,13 +1335,15 @@ function EmptyRenda({
   title,
   subtitle,
   onAction,
-  actionLabel = "Adicionar renda",
+  actionLabel,
 }: {
   title: string;
   subtitle: string;
   onAction?: () => void;
   actionLabel?: string;
 }) {
+  const { t } = useTranslation("renda");
+  const exampleKeys = ["salario", "freelance", "comissao", "aluguel", "vendas"] as const;
   return (
     <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
       <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-success/15 text-success animate-pop">
@@ -1349,16 +1352,16 @@ function EmptyRenda({
       <p className="font-semibold text-foreground">{title}</p>
       <p className="mx-auto mt-1 max-w-sm text-xs">{subtitle}</p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-        {["Salário", "Freelance", "Comissão", "Aluguel", "Vendas"].map((s) => (
-          <Badge key={s} variant="outline" className="rounded-full text-[10px] font-normal">
-            {s}
+        {exampleKeys.map((k) => (
+          <Badge key={k} variant="outline" className="rounded-full text-[10px] font-normal">
+            {t(`empty.examples.${k}`)}
           </Badge>
         ))}
       </div>
       {onAction && (
         <div className="mt-4">
           <Button size="sm" onClick={onAction} className="card-press rounded-full">
-            <Plus className="mr-1 h-4 w-4" /> {actionLabel}
+            <Plus className="mr-1 h-4 w-4" /> {actionLabel ?? t("empty.defaultAction")}
           </Button>
         </div>
       )}
@@ -1380,7 +1383,8 @@ function ReceitaItem({
   onDelete: () => void;
   clienteNome?: string;
 }) {
-  const tipoLabel = TIPOS_RECEITA.find((t) => t.id === r.tipo)?.label;
+  const { t } = useTranslation("renda");
+  const tipoText = t(`tipo.${r.tipo}`);
   const Icon = tipoIcon(r.tipo);
   const isFuturo = r.data > todayISO();
   return (
@@ -1389,7 +1393,7 @@ function ReceitaItem({
         type="button"
         onClick={onEdit}
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        aria-label={`Editar ${r.descricao}`}
+        aria-label={t("item.editAria", { name: r.descricao })}
       >
         <span
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
@@ -1402,21 +1406,21 @@ function ReceitaItem({
             <p className="truncate text-sm font-medium">{r.descricao}</p>
             {r.recorrente && (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-[color:var(--cat-trabalho)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--cat-trabalho)]">
-                <Repeat className="h-2.5 w-2.5" /> rec
+                <Repeat className="h-2.5 w-2.5" /> {t("item.rec")}
               </span>
             )}
             {isFuturo && (
               <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-warning">
-                futuro
+                {t("item.future")}
               </span>
             )}
           </div>
           <p className="truncate text-xs text-muted-foreground">
-            {tipoLabel} · {formatDateBR(r.data)}
+            {tipoText} · {formatDateBR(r.data)}
           </p>
           {clienteNome ? (
             <p className="truncate text-[11px] text-muted-foreground">
-              Cliente: {clienteNome}
+              {t("item.client", { name: clienteNome })}
             </p>
           ) : null}
           <p className="num mt-0.5 text-sm font-semibold text-success">
@@ -1429,7 +1433,7 @@ function ReceitaItem({
           type="button"
           onClick={onEdit}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
-          aria-label="Editar"
+          aria-label={t("item.edit")}
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -1437,7 +1441,7 @@ function ReceitaItem({
           type="button"
           onClick={onDelete}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-destructive active:scale-95"
-          aria-label="Excluir"
+          aria-label={t("item.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -1456,6 +1460,7 @@ function EditReceitaDialog({
   receita: Receita | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("renda");
   const open = !!receita;
   const [descricao, setDescricao] = useState("");
   const [valorStr, setValorStr] = useState("");
@@ -1480,7 +1485,7 @@ function EditReceitaDialog({
     if (!receita) return;
     const valor = parseBRLInput(valorStr);
     if (!valor || !descricao.trim()) {
-      toast.error("Preencha a descrição e o valor.");
+      toast.error(t("toast.fillFields"));
       return;
     }
     updateReceita(
@@ -1488,7 +1493,7 @@ function EditReceitaDialog({
       { descricao: descricao.trim(), valor, data, tipo, clienteId },
       receita.recorrente && receita.recorrenciaId ? scope : "single",
     );
-    toast.success("Renda atualizada. ✅");
+    toast.success(t("toast.updated"));
     onClose();
   }
 
@@ -1496,12 +1501,12 @@ function EditReceitaDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar renda</DialogTitle>
-          <DialogDescription>Altere os detalhes desta entrada.</DialogDescription>
+          <DialogTitle>{t("dialog.editTitle")}</DialogTitle>
+          <DialogDescription>{t("dialog.editDescription")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs text-muted-foreground">Descrição</Label>
+            <Label className="text-xs text-muted-foreground">{t("dialog.fields.descricao")}</Label>
             <Input
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -1510,7 +1515,7 @@ function EditReceitaDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Valor</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.valor")}</Label>
               <Input
                 inputMode="decimal"
                 value={valorStr}
@@ -1519,7 +1524,7 @@ function EditReceitaDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Data</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.fields.data")}</Label>
               <Input
                 type="date"
                 value={data}
@@ -1529,14 +1534,14 @@ function EditReceitaDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Tipo</Label>
+            <Label className="text-xs text-muted-foreground">{t("dialog.fields.tipo")}</Label>
             <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
               <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_RECEITA.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                {TIPOS_RECEITA.map((tp) => (
+                  <SelectItem key={tp.id} value={tp.id}>{t(`tipo.${tp.id}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1550,7 +1555,7 @@ function EditReceitaDialog({
           {receita?.recorrente && receita.recorrenciaId && (
             <div className="rounded-xl border border-border bg-card-elevated p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                Esta é uma renda recorrente. Como aplicar a alteração?
+                {t("dialog.scopeTitle")}
               </p>
               <RadioGroup
                 value={scope}
@@ -1560,40 +1565,40 @@ function EditReceitaDialog({
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="single" id="scope-single" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar somente este mês</span>
+                    <span className="block font-medium">{t("dialog.scope.single")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Não muda os outros meses.
+                      {t("dialog.scope.singleHint")}
                     </span>
                   </span>
                 </label>
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="forward" id="scope-forward" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar este mês e os próximos</span>
+                    <span className="block font-medium">{t("dialog.scope.forward")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Preserva o histórico anterior.
+                      {t("dialog.scope.forwardHint")}
                     </span>
                   </span>
                 </label>
                 <label className="flex items-start gap-2 text-sm">
                   <RadioGroupItem value="all" id="scope-all" className="mt-0.5" />
                   <span>
-                    <span className="block font-medium">Alterar toda a recorrência</span>
+                    <span className="block font-medium">{t("dialog.scope.all")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Atualiza todos os meses ligados a esta renda.
+                      {t("dialog.scope.allHint")}
                     </span>
                   </span>
                 </label>
               </RadioGroup>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                A nova data informada acima só é aplicada nesta receita.
+                {t("dialog.scopeDateNote")}
               </p>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave}>Salvar</Button>
+          <Button variant="outline" onClick={onClose}>{t("dialog.cancel")}</Button>
+          <Button onClick={handleSave}>{t("dialog.saveEdit")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1610,6 +1615,7 @@ function DeleteReceitaDialog({
   receita: Receita | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("renda");
   const open = !!receita;
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
@@ -1628,7 +1634,7 @@ function DeleteReceitaDialog({
     } else {
       deleteReceita(receita.id);
     }
-    toast.success("Renda removida.");
+    toast.success(t("toast.removed"));
     onClose();
   }
 
@@ -1636,16 +1642,16 @@ function DeleteReceitaDialog({
     <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir renda?</AlertDialogTitle>
+          <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir esta renda? Esta ação não pode ser desfeita.
+            {t("delete.body")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {receita?.recorrente && receita.recorrenciaId && (
           <div className="rounded-xl border border-border bg-card-elevated p-3">
             <p className="text-xs font-medium text-muted-foreground">
-              Esta renda é recorrente. O que excluir?
+              {t("delete.recurringQuestion")}
             </p>
             <RadioGroup
               value={scope}
@@ -1654,27 +1660,27 @@ function DeleteReceitaDialog({
             >
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="single" id="del-single" className="mt-0.5" />
-                <span className="font-medium">Somente este mês</span>
+                <span className="font-medium">{t("delete.scope.single")}</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="forward" id="del-forward" className="mt-0.5" />
-                <span className="font-medium">Este mês e os próximos</span>
+                <span className="font-medium">{t("delete.scope.forward")}</span>
               </label>
               <label className="flex items-start gap-2 text-sm">
                 <RadioGroupItem value="all" id="del-all" className="mt-0.5" />
-                <span className="font-medium">Toda a recorrência</span>
+                <span className="font-medium">{t("delete.scope.all")}</span>
               </label>
             </RadioGroup>
           </div>
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Excluir
+            {t("delete.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

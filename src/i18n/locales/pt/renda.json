@@ -1,0 +1,184 @@
+{
+  "back": "Voltar",
+  "header": {
+    "kicker": "Suas entradas",
+    "subtitle": "Visão completa do que entra todo mês."
+  },
+  "nav": {
+    "prev": "Mês anterior",
+    "next": "Próximo mês"
+  },
+  "summary": {
+    "totalLabel": "Total de entradas no mês",
+    "entries_one": "{{count}} entrada registrada",
+    "entries_other": "{{count}} entradas registradas",
+    "variation": "{{sign}}{{value}}% vs mês anterior"
+  },
+  "miniStat": {
+    "salario": "Salário",
+    "extra": "Renda extra",
+    "recorrentes": "Recorrentes",
+    "outras": "Outras",
+    "entries_one": "{{count}} entrada",
+    "entries_other": "{{count}} entradas",
+    "pctMonth": "{{pct}}% do mês"
+  },
+  "insights": {
+    "empty": "Você ainda não cadastrou entradas neste mês. Que tal começar agora?",
+    "up": "Sua renda subiu {{pct}}% em relação ao mês anterior.",
+    "down": "Sua renda caiu {{pct}}% em relação ao mês anterior.",
+    "topSource": "{{pct}}% da sua renda vem de {{label}}.",
+    "recurring_one": "Você tem {{count}} entrada recorrente este mês ({{value}}).",
+    "recurring_other": "Você tem {{count}} entradas recorrentes este mês ({{value}}).",
+    "extraShare": "Sua renda extra representa {{pct}}% do total do mês.",
+    "noExtra": "Você ainda não cadastrou renda extra este mês."
+  },
+  "cta": {
+    "new": "Nova entrada",
+    "quick": {
+      "salario": "Salário",
+      "freela": "Freela",
+      "recorrente": "Recorrente",
+      "avulsa": "Avulsa"
+    }
+  },
+  "dialog": {
+    "newTitle": "Nova entrada de dinheiro",
+    "newDescription": "Salário, freelance, comissão e mais.",
+    "editTitle": "Editar renda",
+    "editDescription": "Altere os detalhes desta entrada.",
+    "fields": {
+      "descricao": "Descrição",
+      "descricaoPlaceholder": "Ex.: Salário do mês",
+      "valor": "Valor",
+      "data": "Data",
+      "tipo": "Tipo",
+      "repeat": "Repetir todo mês",
+      "repeatHint": "Entrada recorrente",
+      "repeatMonths": "Repetir por (meses)"
+    },
+    "cancel": "Cancelar",
+    "save": "Cadastrar",
+    "saveEdit": "Salvar",
+    "scopeTitle": "Esta é uma renda recorrente. Como aplicar a alteração?",
+    "scope": {
+      "single": "Alterar somente este mês",
+      "singleHint": "Não muda os outros meses.",
+      "forward": "Alterar este mês e os próximos",
+      "forwardHint": "Preserva o histórico anterior.",
+      "all": "Alterar toda a recorrência",
+      "allHint": "Atualiza todos os meses ligados a esta renda."
+    },
+    "scopeDateNote": "A nova data informada acima só é aplicada nesta receita."
+  },
+  "toast": {
+    "added": "Renda adicionada. Boa! 💸",
+    "updated": "Renda atualizada. ✅",
+    "removed": "Renda removida.",
+    "fillFields": "Preencha a descrição e o valor."
+  },
+  "duplicate": {
+    "title": "Renda parecida encontrada",
+    "body": "Já existe uma renda parecida neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
+    "confirm": "Salvar mesmo assim",
+    "cancel": "Cancelar"
+  },
+  "charts": {
+    "evolutionKicker": "Evolução",
+    "evolutionTitle": "Últimos 6 meses",
+    "average": "Média:",
+    "peak": "Pico:",
+    "incomeLabel": "Renda",
+    "compositionKicker": "Composição",
+    "compositionTitle": "Por tipo de renda",
+    "noData": "Sem dados neste mês."
+  },
+  "forecast": {
+    "kicker": "Previsão",
+    "titleCurrent": "Renda do mês atual",
+    "titleSelected": "Renda do mês selecionado",
+    "received": "Já recebido",
+    "toReceive": "A receber",
+    "total": "Total previsto:",
+    "completed": "{{pct}}% concluído"
+  },
+  "upcoming": {
+    "kicker": "Próximas",
+    "title": "Entradas recorrentes",
+    "empty": "Sem recorrências futuras cadastradas."
+  },
+  "tabs": {
+    "month": "Este mês",
+    "recurring": "Recorrentes",
+    "history": "Histórico",
+    "forecasts": "Previsões"
+  },
+  "filters": {
+    "search": "Buscar por descrição",
+    "allTypes": "Todos os tipos",
+    "all": "Todas",
+    "onlyRecurring": "Apenas recorrentes",
+    "onlyUnique": "Apenas únicas",
+    "sortRecent": "Mais recentes",
+    "sortValue": "Maior valor",
+    "sortType": "Por tipo"
+  },
+  "empty": {
+    "monthTitle": "Sem rendas neste mês ainda",
+    "monthSubtitle": "Cadastre sua primeira entrada e veja seu mês ficar mais claro.",
+    "filterTitle": "Nenhuma entrada com esses filtros",
+    "filterSubtitle": "Tente limpar a busca ou trocar o filtro.",
+    "recurringTitle": "Você ainda não tem entradas recorrentes neste mês",
+    "recurringSubtitle": "Cadastre uma e ela se repete automaticamente.",
+    "recurringAction": "Adicionar recorrente",
+    "defaultAction": "Adicionar renda",
+    "examples": {
+      "salario": "Salário",
+      "freelance": "Freelance",
+      "comissao": "Comissão",
+      "aluguel": "Aluguel",
+      "vendas": "Vendas"
+    }
+  },
+  "history": {
+    "empty": "Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.",
+    "search": "Buscar por descrição, tipo, mês, ano ou valor",
+    "noResults": "Nenhum resultado para “{{query}}”.",
+    "loadMore": "Carregar mais"
+  },
+  "forecasts": {
+    "title": "Previsão dos próximos meses",
+    "subtitle": "Baseado nas entradas recorrentes ativas."
+  },
+  "item": {
+    "rec": "rec",
+    "future": "futuro",
+    "client": "Cliente: {{name}}",
+    "editAria": "Editar {{name}}",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "delete": {
+    "title": "Excluir renda?",
+    "body": "Tem certeza que deseja excluir esta renda? Esta ação não pode ser desfeita.",
+    "recurringQuestion": "Esta renda é recorrente. O que excluir?",
+    "scope": {
+      "single": "Somente este mês",
+      "forward": "Este mês e os próximos",
+      "all": "Toda a recorrência"
+    },
+    "cancel": "Cancelar",
+    "confirm": "Excluir"
+  },
+  "tipo": {
+    "salario": "Salário",
+    "freelance": "Freelance",
+    "comissao": "Comissão",
+    "venda": "Venda",
+    "reembolso": "Reembolso",
+    "pix": "Pix recebido",
+    "bonus": "Bônus",
+    "outros": "Outros"
+  },
+  "months": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+}
