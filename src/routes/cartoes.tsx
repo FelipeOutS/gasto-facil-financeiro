@@ -659,7 +659,7 @@ const CartaoCard = memo(function CartaoCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              aria-label="Mais ações"
+              aria-label={t("card.moreActions")}
               onClick={(e) => e.stopPropagation()}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
             >
@@ -673,11 +673,11 @@ const CartaoCard = memo(function CartaoCard({
           >
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
-              Editar cartão
+              {t("card.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onImport}>
               <FileUp className="mr-2 h-4 w-4" />
-              Importar fatura
+              {t("card.import")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -685,7 +685,7 @@ const CartaoCard = memo(function CartaoCard({
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Remover cartão
+              {t("card.remove")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -708,7 +708,7 @@ const CartaoCard = memo(function CartaoCard({
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Usado no mês
+              {t("card.usedMonth")}
             </p>
             <p className="num mt-0.5 truncate text-2xl font-bold">
               {formatBRL(r.usadoMes)}
@@ -716,7 +716,7 @@ const CartaoCard = memo(function CartaoCard({
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Limite total
+              {t("card.limitTotal")}
             </p>
             <p className="num mt-0.5 text-sm font-semibold text-white/90">
               {formatBRL(r.limite)}
@@ -736,12 +736,12 @@ const CartaoCard = memo(function CartaoCard({
         </div>
       </div>
 
-      {/* Fatura atual — bloco translúcido com valor, datas, status e ações */}
+      {/* Fatura atual */}
       <div className="relative mt-3.5 rounded-2xl bg-white/10 p-3 backdrop-blur-sm">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
-              Fatura atual
+              {t("card.currentInvoice")}
             </p>
             <p className="num mt-0.5 truncate text-base font-bold">
               {formatBRL(faturaResumo.total)}
@@ -760,16 +760,16 @@ const CartaoCard = memo(function CartaoCard({
             )}
           >
             {badge.icon}
-            {semCompras && faturaStatus === "aberta" ? "Sem compras" : badge.label}
+            {semCompras && faturaStatus === "aberta" ? t("card.noPurchases") : badge.label}
           </span>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-white/85">
           <div>
-            <span className="text-white/60">Fecha </span>
+            <span className="text-white/60">{t("card.closes")} </span>
             <span className="num font-semibold text-white/95">{fmtDM(fechDate)}</span>
           </div>
           <div className="text-right">
-            <span className="text-white/60">Vence </span>
+            <span className="text-white/60">{t("card.dueOn")} </span>
             <span className="num font-semibold text-white/95">{fmtDM(vencDate)}</span>
           </div>
         </div>
@@ -783,7 +783,7 @@ const CartaoCard = memo(function CartaoCard({
             className="inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-3 text-[11px] font-semibold text-foreground transition-colors hover:bg-white"
           >
             <Receipt className="h-3 w-3" />
-            Ver fatura
+            {t("card.viewInvoice")}
           </button>
           {(faturaStatus === "fechada" || faturaStatus === "vencida") &&
             faturaResumo.total > 0 && (
@@ -793,7 +793,7 @@ const CartaoCard = memo(function CartaoCard({
                 className="inline-flex h-7 items-center gap-1 rounded-full border border-white/40 bg-white/10 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-white/20"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                Marcar como paga
+                {t("card.markPaid")}
               </button>
             )}
         </div>
