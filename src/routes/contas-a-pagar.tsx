@@ -480,8 +480,8 @@ function ContasAPagarPage() {
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
             {busca
-              ? `Nada encontrado para "${busca}".`
-              : "Nada nesse filtro por aqui."}
+              ? t("search.noResults", { query: busca })
+              : t("search.emptyFilter")}
           </div>
         ) : (
           <div className="space-y-2.5 stagger">
