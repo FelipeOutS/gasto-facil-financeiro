@@ -577,16 +577,16 @@ function ContaReceberFormDialog({
     if (!userId) return;
     const tituloTrim = titulo.trim();
     if (!tituloTrim) {
-      toast.error("Informe um título");
+      toast.error(t("form.errTitle"));
       return;
     }
     const valorNum = parseBRLInput(valor);
     if (!valorNum || valorNum <= 0) {
-      toast.error("Informe um valor válido");
+      toast.error(t("form.errValue"));
       return;
     }
     if (!dataPrevista) {
-      toast.error("Informe a data prevista");
+      toast.error(t("form.errDate"));
       return;
     }
 
@@ -605,15 +605,15 @@ function ContaReceberFormDialog({
       };
       if (editing) {
         await atualizarContaReceber(editing.id, payload);
-        toast.success("Conta atualizada");
+        toast.success(t("form.toastUpdated"));
       } else {
         await criarContaReceber(userId, payload);
-        toast.success("Conta criada");
+        toast.success(t("form.toastCreated"));
       }
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao salvar");
+      toast.error(t("form.toastError"));
     } finally {
       setSaving(false);
     }
@@ -623,36 +623,34 @@ function ContaReceberFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar conta a receber" : "Nova conta a receber"}</DialogTitle>
-          <DialogDescription>
-            Cadastre uma entrada prevista para acompanhar o que você ainda tem a receber.
-          </DialogDescription>
+          <DialogTitle>{editing ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
+          <DialogDescription>{t("form.desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cr-titulo">Título *</Label>
+            <Label htmlFor="cr-titulo">{t("form.titleLabel")}</Label>
             <Input
               id="cr-titulo"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex: Projeto site João"
+              placeholder={t("form.titlePlaceholder")}
               maxLength={120}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="cr-valor">Valor *</Label>
+              <Label htmlFor="cr-valor">{t("form.value")}</Label>
               <Input
                 id="cr-valor"
                 inputMode="decimal"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
+                placeholder={t("form.valuePlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cr-data">Data prevista *</Label>
+              <Label htmlFor="cr-data">{t("form.expectedDate")}</Label>
               <Input
                 id="cr-data"
                 type="date"
@@ -663,31 +661,31 @@ function ContaReceberFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>{t("form.tipo")}</Label>
               <Select value={tipo} onValueChange={setTipo}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RECEBIMENTO.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label}
+                  {TIPOS_RECEBIMENTO.map((tp) => (
+                    <SelectItem key={tp.id} value={tp.id}>
+                      {t(`tipos.${tp.id}` as const, { defaultValue: tp.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Forma prevista</Label>
+              <Label>{t("form.forma")}</Label>
               <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder={t("form.none")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none">—</SelectItem>
+                  <SelectItem value="__none">{t("form.none")}</SelectItem>
                   {FORMAS_RECEBIMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {t(`formas.${f.id}` as const, { defaultValue: f.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -695,12 +693,12 @@ function ContaReceberFormDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cr-pagador">Pagador (opcional)</Label>
+            <Label htmlFor="cr-pagador">{t("form.payer")}</Label>
             <Input
               id="cr-pagador"
               value={pagador}
               onChange={(e) => setPagador(e.target.value)}
-              placeholder="Nome de quem vai pagar"
+              placeholder={t("form.payerPlaceholder")}
               maxLength={120}
             />
           </div>
@@ -710,17 +708,17 @@ function ContaReceberFormDialog({
             clientesAtivos={clientesAtivos}
           />
           <div className="space-y-1.5">
-            <Label htmlFor="cr-categoria">Categoria (opcional)</Label>
+            <Label htmlFor="cr-categoria">{t("form.category")}</Label>
             <Input
               id="cr-categoria"
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-              placeholder="Ex: Serviços, Aluguel"
+              placeholder={t("form.categoryPlaceholder")}
               maxLength={60}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cr-obs">Observação</Label>
+            <Label htmlFor="cr-obs">{t("form.obs")}</Label>
             <Textarea
               id="cr-obs"
               value={observacao}
@@ -734,11 +732,11 @@ function ContaReceberFormDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             <X className="mr-1 h-4 w-4" />
-            Cancelar
+            {t("form.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             <Check className="mr-1 h-4 w-4" />
-            {editing ? "Salvar alterações" : "Criar conta"}
+            {editing ? t("form.save") : t("form.create")}
           </Button>
         </DialogFooter>
       </DialogContent>
