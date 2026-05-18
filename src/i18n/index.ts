@@ -20,6 +20,7 @@ import ptRelatorios from "./locales/pt/relatorios.json";
 import ptAdicionar from "./locales/pt/adicionar.json";
 import ptGuardado from "./locales/pt/guardado.json";
 import ptRenda from "./locales/pt/renda.json";
+import ptAssinaturas from "./locales/pt/assinaturas.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
