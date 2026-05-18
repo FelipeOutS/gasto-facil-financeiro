@@ -2568,6 +2568,7 @@ function EmpresaInteligenteSection() {
 }
 
 function EmpresaVisual() {
+  const { t } = useTranslation("landing");
   return (
     <div className="relative mx-auto aspect-[4/5] w-full max-w-[560px] lg:aspect-auto lg:h-[680px]">
       {/* soft halo behind portrait */}
