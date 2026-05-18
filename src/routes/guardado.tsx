@@ -323,7 +323,7 @@ function GuardadoPage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold">Bancos cadastrados</h2>
+        <h2 className="text-sm font-semibold">{t("banks.title")}</h2>
         <ul className="mt-3 grid grid-cols-2 gap-2">
           {bancos.map((b) => {
             const valorTotal = porBanco.get(b.id) ?? 0;
@@ -336,9 +336,9 @@ function GuardadoPage() {
                 </div>
                 {b.criadoPeloUsuario && (
                   <button
-                    onClick={() => { deleteBanco(b.id); toast.success("Banco removido."); }}
+                    onClick={() => { deleteBanco(b.id); toast.success(t("banks.removed")); }}
                     className="text-muted-foreground hover:text-destructive"
-                    aria-label="Excluir banco"
+                    aria-label={t("banks.deleteLabel")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
