@@ -1788,6 +1788,7 @@ function CartaoFormDialog({
   onOpenChange: (o: boolean) => void;
   editing: Cartao | null;
 }) {
+  const { t } = useTranslation("cartoes");
   const [nome, setNome] = useState(editing?.nome ?? "");
   const [banco, setBanco] = useState(editing?.banco ?? "");
   const [limiteStr, setLimiteStr] = useState(
