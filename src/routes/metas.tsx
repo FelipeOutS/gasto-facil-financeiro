@@ -481,6 +481,7 @@ function MetaFormDialog({
   bancos: ReturnType<typeof getBancos>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("metas");
   const isCreate = mode.kind === "create";
   const isEdit = mode.kind === "edit";
   const isAdd = mode.kind === "add";
@@ -503,18 +504,18 @@ function MetaFormDialog({
 
   async function handleUploadCover(file: File) {
     if (!file.type.startsWith("image/")) {
-      toast.error("Selecione um arquivo de imagem.");
+      toast.error(t("upload.errType"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx. 5MB).");
+      toast.error(t("upload.errSize"));
       return;
     }
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Faça login novamente.");
+        toast.error(t("upload.errAuth"));
         return;
       }
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -523,12 +524,12 @@ function MetaFormDialog({
         .from("metas-covers")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (error) {
-        toast.error("Falha ao enviar a imagem.");
+        toast.error(t("upload.errUpload"));
         return;
       }
       setImagemKey(`${CUSTOM_COVER_PREFIX}${path}`);
       setImagemManual(true);
-      toast.success("Imagem enviada.");
+      toast.success(t("upload.success"));
     } finally {
       setUploading(false);
     }
@@ -579,7 +580,7 @@ function MetaFormDialog({
   function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
-      toast.error("Coloca um nome e o valor da meta.");
+      toast.error(t("toasts.missing"));
       return;
     }
     if (isCreate) {
@@ -593,14 +594,14 @@ function MetaFormDialog({
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
         imagemKey,
       });
-      toast.success("Meta criada. Cada passo conta. 🎯");
+      toast.success(t("toasts.created"));
       onClose();
       return;
     }
     if (isEdit && baseMeta) {
       const novoAcumulado = parseBRLInput(acumuladoStr) || 0;
       if (novoAcumulado > objetivo) {
-        toast.warning("Heads up: o valor acumulado ficou maior que o objetivo. Salvei mesmo assim.");
+        toast.warning(t("toasts.overGoal"));
       }
       updateMeta(baseMeta.id, {
         nome: nome.trim(),
@@ -612,7 +613,7 @@ function MetaFormDialog({
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
         imagemKey,
       });
-      toast.success("Pronto, sua meta foi atualizada.");
+      toast.success(t("toasts.updated"));
       onClose();
     }
   }
@@ -621,20 +622,19 @@ function MetaFormDialog({
     if (!baseMeta) return;
     const trimmed = valorStr.trim();
     if (trimmed === "") {
-      toast.error("Informe o valor acumulado atual.");
+      toast.error(t("toasts.informValue"));
       return;
     }
     const v = parseBRLInput(valorStr);
-    // permite 0,00 para resetar; bloqueia negativo
     if (v < 0 || Number.isNaN(v)) {
-      toast.error("O valor não pode ser negativo.");
+      toast.error(t("toasts.negative"));
       return;
     }
     updateMeta(baseMeta.id, { valorAtual: v });
     if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
-      toast.success("Você passou da meta. Melhor ainda. 🏆");
+      toast.success(t("toasts.passedGoal"));
     } else {
-      toast.success("Meta atualizada. Agora tá certinho.");
+      toast.success(t("toasts.adjusted"));
     }
     onClose();
   }
@@ -643,12 +643,12 @@ function MetaFormDialog({
     if (!baseMeta) return;
     const v = parseBRLInput(valorStr);
     if (!v) {
-      toast.error("Informe um valor.");
+      toast.error(t("toasts.informAValue"));
       return;
     }
     const novo = Math.max(0, baseMeta.valorAtual - v);
     updateMeta(baseMeta.id, { valorAtual: novo });
-    toast.success("Valor ajustado.");
+    toast.success(t("toasts.valueAdjusted"));
     onClose();
   }
 
@@ -657,33 +657,33 @@ function MetaFormDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isCreate && "Criar meta financeira"}
-            {isEdit && "Editar meta"}
-            {isAdd && "Atualizar valor da meta"}
-            {isRemove && "Ajustar valor"}
+            {isCreate && t("dialog.createTitle")}
+            {isEdit && t("dialog.editTitle")}
+            {isAdd && t("dialog.addTitle")}
+            {isRemove && t("dialog.removeTitle")}
           </DialogTitle>
           <DialogDescription>
-            {isCreate && "Defina um objetivo e acompanhe o progresso."}
-            {isEdit && "Atualize qualquer informação da sua meta."}
-            {isAdd && "Informe quanto você já juntou até agora para esta meta."}
-            {isRemove && `Remover valor de ${baseMeta?.nome}`}
+            {isCreate && t("dialog.createDesc")}
+            {isEdit && t("dialog.editDesc")}
+            {isAdd && t("dialog.addDesc")}
+            {isRemove && t("dialog.removeDesc", { name: baseMeta?.nome ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
         {(isCreate || isEdit) && (
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Nome</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.name")}</Label>
               <Input
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex.: Viagem"
+                placeholder={t("dialog.namePlaceholder")}
                 className="mt-1 h-11 bg-card-elevated"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Valor objetivo</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.goalValue")}</Label>
                 <Input
                   inputMode="decimal"
                   value={objetivoStr}
@@ -694,7 +694,7 @@ function MetaFormDialog({
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">
-                  {isEdit ? "Valor acumulado" : "Já guardado"}
+                  {isEdit ? t("dialog.accumulatedValue") : t("dialog.savedValue")}
                 </Label>
                 <Input
                   inputMode="decimal"
@@ -707,7 +707,7 @@ function MetaFormDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Prazo (opcional)</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.deadline")}</Label>
                 <Input
                   type="date"
                   value={prazo}
@@ -716,13 +716,13 @@ function MetaFormDialog({
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Banco vinculado</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.linkedBank")}</Label>
                 <Select value={bancoId} onValueChange={setBancoId}>
                   <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nenhum">Nenhum</SelectItem>
+                    <SelectItem value="nenhum">{t("dialog.none")}</SelectItem>
                     {bancos.map((b) => (
                       <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
                     ))}
@@ -731,17 +731,17 @@ function MetaFormDialog({
               </div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Descrição</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.description")}</Label>
               <Textarea
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Opcional"
+                placeholder={t("dialog.descriptionPlaceholder")}
                 className="mt-1 min-h-[60px] bg-card-elevated"
               />
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Imagem da meta</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.goalImage")}</Label>
                 {imagemManual && (
                   <button
                     type="button"
@@ -751,7 +751,7 @@ function MetaFormDialog({
                     }}
                     className="text-[11px] font-semibold text-primary hover:underline"
                   >
-                    Usar sugestão automática
+                    {t("dialog.useAutoSuggestion")}
                   </button>
                 )}
               </div>
@@ -766,7 +766,7 @@ function MetaFormDialog({
                 )}
               >
                 <Upload className="h-3.5 w-3.5" />
-                {uploading ? "Enviando..." : "Enviar imagem própria (até 5MB)"}
+                {uploading ? t("dialog.uploading") : t("dialog.uploadOwn")}
                 <input
                   type="file"
                   accept="image/*"
@@ -780,7 +780,7 @@ function MetaFormDialog({
               </label>
 
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Ou escolha uma sugestão
+                {t("dialog.orChooseSuggestion")}
               </p>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
                 {META_COVER_OPTIONS.map((opt) => {
@@ -814,14 +814,14 @@ function MetaFormDialog({
               </div>
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 {isCustomCoverKey(imagemKey)
-                  ? "Imagem própria enviada."
+                  ? t("dialog.imageCustom")
                   : imagemManual
-                    ? "Imagem escolhida manualmente."
-                    : "Sugerida automaticamente pelo nome da meta."}
+                    ? t("dialog.imageManual")
+                    : t("dialog.imageAuto")}
               </p>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Cor</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.color")}</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {META_COLORS.map((c) => (
                   <button
@@ -844,15 +844,15 @@ function MetaFormDialog({
         {(isAdd || isRemove) && baseMeta && (
           <div className="space-y-3">
             <div className="rounded-2xl bg-card-elevated p-3">
-              <p className="text-xs text-muted-foreground">Acumulado atual</p>
+              <p className="text-xs text-muted-foreground">{t("dialog.currentAccumulated")}</p>
               <p className="num text-xl font-bold">{formatBRL(baseMeta.valorAtual)}</p>
               <p className="num mt-1 text-xs text-muted-foreground">
-                Objetivo: {formatBRL(baseMeta.valorObjetivo)}
+                {t("dialog.goalLabel", { value: formatBRL(baseMeta.valorObjetivo) })}
               </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
-                {isAdd ? "Valor acumulado atual" : "Valor a remover"}
+                {isAdd ? t("dialog.addValueLabel") : t("dialog.removeValueLabel")}
               </Label>
               <Input
                 inputMode="decimal"
@@ -864,7 +864,7 @@ function MetaFormDialog({
               />
               {isAdd && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  Quanto você já juntou até agora? Esse valor substitui o acumulado atual.
+                  {t("dialog.addValueHint")}
                 </p>
               )}
             </div>
@@ -872,14 +872,14 @@ function MetaFormDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose}>{t("dialog.cancel")}</Button>
           {(isCreate || isEdit) && (
             <Button onClick={handleCreateOrEdit}>
-              {isCreate ? "Criar meta" : "Salvar alterações"}
+              {isCreate ? t("dialog.create") : t("dialog.save")}
             </Button>
           )}
-          {isAdd && <Button onClick={handleAddValor}>Salvar valor</Button>}
-          {isRemove && <Button onClick={handleRemoverValor}>Remover valor</Button>}
+          {isAdd && <Button onClick={handleAddValor}>{t("dialog.saveValue")}</Button>}
+          {isRemove && <Button onClick={handleRemoverValor}>{t("dialog.removeValue")}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
