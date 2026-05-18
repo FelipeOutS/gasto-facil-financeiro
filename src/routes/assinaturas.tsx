@@ -602,7 +602,7 @@ function AssinaturasPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{historicoOpen?.nome}</DialogTitle>
-            <DialogDescription>Histórico de cobranças</DialogDescription>
+            <DialogDescription>{t("history.title")}</DialogDescription>
           </DialogHeader>
           {historicoOpen && (
             <HistoricoLista rec={historicoOpen} gastos={gastos} />
