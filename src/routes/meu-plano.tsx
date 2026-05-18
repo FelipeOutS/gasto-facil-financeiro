@@ -24,7 +24,6 @@ import {
   PLAN_LABEL,
   commercialPlanByTier,
   formatBRL,
-  getPeriodicidade,
   planAllowsFeature,
   priceForPeriod,
   suggestedUpgrade,
