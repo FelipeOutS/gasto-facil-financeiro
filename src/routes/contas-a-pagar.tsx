@@ -91,14 +91,7 @@ export const Route = createFileRoute("/contas-a-pagar")({
 
 type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
 
-const FILTROS: Array<{ id: FilterId; label: string }> = [
-  { id: "todas", label: "Todas" },
-  { id: "pendentes", label: "Pendentes" },
-  { id: "proximas", label: "Próximas" },
-  { id: "atrasadas", label: "Atrasadas" },
-  { id: "pagas", label: "Pagas" },
-  { id: "recorrentes", label: "Recorrentes" },
-];
+const FILTRO_IDS: FilterId[] = ["todas", "pendentes", "proximas", "atrasadas", "pagas", "recorrentes"];
 
 function normalizar(s: string): string {
   return s
