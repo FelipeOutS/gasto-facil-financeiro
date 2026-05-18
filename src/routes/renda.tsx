@@ -916,10 +916,10 @@ function RendaPage() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Previsão
+                {t("forecast.kicker")}
               </p>
               <h3 className="text-sm font-bold">
-                {isMesAtual ? "Renda do mês atual" : "Renda do mês selecionado"}
+                {isMesAtual ? t("forecast.titleCurrent") : t("forecast.titleSelected")}
               </h3>
             </div>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -927,11 +927,11 @@ function RendaPage() {
           <div className="space-y-3">
             <div className="flex items-end justify-between gap-2">
               <div>
-                <p className="text-[11px] text-muted-foreground">Já recebido</p>
+                <p className="text-[11px] text-muted-foreground">{t("forecast.received")}</p>
                 <Money value={recebidoMes} className="num text-2xl font-bold text-success" />
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-muted-foreground">A receber</p>
+                <p className="text-[11px] text-muted-foreground">{t("forecast.toReceive")}</p>
                 <Money value={aReceberMes} className="num text-base font-semibold text-foreground" />
               </div>
             </div>
@@ -945,10 +945,10 @@ function RendaPage() {
             </div>
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span>
-                Total previsto: <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
+                {t("forecast.total")} <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
               </span>
               <span>
-                {totalMes > 0 ? `${((recebidoMes / totalMes) * 100).toFixed(0)}%` : "0%"} concluído
+                {t("forecast.completed", { pct: totalMes > 0 ? ((recebidoMes / totalMes) * 100).toFixed(0) : "0" })}
               </span>
             </div>
           </div>
@@ -958,15 +958,15 @@ function RendaPage() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Próximas
+                {t("upcoming.kicker")}
               </p>
-              <h3 className="text-sm font-bold">Entradas recorrentes</h3>
+              <h3 className="text-sm font-bold">{t("upcoming.title")}</h3>
             </div>
             <Repeat className="h-4 w-4 text-muted-foreground" />
           </div>
           {proximasRecorrencias.length === 0 ? (
             <p className="grid h-24 place-items-center rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
-              Sem recorrências futuras cadastradas.
+              {t("upcoming.empty")}
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -1001,10 +1001,10 @@ function RendaPage() {
       {/* TABS */}
       <Tabs defaultValue="mes" className="mt-5">
         <TabsList className="grid w-full grid-cols-4 bg-card">
-          <TabsTrigger value="mes">Este mês</TabsTrigger>
-          <TabsTrigger value="recorrentes">Recorrentes</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-          <TabsTrigger value="previsoes">Previsões</TabsTrigger>
+          <TabsTrigger value="mes">{t("tabs.month")}</TabsTrigger>
+          <TabsTrigger value="recorrentes">{t("tabs.recurring")}</TabsTrigger>
+          <TabsTrigger value="historico">{t("tabs.history")}</TabsTrigger>
+          <TabsTrigger value="previsoes">{t("tabs.forecasts")}</TabsTrigger>
         </TabsList>
 
         {/* ESTE MÊS */}
@@ -1016,7 +1016,7 @@ function RendaPage() {
               <Input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por descrição"
+                placeholder={t("filters.search")}
                 className="h-9 bg-card-elevated pl-9 text-sm"
               />
             </div>
@@ -1026,9 +1026,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todos os tipos</SelectItem>
-                {TIPOS_RECEITA.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                <SelectItem value="todas">{t("filters.allTypes")}</SelectItem>
+                {TIPOS_RECEITA.map((tp) => (
+                  <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1037,9 +1037,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
-                <SelectItem value="recorrente">Apenas recorrentes</SelectItem>
-                <SelectItem value="unica">Apenas únicas</SelectItem>
+                <SelectItem value="todas">{t("filters.all")}</SelectItem>
+                <SelectItem value="recorrente">{t("filters.onlyRecurring")}</SelectItem>
+                <SelectItem value="unica">{t("filters.onlyUnique")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={ordem} onValueChange={(v) => setOrdem(v as typeof ordem)}>
@@ -1047,9 +1047,9 @@ function RendaPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="data">Mais recentes</SelectItem>
-                <SelectItem value="valor">Maior valor</SelectItem>
-                <SelectItem value="tipo">Por tipo</SelectItem>
+                <SelectItem value="data">{t("filters.sortRecent")}</SelectItem>
+                <SelectItem value="valor">{t("filters.sortValue")}</SelectItem>
+                <SelectItem value="tipo">{t("filters.sortType")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1058,13 +1058,13 @@ function RendaPage() {
             <EmptyRenda
               title={
                 doMes.length === 0
-                  ? "Sem rendas neste mês ainda"
-                  : "Nenhuma entrada com esses filtros"
+                  ? t("empty.monthTitle")
+                  : t("empty.filterTitle")
               }
               subtitle={
                 doMes.length === 0
-                  ? "Cadastre sua primeira entrada e veja seu mês ficar mais claro."
-                  : "Tente limpar a busca ou trocar o filtro."
+                  ? t("empty.monthSubtitle")
+                  : t("empty.filterSubtitle")
               }
               onAction={doMes.length === 0 ? () => setOpen(true) : undefined}
             />
@@ -1096,10 +1096,10 @@ function RendaPage() {
         <TabsContent value="recorrentes" className="mt-3 space-y-2">
           {recorrentesMes.length === 0 ? (
             <EmptyRenda
-              title="Você ainda não tem entradas recorrentes neste mês"
-              subtitle="Cadastre uma e ela se repete automaticamente."
+              title={t("empty.recurringTitle")}
+              subtitle={t("empty.recurringSubtitle")}
               onAction={() => openWithPreset({ tipo: "salario", recorrente: true })}
-              actionLabel="Adicionar recorrente"
+              actionLabel={t("empty.recurringAction")}
             />
           ) : (
             <ul className="space-y-2">
@@ -1120,7 +1120,7 @@ function RendaPage() {
         <TabsContent value="historico" className="mt-3 space-y-3">
           {historico.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-              Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.
+              {t("history.empty")}
             </div>
           ) : (
             <>
@@ -1132,14 +1132,14 @@ function RendaPage() {
                     setHistoricoQuery(e.target.value);
                     setHistoricoLimit(3);
                   }}
-                  placeholder="Buscar por descrição, tipo, mês, ano ou valor"
+                  placeholder={t("history.search")}
                   className="h-11 bg-card-elevated pl-9"
                 />
               </div>
 
               {historicoFiltrado.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-                  Nenhum resultado para “{historicoQuery}”.
+                  {t("history.noResults", { query: historicoQuery })}
                 </div>
               ) : (
                 <>
@@ -1178,7 +1178,7 @@ function RendaPage() {
                       className="w-full"
                       onClick={() => setHistoricoLimit((n) => n + 3)}
                     >
-                      Carregar mais
+                      {t("history.loadMore")}
                     </Button>
                   )}
                 </>
@@ -1190,9 +1190,9 @@ function RendaPage() {
         {/* PREVISÕES */}
         <TabsContent value="previsoes" className="mt-3 space-y-3">
           <div className="rounded-3xl border border-border bg-card p-4">
-            <h3 className="text-sm font-bold">Previsão dos próximos meses</h3>
+            <h3 className="text-sm font-bold">{t("forecasts.title")}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Baseado nas entradas recorrentes ativas.
+              {t("forecasts.subtitle")}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => {
