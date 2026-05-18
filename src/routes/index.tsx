@@ -1713,6 +1713,7 @@ function ResumoMesCard({
 
 
 function ContasAReceberCard() {
+  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const userId = user?.id;
   const [resumo, setResumo] = useState<{
