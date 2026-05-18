@@ -1588,10 +1588,10 @@ function FaturaSheet({
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold">
-                                    {g.descricao || g.estabelecimento || "Compra"}
+                                    {g.descricao || g.estabelecimento || t("sheet.purchaseDefault")}
                                   </p>
                                   <p className="truncate text-[11px] text-muted-foreground">
-                                    {cat?.nome ?? "Sem categoria"}
+                                    {cat?.nome ?? t("sheet.uncategorized")}
                                     {g.tipoGasto === "parcelado" && g.totalParcelas
                                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                                       : ""}
