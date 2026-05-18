@@ -1684,18 +1684,18 @@ function FaturaSheet({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir esta compra?</AlertDialogTitle>
+              <AlertDialogTitle>{t("sheet.deletePurchaseTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                A compra será removida da fatura. Esta ação não pode ser desfeita.
+                {t("sheet.deletePurchaseDesc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteCompra}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir
+                {t("sheet.deleteItem")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
