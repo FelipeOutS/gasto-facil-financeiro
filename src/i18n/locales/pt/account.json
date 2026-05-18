@@ -1,10 +1,19 @@
 {
   "title": "Minha conta",
+  "back": "Voltar",
+  "defaultUser": "Usuário",
+  "dash": "—",
   "fullAccess": "Acesso total",
   "admin": "Admin",
   "completeProfile": "Complete seu perfil",
   "completeProfileDesc": "Personalize sua experiência escolhendo entre Pessoa física, MEI ou Empresa.",
   "completeBtn": "Completar perfil",
+  "tipo": {
+    "pessoa_fisica": "Pessoa física",
+    "mei": "MEI",
+    "empresa": "Empresa",
+    "naoDefinido": "Não definido"
+  },
   "fields": {
     "type": "Tipo de cadastro",
     "fullName": "Nome completo",
@@ -25,5 +34,9 @@
   "language": {
     "title": "Idioma do app",
     "description": "Escolha o idioma da interface. A preferência é salva e usada nas próximas visitas."
+  },
+  "meta": {
+    "title": "Minha conta — Gasto Inteligente"
   }
 }
+
