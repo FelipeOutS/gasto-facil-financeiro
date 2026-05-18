@@ -206,7 +206,7 @@ function RelatoriosPage() {
     return stack.map((s) => {
       const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
       return {
-        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
+        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
         mes: s.mes,
         ano: s.ano,
         receitas: r.totalReceitas,
