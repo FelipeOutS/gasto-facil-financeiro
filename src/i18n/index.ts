@@ -18,6 +18,7 @@ import ptMetas from "./locales/pt/metas.json";
 import ptOrcamento from "./locales/pt/orcamento.json";
 import ptRelatorios from "./locales/pt/relatorios.json";
 import ptAdicionar from "./locales/pt/adicionar.json";
+import ptGuardado from "./locales/pt/guardado.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
