@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getEconomicRadar } from "@/server/radar.functions";
@@ -85,13 +86,23 @@ export const Route = createFileRoute("/assinaturas")({
   component: AssinaturasPage,
 });
 
-const FREQ_LABEL: Record<FrequenciaRecorrencia, string> = {
-  mensal: "Mensal",
-  semanal: "Semanal",
-  quinzenal: "Quinzenal",
-  anual: "Anual",
-  personalizada: "Personalizada",
-};
+const FREQ_KEYS: FrequenciaRecorrencia[] = [
+  "mensal",
+  "semanal",
+  "quinzenal",
+  "anual",
+  "personalizada",
+];
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function useLabels() {
+  const { t } = useTranslation("assinaturas");
+  const freqLabel = (f: FrequenciaRecorrencia) => t(`freq.${f}`);
+  const statusLabel = (s: StatusRecorrencia) => t(`status.${s}`);
+  const tipoLabel = (k: TipoRecorrencia) => t(`tipo.${k}`);
+  return { t, freqLabel, statusLabel, tipoLabel };
+}
 
 const STATUS_BADGE: Record<StatusRecorrencia, string> = {
   ativa: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
@@ -99,19 +110,6 @@ const STATUS_BADGE: Record<StatusRecorrencia, string> = {
   cancelada: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
   suspeita: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   aguardando: "border-violet-500/40 text-violet-400 bg-violet-500/10",
-};
-
-const STATUS_LABEL: Record<StatusRecorrencia, string> = {
-  ativa: "Ativa",
-  pausada: "Pausada",
-  cancelada: "Cancelada",
-  suspeita: "Suspeita",
-  aguardando: "Aguardando confirmação",
-};
-
-const TIPO_LABEL: Record<TipoRecorrencia, string> = {
-  assinatura: "Assinatura",
-  recorrencia_fixa: "Recorrência fixa",
 };
 
 function diasAteHoje(iso?: string | null): number | null {
@@ -124,17 +122,21 @@ function diasAteHoje(iso?: string | null): number | null {
   return diff;
 }
 
-function descrevePrazo(iso?: string | null): string {
+function describePrazo(t: TFn, iso?: string | null, locale = "pt-BR"): string {
   const d = diasAteHoje(iso);
-  if (d == null) return "—";
-  if (d < 0) return `há ${Math.abs(d)} ${Math.abs(d) === 1 ? "dia" : "dias"}`;
-  if (d === 0) return "hoje";
-  if (d === 1) return "amanhã";
-  if (d < 30) return `em ${d} dias`;
-  return parseDateLocal(iso!)!.toLocaleDateString("pt-BR");
+  if (d == null) return t("prazo.dash");
+  if (d < 0) {
+    const n = Math.abs(d);
+    return n === 1 ? t("prazo.agoOne", { count: n }) : t("prazo.agoOther", { count: n });
+  }
+  if (d === 0) return t("prazo.today");
+  if (d === 1) return t("prazo.tomorrow");
+  if (d < 30) return t("prazo.inDays", { count: d });
+  return parseDateLocal(iso!)!.toLocaleDateString(locale);
 }
 
 function AssinaturasPage() {
+  const { t, freqLabel, statusLabel, tipoLabel } = useLabels();
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const ready = useBootstrap();
@@ -192,9 +194,9 @@ function AssinaturasPage() {
       });
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
-          `${r.criadas} recorrências detectadas${
-            r.suspeitas ? `, ${r.suspeitas} suspeitas` : ""
-          }`,
+          r.suspeitas
+            ? t("toasts.detectedWithSuspects", { criadas: r.criadas, suspeitas: r.suspeitas })
+            : t("toasts.detected", { criadas: r.criadas }),
         );
       }
     })();
@@ -232,12 +234,12 @@ function AssinaturasPage() {
     if (ativas.length === 0) return out;
     const maior = ativas.reduce((a, b) => (a.valor > b.valor ? a : b));
     out.push(
-      `Você gasta ${formatBRL(totais.mensal)} por mês em recorrências, ${formatBRL(
-        totais.anual,
-      )} por ano.`,
+      t("insights.totals", {
+        monthly: formatBRL(totais.mensal),
+        yearly: formatBRL(totais.anual),
+      }),
     );
-    out.push(`${maior.nome} é sua maior recorrência ativa.`);
-    // Cartão dominante
+    out.push(t("insights.biggest", { name: maior.nome }));
     const porCartao = new Map<string, number>();
     for (const r of ativas) {
       if (!r.cartaoId) continue;
@@ -247,25 +249,20 @@ function AssinaturasPage() {
       const [topCartao] = [...porCartao.entries()].sort((a, b) => b[1] - a[1]);
       const card = getCartaoById(topCartao[0]);
       if (card && topCartao[1] >= 2) {
-        out.push(
-          `Você tem ${topCartao[1]} recorrências cobradas no cartão ${card.nome}.`,
-        );
+        out.push(t("insights.topCard", { count: topCartao[1], card: card.nome }));
       }
     }
-    // Aumento de valor
     const aumentos = recs.filter(
       (r) => r.ultimoValor && Math.abs(r.valor - r.ultimoValor) > 0.5,
     );
     for (const r of aumentos.slice(0, 1)) {
       const diff = r.valor - (r.ultimoValor ?? 0);
       if (diff > 0) {
-        out.push(
-          `Detectamos aumento de ${formatBRL(diff)} na recorrência ${r.nome}.`,
-        );
+        out.push(t("insights.increase", { diff: formatBRL(diff), name: r.nome }));
       }
     }
     return out;
-  }, [recs, totais]);
+  }, [recs, totais, t]);
 
   // Integração com orçamento por categoria (apenas leitura/análise)
   const orcamentoAssinaturas = useMemo(() => {
@@ -309,7 +306,7 @@ function AssinaturasPage() {
         nomes: nomes.slice(0, 20),
       });
       toast.success(
-        `Análise concluída: ${r.criadas} ativas, ${r.suspeitas} suspeitas`,
+        t("toasts.syncDone", { ativas: r.criadas, suspeitas: r.suspeitas }),
       );
     } finally {
       setSyncing(false);
@@ -318,39 +315,42 @@ function AssinaturasPage() {
 
   async function handleConfirmarSuspeita(r: Recorrencia) {
     await atualizarRecorrencia(r.id, { status: "ativa" });
-    toast.success(`${r.nome} confirmada como recorrência`);
+    toast.success(t("toasts.confirmed", { name: r.nome }));
   }
 
   async function handleIgnorar(r: Recorrencia) {
     await atualizarRecorrencia(r.id, { status: "cancelada" });
-    toast(`${r.nome} ignorada`);
+    toast(t("toasts.ignored", { name: r.nome }));
   }
 
   async function handleTogglePause(r: Recorrencia) {
     const novo: StatusRecorrencia = r.status === "pausada" ? "ativa" : "pausada";
     await atualizarRecorrencia(r.id, { status: novo });
-    toast.success(`${r.nome} ${novo === "pausada" ? "pausada" : "reativada"}`);
+    toast.success(
+      novo === "pausada"
+        ? t("toasts.paused", { name: r.nome })
+        : t("toasts.reactivated", { name: r.nome }),
+    );
   }
 
   async function handleCancelar(r: Recorrencia) {
-    if (!confirm(`Cancelar a recorrência "${r.nome}"?`)) return;
+    if (!confirm(t("confirms.cancel", { name: r.nome }))) return;
     await atualizarRecorrencia(r.id, { status: "cancelada" });
-    toast.success("Recorrência cancelada");
+    toast.success(t("toasts.canceled"));
   }
 
   async function handleExcluir(r: Recorrencia) {
-    if (!confirm(`Excluir a recorrência "${r.nome}"? Essa ação não pode ser desfeita.`))
-      return;
+    if (!confirm(t("confirms.delete", { name: r.nome }))) return;
     await excluirRecorrencia(r.id);
-    toast.success("Recorrência excluída");
+    toast.success(t("toasts.deleted"));
   }
 
   async function handleGerarGasto(r: Recorrencia) {
     const res = await gerarGastoDoMes(r);
     if (res.ok) {
-      toast.success("Gasto criado a partir da recorrência");
+      toast.success(t("toasts.expenseCreated"));
     } else {
-      toast.error("Não foi possível criar o gasto");
+      toast.error(t("toasts.expenseError"));
     }
   }
 
@@ -360,10 +360,10 @@ function AssinaturasPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-              Assinaturas e recorrências
+              {t("title")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento.
+              {t("subtitle")}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -374,7 +374,7 @@ function AssinaturasPage() {
               disabled={syncing}
             >
               <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Reanalisar</span>
+              <span className="hidden sm:inline">{t("actions.reanalyze")}</span>
             </Button>
             <Button
               size="sm"
@@ -384,7 +384,7 @@ function AssinaturasPage() {
               }}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova recorrência</span>
+              <span className="hidden sm:inline">{t("actions.new")}</span>
             </Button>
           </div>
         </div>
@@ -394,22 +394,22 @@ function AssinaturasPage() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
           icon={<CalendarClock className="h-4 w-4" />}
-          label="Total mensal confirmado"
+          label={t("summary.monthly")}
           value={formatBRL(totais.mensal)}
         />
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Possíveis recorrências"
+          label={t("summary.possible")}
           value={formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))}
         />
         <SummaryCard
           icon={<Sparkles className="h-4 w-4" />}
-          label="Recorrências ativas"
+          label={t("summary.active")}
           value={`${totais.ativas}`}
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Suspeitas"
+          label={t("summary.suspect")}
           value={`${suspeitas.length}`}
         />
       </section>
@@ -420,11 +420,11 @@ function AssinaturasPage() {
           <div className="flex items-center gap-2 text-sky-400">
             <Sparkles className="h-4 w-4" />
             <h2 className="text-sm font-semibold">
-              Detectamos {suspeitas.length} possível(is) recorrência(s)
+              {t("suspects.heading", { count: suspeitas.length })}
             </h2>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Confirme para começar a acompanhar.
+            {t("suspects.hint")}
           </p>
           <ul className="mt-3 space-y-2">
             {suspeitas.map((r) => (
@@ -445,7 +445,7 @@ function AssinaturasPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{r.nome}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatBRL(r.valor)} · {TIPO_LABEL[r.tipoRecorrencia]} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? "Sem categoria"} · {FREQ_LABEL[r.frequencia]}
+                      {formatBRL(r.valor)} · {tipoLabel(r.tipoRecorrencia)} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? t("suspects.noCategory")} · {freqLabel(r.frequencia)}
                     </p>
                   </div>
                 </div>
@@ -458,20 +458,20 @@ function AssinaturasPage() {
                       setDialogOpen(true);
                     }}
                   >
-                    Editar
+                    {t("actions.edit")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleIgnorar(r)}
                   >
-                    Ignorar
+                    {t("actions.ignore")}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => handleConfirmarSuspeita(r)}
                   >
-                    <Check className="h-4 w-4" /> Confirmar
+                    <Check className="h-4 w-4" /> {t("actions.confirm")}
                   </Button>
                 </div>
               </li>
@@ -483,29 +483,31 @@ function AssinaturasPage() {
       {/* Insights */}
       {insights.length > 0 && (
         <section className="mt-5 rounded-2xl border border-border/60 bg-card/40 p-4">
-          <h2 className="text-sm font-semibold">Insights</h2>
+          <h2 className="text-sm font-semibold">{t("insights.title")}</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-            {insights.map((t, i) => (
+            {insights.map((line, i) => (
               <li key={i} className="flex gap-2">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
-                <span>{t}</span>
+                <span>{line}</span>
               </li>
             ))}
           </ul>
           {orcamentoAssinaturas && (
             <div className="mt-3 rounded-xl border border-border/40 bg-background/40 p-3 text-xs">
               <p className="font-medium text-foreground">
-                Orçamento de Assinaturas
+                {t("insights.budgetTitle")}
               </p>
               <p className="text-muted-foreground">
-                Limite: {formatBRL(orcamentoAssinaturas.limite)} · Recorrências
-                previstas: {formatBRL(orcamentoAssinaturas.totalRec)}
+                {t("insights.budgetLine", {
+                  limit: formatBRL(orcamentoAssinaturas.limite),
+                  total: formatBRL(orcamentoAssinaturas.totalRec),
+                })}
               </p>
               {orcamentoAssinaturas.totalRec >
                 orcamentoAssinaturas.limite * 0.8 && (
                 <p className="mt-1 flex items-center gap-1 text-amber-400">
                   <AlertTriangle className="h-3 w-3" />
-                  Suas assinaturas consomem mais de 80% do orçamento.
+                  {t("insights.budgetWarn")}
                 </p>
               )}
             </div>
@@ -527,7 +529,7 @@ function AssinaturasPage() {
                   : "border-border/60 text-muted-foreground hover:bg-accent/40"
               }`}
             >
-              {s === "todas" ? "Todas" : STATUS_LABEL[s]}
+              {s === "todas" ? t("status.all") : statusLabel(s)}
             </button>
           ),
         )}
@@ -539,21 +541,23 @@ function AssinaturasPage() {
           <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-8 text-center">
             <CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm font-medium">
-              Nenhuma recorrência {filtroStatus === "todas" ? "" : STATUS_LABEL[filtroStatus as StatusRecorrencia].toLowerCase()}
+              {filtroStatus === "todas"
+                ? t("empty.none")
+                : t("empty.noneStatus", { status: statusLabel(filtroStatus as StatusRecorrencia).toLowerCase() })}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui.
+              {t("empty.hint")}
             </p>
             {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
               <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
-                <p>Gastos encontrados: {debugAnalise.gastos}</p>
-                <p>Gastos analisados: {debugAnalise.analisados}</p>
-                <p>Palavras-chave/recorrências encontradas: {debugAnalise.encontradas}</p>
-                <p>Ativas criadas: {debugAnalise.criadas}</p>
-                <p>Suspeitas criadas: {debugAnalise.suspeitas}</p>
-                <p>Assinaturas: {debugAnalise.assinaturas}</p>
-                <p>Recorrências fixas: {debugAnalise.fixas}</p>
-                <p className="mt-2 truncate">Amostra: {debugAnalise.nomes.join(", ") || "—"}</p>
+                <p>{t("debug.found", { n: debugAnalise.gastos })}</p>
+                <p>{t("debug.analyzed", { n: debugAnalise.analisados })}</p>
+                <p>{t("debug.matched", { n: debugAnalise.encontradas })}</p>
+                <p>{t("debug.created", { n: debugAnalise.criadas })}</p>
+                <p>{t("debug.suspects", { n: debugAnalise.suspeitas })}</p>
+                <p>{t("debug.subs", { n: debugAnalise.assinaturas })}</p>
+                <p>{t("debug.fixed", { n: debugAnalise.fixas })}</p>
+                <p className="mt-2 truncate">{t("debug.sample", { names: debugAnalise.nomes.join(", ") || t("prazo.dash") })}</p>
               </div>
             )}
           </div>
@@ -598,7 +602,7 @@ function AssinaturasPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{historicoOpen?.nome}</DialogTitle>
-            <DialogDescription>Histórico de cobranças</DialogDescription>
+            <DialogDescription>{t("history.title")}</DialogDescription>
           </DialogHeader>
           {historicoOpen && (
             <HistoricoLista rec={historicoOpen} gastos={gastos} />
@@ -656,6 +660,7 @@ function RecorrenciaCard({
   onHistorico: () => void;
   onGerarGasto: () => void;
 }) {
+  const { t, freqLabel, statusLabel, tipoLabel } = useLabels();
   const cat = rec.categoriaId ? getCategoriaById(rec.categoriaId) : undefined;
   const cartao = rec.cartaoId ? getCartaoById(rec.cartaoId) : undefined;
   const formaLabel = rec.formaPagamento
@@ -678,7 +683,7 @@ function RecorrenciaCard({
               variant="outline"
               className={`shrink-0 text-[10px] ${STATUS_BADGE[rec.status]}`}
             >
-              {STATUS_LABEL[rec.status]}
+              {statusLabel(rec.status)}
             </Badge>
             {rec.moeda && rec.moeda !== "BRL" && (
               <Badge
@@ -697,37 +702,37 @@ function RecorrenciaCard({
               </span>
             ) : null}
             <span className="ml-1 text-xs font-normal text-muted-foreground">
-              /{rec.frequencia === "mensal" ? "mês" : FREQ_LABEL[rec.frequencia].toLowerCase()}
+              /{rec.frequencia === "mensal" ? t("freq.monthShort") : freqLabel(rec.frequencia).toLowerCase()}
             </span>
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {TIPO_LABEL[rec.tipoRecorrencia]} · {cat?.nome ?? "Sem categoria"}
+            {tipoLabel(rec.tipoRecorrencia)} · {cat?.nome ?? t("card.noCategory")}
             {formaLabel && ` · ${formaLabel}`}
             {cartao && ` · ${cartao.nome}`}
-            {rec.proximaCobranca && ` · próxima ${descrevePrazo(rec.proximaCobranca)}`}
+            {rec.proximaCobranca && ` · ${t("card.nextLabel", { when: describePrazo(t, rec.proximaCobranca) })}`}
           </p>
           {aumentou && (
             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-400">
               <AlertTriangle className="h-3 w-3" />
-              Aumento de {formatBRL(rec.valor - (rec.ultimoValor ?? 0))} desde a última cobrança
+              {t("card.increased", { diff: formatBRL(rec.valor - (rec.ultimoValor ?? 0)) })}
             </p>
           )}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/40 pt-3">
         <Button size="sm" variant="ghost" onClick={onHistorico}>
-          <History className="h-3.5 w-3.5" /> Histórico
+          <History className="h-3.5 w-3.5" /> {t("actions.history")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" /> Editar
+          <Pencil className="h-3.5 w-3.5" /> {t("actions.edit")}
         </Button>
         {rec.status === "suspeita" && (
           <>
             <Button size="sm" variant="ghost" onClick={onIgnorar}>
-              <X className="h-3.5 w-3.5" /> Ignorar
+              <X className="h-3.5 w-3.5" /> {t("actions.ignore")}
             </Button>
             <Button size="sm" variant="ghost" onClick={onConfirmar}>
-              <Check className="h-3.5 w-3.5" /> Confirmar
+              <Check className="h-3.5 w-3.5" /> {t("actions.confirm")}
             </Button>
           </>
         )}
@@ -736,19 +741,19 @@ function RecorrenciaCard({
             <Button size="sm" variant="ghost" onClick={onTogglePause}>
               {rec.status === "pausada" ? (
                 <>
-                  <Play className="h-3.5 w-3.5" /> Reativar
+                  <Play className="h-3.5 w-3.5" /> {t("actions.reactivate")}
                 </>
               ) : (
                 <>
-                  <Pause className="h-3.5 w-3.5" /> Pausar
+                  <Pause className="h-3.5 w-3.5" /> {t("actions.pause")}
                 </>
               )}
             </Button>
             <Button size="sm" variant="ghost" onClick={onGerarGasto}>
-              <CreditCard className="h-3.5 w-3.5" /> Gerar gasto
+              <CreditCard className="h-3.5 w-3.5" /> {t("actions.generateExpense")}
             </Button>
             <Button size="sm" variant="ghost" onClick={onCancelar}>
-              <X className="h-3.5 w-3.5" /> Cancelar
+              <X className="h-3.5 w-3.5" /> {t("actions.cancel")}
             </Button>
           </>
         )}
@@ -772,6 +777,7 @@ function HistoricoLista({
   rec: Recorrencia;
   gastos: ReturnType<typeof getGastos>;
 }) {
+  const { t } = useTranslation("assinaturas");
   const historico = useMemo(
     () => historicoDaRecorrencia(rec, gastos),
     [rec, gastos],
@@ -780,7 +786,7 @@ function HistoricoLista({
     <div className="space-y-2">
       {historico.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nenhum gasto vinculado encontrado ainda.
+          {t("history.empty")}
         </p>
       )}
       {historico.map((g) => (
@@ -798,7 +804,7 @@ function HistoricoLista({
             href={`/gastos?highlight=${g.id}`}
             className="text-xs text-brand hover:underline"
           >
-            Ver
+            {t("history.view")}
           </a>
         </div>
       ))}
@@ -807,11 +813,11 @@ function HistoricoLista({
           <div>
             <p className="font-medium text-brand">{formatBRL(rec.valor)}</p>
             <p className="text-xs text-muted-foreground">
-              Previsto · {parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR")}
+              {t("history.forecast", { date: parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR") ?? "" })}
             </p>
           </div>
           <Badge variant="outline" className="text-[10px]">
-            previsão
+            {t("history.forecastBadge")}
           </Badge>
         </div>
       )}
@@ -832,6 +838,7 @@ function RecorrenciaDialog({
   userId: string | null;
   onSaved: () => void;
 }) {
+  const { t, freqLabel, statusLabel } = useLabels();
   const categorias = useStore(getCategorias);
   const cartoes = useStore(getCartoes);
   const [nome, setNome] = useState("");
@@ -911,7 +918,7 @@ function RecorrenciaDialog({
     if (!userId) return;
     const valorNum = parseBRLInput(valor);
     if (!nome.trim() || valorNum <= 0) {
-      toast.error("Informe nome e valor válidos");
+      toast.error(t("toasts.invalid"));
       return;
     }
     setSaving(true);
@@ -931,7 +938,7 @@ function RecorrenciaDialog({
           moeda,
           valorOriginal: valorOriginalNum,
         });
-        toast.success("Recorrência atualizada");
+        toast.success(t("toasts.updated"));
       } else {
         await criarRecorrencia(userId, {
           nome: nome.trim(),
@@ -947,7 +954,7 @@ function RecorrenciaDialog({
           moeda,
           valorOriginal: valorOriginalNum,
         });
-        toast.success("Recorrência criada");
+        toast.success(t("toasts.created"));
       }
       onSaved();
     } finally {
@@ -960,25 +967,23 @@ function RecorrenciaDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Editar recorrência" : "Nova recorrência"}
+            {editing ? t("dialog.titleEdit") : t("dialog.titleNew")}
           </DialogTitle>
           <DialogDescription>
-            {editing
-              ? "Ajuste os dados da assinatura ou recorrência."
-              : "Cadastre uma nova assinatura ou despesa que se repete."}
+            {editing ? t("dialog.descEdit") : t("dialog.descNew")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-xs font-medium">Nome</label>
+            <label className="text-xs font-medium">{t("dialog.name")}</label>
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Spotify, Aluguel"
+              placeholder={t("dialog.namePlaceholder")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium">Moeda</label>
+            <label className="text-xs font-medium">{t("dialog.currency")}</label>
             <Select
               value={moeda}
               onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
@@ -987,9 +992,9 @@ function RecorrenciaDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BRL">🇧🇷 Real (BRL)</SelectItem>
-                <SelectItem value="USD">🇺🇸 Dólar (USD)</SelectItem>
-                <SelectItem value="EUR">🇪🇺 Euro (EUR)</SelectItem>
+                <SelectItem value="BRL">{t("dialog.currencyBRL")}</SelectItem>
+                <SelectItem value="USD">{t("dialog.currencyUSD")}</SelectItem>
+                <SelectItem value="EUR">{t("dialog.currencyEUR")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -997,17 +1002,17 @@ function RecorrenciaDialog({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium">
-                  Valor em {moeda === "USD" ? "dólares" : "euros"}
+                  {moeda === "USD" ? t("dialog.valueInUSD") : t("dialog.valueInEUR")}
                 </label>
                 <Input
                   value={valorOriginal}
                   onChange={(e) => setValorOriginal(e.target.value)}
                   inputMode="decimal"
-                  placeholder={moeda === "USD" ? "Ex: 9,99" : "Ex: 12,50"}
+                  placeholder={moeda === "USD" ? t("dialog.phUSD") : t("dialog.phEUR")}
                 />
               </div>
               <div>
-                <label className="text-xs font-medium">Cotação atual</label>
+                <label className="text-xs font-medium">{t("dialog.currentRate")}</label>
                 <Input
                   readOnly
                   value={
@@ -1021,15 +1026,14 @@ function RecorrenciaDialog({
                 />
               </div>
               <p className="col-span-2 rounded-md bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                Estimativa em reais já com IOF e spread médios. O valor final
-                pode variar a cada cobrança.
+                {t("dialog.estimateHint")}
               </p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium">
-                {moeda === "BRL" ? "Valor (R$)" : "Estimativa em reais"}
+                {moeda === "BRL" ? t("dialog.valueBRL") : t("dialog.estimateBRL")}
               </label>
               <Input
                 value={valor}
@@ -1039,7 +1043,7 @@ function RecorrenciaDialog({
               />
             </div>
             <div>
-              <label className="text-xs font-medium">Frequência</label>
+              <label className="text-xs font-medium">{t("dialog.frequency")}</label>
               <Select
                 value={frequencia}
                 onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
@@ -1048,11 +1052,9 @@ function RecorrenciaDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(
-                    Object.keys(FREQ_LABEL) as FrequenciaRecorrencia[]
-                  ).map((f) => (
+                  {FREQ_KEYS.map((f) => (
                     <SelectItem key={f} value={f}>
-                      {FREQ_LABEL[f]}
+                      {freqLabel(f)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1060,7 +1062,7 @@ function RecorrenciaDialog({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium">Próxima cobrança</label>
+            <label className="text-xs font-medium">{t("dialog.next")}</label>
             <Input
               type="date"
               value={proximaCobranca}
@@ -1068,16 +1070,16 @@ function RecorrenciaDialog({
             />
           </div>
           <div>
-            <label className="text-xs font-medium">Categoria</label>
+            <label className="text-xs font-medium">{t("dialog.category")}</label>
             <Select
               value={categoriaId || "__none__"}
               onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar" />
+                <SelectValue placeholder={t("dialog.categorySelect")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">Sem categoria</SelectItem>
+                <SelectItem value="__none__">{t("dialog.noCategory")}</SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -1088,7 +1090,7 @@ function RecorrenciaDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium">Forma de pagamento</label>
+              <label className="text-xs font-medium">{t("dialog.payment")}</label>
               <Select
                 value={formaPagamento || "__none__"}
                 onValueChange={(v) =>
@@ -1096,10 +1098,10 @@ function RecorrenciaDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder={t("dialog.categorySelect")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Não definida</SelectItem>
+                  <SelectItem value="__none__">{t("dialog.paymentNone")}</SelectItem>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.label}
@@ -1109,7 +1111,7 @@ function RecorrenciaDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium">Cartão</label>
+              <label className="text-xs font-medium">{t("dialog.card")}</label>
               <Select
                 value={cartaoId || "__none__"}
                 onValueChange={(v) => setCartaoId(v === "__none__" ? "" : v)}
@@ -1119,7 +1121,7 @@ function RecorrenciaDialog({
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  <SelectItem value="__none__">{t("dialog.noCard")}</SelectItem>
                   {cartoes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -1130,7 +1132,7 @@ function RecorrenciaDialog({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium">Status</label>
+            <label className="text-xs font-medium">{t("dialog.status")}</label>
             <Select
               value={status}
               onValueChange={(v) => setStatus(v as StatusRecorrencia)}
@@ -1141,14 +1143,14 @@ function RecorrenciaDialog({
               <SelectContent>
                 {(["ativa", "pausada", "cancelada"] as const).map((s) => (
                   <SelectItem key={s} value={s}>
-                    {STATUS_LABEL[s]}
+                    {statusLabel(s)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium">Observação</label>
+            <label className="text-xs font-medium">{t("dialog.note")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -1161,10 +1163,10 @@ function RecorrenciaDialog({
               variant="ghost"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {t("actions.cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : editing ? "Salvar" : "Criar"}
+              {saving ? t("actions.saving") : editing ? t("actions.save") : t("actions.create")}
             </Button>
           </DialogFooter>
         </form>

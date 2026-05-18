@@ -20,6 +20,7 @@ import ptRelatorios from "./locales/pt/relatorios.json";
 import ptAdicionar from "./locales/pt/adicionar.json";
 import ptGuardado from "./locales/pt/guardado.json";
 import ptRenda from "./locales/pt/renda.json";
+import ptAssinaturas from "./locales/pt/assinaturas.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -40,6 +41,7 @@ import enRelatorios from "./locales/en/relatorios.json";
 import enAdicionar from "./locales/en/adicionar.json";
 import enGuardado from "./locales/en/guardado.json";
 import enRenda from "./locales/en/renda.json";
+import enAssinaturas from "./locales/en/assinaturas.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -71,8 +73,8 @@ function detectInitialLocale(): Locale {
 }
 
 const resources = {
-  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda },
-  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda },
+  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda, assinaturas: ptAssinaturas },
+  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda, assinaturas: enAssinaturas },
 };
 
 if (!i18n.isInitialized) {
@@ -81,7 +83,7 @@ if (!i18n.isInitialized) {
     lng: detectInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,
     defaultNS: "common",
-    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda"],
+    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas"],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
