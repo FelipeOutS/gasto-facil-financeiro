@@ -499,7 +499,7 @@ function RendaPage() {
           const desc = normalizeDescricao(r.descricao);
           const tLabel = normalizeDescricao(tipoLabel(r.tipo));
           if (desc.includes(q)) return true;
-          if (tipoLabel.includes(q)) return true;
+          if (tLabel.includes(q)) return true;
           if (Number.isFinite(qNum) && qNum > 0 && Math.abs(r.valor - qNum) < 0.01) return true;
           return false;
         });
