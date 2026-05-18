@@ -1839,6 +1839,7 @@ function ContasAReceberCard() {
 }
 
 function AssinaturasMoedaEstrangeiraBanner() {
+  const { t } = useTranslation("dashboard");
   const recs = useRecorrencias();
   const ativas = recs.filter(
     (r) => r.status === "ativa" && r.moeda && r.moeda !== "BRL",
@@ -1846,8 +1847,8 @@ function AssinaturasMoedaEstrangeiraBanner() {
   if (ativas.length === 0) return null;
   const moedas = Array.from(new Set(ativas.map((r) => r.moeda)));
   const moedaLabel = moedas.length === 1
-    ? moedas[0] === "USD" ? "dólar" : "euro"
-    : "moeda estrangeira";
+    ? moedas[0] === "USD" ? t("moedaEstrangeira.dolar") : t("moedaEstrangeira.euro")
+    : t("moedaEstrangeira.moedaEstrangeira");
   return (
     <Link
       to="/assinaturas"
@@ -1858,10 +1859,10 @@ function AssinaturasMoedaEstrangeiraBanner() {
       </span>
       <div className="min-w-0 text-sm">
         <p className="font-semibold">
-          Você possui {ativas.length === 1 ? "uma assinatura" : `${ativas.length} assinaturas`} em {moedaLabel}.
+          {t(ativas.length === 1 ? "moedaEstrangeira.umaSing" : "moedaEstrangeira.umaPlur", { count: ativas.length, moeda: moedaLabel })}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          A variação do câmbio pode alterar o valor da próxima fatura. Toque para revisar.
+          {t("moedaEstrangeira.subtitle")}
         </p>
       </div>
     </Link>
