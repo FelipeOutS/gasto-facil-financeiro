@@ -82,15 +82,27 @@ export function toLocalISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function currentDateLocale(): string {
+  try {
+    // Avoid hard import cycle by reading from i18next if available at runtime.
+    const w = globalThis as { i18next?: { language?: string } };
+    const lng = w.i18next?.language ?? (typeof document !== "undefined" ? document.documentElement.lang : "");
+    if (lng && lng.toLowerCase().startsWith("en")) return "en-US";
+  } catch {
+    /* noop */
+  }
+  return "pt-BR";
+}
+
 export function formatDateBR(iso: string | Date): string {
   const d = parseDateLocal(iso);
   if (!d) return "";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString(currentDateLocale(), { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function formatMonthYear(year: number, month: number): string {
   const d = new Date(year, month - 1, 1);
-  return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return d.toLocaleDateString(currentDateLocale(), { month: "long", year: "numeric" });
 }
 
 export function todayISO(): string {
