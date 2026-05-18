@@ -1,0 +1,63 @@
+{
+  "metaTitle": "Confirmar gasto — Gasto Inteligente",
+  "eyebrow": "Leitura por imagem",
+  "header": "Comprovante",
+  "headerDone": "Pronto!",
+  "intro": "Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.",
+  "back": "Voltar",
+  "errors": {
+    "fileType": "Use uma imagem PNG, JPG ou WEBP.",
+    "fileSize": "Imagem muito grande. Tente uma menor que 8 MB.",
+    "ocrFallback": "Não consegui ler tudo dessa imagem.",
+    "network": "Não consegui conectar agora. Tenta de novo em instantes."
+  },
+  "success": {
+    "title": "Pronto, gasto salvo!",
+    "subtitle": "Já coloquei esse gasto no seu histórico.",
+    "view": "Ver em Gastos",
+    "another": "Adicionar outro",
+    "toast": "Pronto, gasto salvo!"
+  },
+  "upload": {
+    "cta": "Toque para enviar uma imagem",
+    "formats": "PNG, JPG ou WEBP",
+    "remove": "Remover imagem",
+    "analyze": "Analisar imagem",
+    "manual": "Preencher manualmente"
+  },
+  "analyzing": {
+    "title": "Lendo seu comprovante...",
+    "subtitle": "Estou procurando valor, data e descrição. Você confere tudo antes de salvar.",
+    "values": "Detectando valores",
+    "date": "Lendo data",
+    "category": "Categoria"
+  },
+  "error": {
+    "title": "Não consegui ler tudo dessa imagem",
+    "fallback": "Pode acontecer com prints cortados, imagem tremida ou comprovante com pouco contraste. Você ainda pode preencher manualmente.",
+    "retry": "Tentar outra imagem",
+    "manual": "Preencher manualmente"
+  },
+  "review": {
+    "foundMany": "Encontrei alguns valores",
+    "foundOne": "Encontrei um valor",
+    "subMany": "Escolha qual deles é o valor principal do gasto.",
+    "subOne": "Confere se está certo antes de salvar.",
+    "imageAlt": "Comprovante",
+    "valuesLabel": "Valores encontrados — toque para usar",
+    "submit": "Salvar gasto",
+    "tip": "Dá uma conferida e salva quando quiser."
+  },
+  "guard": "Para adicionar gastos, escolha um plano ativo.",
+  "dup": {
+    "title": "Possível gasto duplicado",
+    "desc": "Esse gasto parece já ter sido cadastrado. Deseja salvar mesmo assim?",
+    "cancel": "Cancelar",
+    "confirm": "Salvar mesmo assim"
+  },
+  "confidence": {
+    "alta": "Confiança alta",
+    "media": "Confiança média",
+    "baixa": "Confiança baixa"
+  }
+}

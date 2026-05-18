@@ -1,0 +1,63 @@
+{
+  "metaTitle": "Confirm expense — Gasto Inteligente",
+  "eyebrow": "Image reading",
+  "header": "Receipt",
+  "headerDone": "Done!",
+  "intro": "Send the screenshot and I'll try to fill it in for you. AI helps, but you're in charge.",
+  "back": "Back",
+  "errors": {
+    "fileType": "Use a PNG, JPG or WEBP image.",
+    "fileSize": "Image too large. Try one smaller than 8 MB.",
+    "ocrFallback": "I couldn't read everything from this image.",
+    "network": "Couldn't connect right now. Try again in a moment."
+  },
+  "success": {
+    "title": "Done, expense saved!",
+    "subtitle": "I've added this expense to your history.",
+    "view": "View in Expenses",
+    "another": "Add another",
+    "toast": "Done, expense saved!"
+  },
+  "upload": {
+    "cta": "Tap to upload an image",
+    "formats": "PNG, JPG or WEBP",
+    "remove": "Remove image",
+    "analyze": "Analyze image",
+    "manual": "Fill in manually"
+  },
+  "analyzing": {
+    "title": "Reading your receipt...",
+    "subtitle": "Looking for amount, date and description. You'll review everything before saving.",
+    "values": "Detecting amounts",
+    "date": "Reading date",
+    "category": "Category"
+  },
+  "error": {
+    "title": "I couldn't read everything from this image",
+    "fallback": "This can happen with cropped screenshots, blurry images or low-contrast receipts. You can still fill it in manually.",
+    "retry": "Try another image",
+    "manual": "Fill in manually"
+  },
+  "review": {
+    "foundMany": "I found a few amounts",
+    "foundOne": "I found an amount",
+    "subMany": "Choose which one is the main amount of the expense.",
+    "subOne": "Check if it's right before saving.",
+    "imageAlt": "Receipt",
+    "valuesLabel": "Amounts found — tap to use",
+    "submit": "Save expense",
+    "tip": "Take a look and save whenever you're ready."
+  },
+  "guard": "To add expenses, choose an active plan.",
+  "dup": {
+    "title": "Possible duplicate expense",
+    "desc": "This expense seems to be already registered. Save anyway?",
+    "cancel": "Cancel",
+    "confirm": "Save anyway"
+  },
+  "confidence": {
+    "alta": "High confidence",
+    "media": "Medium confidence",
+    "baixa": "Low confidence"
+  }
+}
