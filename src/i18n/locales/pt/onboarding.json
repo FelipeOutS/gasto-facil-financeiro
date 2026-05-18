@@ -1,0 +1,82 @@
+{
+  "meta": { "title": "Configuração inicial — Gasto Inteligente" },
+  "brand": "Gasto Inteligente",
+  "loading": "Preparando sua configuração…",
+  "skip": "Pular por enquanto",
+  "common": {
+    "continue": "Continuar",
+    "back": "Voltar",
+    "start": "Começar"
+  },
+  "welcome": {
+    "title": "Vamos configurar seu controle financeiro",
+    "subtitle": "Responda algumas perguntas rápidas para deixar o app do seu jeito."
+  },
+  "accountType": {
+    "title": "Como você pretende usar?",
+    "subtitle": "Escolha o perfil que mais combina com você.",
+    "items": {
+      "pessoa_fisica": {
+        "title": "Pessoa física",
+        "description": "Para controlar minha vida financeira pessoal."
+      },
+      "mei": {
+        "title": "MEI",
+        "description": "Para organizar meu dinheiro pessoal e o financeiro do meu negócio."
+      },
+      "empresa": {
+        "title": "Empresa",
+        "description": "Para acompanhar receitas, despesas, contas e relatórios da empresa."
+      }
+    }
+  },
+  "goals": {
+    "title": "O que você mais quer resolver?",
+    "subtitle": "Pode marcar mais de uma opção.",
+    "items": {
+      "controlar_gastos": "Controlar gastos do mês",
+      "organizar_cartoes": "Organizar cartões e faturas",
+      "contas_a_pagar": "Não esquecer contas a pagar",
+      "contas_a_receber": "Controlar valores a receber",
+      "investimentos": "Acompanhar investimentos",
+      "orcamento": "Criar orçamento por categoria",
+      "assinaturas": "Identificar assinaturas e recorrências",
+      "alertas": "Ter alertas inteligentes"
+    }
+  },
+  "modules": {
+    "title": "Quais áreas quer ver no seu app?",
+    "subtitle": "Vamos destacar isso primeiro. Você pode usar todas depois.",
+    "items": {
+      "gastos": "Gastos",
+      "cartoes": "Cartões",
+      "contas_a_pagar": "Contas a pagar",
+      "contas_a_receber": "Contas a receber",
+      "orcamento": "Orçamento",
+      "assinaturas": "Assinaturas",
+      "investimentos": "Investimentos",
+      "alertas": "Alertas",
+      "relatorios": "Relatórios"
+    }
+  },
+  "plan": {
+    "title": "Plano recomendado para você",
+    "subtitle": "Você pode continuar no plano atual e mudar quando quiser.",
+    "recommendedTag": "Recomendado",
+    "seePlan": "Ver plano",
+    "keepCurrent": "Continuar no plano atual"
+  },
+  "done": {
+    "title": "Tudo pronto",
+    "subtitle": "Seu app está configurado. Por onde quer começar?",
+    "goDashboard": "Ir para o dashboard",
+    "shortcuts": {
+      "gastos": "Adicionar primeiro gasto",
+      "cartoes": "Cadastrar cartão",
+      "contas_a_pagar": "Criar conta a pagar",
+      "contas_a_receber": "Criar conta a receber",
+      "orcamento": "Definir orçamento",
+      "investimentos": "Cadastrar investimento"
+    }
+  }
+}
