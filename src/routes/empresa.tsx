@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -48,27 +49,20 @@ import {
   type MinhaEmpresa,
 } from "@/lib/empresa";
 import { consultarCnpj } from "@/server/cnpj.functions";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/empresa")({
-  head: () => ({
-    meta: [
-      { title: "Empresa Inteligente — Gasto Inteligente" },
-      {
-        name: "description",
-        content:
-          "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente.",
-      },
-      {
-        property: "og:title",
-        content: "Empresa Inteligente — Gasto Inteligente",
-      },
-      {
-        property: "og:description",
-        content:
-          "Para MEI e empresas: cadastre os dados da sua empresa pelo CNPJ.",
-      },
-    ],
-  }),
+  head: () => {
+    const t = i18n.getFixedT(null, "empresa");
+    return {
+      meta: [
+        { title: t("meta.title") },
+        { name: "description", content: t("meta.description") },
+        { property: "og:title", content: t("meta.ogTitle") },
+        { property: "og:description", content: t("meta.ogDescription") },
+      ],
+    };
+  },
   component: EmpresaPage,
 });
 
@@ -90,23 +84,23 @@ function aplicarMascaraCnpj(v: string): string {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
-function formatarData(iso: string | null | undefined): string {
+function formatarData(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   try {
     const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
     if (!Number.isFinite(d.getTime())) return "—";
-    return d.toLocaleDateString("pt-BR");
+    return d.toLocaleDateString(locale);
   } catch {
     return "—";
   }
 }
 
-function formatarDataHora(iso: string | null | undefined): string {
+function formatarDataHora(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return "—";
-    return d.toLocaleString("pt-BR", {
+    return d.toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -118,17 +112,19 @@ function formatarDataHora(iso: string | null | undefined): string {
   }
 }
 
-function rotuloFonte(source: string | null | undefined): string {
-  if (!source) return "—";
-  if (source === "brasilapi") return "Receita Federal (via BrasilAPI)";
-  if (source === "cnpjws") return "Receita Federal (via CNPJ.ws)";
-  if (source === "cache") return "Última consulta salva";
-  return source;
-}
-
 function EmpresaPage() {
+  const { t, i18n: i18nInst } = useTranslation("empresa");
+  const localeCode = i18nInst.language?.startsWith("en") ? "en-US" : "pt-BR";
   const { user } = useAuth();
   const consultarFn = useServerFn(consultarCnpj);
+
+  const rotuloFonte = (source: string | null | undefined): string => {
+    if (!source) return "—";
+    if (source === "brasilapi") return t("sources.brasilapi");
+    if (source === "cnpjws") return t("sources.cnpjws");
+    if (source === "cache") return t("sources.cache");
+    return source;
+  };
 
   const [empresa, setEmpresa] = useState<MinhaEmpresa | null>(null);
   const [loadingEmpresa, setLoadingEmpresa] = useState(true);
@@ -143,7 +139,6 @@ function EmpresaPage() {
   const [confirmarRemover, setConfirmarRemover] = useState(false);
   const [removendo, setRemovendo] = useState(false);
 
-  // Carrega empresa salva do usuário.
   useEffect(() => {
     if (!user?.id) return;
     let cancelado = false;
@@ -192,16 +187,13 @@ function EmpresaPage() {
       }
     } catch (err) {
       console.error("[empresa] erro na consulta:", err);
-      toast.error(
-        "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
-      );
+      toast.error(t("toasts.consultError"));
       setResp({
         success: false,
         source: null,
         stale: false,
         company: null,
-        message:
-          "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
+        message: t("toasts.consultError"),
       });
     } finally {
       setConsultando(false);
@@ -221,7 +213,7 @@ function EmpresaPage() {
           fetchedAt,
         );
         setEmpresa(atualizada);
-        toast.success("Dados da empresa atualizados.");
+        toast.success(t("toasts.updated"));
       } else {
         const nova = await salvarMinhaEmpresa(
           user.id,
@@ -230,15 +222,15 @@ function EmpresaPage() {
           fetchedAt,
         );
         setEmpresa(nova);
-        toast.success("Empresa salva como sua empresa.");
+        toast.success(t("toasts.saved"));
       }
       limparConsulta();
     } catch (err) {
       const msg = (err as { message?: string })?.message ?? "";
       if (msg.includes("user_companies_user_unique")) {
-        toast.error("Você já tem uma empresa cadastrada. Use 'Atualizar dados'.");
+        toast.error(t("toasts.duplicate"));
       } else {
-        toast.error("Não conseguimos salvar agora. Tente novamente.");
+        toast.error(t("toasts.saveError"));
       }
     } finally {
       setSalvando(false);
@@ -251,9 +243,9 @@ function EmpresaPage() {
     try {
       await removerMinhaEmpresa(empresa.id);
       setEmpresa(null);
-      toast.success("Empresa removida.");
+      toast.success(t("toasts.removed"));
     } catch {
-      toast.error("Não conseguimos remover agora. Tente novamente.");
+      toast.error(t("toasts.removeError"));
     } finally {
       setRemovendo(false);
       setConfirmarRemover(false);
@@ -279,10 +271,9 @@ function EmpresaPage() {
             <Building2 className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-2xl font-semibold">Empresa Inteligente</h1>
+            <h1 className="text-2xl font-semibold">{t("header.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Consulte seu CNPJ e mantenha os dados da sua empresa organizados
-              no Gasto Inteligente.
+              {t("header.subtitle")}
             </p>
           </div>
         </div>
@@ -302,6 +293,8 @@ function EmpresaPage() {
             onAlterar={alterar}
             onRemover={() => setConfirmarRemover(true)}
             consultando={consultando}
+            t={t}
+            localeCode={localeCode}
           />
         ) : (
           <BuscaCard
@@ -315,6 +308,7 @@ function EmpresaPage() {
             erroCampo={erroCampo}
             podeBuscar={cnpjValido}
             mostrandoPreview={!!resp?.company}
+            t={t}
           />
         )}
 
@@ -326,69 +320,69 @@ function EmpresaPage() {
             onSalvar={() => void salvar()}
             onBuscarOutro={limparConsulta}
             onCancelar={limparConsulta}
+            t={t}
+            localeCode={localeCode}
+            rotuloFonte={rotuloFonte}
           />
         )}
 
-        <GrupoAtalhos titulo="Cadastro">
+        <GrupoAtalhos titulo={t("groups.cadastro")}>
           <AtalhoCard
             to="/fornecedores"
-            titulo="Fornecedores"
-            descricao="Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais."
-            cta="Abrir"
+            titulo={t("shortcuts.fornecedores.title")}
+            descricao={t("shortcuts.fornecedores.desc")}
+            cta={t("shortcuts.fornecedores.cta")}
           />
           <AtalhoCard
             to="/clientes"
-            titulo="Clientes"
-            descricao="Cadastre clientes por CNPJ e prepare seus relatórios de receitas."
-            cta="Abrir"
+            titulo={t("shortcuts.clientes.title")}
+            descricao={t("shortcuts.clientes.desc")}
+            cta={t("shortcuts.clientes.cta")}
           />
         </GrupoAtalhos>
 
-        <GrupoAtalhos titulo="Relatórios">
+        <GrupoAtalhos titulo={t("groups.relatorios")}>
           <AtalhoCard
             to="/fornecedores/relatorio"
-            titulo="Relatório por fornecedor"
-            descricao="Acompanhe quanto você movimenta com cada fornecedor."
-            cta="Ver relatório"
+            titulo={t("shortcuts.fornecedoresRelatorio.title")}
+            descricao={t("shortcuts.fornecedoresRelatorio.desc")}
+            cta={t("shortcuts.fornecedoresRelatorio.cta")}
           />
           <AtalhoCard
             to="/clientes/relatorio"
-            titulo="Relatório por cliente"
-            descricao="Veja de quais clientes sua empresa mais recebeu e o que ainda está em aberto."
-            cta="Ver relatório"
+            titulo={t("shortcuts.clientesRelatorio.title")}
+            descricao={t("shortcuts.clientesRelatorio.desc")}
+            cta={t("shortcuts.clientesRelatorio.cta")}
           />
         </GrupoAtalhos>
 
-        <GrupoAtalhos titulo="Contador">
+        <GrupoAtalhos titulo={t("groups.contador")}>
           <AtalhoCard
             to="/contador"
-            titulo="Pacote para Contador"
-            descricao="Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências."
-            cta="Gerar pacote"
+            titulo={t("shortcuts.contador.title")}
+            descricao={t("shortcuts.contador.desc")}
+            cta={t("shortcuts.contador.cta")}
           />
         </GrupoAtalhos>
 
         <section className="rounded-2xl border border-dashed bg-muted/30 p-4 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Sobre a consulta</p>
-          <p className="mt-1">
-            Buscamos os dados públicos da empresa diretamente em fontes oficiais
-            ligadas à Receita Federal. Nenhum dado é salvo na sua conta sem que
-            você confirme.
-          </p>
+          <p className="font-medium text-foreground">{t("about.title")}</p>
+          <p className="mt-1">{t("about.body")}</p>
         </section>
       </main>
 
       <AlertDialog open={confirmarRemover} onOpenChange={setConfirmarRemover}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover empresa?</AlertDialogTitle>
+            <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Os dados da sua empresa serão apagados do Gasto Inteligente. Você
-              pode cadastrar novamente quando quiser.
+              {t("remove.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removendo}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={removendo}>
+              {t("remove.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -397,7 +391,7 @@ function EmpresaPage() {
               disabled={removendo}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {removendo ? "Removendo…" : "Remover"}
+              {removendo ? t("remove.loading") : t("remove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -406,9 +400,7 @@ function EmpresaPage() {
   );
 }
 
-// ============================================================
-// Empresa salva
-// ============================================================
+type TFn = ReturnType<typeof useTranslation>["t"];
 
 function EmpresaSalvaCard({
   empresa,
@@ -416,12 +408,16 @@ function EmpresaSalvaCard({
   onAlterar,
   onRemover,
   consultando,
+  t,
+  localeCode,
 }: {
   empresa: MinhaEmpresa;
   onAtualizar: () => void;
   onAlterar: () => void;
   onRemover: () => void;
   consultando: boolean;
+  t: TFn;
+  localeCode: string;
 }) {
   const endereco = [
     empresa.logradouro,
@@ -434,12 +430,20 @@ function EmpresaSalvaCard({
     .filter(Boolean)
     .join(", ");
 
+  const atividade = empresa.cnae_principal_descricao
+    ? `${empresa.cnae_principal_descricao}${
+        empresa.cnae_principal_codigo
+          ? t("saved.cnaeSuffix", { code: empresa.cnae_principal_codigo })
+          : ""
+      }`
+    : "—";
+
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Minha Empresa
+            {t("saved.title")}
           </h2>
           <p className="mt-1 truncate text-lg font-semibold">
             {empresa.razao_social ?? "—"}
@@ -471,23 +475,23 @@ function EmpresaSalvaCard({
       <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <InfoLinha
           icon={<Briefcase className="h-4 w-4" />}
-          label="Atividade principal"
-          value={
-            empresa.cnae_principal_descricao
-              ? `${empresa.cnae_principal_descricao}${empresa.cnae_principal_codigo ? ` (CNAE ${empresa.cnae_principal_codigo})` : ""}`
-              : "—"
-          }
+          label={t("saved.activity")}
+          value={atividade}
         />
         <InfoLinha
           icon={<MapPin className="h-4 w-4" />}
-          label="Endereço"
+          label={t("saved.address")}
           value={endereco || "—"}
         />
       </dl>
 
       <p className="mt-4 text-[11px] text-muted-foreground">
-        Última atualização dos dados:{" "}
-        {formatarDataHora(empresa.cnpj_cache_fetched_at ?? empresa.updated_at)}
+        {t("saved.lastUpdate", {
+          when: formatarDataHora(
+            empresa.cnpj_cache_fetched_at ?? empresa.updated_at,
+            localeCode,
+          ),
+        })}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -497,11 +501,11 @@ function EmpresaSalvaCard({
           ) : (
             <RefreshCw className="h-4 w-4" />
           )}
-          Atualizar dados do CNPJ
+          {t("saved.actions.update")}
         </Button>
         <Button onClick={onAlterar} variant="outline" className="gap-2">
           <FileSearch className="h-4 w-4" />
-          Alterar empresa
+          {t("saved.actions.change")}
         </Button>
         <Button
           onClick={onRemover}
@@ -509,7 +513,7 @@ function EmpresaSalvaCard({
           className="gap-2 text-destructive hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
-          Remover empresa
+          {t("saved.actions.remove")}
         </Button>
       </div>
     </section>
@@ -538,10 +542,6 @@ function InfoLinha({
   );
 }
 
-// ============================================================
-// Card de busca
-// ============================================================
-
 function BuscaCard({
   cnpjInput,
   onChange,
@@ -550,6 +550,7 @@ function BuscaCard({
   erroCampo,
   podeBuscar,
   mostrandoPreview,
+  t,
 }: {
   cnpjInput: string;
   onChange: (v: string) => void;
@@ -558,26 +559,24 @@ function BuscaCard({
   erroCampo: string | null;
   podeBuscar: boolean;
   mostrandoPreview: boolean;
+  t: TFn;
 }) {
   if (mostrandoPreview) return null;
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
-      <h2 className="text-base font-semibold">Minha Empresa</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Digite seu CNPJ para buscar os dados públicos da empresa
-        automaticamente.
-      </p>
+      <h2 className="text-base font-semibold">{t("search.title")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("search.subtitle")}</p>
 
       <div className="mt-4 space-y-2">
         <Label htmlFor="cnpj-input" className="text-sm">
-          CNPJ
+          {t("search.label")}
         </Label>
         <Input
           id="cnpj-input"
           inputMode="numeric"
           autoComplete="off"
           maxLength={18}
-          placeholder="00.000.000/0000-00"
+          placeholder={t("search.placeholder")}
           value={cnpjInput}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
@@ -607,15 +606,11 @@ function BuscaCard({
         ) : (
           <Search className="h-4 w-4" />
         )}
-        Buscar CNPJ
+        {t("search.submit")}
       </Button>
     </section>
   );
 }
-
-// ============================================================
-// Resultado da consulta (preview antes de salvar)
-// ============================================================
 
 function ResultadoConsulta({
   resp,
@@ -624,6 +619,9 @@ function ResultadoConsulta({
   onSalvar,
   onBuscarOutro,
   onCancelar,
+  t,
+  localeCode,
+  rotuloFonte,
 }: {
   resp: ConsultaResp;
   modoAtualizar: boolean;
@@ -631,30 +629,31 @@ function ResultadoConsulta({
   onSalvar: () => void;
   onBuscarOutro: () => void;
   onCancelar: () => void;
+  t: TFn;
+  localeCode: string;
+  rotuloFonte: (source: string | null | undefined) => string;
 }) {
-  // Sem empresa e sem cache → erro total.
   if (!resp.company) {
+    const msg = resp.message ?? "";
+    const heading = msg.includes("inválido") || msg.toLowerCase().includes("invalid")
+      ? t("result.errors.invalid")
+      : msg.includes("encontramos") || msg.toLowerCase().includes("not found")
+        ? t("result.errors.notFound")
+        : t("result.errors.generic");
     return (
       <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
         <div className="flex items-start gap-2">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="flex-1">
-            <p className="font-medium">
-              {resp.message?.includes("inválido")
-                ? "CNPJ inválido"
-                : resp.message?.includes("encontramos")
-                  ? "Empresa não encontrada"
-                  : "Não foi possível consultar"}
-            </p>
+            <p className="font-medium">{heading}</p>
             <p className="mt-1 text-xs text-destructive/80">
-              {resp.message ??
-                "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos."}
+              {resp.message ?? t("result.errors.fallback")}
             </p>
           </div>
         </div>
         <div className="mt-3 flex gap-2">
           <Button onClick={onCancelar} size="sm" variant="outline">
-            Cancelar
+            {t("result.cancel")}
           </Button>
         </div>
       </section>
@@ -669,18 +668,26 @@ function ResultadoConsulta({
     c.endereco.municipio && c.endereco.uf
       ? `${c.endereco.municipio}/${c.endereco.uf}`
       : c.endereco.municipio || c.endereco.uf,
-    c.endereco.cep ? `CEP ${c.endereco.cep}` : null,
+    c.endereco.cep ? t("result.fields.cep", { cep: c.endereco.cep }) : null,
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const atividade = c.cnaePrincipalDescricao
+    ? `${c.cnaePrincipalDescricao}${
+        c.cnaePrincipalCodigo
+          ? t("saved.cnaeSuffix", { code: c.cnaePrincipalCodigo })
+          : ""
+      }`
+    : "—";
 
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Dados encontrados</h2>
+          <h2 className="text-base font-semibold">{t("result.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Confira os dados antes de salvar como sua empresa.
+            {t("result.subtitle")}
           </p>
         </div>
         <span
@@ -694,12 +701,14 @@ function ResultadoConsulta({
           {resp.stale ? (
             <>
               <AlertCircle className="h-3 w-3" />
-              Última informação disponível
+              {t("result.badgeStale")}
             </>
           ) : (
             <>
               <CheckCircle2 className="h-3 w-3" />
-              {resp.source === "cache" ? "Do cache (atualizado)" : "Atualizado agora"}
+              {resp.source === "cache"
+                ? t("result.badgeCache")
+                : t("result.badgeFresh")}
             </>
           )}
         </span>
@@ -713,47 +722,43 @@ function ResultadoConsulta({
       )}
 
       <div className="mt-4 space-y-3 text-sm">
-        <InfoBloco label="CNPJ" value={c.cnpjFormatado} mono />
-        <InfoBloco label="Razão social" value={c.razaoSocial ?? "—"} />
+        <InfoBloco label={t("result.fields.cnpj")} value={c.cnpjFormatado} mono />
+        <InfoBloco label={t("result.fields.razaoSocial")} value={c.razaoSocial ?? "—"} />
         {c.nomeFantasia && (
-          <InfoBloco label="Nome fantasia" value={c.nomeFantasia} />
+          <InfoBloco label={t("result.fields.nomeFantasia")} value={c.nomeFantasia} />
         )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <InfoBloco
-            label="Situação cadastral"
+            label={t("result.fields.situacao")}
             value={c.situacaoCadastral ?? "—"}
             icon={<CheckCircle2 className="h-3.5 w-3.5" />}
           />
           <InfoBloco
-            label="Data de abertura"
-            value={formatarData(c.dataAbertura)}
+            label={t("result.fields.abertura")}
+            value={formatarData(c.dataAbertura, localeCode)}
             icon={<Calendar className="h-3.5 w-3.5" />}
           />
-          <InfoBloco label="Porte" value={c.porte ?? "—"} />
+          <InfoBloco label={t("result.fields.porte")} value={c.porte ?? "—"} />
           <InfoBloco
-            label="Natureza jurídica"
+            label={t("result.fields.natureza")}
             value={c.naturezaJuridica ?? "—"}
             icon={<ScrollText className="h-3.5 w-3.5" />}
           />
         </div>
         <InfoBloco
-          label="Atividade principal"
-          value={
-            c.cnaePrincipalDescricao
-              ? `${c.cnaePrincipalDescricao}${c.cnaePrincipalCodigo ? ` (CNAE ${c.cnaePrincipalCodigo})` : ""}`
-              : "—"
-          }
+          label={t("result.fields.atividade")}
+          value={atividade}
           icon={<Briefcase className="h-3.5 w-3.5" />}
         />
         <InfoBloco
-          label="Endereço"
+          label={t("result.fields.endereco")}
           value={endereco || "—"}
           icon={<MapPin className="h-3.5 w-3.5" />}
         />
       </div>
 
       <p className="mt-4 text-[11px] text-muted-foreground">
-        Fonte: {rotuloFonte(resp.source)}
+        {t("result.source", { source: rotuloFonte(resp.source) })}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -763,13 +768,15 @@ function ResultadoConsulta({
           ) : (
             <CheckCircle2 className="h-4 w-4" />
           )}
-          {modoAtualizar ? "Atualizar minha empresa" : "Salvar como minha empresa"}
+          {modoAtualizar
+            ? t("result.updateCompany")
+            : t("result.saveAsCompany")}
         </Button>
         <Button onClick={onBuscarOutro} variant="outline">
-          Buscar outro CNPJ
+          {t("result.searchOther")}
         </Button>
         <Button onClick={onCancelar} variant="ghost">
-          Cancelar
+          {t("result.cancel")}
         </Button>
       </div>
     </section>

@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "Empresa Inteligente — Gasto Inteligente",
+    "description": "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente.",
+    "ogTitle": "Empresa Inteligente — Gasto Inteligente",
+    "ogDescription": "Para MEI e empresas: cadastre os dados da sua empresa pelo CNPJ."
+  },
+  "header": {
+    "title": "Empresa Inteligente",
+    "subtitle": "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente."
+  },
+  "sources": {
+    "brasilapi": "Receita Federal (via BrasilAPI)",
+    "cnpjws": "Receita Federal (via CNPJ.ws)",
+    "cache": "Última consulta salva"
+  },
+  "saved": {
+    "title": "Minha Empresa",
+    "addressDash": "—",
+    "lastUpdate": "Última atualização dos dados: {{when}}",
+    "activity": "Atividade principal",
+    "address": "Endereço",
+    "cnaeSuffix": " (CNAE {{code}})",
+    "actions": {
+      "update": "Atualizar dados do CNPJ",
+      "change": "Alterar empresa",
+      "remove": "Remover empresa"
+    }
+  },
+  "search": {
+    "title": "Minha Empresa",
+    "subtitle": "Digite seu CNPJ para buscar os dados públicos da empresa automaticamente.",
+    "label": "CNPJ",
+    "placeholder": "00.000.000/0000-00",
+    "submit": "Buscar CNPJ"
+  },
+  "result": {
+    "title": "Dados encontrados",
+    "subtitle": "Confira os dados antes de salvar como sua empresa.",
+    "badgeStale": "Última informação disponível",
+    "badgeCache": "Do cache (atualizado)",
+    "badgeFresh": "Atualizado agora",
+    "fields": {
+      "cnpj": "CNPJ",
+      "razaoSocial": "Razão social",
+      "nomeFantasia": "Nome fantasia",
+      "situacao": "Situação cadastral",
+      "abertura": "Data de abertura",
+      "porte": "Porte",
+      "natureza": "Natureza jurídica",
+      "atividade": "Atividade principal",
+      "endereco": "Endereço",
+      "cep": "CEP {{cep}}"
+    },
+    "source": "Fonte: {{source}}",
+    "saveAsCompany": "Salvar como minha empresa",
+    "updateCompany": "Atualizar minha empresa",
+    "searchOther": "Buscar outro CNPJ",
+    "cancel": "Cancelar",
+    "errors": {
+      "invalid": "CNPJ inválido",
+      "notFound": "Empresa não encontrada",
+      "generic": "Não foi possível consultar",
+      "fallback": "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos."
+    }
+  },
+  "groups": {
+    "cadastro": "Cadastro",
+    "relatorios": "Relatórios",
+    "contador": "Contador"
+  },
+  "shortcuts": {
+    "fornecedores": { "title": "Fornecedores", "desc": "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais.", "cta": "Abrir" },
+    "clientes": { "title": "Clientes", "desc": "Cadastre clientes por CNPJ e prepare seus relatórios de receitas.", "cta": "Abrir" },
+    "fornecedoresRelatorio": { "title": "Relatório por fornecedor", "desc": "Acompanhe quanto você movimenta com cada fornecedor.", "cta": "Ver relatório" },
+    "clientesRelatorio": { "title": "Relatório por cliente", "desc": "Veja de quais clientes sua empresa mais recebeu e o que ainda está em aberto.", "cta": "Ver relatório" },
+    "contador": { "title": "Pacote para Contador", "desc": "Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências.", "cta": "Gerar pacote" }
+  },
+  "about": {
+    "title": "Sobre a consulta",
+    "body": "Buscamos os dados públicos da empresa diretamente em fontes oficiais ligadas à Receita Federal. Nenhum dado é salvo na sua conta sem que você confirme."
+  },
+  "remove": {
+    "title": "Remover empresa?",
+    "description": "Os dados da sua empresa serão apagados do Gasto Inteligente. Você pode cadastrar novamente quando quiser.",
+    "cancel": "Cancelar",
+    "confirm": "Remover",
+    "loading": "Removendo…"
+  },
+  "toasts": {
+    "updated": "Dados da empresa atualizados.",
+    "saved": "Empresa salva como sua empresa.",
+    "duplicate": "Você já tem uma empresa cadastrada. Use 'Atualizar dados'.",
+    "saveError": "Não conseguimos salvar agora. Tente novamente.",
+    "removed": "Empresa removida.",
+    "removeError": "Não conseguimos remover agora. Tente novamente.",
+    "consultError": "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos."
+  },
+  "dash": "—"
+}
