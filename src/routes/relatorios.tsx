@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
@@ -24,7 +25,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS } from "date-fns/locale";
 import {
   PieChart,
   Pie,
@@ -42,7 +43,7 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
-import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
