@@ -1076,29 +1076,40 @@ function UltimasCompras({
 const MESES_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const MESES_FULL = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-function statusBadgeStyle(status: StatusFatura): { label: string; cls: string; icon: React.ReactNode } {
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function monthsAbbr(t: TFn): string[] {
+  const arr = i18n.t("cartoes:months.abbr", { returnObjects: true }) as unknown;
+  return Array.isArray(arr) ? (arr as string[]) : ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+}
+function monthsFull(t: TFn): string[] {
+  const arr = i18n.t("cartoes:months.full", { returnObjects: true }) as unknown;
+  return Array.isArray(arr) ? (arr as string[]) : ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+}
+
+function statusBadgeStyle(status: StatusFatura, t: TFn): { label: string; cls: string; icon: React.ReactNode } {
   switch (status) {
     case "paga":
       return {
-        label: "Paga",
+        label: t("status.paid"),
         cls: "bg-success/20 text-success border-success/30",
         icon: <CheckCircle2 className="h-3 w-3" />,
       };
     case "vencida":
       return {
-        label: "Vencida",
+        label: t("status.overdue"),
         cls: "bg-destructive/20 text-destructive border-destructive/30",
         icon: <AlertTriangle className="h-3 w-3" />,
       };
     case "fechada":
       return {
-        label: "Fechada",
+        label: t("status.closed"),
         cls: "bg-warning/20 text-warning border-warning/30",
         icon: <Lock className="h-3 w-3" />,
       };
     default:
       return {
-        label: "Aberta",
+        label: t("status.open"),
         cls: "bg-brand-soft text-brand-on-soft border-brand/20",
         icon: <Sparkles className="h-3 w-3" />,
       };
