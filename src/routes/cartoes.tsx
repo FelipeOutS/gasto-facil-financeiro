@@ -1670,7 +1670,7 @@ function FaturaSheet({
                   cartaoId: cartao.id,
                   data: toISODateLocal(new Date()),
                 }}
-                submitLabel="Adicionar compra"
+                submitLabel={t("sheet.submitPurchase")}
                 onSubmit={handleAddCompra}
               />
             </div>
