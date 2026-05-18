@@ -260,6 +260,7 @@ function MetaCard({
   onChangeImage: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation("metas");
   const breakdown = getMetaProgressoBreakdown(meta.id);
   const progresso = breakdown.total;
   const status: ReturnType<typeof statusMeta> =
@@ -303,12 +304,12 @@ function MetaCard({
           <div className="flex flex-wrap gap-1.5">
             {isDone && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-success-foreground shadow-md animate-pop">
-                <Trophy className="h-3 w-3" /> Concluída
+                <Trophy className="h-3 w-3" /> {t("card.doneBadge")}
               </span>
             )}
             {isAlmostDone && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
-                <Flame className="h-3 w-3" /> Quase lá
+                <Flame className="h-3 w-3" /> {t("card.almostBadge")}
               </span>
             )}
           </div>
@@ -317,7 +318,7 @@ function MetaCard({
             <DropdownMenuTrigger asChild>
               <button
                 className="grid h-8 w-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
-                aria-label="Mais ações"
+                aria-label={t("card.moreActions")}
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
@@ -325,24 +326,24 @@ function MetaCard({
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onSelect={onEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
-                Editar meta
+                {t("card.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onChangeImage}>
                 <ImageIcon className="mr-2 h-4 w-4" />
-                Trocar imagem
+                {t("card.changeImage")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onAdd}>
                 <Plus className="mr-2 h-4 w-4" />
-                Atualizar valor
+                {t("card.updateValue")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onRemove} disabled={progresso <= 0}>
                 <Minus className="mr-2 h-4 w-4" />
-                Remover valor
+                {t("card.removeValue")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Excluir meta
+                {t("card.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -354,8 +355,8 @@ function MetaCard({
             {meta.nome}
           </p>
           <p className="line-clamp-1 text-[12px] text-white/85 drop-shadow">
-            {STATUS_LABEL[status]}
-            {meta.prazo ? ` · até ${formatDateBR(meta.prazo)}` : ""}
+            {t(`status.${status}`)}
+            {meta.prazo ? t("card.untilDate", { date: formatDateBR(meta.prazo) }) : ""}
           </p>
         </div>
       </div>
