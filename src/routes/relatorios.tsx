@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
@@ -24,7 +26,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS } from "date-fns/locale";
 import {
   PieChart,
   Pie,
@@ -42,7 +44,7 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
-import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
@@ -98,9 +100,10 @@ export const Route = createFileRoute("/relatorios")({
 type Periodo = "mes" | "anterior" | "3m" | "6m" | "trimestre" | "semestre" | "ano" | "custom";
 
 function RelatoriosPage() {
+  const { t } = useTranslation("relatorios");
   const ready = useBootstrap();
   const { profile } = useAuth();
-  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
+  const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
@@ -230,27 +233,25 @@ function RelatoriosPage() {
     if (periodo === "custom" && customRange.from && customRange.to) {
       return `${format(customRange.from, "dd/MM/yyyy")} – ${format(customRange.to, "dd/MM/yyyy")}`;
     }
-    if (periodo === "trimestre") return "Últimos 3 meses";
-    if (periodo === "semestre") return "Últimos 6 meses";
-    if (periodo === "ano") return "Últimos 12 meses";
-    if (periodo === "3m") return "Últimos 3 meses";
-    if (periodo === "6m") return "Últimos 6 meses";
+    if (periodo === "trimestre" || periodo === "3m") return t("period.label3m");
+    if (periodo === "semestre" || periodo === "6m") return t("period.label6m");
+    if (periodo === "ano") return t("period.label12m");
     return formatMonthYear(ym.ano, ym.mes);
-  }, [periodo, customRange, ym]);
+  }, [periodo, customRange, ym, t]);
 
   function exportCSV() {
     const rows: string[] = [];
-    rows.push("Período;" + periodoLabel);
+    rows.push(t("export.period") + ";" + periodoLabel);
     rows.push("");
-    rows.push("Mês;Receitas;Despesas;Saldo");
+    rows.push(`${t("export.month")};${t("export.receitas")};${t("export.despesas")};${t("export.saldo")}`);
     for (const m of historicoMeses) {
       rows.push(`${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`);
     }
     rows.push("");
-    rows.push("Totais;" + totaisPeriodo.receitas.toFixed(2) + ";" + totaisPeriodo.despesas.toFixed(2) + ";" + totaisPeriodo.saldo.toFixed(2));
+    rows.push(`${t("export.totals")};${totaisPeriodo.receitas.toFixed(2)};${totaisPeriodo.despesas.toFixed(2)};${totaisPeriodo.saldo.toFixed(2)}`);
     rows.push("");
-    rows.push("Gastos por categoria (mês de referência)");
-    rows.push("Categoria;Valor;%");
+    rows.push(t("export.gastosCategoria"));
+    rows.push(`${t("export.categoria")};${t("export.valor")};${t("export.pct")}`);
     for (const c of resumo.porCategoria) {
       rows.push(`${c.nome};${c.valor.toFixed(2)};${c.pct.toFixed(1)}`);
     }
@@ -293,13 +294,13 @@ function RelatoriosPage() {
       <header className="flex items-start justify-between gap-3 pt-2 animate-rise">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            {vocab.relatoriosTitle}
+            {t(`title.${tipo}`)}
           </p>
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            {vocab.relatoriosSubtitle}
+            {t(`subtitle.${tipo}`)}
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0 rounded-full border border-border bg-card p-1">
@@ -325,11 +326,11 @@ function RelatoriosPage() {
         <div className="-mx-1 flex w-full flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
           {(
             [
-              { id: "mes", label: "Mês atual" },
-              { id: "anterior", label: "Mês anterior" },
-              { id: "trimestre", label: "Trimestre" },
-              { id: "semestre", label: "Semestre" },
-              { id: "ano", label: "Ano" },
+              { id: "mes", label: t("period.mes") },
+              { id: "anterior", label: t("period.anterior") },
+              { id: "trimestre", label: t("period.trimestre") },
+              { id: "semestre", label: t("period.semestre") },
+              { id: "ano", label: t("period.ano") },
             ] as Array<{ id: Periodo; label: string }>
           ).map((p) => (
             <button
@@ -358,13 +359,13 @@ function RelatoriosPage() {
                 <CalendarRange className="h-3.5 w-3.5" />
                 {periodo === "custom" && customRange.from && customRange.to
                   ? `${format(customRange.from, "dd/MM")} – ${format(customRange.to, "dd/MM")}`
-                  : "Personalizado"}
+                  : t("period.custom")}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="range"
-                locale={ptBR}
+                locale={i18n.language === "en" ? enUS : ptBR}
                 selected={customRange as any}
                 onSelect={(r: any) => {
                   setCustomRange(r ?? {});
@@ -378,10 +379,10 @@ function RelatoriosPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
-            <Download className="h-3.5 w-3.5" /> CSV
+            <Download className="h-3.5 w-3.5" /> {t("actions.csv")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
-            <Printer className="h-3.5 w-3.5" /> Imprimir
+            <Printer className="h-3.5 w-3.5" /> {t("actions.print")}
           </Button>
         </div>
       </div>

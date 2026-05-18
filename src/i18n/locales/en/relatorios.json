@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "title": "Reports — Gasto Inteligente",
+    "description": "Understand where your money went and how to improve next month."
+  },
+  "title": {
+    "pessoa_fisica": "Personal Reports",
+    "mei": "MEI Reports",
+    "empresa": "Business Reports"
+  },
+  "subtitle": {
+    "pessoa_fisica": "Understand your spending and financial evolution.",
+    "mei": "See how money came in, went out, and where to improve.",
+    "empresa": "Track performance, costs, revenue, and company balance."
+  },
+  "period": {
+    "mes": "Current month",
+    "anterior": "Previous month",
+    "trimestre": "Quarter",
+    "semestre": "Semester",
+    "ano": "Year",
+    "custom": "Custom",
+    "label3m": "Last 3 months",
+    "label6m": "Last 6 months",
+    "label12m": "Last 12 months"
+  },
+  "aria": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "actions": {
+    "csv": "CSV",
+    "print": "Print",
+    "generateSummary": "Generate month summary",
+    "anotherVersion": "Another version"
+  },
+  "totals": {
+    "title": "Period totals",
+    "monthsCount": "{{period}} · {{count}} months",
+    "receitas": "Income",
+    "despesas": "Expenses",
+    "saldo": "Balance"
+  },
+  "sections": {
+    "resumo": "Month summary",
+    "comparativo": "Comparison with previous month",
+    "graficos": "Charts",
+    "topDespesas": "Top 5 expenses",
+    "insights": "Month insights",
+    "fechamento": "Month closing"
+  },
+  "kpi": {
+    "receitas": "Income",
+    "despesas": "Expenses",
+    "saldo": "Balance",
+    "cartao": "On card",
+    "contas": "Paid in bills",
+    "guardado": "Saved",
+    "maiorGasto": "Top expense",
+    "estouros": "Overruns"
+  },
+  "chart": {
+    "gastosCategoria": "Spending by category",
+    "receitasDespesas": "Income vs Expenses",
+    "evolucaoSaldo": "Balance evolution",
+    "topCategorias": "Top 5 categories",
+    "emptyGastos": "No spending this month.",
+    "emptyCategorias": "No categories this month.",
+    "pctDoMes": "% of month"
+  },
+  "comparativo": {
+    "anterior": "Previous: {{valor}}",
+    "noChange": "No change",
+    "maiorAlta": "📈 Biggest increase",
+    "maiorReducao": "📉 Biggest reduction"
+  },
+  "fechamento": {
+    "estadoMes": "Month status",
+    "pontuacao": "Score: {{pontuacao}}/100",
+    "entradas": "Income",
+    "saidas": "Outflow",
+    "saldoFinal": "Final balance",
+    "guardado": "Saved",
+    "contasPagas": "Bills paid",
+    "contasPendentes": "Pending bills",
+    "orcEstourados": "Budget overruns",
+    "melhorCategoria": "Best category",
+    "none": "—"
+  },
+  "insights": {
+    "empty": "Not enough data to generate insights for this month."
+  },
+  "estado": {
+    "excelente": {
+      "titulo": "Excellent",
+      "frases": [
+        "You closed the month very well! 🎉 Money left over, you controlled spending, and even managed to save. Keep it up!",
+        "Excellent month! 🔥 You did great on almost everything. Keep going and next month will be even better.",
+        "Way to go! ✨ This month was a breather for your wallet and you still had money left to save."
+      ]
+    },
+    "bom": {
+      "titulo": "Good",
+      "frases": [
+        "Nice! Your month was positive 😄 You kept good control and stayed within expectations in most categories.",
+        "Positive month! 👏 You balanced income and expenses and still closed in the black.",
+        "Well done! 💪 Quiet month, no excess, and the balance stayed positive."
+      ]
+    },
+    "mediano": {
+      "titulo": "Average",
+      "frases": [
+        "It was an okay month 🙂 Things didn't get totally out of control, but you can adjust a few points to save more next time.",
+        "This month was balanced, not too bad, not too great 😅",
+        "Average month 🤔 You managed to close it, but you can tighten some expenses to have more left over."
+      ]
+    },
+    "atencao": {
+      "titulo": "Attention",
+      "frases": [
+        "Oops! This month needed more care ⚠️ Your spending went past the ideal in some areas.",
+        "Whoa, this month got a little out of control 👀 It's worth looking at the categories that grew the most.",
+        "Attention! 🚧 Some categories went over budget and the balance got tight. Let's reorganize for next month."
+      ]
+    },
+    "critico": {
+      "titulo": "Critical",
+      "frases": [
+        "Alert on 🚨 This month weighed more on your wallet. It's worth reviewing categories and bills so next month closes better.",
+        "This month was tough 😬 More outflow than income and several areas bursting — time to breathe and replan.",
+        "Critical month 🚨 Important to review where you can cut back before the next one rolls around."
+      ]
+    }
+  },
+  "insightTexts": {
+    "maiorGasto": [
+      "Your biggest spending was on {{categoria}}",
+      "{{categoria}} led spending this month",
+      "{{categoria}} weighed the most on your wallet"
+    ],
+    "guardou": [
+      "You saved {{valor}} this month 🎯",
+      "Nice! {{valor}} went to reserves 💰",
+      "{{valor}} went into the piggy bank ✨"
+    ],
+    "cartaoAlto": [
+      "The card represented {{pct}}% of expenses 💳",
+      "Watch the card: {{pct}}% of everything you spent was on it 👀"
+    ],
+    "saldoNegativo": [
+      "You had more outflows than inflows this month 📉",
+      "This month more went out than came in — worth reviewing 📉",
+      "The balance closed in the red ⛔"
+    ],
+    "dentroOrcamento": [
+      "Nice! You stayed within budget in {{n}} category(s) ✅",
+      "{{n}} category(s) under control 👏"
+    ],
+    "atrasadas": [
+      "You had {{n}} overdue bill(s) this month 👀",
+      "{{n}} bill(s) passed the due date — keep an eye on them ⏰"
+    ],
+    "altaCategoria": "Your biggest increase was in {{categoria}} ({{valor}})",
+    "reducaoCategoria": "You saved {{valor}} on {{categoria}}",
+    "gastouMais": "You spent {{valor}} more than last month",
+    "gastouMenos": "You spent {{valor}} less than last month",
+    "estouroOrcamento": "You exceeded the budget in {{categorias}}"
+  },
+  "classificacao": {
+    "sobrouMais20": "More than 20% of income left over",
+    "saldoPositivo": "Positive balance",
+    "saldoNegativo": "Negative balance",
+    "guardouDinheiro": "Saved money",
+    "nenhumEstouro": "No budget overruns",
+    "estouroCount": "{{count}} budget overrun(s)",
+    "atrasadaCount": "{{count}} overdue bill(s)",
+    "saldoMelhor": "Balance better than last month",
+    "saldoPior": "Balance worse than last month"
+  },
+  "resumoTexto": {
+    "intro": "In {{mes}}, you received {{receitas}} and spent {{despesas}}.",
+    "sobrou": "{{valor}} left over this month 💰",
+    "negativo": "The balance was negative by {{valor}} 📉",
+    "maiorGasto": "Your biggest spending was on {{categoria}} 🛒",
+    "guardou": "and you still managed to save {{valor}} 🎯",
+    "atrasadas": "Attention: {{count}} bill(s) were overdue ⏰"
+  },
+  "export": {
+    "period": "Period",
+    "month": "Month",
+    "receitas": "Income",
+    "despesas": "Expenses",
+    "saldo": "Balance",
+    "totals": "Totals",
+    "gastosCategoria": "Spending by category (reference month)",
+    "categoria": "Category",
+    "valor": "Amount",
+    "pct": "%"
+  }
+}

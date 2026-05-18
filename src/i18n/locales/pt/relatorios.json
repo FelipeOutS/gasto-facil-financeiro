@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "title": "Relatórios — Gasto Inteligente",
+    "description": "Entenda para onde seu dinheiro foi e como melhorar no próximo mês."
+  },
+  "title": {
+    "pessoa_fisica": "Relatórios pessoais",
+    "mei": "Relatórios do MEI",
+    "empresa": "Relatórios empresariais"
+  },
+  "subtitle": {
+    "pessoa_fisica": "Entenda seus gastos e sua evolução financeira.",
+    "mei": "Veja como o dinheiro entrou, saiu e onde melhorar.",
+    "empresa": "Acompanhe desempenho, custos, entradas e saldo da empresa."
+  },
+  "period": {
+    "mes": "Mês atual",
+    "anterior": "Mês anterior",
+    "trimestre": "Trimestre",
+    "semestre": "Semestre",
+    "ano": "Ano",
+    "custom": "Personalizado",
+    "label3m": "Últimos 3 meses",
+    "label6m": "Últimos 6 meses",
+    "label12m": "Últimos 12 meses"
+  },
+  "aria": {
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês"
+  },
+  "actions": {
+    "csv": "CSV",
+    "print": "Imprimir",
+    "generateSummary": "Gerar resumo do mês",
+    "anotherVersion": "Outra versão"
+  },
+  "totals": {
+    "title": "Totais do período",
+    "monthsCount": "{{period}} · {{count}} meses",
+    "receitas": "Receitas",
+    "despesas": "Despesas",
+    "saldo": "Saldo"
+  },
+  "sections": {
+    "resumo": "Resumo do mês",
+    "comparativo": "Comparativo com o mês anterior",
+    "graficos": "Gráficos",
+    "topDespesas": "Top 5 maiores despesas",
+    "insights": "Insights do mês",
+    "fechamento": "Fechamento do mês"
+  },
+  "kpi": {
+    "receitas": "Receitas",
+    "despesas": "Despesas",
+    "saldo": "Saldo",
+    "cartao": "No cartão",
+    "contas": "Pago em contas",
+    "guardado": "Guardado",
+    "maiorGasto": "Maior gasto",
+    "estouros": "Estouros"
+  },
+  "chart": {
+    "gastosCategoria": "Gastos por categoria",
+    "receitasDespesas": "Receitas vs Despesas",
+    "evolucaoSaldo": "Evolução do saldo",
+    "topCategorias": "Top 5 categorias",
+    "emptyGastos": "Sem gastos no mês.",
+    "emptyCategorias": "Sem categorias no mês.",
+    "pctDoMes": "% do mês"
+  },
+  "comparativo": {
+    "anterior": "Anterior: {{valor}}",
+    "noChange": "Sem variação",
+    "maiorAlta": "📈 Maior alta",
+    "maiorReducao": "📉 Maior redução"
+  },
+  "fechamento": {
+    "estadoMes": "Estado do mês",
+    "pontuacao": "Pontuação: {{pontuacao}}/100",
+    "entradas": "Entradas",
+    "saidas": "Saídas",
+    "saldoFinal": "Saldo final",
+    "guardado": "Guardado",
+    "contasPagas": "Contas pagas",
+    "contasPendentes": "Contas pendentes",
+    "orcEstourados": "Orçamentos estourados",
+    "melhorCategoria": "Melhor categoria",
+    "none": "—"
+  },
+  "insights": {
+    "empty": "Sem dados suficientes para gerar insights neste mês."
+  },
+  "estado": {
+    "excelente": {
+      "titulo": "Excelente",
+      "frases": [
+        "Você fechou o mês muito bem! 🎉 Sobrou dinheiro, deu pra controlar os gastos e ainda guardar uma parte. Bora manter esse ritmo!",
+        "Mês excelente! 🔥 Você mandou bem em quase tudo. Continua assim que o próximo vai ser ainda melhor.",
+        "Boa demais! ✨ Esse mês foi de respiro pro bolso e ainda sobrou pra guardar."
+      ]
+    },
+    "bom": {
+      "titulo": "Bom",
+      "frases": [
+        "Boa! Seu mês foi positivo 😄 Você conseguiu manter um bom controle e ficou dentro do esperado na maior parte das categorias.",
+        "Mês positivo! 👏 Deu pra equilibrar entradas e saídas e ainda fechar no azul.",
+        "Mandou bem! 💪 Mês tranquilo, nada de exagero, e o saldo ficou positivo."
+      ]
+    },
+    "mediano": {
+      "titulo": "Mediano",
+      "frases": [
+        "Foi um mês ok 🙂 Não saiu totalmente do controle, mas dá pra ajustar alguns pontos pra sobrar mais no próximo.",
+        "Esse mês ficou no equilíbrio, nem tão ruim, nem tão incrível 😅",
+        "Mês mediano 🤔 Deu pra fechar, mas dá pra apertar uns gastos pra sobrar mais."
+      ]
+    },
+    "atencao": {
+      "titulo": "Atenção",
+      "frases": [
+        "Ops! Esse mês pediu mais cuidado ⚠️ Seus gastos passaram do ideal em algumas áreas.",
+        "Opa, esse mês saiu um pouco do controle 👀 Vale dar uma olhada nas categorias que mais cresceram.",
+        "Atenção! 🚧 Algumas categorias estouraram e o saldo apertou. Bora reorganizar pro próximo."
+      ]
+    },
+    "critico": {
+      "titulo": "Crítico",
+      "frases": [
+        "Alerta ligado 🚨 Esse mês pesou mais no bolso. Vale revisar categorias e contas pro próximo fechar melhor.",
+        "Esse mês foi puxado 😬 Saída maior que entrada e várias áreas estourando — hora de respirar e replanejar.",
+        "Mês crítico 🚨 Importante revisar onde dá pra cortar antes do próximo virar."
+      ]
+    }
+  },
+  "insightTexts": {
+    "maiorGasto": [
+      "Seu maior gasto foi com {{categoria}}",
+      "{{categoria}} liderou os gastos esse mês",
+      "{{categoria}} foi quem mais pesou no bolso"
+    ],
+    "guardou": [
+      "Você guardou {{valor}} esse mês 🎯",
+      "Boa! {{valor}} foram pra reserva 💰",
+      "{{valor}} foram parar no cofrinho ✨"
+    ],
+    "cartaoAlto": [
+      "O cartão representou {{pct}}% das despesas 💳",
+      "Olho no cartão: {{pct}}% de tudo que você gastou foi nele 👀"
+    ],
+    "saldoNegativo": [
+      "Você teve mais saídas do que entradas neste mês 📉",
+      "Esse mês saiu mais do que entrou — vale revisar 📉",
+      "O saldo fechou no vermelho ⛔"
+    ],
+    "dentroOrcamento": [
+      "Boa! Você ficou dentro do orçamento em {{n}} categoria(s) ✅",
+      "{{n}} categoria(s) no controle 👏"
+    ],
+    "atrasadas": [
+      "Você teve {{n}} conta(s) atrasada(s) neste mês 👀",
+      "{{n}} conta(s) passaram do prazo — fica de olho ⏰"
+    ],
+    "altaCategoria": "Sua maior alta foi em {{categoria}} ({{valor}})",
+    "reducaoCategoria": "Você economizou {{valor}} em {{categoria}}",
+    "gastouMais": "Você gastou {{valor}} a mais que no mês anterior",
+    "gastouMenos": "Você gastou {{valor}} a menos que no mês anterior",
+    "estouroOrcamento": "Você ultrapassou o orçamento em {{categorias}}"
+  },
+  "classificacao": {
+    "sobrouMais20": "Sobrou mais de 20% da renda",
+    "saldoPositivo": "Saldo positivo",
+    "saldoNegativo": "Saldo negativo",
+    "guardouDinheiro": "Guardou dinheiro",
+    "nenhumEstouro": "Nenhum orçamento estourado",
+    "estouroCount": "{{count}} orçamento(s) estourado(s)",
+    "atrasadaCount": "{{count}} conta(s) atrasada(s)",
+    "saldoMelhor": "Saldo melhor que o mês anterior",
+    "saldoPior": "Saldo pior que o mês anterior"
+  },
+  "resumoTexto": {
+    "intro": "Em {{mes}}, você recebeu {{receitas}} e gastou {{despesas}}.",
+    "sobrou": "Sobrou {{valor}} no mês 💰",
+    "negativo": "O saldo ficou negativo em {{valor}} 📉",
+    "maiorGasto": "Seu maior gasto foi em {{categoria}} 🛒",
+    "guardou": "e você ainda conseguiu guardar {{valor}} 🎯",
+    "atrasadas": "Atenção: {{count}} conta(s) ficaram atrasadas ⏰"
+  },
+  "export": {
+    "period": "Período",
+    "month": "Mês",
+    "receitas": "Receitas",
+    "despesas": "Despesas",
+    "saldo": "Saldo",
+    "totals": "Totais",
+    "gastosCategoria": "Gastos por categoria (mês de referência)",
+    "categoria": "Categoria",
+    "valor": "Valor",
+    "pct": "%"
+  }
+}
