@@ -901,12 +901,13 @@ function LimiteMensalCard({
   passouLimite: boolean;
   proximoLimite: boolean;
 }) {
+  const { t } = useTranslation("dashboard");
   return (
     <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Limite mensal
+            {t("limiteMensal.eyebrow")}
           </p>
           <p className="num mt-1 text-sm font-semibold">
             {formatBRL(total)} <span className="font-normal text-muted-foreground">/ {formatBRL(limiteTotal)}</span>
@@ -926,16 +927,16 @@ function LimiteMensalCard({
       {passouLimite ? (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Limite ultrapassado em {formatBRL(total - limiteTotal)}
+          {t("limiteMensal.ultrapassado", { valor: formatBRL(total - limiteTotal) })}
         </p>
       ) : proximoLimite ? (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Você já usou {Math.round((total / limiteTotal) * 100)}% do limite
+          {t("limiteMensal.quase", { pct: Math.round((total / limiteTotal) * 100) })}
         </p>
       ) : (
         <p className="num mt-2 text-[11px] text-muted-foreground">
-          {Math.round((total / limiteTotal) * 100)}% usado
+          {t("limiteMensal.usado", { pct: Math.round((total / limiteTotal) * 100) })}
         </p>
       )}
     </section>
