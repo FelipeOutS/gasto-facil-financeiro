@@ -3960,20 +3960,21 @@ function OrcamentoMock() {
 /* ============================== CONTAS MOCK ============================== */
 
 function ContasMock() {
+  const { t } = useTranslation("landing");
   const contas = [
-    { n: "Aluguel", v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: "Pago" },
-    { n: "Internet", v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: "Em 3 dias" },
-    { n: "Energia", v: "R$ 248,30", d: "18/12", tone: "info" as const, label: "Em 9 dias" },
-    { n: "Cliente — projeto", v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: "A receber" },
+    { n: t("mockup.contas.items.rent"), v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: t("mockup.contas.labels.paid") },
+    { n: t("mockup.contas.items.internet"), v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: t("mockup.contas.labels.in3") },
+    { n: t("mockup.contas.items.energy"), v: "R$ 248,30", d: "18/12", tone: "info" as const, label: t("mockup.contas.labels.in9") },
+    { n: t("mockup.contas.items.client"), v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: t("mockup.contas.labels.toReceive") },
   ];
   return (
     <MockShell>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            Contas · dezembro
+            {t("mockup.contas.eyebrow")}
           </p>
-          <p className="text-base font-bold text-slate-900">R$ 1.818,20 em aberto</p>
+          <p className="text-base font-bold text-slate-900">{t("mockup.contas.open")}</p>
         </div>
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 text-amber-700">
           <CalendarClock className="h-5 w-5" />
