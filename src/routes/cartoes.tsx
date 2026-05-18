@@ -2040,10 +2040,10 @@ function CartaoFormDialog({
 
                 <section>
                   <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Aparência
+                    {t("form.appearanceTitle")}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Escolha uma cor para identificar seu cartão.
+                    {t("form.appearanceHint")}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2.5">
                     {CORES_CARTAO.map((c) => {
