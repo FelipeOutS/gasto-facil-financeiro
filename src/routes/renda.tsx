@@ -785,9 +785,9 @@ function RendaPage() {
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Evolução
+                {t("charts.evolutionKicker")}
               </p>
-              <h3 className="text-sm font-bold">Últimos 6 meses</h3>
+              <h3 className="text-sm font-bold">{t("charts.evolutionTitle")}</h3>
             </div>
             {(() => {
               const valores = evolucao6m.map((e) => e.total);
@@ -797,10 +797,10 @@ function RendaPage() {
               return (
                 <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Média: <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
+                    {t("charts.average")} <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
                   </span>
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Pico: <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
+                    {t("charts.peak")} <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
                   </span>
                 </div>
               );
