@@ -1216,7 +1216,7 @@ function RendaPage() {
                 return (
                   <div key={`${a}-${m}`} className="rounded-2xl bg-card-elevated p-3">
                     <p className="text-[11px] capitalize text-muted-foreground">
-                      {MONTH_SHORT[m - 1]}/{String(a).slice(-2)}
+                      {monthShort[m - 1]}/{String(a).slice(-2)}
                     </p>
                     <Money value={previsto} className="num mt-0.5 block text-base font-bold text-success" />
                   </div>
