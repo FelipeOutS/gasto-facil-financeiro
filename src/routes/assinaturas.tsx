@@ -420,11 +420,11 @@ function AssinaturasPage() {
           <div className="flex items-center gap-2 text-sky-400">
             <Sparkles className="h-4 w-4" />
             <h2 className="text-sm font-semibold">
-              Detectamos {suspeitas.length} possível(is) recorrência(s)
+              {t("suspects.heading", { count: suspeitas.length })}
             </h2>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Confirme para começar a acompanhar.
+            {t("suspects.hint")}
           </p>
           <ul className="mt-3 space-y-2">
             {suspeitas.map((r) => (
@@ -445,7 +445,7 @@ function AssinaturasPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{r.nome}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatBRL(r.valor)} · {TIPO_LABEL[r.tipoRecorrencia]} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? "Sem categoria"} · {FREQ_LABEL[r.frequencia]}
+                      {formatBRL(r.valor)} · {tipoLabel(r.tipoRecorrencia)} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? t("suspects.noCategory")} · {freqLabel(r.frequencia)}
                     </p>
                   </div>
                 </div>
@@ -458,20 +458,20 @@ function AssinaturasPage() {
                       setDialogOpen(true);
                     }}
                   >
-                    Editar
+                    {t("actions.edit")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleIgnorar(r)}
                   >
-                    Ignorar
+                    {t("actions.ignore")}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => handleConfirmarSuspeita(r)}
                   >
-                    <Check className="h-4 w-4" /> Confirmar
+                    <Check className="h-4 w-4" /> {t("actions.confirm")}
                   </Button>
                 </div>
               </li>
