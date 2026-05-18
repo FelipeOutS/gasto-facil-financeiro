@@ -1608,7 +1608,7 @@ function FaturaSheet({
                                         tabIndex={0}
                                         onClick={(e) => e.stopPropagation()}
                                         className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-card focus:outline-none"
-                                        aria-label="Opções da compra"
+                                        aria-label={t("sheet.purchaseOptions")}
                                       >
                                         <MoreHorizontal className="h-4 w-4" />
                                       </span>
