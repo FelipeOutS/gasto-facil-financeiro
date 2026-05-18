@@ -803,18 +803,19 @@ function StatusPill({
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const { t } = useTranslation("contas-a-pagar");
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center animate-rise">
       <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground animate-pop">
         <Receipt className="h-6 w-6" />
       </span>
-      <p className="text-sm font-semibold">Sem boletos te perseguindo por enquanto</p>
+      <p className="text-sm font-semibold">{t("empty.title")}</p>
       <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-        Cadastre uma conta e deixe o app lembrar por você antes de vencer.
+        {t("empty.subtitle")}
       </p>
       <Button size="sm" className="card-press rounded-full mt-4" onClick={onAdd}>
         <Plus className="mr-1 h-4 w-4" />
-        Adicionar primeira conta
+        {t("empty.addFirst")}
       </Button>
     </div>
   );
