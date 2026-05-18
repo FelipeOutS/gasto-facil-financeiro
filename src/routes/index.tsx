@@ -1088,6 +1088,7 @@ function ContasCard({
   resumo: ContasResumo;
   variant?: "default" | "sideTop";
 }) {
+  const { t } = useTranslation("dashboard");
   const hasAtrasada = resumo.atrasadasCount > 0;
   const hasPendentes = resumo.pendentesCount > 0 || hasAtrasada;
   const tudoPago = resumo.total > 0 && !hasPendentes;
@@ -1097,10 +1098,10 @@ function ContasCard({
   function vencimentoLabel(): string {
     const d = resumo.diasParaProxima;
     if (d === null) return "";
-    if (d < 0) return `vencida há ${Math.abs(d)}d`;
-    if (d === 0) return "vence hoje";
-    if (d === 1) return "vence amanhã";
-    return `vence em ${d}d`;
+    if (d < 0) return t("contas.vencimento.atrasada", { dias: Math.abs(d) });
+    if (d === 0) return t("contas.vencimento.hoje");
+    if (d === 1) return t("contas.vencimento.amanha");
+    return t("contas.vencimento.futuro", { dias: d });
   }
 
   return (
@@ -1127,14 +1128,14 @@ function ContasCard({
           </span>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Próximas contas
+              {t("contas.eyebrow")}
             </p>
             <h2 className="text-sm font-semibold">
               {semContas
-                ? "Cadastre suas contas e não perca nenhum vencimento"
+                ? t("contas.semContas")
                 : tudoPago
-                  ? "Tudo pago neste mês 🎉"
-                  : `${formatBRL(resumo.pendente)} pendentes`}
+                  ? t("contas.tudoPago")
+                  : t("contas.pendentes", { valor: formatBRL(resumo.pendente) })}
             </h2>
           </div>
         </div>
@@ -1142,14 +1143,14 @@ function ContasCard({
           to="/contas-a-pagar"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Ver →
+          {t("contas.ver")}
         </Link>
       </div>
 
       {!semContas && !tudoPago && resumo.proxima && (
         <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima a vencer
+            {t("contas.proximaVencer")}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.nome}</p>
@@ -1176,12 +1177,12 @@ function ContasCard({
         <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="num">
             {resumo.pendentesCount}{" "}
-            {resumo.pendentesCount === 1 ? "pendente" : "pendentes"}
+            {resumo.pendentesCount === 1 ? t("contas.pendenteSing") : t("contas.pendentePlur")}
           </span>
           <span>·</span>
           <span className={cn("num", hasAtrasada && "text-destructive font-medium")}>
             {resumo.atrasadasCount}{" "}
-            {resumo.atrasadasCount === 1 ? "atrasada" : "atrasadas"}
+            {resumo.atrasadasCount === 1 ? t("contas.atrasadaSing") : t("contas.atrasadaPlur")}
           </span>
         </div>
       )}
@@ -1190,7 +1191,7 @@ function ContasCard({
         <Link to="/contas-a-pagar" className="mt-3 block">
           <Button variant="outline" size="sm" className="w-full">
             <Plus className="mr-1 h-4 w-4" />
-            Adicionar conta
+            {t("contas.adicionar")}
           </Button>
         </Link>
       )}
