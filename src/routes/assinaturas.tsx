@@ -136,6 +136,7 @@ function describePrazo(t: TFn, iso?: string | null, locale = "pt-BR"): string {
 }
 
 function AssinaturasPage() {
+  const { t, freqLabel, statusLabel, tipoLabel } = useLabels();
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const ready = useBootstrap();
