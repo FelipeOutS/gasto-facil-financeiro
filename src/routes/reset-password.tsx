@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AuthShell } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,9 +69,8 @@ function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="space-y-1.5">
           <Label htmlFor="password">Nova senha</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             required
             value={password}
@@ -81,9 +81,8 @@ function ResetPasswordPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="confirm">Confirmar senha</Label>
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             autoComplete="new-password"
             required
             value={confirm}

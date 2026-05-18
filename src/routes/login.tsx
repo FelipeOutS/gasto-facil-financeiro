@@ -5,6 +5,7 @@ import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { traduzirErroAuth } from "@/lib/auth-messages";
@@ -90,9 +91,8 @@ function LoginForm() {
               Esqueci minha senha
             </Link>
           </div>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             required
             minLength={6}
