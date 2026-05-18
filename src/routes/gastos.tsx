@@ -451,8 +451,8 @@ function GastosPage() {
   }, [gastos, mesRef]);
 
   const referenceMonthCaption = mesRef === MES_REF_ALL
-    ? "Mostrando todos os gastos cadastrados"
-    : `Mostrando gastos referentes a ${ymToLabel(mesRef)}`;
+    ? t("monthRef.captionAll")
+    : t("monthRef.caption", { month: ymToLabel(mesRef) });
 
   const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
   function shiftMes(delta: number) {
