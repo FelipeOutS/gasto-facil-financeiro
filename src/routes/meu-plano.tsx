@@ -181,7 +181,7 @@ function MeuPlanoPage() {
   async function escolherPlano(tier: PlanTier) {
     if (isAdminMaster) return;
     if (!user?.id) {
-      toast.error("Faça login para assinar.");
+      toast.error(tp("toasts.loginToSubscribe"));
       return;
     }
     setSubmitting(tier);
@@ -198,7 +198,7 @@ function MeuPlanoPage() {
         return;
       }
       if (res.method === "card") {
-        toast.success("Redirecionando para o pagamento seguro do Mercado Pago…");
+        toast.success(tp("toasts.redirectingCard"));
         setPixCharge(null);
         await refresh();
         void listarPagamentos(user.id).then(setHistorico);
@@ -211,11 +211,11 @@ function MeuPlanoPage() {
         qr_code_base64: res.payment.qr_code_base64,
         ticket_url: res.payment.ticket_url,
       });
-      toast.success("Cobrança Pix gerada. Pague para ativar o plano.");
+      toast.success(tp("toasts.pixGenerated"));
       await refresh();
       void listarPagamentos(user.id).then(setHistorico);
     } catch {
-      toast.error("Erro ao iniciar pagamento.");
+      toast.error(tp("toasts.startPaymentError"));
     } finally {
       setSubmitting(null);
     }
@@ -232,12 +232,12 @@ function MeuPlanoPage() {
         return;
       }
       if (r.status === "approved") {
-        toast.success("Pagamento aprovado! Plano ativado.");
+        toast.success(tp("toasts.approvedActivated"));
         setPixCharge(null);
       } else if (["rejected", "cancelled", "expired"].includes(r.status)) {
-        toast.error("Pagamento recusado. Tente novamente.");
+        toast.error(tp("toasts.rejectedTryAgain"));
       } else {
-        toast.info("Pagamento ainda em análise. Tente novamente em instantes.");
+        toast.info(tp("toasts.stillAnalyzing"));
       }
       await refresh();
       void listarPagamentos(user.id).then(setHistorico);
@@ -249,11 +249,11 @@ function MeuPlanoPage() {
   async function iniciarTeste(tier: PlanTier) {
     if (isAdminMaster) return;
     if (!user?.id) {
-      toast.error("Faça login para iniciar o teste.");
+      toast.error(tp("toasts.loginToTrial"));
       return;
     }
     if (trialUsed) {
-      toast.error("Você já utilizou o teste gratuito.");
+      toast.error(tp("toasts.trialUsed"));
       return;
     }
     setSubmitting(tier);
@@ -264,10 +264,10 @@ function MeuPlanoPage() {
         toast.error(res.reason);
         return;
       }
-      toast.success(`Teste grátis ativado! ${PLAN_LABEL[tier]} liberado por 10 dias.`);
+      toast.success(tp("toasts.trialActivated", { plan: PLAN_LABEL[tier] }));
       await refresh();
     } catch {
-      toast.error("Erro ao iniciar o teste.");
+      toast.error(tp("toasts.trialError"));
     } finally {
       setSubmitting(null);
     }
