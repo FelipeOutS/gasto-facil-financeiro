@@ -287,7 +287,7 @@ function ContasAPagarPage() {
           <button
             onClick={() => changeMonth(-1)}
             className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Mês anterior"
+            aria-label={t("header.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
