@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { GastoForm } from "@/components/GastoForm";
 import { addGasto, findPossibleDuplicate } from "@/lib/store";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
+import i18n from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,21 +20,22 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/manual")({
-  head: () => ({ meta: [{ title: "Cadastrar manualmente — Gasto Inteligente" }] }),
+  head: () => ({ meta: [{ title: i18n.t("adicionar:manual.meta.title") }] }),
   component: Manual,
 });
 
 function Manual() {
+  const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const [pending, setPending] = useState<null | (() => void)>(null);
 
   useEffect(() => {
     if (!canWrite) {
-      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      requireSubscription(t("requirePlan"));
       navigate({ to: "/meu-plano" });
     }
-  }, [canWrite, requireSubscription, navigate]);
+  }, [canWrite, requireSubscription, navigate, t]);
 
   if (!canWrite) return null;
 
@@ -42,13 +45,13 @@ function Manual() {
         <Link
           to="/adicionar"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("header.back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Manual</p>
-          <h1 className="text-2xl font-bold tracking-tight">Novo gasto</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("manual.kicker")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("manual.title")}</h1>
         </div>
       </header>
 
@@ -58,11 +61,11 @@ function Manual() {
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
             const save = () => {
               if (!canWrite) {
-                requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+                requireSubscription(t("requirePlan"));
                 return;
               }
               addGasto(data);
-              toast.success("Gasto registrado. ✅");
+              toast.success(t("manual.toastSaved"));
               navigate({ to: "/" });
             };
             if (dup) {
@@ -77,20 +80,18 @@ function Manual() {
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Possível gasto duplicado</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esse gasto parece já ter sido cadastrado. Deseja salvar mesmo assim?
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("manual.dup.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("manual.dup.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("manual.dup.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 pending?.();
                 setPending(null);
               }}
             >
-              Salvar mesmo assim
+              {t("manual.dup.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
