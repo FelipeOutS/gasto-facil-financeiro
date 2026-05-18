@@ -24,6 +24,7 @@ import ptAssinaturas from "./locales/pt/assinaturas.json";
 import ptMeuPlano from "./locales/pt/meu-plano.json";
 import ptPerfil from "./locales/pt/perfil.json";
 import ptEmpresa from "./locales/pt/empresa.json";
+import ptOnboarding from "./locales/pt/onboarding.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -48,6 +49,7 @@ import enAssinaturas from "./locales/en/assinaturas.json";
 import enMeuPlano from "./locales/en/meu-plano.json";
 import enPerfil from "./locales/en/perfil.json";
 import enEmpresa from "./locales/en/empresa.json";
+import enOnboarding from "./locales/en/onboarding.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
