@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Fornecedores — Gasto Inteligente",
+    "description": "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais."
+  },
+  "header": {
+    "back": "Empresa Inteligente",
+    "title": "Fornecedores",
+    "subtitle": "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais.",
+    "report": "Relatório",
+    "new": "Novo"
+  },
+  "empty": {
+    "title": "Nenhum fornecedor cadastrado",
+    "subtitle": "Comece pelo CNPJ para preencher os dados automaticamente, ou cadastre manualmente.",
+    "cta": "Cadastrar fornecedor"
+  },
+  "dialog": {
+    "newTitle": "Novo fornecedor",
+    "newDesc": "Cadastre por CNPJ para preencher os dados automaticamente ou adicione manualmente.",
+    "tabCnpj": "Por CNPJ",
+    "tabManual": "Manualmente",
+    "cnpj": "CNPJ",
+    "cnpjPlaceholder": "00.000.000/0000-00",
+    "search": "Buscar",
+    "save": "Salvar fornecedor",
+    "cancel": "Cancelar"
+  },
+  "cnpjFields": {
+    "apelido": "Apelido (opcional)",
+    "apelidoPlaceholder": "Como você chama no dia a dia",
+    "telefone": "Telefone (opcional)",
+    "telefonePlaceholder": "(00) 00000-0000",
+    "email": "E-mail (opcional)",
+    "emailPlaceholder": "contato@fornecedor.com",
+    "obs": "Observações (opcional)"
+  },
+  "manual": {
+    "nome": "Nome do fornecedor *",
+    "nomePlaceholder": "Ex.: João Eletricista",
+    "apelido": "Apelido (opcional)",
+    "telefone": "Telefone (opcional)",
+    "email": "E-mail (opcional)",
+    "obs": "Observações (opcional)"
+  },
+  "edit": {
+    "title": "Editar fornecedor",
+    "desc": "Atualize os dados de contato e observações.",
+    "nome": "Nome *",
+    "apelido": "Apelido",
+    "telefone": "Telefone",
+    "email": "E-mail",
+    "obs": "Observações",
+    "cancel": "Cancelar",
+    "save": "Salvar alterações",
+    "saving": "Salvando…"
+  },
+  "remove": {
+    "title": "Remover fornecedor?",
+    "desc": "Este fornecedor será apagado da sua conta. Essa ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "confirm": "Remover",
+    "removing": "Removendo…"
+  },
+  "card": {
+    "inactive": "Inativo",
+    "editAria": "Editar",
+    "removeAria": "Remover",
+    "activate": "Ativar",
+    "deactivate": "Desativar"
+  },
+  "toasts": {
+    "loadError": "Não conseguimos carregar seus fornecedores.",
+    "duplicate": "Este fornecedor já está cadastrado na sua conta.",
+    "cnpjError": "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
+    "saved": "Fornecedor cadastrado.",
+    "saveError": "Não conseguimos salvar agora. Tente novamente.",
+    "nameRequired": "Informe o nome do fornecedor.",
+    "updated": "Fornecedor atualizado.",
+    "updateError": "Não conseguimos atualizar agora. Tente novamente.",
+    "activated": "Fornecedor ativado.",
+    "deactivated": "Fornecedor desativado.",
+    "toggleError": "Não conseguimos atualizar agora.",
+    "removed": "Fornecedor removido.",
+    "removeError": "Não conseguimos remover agora."
+  }
+}

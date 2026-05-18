@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "title": "Suppliers — Smart Expense",
+    "description": "Register suppliers by CNPJ and better organize your business expenses."
+  },
+  "header": {
+    "back": "Smart Business",
+    "title": "Suppliers",
+    "subtitle": "Register suppliers by CNPJ and better organize your business expenses.",
+    "report": "Report",
+    "new": "New"
+  },
+  "empty": {
+    "title": "No suppliers registered",
+    "subtitle": "Start with the CNPJ to fill in data automatically, or register manually.",
+    "cta": "Register supplier"
+  },
+  "dialog": {
+    "newTitle": "New supplier",
+    "newDesc": "Register by CNPJ to auto-fill data or add manually.",
+    "tabCnpj": "By CNPJ",
+    "tabManual": "Manually",
+    "cnpj": "CNPJ",
+    "cnpjPlaceholder": "00.000.000/0000-00",
+    "search": "Search",
+    "save": "Save supplier",
+    "cancel": "Cancel"
+  },
+  "cnpjFields": {
+    "apelido": "Nickname (optional)",
+    "apelidoPlaceholder": "What you call them day-to-day",
+    "telefone": "Phone (optional)",
+    "telefonePlaceholder": "(00) 00000-0000",
+    "email": "Email (optional)",
+    "emailPlaceholder": "contact@supplier.com",
+    "obs": "Notes (optional)"
+  },
+  "manual": {
+    "nome": "Supplier name *",
+    "nomePlaceholder": "Ex.: John the Electrician",
+    "apelido": "Nickname (optional)",
+    "telefone": "Phone (optional)",
+    "email": "Email (optional)",
+    "obs": "Notes (optional)"
+  },
+  "edit": {
+    "title": "Edit supplier",
+    "desc": "Update contact details and notes.",
+    "nome": "Name *",
+    "apelido": "Nickname",
+    "telefone": "Phone",
+    "email": "Email",
+    "obs": "Notes",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "saving": "Saving…"
+  },
+  "remove": {
+    "title": "Remove supplier?",
+    "desc": "This supplier will be deleted from your account. This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Remove",
+    "removing": "Removing…"
+  },
+  "card": {
+    "inactive": "Inactive",
+    "editAria": "Edit",
+    "removeAria": "Remove",
+    "activate": "Activate",
+    "deactivate": "Deactivate"
+  },
+  "toasts": {
+    "loadError": "We couldn't load your suppliers.",
+    "duplicate": "This supplier is already registered in your account.",
+    "cnpjError": "We couldn't look up this CNPJ right now. Please try again in a few minutes.",
+    "saved": "Supplier registered.",
+    "saveError": "We couldn't save right now. Please try again.",
+    "nameRequired": "Enter the supplier name.",
+    "updated": "Supplier updated.",
+    "updateError": "We couldn't update right now. Please try again.",
+    "activated": "Supplier activated.",
+    "deactivated": "Supplier deactivated.",
+    "toggleError": "We couldn't update right now.",
+    "removed": "Supplier removed.",
+    "removeError": "We couldn't remove right now."
+  }
+}
