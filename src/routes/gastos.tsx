@@ -875,23 +875,23 @@ function GastosPage() {
           <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium hover:bg-card-elevated transition-colors">
             <span className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Filtros avançados
+              {t("filters.advanced")}
             </span>
             <span className="text-xs text-muted-foreground">
-              {advOpen ? "Recolher" : "Expandir"}
+              {advOpen ? t("filters.collapse") : t("filters.expand")}
             </span>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-fade-in">
           <div className="mt-2 grid gap-3 rounded-2xl border border-border bg-card p-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="text-xs text-muted-foreground">Categoria</label>
+              <label className="text-xs text-muted-foreground">{t("filters.category")}</label>
               <Select value={catFilter} onValueChange={setCatFilter}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas categorias</SelectItem>
+                  <SelectItem value="todas">{t("filters.allCategories")}</SelectItem>
                   {categorias.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -901,37 +901,37 @@ function GastosPage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Pagamento</label>
+              <label className="text-xs text-muted-foreground">{t("filters.payment")}</label>
               <Select value={pagFilter} onValueChange={setPagFilter}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todos pagamentos</SelectItem>
+                  <SelectItem value="todas">{t("filters.allPayments")}</SelectItem>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {tPag(f.id, f.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Ordenar</label>
+              <label className="text-xs text-muted-foreground">{t("filters.order")}</label>
               <Select value={order} onValueChange={setOrder}>
                 <SelectTrigger className="mt-1 h-10 bg-card-elevated">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recente">Mais recente</SelectItem>
-                  <SelectItem value="antigo">Mais antigo</SelectItem>
-                  <SelectItem value="maior">Maior valor</SelectItem>
-                  <SelectItem value="menor">Menor valor</SelectItem>
+                  <SelectItem value="recente">{t("filters.orderRecent")}</SelectItem>
+                  <SelectItem value="antigo">{t("filters.orderOldest")}</SelectItem>
+                  <SelectItem value="maior">{t("filters.orderHighest")}</SelectItem>
+                  <SelectItem value="menor">{t("filters.orderLowest")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor mínimo (R$)</label>
+              <label className="text-xs text-muted-foreground">{t("filters.minValue")}</label>
               <Input
                 inputMode="decimal"
                 placeholder="0,00"
@@ -941,7 +941,7 @@ function GastosPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor máximo (R$)</label>
+              <label className="text-xs text-muted-foreground">{t("filters.maxValue")}</label>
               <Input
                 inputMode="decimal"
                 placeholder="0,00"
@@ -965,41 +965,48 @@ function GastosPage() {
                 setCustomFrom(undefined);
                 setCustomTo(undefined);
               }}
+              removeLabel={t("filters.active.remove", { label: periodoChipLabel })}
             />
           )}
           {categoriaAtiva && (
             <ActiveChip
-              label={`Categoria: ${categoriaAtiva.nome}`}
+              label={t("filters.active.category", { name: categoriaAtiva.nome })}
               onRemove={() => setCatFilter("todas")}
+              removeLabel={t("filters.active.remove", { label: categoriaAtiva.nome })}
             />
           )}
           {pagamentoAtivo && (
             <ActiveChip
-              label={`Pagamento: ${pagamentoAtivo.label}`}
+              label={t("filters.active.payment", { name: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
               onRemove={() => setPagFilter("todas")}
+              removeLabel={t("filters.active.remove", { label: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
             />
           )}
           {hasMin && (
             <ActiveChip
-              label={`Acima de ${formatBRL(minNum)}`}
+              label={t("filters.active.above", { value: formatBRL(minNum) })}
               onRemove={() => setValorMin("")}
             />
           )}
           {hasMax && (
             <ActiveChip
-              label={`Até ${formatBRL(maxNum)}`}
+              label={t("filters.active.below", { value: formatBRL(maxNum) })}
               onRemove={() => setValorMax("")}
             />
           )}
           {q.trim() && (
-            <ActiveChip label={`Busca: "${q.trim()}"`} onRemove={() => setQ("")} />
+            <ActiveChip
+              label={t("filters.active.search", { q: q.trim() })}
+              onRemove={() => setQ("")}
+            />
           )}
           {order !== "recente" && (
             <ActiveChip
-              label={`Ordem: ${
-                { antigo: "Mais antigo", maior: "Maior valor", menor: "Menor valor" }[order] ??
-                order
-              }`}
+              label={t("filters.active.order", {
+                name: t(
+                  `filters.order${order === "antigo" ? "Oldest" : order === "maior" ? "Highest" : order === "menor" ? "Lowest" : "Recent"}`,
+                ),
+              })}
               onRemove={() => setOrder("recente")}
             />
           )}
@@ -1009,7 +1016,7 @@ function GastosPage() {
             onClick={clearAll}
             className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
           >
-            Limpar filtros
+            {t("filters.clear")}
           </Button>
         </div>
       )}
@@ -1019,37 +1026,37 @@ function GastosPage() {
         <SummaryStat
           icon={<Hash className="h-4 w-4" />}
           tone="neutral"
-          label="Encontrados"
+          label={t("summary.found")}
           value={<CountNumber value={filtered.length} />}
-          hint={mesRef === "todos" ? "no período" : ymToLabel(mesRef)}
+          hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
         />
         <SummaryStat
           icon={<Wallet className="h-4 w-4" />}
           tone="brand"
-          label="Total"
+          label={t("summary.total")}
           value={<Money value={total} />}
-          hint="somatório dos itens"
+          hint={t("summary.totalHint")}
           highlight
         />
         <SummaryStat
           icon={<TrendingUp className="h-4 w-4" />}
           tone="info"
-          label="Média por gasto"
+          label={t("summary.avg")}
           value={<Money value={media} />}
-          hint={filtered.length ? `${filtered.length} itens` : "—"}
+          hint={filtered.length ? t("summary.avgHint", { count: filtered.length }) : t("summary.noValue")}
         />
         <SummaryStat
           icon={<Tag className="h-4 w-4" />}
           tone="success"
-          label="Top categoria"
+          label={t("summary.topCategory")}
           value={
             topCategoria ? (
               <span className="truncate block">{topCategoria.nome}</span>
             ) : (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">{t("summary.noValue")}</span>
             )
           }
-          hint={topCategoria ? formatBRL(topCategoria.valor) : "sem dados"}
+          hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
         />
       </div>
 
@@ -1060,22 +1067,22 @@ function GastosPage() {
             <Checkbox
               checked={allSelected ? true : someSelected ? "indeterminate" : false}
               onCheckedChange={() => toggleAllVisible()}
-              aria-label="Selecionar todos"
+              aria-label={t("bulk.selectAll")}
             />
             <span>
               {allSelected
-                ? `Todos selecionados (${filtered.length})`
+                ? t("bulk.allSelected", { count: filtered.length })
                 : selected.size > 0
-                  ? `${selected.size} selecionado${selected.size === 1 ? "" : "s"}`
+                  ? t("bulk.selected", { count: selected.size })
                   : hasAnyFilter
-                    ? `Selecionar todos filtrados (${filtered.length})`
-                    : `Selecionar todos (${filtered.length})`}
+                    ? t("bulk.selectFiltered", { count: filtered.length })
+                    : t("bulk.selectAllN", { count: filtered.length })}
             </span>
           </label>
           {selected.size > 0 && (
             <div className="flex items-center gap-2">
               <span className="num text-xs text-muted-foreground">
-                Total: {formatBRL(valorSelecionado)}
+                {t("bulk.total", { value: formatBRL(valorSelecionado) })}
               </span>
               <Button
                 size="sm"
@@ -1083,13 +1090,13 @@ function GastosPage() {
                 className="h-8 rounded-full px-3 text-xs"
                 onClick={clearSelection}
               >
-                Limpar
+                {t("bulk.clear")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-xs">
                     <CalendarIcon className="mr-1 h-3.5 w-3.5" />
-                    Mover p/ mês
+                    {t("bulk.moveToMonth")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
@@ -1100,10 +1107,10 @@ function GastosPage() {
                         const ids = Array.from(selected);
                         const n = await bulkSetMesReferencia(ids, o.value);
                         if (n > 0) {
-                          toast.success(`${n} gasto(s) movido(s) para ${o.label}.`);
+                          toast.success(t("bulk.moved", { count: n, month: o.label }));
                           clearSelection();
                         } else {
-                          toast.error("Não foi possível mover os gastos.");
+                          toast.error(t("bulk.moveError"));
                         }
                       }}
                     >
@@ -1119,7 +1126,7 @@ function GastosPage() {
                 onClick={() => setConfirmBulk(true)}
               >
                 <Trash2 className="mr-1 h-3.5 w-3.5" />
-                Excluir selecionados
+                {t("bulk.delete")}
               </Button>
             </div>
           )}
@@ -1131,37 +1138,34 @@ function GastosPage() {
         <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
           {hasAnyFilter ? (
             <>
-              <p className="font-medium text-foreground">Nada encontrado nesse filtro</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Tenta mudar o período, categoria ou forma de pagamento.
-              </p>
+              <p className="font-medium text-foreground">{t("empty.filteredTitle")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("empty.filteredSub")}</p>
               <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
-                Limpar filtros
+                {t("empty.clearFilters")}
               </Button>
             </>
           ) : mesRef !== "todos" ? (
             <>
-              <p className="font-medium text-foreground">Nada por aqui ainda</p>
+              <p className="font-medium text-foreground">{t("empty.monthTitle")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Seus gastos de {ymToLabel(mesRef)} aparecerão aqui.
+                {t("empty.monthSub", { month: ymToLabel(mesRef) })}
               </p>
               <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">Adicionar gasto em {ymToLabel(mesRef)}</Link>
+                <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
               </Button>
             </>
           ) : (
             <>
-              <p className="font-medium text-foreground">Nenhum gasto por aqui ainda</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Quando você lançar um gasto, ele aparece aqui bonitinho pra você acompanhar.
-              </p>
+              <p className="font-medium text-foreground">{t("empty.noneTitle")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("empty.noneSub")}</p>
               <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">Adicionar meu primeiro gasto</Link>
+                <Link to="/adicionar">{t("empty.noneCta")}</Link>
               </Button>
             </>
           )}
         </div>
       ) : (
+
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
