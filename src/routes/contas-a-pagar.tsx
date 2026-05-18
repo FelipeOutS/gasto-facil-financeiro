@@ -1531,12 +1531,11 @@ function ContaFormDialog({
           <AlertDialogHeader>
             <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">
               <Repeat className="h-3.5 w-3.5" />
-              Conta recorrente
+              {t("scope.badge")}
             </div>
-            <AlertDialogTitle>Como deseja aplicar esta alteração?</AlertDialogTitle>
+            <AlertDialogTitle>{t("scope.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está editando uma conta recorrente. Deseja aplicar esta alteração
-              somente nesta conta ou também nas demais recorrências?
+              {t("scope.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -1546,9 +1545,9 @@ function ContaFormDialog({
               onClick={() => applyEditScope("single")}
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
             >
-              <p className="text-sm font-semibold">Somente esta conta</p>
+              <p className="text-sm font-semibold">{t("scope.single")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera apenas a ocorrência de {formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0)}.
+                {t("scope.singleHint", { label: formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0) })}
               </p>
             </button>
             <button
@@ -1556,9 +1555,9 @@ function ContaFormDialog({
               onClick={() => applyEditScope("future")}
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
             >
-              <p className="text-sm font-semibold">Esta e as próximas</p>
+              <p className="text-sm font-semibold">{t("scope.future")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera esta ocorrência e todas as futuras (mantém o histórico passado).
+                {t("scope.futureHint")}
               </p>
             </button>
             <button
@@ -1566,15 +1565,15 @@ function ContaFormDialog({
               onClick={() => applyEditScope("all")}
               className="w-full rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10"
             >
-              <p className="text-sm font-semibold">Todas as recorrências</p>
+              <p className="text-sm font-semibold">{t("scope.all")}</p>
               <p className="text-xs text-muted-foreground">
-                Altera toda a série, incluindo passadas (ocorrências já pagas são preservadas).
+                {t("scope.allHint")}
               </p>
             </button>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("scope.cancel")}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
