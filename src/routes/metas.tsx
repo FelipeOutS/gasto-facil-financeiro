@@ -366,7 +366,7 @@ function MetaCard({
         {/* Bloco principal — Progresso da meta */}
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Progresso da meta
+            {t("card.progressLabel")}
           </p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <Money
@@ -374,7 +374,7 @@ function MetaCard({
               className="num text-3xl sm:text-4xl font-extrabold tracking-tight leading-none"
             />
             <span className="num text-sm text-muted-foreground whitespace-nowrap">
-              de <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
+              {t("card.of")} <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
             </span>
           </div>
 
@@ -407,7 +407,7 @@ function MetaCard({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500">
                 <PiggyBank className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs text-muted-foreground truncate">Guardado em reservas</span>
+              <span className="text-xs text-muted-foreground truncate">{t("card.savedInReserves")}</span>
             </div>
             <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.guardado)}</span>
           </div>
@@ -418,7 +418,7 @@ function MetaCard({
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
                   <Wallet className="h-3.5 w-3.5" />
                 </span>
-                <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
+                <span className="text-xs text-muted-foreground truncate">{t("card.addedDirect")}</span>
               </div>
               <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
             </div>
@@ -442,7 +442,7 @@ function MetaCard({
                 {isDone ? <Check className="h-3.5 w-3.5" /> : <Flag className="h-3.5 w-3.5" />}
               </span>
               <span className="text-xs font-semibold text-foreground truncate">
-                {isDone ? "Meta concluída" : "Falta para concluir"}
+                {isDone ? t("card.goalDone") : t("card.remaining")}
               </span>
             </div>
             <span className="num text-sm font-bold tabular-nums" style={{ color: meta.colorHex }}>
@@ -454,7 +454,7 @@ function MetaCard({
         {isDone ? (
           <div className="flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2.5 text-xs font-semibold text-success animate-pop">
             <Sparkles className="h-3.5 w-3.5" />
-            Meta batida! Você chegou lá. 🏆
+            {t("card.doneCelebrate")}
           </div>
         ) : (
           <Button
@@ -464,7 +464,7 @@ function MetaCard({
             onClick={onAdd}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Atualizar valor
+            {t("card.updateButton")}
           </Button>
         )}
       </div>
