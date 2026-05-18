@@ -395,31 +395,30 @@ function MeuPlanoPage() {
         {!isAdminMaster && isTrialActive && (
           <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
             <p>
-              <strong>Teste grátis ativo</strong> — {PLAN_LABEL[plan]} liberado por 10 dias.
+              <strong>{tp("trial.activeTitle")}</strong>{tp("trial.activeRelease", { plan: planName(plan) })}
             </p>
             <p className="mt-0.5 text-primary/80">
-              Faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"} para o fim do teste.
+              {tp("trial.daysLeft", { count: trialDaysLeft })}
             </p>
             {trialEndsAt && (
               <p className="mt-0.5 text-[10px] text-primary/70">
-                Termina em {new Date(trialEndsAt).toLocaleDateString("pt-BR")}.
+                {tp("trial.endsOn", { date: formatDate(trialEndsAt) })}
               </p>
             )}
           </div>
         )}
         {!isAdminMaster && trialEndsAt && status !== "teste" && trialUsed && !isTrialActive && (
           <p className="mt-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Seu teste gratuito de 10 dias já foi utilizado.
+            {tp("trial.alreadyUsed")}
           </p>
         )}
         {!isAdminMaster && isCancelled && accessUntil && (
           <div className="mt-3 rounded-xl border border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             <p>
-              <strong>Assinatura cancelada.</strong> Seu acesso premium continua até{" "}
-              {new Date(accessUntil).toLocaleDateString("pt-BR")}.
+              <strong>{tp("cancelled.title")}</strong>{tp("cancelled.untilPrefix", { date: formatDate(accessUntil) })}
             </p>
             <p className="mt-0.5">
-              Depois disso, os recursos premium serão bloqueados — seus dados continuam salvos.
+              {tp("cancelled.after")}
             </p>
           </div>
         )}
@@ -428,7 +427,7 @@ function MeuPlanoPage() {
           <div className="mt-5">
             <Button className="w-full rounded-2xl" variant="outline" disabled>
               <Crown className="mr-2 h-4 w-4 text-amber-500" />
-              Acesso total liberado
+              {tp("actions.totalAccessGranted")}
             </Button>
           </div>
         ) : aguardando ? (
@@ -439,7 +438,7 @@ function MeuPlanoPage() {
               disabled={submitting !== null}
             >
               <Hourglass className="mr-2 h-4 w-4" />
-              Gerar nova cobrança Pix
+              {tp("actions.newPixCharge")}
             </Button>
           </div>
         ) : ativoPago ? (
@@ -453,7 +452,7 @@ function MeuPlanoPage() {
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Trocar plano
+              {tp("actions.changePlan")}
             </Button>
             {!isCancelled ? (
               <Button
@@ -462,11 +461,11 @@ function MeuPlanoPage() {
                 onClick={() => setCancelOpen(true)}
               >
                 <XCircle className="mr-2 h-4 w-4" />
-                Cancelar assinatura
+                {tp("actions.cancelSubscription")}
               </Button>
             ) : (
               <Button variant="outline" className="rounded-2xl sm:flex-1" disabled>
-                Já cancelada
+                {tp("actions.alreadyCancelled")}
               </Button>
             )}
           </div>
@@ -479,8 +478,8 @@ function MeuPlanoPage() {
             >
               <Zap className="mr-2 h-4 w-4" />
               {expirado || recusado
-                ? `Regularizar pagamento — ${PLAN_LABEL[recommended]}`
-                : `Assinar agora — ${PLAN_LABEL[recommended]}`}
+                ? tp("actions.regularize", { plan: planName(recommended) })
+                : tp("actions.subscribeNow", { plan: planName(recommended) })}
             </Button>
           </div>
         )}
@@ -490,20 +489,20 @@ function MeuPlanoPage() {
       {!isAdminMaster && pixCharge && (pixCharge.qr_code_base64 || pixCharge.ticket_url) && (
         <section className="mt-4 overflow-hidden rounded-3xl border border-amber-500/30 bg-amber-500/5 p-5">
           <p className="text-[11px] uppercase tracking-widest text-amber-600 dark:text-amber-400">
-            Pague com Pix
+            {tp("pix.eyebrow")}
           </p>
-          <h3 className="mt-1 text-base font-bold">Escaneie o QR Code abaixo</h3>
+          <h3 className="mt-1 text-base font-bold">{tp("pix.title")}</h3>
           {pixCharge.qr_code_base64 && (
             <img
               src={`data:image/png;base64,${pixCharge.qr_code_base64}`}
-              alt="QR Code Pix"
+              alt={tp("pix.qrAlt")}
               className="mx-auto mt-3 h-48 w-48 rounded-xl bg-white p-2"
             />
           )}
           {pixCharge.qr_code && (
             <div className="mt-3">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                Pix Copia e Cola
+                {tp("pix.copyTitle")}
               </p>
               <textarea
                 readOnly
@@ -517,10 +516,10 @@ function MeuPlanoPage() {
                 className="mt-2 w-full rounded-xl"
                 onClick={() => {
                   navigator.clipboard.writeText(pixCharge.qr_code ?? "");
-                  toast.success("Código Pix copiado!");
+                  toast.success(tp("pix.copied"));
                 }}
               >
-                Copiar código Pix
+                {tp("pix.copy")}
               </Button>
             </div>
           )}
@@ -531,7 +530,7 @@ function MeuPlanoPage() {
               rel="noopener noreferrer"
               className="mt-3 block rounded-xl border border-border bg-card px-3 py-2 text-center text-xs font-semibold hover:border-primary/40"
             >
-              Abrir página de pagamento Mercado Pago
+              {tp("pix.openMP")}
             </a>
           )}
           {pixCharge.paymentId && (
@@ -541,18 +540,18 @@ function MeuPlanoPage() {
               onClick={checarPagamento}
               disabled={verifying}
             >
-              {verifying ? "Verificando…" : "Já paguei, verificar pagamento"}
+              {verifying ? tp("pix.verifying") : tp("pix.verify")}
             </Button>
           )}
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Após o pagamento ser aprovado, seu plano é ativado automaticamente.
+            {tp("pix.afterApproval")}
           </p>
         </section>
       )}
 
       {/* Recursos */}
       <h3 className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-        Recursos
+        {tp("sections.features")}
       </h3>
       <section className="mt-3 grid gap-2 sm:grid-cols-2">
         {PLAN_FEATURES.map((f) => {
@@ -590,7 +589,7 @@ function MeuPlanoPage() {
       </section>
 
       <h3 id="planos-disponiveis" className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-        Planos disponíveis
+        {tp("sections.plans")}
       </h3>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {PERIODICIDADES.map((p) => {
