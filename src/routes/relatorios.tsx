@@ -694,12 +694,12 @@ function RelatoriosPage() {
           </div>
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Estado do mês
+              {t("fechamento.estadoMes")}
             </p>
             <h3 className={cn("text-2xl font-bold leading-tight", cores.text)}>
               {tituloDoEstado(classificacao.estado)}
             </h3>
-            <p className="text-xs text-muted-foreground">Pontuação: {classificacao.pontuacao}/100</p>
+            <p className="text-xs text-muted-foreground">{t("fechamento.pontuacao", { pontuacao: classificacao.pontuacao })}</p>
           </div>
         </div>
 
