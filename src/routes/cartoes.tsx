@@ -1927,14 +1927,14 @@ function CartaoFormDialog({
 
                   <div>
                     <Label htmlFor="limite" className="text-xs text-muted-foreground">
-                      Limite total (R$)
+                      {t("form.limitLabel")}
                     </Label>
                     <Input
                       id="limite"
                       inputMode="decimal"
                       value={limiteStr}
                       onChange={(e) => setLimiteStr(e.target.value)}
-                      placeholder="0,00"
+                      placeholder={t("form.limitPlaceholder")}
                       className="num mt-1.5 h-11"
                     />
                   </div>
