@@ -91,9 +91,8 @@ function LoginForm() {
               Esqueci minha senha
             </Link>
           </div>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             required
             minLength={6}
