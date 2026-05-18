@@ -394,22 +394,22 @@ function AssinaturasPage() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
           icon={<CalendarClock className="h-4 w-4" />}
-          label="Total mensal confirmado"
+          label={t("summary.monthly")}
           value={formatBRL(totais.mensal)}
         />
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Possíveis recorrências"
+          label={t("summary.possible")}
           value={formatBRL(suspeitas.reduce((s, r) => s + r.valor, 0))}
         />
         <SummaryCard
           icon={<Sparkles className="h-4 w-4" />}
-          label="Recorrências ativas"
+          label={t("summary.active")}
           value={`${totais.ativas}`}
         />
         <SummaryCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Suspeitas"
+          label={t("summary.suspect")}
           value={`${suspeitas.length}`}
         />
       </section>
