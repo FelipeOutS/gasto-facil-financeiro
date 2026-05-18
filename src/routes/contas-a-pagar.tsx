@@ -1592,6 +1592,7 @@ function PagarDialog({
   onClose: () => void;
   categoriasCount: number;
 }) {
+  const { t } = useTranslation("contas-a-pagar");
   const categorias = getCategorias();
   const [nome, setNome] = useState(conta.nome);
   const [valorStr, setValorStr] = useState(
@@ -1606,12 +1607,12 @@ function PagarDialog({
   async function handlePagar() {
     const nomeTrim = nome.trim();
     if (!nomeTrim) {
-      toast.error("Informe a descrição da conta.");
+      toast.error(t("pay.errName"));
       return;
     }
     const valorNum = parseBRLInput(valorStr);
     if (!valorNum || valorNum <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(t("pay.errValue"));
       return;
     }
     try {
@@ -1626,12 +1627,12 @@ function PagarDialog({
       });
       toast.success(
         criarGasto
-          ? "Conta paga e gasto registrado."
-          : "Conta marcada como paga.",
+          ? t("pay.toastWithExpense")
+          : t("pay.toastOnly"),
       );
       onClose();
     } catch {
-      toast.error("Não foi possível salvar o pagamento. Tente novamente.");
+      toast.error(t("pay.toastError"));
     }
   }
 
@@ -1639,26 +1640,26 @@ function PagarDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Marcar como paga</DialogTitle>
+          <DialogTitle>{t("pay.title")}</DialogTitle>
           <DialogDescription>
-            Revise os dados antes de confirmar o pagamento.
+            {t("pay.desc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="pag-nome">Descrição</Label>
+            <Label htmlFor="pag-nome">{t("pay.name")}</Label>
             <Input
               id="pag-nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Internet"
+              placeholder={t("pay.namePlaceholder")}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="pag-valor">Valor pago</Label>
+              <Label htmlFor="pag-valor">{t("pay.value")}</Label>
               <Input
                 id="pag-valor"
                 inputMode="decimal"
@@ -1668,7 +1669,7 @@ function PagarDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pag-data">Data do pagamento</Label>
+              <Label htmlFor="pag-data">{t("pay.date")}</Label>
               <Input
                 id="pag-data"
                 type="date"
@@ -1680,7 +1681,7 @@ function PagarDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Forma de pagamento</Label>
+              <Label>{t("pay.method")}</Label>
               <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1695,16 +1696,16 @@ function PagarDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Categoria</Label>
+              <Label>{t("pay.category")}</Label>
               <Select
                 value={categoriaId || "__none__"}
                 onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sem categoria" />
+                  <SelectValue placeholder={t("pay.noCategory")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Sem categoria</SelectItem>
+                  <SelectItem value="__none__">{t("pay.noCategory")}</SelectItem>
                   {categorias.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -1716,24 +1717,24 @@ function PagarDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pag-obs">Observação (opcional)</Label>
+            <Label htmlFor="pag-obs">{t("pay.obs")}</Label>
             <Textarea
               id="pag-obs"
               value={obs}
               onChange={(e) => setObs(e.target.value)}
               rows={2}
-              placeholder="Conta usada, comprovante, etc."
+              placeholder={t("pay.obsPlaceholder")}
             />
           </div>
 
           <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium">Registrar como gasto</p>
+                <p className="text-sm font-medium">{t("pay.asExpenseTitle")}</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
                   {categoriasCount === 0
-                    ? "Sem categorias cadastradas — vai para “Outros” em Gastos."
-                    : "Cria um lançamento em Gastos com a categoria selecionada."}
+                    ? t("pay.asExpenseHintNoCats")
+                    : t("pay.asExpenseHint")}
                 </p>
               </div>
               <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />
@@ -1743,11 +1744,11 @@ function PagarDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {t("pay.cancel")}
           </Button>
           <Button onClick={handlePagar}>
             <Check className="mr-1 h-4 w-4" />
-            Confirmar pagamento
+            {t("pay.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
