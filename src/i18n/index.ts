@@ -12,6 +12,7 @@ import ptCartoes from "./locales/pt/cartoes.json";
 import ptContasAPagar from "./locales/pt/contas-a-pagar.json";
 import ptContasAReceber from "./locales/pt/contas-a-receber.json";
 import ptCategorias from "./locales/pt/categorias.json";
+import ptClientes from "./locales/pt/clientes.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -24,6 +25,7 @@ import enCartoes from "./locales/en/cartoes.json";
 import enContasAPagar from "./locales/en/contas-a-pagar.json";
 import enContasAReceber from "./locales/en/contas-a-receber.json";
 import enCategorias from "./locales/en/categorias.json";
+import enClientes from "./locales/en/clientes.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -55,8 +57,8 @@ function detectInitialLocale(): Locale {
 }
 
 const resources = {
-  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias },
-  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias },
+  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes },
+  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes },
 };
 
 if (!i18n.isInitialized) {
