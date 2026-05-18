@@ -83,18 +83,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const META_COLORS = [
   "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#fb923c",
   "#fde047", "#22d3ee", "#f87171", "#e879f9", "#94a3b8",
 ];
-
-const STATUS_LABEL = {
-  nao_iniciada: "Não iniciada",
-  em_andamento: "Em andamento",
-  quase: "Quase concluída",
-  concluida: "Concluída",
-} as const;
 
 export const Route = createFileRoute("/metas")({
   head: () => ({ meta: [{ title: "Metas financeiras — Gasto Inteligente" }] }),
@@ -109,6 +103,7 @@ type DialogMode =
   | { kind: "remove"; meta: Meta };
 
 function MetasPage() {
+  const { t } = useTranslation("metas");
   const ready = useBootstrap();
   const metas = useStore(() => getMetas());
   const bancos = useStore(() => getBancos());
@@ -133,19 +128,23 @@ function MetasPage() {
 
   if (!ready) return <PageSkeleton />;
 
+  const countLabel = metas.length === 1
+    ? t("summary.countOne", { count: metas.length })
+    : t("summary.countOther", { count: metas.length });
+
   return (
     <MobileShell>
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-          aria-label="Voltar"
+          aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Objetivos</p>
-          <h1 className="text-2xl font-bold tracking-tight">Metas financeiras</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("eyebrow")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         </div>
       </header>
 
@@ -154,12 +153,13 @@ function MetasPage() {
           <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
             <Target className="h-3.5 w-3.5" />
           </span>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Total em progresso nas metas</p>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("summary.label")}</p>
         </div>
         <Money value={totalAcumulado} className="num mt-2 block text-4xl font-extrabold tracking-tight" />
-        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-          {metas.length} {metas.length === 1 ? "meta criada" : "metas criadas"}. Esse valor representa o progresso acumulado nas metas e <strong className="text-foreground/80">não</strong> o saldo em banco.
-        </p>
+        <p
+          className="mt-1.5 text-xs leading-relaxed text-muted-foreground"
+          dangerouslySetInnerHTML={{ __html: countLabel + t("summary.hint") }}
+        />
       </section>
 
       <Button
@@ -168,7 +168,7 @@ function MetasPage() {
         onClick={() => setDialog({ kind: "create" })}
       >
         <Plus className="mr-1 h-5 w-5" />
-        Nova meta
+        {t("newGoal")}
       </Button>
 
       <section className="mt-5 space-y-3">
@@ -178,10 +178,10 @@ function MetasPage() {
               <Target className="h-6 w-6" />
             </span>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              Escolha uma meta e acompanhe cada passo até chegar lá.
+              {t("empty.title")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Viagem, reserva, troca de carro — qualquer objetivo que valha a pena.
+              {t("empty.subtitle")}
             </p>
             <Button
               size="sm"
@@ -189,7 +189,7 @@ function MetasPage() {
               onClick={() => setDialog({ kind: "create" })}
             >
               <Plus className="mr-1 h-4 w-4" />
-              Criar primeira meta
+              {t("empty.cta")}
             </Button>
           </div>
         ) : (
@@ -218,23 +218,25 @@ function MetasPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
-            <AlertDialogDescription>
-              A meta <strong>{confirmDelete?.nome}</strong> será removida. As reservas em Guardado vinculadas a ela <strong>não serão apagadas</strong> — vão continuar em Guardado como "sem meta vinculada".
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
+            <AlertDialogDescription
+              dangerouslySetInnerHTML={{
+                __html: t("delete.description", { name: confirmDelete?.nome ?? "" }),
+              }}
+            />
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmDelete) {
                   deleteMeta(confirmDelete.id);
-                  toast.success("Meta excluída.");
+                  toast.success(t("delete.toast"));
                 }
                 setConfirmDelete(null);
               }}
             >
-              Excluir
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -258,6 +260,7 @@ function MetaCard({
   onChangeImage: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation("metas");
   const breakdown = getMetaProgressoBreakdown(meta.id);
   const progresso = breakdown.total;
   const status: ReturnType<typeof statusMeta> =
@@ -301,12 +304,12 @@ function MetaCard({
           <div className="flex flex-wrap gap-1.5">
             {isDone && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-success-foreground shadow-md animate-pop">
-                <Trophy className="h-3 w-3" /> Concluída
+                <Trophy className="h-3 w-3" /> {t("card.doneBadge")}
               </span>
             )}
             {isAlmostDone && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
-                <Flame className="h-3 w-3" /> Quase lá
+                <Flame className="h-3 w-3" /> {t("card.almostBadge")}
               </span>
             )}
           </div>
@@ -315,7 +318,7 @@ function MetaCard({
             <DropdownMenuTrigger asChild>
               <button
                 className="grid h-8 w-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
-                aria-label="Mais ações"
+                aria-label={t("card.moreActions")}
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
@@ -323,24 +326,24 @@ function MetaCard({
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onSelect={onEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
-                Editar meta
+                {t("card.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onChangeImage}>
                 <ImageIcon className="mr-2 h-4 w-4" />
-                Trocar imagem
+                {t("card.changeImage")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onAdd}>
                 <Plus className="mr-2 h-4 w-4" />
-                Atualizar valor
+                {t("card.updateValue")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onRemove} disabled={progresso <= 0}>
                 <Minus className="mr-2 h-4 w-4" />
-                Remover valor
+                {t("card.removeValue")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Excluir meta
+                {t("card.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -352,8 +355,8 @@ function MetaCard({
             {meta.nome}
           </p>
           <p className="line-clamp-1 text-[12px] text-white/85 drop-shadow">
-            {STATUS_LABEL[status]}
-            {meta.prazo ? ` · até ${formatDateBR(meta.prazo)}` : ""}
+            {t(`status.${status}`)}
+            {meta.prazo ? t("card.untilDate", { date: formatDateBR(meta.prazo) }) : ""}
           </p>
         </div>
       </div>
@@ -363,7 +366,7 @@ function MetaCard({
         {/* Bloco principal — Progresso da meta */}
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Progresso da meta
+            {t("card.progressLabel")}
           </p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <Money
@@ -371,7 +374,7 @@ function MetaCard({
               className="num text-3xl sm:text-4xl font-extrabold tracking-tight leading-none"
             />
             <span className="num text-sm text-muted-foreground whitespace-nowrap">
-              de <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
+              {t("card.of")} <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
             </span>
           </div>
 
@@ -404,7 +407,7 @@ function MetaCard({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500">
                 <PiggyBank className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs text-muted-foreground truncate">Guardado em reservas</span>
+              <span className="text-xs text-muted-foreground truncate">{t("card.savedInReserves")}</span>
             </div>
             <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.guardado)}</span>
           </div>
@@ -415,7 +418,7 @@ function MetaCard({
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
                   <Wallet className="h-3.5 w-3.5" />
                 </span>
-                <span className="text-xs text-muted-foreground truncate">Adicionado direto</span>
+                <span className="text-xs text-muted-foreground truncate">{t("card.addedDirect")}</span>
               </div>
               <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
             </div>
@@ -439,7 +442,7 @@ function MetaCard({
                 {isDone ? <Check className="h-3.5 w-3.5" /> : <Flag className="h-3.5 w-3.5" />}
               </span>
               <span className="text-xs font-semibold text-foreground truncate">
-                {isDone ? "Meta concluída" : "Falta para concluir"}
+                {isDone ? t("card.goalDone") : t("card.remaining")}
               </span>
             </div>
             <span className="num text-sm font-bold tabular-nums" style={{ color: meta.colorHex }}>
@@ -451,7 +454,7 @@ function MetaCard({
         {isDone ? (
           <div className="flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2.5 text-xs font-semibold text-success animate-pop">
             <Sparkles className="h-3.5 w-3.5" />
-            Meta batida! Você chegou lá. 🏆
+            {t("card.doneCelebrate")}
           </div>
         ) : (
           <Button
@@ -461,7 +464,7 @@ function MetaCard({
             onClick={onAdd}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Atualizar valor
+            {t("card.updateButton")}
           </Button>
         )}
       </div>
@@ -478,6 +481,7 @@ function MetaFormDialog({
   bancos: ReturnType<typeof getBancos>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("metas");
   const isCreate = mode.kind === "create";
   const isEdit = mode.kind === "edit";
   const isAdd = mode.kind === "add";
@@ -500,18 +504,18 @@ function MetaFormDialog({
 
   async function handleUploadCover(file: File) {
     if (!file.type.startsWith("image/")) {
-      toast.error("Selecione um arquivo de imagem.");
+      toast.error(t("upload.errType"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx. 5MB).");
+      toast.error(t("upload.errSize"));
       return;
     }
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Faça login novamente.");
+        toast.error(t("upload.errAuth"));
         return;
       }
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -520,12 +524,12 @@ function MetaFormDialog({
         .from("metas-covers")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (error) {
-        toast.error("Falha ao enviar a imagem.");
+        toast.error(t("upload.errUpload"));
         return;
       }
       setImagemKey(`${CUSTOM_COVER_PREFIX}${path}`);
       setImagemManual(true);
-      toast.success("Imagem enviada.");
+      toast.success(t("upload.success"));
     } finally {
       setUploading(false);
     }
@@ -576,7 +580,7 @@ function MetaFormDialog({
   function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
-      toast.error("Coloca um nome e o valor da meta.");
+      toast.error(t("toasts.missing"));
       return;
     }
     if (isCreate) {
@@ -590,14 +594,14 @@ function MetaFormDialog({
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
         imagemKey,
       });
-      toast.success("Meta criada. Cada passo conta. 🎯");
+      toast.success(t("toasts.created"));
       onClose();
       return;
     }
     if (isEdit && baseMeta) {
       const novoAcumulado = parseBRLInput(acumuladoStr) || 0;
       if (novoAcumulado > objetivo) {
-        toast.warning("Heads up: o valor acumulado ficou maior que o objetivo. Salvei mesmo assim.");
+        toast.warning(t("toasts.overGoal"));
       }
       updateMeta(baseMeta.id, {
         nome: nome.trim(),
@@ -609,7 +613,7 @@ function MetaFormDialog({
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
         imagemKey,
       });
-      toast.success("Pronto, sua meta foi atualizada.");
+      toast.success(t("toasts.updated"));
       onClose();
     }
   }
@@ -618,20 +622,19 @@ function MetaFormDialog({
     if (!baseMeta) return;
     const trimmed = valorStr.trim();
     if (trimmed === "") {
-      toast.error("Informe o valor acumulado atual.");
+      toast.error(t("toasts.informValue"));
       return;
     }
     const v = parseBRLInput(valorStr);
-    // permite 0,00 para resetar; bloqueia negativo
     if (v < 0 || Number.isNaN(v)) {
-      toast.error("O valor não pode ser negativo.");
+      toast.error(t("toasts.negative"));
       return;
     }
     updateMeta(baseMeta.id, { valorAtual: v });
     if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
-      toast.success("Você passou da meta. Melhor ainda. 🏆");
+      toast.success(t("toasts.passedGoal"));
     } else {
-      toast.success("Meta atualizada. Agora tá certinho.");
+      toast.success(t("toasts.adjusted"));
     }
     onClose();
   }
@@ -640,12 +643,12 @@ function MetaFormDialog({
     if (!baseMeta) return;
     const v = parseBRLInput(valorStr);
     if (!v) {
-      toast.error("Informe um valor.");
+      toast.error(t("toasts.informAValue"));
       return;
     }
     const novo = Math.max(0, baseMeta.valorAtual - v);
     updateMeta(baseMeta.id, { valorAtual: novo });
-    toast.success("Valor ajustado.");
+    toast.success(t("toasts.valueAdjusted"));
     onClose();
   }
 
@@ -654,33 +657,33 @@ function MetaFormDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isCreate && "Criar meta financeira"}
-            {isEdit && "Editar meta"}
-            {isAdd && "Atualizar valor da meta"}
-            {isRemove && "Ajustar valor"}
+            {isCreate && t("dialog.createTitle")}
+            {isEdit && t("dialog.editTitle")}
+            {isAdd && t("dialog.addTitle")}
+            {isRemove && t("dialog.removeTitle")}
           </DialogTitle>
           <DialogDescription>
-            {isCreate && "Defina um objetivo e acompanhe o progresso."}
-            {isEdit && "Atualize qualquer informação da sua meta."}
-            {isAdd && "Informe quanto você já juntou até agora para esta meta."}
-            {isRemove && `Remover valor de ${baseMeta?.nome}`}
+            {isCreate && t("dialog.createDesc")}
+            {isEdit && t("dialog.editDesc")}
+            {isAdd && t("dialog.addDesc")}
+            {isRemove && t("dialog.removeDesc", { name: baseMeta?.nome ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
         {(isCreate || isEdit) && (
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Nome</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.name")}</Label>
               <Input
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex.: Viagem"
+                placeholder={t("dialog.namePlaceholder")}
                 className="mt-1 h-11 bg-card-elevated"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Valor objetivo</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.goalValue")}</Label>
                 <Input
                   inputMode="decimal"
                   value={objetivoStr}
@@ -691,7 +694,7 @@ function MetaFormDialog({
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">
-                  {isEdit ? "Valor acumulado" : "Já guardado"}
+                  {isEdit ? t("dialog.accumulatedValue") : t("dialog.savedValue")}
                 </Label>
                 <Input
                   inputMode="decimal"
@@ -704,7 +707,7 @@ function MetaFormDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Prazo (opcional)</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.deadline")}</Label>
                 <Input
                   type="date"
                   value={prazo}
@@ -713,13 +716,13 @@ function MetaFormDialog({
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Banco vinculado</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.linkedBank")}</Label>
                 <Select value={bancoId} onValueChange={setBancoId}>
                   <SelectTrigger className="mt-1 h-11 bg-card-elevated">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nenhum">Nenhum</SelectItem>
+                    <SelectItem value="nenhum">{t("dialog.none")}</SelectItem>
                     {bancos.map((b) => (
                       <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
                     ))}
@@ -728,17 +731,17 @@ function MetaFormDialog({
               </div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Descrição</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.description")}</Label>
               <Textarea
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Opcional"
+                placeholder={t("dialog.descriptionPlaceholder")}
                 className="mt-1 min-h-[60px] bg-card-elevated"
               />
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Imagem da meta</Label>
+                <Label className="text-xs text-muted-foreground">{t("dialog.goalImage")}</Label>
                 {imagemManual && (
                   <button
                     type="button"
@@ -748,7 +751,7 @@ function MetaFormDialog({
                     }}
                     className="text-[11px] font-semibold text-primary hover:underline"
                   >
-                    Usar sugestão automática
+                    {t("dialog.useAutoSuggestion")}
                   </button>
                 )}
               </div>
@@ -763,7 +766,7 @@ function MetaFormDialog({
                 )}
               >
                 <Upload className="h-3.5 w-3.5" />
-                {uploading ? "Enviando..." : "Enviar imagem própria (até 5MB)"}
+                {uploading ? t("dialog.uploading") : t("dialog.uploadOwn")}
                 <input
                   type="file"
                   accept="image/*"
@@ -777,7 +780,7 @@ function MetaFormDialog({
               </label>
 
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Ou escolha uma sugestão
+                {t("dialog.orChooseSuggestion")}
               </p>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
                 {META_COVER_OPTIONS.map((opt) => {
@@ -811,14 +814,14 @@ function MetaFormDialog({
               </div>
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 {isCustomCoverKey(imagemKey)
-                  ? "Imagem própria enviada."
+                  ? t("dialog.imageCustom")
                   : imagemManual
-                    ? "Imagem escolhida manualmente."
-                    : "Sugerida automaticamente pelo nome da meta."}
+                    ? t("dialog.imageManual")
+                    : t("dialog.imageAuto")}
               </p>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Cor</Label>
+              <Label className="text-xs text-muted-foreground">{t("dialog.color")}</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {META_COLORS.map((c) => (
                   <button
@@ -841,15 +844,15 @@ function MetaFormDialog({
         {(isAdd || isRemove) && baseMeta && (
           <div className="space-y-3">
             <div className="rounded-2xl bg-card-elevated p-3">
-              <p className="text-xs text-muted-foreground">Acumulado atual</p>
+              <p className="text-xs text-muted-foreground">{t("dialog.currentAccumulated")}</p>
               <p className="num text-xl font-bold">{formatBRL(baseMeta.valorAtual)}</p>
               <p className="num mt-1 text-xs text-muted-foreground">
-                Objetivo: {formatBRL(baseMeta.valorObjetivo)}
+                {t("dialog.goalLabel", { value: formatBRL(baseMeta.valorObjetivo) })}
               </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
-                {isAdd ? "Valor acumulado atual" : "Valor a remover"}
+                {isAdd ? t("dialog.addValueLabel") : t("dialog.removeValueLabel")}
               </Label>
               <Input
                 inputMode="decimal"
@@ -861,7 +864,7 @@ function MetaFormDialog({
               />
               {isAdd && (
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  Quanto você já juntou até agora? Esse valor substitui o acumulado atual.
+                  {t("dialog.addValueHint")}
                 </p>
               )}
             </div>
@@ -869,14 +872,14 @@ function MetaFormDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose}>{t("dialog.cancel")}</Button>
           {(isCreate || isEdit) && (
             <Button onClick={handleCreateOrEdit}>
-              {isCreate ? "Criar meta" : "Salvar alterações"}
+              {isCreate ? t("dialog.create") : t("dialog.save")}
             </Button>
           )}
-          {isAdd && <Button onClick={handleAddValor}>Salvar valor</Button>}
-          {isRemove && <Button onClick={handleRemoverValor}>Remover valor</Button>}
+          {isAdd && <Button onClick={handleAddValor}>{t("dialog.saveValue")}</Button>}
+          {isRemove && <Button onClick={handleRemoverValor}>{t("dialog.removeValue")}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
