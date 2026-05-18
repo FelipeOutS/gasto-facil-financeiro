@@ -350,6 +350,8 @@ function GuardadoPage() {
       </section>
 
       <ReservaFormDialog
+        t={t}
+        tipoLabel={tipoLabel}
         mode={dialog}
         bancos={bancos}
         onClose={() => setDialog({ kind: "closed" })}
