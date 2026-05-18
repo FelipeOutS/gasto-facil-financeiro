@@ -1942,7 +1942,7 @@ function CartaoFormDialog({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="fech" className="text-xs text-muted-foreground">
-                        Dia de fechamento
+                        {t("form.closingDay")}
                       </Label>
                       <Input
                         id="fech"
