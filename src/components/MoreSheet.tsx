@@ -127,12 +127,9 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     if (!open || !portalReady || typeof document === "undefined") return;
     const { body } = document;
     const previousOverflow = body.style.overflow;
-    const previousTouchAction = body.style.touchAction;
     body.style.overflow = "hidden";
-    body.style.touchAction = "none";
     return () => {
       body.style.overflow = previousOverflow;
-      body.style.touchAction = previousTouchAction;
     };
   }, [open, portalReady]);
 
