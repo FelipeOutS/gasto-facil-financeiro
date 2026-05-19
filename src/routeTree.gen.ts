@@ -46,6 +46,7 @@ import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AssinaturasRouteImport } from './routes/assinaturas'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
@@ -262,6 +263,11 @@ const AssinaturasRoute = AssinaturasRouteImport.update({
   path: '/assinaturas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AlertasRoute = AlertasRouteImport.update({
   id: '/alertas',
   path: '/alertas',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
+  '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
+  '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
@@ -562,6 +570,7 @@ export interface FileRoutesById {
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
+  '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/cartoes': typeof CartoesRoute
@@ -633,6 +642,7 @@ export interface FileRouteTypes {
     | '/adicionar'
     | '/admin'
     | '/alertas'
+    | '/app'
     | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
@@ -702,6 +712,7 @@ export interface FileRouteTypes {
     | '/adicionar'
     | '/admin'
     | '/alertas'
+    | '/app'
     | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
@@ -771,6 +782,7 @@ export interface FileRouteTypes {
     | '/adicionar'
     | '/admin'
     | '/alertas'
+    | '/app'
     | '/assinaturas'
     | '/cadastro'
     | '/cartoes'
@@ -841,6 +853,7 @@ export interface RootRouteChildren {
   AdicionarRoute: typeof AdicionarRoute
   AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
+  AppRoute: typeof AppRoute
   AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
   CartoesRoute: typeof CartoesRoute
@@ -1167,6 +1180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssinaturasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/alertas': {
       id: '/alertas'
       path: '/alertas'
@@ -1385,6 +1405,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdicionarRoute: AdicionarRoute,
   AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
+  AppRoute: AppRoute,
   AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
   CartoesRoute: CartoesRoute,
