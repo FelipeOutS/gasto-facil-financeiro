@@ -140,11 +140,15 @@ function currentReferenceMonth() {
 
 function readInitialReferenceMonth() {
   if (typeof window === "undefined") return currentReferenceMonth();
-  const params = new URLSearchParams(window.location.search);
-  const fromUrl = params.get("mes");
-  if (isValidReferenceMonth(fromUrl)) return fromUrl;
-  const fromStorage = window.localStorage.getItem(MES_REF_STORAGE_KEY);
-  if (isValidReferenceMonth(fromStorage)) return fromStorage;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("mes");
+    if (isValidReferenceMonth(fromUrl)) return fromUrl;
+    const fromStorage = window.localStorage.getItem(MES_REF_STORAGE_KEY);
+    if (isValidReferenceMonth(fromStorage)) return fromStorage;
+  } catch {
+    // WebView Android pode bloquear localStorage — não deixe a rota quebrar.
+  }
   return currentReferenceMonth();
 }
 
