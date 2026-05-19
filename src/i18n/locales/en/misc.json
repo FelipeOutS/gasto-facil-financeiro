@@ -142,6 +142,97 @@
     "outros": "Other",
     "compare": { "title": "Comparison with previous month", "current": "Current month", "previous": "Previous month", "same": "Same as last month." }
   },
+  "investimentos": {
+    "locked": {
+      "title": "Your investments are saved",
+      "desc": "Your free trial has ended. Your investments are still stored, but to view and keep tracking your portfolio, subscribe to a plan with Investments access.",
+      "plans": "See plans",
+      "subscribe": "Subscribe now",
+      "home": "Back to home"
+    },
+    "title": "Investments",
+    "subtitle": "Track your portfolio, equity evolution and yields all in one place.",
+    "actions": {
+      "imports": "Imports",
+      "updateValues": "Refresh values",
+      "movement": "Movement",
+      "income": "Yield",
+      "import": "Import",
+      "add": "Add investment",
+      "new": "New",
+      "newM": "New"
+    },
+    "infoCalc": "Values are calculated from the information you registered or imported. For more accuracy, refresh the current value of your investments regularly.",
+    "kpi": {
+      "patrimony": "Total equity",
+      "applied": "Amount invested",
+      "profit": "Gain / Loss",
+      "yield": "Return",
+      "incomeYear": "Yields this year"
+    },
+    "wallet": {
+      "title": "My portfolio",
+      "countOne": "{{count}} asset",
+      "countOther": "{{count}} assets",
+      "loading": "Loading…",
+      "loadError": "Could not load investments.",
+      "emptyTitle": "No investments registered",
+      "emptyDesc": "Start by registering your first asset manually or import a statement.",
+      "applied": "Invested",
+      "current": "Current",
+      "outdated": "Value may be outdated",
+      "details": "View details",
+      "refresh": "Refresh value",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete {{name}}?",
+      "deleted": "Investment deleted.",
+      "deleteError": "Could not delete."
+    },
+    "dist": {
+      "title": "Portfolio breakdown",
+      "empty": "Register assets to see the breakdown."
+    },
+    "insights": {
+      "title": "Portfolio insights",
+      "concentradaFixa": "Your portfolio is concentrated in fixed income.",
+      "recebidoAno": "You received {{val}} in yields this year.",
+      "maiorTipo": "Your largest asset type ({{label}}) represents {{pct}}% of the portfolio.",
+      "semRendMes": "You haven't registered any yields this month yet.",
+      "poucasMov": "Add more movements to calculate returns more accurately."
+    },
+    "evol": {
+      "title": "Equity evolution",
+      "empty": "Add investments or import a statement to track your evolution.",
+      "patrimony": "Equity",
+      "contributed": "Contributed",
+      "variation": "Variation",
+      "incomeMonth": "Yields this month"
+    },
+    "movs": {
+      "title": "Movements",
+      "empty": "No movements yet.",
+      "confirmDelete": "Delete movement? The investment totals will be recalculated.",
+      "deleted": "Movement deleted."
+    },
+    "rends": {
+      "title": "Yields",
+      "empty": "No yields registered.",
+      "confirmDelete": "Delete yield?",
+      "deleted": "Yield deleted."
+    },
+    "b3": {
+      "title": "B3 integration",
+      "notConnected": "Not connected",
+      "manualAvail": "Manual import available",
+      "apiSoon": "B3 API — coming soon",
+      "desc": "Automatic B3 connection requires official/authorized access. For now, you can import statements from the Investor Area or register your investments manually.",
+      "security": "We never ask for your B3 password, broker password, tax ID or bank token. Only use officially exported files or register data manually."
+    },
+    "detail": {
+      "confirmDeleteAtivo": "Delete {{name}}? Related movements and yields will also be removed."
+    }
+  },
   "ai": {
     "metaTitle": "Gasto Inteligente AI — AI financial assistant",
     "metaDesc": "Chat with AI about your expenses, goals and financial organization in plain language.",
