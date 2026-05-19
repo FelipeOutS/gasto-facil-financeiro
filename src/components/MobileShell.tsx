@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
+import { MobileTopBar } from "./MobileTopBar";
 import { AuthGate } from "./AuthGate";
 
 export function MobileShell({
@@ -21,6 +22,7 @@ export function MobileShell({
   const inner = (
     <div className="min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
+      {showNav && <MobileTopBar />}
       <div className={showNav ? "lg:pl-64" : ""}>
         <main
           className={
