@@ -401,7 +401,7 @@ function Index() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Switcher solto apenas no mobile/tablet — no desktop ele vai pro card */}
           <div className="lg:hidden">{monthSwitcher}</div>
-          <NotificationBell />
+          <div className="hidden lg:block"><NotificationBell /></div>
         </div>
       </header>
 
