@@ -139,6 +139,7 @@ const RENT_TIPOS = [
 ];
 
 function InvestimentosPage() {
+  const { t } = useTranslation("misc");
   const { user } = useAuth();
   const userId = user?.id;
   const [ativos, setAtivos] = useState<Ativo[]>([]);
@@ -172,7 +173,7 @@ function InvestimentosPage() {
       setImportacoes(imps);
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível carregar os investimentos.");
+      toast.error(t("investimentos.wallet.loadError"));
     } finally {
       setLoading(false);
     }
@@ -192,15 +193,15 @@ function InvestimentosPage() {
     const fixaPct = distribuicao
       .filter((d) => classeAtivo(d.tipo) === "Renda fixa")
       .reduce((s, d) => s + d.pct, 0);
-    if (fixaPct >= 70) out.push("Sua carteira está concentrada em renda fixa.");
+    if (fixaPct >= 70) out.push(t("investimentos.insights.concentradaFixa"));
     if (totais.rendimentosAno > 0)
-      out.push(`Você recebeu ${formatBRL(totais.rendimentosAno)} em rendimentos este ano.`);
+      out.push(t("investimentos.insights.recebidoAno", { val: formatBRL(totais.rendimentosAno) }));
     if (distribuicao[0] && distribuicao[0].pct >= 40)
-      out.push(`Seu maior tipo de ativo (${distribuicao[0].label}) representa ${distribuicao[0].pct.toFixed(0)}% da carteira.`);
-    if (totais.rendimentosMes === 0) out.push("Você ainda não cadastrou rendimentos este mês.");
-    if (movs.length < 3) out.push("Adicione mais movimentações para calcular a rentabilidade com mais precisão.");
+      out.push(t("investimentos.insights.maiorTipo", { label: distribuicao[0].label, pct: distribuicao[0].pct.toFixed(0) }));
+    if (totais.rendimentosMes === 0) out.push(t("investimentos.insights.semRendMes"));
+    if (movs.length < 3) out.push(t("investimentos.insights.poucasMov"));
     return out;
-  }, [ativos, distribuicao, totais, movs]);
+  }, [ativos, distribuicao, totais, movs, t]);
 
   return (
     <MobileShell wide>
