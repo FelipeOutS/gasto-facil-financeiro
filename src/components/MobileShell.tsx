@@ -22,8 +22,8 @@ export function MobileShell({
   const inner = (
     <div className="min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
+      {showNav && <MobileTopBar />}
       <div className={showNav ? "lg:pl-64" : ""}>
-        <main
           className={
             "mx-auto flex min-h-screen min-h-dvh w-full flex-col px-4 pb-[calc(96px+env(safe-area-inset-bottom))] safe-top sm:px-5 md:px-6 lg:px-6 lg:pb-12 xl:px-8 2xl:px-10 page-enter " +
             (wide
