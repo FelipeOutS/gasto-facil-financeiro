@@ -25,7 +25,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
 import { PLAN_LABEL, type FeatureKey } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
@@ -33,8 +32,6 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
-import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
-import { UserAvatar } from "@/components/UserAvatar";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
 
@@ -109,7 +106,51 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
-const MORE_MENU_BOTTOM_OFFSET = 84;
+const MORE_MENU_BOTTOM_OFFSET = 76;
+const androidSheetStyles = {
+  root: {
+    position: "fixed" as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 2147483000,
+    WebkitTransform: "translate3d(0,0,0)",
+    transform: "translate3d(0,0,0)",
+  },
+  backdrop: {
+    position: "absolute" as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(0,0,0,0.68)",
+  },
+  panel: {
+    position: "absolute" as const,
+    right: 12,
+    left: 12,
+    bottom: MORE_MENU_BOTTOM_OFFSET,
+    zIndex: 2147483001,
+    maxHeight: "calc(100vh - 96px)",
+    overflow: "hidden",
+    borderRadius: 24,
+    border: "1px solid rgba(255,255,255,0.14)",
+    backgroundColor: "#24262b",
+    color: "#f8fafc",
+    boxShadow: "0 24px 70px rgba(0,0,0,0.65)",
+    WebkitTransform: "translate3d(0,0,0)",
+    transform: "translate3d(0,0,0)",
+  },
+};
+
+function getInitials(name?: string | null, email?: string | null) {
+  const src = (name && name.trim()) || (email && email.split("@")[0]) || "U";
+  const parts = src.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 type Props = {
   open: boolean;
@@ -235,120 +276,154 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   return (
     <>
       {open && (
+        <div className="lg:hidden" data-more-menu-root="true" style={androidSheetStyles.root}>
+          <div onClick={closeMenu} aria-hidden="true" style={androidSheetStyles.backdrop} />
           <div
-            className="fixed inset-0 isolate lg:hidden"
-            data-more-menu-root="true"
-            style={{ zIndex: 2147483000 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="more-menu-title"
+            className="flex min-h-0 flex-col"
+            style={androidSheetStyles.panel}
           >
-            <div
-              className="absolute inset-0 z-0 bg-black/65"
-              onClick={closeMenu}
-              aria-hidden="true"
-            />
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="more-menu-title"
-              className="fixed inset-x-3 z-10 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
-              style={{ bottom: MORE_MENU_BOTTOM_OFFSET, maxHeight: "calc(100vh - 112px)" }}
-            >
-              <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-                <div className="min-w-0">
-                  <h2 id="more-menu-title" className="text-lg font-semibold text-foreground">
-                    {t("more.title")}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{t("more.description")}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeMenu}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/60 bg-card/70 text-muted-foreground transition-colors hover:bg-card hover:text-foreground active:scale-95"
-                  aria-label="Fechar menu"
+            <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+              <div className="min-w-0">
+                <h2
+                  id="more-menu-title"
+                  className="text-lg font-semibold"
+                  style={{ color: "#ffffff" }}
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  {t("more.title")}
+                </h2>
+                <p className="mt-1 text-xs" style={{ color: "#aeb6c2" }}>
+                  {t("more.description")}
+                </p>
               </div>
-
-              <div className="px-5 pb-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    window.setTimeout(() => navigate({ to: "/conta" }), 60);
-                  }}
-                  className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-colors hover:bg-card/90 active:scale-[0.99]"
-                >
-                  <UserAvatar
-                    url={profile?.avatar_url}
-                    name={profile?.nome ?? profile?.responsavel_nome}
-                    email={user?.email}
-                    size={42}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {profile?.nome ||
-                        profile?.responsavel_nome ||
-                        user?.email?.split("@")[0] ||
-                        t("header.fallbackUser")}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
-                  </div>
-                </button>
-                <ConnectedAccountSwitcher className="mb-2" />
-                <div className="rounded-2xl border border-border/60 bg-card/70 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t("more.currentPlan")}
-                  </p>
-                  <div className="mt-0.5 flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
-                    {isTrialActive && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                        <Sparkles className="h-3 w-3" />
-                        {t("more.trial", { days: trialDaysLeft })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-2"
-                style={{ paddingBottom: 24 }}
+              <button
+                type="button"
+                onClick={closeMenu}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full active:scale-95"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+                aria-label="Fechar menu"
               >
-                <div className="grid grid-cols-2 gap-3">
-                  {items.map((item) => {
-                    const locked = isLocked(item);
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.to}
-                        type="button"
-                        onClick={() => handleItem(item)}
-                        className={cn(
-                          "group relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-all hover:border-border hover:bg-card/90 active:scale-[0.98]",
-                        )}
-                      >
-                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft/60 text-brand-on-soft">
-                          <Icon className="h-4 w-4" strokeWidth={2} />
-                        </span>
-                        <span className="flex w-full items-center gap-1">
-                          <span className="text-sm font-semibold leading-tight">
-                            {t(`items.${item.labelKey}`)}
-                          </span>
-                          {locked && (
-                            <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />
-                          )}
-                        </span>
-                        <span className="text-[11px] leading-snug text-muted-foreground">
-                          {t(`descriptions.${item.descKey}`)}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="px-5 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  window.setTimeout(() => navigate({ to: "/conta" }), 60);
+                }}
+                className="mb-2 flex w-full items-center gap-3 rounded-2xl p-3 text-left active:scale-[0.99]"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+              >
+                <span
+                  className="grid h-[42px] w-[42px] shrink-0 place-items-center overflow-hidden rounded-full text-sm font-bold"
+                  style={{ backgroundColor: "#dde7ff", color: "#172033" }}
+                >
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile?.nome ?? "Avatar"}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email)
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {profile?.nome ||
+                      profile?.responsavel_nome ||
+                      user?.email?.split("@")[0] ||
+                      t("header.fallbackUser")}
+                  </p>
+                  <p className="truncate text-[11px]" style={{ color: "#aeb6c2" }}>
+                    {user?.email}
+                  </p>
+                </div>
+              </button>
+              <div
+                className="rounded-2xl p-3"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+              >
+                <p
+                  className="text-[10px] font-semibold uppercase tracking-wider"
+                  style={{ color: "#aeb6c2" }}
+                >
+                  {t("more.currentPlan")}
+                </p>
+                <div className="mt-0.5 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
+                  {isTrialActive && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                      <Sparkles className="h-3 w-3" />
+                      {t("more.trial", { days: trialDaysLeft })}
+                    </span>
+                  )}
                 </div>
               </div>
-            </section>
+            </div>
+
+            <div
+              className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2"
+              style={{ paddingBottom: 24, WebkitOverflowScrolling: "touch" }}
+            >
+              <div className="grid grid-cols-2 gap-3">
+                {items.map((item) => {
+                  const locked = isLocked(item);
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.to}
+                      type="button"
+                      onClick={() => handleItem(item)}
+                      className="relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl p-3 text-left active:scale-[0.98]"
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        backgroundColor: "#30333a",
+                        color: "#f8fafc",
+                      }}
+                    >
+                      <span
+                        className="grid h-9 w-9 place-items-center rounded-xl"
+                        style={{ backgroundColor: "#dde7ff", color: "#172033" }}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <span className="flex w-full items-center gap-1">
+                        <span className="text-sm font-semibold leading-tight">
+                          {t(`items.${item.labelKey}`)}
+                        </span>
+                        {locked && (
+                          <Lock className="ml-auto h-3.5 w-3.5" style={{ color: "#aeb6c2" }} />
+                        )}
+                      </span>
+                      <span className="text-[11px] leading-snug" style={{ color: "#aeb6c2" }}>
+                        {t(`descriptions.${item.descKey}`)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
+        </div>
       )}
       <PremiumLockModal
         open={lockState.open}
