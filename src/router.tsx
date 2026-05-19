@@ -1,19 +1,41 @@
-import { createRouter, Link, useRouter } from "@tanstack/react-router";
+import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
 import { PageSkeleton } from "./components/PageSkeleton";
 
+function isRecoverableRouteLoadError(error: Error) {
+  const text = `${error.name} ${error.message} ${error.stack ?? ""}`.toLowerCase();
+  return (
+    text.includes("failed to fetch dynamically imported module") ||
+    text.includes("importing a module script failed") ||
+    text.includes("loading chunk") ||
+    text.includes("dynamically imported") ||
+    text.includes("modulepreload")
+  );
+}
+
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isRouteLoadError = isRecoverableRouteLoadError(error);
 
   useEffect(() => {
-    // Log full error so we can inspect from console on next visit.
-    console.error("[Router error boundary]", error);
-  }, [error]);
+    console.error("[Router error boundary]", { pathname, error });
+
+    if (!isRouteLoadError || typeof window === "undefined") return;
+    const key = `gi:route-reload:${pathname}`;
+    try {
+      if (window.sessionStorage.getItem(key) === "1") return;
+      window.sessionStorage.setItem(key, "1");
+      window.location.reload();
+    } catch {
+      window.location.reload();
+    }
+  }, [error, isRouteLoadError, pathname]);
 
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="fixed inset-0 z-[10000] flex min-h-screen min-h-dvh items-center justify-center overflow-auto bg-background px-4 text-foreground">
       <div className="max-w-md text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
           <svg
@@ -33,7 +55,9 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Algo deu errado</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Não conseguimos carregar esta tela. Tente novamente em alguns instantes.
+          {isRouteLoadError
+            ? "Estamos atualizando esta tela. Se ela não recarregar automaticamente, tente novamente."
+            : "Não conseguimos carregar esta tela. Tente novamente em alguns instantes."}
         </p>
         {import.meta.env.DEV && error.message && (
           <pre className="mt-4 max-h-40 overflow-auto rounded-md bg-muted p-3 text-left font-mono text-xs text-destructive">
@@ -43,7 +67,11 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
         <div className="mt-6 flex items-center justify-center gap-3">
           <button
             onClick={() => {
-              router.invalidate();
+              if (isRouteLoadError && typeof window !== "undefined") {
+                window.location.reload();
+                return;
+              }
+              void router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
