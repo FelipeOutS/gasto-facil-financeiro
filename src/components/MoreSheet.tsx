@@ -384,7 +384,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                   })}
                 </div>
               </div>
-            </section>
+            </div>
           </div>
       )}
       <PremiumLockModal
