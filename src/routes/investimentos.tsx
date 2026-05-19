@@ -208,14 +208,14 @@ function InvestimentosPage() {
       <header className="pt-4 pb-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Investimentos</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("investimentos.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Acompanhe sua carteira, evolução patrimonial e rendimentos em um só lugar.
+              {t("investimentos.subtitle")}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)}>
-              <History className="h-4 w-4 mr-1.5" /> Importações
+              <History className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.imports")}
               {importacoes.length > 0 && (
                 <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5">
                   {importacoes.length}
@@ -228,7 +228,7 @@ function InvestimentosPage() {
               onClick={() => setOpenAtualizarLote(true)}
               disabled={ativos.length === 0}
             >
-              <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar valores
+              <RefreshCw className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.updateValues")}
             </Button>
             <Button
               variant="outline"
@@ -236,7 +236,7 @@ function InvestimentosPage() {
               onClick={() => setMovDialog({ open: true, mov: null })}
               disabled={ativos.length === 0}
             >
-              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Movimentação
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.movement")}
             </Button>
             <Button
               variant="outline"
@@ -244,47 +244,47 @@ function InvestimentosPage() {
               onClick={() => setRendDialog({ open: true, rend: null })}
               disabled={ativos.length === 0}
             >
-              <HandCoins className="h-4 w-4 mr-1.5" /> Rendimento
+              <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
-              <Upload className="h-4 w-4 mr-1.5" /> Importar
+              <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
             <Button size="sm" onClick={() => { setEditing(null); setOpenAdd(true); }}>
-              <Plus className="h-4 w-4 mr-1.5" /> Adicionar investimento
+              <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
             </Button>
           </div>
         </div>
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/40 bg-muted/20 p-2.5 text-[11px] text-muted-foreground max-w-3xl">
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
-            Os valores são calculados com base nas informações cadastradas ou importadas. Para acompanhar a carteira
-            com mais precisão, atualize o valor atual dos investimentos periodicamente.
+            {t("investimentos.infoCalc")}
           </span>
         </div>
       </header>
 
       {/* Cards de topo */}
       <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-2">
-        <KpiCard icon={<Wallet className="h-4 w-4" />} label="Patrimônio total" value={formatBRL(totais.patrimonio)} />
-        <KpiCard icon={<PiggyBank className="h-4 w-4" />} label="Valor aplicado" value={formatBRL(totais.aplicado)} />
+        <KpiCard icon={<Wallet className="h-4 w-4" />} label={t("investimentos.kpi.patrimony")} value={formatBRL(totais.patrimonio)} />
+        <KpiCard icon={<PiggyBank className="h-4 w-4" />} label={t("investimentos.kpi.applied")} value={formatBRL(totais.aplicado)} />
         <KpiCard
           icon={totais.lucro >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-          label="Lucro / Prejuízo"
+          label={t("investimentos.kpi.profit")}
           value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`}
           tone={totais.lucro >= 0 ? "pos" : "neg"}
         />
         <KpiCard
           icon={<BarChart3 className="h-4 w-4" />}
-          label="Rentabilidade"
+          label={t("investimentos.kpi.yield")}
           value={`${totais.rentabilidade >= 0 ? "+" : ""}${totais.rentabilidade.toFixed(2)}%`}
           tone={totais.rentabilidade >= 0 ? "pos" : "neg"}
         />
         <KpiCard
           icon={<Coins className="h-4 w-4" />}
-          label="Rendimentos no ano"
+          label={t("investimentos.kpi.incomeYear")}
           value={formatBRL(totais.rendimentosAno)}
         />
       </section>
+
 
       {/* Conteúdo principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
