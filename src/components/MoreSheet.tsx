@@ -25,7 +25,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
 import { PLAN_LABEL, type FeatureKey } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
@@ -33,8 +32,6 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail } from "@/lib/plans";
 import { useRoles } from "@/lib/use-roles";
-import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
-import { UserAvatar } from "@/components/UserAvatar";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
 
