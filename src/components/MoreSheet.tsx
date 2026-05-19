@@ -144,6 +144,14 @@ const androidSheetStyles = {
   },
 };
 
+function getInitials(name?: string | null, email?: string | null) {
+  const src = (name && name.trim()) || (email && email.split("@")[0]) || "U";
+  const parts = src.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -310,14 +318,24 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                     closeMenu();
                     window.setTimeout(() => navigate({ to: "/conta" }), 60);
                   }}
-                  className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-colors hover:bg-card/90 active:scale-[0.99]"
+                  className="mb-2 flex w-full items-center gap-3 rounded-2xl p-3 text-left active:scale-[0.99]"
+                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
                 >
-                  <UserAvatar
-                    url={profile?.avatar_url}
-                    name={profile?.nome ?? profile?.responsavel_nome}
-                    email={user?.email}
-                    size={42}
-                  />
+                  <span
+                    className="grid h-[42px] w-[42px] shrink-0 place-items-center overflow-hidden rounded-full text-sm font-bold"
+                    style={{ backgroundColor: "#dde7ff", color: "#172033" }}
+                  >
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile?.nome ?? "Avatar"}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email)
+                    )}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">
                       {profile?.nome ||
@@ -325,12 +343,14 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                         user?.email?.split("@")[0] ||
                         t("header.fallbackUser")}
                     </p>
-                    <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+                    <p className="truncate text-[11px]" style={{ color: "#aeb6c2" }}>{user?.email}</p>
                   </div>
                 </button>
-                <ConnectedAccountSwitcher className="mb-2" />
-                <div className="rounded-2xl border border-border/60 bg-card/70 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div
+                  className="rounded-2xl p-3"
+                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#aeb6c2" }}>
                     {t("more.currentPlan")}
                   </p>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
@@ -346,8 +366,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               </div>
 
               <div
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-2"
-                style={{ paddingBottom: 24 }}
+                className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2"
+                style={{ paddingBottom: 24, WebkitOverflowScrolling: "touch" }}
               >
                 <div className="grid grid-cols-2 gap-3">
                   {items.map((item) => {
@@ -358,11 +378,10 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                         key={item.to}
                         type="button"
                         onClick={() => handleItem(item)}
-                        className={cn(
-                          "group relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-all hover:border-border hover:bg-card/90 active:scale-[0.98]",
-                        )}
+                        className="relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl p-3 text-left active:scale-[0.98]"
+                        style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
                       >
-                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft/60 text-brand-on-soft">
+                        <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#dde7ff", color: "#172033" }}>
                           <Icon className="h-4 w-4" strokeWidth={2} />
                         </span>
                         <span className="flex w-full items-center gap-1">
@@ -370,10 +389,10 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                             {t(`items.${item.labelKey}`)}
                           </span>
                           {locked && (
-                            <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />
+                            <Lock className="ml-auto h-3.5 w-3.5" style={{ color: "#aeb6c2" }} />
                           )}
                         </span>
-                        <span className="text-[11px] leading-snug text-muted-foreground">
+                        <span className="text-[11px] leading-snug" style={{ color: "#aeb6c2" }}>
                           {t(`descriptions.${item.descKey}`)}
                         </span>
                       </button>
