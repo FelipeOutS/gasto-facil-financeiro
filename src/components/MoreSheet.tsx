@@ -110,7 +110,7 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
-const MORE_MENU_BOTTOM_OFFSET_PX = 80;
+const MORE_MENU_BOTTOM_OFFSET = "calc(80px + env(safe-area-inset-bottom, 0px))";
 
 type Props = {
   open: boolean;
@@ -241,7 +241,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const menuPortal =
     portalReady && open
       ? createPortal(
-          <div className="fixed inset-0 z-[1000] lg:hidden" data-more-menu-root="true">
+          <div className="fixed inset-0 isolate z-[1000] lg:hidden" data-more-menu-root="true">
             <div
               className="absolute inset-0 z-0 bg-black/65"
               onClick={closeMenu}
@@ -252,7 +252,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               aria-modal="true"
               aria-labelledby="more-menu-title"
               className="fixed inset-x-3 z-10 flex min-h-0 max-h-[78vh] max-h-[78dvh] flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
-              style={{ bottom: MORE_MENU_BOTTOM_OFFSET_PX }}
+              style={{ bottom: MORE_MENU_BOTTOM_OFFSET }}
             >
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
                 <div className="min-w-0">
