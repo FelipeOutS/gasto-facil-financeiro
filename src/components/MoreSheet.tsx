@@ -138,8 +138,13 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          overlayClassName="data-[state=closed]:duration-0 z-[60]"
-          className="z-[70] h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 pb-[env(safe-area-inset-bottom)] data-[state=closed]:duration-0 data-[state=open]:duration-150"
+          overlayClassName="data-[state=closed]:duration-0 z-[9998] fixed inset-0"
+          className="z-[9999] fixed inset-x-0 bottom-0 flex flex-col rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 data-[state=closed]:duration-0 data-[state=open]:duration-150"
+          style={{
+            maxHeight: "calc(100dvh - 24px)",
+            height: "min(75dvh, calc(100dvh - 24px))",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+          }}
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">{t("more.title")}</SheetTitle>
@@ -187,7 +192,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
             </div>
           </div>
 
-          <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
+          <div className="flex-1 overflow-y-auto px-5 pb-6 pt-2 overscroll-contain">
             <div className="grid grid-cols-2 gap-3">
               {items.map((item) => {
                 const locked = isLocked(item);
