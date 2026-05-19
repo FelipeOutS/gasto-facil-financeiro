@@ -192,7 +192,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
             </div>
           </div>
 
-          <div className="overflow-y-auto px-5 pb-8 pt-2" style={{ maxHeight: "calc(75vh - 170px)" }}>
+          <div className="flex-1 overflow-y-auto px-5 pb-6 pt-2 overscroll-contain">
             <div className="grid grid-cols-2 gap-3">
               {items.map((item) => {
                 const locked = isLocked(item);
