@@ -91,6 +91,10 @@ import {
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos")({
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return { meta: [{ title: t("investimentos.title") + " — Gasto Inteligente" }] };
+  },
   component: InvestimentosGate,
 });
 
@@ -102,24 +106,23 @@ function InvestimentosGate() {
 }
 
 function InvestimentosBloqueado() {
+  const { t } = useTranslation("misc");
   return (
     <MobileShell wide>
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-card">
-        <h1 className="text-xl font-bold">Seus investimentos estão salvos</h1>
+        <h1 className="text-xl font-bold">{t("investimentos.locked.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seu teste gratuito terminou. Seus investimentos continuam armazenados,
-          mas para visualizar e continuar acompanhando sua carteira, assine um
-          plano com acesso a Investimentos.
+          {t("investimentos.locked.desc")}
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <Button asChild className="rounded-2xl">
-            <Link to="/meu-plano">Ver planos</Link>
+            <Link to="/meu-plano">{t("investimentos.locked.plans")}</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-2xl">
-            <Link to="/meu-plano">Assinar agora</Link>
+            <Link to="/meu-plano">{t("investimentos.locked.subscribe")}</Link>
           </Button>
           <Button asChild variant="ghost" className="rounded-2xl">
-            <Link to="/">Voltar ao início</Link>
+            <Link to="/">{t("investimentos.locked.home")}</Link>
           </Button>
         </div>
       </div>
