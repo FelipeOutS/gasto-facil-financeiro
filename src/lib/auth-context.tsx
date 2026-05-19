@@ -38,6 +38,17 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AUTH_BOOT_TIMEOUT_MS = 6000;
+
+function withAuthTimeout<T>(promise: Promise<T>, ms = AUTH_BOOT_TIMEOUT_MS): Promise<T | null> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(null), ms);
+    promise
+      .then((value) => resolve(value))
+      .catch(() => resolve(null))
+      .finally(() => window.clearTimeout(timer));
+  });
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -45,10 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     // Safety: nunca deixe loading=true para sempre (WebView pode travar getSession)
     const loadingFallback = window.setTimeout(() => {
-      setLoading(false);
-    }, 12000);
+      if (mounted) setLoading(false);
+    }, AUTH_BOOT_TIMEOUT_MS + 1000);
 
     // 1) listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
@@ -70,9 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // 2) then existing session
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
+    withAuthTimeout(supabase.auth.getSession())
+      .then((result) => {
+        if (!mounted) return;
+        const data = result?.data ?? { session: null };
         setSession(data.session);
         const uid = data.session?.user.id ?? null;
         setActiveUserId(uid);
@@ -86,10 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         window.clearTimeout(loadingFallback);
-        setLoading(false);
+        if (mounted) setLoading(false);
       });
 
     return () => {
+      mounted = false;
       window.clearTimeout(loadingFallback);
       sub.subscription.unsubscribe();
     };
