@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal, flushSync } from "react-dom";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -134,7 +133,6 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     title: "",
   });
   const [navigating, setNavigating] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
   const historyPushedRef = useRef(false);
 
   const closeMenu = useCallback(() => {
@@ -146,11 +144,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   }, [onOpenChange]);
 
   useEffect(() => {
-    setPortalReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open || !portalReady || typeof window === "undefined") return;
+    if (!open || typeof window === "undefined") return;
 
     window.history.pushState(
       { ...(window.history.state ?? {}), moreMenuOpen: true },
@@ -167,26 +161,26 @@ export function MoreSheet({ open, onOpenChange }: Props) {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [open, portalReady, onOpenChange]);
+  }, [open, onOpenChange]);
 
   useEffect(() => {
-    if (!open || !portalReady || typeof document === "undefined") return;
+    if (!open || typeof document === "undefined") return;
     const { body } = document;
     const previousOverflow = body.style.overflow;
     body.style.overflow = "hidden";
     return () => {
       body.style.overflow = previousOverflow;
     };
-  }, [open, portalReady]);
+  }, [open]);
 
   useEffect(() => {
-    if (!open || !portalReady || typeof document === "undefined") return;
+    if (!open || typeof document === "undefined") return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeMenu();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, portalReady, closeMenu]);
+  }, [open, closeMenu]);
 
   const getRule = useCallback(
     (item: MoreItem) => {
