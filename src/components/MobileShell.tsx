@@ -19,12 +19,12 @@ export function MobileShell({
   const showNav = !hideNav;
 
   const inner = (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
       <div className={showNav ? "lg:pl-64" : ""}>
         <main
           className={
-            "mx-auto flex min-h-screen w-full flex-col px-4 pb-[calc(96px+env(safe-area-inset-bottom))] safe-top sm:px-5 md:px-6 lg:px-6 lg:pb-12 xl:px-8 2xl:px-10 page-enter " +
+            "mx-auto flex min-h-screen min-h-dvh w-full flex-col px-4 pb-[calc(96px+env(safe-area-inset-bottom))] safe-top sm:px-5 md:px-6 lg:px-6 lg:pb-12 xl:px-8 2xl:px-10 page-enter " +
             (wide
               ? "max-w-md md:max-w-3xl lg:max-w-[1200px] xl:max-w-[1440px] 2xl:max-w-[1600px]"
               : "max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl")
@@ -36,6 +36,7 @@ export function MobileShell({
       {showNav && <BottomNav />}
     </div>
   );
+
 
   if (unprotected) return inner;
   return <AuthGate>{inner}</AuthGate>;

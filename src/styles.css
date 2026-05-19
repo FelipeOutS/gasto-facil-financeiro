@@ -219,9 +219,28 @@ body {
   }
 
   html,
-  body {
+  body,
+  #root {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    min-height: 100vh;
+    /* Usa dynamic viewport quando suportado (corrige faixa branca no WebView
+       Android quando a barra de URL/sistema colapsa). */
+    min-height: 100dvh;
+  }
+
+  html {
+    /* Sinaliza o esquema de cor pro WebView pintar overscroll/scrollbar
+       no tom certo (sem flash branco no topo/rodapé). */
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  html,
+  body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -230,14 +249,15 @@ body {
   }
 
   body {
-    min-height: 100vh;
     background: radial-gradient(
         ellipse at top,
         oklch(0.22 0.012 260) 0%,
         var(--color-background) 60%
       )
-      no-repeat fixed;
+      no-repeat fixed,
+      var(--color-background);
   }
+
 
   /* Soft brand tint overlay — visível mas elegante. A intensidade real é
      controlada por --brand-tint (definido em accent.tsx), variando por cor
