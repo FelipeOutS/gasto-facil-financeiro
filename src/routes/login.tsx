@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { traduzirErroAuth } from "@/lib/auth-messages";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/login")({
   head: () => {
@@ -66,6 +67,9 @@ function LoginForm() {
         </div>
       }
     >
+      <div className="mb-5 flex justify-center sm:hidden">
+        <LanguageSwitcher align="center" className="h-9 rounded-full px-4" />
+      </div>
       <div className="mb-5 animate-fade-in">
         <GoogleAuthButton label={t("login.googleLabel")} separatorText={t("login.separator")} />
       </div>
