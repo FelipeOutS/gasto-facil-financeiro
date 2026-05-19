@@ -11,6 +11,8 @@ import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 
+const AUTH_REDIRECT_KEY_PREFIX = "gi:auth-redirect:";
+
 /**
  * Rotas que NÃO exigem assinatura ativa.
  * Tudo o que não estiver aqui só carrega para usuários com plano ativo
@@ -91,9 +93,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading && !session && !redirecting) {
       setRedirecting(true);
-      void navigate({ to: "/login" });
+      try {
+        if (pathname !== "/login") {
+          window.sessionStorage.setItem(AUTH_REDIRECT_KEY_PREFIX + "after-login", pathname);
+        }
+      } catch {
+        /* ignore */
+      }
+      void navigate({ to: "/login", replace: true });
     }
-  }, [loading, session, redirecting, navigate]);
+  }, [loading, session, redirecting, navigate, pathname]);
 
   // Redireciona para onboarding na primeira entrada
   useEffect(() => {
