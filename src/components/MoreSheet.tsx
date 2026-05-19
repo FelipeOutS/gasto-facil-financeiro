@@ -138,8 +138,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          overlayClassName="data-[state=closed]:duration-0"
-          className="h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 lg:hidden data-[state=closed]:duration-0 data-[state=open]:duration-150"
+          overlayClassName="data-[state=closed]:duration-0 z-[60]"
+          className="z-[70] h-[75vh] rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 pb-[env(safe-area-inset-bottom)] data-[state=closed]:duration-0 data-[state=open]:duration-150"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">{t("more.title")}</SheetTitle>
