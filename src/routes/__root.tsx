@@ -103,7 +103,7 @@ export const Route = createRootRoute({
         rel: "preload",
         as: "image",
         href: "/logos/brand/gasto-inteligente-light.png",
-        fetchpriority: "high",
+        fetchPriority: "high",
       },
     ],
     scripts: [
@@ -150,12 +150,12 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <AccentProvider>
             <AuthProvider>
