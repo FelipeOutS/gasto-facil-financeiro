@@ -250,7 +250,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               aria-modal="true"
               aria-labelledby="more-menu-title"
               className="fixed inset-x-3 z-10 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
-              style={{ bottom: MORE_MENU_BOTTOM_OFFSET }}
+              style={{ bottom: MORE_MENU_BOTTOM_OFFSET, maxHeight: "calc(100vh - 112px)" }}
             >
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
                 <div className="min-w-0">
