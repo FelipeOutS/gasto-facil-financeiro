@@ -186,17 +186,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, portalReady, closeMenu]);
 
-  useEffect(() => {
-    if (!open) return;
-    items.forEach((item) => {
-      if (isLocked(item)) return;
-      router.preloadRoute({ to: item.to }).catch(() => {
-        // Prefetch é uma otimização: falhas não devem bloquear o menu.
-      });
-    });
-  }, [open, items, router, isAdminMaster, hasFullAccess, can]);
-
-  function getRule(item: MoreItem) {
+  const getRule = useCallback((item: MoreItem) => {
     return (
       ROUTE_RULE[item.to] ??
       (item.feature
@@ -207,13 +197,23 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           }
         : null)
     );
-  }
+  }, [t]);
 
-  function isLocked(item: MoreItem) {
+  const isLocked = useCallback((item: MoreItem) => {
     if (isAdminMaster || hasFullAccess) return false;
     const rule = getRule(item);
     return rule ? !can(rule.feature) : false;
-  }
+  }, [can, getRule, hasFullAccess, isAdminMaster]);
+
+  useEffect(() => {
+    if (!open) return;
+    items.forEach((item) => {
+      if (isLocked(item)) return;
+      router.preloadRoute({ to: item.to }).catch(() => {
+        // Prefetch é uma otimização: falhas não devem bloquear o menu.
+      });
+    });
+  }, [open, items, router, isLocked]);
 
   function handleItem(item: MoreItem) {
     if (navigating) return;
@@ -243,7 +243,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="more-menu-title"
-              className="fixed inset-x-3 z-[90] flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/98 shadow-2xl shadow-black/35 backdrop-blur-xl lg:hidden"
+              className="fixed inset-x-3 z-[90] flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/98 shadow-2xl shadow-black/35 backdrop-blur-xl lg:hidden"
               style={{
                 bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
                 maxHeight:
@@ -309,7 +309,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-2">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-2">
                 <div className="grid grid-cols-2 gap-3">
                   {items.map((item) => {
                     const locked = isLocked(item);
