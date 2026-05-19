@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
 import { BrandLoader } from "@/components/BrandLoader";
+import { LANG_STORAGE_KEY, isLocale } from "@/i18n";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -20,19 +21,19 @@ function AppEntry() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
 
-  // Garante idioma: usa o salvo (i18next detecta localStorage) ou PT-BR como padrão.
+  // Garante idioma: usa o salvo pelo seletor global ou PT como padrão.
   useEffect(() => {
     try {
       const saved =
         typeof window !== "undefined"
-          ? window.localStorage.getItem("i18nextLng")
+          ? window.localStorage.getItem(LANG_STORAGE_KEY)
           : null;
-      const lang = saved && saved.trim() ? saved : "pt-BR";
+      const lang = isLocale(saved) ? saved : "pt";
       if (i18n.language !== lang) {
         void i18n.changeLanguage(lang);
       }
     } catch {
-      void i18n.changeLanguage("pt-BR");
+      void i18n.changeLanguage("pt");
     }
   }, [i18n]);
 
