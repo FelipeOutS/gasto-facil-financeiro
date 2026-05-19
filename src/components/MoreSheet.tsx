@@ -138,13 +138,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          overlayClassName="data-[state=closed]:duration-0 z-[9998] fixed inset-0"
-          className="z-[9999] fixed inset-x-0 bottom-0 flex flex-col rounded-t-3xl border-t border-border/60 bg-background/95 backdrop-blur-xl p-0 data-[state=closed]:duration-0 data-[state=open]:duration-150"
-          style={{
-            maxHeight: "calc(100dvh - 24px)",
-            height: "min(75dvh, calc(100dvh - 24px))",
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
-          }}
+          overlayClassName="data-[state=closed]:duration-0 z-[9998]"
+          className="z-[9999] flex h-[85dvh] max-h-[calc(100dvh-24px)] flex-col rounded-t-3xl border-t border-border/60 bg-background/95 p-0 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] backdrop-blur-xl data-[state=closed]:duration-150 data-[state=open]:duration-200"
         >
           <SheetHeader className="px-5 pt-5 pb-3 pr-12 text-left">
             <SheetTitle className="text-lg">{t("more.title")}</SheetTitle>
