@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { usePlan } from "@/lib/use-plan";
 import {
   Plus,
@@ -89,6 +91,10 @@ import {
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos")({
+  head: () => {
+    const t = i18n.getFixedT(i18n.language, "misc");
+    return { meta: [{ title: t("investimentos.title") + " — Gasto Inteligente" }] };
+  },
   component: InvestimentosGate,
 });
 
@@ -100,24 +106,23 @@ function InvestimentosGate() {
 }
 
 function InvestimentosBloqueado() {
+  const { t } = useTranslation("misc");
   return (
     <MobileShell wide>
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-card">
-        <h1 className="text-xl font-bold">Seus investimentos estão salvos</h1>
+        <h1 className="text-xl font-bold">{t("investimentos.locked.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seu teste gratuito terminou. Seus investimentos continuam armazenados,
-          mas para visualizar e continuar acompanhando sua carteira, assine um
-          plano com acesso a Investimentos.
+          {t("investimentos.locked.desc")}
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <Button asChild className="rounded-2xl">
-            <Link to="/meu-plano">Ver planos</Link>
+            <Link to="/meu-plano">{t("investimentos.locked.plans")}</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-2xl">
-            <Link to="/meu-plano">Assinar agora</Link>
+            <Link to="/meu-plano">{t("investimentos.locked.subscribe")}</Link>
           </Button>
           <Button asChild variant="ghost" className="rounded-2xl">
-            <Link to="/">Voltar ao início</Link>
+            <Link to="/">{t("investimentos.locked.home")}</Link>
           </Button>
         </div>
       </div>
@@ -134,6 +139,7 @@ const RENT_TIPOS = [
 ];
 
 function InvestimentosPage() {
+  const { t } = useTranslation("misc");
   const { user } = useAuth();
   const userId = user?.id;
   const [ativos, setAtivos] = useState<Ativo[]>([]);
@@ -167,7 +173,7 @@ function InvestimentosPage() {
       setImportacoes(imps);
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível carregar os investimentos.");
+      toast.error(t("investimentos.wallet.loadError"));
     } finally {
       setLoading(false);
     }
@@ -187,29 +193,29 @@ function InvestimentosPage() {
     const fixaPct = distribuicao
       .filter((d) => classeAtivo(d.tipo) === "Renda fixa")
       .reduce((s, d) => s + d.pct, 0);
-    if (fixaPct >= 70) out.push("Sua carteira está concentrada em renda fixa.");
+    if (fixaPct >= 70) out.push(t("investimentos.insights.concentradaFixa"));
     if (totais.rendimentosAno > 0)
-      out.push(`Você recebeu ${formatBRL(totais.rendimentosAno)} em rendimentos este ano.`);
+      out.push(t("investimentos.insights.recebidoAno", { val: formatBRL(totais.rendimentosAno) }));
     if (distribuicao[0] && distribuicao[0].pct >= 40)
-      out.push(`Seu maior tipo de ativo (${distribuicao[0].label}) representa ${distribuicao[0].pct.toFixed(0)}% da carteira.`);
-    if (totais.rendimentosMes === 0) out.push("Você ainda não cadastrou rendimentos este mês.");
-    if (movs.length < 3) out.push("Adicione mais movimentações para calcular a rentabilidade com mais precisão.");
+      out.push(t("investimentos.insights.maiorTipo", { label: distribuicao[0].label, pct: distribuicao[0].pct.toFixed(0) }));
+    if (totais.rendimentosMes === 0) out.push(t("investimentos.insights.semRendMes"));
+    if (movs.length < 3) out.push(t("investimentos.insights.poucasMov"));
     return out;
-  }, [ativos, distribuicao, totais, movs]);
+  }, [ativos, distribuicao, totais, movs, t]);
 
   return (
     <MobileShell wide>
       <header className="pt-4 pb-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Investimentos</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("investimentos.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Acompanhe sua carteira, evolução patrimonial e rendimentos em um só lugar.
+              {t("investimentos.subtitle")}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)}>
-              <History className="h-4 w-4 mr-1.5" /> Importações
+              <History className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.imports")}
               {importacoes.length > 0 && (
                 <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5">
                   {importacoes.length}
@@ -222,7 +228,7 @@ function InvestimentosPage() {
               onClick={() => setOpenAtualizarLote(true)}
               disabled={ativos.length === 0}
             >
-              <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar valores
+              <RefreshCw className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.updateValues")}
             </Button>
             <Button
               variant="outline"
@@ -230,7 +236,7 @@ function InvestimentosPage() {
               onClick={() => setMovDialog({ open: true, mov: null })}
               disabled={ativos.length === 0}
             >
-              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Movimentação
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.movement")}
             </Button>
             <Button
               variant="outline"
@@ -238,66 +244,66 @@ function InvestimentosPage() {
               onClick={() => setRendDialog({ open: true, rend: null })}
               disabled={ativos.length === 0}
             >
-              <HandCoins className="h-4 w-4 mr-1.5" /> Rendimento
+              <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
-              <Upload className="h-4 w-4 mr-1.5" /> Importar
+              <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
             <Button size="sm" onClick={() => { setEditing(null); setOpenAdd(true); }}>
-              <Plus className="h-4 w-4 mr-1.5" /> Adicionar investimento
+              <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
             </Button>
           </div>
         </div>
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/40 bg-muted/20 p-2.5 text-[11px] text-muted-foreground max-w-3xl">
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
-            Os valores são calculados com base nas informações cadastradas ou importadas. Para acompanhar a carteira
-            com mais precisão, atualize o valor atual dos investimentos periodicamente.
+            {t("investimentos.infoCalc")}
           </span>
         </div>
       </header>
 
       {/* Cards de topo */}
       <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-2">
-        <KpiCard icon={<Wallet className="h-4 w-4" />} label="Patrimônio total" value={formatBRL(totais.patrimonio)} />
-        <KpiCard icon={<PiggyBank className="h-4 w-4" />} label="Valor aplicado" value={formatBRL(totais.aplicado)} />
+        <KpiCard icon={<Wallet className="h-4 w-4" />} label={t("investimentos.kpi.patrimony")} value={formatBRL(totais.patrimonio)} />
+        <KpiCard icon={<PiggyBank className="h-4 w-4" />} label={t("investimentos.kpi.applied")} value={formatBRL(totais.aplicado)} />
         <KpiCard
           icon={totais.lucro >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-          label="Lucro / Prejuízo"
+          label={t("investimentos.kpi.profit")}
           value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`}
           tone={totais.lucro >= 0 ? "pos" : "neg"}
         />
         <KpiCard
           icon={<BarChart3 className="h-4 w-4" />}
-          label="Rentabilidade"
+          label={t("investimentos.kpi.yield")}
           value={`${totais.rentabilidade >= 0 ? "+" : ""}${totais.rentabilidade.toFixed(2)}%`}
           tone={totais.rentabilidade >= 0 ? "pos" : "neg"}
         />
         <KpiCard
           icon={<Coins className="h-4 w-4" />}
-          label="Rendimentos no ano"
+          label={t("investimentos.kpi.incomeYear")}
           value={formatBRL(totais.rendimentosAno)}
         />
       </section>
+
 
       {/* Conteúdo principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         {/* Carteira */}
         <section className="lg:col-span-2 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Minha carteira</h2>
-            <span className="text-xs text-muted-foreground">{ativos.length} ativo(s)</span>
+            <h2 className="font-semibold">{t("investimentos.wallet.title")}</h2>
+            <span className="text-xs text-muted-foreground">{t(ativos.length === 1 ? "investimentos.wallet.countOne" : "investimentos.wallet.countOther", { count: ativos.length })}</span>
           </div>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{t("investimentos.wallet.loading")}</p>
           ) : ativos.length === 0 ? (
             <EmptyState
-              title="Nenhum investimento cadastrado"
-              description="Comece cadastrando seu primeiro ativo manualmente ou importe um extrato."
+              title={t("investimentos.wallet.emptyTitle")}
+              description={t("investimentos.wallet.emptyDesc")}
               cta={
                 <Button size="sm" onClick={() => setOpenAdd(true)}>
-                  <Plus className="h-4 w-4 mr-1.5" /> Adicionar investimento
+                  <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
                 </Button>
               }
             />
@@ -325,7 +331,7 @@ function InvestimentosPage() {
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {a.quantidade ? `${a.quantidade} · ` : ""}
-                        Aplicado {formatBRL(Number(a.valor_aplicado || 0))} · Atual {formatBRL(Number(a.valor_atual || 0))}
+                        {t("investimentos.wallet.applied")} {formatBRL(Number(a.valor_aplicado || 0))} · {t("investimentos.wallet.current")} {formatBRL(Number(a.valor_atual || 0))}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <Badge
@@ -338,7 +344,7 @@ function InvestimentosPage() {
                         {ult.desatualizado && a.ultima_atualizacao && (
                           <span className="text-[10px] text-amber-500/80 flex items-center gap-1">
                             <AlertTriangle className="h-2.5 w-2.5" />
-                            Valor pode estar desatualizado
+                            {t("investimentos.wallet.outdated")}
                           </span>
                         )}
                       </div>
@@ -356,7 +362,7 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8"
-                        title="Ver detalhes"
+                        title={t("investimentos.wallet.details")}
                         onClick={() => setDetalheAtivo(a)}
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -365,23 +371,23 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-brand"
-                        title="Atualizar valor"
+                        title={t("investimentos.wallet.refresh")}
                         onClick={() => setAtualizandoAtivo(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" title="Editar" onClick={() => { setEditing(a); setOpenAdd(true); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => { setEditing(a); setOpenAdd(true); }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-rose-500 hover:text-rose-500"
-                        title="Excluir"
+                        title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm(`Excluir ${a.nome}?`)) return;
+                          if (!confirm(t("investimentos.wallet.confirmDelete", { name: a.nome }))) return;
                           await excluirAtivo(a.id);
-                          toast.success("Investimento excluído.");
+                          toast.success(t("investimentos.wallet.deleted"));
                           reload();
                         }}
                       >
@@ -398,9 +404,9 @@ function InvestimentosPage() {
         {/* Distribuição + Insights */}
         <aside className="space-y-4">
           <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
-            <h2 className="font-semibold mb-3">Distribuição da carteira</h2>
+            <h2 className="font-semibold mb-3">{t("investimentos.dist.title")}</h2>
             {distribuicao.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Cadastre ativos para ver a distribuição.</p>
+              <p className="text-xs text-muted-foreground">{t("investimentos.dist.empty")}</p>
             ) : (
               <ul className="space-y-2.5">
                 {distribuicao.map((d) => (
@@ -425,7 +431,7 @@ function InvestimentosPage() {
             <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-4 w-4 text-brand" />
-                <h2 className="font-semibold">Insights da carteira</h2>
+                <h2 className="font-semibold">{t("investimentos.insights.title")}</h2>
               </div>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 {insights.map((i, idx) => (
@@ -442,17 +448,17 @@ function InvestimentosPage() {
 
       {/* Evolução patrimonial */}
       <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4 mt-4">
-        <h2 className="font-semibold mb-3">Evolução patrimonial</h2>
+        <h2 className="font-semibold mb-3">{t("investimentos.evol.title")}</h2>
         {ativos.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Adicione investimentos ou importe um extrato para acompanhar sua evolução.
+            {t("investimentos.evol.empty")}
           </p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <MiniStat label="Patrimônio" value={formatBRL(totais.patrimonio)} />
-            <MiniStat label="Aportado" value={formatBRL(totais.aplicado)} />
-            <MiniStat label="Variação" value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`} />
-            <MiniStat label="Rendimentos no mês" value={formatBRL(totais.rendimentosMes)} />
+            <MiniStat label={t("investimentos.evol.patrimony")} value={formatBRL(totais.patrimonio)} />
+            <MiniStat label={t("investimentos.evol.contributed")} value={formatBRL(totais.aplicado)} />
+            <MiniStat label={t("investimentos.evol.variation")} value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`} />
+            <MiniStat label={t("investimentos.evol.incomeMonth")} value={formatBRL(totais.rendimentosMes)} />
           </div>
         )}
       </section>
@@ -461,7 +467,7 @@ function InvestimentosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Movimentações</h2>
+            <h2 className="font-semibold">{t("investimentos.movs.title")}</h2>
             <Button
               size="sm"
               variant="ghost"
@@ -469,11 +475,11 @@ function InvestimentosPage() {
               onClick={() => setMovDialog({ open: true, mov: null })}
               disabled={ativos.length === 0}
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Nova
+              <Plus className="h-3.5 w-3.5 mr-1" /> {t("investimentos.actions.new")}
             </Button>
           </div>
           {movs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Sem movimentações ainda.</p>
+            <p className="text-xs text-muted-foreground">{t("investimentos.movs.empty")}</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
               {movs.slice(0, 10).map((m) => {
@@ -500,7 +506,7 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        title="Editar"
+                        title={t("investimentos.wallet.edit")}
                         onClick={() => setMovDialog({ open: true, mov: m })}
                       >
                         <Pencil className="h-3 w-3" />
@@ -509,18 +515,18 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
-                        title="Excluir"
+                        title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm("Excluir movimentação? Os totais do investimento serão recalculados.")) return;
+                          if (!confirm(t("investimentos.movs.confirmDelete"))) return;
                           try {
                             const aId = m.ativo_id;
                             await excluirMovimentacao(m.id);
                             if (aId && userId) await recalcularAtivoPorMovimentacoes(userId, aId);
-                            toast.success("Movimentação excluída.");
+                            toast.success(t("investimentos.movs.deleted"));
                             reload();
                           } catch (e) {
                             console.error(e);
-                            toast.error("Não foi possível excluir.");
+                            toast.error(t("investimentos.wallet.deleteError"));
                           }
                         }}
                       >
@@ -536,7 +542,7 @@ function InvestimentosPage() {
 
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Rendimentos</h2>
+            <h2 className="font-semibold">{t("investimentos.rends.title")}</h2>
             <Button
               size="sm"
               variant="ghost"
@@ -544,11 +550,11 @@ function InvestimentosPage() {
               onClick={() => setRendDialog({ open: true, rend: null })}
               disabled={ativos.length === 0}
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Novo
+              <Plus className="h-3.5 w-3.5 mr-1" /> {t("investimentos.actions.newM")}
             </Button>
           </div>
           {rends.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Sem rendimentos cadastrados.</p>
+            <p className="text-xs text-muted-foreground">{t("investimentos.rends.empty")}</p>
           ) : (
             <ul className="divide-y divide-border/40 text-sm">
               {rends.slice(0, 10).map((r) => {
@@ -570,7 +576,7 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        title="Editar"
+                        title={t("investimentos.wallet.edit")}
                         onClick={() => setRendDialog({ open: true, rend: r })}
                       >
                         <Pencil className="h-3 w-3" />
@@ -579,16 +585,16 @@ function InvestimentosPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
-                        title="Excluir"
+                        title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm("Excluir rendimento?")) return;
+                          if (!confirm(t("investimentos.rends.confirmDelete"))) return;
                           try {
                             await excluirRendimento(r.id);
-                            toast.success("Rendimento excluído.");
+                            toast.success(t("investimentos.rends.deleted"));
                             reload();
                           } catch (e) {
                             console.error(e);
-                            toast.error("Não foi possível excluir.");
+                            toast.error(t("investimentos.wallet.deleteError"));
                           }
                         }}
                       >
@@ -611,20 +617,18 @@ function InvestimentosPage() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-semibold">Integração B3</h2>
-              <Badge variant="outline" className="text-[10px]">Não conectado</Badge>
-              <Badge variant="secondary" className="text-[10px]">Importação manual disponível</Badge>
-              <Badge variant="outline" className="text-[10px]">API B3 — em breve</Badge>
+              <h2 className="font-semibold">{t("investimentos.b3.title")}</h2>
+              <Badge variant="outline" className="text-[10px]">{t("investimentos.b3.notConnected")}</Badge>
+              <Badge variant="secondary" className="text-[10px]">{t("investimentos.b3.manualAvail")}</Badge>
+              <Badge variant="outline" className="text-[10px]">{t("investimentos.b3.apiSoon")}</Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-              A conexão automática com a B3 depende de acesso oficial/autorizado. Por enquanto, você pode importar
-              extratos da Área do Investidor ou cadastrar seus investimentos manualmente.
+              {t("investimentos.b3.desc")}
             </p>
             <div className="flex items-start gap-2 mt-3 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
               <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <span>
-                Não pedimos senha da B3, senha da corretora, CPF ou token bancário. Use apenas arquivos exportados
-                oficialmente ou cadastre os dados manualmente.
+                {t("investimentos.b3.security")}
               </span>
             </div>
           </div>
@@ -696,15 +700,15 @@ function InvestimentosPage() {
         onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
         onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
         onExcluirAtivo={async (a) => {
-          if (!confirm(`Excluir ${a.nome}? Movimentações e rendimentos relacionados também serão removidos.`)) return;
+          if (!confirm(t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }))) return;
           try {
             await excluirAtivo(a.id);
-            toast.success("Investimento excluído.");
+            toast.success(t("investimentos.wallet.deleted"));
             setDetalheAtivo(null);
             reload();
           } catch (e) {
             console.error(e);
-            toast.error("Não foi possível excluir.");
+            toast.error(t("investimentos.wallet.deleteError"));
           }
         }}
       />

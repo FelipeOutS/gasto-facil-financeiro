@@ -142,6 +142,97 @@
     "outros": "Outros",
     "compare": { "title": "Comparação com o mês anterior", "current": "Mês atual", "previous": "Mês anterior", "same": "Mesmo valor que no mês anterior." }
   },
+  "investimentos": {
+    "locked": {
+      "title": "Seus investimentos estão salvos",
+      "desc": "Seu teste gratuito terminou. Seus investimentos continuam armazenados, mas para visualizar e continuar acompanhando sua carteira, assine um plano com acesso a Investimentos.",
+      "plans": "Ver planos",
+      "subscribe": "Assinar agora",
+      "home": "Voltar ao início"
+    },
+    "title": "Investimentos",
+    "subtitle": "Acompanhe sua carteira, evolução patrimonial e rendimentos em um só lugar.",
+    "actions": {
+      "imports": "Importações",
+      "updateValues": "Atualizar valores",
+      "movement": "Movimentação",
+      "income": "Rendimento",
+      "import": "Importar",
+      "add": "Adicionar investimento",
+      "new": "Nova",
+      "newM": "Novo"
+    },
+    "infoCalc": "Os valores são calculados com base nas informações cadastradas ou importadas. Para acompanhar a carteira com mais precisão, atualize o valor atual dos investimentos periodicamente.",
+    "kpi": {
+      "patrimony": "Patrimônio total",
+      "applied": "Valor aplicado",
+      "profit": "Lucro / Prejuízo",
+      "yield": "Rentabilidade",
+      "incomeYear": "Rendimentos no ano"
+    },
+    "wallet": {
+      "title": "Minha carteira",
+      "countOne": "{{count}} ativo",
+      "countOther": "{{count}} ativos",
+      "loading": "Carregando…",
+      "loadError": "Não foi possível carregar os investimentos.",
+      "emptyTitle": "Nenhum investimento cadastrado",
+      "emptyDesc": "Comece cadastrando seu primeiro ativo manualmente ou importe um extrato.",
+      "applied": "Aplicado",
+      "current": "Atual",
+      "outdated": "Valor pode estar desatualizado",
+      "details": "Ver detalhes",
+      "refresh": "Atualizar valor",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "confirmDelete": "Excluir {{name}}?",
+      "deleted": "Investimento excluído.",
+      "deleteError": "Não foi possível excluir."
+    },
+    "dist": {
+      "title": "Distribuição da carteira",
+      "empty": "Cadastre ativos para ver a distribuição."
+    },
+    "insights": {
+      "title": "Insights da carteira",
+      "concentradaFixa": "Sua carteira está concentrada em renda fixa.",
+      "recebidoAno": "Você recebeu {{val}} em rendimentos este ano.",
+      "maiorTipo": "Seu maior tipo de ativo ({{label}}) representa {{pct}}% da carteira.",
+      "semRendMes": "Você ainda não cadastrou rendimentos este mês.",
+      "poucasMov": "Adicione mais movimentações para calcular a rentabilidade com mais precisão."
+    },
+    "evol": {
+      "title": "Evolução patrimonial",
+      "empty": "Adicione investimentos ou importe um extrato para acompanhar sua evolução.",
+      "patrimony": "Patrimônio",
+      "contributed": "Aportado",
+      "variation": "Variação",
+      "incomeMonth": "Rendimentos no mês"
+    },
+    "movs": {
+      "title": "Movimentações",
+      "empty": "Sem movimentações ainda.",
+      "confirmDelete": "Excluir movimentação? Os totais do investimento serão recalculados.",
+      "deleted": "Movimentação excluída."
+    },
+    "rends": {
+      "title": "Rendimentos",
+      "empty": "Sem rendimentos cadastrados.",
+      "confirmDelete": "Excluir rendimento?",
+      "deleted": "Rendimento excluído."
+    },
+    "b3": {
+      "title": "Integração B3",
+      "notConnected": "Não conectado",
+      "manualAvail": "Importação manual disponível",
+      "apiSoon": "API B3 — em breve",
+      "desc": "A conexão automática com a B3 depende de acesso oficial/autorizado. Por enquanto, você pode importar extratos da Área do Investidor ou cadastrar seus investimentos manualmente.",
+      "security": "Não pedimos senha da B3, senha da corretora, CPF ou token bancário. Use apenas arquivos exportados oficialmente ou cadastre os dados manualmente."
+    },
+    "detail": {
+      "confirmDeleteAtivo": "Excluir {{name}}? Movimentações e rendimentos relacionados também serão removidos."
+    }
+  },
   "ai": {
     "metaTitle": "Gasto Inteligente AI — Assistente financeiro com IA",
     "metaDesc": "Converse com a IA sobre seus gastos, metas e organização financeira em linguagem simples.",
