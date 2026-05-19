@@ -45,6 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety: nunca deixe loading=true para sempre (WebView pode travar getSession)
+    const loadingFallback = window.setTimeout(() => {
+      setLoading(false);
+    }, 12000);
+
     // 1) listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
       setSession(sess);
@@ -65,21 +70,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // 2) then existing session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      const uid = data.session?.user.id ?? null;
-      setActiveUserId(uid);
-      if (uid) {
-        void (async () => {
-          await migrateLegacyDataToUser(uid);
-          await hydrateUser(uid);
-          void loadProfile(uid);
-        })();
-      }
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        const uid = data.session?.user.id ?? null;
+        setActiveUserId(uid);
+        if (uid) {
+          void (async () => {
+            await migrateLegacyDataToUser(uid);
+            await hydrateUser(uid);
+            void loadProfile(uid);
+          })();
+        }
+      })
+      .finally(() => {
+        window.clearTimeout(loadingFallback);
+        setLoading(false);
+      });
 
     return () => {
+      window.clearTimeout(loadingFallback);
       sub.subscription.unsubscribe();
     };
   }, []);
