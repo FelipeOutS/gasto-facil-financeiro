@@ -109,7 +109,43 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
-const MORE_MENU_BOTTOM_OFFSET = 84;
+const MORE_MENU_BOTTOM_OFFSET = 76;
+const androidSheetStyles = {
+  root: {
+    position: "fixed" as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 2147483000,
+    WebkitTransform: "translate3d(0,0,0)",
+    transform: "translate3d(0,0,0)",
+  },
+  backdrop: {
+    position: "absolute" as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(0,0,0,0.68)",
+  },
+  panel: {
+    position: "absolute" as const,
+    right: 12,
+    left: 12,
+    bottom: MORE_MENU_BOTTOM_OFFSET,
+    zIndex: 2147483001,
+    maxHeight: "calc(100vh - 96px)",
+    overflow: "hidden",
+    borderRadius: 24,
+    border: "1px solid rgba(255,255,255,0.14)",
+    backgroundColor: "#24262b",
+    color: "#f8fafc",
+    boxShadow: "0 24px 70px rgba(0,0,0,0.65)",
+    WebkitTransform: "translate3d(0,0,0)",
+    transform: "translate3d(0,0,0)",
+  },
+};
 
 type Props = {
   open: boolean;
@@ -236,33 +272,34 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     <>
       {open && (
           <div
-            className="fixed inset-0 isolate lg:hidden"
+            className="lg:hidden"
             data-more-menu-root="true"
-            style={{ zIndex: 2147483000 }}
+            style={androidSheetStyles.root}
           >
             <div
-              className="absolute inset-0 z-0 bg-black/65"
               onClick={closeMenu}
               aria-hidden="true"
+              style={androidSheetStyles.backdrop}
             />
-            <section
+            <div
               role="dialog"
               aria-modal="true"
               aria-labelledby="more-menu-title"
-              className="fixed inset-x-3 z-10 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
-              style={{ bottom: MORE_MENU_BOTTOM_OFFSET, maxHeight: "calc(100vh - 112px)" }}
+              className="flex min-h-0 flex-col"
+              style={androidSheetStyles.panel}
             >
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
                 <div className="min-w-0">
-                  <h2 id="more-menu-title" className="text-lg font-semibold text-foreground">
+                  <h2 id="more-menu-title" className="text-lg font-semibold" style={{ color: "#ffffff" }}>
                     {t("more.title")}
                   </h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{t("more.description")}</p>
+                  <p className="mt-1 text-xs" style={{ color: "#aeb6c2" }}>{t("more.description")}</p>
                 </div>
                 <button
                   type="button"
                   onClick={closeMenu}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/60 bg-card/70 text-muted-foreground transition-colors hover:bg-card hover:text-foreground active:scale-95"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full active:scale-95"
+                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
                   aria-label="Fechar menu"
                 >
                   <X className="h-4 w-4" />
