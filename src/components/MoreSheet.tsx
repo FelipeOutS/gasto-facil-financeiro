@@ -186,24 +186,30 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, portalReady, closeMenu]);
 
-  const getRule = useCallback((item: MoreItem) => {
-    return (
-      ROUTE_RULE[item.to] ??
-      (item.feature
-        ? {
-            feature: item.feature,
-            title: `${t(`items.${item.labelKey}`)} ${t("more.premiumSuffix")}`,
-            path: item.to,
-          }
-        : null)
-    );
-  }, [t]);
+  const getRule = useCallback(
+    (item: MoreItem) => {
+      return (
+        ROUTE_RULE[item.to] ??
+        (item.feature
+          ? {
+              feature: item.feature,
+              title: `${t(`items.${item.labelKey}`)} ${t("more.premiumSuffix")}`,
+              path: item.to,
+            }
+          : null)
+      );
+    },
+    [t],
+  );
 
-  const isLocked = useCallback((item: MoreItem) => {
-    if (isAdminMaster || hasFullAccess) return false;
-    const rule = getRule(item);
-    return rule ? !can(rule.feature) : false;
-  }, [can, getRule, hasFullAccess, isAdminMaster]);
+  const isLocked = useCallback(
+    (item: MoreItem) => {
+      if (isAdminMaster || hasFullAccess) return false;
+      const rule = getRule(item);
+      return rule ? !can(rule.feature) : false;
+    },
+    [can, getRule, hasFullAccess, isAdminMaster],
+  );
 
   useEffect(() => {
     if (!open) return;
