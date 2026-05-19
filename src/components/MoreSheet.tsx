@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal, flushSync } from "react-dom";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -110,7 +109,7 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
-const MORE_MENU_BOTTOM_OFFSET = "calc(80px + env(safe-area-inset-bottom, 0px))";
+const MORE_MENU_BOTTOM_OFFSET = 84;
 
 type Props = {
   open: boolean;
@@ -134,7 +133,6 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     title: "",
   });
   const [navigating, setNavigating] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
   const historyPushedRef = useRef(false);
 
   const closeMenu = useCallback(() => {
@@ -146,11 +144,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   }, [onOpenChange]);
 
   useEffect(() => {
-    setPortalReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open || !portalReady || typeof window === "undefined") return;
+    if (!open || typeof window === "undefined") return;
 
     window.history.pushState(
       { ...(window.history.state ?? {}), moreMenuOpen: true },
@@ -167,26 +161,26 @@ export function MoreSheet({ open, onOpenChange }: Props) {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [open, portalReady, onOpenChange]);
+  }, [open, onOpenChange]);
 
   useEffect(() => {
-    if (!open || !portalReady || typeof document === "undefined") return;
+    if (!open || typeof document === "undefined") return;
     const { body } = document;
     const previousOverflow = body.style.overflow;
     body.style.overflow = "hidden";
     return () => {
       body.style.overflow = previousOverflow;
     };
-  }, [open, portalReady]);
+  }, [open]);
 
   useEffect(() => {
-    if (!open || !portalReady || typeof document === "undefined") return;
+    if (!open || typeof document === "undefined") return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeMenu();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, portalReady, closeMenu]);
+  }, [open, closeMenu]);
 
   const getRule = useCallback(
     (item: MoreItem) => {
@@ -227,21 +221,25 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
-      flushSync(() => closeMenu());
+      closeMenu();
       setLockState({ open: true, title: rule.title });
       return;
     }
     setNavigating(true);
-    flushSync(() => closeMenu());
+    closeMenu();
     window.setTimeout(() => {
       navigate({ to: item.to }).finally(() => setNavigating(false));
     }, 60);
   }
 
-  const menuPortal =
-    portalReady && open
-      ? createPortal(
-          <div className="fixed inset-0 isolate z-[1000] lg:hidden" data-more-menu-root="true">
+  return (
+    <>
+      {open && (
+          <div
+            className="fixed inset-0 isolate lg:hidden"
+            data-more-menu-root="true"
+            style={{ zIndex: 2147483000 }}
+          >
             <div
               className="absolute inset-0 z-0 bg-black/65"
               onClick={closeMenu}
@@ -251,8 +249,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="more-menu-title"
-              className="fixed inset-x-3 z-10 flex min-h-0 max-h-[78vh] max-h-[78dvh] flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
-              style={{ bottom: MORE_MENU_BOTTOM_OFFSET }}
+              className="fixed inset-x-3 z-10 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
+              style={{ bottom: MORE_MENU_BOTTOM_OFFSET, maxHeight: "calc(100vh - 112px)" }}
             >
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
                 <div className="min-w-0">
@@ -275,7 +273,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 <button
                   type="button"
                   onClick={() => {
-                    flushSync(() => closeMenu());
+                    closeMenu();
                     window.setTimeout(() => navigate({ to: "/conta" }), 60);
                   }}
                   className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-colors hover:bg-card/90 active:scale-[0.99]"
@@ -315,7 +313,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
 
               <div
                 className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-2"
-                style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+                style={{ paddingBottom: 24 }}
               >
                 <div className="grid grid-cols-2 gap-3">
                   {items.map((item) => {
@@ -350,14 +348,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 </div>
               </div>
             </section>
-          </div>,
-          document.body,
-        )
-      : null;
-
-  return (
-    <>
-      {menuPortal}
+          </div>
+      )}
       <PremiumLockModal
         open={lockState.open}
         onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
