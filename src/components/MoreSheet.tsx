@@ -221,21 +221,25 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     if (navigating) return;
     if (isLocked(item)) {
       const rule = getRule(item)!;
-      flushSync(() => closeMenu());
+      closeMenu();
       setLockState({ open: true, title: rule.title });
       return;
     }
     setNavigating(true);
-    flushSync(() => closeMenu());
+    closeMenu();
     window.setTimeout(() => {
       navigate({ to: item.to }).finally(() => setNavigating(false));
     }, 60);
   }
 
-  const menuPortal =
-    portalReady && open
-      ? createPortal(
-          <div className="fixed inset-0 isolate z-[1000] lg:hidden" data-more-menu-root="true">
+  return (
+    <>
+      {open && (
+          <div
+            className="fixed inset-0 isolate lg:hidden"
+            data-more-menu-root="true"
+            style={{ zIndex: 2147483000 }}
+          >
             <div
               className="absolute inset-0 z-0 bg-black/65"
               onClick={closeMenu}
@@ -269,7 +273,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 <button
                   type="button"
                   onClick={() => {
-                    flushSync(() => closeMenu());
+                    closeMenu();
                     window.setTimeout(() => navigate({ to: "/conta" }), 60);
                   }}
                   className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3 text-left transition-colors hover:bg-card/90 active:scale-[0.99]"
@@ -344,14 +348,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 </div>
               </div>
             </section>
-          </div>,
-          document.body,
-        )
-      : null;
-
-  return (
-    <>
-      {menuPortal}
+          </div>
+      )}
       <PremiumLockModal
         open={lockState.open}
         onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
