@@ -110,6 +110,8 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
+const MORE_MENU_BOTTOM_OFFSET_PX = 80;
+
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -239,9 +241,9 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const menuPortal =
     portalReady && open
       ? createPortal(
-          <>
+          <div className="fixed inset-0 z-[1000] lg:hidden" data-more-menu-root="true">
             <div
-              className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] lg:hidden"
+              className="absolute inset-0 z-0 bg-black/65"
               onClick={closeMenu}
               aria-hidden="true"
             />
@@ -249,12 +251,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="more-menu-title"
-              className="fixed inset-x-3 z-[90] flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/98 shadow-2xl shadow-black/35 backdrop-blur-xl lg:hidden"
-              style={{
-                bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
-                maxHeight:
-                  "calc(100dvh - 104px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
-              }}
+              className="fixed inset-x-3 z-10 flex min-h-0 max-h-[78vh] max-h-[78dvh] flex-col overflow-hidden rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/40 lg:hidden"
+              style={{ bottom: MORE_MENU_BOTTOM_OFFSET_PX }}
             >
               <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
                 <div className="min-w-0">
@@ -315,7 +313,10 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 </div>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-2">
+              <div
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-2"
+                style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+              >
                 <div className="grid grid-cols-2 gap-3">
                   {items.map((item) => {
                     const locked = isLocked(item);
@@ -349,7 +350,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                 </div>
               </div>
             </section>
-          </>,
+          </div>,
           document.body,
         )
       : null;
