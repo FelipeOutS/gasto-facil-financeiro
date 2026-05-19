@@ -291,19 +291,19 @@ function InvestimentosPage() {
         {/* Carteira */}
         <section className="lg:col-span-2 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Minha carteira</h2>
-            <span className="text-xs text-muted-foreground">{ativos.length} ativo(s)</span>
+            <h2 className="font-semibold">{t("investimentos.wallet.title")}</h2>
+            <span className="text-xs text-muted-foreground">{t(ativos.length === 1 ? "investimentos.wallet.countOne" : "investimentos.wallet.countOther", { count: ativos.length })}</span>
           </div>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{t("investimentos.wallet.loading")}</p>
           ) : ativos.length === 0 ? (
             <EmptyState
-              title="Nenhum investimento cadastrado"
-              description="Comece cadastrando seu primeiro ativo manualmente ou importe um extrato."
+              title={t("investimentos.wallet.emptyTitle")}
+              description={t("investimentos.wallet.emptyDesc")}
               cta={
                 <Button size="sm" onClick={() => setOpenAdd(true)}>
-                  <Plus className="h-4 w-4 mr-1.5" /> Adicionar investimento
+                  <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
                 </Button>
               }
             />
