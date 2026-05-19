@@ -103,7 +103,7 @@ export const Route = createRootRoute({
         rel: "preload",
         as: "image",
         href: "/logos/brand/gasto-inteligente-light.png",
-        fetchpriority: "high",
+        fetchPriority: "high",
       },
     ],
     scripts: [
