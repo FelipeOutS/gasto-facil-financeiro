@@ -276,132 +276,154 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   return (
     <>
       {open && (
+        <div className="lg:hidden" data-more-menu-root="true" style={androidSheetStyles.root}>
+          <div onClick={closeMenu} aria-hidden="true" style={androidSheetStyles.backdrop} />
           <div
-            className="lg:hidden"
-            data-more-menu-root="true"
-            style={androidSheetStyles.root}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="more-menu-title"
+            className="flex min-h-0 flex-col"
+            style={androidSheetStyles.panel}
           >
-            <div
-              onClick={closeMenu}
-              aria-hidden="true"
-              style={androidSheetStyles.backdrop}
-            />
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="more-menu-title"
-              className="flex min-h-0 flex-col"
-              style={androidSheetStyles.panel}
-            >
-              <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-                <div className="min-w-0">
-                  <h2 id="more-menu-title" className="text-lg font-semibold" style={{ color: "#ffffff" }}>
-                    {t("more.title")}
-                  </h2>
-                  <p className="mt-1 text-xs" style={{ color: "#aeb6c2" }}>{t("more.description")}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeMenu}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full active:scale-95"
-                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
-                  aria-label="Fechar menu"
+            <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+              <div className="min-w-0">
+                <h2
+                  id="more-menu-title"
+                  className="text-lg font-semibold"
+                  style={{ color: "#ffffff" }}
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  {t("more.title")}
+                </h2>
+                <p className="mt-1 text-xs" style={{ color: "#aeb6c2" }}>
+                  {t("more.description")}
+                </p>
               </div>
-
-              <div className="px-5 pb-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    window.setTimeout(() => navigate({ to: "/conta" }), 60);
-                  }}
-                  className="mb-2 flex w-full items-center gap-3 rounded-2xl p-3 text-left active:scale-[0.99]"
-                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
-                >
-                  <span
-                    className="grid h-[42px] w-[42px] shrink-0 place-items-center overflow-hidden rounded-full text-sm font-bold"
-                    style={{ backgroundColor: "#dde7ff", color: "#172033" }}
-                  >
-                    {profile?.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={profile?.nome ?? "Avatar"}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email)
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {profile?.nome ||
-                        profile?.responsavel_nome ||
-                        user?.email?.split("@")[0] ||
-                        t("header.fallbackUser")}
-                    </p>
-                    <p className="truncate text-[11px]" style={{ color: "#aeb6c2" }}>{user?.email}</p>
-                  </div>
-                </button>
-                <div
-                  className="rounded-2xl p-3"
-                  style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#aeb6c2" }}>
-                    {t("more.currentPlan")}
-                  </p>
-                  <div className="mt-0.5 flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
-                    {isTrialActive && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                        <Sparkles className="h-3 w-3" />
-                        {t("more.trial", { days: trialDaysLeft })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2"
-                style={{ paddingBottom: 24, WebkitOverflowScrolling: "touch" }}
+              <button
+                type="button"
+                onClick={closeMenu}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full active:scale-95"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+                aria-label="Fechar menu"
               >
-                <div className="grid grid-cols-2 gap-3">
-                  {items.map((item) => {
-                    const locked = isLocked(item);
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.to}
-                        type="button"
-                        onClick={() => handleItem(item)}
-                        className="relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl p-3 text-left active:scale-[0.98]"
-                        style={{ border: "1px solid rgba(255,255,255,0.14)", backgroundColor: "#30333a", color: "#f8fafc" }}
-                      >
-                        <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#dde7ff", color: "#172033" }}>
-                          <Icon className="h-4 w-4" strokeWidth={2} />
-                        </span>
-                        <span className="flex w-full items-center gap-1">
-                          <span className="text-sm font-semibold leading-tight">
-                            {t(`items.${item.labelKey}`)}
-                          </span>
-                          {locked && (
-                            <Lock className="ml-auto h-3.5 w-3.5" style={{ color: "#aeb6c2" }} />
-                          )}
-                        </span>
-                        <span className="text-[11px] leading-snug" style={{ color: "#aeb6c2" }}>
-                          {t(`descriptions.${item.descKey}`)}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="px-5 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  window.setTimeout(() => navigate({ to: "/conta" }), 60);
+                }}
+                className="mb-2 flex w-full items-center gap-3 rounded-2xl p-3 text-left active:scale-[0.99]"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+              >
+                <span
+                  className="grid h-[42px] w-[42px] shrink-0 place-items-center overflow-hidden rounded-full text-sm font-bold"
+                  style={{ backgroundColor: "#dde7ff", color: "#172033" }}
+                >
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile?.nome ?? "Avatar"}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email)
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {profile?.nome ||
+                      profile?.responsavel_nome ||
+                      user?.email?.split("@")[0] ||
+                      t("header.fallbackUser")}
+                  </p>
+                  <p className="truncate text-[11px]" style={{ color: "#aeb6c2" }}>
+                    {user?.email}
+                  </p>
+                </div>
+              </button>
+              <div
+                className="rounded-2xl p-3"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  backgroundColor: "#30333a",
+                  color: "#f8fafc",
+                }}
+              >
+                <p
+                  className="text-[10px] font-semibold uppercase tracking-wider"
+                  style={{ color: "#aeb6c2" }}
+                >
+                  {t("more.currentPlan")}
+                </p>
+                <div className="mt-0.5 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{PLAN_LABEL[plan]}</p>
+                  {isTrialActive && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                      <Sparkles className="h-3 w-3" />
+                      {t("more.trial", { days: trialDaysLeft })}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
+
+            <div
+              className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2"
+              style={{ paddingBottom: 24, WebkitOverflowScrolling: "touch" }}
+            >
+              <div className="grid grid-cols-2 gap-3">
+                {items.map((item) => {
+                  const locked = isLocked(item);
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.to}
+                      type="button"
+                      onClick={() => handleItem(item)}
+                      className="relative flex min-h-[116px] flex-col items-start gap-2 rounded-2xl p-3 text-left active:scale-[0.98]"
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        backgroundColor: "#30333a",
+                        color: "#f8fafc",
+                      }}
+                    >
+                      <span
+                        className="grid h-9 w-9 place-items-center rounded-xl"
+                        style={{ backgroundColor: "#dde7ff", color: "#172033" }}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <span className="flex w-full items-center gap-1">
+                        <span className="text-sm font-semibold leading-tight">
+                          {t(`items.${item.labelKey}`)}
+                        </span>
+                        {locked && (
+                          <Lock className="ml-auto h-3.5 w-3.5" style={{ color: "#aeb6c2" }} />
+                        )}
+                      </span>
+                      <span className="text-[11px] leading-snug" style={{ color: "#aeb6c2" }}>
+                        {t(`descriptions.${item.descKey}`)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
+        </div>
       )}
       <PremiumLockModal
         open={lockState.open}
