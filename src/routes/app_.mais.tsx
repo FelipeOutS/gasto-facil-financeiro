@@ -121,7 +121,7 @@ function AppMaisPage() {
           return (
             <Link
               key={item.to}
-              to={item.to}
+              to={locked ? "/meu-plano" : item.to}
               preload="intent"
               preloadDelay={0}
               className={cn(
