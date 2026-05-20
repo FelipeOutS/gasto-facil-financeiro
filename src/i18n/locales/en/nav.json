@@ -45,7 +45,8 @@
     "description": "Access the other areas of your financial control.",
     "currentPlan": "Current plan",
     "trial": "Free trial · {{days}}d",
-    "premiumSuffix": "is a premium feature"
+    "premiumSuffix": "is a premium feature",
+    "signOut": "Sign out"
   },
   "descriptions": {
     "alertas": "Important alerts about your finances",
