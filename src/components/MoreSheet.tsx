@@ -161,12 +161,12 @@ export function MoreSheet({ open, onOpenChange }: Props) {
   const router = useRouter();
   const navigate = useNavigate();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { hasFullAccess } = useRoles();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: MoreItem[] = useMemo(
-    () => (isAdminMaster ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS),
-    [isAdminMaster],
+    () => (isAdminMaster || hasFullAccess ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS),
+    [hasFullAccess, isAdminMaster],
   );
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({
     open: false,
@@ -272,9 +272,23 @@ export function MoreSheet({ open, onOpenChange }: Props) {
     }, 60);
   }
 
+  function handleSignOut() {
+    if (navigating) return;
+    setNavigating(true);
+    closeMenu();
+    window.setTimeout(() => {
+      void signOut().finally(() => {
+        setNavigating(false);
+        void navigate({ to: "/login" });
+      });
+    }, 60);
+  }
+
   return (
     <>
-      {open && (
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
         <div className="lg:hidden" data-more-menu-root="true" style={androidSheetStyles.root}>
           <div onClick={closeMenu} aria-hidden="true" style={androidSheetStyles.backdrop} />
           <div
@@ -420,9 +434,23 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                   );
                 })}
               </div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl p-3 text-sm font-semibold active:scale-[0.98]"
+                style={{
+                  border: "1px solid rgba(248,113,113,0.35)",
+                  backgroundColor: "rgba(127,29,29,0.26)",
+                  color: "#fecaca",
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                {t("more.signOut")}
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
       <PremiumLockModal
         open={lockState.open}
