@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
 
-export const Route = createFileRoute("/app/mais")({
+export const Route = createFileRoute("/app_/mais")({
   head: () => ({ meta: [{ title: "Mais opções — Gasto Inteligente" }] }),
   component: AppMaisPage,
 });

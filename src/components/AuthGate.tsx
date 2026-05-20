@@ -25,6 +25,7 @@ const SUBSCRIPTION_ALLOWLIST = new Set<string>([
   "/reset-password",
   "/confirmar",
   "/onboarding",
+  "/app/mais",
   "/meu-plano",
   "/conta",
   "/perfil",
