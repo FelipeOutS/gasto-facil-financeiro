@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,6 +23,7 @@ import {
   Store,
   Contact,
   ClipboardList,
+  LogOut,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -106,7 +108,6 @@ export const MORE_ITEMS: MoreItem[] = [
 /** Rotas que pertencem ao painel "Mais" — usado para destacar a aba ativa. */
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), "/admin"];
 
-const MORE_MENU_BOTTOM_OFFSET = 76;
 const androidSheetStyles = {
   root: {
     position: "fixed" as const,
@@ -114,33 +115,31 @@ const androidSheetStyles = {
     right: 0,
     bottom: 0,
     left: 0,
-    zIndex: 2147483000,
-    WebkitTransform: "translate3d(0,0,0)",
-    transform: "translate3d(0,0,0)",
+    zIndex: 9998,
+    pointerEvents: "auto" as const,
   },
   backdrop: {
-    position: "absolute" as const,
+    position: "fixed" as const,
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
     backgroundColor: "rgba(0,0,0,0.68)",
+    zIndex: 9998,
   },
   panel: {
-    position: "absolute" as const,
+    position: "fixed" as const,
     right: 12,
     left: 12,
-    bottom: MORE_MENU_BOTTOM_OFFSET,
-    zIndex: 2147483001,
-    maxHeight: "calc(100vh - 96px)",
+    bottom: 12,
+    zIndex: 10000,
+    maxHeight: "calc(100vh - 24px)",
     overflow: "hidden",
     borderRadius: 24,
     border: "1px solid rgba(255,255,255,0.14)",
     backgroundColor: "#24262b",
     color: "#f8fafc",
     boxShadow: "0 24px 70px rgba(0,0,0,0.65)",
-    WebkitTransform: "translate3d(0,0,0)",
-    transform: "translate3d(0,0,0)",
   },
 };
 
