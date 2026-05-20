@@ -70,8 +70,7 @@ const SelectContent = React.forwardRef<
       collisionPadding={12}
       className={cn(
         "relative z-[10000] max-h-[min(var(--radix-select-content-available-height),calc(100vh-1.5rem))] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md shadow-black/40",
-        position === "popper" &&
-          "",
+        position === "popper" && "",
         className,
       )}
       position={position}
