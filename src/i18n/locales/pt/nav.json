@@ -45,7 +45,8 @@
     "description": "Acesse as outras áreas do seu controle financeiro.",
     "currentPlan": "Plano atual",
     "trial": "Teste grátis · {{days}}d",
-    "premiumSuffix": "é um recurso premium"
+    "premiumSuffix": "é um recurso premium",
+    "signOut": "Sair da conta"
   },
   "descriptions": {
     "alertas": "Avisos importantes do seu financeiro",
