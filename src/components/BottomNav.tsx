@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Home, List, CreditCard, Target } from "lucide-react";
+import { Home, List, CreditCard, Target, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
 
@@ -10,6 +10,7 @@ const TABS = [
   { to: "/gastos", labelKey: "gastos", icon: List },
   { to: "/cartoes", labelKey: "cartoes", icon: CreditCard },
   { to: "/metas", labelKey: "metas", icon: Target },
+  { to: "/app/mais", labelKey: "more", icon: Menu },
 ] as const;
 
 export function BottomNav() {
@@ -41,7 +42,7 @@ export function BottomNav() {
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
         {TABS.map(({ to, labelKey, icon: Icon }) => {
           const active =
-            to === "/" ? currentPath === "/" : currentPath.startsWith(to);
+            to === "/" ? currentPath === "/" : currentPath === to || currentPath.startsWith(to + "/");
           const showDot = to === "/" && alerta !== "nenhum";
           return (
             <li key={to} className="flex-1">

@@ -58,6 +58,7 @@ import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
+import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
@@ -323,6 +324,11 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   path: '/clientes/relatorio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppMaisRoute = AppMaisRouteImport.update({
+  id: '/app_/mais',
+  path: '/app/mais',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   id: '/api/ocr-gasto',
   path: '/api/ocr-gasto',
@@ -476,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/mais': typeof AppMaisRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -546,6 +553,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/mais': typeof AppMaisRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -617,6 +625,7 @@ export interface FileRoutesById {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app_/mais': typeof AppMaisRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -689,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app/mais'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -759,6 +769,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app/mais'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -829,6 +840,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app_/mais'
     | '/clientes_/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -900,6 +912,7 @@ export interface RootRouteChildren {
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  AppMaisRoute: typeof AppMaisRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
@@ -1264,6 +1277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientesRelatorioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/mais': {
+      id: '/app_/mais'
+      path: '/app/mais'
+      fullPath: '/app/mais'
+      preLoaderRoute: typeof AppMaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ocr-gasto': {
       id: '/api/ocr-gasto'
       path: '/api/ocr-gasto'
@@ -1452,6 +1472,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  AppMaisRoute: AppMaisRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,

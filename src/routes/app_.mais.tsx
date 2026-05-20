@@ -1,0 +1,161 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, ChevronRight, Lock, LogOut, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { MobileShell } from "@/components/MobileShell";
+import { UserAvatar } from "@/components/UserAvatar";
+import { ADMIN_ITEM, MORE_ITEMS, type MoreItem } from "@/lib/more-menu";
+import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
+import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
+import { useRoles } from "@/lib/use-roles";
+import { cn } from "@/lib/utils";
+
+const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
+
+export const Route = createFileRoute("/app_/mais")({
+  head: () => ({ meta: [{ title: "Mais opções — Gasto Inteligente" }] }),
+  component: AppMaisPage,
+});
+
+function AppMaisPage() {
+  const { t } = useTranslation("nav");
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const { hasFullAccess } = useRoles();
+  const [signingOut, setSigningOut] = useState(false);
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const items = useMemo(
+    () => (isAdminMaster || hasFullAccess ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS),
+    [hasFullAccess, isAdminMaster],
+  );
+
+  const displayName =
+    profile?.nome ||
+    profile?.responsavel_nome ||
+    profile?.nome_fantasia ||
+    user?.email?.split("@")[0] ||
+    t("header.fallbackUser");
+
+  function getRule(item: MoreItem) {
+    return (
+      ROUTE_RULE[item.to] ??
+      (item.feature
+        ? {
+            feature: item.feature,
+            title: `${t(`items.${item.labelKey}`)} ${t("more.premiumSuffix")}`,
+            path: item.to,
+          }
+        : null)
+    );
+  }
+
+  function isLocked(item: MoreItem) {
+    if (isAdminMaster || hasFullAccess) return false;
+    const rule = getRule(item);
+    return rule ? !can(rule.feature) : false;
+  }
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    await signOut();
+    void navigate({ to: "/login", replace: true });
+  }
+
+  return (
+    <MobileShell>
+      <header className="flex items-start gap-3 pt-3">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">{t("more.title")}</h1>
+          <p className="mt-1 text-sm leading-snug text-muted-foreground">{t("more.description")}</p>
+        </div>
+      </header>
+
+      <section className="mt-5 rounded-3xl border border-border bg-card p-4 shadow-card">
+        <div className="flex items-center gap-3">
+          <UserAvatar
+            url={profile?.avatar_url}
+            name={displayName}
+            email={user?.email}
+            size={58}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-semibold">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-3 rounded-3xl border border-border bg-card p-4 shadow-card">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {t("more.currentPlan")}
+            </p>
+            <p className="mt-1 truncate text-base font-semibold">{PLAN_LABEL[plan]}</p>
+          </div>
+          {isTrialActive && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-[10px] font-semibold text-warning">
+              <Sparkles className="h-3 w-3" />
+              {t("more.trial", { days: trialDaysLeft })}
+            </span>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-5 grid grid-cols-1 gap-3 pb-3">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const locked = isLocked(item);
+          return (
+            <Link
+              key={item.to}
+              to={locked ? "/meu-plano" : item.to}
+              preload="intent"
+              preloadDelay={0}
+              className={cn(
+                "group flex min-h-[76px] items-center gap-3 rounded-3xl border border-border bg-card p-4 text-left shadow-card transition-colors active:scale-[0.99]",
+                locked ? "opacity-75" : "hover:bg-card-elevated",
+              )}
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-foreground ring-1 ring-border/60">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="truncate">{t(`items.${item.labelKey}`)}</span>
+                  {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                </span>
+                <span className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
+                  {t(`descriptions.${item.descKey}`)}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="mt-1 flex min-h-[58px] items-center justify-center gap-2 rounded-3xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive active:scale-[0.99] disabled:opacity-60"
+        >
+          <LogOut className="h-4 w-4" />
+          {t("more.signOut")}
+        </button>
+      </section>
+    </MobileShell>
+  );
+}
