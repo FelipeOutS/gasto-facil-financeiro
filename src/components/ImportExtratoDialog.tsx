@@ -322,7 +322,7 @@ export function ImportExtratoDialog({
     async (files: File[]) => {
       if (files.length === 0) return;
       if (files.length > 10) {
-        toast.error("Envie no máximo 10 imagens por vez.");
+        toast.error(t("errors.tooManyImages"));
         return;
       }
       setLoading(true);
