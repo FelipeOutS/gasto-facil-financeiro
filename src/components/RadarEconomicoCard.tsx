@@ -56,11 +56,6 @@ interface RadarResult {
   message?: string;
 }
 
-const CURRENCY_LABEL: Record<string, string> = {
-  USD_BRL: "Dólar",
-  EUR_BRL: "Euro",
-};
-
 const CURRENCY_FLAG: Record<string, string> = {
   USD_BRL: "🇺🇸",
   EUR_BRL: "🇪🇺",
@@ -72,42 +67,27 @@ function formatPct(v: number | null | undefined): string {
   return `${sign}${v.toFixed(2).replace(".", ",")}%`;
 }
 
-function formatHora(iso: string): string {
-  try {
-    const d = new Date(iso);
-    if (!Number.isFinite(d.getTime()) || d.getTime() === 0) return "—";
-    return d.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "—";
-  }
-}
-
-function mensagemImpacto(usd?: Indicator, eur?: Indicator): string {
-  const u = usd?.variationPercent ?? 0;
-  const e = eur?.variationPercent ?? 0;
-  const sobeUsd = u > 0.2;
-  const caiUsd = u < -0.2;
-  if (sobeUsd) {
-    return "O dólar subiu hoje. Compras internacionais e assinaturas em dólar podem pesar mais na fatura.";
-  }
-  if (caiUsd) {
-    return "O dólar caiu hoje. Bom momento para acompanhar compras internacionais e assinaturas em dólar.";
-  }
-  if (e > 0.2) {
-    return "O euro subiu hoje. Compras e viagens para a Europa podem ficar mais caras.";
-  }
-  if (e < -0.2) {
-    return "O euro caiu hoje. Compras e viagens para a Europa podem ficar um pouco mais em conta.";
-  }
-  return "As cotações estão relativamente estáveis hoje. Sem grandes impactos em compras internacionais.";
+function useFormatHora() {
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "pt-BR";
+  return (iso: string): string => {
+    try {
+      const d = new Date(iso);
+      if (!Number.isFinite(d.getTime()) || d.getTime() === 0) return "—";
+      return d.toLocaleString(locale, {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "—";
+    }
+  };
 }
 
 function VariationBadge({ pct }: { pct: number | null }) {
+  const { t } = useTranslation("dashboard");
   if (pct === null || !Number.isFinite(pct)) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -124,7 +104,7 @@ function VariationBadge({ pct }: { pct: number | null }) {
           ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
           : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
       )}
-      title={positivo ? "Variação positiva no dia" : "Variação negativa no dia"}
+      title={positivo ? t("radarCard.variation.up") : t("radarCard.variation.down")}
     >
       {positivo ? (
         <TrendingUp className="h-3 w-3" />
@@ -141,7 +121,9 @@ function VariationBadge({ pct }: { pct: number | null }) {
  * do dia e abre um modal com detalhes + conversor rápido.
  */
 export function RadarEconomicoCard({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const fetchRadar = useServerFn(getEconomicRadar);
+  const formatHora = useFormatHora();
   const [data, setData] = useState<RadarResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -159,15 +141,14 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
             indicators: [],
             status: "desatualizado",
             fetchedAt: new Date(0).toISOString(),
-            message:
-              "Não conseguimos carregar as cotações agora. Tente novamente em instantes.",
+            message: t("radarCard.loadError"),
           });
       })
       .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
     };
-  }, [fetchRadar]);
+  }, [fetchRadar, t]);
 
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
@@ -178,6 +159,16 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
   const stale =
     !loading && (!hasCurrencyValues || usd?.status === "desatualizado" || eur?.status === "desatualizado");
 
+  const impactoMsg = (): string => {
+    const u = usd?.variationPercent ?? 0;
+    const e = eur?.variationPercent ?? 0;
+    if (u > 0.2) return t("radarCard.msg.usdUp");
+    if (u < -0.2) return t("radarCard.msg.usdDown");
+    if (e > 0.2) return t("radarCard.msg.eurUp");
+    if (e < -0.2) return t("radarCard.msg.eurDown");
+    return t("radarCard.msg.stable");
+  };
+
   return (
     <>
       <button
@@ -187,7 +178,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
           "group w-full overflow-hidden rounded-2xl border bg-card p-4 text-left shadow-sm transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
           className,
         )}
-        aria-label="Abrir Radar Econômico"
+        aria-label={t("radarCard.aria")}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -195,18 +186,18 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
               <span className="rounded-lg bg-primary/10 p-1.5 text-primary">
                 <ArrowRightLeft className="h-4 w-4" />
               </span>
-              <h3 className="text-sm font-semibold">Radar Econômico</h3>
+              <h3 className="text-sm font-semibold">{t("radarCard.title")}</h3>
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Cotações de referência do dia
+              {t("radarCard.subtitle")}
             </p>
           </div>
           {stale && (
             <span
               className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
-              title="Não foi possível atualizar agora"
+              title={t("radarCard.outdatedTitle")}
             >
-              <AlertCircle className="h-3 w-3" /> desatualizado
+              <AlertCircle className="h-3 w-3" /> {t("radarCard.outdated")}
             </span>
           )}
         </div>
@@ -227,15 +218,15 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
 
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
           {loading
-            ? "Carregando cotações…"
+            ? t("radarCard.loading")
             : stale
-              ? "Não conseguimos atualizar os indicadores agora. Exibindo a última cotação disponível."
-              : mensagemImpacto(usd, eur)}
+              ? t("radarCard.outdatedDesc")
+              : impactoMsg()}
         </p>
 
         {!loading && data && data.indicators.length > 0 && (
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Atualizado em {formatHora(data.fetchedAt)} · toque para ver detalhes
+            {t("radarCard.updatedAt", { quando: formatHora(data.fetchedAt) })}
           </p>
         )}
       </button>
@@ -266,8 +257,10 @@ function CotacaoMini({
   ind: Indicator | undefined;
   fallbackKey: string;
 }) {
-  const label = CURRENCY_LABEL[ind?.key ?? fallbackKey] ?? fallbackKey;
-  const flag = CURRENCY_FLAG[ind?.key ?? fallbackKey] ?? "💱";
+  const { t } = useTranslation("dashboard");
+  const key = ind?.key ?? fallbackKey;
+  const label = t(`radarCard.label.${key}`, { defaultValue: key });
+  const flag = CURRENCY_FLAG[key] ?? "💱";
   const value = ind?.valueBRL ?? ind?.value;
   return (
     <div className="rounded-xl border bg-background/50 p-3">
@@ -298,6 +291,8 @@ export function RadarDetalhesDialog({
   loading: boolean;
   onRefresh: () => void | Promise<void>;
 }) {
+  const { t } = useTranslation("dashboard");
+  const formatHora = useFormatHora();
   const usd = data?.indicators.find((i) => i.key === "USD_BRL");
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
   const usdValue = usd?.valueBRL ?? usd?.value;
@@ -328,11 +323,10 @@ export function RadarDetalhesDialog({
       brl: n * cotacaoAtual.value,
       cotacao: cotacaoAtual.value,
       quando: cotacaoAtual.fetchedAt,
-      moeda: CURRENCY_LABEL[cotacaoAtual.key] ?? cotacaoAtual.key,
+      moeda: t(`radarCard.label.${cotacaoAtual.key}`, { defaultValue: cotacaoAtual.key }),
     });
   };
 
-  // limpa resultado se troca de moeda ou valor
   useEffect(() => {
     setConvertido(null);
   }, [moeda, valor]);
@@ -343,17 +337,16 @@ export function RadarDetalhesDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-primary" />
-            Radar Econômico
+            {t("radarCard.dialog.title")}
           </DialogTitle>
           <DialogDescription>
-            Cotações de referência para você acompanhar o impacto do câmbio.
+            {t("radarCard.dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
         {stale && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-800 dark:text-amber-300">
-            Não conseguimos atualizar os indicadores agora. Mostrando a última
-            cotação disponível.
+            {t("radarCard.dialog.outdated")}
           </div>
         )}
 
@@ -365,7 +358,7 @@ export function RadarDetalhesDialog({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
             {data && data.indicators.length > 0
-              ? `Atualizado em ${formatHora(data.fetchedAt)}`
+              ? t("radarCard.dialog.updatedAt", { quando: formatHora(data.fetchedAt) })
               : "—"}
           </span>
           <Button
@@ -377,32 +370,32 @@ export function RadarDetalhesDialog({
             className="h-7 px-2 text-xs"
           >
             <RefreshCw className={cn("mr-1 h-3 w-3", loading && "animate-spin")} />
-            Atualizar
+            {t("radarCard.dialog.refresh")}
           </Button>
         </div>
 
         <div className="space-y-3 rounded-xl border bg-muted/30 p-3">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold">Conversor rápido</h4>
+            <h4 className="text-sm font-semibold">{t("radarCard.dialog.converter")}</h4>
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr_auto]">
             <div className="space-y-1">
-              <Label className="text-xs">Moeda</Label>
+              <Label className="text-xs">{t("radarCard.dialog.currency")}</Label>
               <Select value={moeda} onValueChange={(v) => setMoeda(v as typeof moeda)}>
                 <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USD_BRL">🇺🇸 Dólar (USD)</SelectItem>
-                  <SelectItem value="EUR_BRL">🇪🇺 Euro (EUR)</SelectItem>
+                  <SelectItem value="USD_BRL">{t("radarCard.dialog.usdItem")}</SelectItem>
+                  <SelectItem value="EUR_BRL">{t("radarCard.dialog.eurItem")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <Label className="text-xs" htmlFor="radar-valor">
-                Valor
+                {t("radarCard.dialog.value")}
               </Label>
               <Input
                 id="radar-valor"
@@ -420,27 +413,29 @@ export function RadarDetalhesDialog({
                 disabled={!cotacaoAtual || loading}
                 className="h-9 w-full sm:w-auto"
               >
-                Converter
+                {t("radarCard.dialog.convert")}
               </Button>
             </div>
           </div>
 
           {convertido && (
             <div className="rounded-lg border bg-background p-3">
-              <p className="text-xs text-muted-foreground">Valor aproximado</p>
+              <p className="text-xs text-muted-foreground">{t("radarCard.dialog.approxValue")}</p>
               <p className="text-2xl font-semibold tabular-nums">
                 {formatBRL(convertido.brl)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Cotação usada: {formatBRL(convertido.cotacao)} por 1{" "}
-                {convertido.moeda} · {formatHora(convertido.quando)}
+                {t("radarCard.dialog.rateUsed", {
+                  cotacao: formatBRL(convertido.cotacao),
+                  moeda: convertido.moeda,
+                  quando: formatHora(convertido.quando),
+                })}
               </p>
             </div>
           )}
 
           <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Este valor é uma estimativa. A cobrança final pode variar conforme
-            IOF, spread, data da compra e cotação usada pelo cartão.
+            {t("radarCard.dialog.estimateNote")}
           </p>
         </div>
       </DialogContent>
@@ -457,8 +452,10 @@ function CotacaoDetalhe({
   loading: boolean;
   fallbackKey: string;
 }) {
-  const label = CURRENCY_LABEL[ind?.key ?? fallbackKey] ?? fallbackKey;
-  const flag = CURRENCY_FLAG[ind?.key ?? fallbackKey] ?? "💱";
+  const { t } = useTranslation("dashboard");
+  const key = ind?.key ?? fallbackKey;
+  const label = t(`radarCard.label.${key}`, { defaultValue: key });
+  const flag = CURRENCY_FLAG[key] ?? "💱";
   const value = ind?.valueBRL ?? ind?.value;
   return (
     <div className="rounded-xl border bg-card p-3">
@@ -479,13 +476,13 @@ function CotacaoDetalhe({
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-muted/40 px-2 py-1">
-          <p className="text-muted-foreground">Máx.</p>
+          <p className="text-muted-foreground">{t("radarCard.dialog.high")}</p>
           <p className="font-medium tabular-nums">
             {ind?.high != null ? formatBRL(ind.high) : "—"}
           </p>
         </div>
         <div className="rounded-lg bg-muted/40 px-2 py-1">
-          <p className="text-muted-foreground">Mín.</p>
+          <p className="text-muted-foreground">{t("radarCard.dialog.low")}</p>
           <p className="font-medium tabular-nums">
             {ind?.low != null ? formatBRL(ind.low) : "—"}
           </p>
