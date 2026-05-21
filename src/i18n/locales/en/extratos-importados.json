@@ -1,0 +1,57 @@
+{
+  "back": "Back",
+  "details": "Import details",
+  "title": "Imported statements",
+  "descDetails": "Check the items of this import and, if needed, revert the batch.",
+  "descList": "History of bank statement imports.",
+  "empty": "No bank statement imports yet.",
+  "noPeriod": "Period not identified",
+  "extratoLabel": "{{tipo}} statement",
+  "importedOn": "Imported on {{date}}",
+  "periodSuffix": " • Period: {{from}} – {{to}}",
+  "movim": "{{count}} entries",
+  "stats": {
+    "receitas": "Income",
+    "despesas": "Expenses",
+    "transferencias": "Transfers",
+    "movim": "Entries"
+  },
+  "lists": {
+    "despesas": "Expenses",
+    "receitas": "Income",
+    "transferencias": "Internal transfers"
+  },
+  "editedWarn_one": "<0>{{count}}</0> item from this batch was edited after the import. Reverting will delete it anyway.",
+  "editedWarn_other": "<0>{{count}}</0> items from this batch were edited after the import. Reverting will delete them anyway.",
+  "status": {
+    "revertido": "Reverted",
+    "erro": "Error",
+    "importado": "Imported"
+  },
+  "actions": {
+    "remove": "Remove from history",
+    "revert": "Revert import"
+  },
+  "confirmRevert": {
+    "title": "Revert import?",
+    "body": "This will delete <0>all</0> {{count}} entries created in this import (expenses, income, transfers and savings) and refresh Dashboard, Expenses, My income and Savings.",
+    "editedNote_one": "⚠ {{count}} item was edited after the import and will also be deleted.",
+    "editedNote_other": "⚠ {{count}} items were edited after the import and will also be deleted.",
+    "cancel": "Cancel",
+    "doing": "Reverting...",
+    "confirm": "Yes, revert"
+  },
+  "confirmDelete": {
+    "title": "Remove from history?",
+    "body": "This import was already reverted. Removing only deletes the history record — it doesn't affect any entry.",
+    "cancel": "Cancel",
+    "doing": "Removing...",
+    "confirm": "Remove"
+  },
+  "toast": {
+    "reverted": "Import reverted. Dashboard, Expenses, My income and Savings were recalculated.",
+    "revertFail": "Couldn't revert this import. Try again.",
+    "removed": "Record removed from history.",
+    "removeFail": "Couldn't remove this record."
+  }
+}

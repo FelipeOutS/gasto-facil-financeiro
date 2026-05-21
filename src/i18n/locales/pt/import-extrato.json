@@ -1,0 +1,87 @@
+{
+  "title": "Importar extrato bancário",
+  "desc": "Pix, transferências, débito, tarifas, entradas e saídas da conta.",
+  "source": {
+    "imagens": "Imagens / prints",
+    "imagensDesc": "Até 10 prints do extrato",
+    "pdf": "PDF",
+    "pdfDesc": "Extrato em PDF (texto ou escaneado)",
+    "csv": "CSV",
+    "csvDesc": "Exportado do internet banking"
+  },
+  "upload": {
+    "back": "← Voltar",
+    "loading": "Lendo o extrato com IA, aguarde...",
+    "privacy": "Os arquivos não são salvos. A IA extrai apenas as movimentações para você revisar.",
+    "pickOne": "Selecionar arquivo",
+    "pickMany": "Selecionar arquivos",
+    "hintImagens": "Selecione até 10 imagens do extrato. Aceita JPG e PNG.",
+    "hintPdf": "Selecione um PDF do extrato. Se for protegido por senha, exporte uma versão sem senha.",
+    "hintCsv": "Espera colunas: Data, Descrição/Histórico, Valor."
+  },
+  "footer": {
+    "selectedOf": "{{sel}} de {{total}} selecionado(s)",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar importação"
+  },
+  "review": {
+    "banco": "Banco",
+    "periodo": "Período",
+    "saldoFinal": "Saldo final",
+    "saldoInicial": "Saldo inicial",
+    "entradas": "Entradas",
+    "saidas": "Saídas",
+    "found_one": "{{count}} movimentação encontrada",
+    "found_other": "{{count}} movimentações encontradas",
+    "addRow": "Adicionar linha"
+  },
+  "row": {
+    "remove": "Remover",
+    "descricao": "Descrição",
+    "valor": "Valor",
+    "data": "Data",
+    "horario": "Horário (opcional)",
+    "tipo": "Tipo",
+    "formaPg": "Forma de pagamento",
+    "categoria": "Categoria",
+    "total": "Total:",
+    "tipos": {
+      "despesa": "Despesa",
+      "receita": "Receita",
+      "transferencia_interna": "Transferência interna",
+      "transferenciaShort": "Transf. interna"
+    },
+    "badge": {
+      "exists": "Já existe no app",
+      "repeated": "Repetido no envio",
+      "incomplete": "Incompleto",
+      "reserva": "Guardado/Cofrinho",
+      "resgateReserva": "Retirada do cofrinho",
+      "pagamentoFatura": "Pagamento de fatura",
+      "revisar": "Revisar",
+      "novo": "Novo"
+    }
+  },
+  "errors": {
+    "tooManyImages": "Envie no máximo 10 imagens por vez.",
+    "readFail": "Não consegui ler o extrato.",
+    "noneFoundImg": "Nenhuma movimentação encontrada nas imagens.",
+    "sendImg": "Erro ao enviar imagens.",
+    "pdfEmpty": "Arquivo PDF vazio.",
+    "pdfTooBig": "PDF muito grande. Tente um arquivo menor que 15 MB.",
+    "pdfTooBigShort": "PDF muito grande. Tente um arquivo menor.",
+    "readPdfNo": "Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.",
+    "processFail": "Erro ao processar o extrato. Tente novamente.",
+    "noneInPdf": "Não encontramos movimentações nesse PDF.",
+    "csvEmpty": "CSV vazio ou inválido.",
+    "csvCols": "CSV sem colunas reconhecíveis. Esperado: Data, Descrição/Histórico, Valor.",
+    "csvNoValid": "Nenhuma linha válida no CSV.",
+    "csvRead": "Erro ao ler CSV.",
+    "noneSelected": "Nenhum item válido selecionado.",
+    "fileRead": "Não consegui ler o arquivo."
+  },
+  "toast": {
+    "noNew": "Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.",
+    "done": "Importação concluída: {{novos}} novo(s), {{dup}} duplicado(s) ignorado(s) e {{nao}} item(ns) não confirmado(s)."
+  }
+}

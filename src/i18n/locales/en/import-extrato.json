@@ -1,0 +1,87 @@
+{
+  "title": "Import bank statement",
+  "desc": "Pix, transfers, debit, fees, deposits and withdrawals from the account.",
+  "source": {
+    "imagens": "Images / screenshots",
+    "imagensDesc": "Up to 10 screenshots of the statement",
+    "pdf": "PDF",
+    "pdfDesc": "Statement PDF (text or scanned)",
+    "csv": "CSV",
+    "csvDesc": "Exported from online banking"
+  },
+  "upload": {
+    "back": "← Back",
+    "loading": "Reading the statement with AI, please wait...",
+    "privacy": "Files aren't saved. The AI only extracts transactions for you to review.",
+    "pickOne": "Select file",
+    "pickMany": "Select files",
+    "hintImagens": "Select up to 10 statement images. JPG and PNG accepted.",
+    "hintPdf": "Select a statement PDF. If it's password-protected, export an unprotected version.",
+    "hintCsv": "Expects columns: Date, Description/History, Amount."
+  },
+  "footer": {
+    "selectedOf": "{{sel}} of {{total}} selected",
+    "cancel": "Cancel",
+    "confirm": "Confirm import"
+  },
+  "review": {
+    "banco": "Bank",
+    "periodo": "Period",
+    "saldoFinal": "Final balance",
+    "saldoInicial": "Opening balance",
+    "entradas": "Inflows",
+    "saidas": "Outflows",
+    "found_one": "{{count}} transaction found",
+    "found_other": "{{count}} transactions found",
+    "addRow": "Add row"
+  },
+  "row": {
+    "remove": "Remove",
+    "descricao": "Description",
+    "valor": "Amount",
+    "data": "Date",
+    "horario": "Time (optional)",
+    "tipo": "Type",
+    "formaPg": "Payment method",
+    "categoria": "Category",
+    "total": "Total:",
+    "tipos": {
+      "despesa": "Expense",
+      "receita": "Income",
+      "transferencia_interna": "Internal transfer",
+      "transferenciaShort": "Int. transfer"
+    },
+    "badge": {
+      "exists": "Already in app",
+      "repeated": "Repeated in upload",
+      "incomplete": "Incomplete",
+      "reserva": "Savings",
+      "resgateReserva": "Savings withdrawal",
+      "pagamentoFatura": "Statement payment",
+      "revisar": "Review",
+      "novo": "New"
+    }
+  },
+  "errors": {
+    "tooManyImages": "Upload up to 10 images at a time.",
+    "readFail": "Couldn't read the statement.",
+    "noneFoundImg": "No transactions found in the images.",
+    "sendImg": "Error uploading images.",
+    "pdfEmpty": "Empty PDF file.",
+    "pdfTooBig": "PDF too large. Try a file smaller than 15 MB.",
+    "pdfTooBigShort": "PDF too large. Try a smaller file.",
+    "readPdfNo": "Couldn't read this PDF. Try another file or export an unprotected version.",
+    "processFail": "Error processing the statement. Try again.",
+    "noneInPdf": "No transactions found in this PDF.",
+    "csvEmpty": "Empty or invalid CSV.",
+    "csvCols": "CSV without recognizable columns. Expected: Date, Description/History, Amount.",
+    "csvNoValid": "No valid row in the CSV.",
+    "csvRead": "Error reading CSV.",
+    "noneSelected": "No valid item selected.",
+    "fileRead": "Couldn't read the file."
+  },
+  "toast": {
+    "noNew": "No new entries added. The items found seem to already be in the app.",
+    "done": "Import complete: {{novos}} new, {{dup}} duplicate(s) ignored and {{nao}} item(s) not confirmed."
+  }
+}

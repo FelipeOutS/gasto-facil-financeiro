@@ -1,0 +1,92 @@
+{
+  "title": "Importar conta",
+  "desc": "Tire foto, cole o texto ou envie o PDF do boleto/Pix. Você revisa antes de salvar.",
+  "tabs": { "imagem": "Imagem", "texto": "Texto", "pdf": "PDF" },
+  "imagem": {
+    "hint": "Foto ou print do boleto/Pix",
+    "format": "JPG, PNG ou WEBP até 10MB.",
+    "reading": "Lendo…",
+    "pick": "Selecionar imagem"
+  },
+  "texto": {
+    "label": "Cole o texto",
+    "placeholder": "Cole aqui o texto do boleto, Pix copia e cola, ou da fatura...",
+    "extract": "Extrair dados"
+  },
+  "pdf": {
+    "hint": "Envie um PDF do boleto, Pix ou conta",
+    "info": "Você poderá revisar antes de salvar. PDF até 10MB.",
+    "reading": "Lendo PDF…",
+    "pick": "Selecionar PDF"
+  },
+  "lowConfidence": "Confiança baixa na leitura. Confira todos os campos com atenção antes de salvar.",
+  "fields": {
+    "nome": "Nome da conta",
+    "beneficiario": "Beneficiário",
+    "valor": "Valor",
+    "vencimento": "Vencimento",
+    "forma": "Forma",
+    "categoria": "Categoria",
+    "selecione": "Selecione",
+    "none": "—",
+    "semCategoria": "Sem categoria",
+    "codigoBoleto": "Código do boleto",
+    "linhaDigitavel": "Linha digitável",
+    "codigoPix": "Pix copia e cola",
+    "chavePix": "Chave Pix",
+    "banco": "Banco emissor",
+    "observacao": "Observação"
+  },
+  "lote": {
+    "selectedOf": "{{sel}} de {{total}} selecionada(s)",
+    "markAll": "Marcar todas",
+    "unmark": "Desmarcar",
+    "empty": "Nenhum item para revisar.",
+    "noName": "(sem nome)",
+    "exists": "Já existe no app",
+    "lowConfBadge": "Confiança baixa",
+    "dueOn": " · vence {{date}}",
+    "removeFromList": "Remover da lista"
+  },
+  "footer": {
+    "back": "Voltar",
+    "save": "Salvar conta",
+    "importSelected": "Importar selecionadas",
+    "cancel": "Cancelar"
+  },
+  "errors": {
+    "readFail": "Falha ao ler a conta.",
+    "nothingFound": "Nada de útil identificado.",
+    "networkConta": "Erro de rede ao processar a conta.",
+    "readPdfFail": "Não foi possível ler este PDF.",
+    "noneInPdf": "Nenhuma conta foi encontrada neste arquivo.",
+    "networkPdf": "Erro de rede ao processar o PDF.",
+    "pickImage": "Selecione uma imagem (JPG, PNG, WEBP).",
+    "imageTooBig": "Imagem muito grande (máx 10MB).",
+    "pickPdf": "Selecione um arquivo PDF.",
+    "pdfTooBig": "PDF muito grande (máx 10MB).",
+    "pasteText": "Cole o texto do boleto/Pix.",
+    "needName": "Informe o nome da conta.",
+    "invalidValue": "Valor inválido.",
+    "needDue": "Informe o vencimento.",
+    "dupBoleto": "Esta conta parece já estar cadastrada (mesmo código de boleto).",
+    "dupPix": "Esta conta parece já estar cadastrada (mesmo código Pix).",
+    "needSelectImport": "Selecione ao menos uma conta para importar.",
+    "needNameItem": "Informe o nome de uma das contas selecionadas.",
+    "invalidValueItem": "Valor inválido em \"{{name}}\".",
+    "needDueItem": "Informe o vencimento de \"{{name}}\"."
+  },
+  "dup": {
+    "sameBoletoCode": "Mesmo código de boleto",
+    "samePixCode": "Mesmo Pix copia e cola",
+    "similarValueDate": "Valor + vencimento parecidos",
+    "confirm": "Já existe uma conta parecida (\"{{name}}\", {{date}}). Salvar mesmo assim?"
+  },
+  "success": {
+    "extracted": "Dados extraídos. Revise antes de salvar.",
+    "foundCount": "{{count}} conta(s) encontrada(s). Revise antes de salvar.",
+    "saved": "Conta importada e salva. ✅",
+    "batchDone": "Importação concluída: {{salvas}} conta(s) adicionada(s){{ignoradasMsg}}.",
+    "ignoredSuffix": ", {{count}} duplicada(s) ignorada(s)"
+  }
+}

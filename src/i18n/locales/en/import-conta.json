@@ -1,0 +1,92 @@
+{
+  "title": "Import bill",
+  "desc": "Take a photo, paste the text or upload the PDF of the boleto/Pix. You review before saving.",
+  "tabs": { "imagem": "Image", "texto": "Text", "pdf": "PDF" },
+  "imagem": {
+    "hint": "Photo or screenshot of the boleto/Pix",
+    "format": "JPG, PNG or WEBP up to 10MB.",
+    "reading": "Reading…",
+    "pick": "Select image"
+  },
+  "texto": {
+    "label": "Paste the text",
+    "placeholder": "Paste the text of the boleto, Pix copy-paste or invoice here...",
+    "extract": "Extract data"
+  },
+  "pdf": {
+    "hint": "Upload a PDF of the boleto, Pix or bill",
+    "info": "You'll be able to review before saving. PDF up to 10MB.",
+    "reading": "Reading PDF…",
+    "pick": "Select PDF"
+  },
+  "lowConfidence": "Low confidence on the reading. Double-check all fields before saving.",
+  "fields": {
+    "nome": "Bill name",
+    "beneficiario": "Payee",
+    "valor": "Amount",
+    "vencimento": "Due date",
+    "forma": "Method",
+    "categoria": "Category",
+    "selecione": "Select",
+    "none": "—",
+    "semCategoria": "No category",
+    "codigoBoleto": "Boleto code",
+    "linhaDigitavel": "Digitable line",
+    "codigoPix": "Pix copy-paste",
+    "chavePix": "Pix key",
+    "banco": "Issuing bank",
+    "observacao": "Notes"
+  },
+  "lote": {
+    "selectedOf": "{{sel}} of {{total}} selected",
+    "markAll": "Select all",
+    "unmark": "Clear",
+    "empty": "Nothing to review.",
+    "noName": "(no name)",
+    "exists": "Already in app",
+    "lowConfBadge": "Low confidence",
+    "dueOn": " · due {{date}}",
+    "removeFromList": "Remove from list"
+  },
+  "footer": {
+    "back": "Back",
+    "save": "Save bill",
+    "importSelected": "Import selected",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "readFail": "Failed to read the bill.",
+    "nothingFound": "Nothing useful identified.",
+    "networkConta": "Network error processing the bill.",
+    "readPdfFail": "Couldn't read this PDF.",
+    "noneInPdf": "No bill found in this file.",
+    "networkPdf": "Network error processing the PDF.",
+    "pickImage": "Select an image (JPG, PNG, WEBP).",
+    "imageTooBig": "Image too large (max 10MB).",
+    "pickPdf": "Select a PDF file.",
+    "pdfTooBig": "PDF too large (max 10MB).",
+    "pasteText": "Paste the boleto/Pix text.",
+    "needName": "Enter the bill name.",
+    "invalidValue": "Invalid amount.",
+    "needDue": "Enter the due date.",
+    "dupBoleto": "This bill seems to be already registered (same boleto code).",
+    "dupPix": "This bill seems to be already registered (same Pix code).",
+    "needSelectImport": "Select at least one bill to import.",
+    "needNameItem": "Enter the name of one of the selected bills.",
+    "invalidValueItem": "Invalid amount in \"{{name}}\".",
+    "needDueItem": "Enter the due date of \"{{name}}\"."
+  },
+  "dup": {
+    "sameBoletoCode": "Same boleto code",
+    "samePixCode": "Same Pix copy-paste",
+    "similarValueDate": "Similar amount + due date",
+    "confirm": "A similar bill exists (\"{{name}}\", {{date}}). Save anyway?"
+  },
+  "success": {
+    "extracted": "Data extracted. Review before saving.",
+    "foundCount": "{{count}} bill(s) found. Review before saving.",
+    "saved": "Bill imported and saved. ✅",
+    "batchDone": "Import complete: {{salvas}} bill(s) added{{ignoradasMsg}}.",
+    "ignoredSuffix": ", {{count}} duplicate(s) ignored"
+  }
+}

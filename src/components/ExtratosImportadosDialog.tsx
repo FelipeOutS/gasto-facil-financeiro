@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   FileText,
   FileSpreadsheet,
@@ -50,24 +51,25 @@ function iconForOrigem(o: ExtratoImportado["tipoOrigem"]) {
   return <ImageIcon className="h-4 w-4" />;
 }
 
-function statusBadge(status: ExtratoImportado["status"]) {
+function StatusBadge({ status }: { status: ExtratoImportado["status"] }) {
+  const { t } = useTranslation("extratos-importados");
   if (status === "revertido") {
     return (
       <Badge variant="outline" className="gap-1 text-muted-foreground">
-        <XCircle className="h-3 w-3" /> Revertido
+        <XCircle className="h-3 w-3" /> {t("status.revertido")}
       </Badge>
     );
   }
   if (status === "erro") {
     return (
       <Badge variant="destructive" className="gap-1">
-        <AlertTriangle className="h-3 w-3" /> Erro
+        <AlertTriangle className="h-3 w-3" /> {t("status.erro")}
       </Badge>
     );
   }
   return (
     <Badge variant="secondary" className="gap-1">
-      <CheckCircle2 className="h-3 w-3" /> Importado
+      <CheckCircle2 className="h-3 w-3" /> {t("status.importado")}
     </Badge>
   );
 }
@@ -79,6 +81,7 @@ export function ExtratosImportadosDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { t } = useTranslation("extratos-importados");
   useStore(() => 0);
   const extratos = getExtratosImportados();
 
@@ -116,9 +119,9 @@ export function ExtratosImportadosDialog({
     try {
       const ok = await revertExtratoImportado(batchId);
       if (ok) {
-        toast.success("Importação revertida. Dashboard, Gastos, Minha renda e Guardado foram recalculados.");
+        toast.success(t("toast.reverted"));
       } else {
-        toast.error("Não foi possível reverter essa importação. Tente novamente.");
+        toast.error(t("toast.revertFail"));
       }
     } finally {
       setWorking(false);
@@ -131,10 +134,10 @@ export function ExtratosImportadosDialog({
     try {
       const ok = await deleteExtratoImportado(batchId);
       if (ok) {
-        toast.success("Registro removido do histórico.");
+        toast.success(t("toast.removed"));
         if (selectedId === batchId) setSelectedId(null);
       } else {
-        toast.error("Não foi possível remover esse registro.");
+        toast.error(t("toast.removeFail"));
       }
     } finally {
       setWorking(false);
@@ -161,23 +164,21 @@ export function ExtratosImportadosDialog({
                     type="button"
                     onClick={() => setSelectedId(null)}
                     className="text-muted-foreground hover:text-foreground"
-                    aria-label="Voltar"
+                    aria-label={t("back")}
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </button>
-                  Detalhes da importação
+                  {t("details")}
                 </>
               ) : (
                 <>
                   <FileText className="h-5 w-5" />
-                  Extratos importados
+                  {t("title")}
                 </>
               )}
             </DialogTitle>
             <DialogDescription className="text-sm">
-              {selected
-                ? "Veja os itens dessa importação e, se precisar, reverta o lote."
-                : "Histórico das importações de extrato bancário."}
+              {selected ? t("descDetails") : t("descList")}
             </DialogDescription>
           </DialogHeader>
 
@@ -186,7 +187,7 @@ export function ExtratosImportadosDialog({
               <>
                 {extratos.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
-                    Nenhuma importação de extrato bancário até agora.
+                    {t("empty")}
                   </div>
                 ) : (
                   <ul className="space-y-2">
@@ -194,7 +195,7 @@ export function ExtratosImportadosDialog({
                       const periodo =
                         e.periodoInicio && e.periodoFim
                           ? `${formatDateBR(e.periodoInicio)} – ${formatDateBR(e.periodoFim)}`
-                          : "Período não identificado";
+                          : t("noPeriod");
                       return (
                         <li key={e.id}>
                           <button
@@ -211,13 +212,13 @@ export function ExtratosImportadosDialog({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-medium truncate">
-                                  {e.nomeArquivo || `Extrato ${e.tipoOrigem.toUpperCase()}`}
+                                  {e.nomeArquivo || t("extratoLabel", { tipo: e.tipoOrigem.toUpperCase() })}
                                 </span>
-                                {statusBadge(e.status)}
+                                <StatusBadge status={e.status} />
                               </div>
                               <div className="text-xs text-muted-foreground mt-0.5">
                                 {formatDateBR(e.dataImportacao)} • {periodo} •{" "}
-                                {e.qtdMovimentacoes} movim.
+                                {t("movim", { count: e.qtdMovimentacoes })}
                               </div>
                             </div>
                             <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -235,44 +236,51 @@ export function ExtratosImportadosDialog({
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">
-                      {selected.nomeArquivo || `Extrato ${selected.tipoOrigem.toUpperCase()}`}
+                      {selected.nomeArquivo || t("extratoLabel", { tipo: selected.tipoOrigem.toUpperCase() })}
                     </span>
-                    {statusBadge(selected.status)}
+                    <StatusBadge status={selected.status} />
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    Importado em {formatDateBR(selected.dataImportacao)}
+                    {t("importedOn", { date: formatDateBR(selected.dataImportacao) })}
                     {selected.periodoInicio && selected.periodoFim
-                      ? ` • Período: ${formatDateBR(selected.periodoInicio)} – ${formatDateBR(selected.periodoFim)}`
+                      ? t("periodSuffix", {
+                          from: formatDateBR(selected.periodoInicio),
+                          to: formatDateBR(selected.periodoFim),
+                        })
                       : ""}
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-sm">
-                    <Stat label="Receitas" value={formatBRL(selected.totalReceitas)} positive />
-                    <Stat label="Despesas" value={formatBRL(selected.totalDespesas)} negative />
-                    <Stat label="Transferências" value={formatBRL(selected.totalTransferencias)} />
-                    <Stat label="Movim." value={String(selected.qtdMovimentacoes)} />
+                    <Stat label={t("stats.receitas")} value={formatBRL(selected.totalReceitas)} positive />
+                    <Stat label={t("stats.despesas")} value={formatBRL(selected.totalDespesas)} negative />
+                    <Stat label={t("stats.transferencias")} value={formatBRL(selected.totalTransferencias)} />
+                    <Stat label={t("stats.movim")} value={String(selected.qtdMovimentacoes)} />
                   </div>
 
                   {editadosDoSelecionado && editadosDoSelecionado.total > 0 && selected.status !== "revertido" && (
                     <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
                       <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                       <div>
-                        <strong>{editadosDoSelecionado.total}</strong> item(ns) desse lote
-                        foram editados depois da importação. Reverter vai apagar esses
-                        itens mesmo assim.
+                        <Trans
+                          i18nKey="editedWarn"
+                          ns="extratos-importados"
+                          count={editadosDoSelecionado.total}
+                          values={{ count: editadosDoSelecionado.total }}
+                          components={{ 0: <strong /> }}
+                        />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <ItemList title="Despesas" items={itensDoSelecionado.gastos.map(g => ({
+                <ItemList title={t("lists.despesas")} items={itensDoSelecionado.gastos.map(g => ({
                   id: g.id, descricao: g.descricao, valor: g.valor, data: g.data,
                 }))} tone="negative" />
-                <ItemList title="Receitas" items={itensDoSelecionado.receitas.map(r => ({
+                <ItemList title={t("lists.receitas")} items={itensDoSelecionado.receitas.map(r => ({
                   id: r.id, descricao: r.descricao, valor: r.valor, data: r.data,
                 }))} tone="positive" />
-                <ItemList title="Transferências internas" items={itensDoSelecionado.transferencias.map(t => ({
-                  id: t.id, descricao: t.descricao, valor: t.valor, data: t.data,
+                <ItemList title={t("lists.transferencias")} items={itensDoSelecionado.transferencias.map(tr => ({
+                  id: tr.id, descricao: tr.descricao, valor: tr.valor, data: tr.data,
                 }))} tone="neutral" />
               </div>
             )}
@@ -287,7 +295,7 @@ export function ExtratosImportadosDialog({
                   disabled={working}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Remover do histórico
+                  {t("actions.remove")}
                 </Button>
               ) : (
                 <Button
@@ -300,7 +308,7 @@ export function ExtratosImportadosDialog({
                   ) : (
                     <Trash2 className="h-4 w-4" />
                   )}
-                  Reverter importação
+                  {t("actions.revert")}
                 </Button>
               )}
             </div>
@@ -314,22 +322,25 @@ export function ExtratosImportadosDialog({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reverter importação?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Isso vai apagar <strong>todos</strong> os{" "}
-              {confirmRevertExtrato?.qtdMovimentacoes ?? 0} lançamentos
-              criados nessa importação (despesas, receitas, transferências e
-              reservas) e atualizar Dashboard, Gastos, Minha renda e Guardado.
-              {confirmRevertEditados && confirmRevertEditados.total > 0 && (
-                <span className="block mt-3 text-amber-600 font-medium">
-                  ⚠ {confirmRevertEditados.total} item(ns) foram editados depois
-                  da importação e também serão apagados.
-                </span>
-              )}
+            <AlertDialogTitle>{t("confirmRevert.title")}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <Trans
+                  i18nKey="confirmRevert.body"
+                  ns="extratos-importados"
+                  values={{ count: confirmRevertExtrato?.qtdMovimentacoes ?? 0 }}
+                  components={{ 0: <strong /> }}
+                />
+                {confirmRevertEditados && confirmRevertEditados.total > 0 && (
+                  <span className="block mt-3 text-amber-600 font-medium">
+                    {t("confirmRevert.editedNote", { count: confirmRevertEditados.total })}
+                  </span>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={working}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={working}>{t("confirmRevert.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={working}
               onClick={(e) => {
@@ -338,7 +349,7 @@ export function ExtratosImportadosDialog({
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {working ? "Revertendo..." : "Sim, reverter"}
+              {working ? t("confirmRevert.doing") : t("confirmRevert.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -350,14 +361,13 @@ export function ExtratosImportadosDialog({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover do histórico?</AlertDialogTitle>
+            <AlertDialogTitle>{t("confirmDelete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta importação já foi revertida. Remover apenas apaga o
-              registro do histórico — não afeta nenhum lançamento.
+              {t("confirmDelete.body")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={working}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={working}>{t("confirmDelete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={working}
               onClick={(e) => {
@@ -365,7 +375,7 @@ export function ExtratosImportadosDialog({
                 if (confirmDeleteId) handleDelete(confirmDeleteId);
               }}
             >
-              {working ? "Removendo..." : "Remover"}
+              {working ? t("confirmDelete.doing") : t("confirmDelete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
