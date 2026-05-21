@@ -328,7 +328,7 @@ export function ImportExtratoDialog({
       setLoading(true);
       setObservacaoIA(null);
       try {
-        const dataUrls = await Promise.all(files.map(fileToDataUrl));
+        const dataUrls = await Promise.all(files.map((f) => fileToDataUrl(f, t("errors.fileRead"))));
         const resp = await apiFetch("/api/import-extrato", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
