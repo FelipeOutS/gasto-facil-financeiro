@@ -394,7 +394,7 @@ function Hero() {
             "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
         }}
       />
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-1 pb-16 sm:px-6 sm:pt-4 md:pt-10 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-0 pb-16 sm:px-6 sm:pt-2 md:pt-8 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
         <div className="lg:col-span-6">
           <motion.span
             initial={{ opacity: 0, y: 8 }}
