@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import {
   ImageIcon,
   FileSpreadsheet,
@@ -86,16 +87,16 @@ type ReviewItem = FaturaItemBruto & {
   dupStatus: DupStatus;
 };
 
-const COL_LABELS: Record<CsvColumnRole, string> = {
-  data: "Data",
-  descricao: "Descrição",
-  estabelecimento: "Estabelecimento",
-  valor: "Valor",
-  categoria: "Categoria",
-  parcela: "Parcela",
-  totalParcelas: "Total de parcelas",
-  observacao: "Observação",
-  ignorar: "Ignorar",
+const COL_LABEL_KEYS: Record<CsvColumnRole, string> = {
+  data: "mapping.labels.data",
+  descricao: "mapping.labels.descricao",
+  estabelecimento: "mapping.labels.estabelecimento",
+  valor: "mapping.labels.valor",
+  categoria: "mapping.labels.categoria",
+  parcela: "mapping.labels.parcela",
+  totalParcelas: "mapping.labels.totalParcelas",
+  observacao: "mapping.labels.observacao",
+  ignorar: "mapping.labels.ignorar",
 };
 
 const COL_OPTIONS: CsvColumnRole[] = [
@@ -119,6 +120,7 @@ export function ImportFaturaDialog({
   onOpenChange: (o: boolean) => void;
   cartaoIdInicial?: string;
 }) {
+  const { t } = useTranslation("import-fatura");
   const cartoes = useStore(() => getCartoes());
   const categorias = useStore(() => getCategorias());
 
@@ -288,7 +290,7 @@ export function ImportFaturaDialog({
       if (!resp.ok) {
         const msg =
           data?.error ||
-          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+          t("errorReadingImage");
         setErrorMessage(msg);
         toast.error(msg);
         setImgLoading(false);
@@ -299,7 +301,7 @@ export function ImportFaturaDialog({
         : [];
       if (itens.length === 0) {
         const msg =
-          "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+          t("errorReadingImage");
         setErrorMessage(msg);
         toast.error(msg);
         setImgLoading(false);
@@ -312,7 +314,7 @@ export function ImportFaturaDialog({
     } catch (err) {
       console.error(err);
       const msg =
-        "Não consegui ler essa imagem com segurança. Você pode tentar outro print ou preencher manualmente.";
+        t("errorReadingImage");
       setErrorMessage(msg);
       toast.error(msg);
       setImgLoading(false);
@@ -326,13 +328,13 @@ export function ImportFaturaDialog({
     if (!file) return;
     setErrorMessage(null);
     if (!/\.pdf$|application\/pdf/i.test(file.type || file.name)) {
-      const msg = "Envie um arquivo PDF.";
+      const msg = t("errorNeedPdf");
       setErrorMessage(msg);
       toast.error(msg);
       return;
     }
     if (file.size > 12 * 1024 * 1024) {
-      const msg = "PDF muito grande. Tente um arquivo menor que 12 MB.";
+      const msg = t("errorPdfTooBig");
       setErrorMessage(msg);
       toast.error(msg);
       return;
@@ -358,7 +360,7 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
-        const msg = data?.error || "Não consegui ler esse PDF com segurança.";
+        const msg = data?.error || t("errorReadingPdf");
         setErrorMessage(msg);
         toast.error(msg);
         setPdfLoading(false);
@@ -367,7 +369,7 @@ export function ImportFaturaDialog({
       const itens = Array.isArray(data?.itens) ? (data.itens as FaturaItemBruto[]) : [];
       if (itens.length === 0) {
         const msg =
-          "Nenhuma movimentação encontrada. Tente enviar um arquivo mais nítido ou revise se o documento contém lançamentos.";
+          t("errorNoMovements");
         setErrorMessage(msg);
         toast.error(msg);
         setPdfLoading(false);
@@ -379,7 +381,7 @@ export function ImportFaturaDialog({
       setStep("review");
     } catch (err) {
       console.error(err);
-      const msg = "Não consegui ler esse PDF agora. Tente novamente.";
+      const msg = t("errorReadingPdfRetry");
       setErrorMessage(msg);
       toast.error(msg);
       setPdfLoading(false);
@@ -396,7 +398,7 @@ export function ImportFaturaDialog({
     const parsed = parseCsvFile(text);
     if (parsed.headers.length === 0 || parsed.rows.length === 0) {
       const msg =
-        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+        t("errorCsvUnknown");
       setErrorMessage(msg);
       toast.error(msg);
       return;
@@ -420,7 +422,7 @@ export function ImportFaturaDialog({
   function aplicarMapping() {
     if (!csvMap.includes("valor") || !csvMap.includes("data")) {
       const msg =
-        "Não consegui identificar as colunas da fatura. Confira o arquivo ou ajuste os campos manualmente.";
+        t("errorCsvUnknown");
       setErrorMessage(msg);
       toast.error(msg);
       return;
@@ -501,11 +503,11 @@ export function ImportFaturaDialog({
 
   async function confirmarImportacao() {
     if (!cartaoId) {
-      toast.error("Selecione o cartão antes de salvar.");
+      toast.error(t("errorPickCard"));
       return;
     }
     if (!invoiceMonth || !/^\d{4}-\d{2}$/.test(invoiceMonth)) {
-      toast.error("Selecione o mês da fatura antes de salvar.");
+      toast.error(t("errorPickMonth"));
       return;
     }
     const validos = items.filter(
@@ -517,7 +519,7 @@ export function ImportFaturaDialog({
         !!(i.descricao && i.descricao.trim()),
     );
     if (validos.length === 0) {
-      toast.error("Nenhuma compra pronta para importar.");
+      toast.error(t("errorNoneReady"));
       return;
     }
     setSaving(true);
@@ -556,26 +558,24 @@ export function ImportFaturaDialog({
       ).length;
       const novos = salvos.length;
       if (novos === 0) {
-        toast.warning(
-          "Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.",
-        );
+        toast.warning(t("toast.noneAdded"));
       } else if (duplicadosIgnorados > 0 || naoConfirmados > 0) {
         toast.success(
-          `Importação concluída: ${novos} novo(s), ${duplicadosIgnorados} duplicado(s) ignorado(s) e ${
-            naoConfirmados - duplicadosIgnorados
-          } item(ns) não confirmado(s).`,
+          t("toast.doneMixed", {
+            novos,
+            dup: duplicadosIgnorados,
+            nao: naoConfirmados - duplicadosIgnorados,
+          }),
         );
       } else {
-        toast.success(
-          `Importação concluída. ${novos} compra(s) adicionada(s) ao app.`,
-        );
+        toast.success(t("toast.donePure", { count: novos }));
       }
       // Suprimir warning de var não usada
       void totalItens;
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao salvar. Tente novamente.");
+      toast.error(t("errorSave"));
     } finally {
       setSaving(false);
     }
@@ -593,12 +593,9 @@ export function ImportFaturaDialog({
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 pb-4 pt-5 text-left sm:px-6">
           <DialogTitle className="text-xl font-bold tracking-tight">
-            Importar fatura
+            {t("title")}
           </DialogTitle>
-          <DialogDescription>
-            Envie um print ou arquivo CSV da sua fatura. Antes de salvar, você
-            poderá revisar tudo.
-          </DialogDescription>
+          <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
@@ -706,21 +703,22 @@ function SourceStep({
   onPick: (s: Step) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("import-fatura");
   return (
     <div className="space-y-4">
       {/* Seleção de cartão */}
       <div className="rounded-2xl border border-border bg-card-elevated p-4">
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Cartão dessas compras
+          {t("source.cardLabel")}
         </Label>
         {cartoes.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            Cadastre um cartão antes de importar a fatura.
+            {t("source.noCards")}
           </p>
         ) : (
           <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v)}>
             <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Escolha um cartão" />
+              <SelectValue placeholder={t("source.pickCard")} />
             </SelectTrigger>
             <SelectContent>
               {cartoes.map((c) => (
@@ -736,22 +734,22 @@ function SourceStep({
       <div className="grid gap-3 sm:grid-cols-3">
         <SourceCard
           icon={<ImageIcon className="h-5 w-5" />}
-          title="Imagens / prints"
-          desc="Envie 1 a 10 prints da fatura."
+          title={t("source.imagens")}
+          desc={t("source.imagensDesc")}
           onClick={() => onPick("image-upload")}
           disabled={cartoes.length === 0}
         />
         <SourceCard
           icon={<FileText className="h-5 w-5" />}
-          title="PDF da fatura"
-          desc="Aceita PDF com texto ou escaneado."
+          title={t("source.pdf")}
+          desc={t("source.pdfDesc")}
           onClick={() => onPick("pdf-upload")}
           disabled={cartoes.length === 0}
         />
         <SourceCard
           icon={<FileSpreadsheet className="h-5 w-5" />}
-          title="CSV / planilha"
-          desc="Exportação do app do banco."
+          title={t("source.csv")}
+          desc={t("source.csvDesc")}
           onClick={() => onPick("csv-upload")}
           disabled={cartoes.length === 0}
         />
@@ -762,12 +760,12 @@ function SourceStep({
         onClick={onClose}
         className="block w-full rounded-xl border border-dashed border-border px-4 py-3 text-center text-sm text-muted-foreground transition-colors hover:bg-card-elevated"
       >
-        Prefiro preencher manualmente
+        {t("source.manual")}
       </button>
 
       <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Não pedimos número completo, CVV ou senha. Só usamos o que ajuda você.
+        {t("source.privacy")}
       </p>
     </div>
   );
@@ -825,12 +823,8 @@ function ImageStep({
   onProcess: () => void;
   onBack: () => void;
 }) {
-  const STAGES = [
-    "Detectando valores",
-    "Lendo datas",
-    "Organizando compras",
-    "Preparando conferência",
-  ];
+  const { t } = useTranslation("import-fatura");
+  const STAGES = t("image.stages", { returnObjects: true }) as string[];
   if (loading) {
     return (
       <div className="grid place-items-center py-12">
@@ -838,9 +832,9 @@ function ImageStep({
           <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft motion-safe:animate-pulse-soft">
             <Sparkles className="h-7 w-7" />
           </div>
-          <h3 className="mt-4 text-base font-semibold">Lendo sua fatura…</h3>
+          <h3 className="mt-4 text-base font-semibold">{t("image.loadingTitle")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Isso pode levar alguns segundos.
+            {t("image.loadingSub")}
           </p>
           <ul className="mt-5 space-y-1.5 text-left text-sm">
             {STAGES.map((s, i) => (
@@ -874,10 +868,10 @@ function ImageStep({
       >
         <Upload className="h-6 w-6 text-muted-foreground" />
         <p className="text-sm font-semibold">
-          Clique para enviar print(s) da fatura
+          {t("image.uploadTitle")}
         </p>
         <p className="text-xs text-muted-foreground">
-          Aceita até 10 imagens. JPG, PNG ou WEBP.
+          {t("image.uploadHint")}
         </p>
         <input
           id="fatura-img"
@@ -898,14 +892,14 @@ function ImageStep({
             >
               <img
                 src={src}
-                alt={`Fatura ${i + 1}`}
+                alt={t("image.alt", { n: i + 1 })}
                 className="h-28 w-full object-cover"
               />
               <button
                 type="button"
                 onClick={() => onRemove(i)}
                 className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white"
-                aria-label="Remover"
+                aria-label={t("image.remove")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -916,7 +910,7 @@ function ImageStep({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button variant="outline" onClick={onBack}>
-          Voltar
+          {t("image.back")}
         </Button>
         <Button
           onClick={onProcess}
@@ -924,7 +918,7 @@ function ImageStep({
           className="bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
         >
           <Sparkles className="mr-2 h-4 w-4" />
-          Analisar fatura
+          {t("image.analyze")}
         </Button>
       </div>
     </div>
@@ -938,6 +932,7 @@ function CsvStep({
   onPick: (fl: FileList | null) => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("import-fatura");
   return (
     <div className="space-y-4">
       <label
@@ -946,10 +941,10 @@ function CsvStep({
       >
         <FileSpreadsheet className="h-6 w-6 text-muted-foreground" />
         <p className="text-sm font-semibold">
-          Clique para enviar um arquivo CSV
+          {t("csv.uploadTitle")}
         </p>
         <p className="text-xs text-muted-foreground">
-          Aceita CSV com vírgula, ponto-e-vírgula, valores em R$ ou formato internacional.
+          {t("csv.uploadHint")}
         </p>
         <input
           id="fatura-csv"
@@ -961,16 +956,15 @@ function CsvStep({
       </label>
 
       <div className="rounded-xl bg-card-elevated p-3 text-xs text-muted-foreground">
-        <p className="font-semibold text-foreground">Dica</p>
+        <p className="font-semibold text-foreground">{t("csv.tipTitle")}</p>
         <p className="mt-1">
-          Se as colunas não forem reconhecidas automaticamente, abriremos uma
-          etapa rápida para você indicar o que é o quê.
+          {t("csv.tipBody")}
         </p>
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button variant="outline" onClick={onBack}>
-          Voltar
+          {t("csv.back")}
         </Button>
       </div>
     </div>
@@ -992,11 +986,11 @@ function CsvMapping({
   onBack: () => void;
   onApply: () => void;
 }) {
+  const { t } = useTranslation("import-fatura");
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-card-elevated p-3 text-xs text-muted-foreground">
-        Indique o que cada coluna do seu arquivo representa. Pré-visualizamos as
-        primeiras linhas abaixo.
+        {t("mapping.intro")}
       </div>
 
       <div className="space-y-2">
@@ -1006,9 +1000,9 @@ function CsvMapping({
             className="grid items-center gap-2 rounded-xl border border-border bg-card p-3 sm:grid-cols-[1fr_220px]"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{h || `Coluna ${i + 1}`}</p>
+              <p className="truncate text-sm font-semibold">{h || t("mapping.column", { n: i + 1 })}</p>
               <p className="truncate text-[11px] text-muted-foreground">
-                Exemplo: {rows.map((r) => r[i] ?? "").filter(Boolean).slice(0, 2).join(" · ") || "—"}
+                {t("mapping.example", { value: rows.map((r) => r[i] ?? "").filter(Boolean).slice(0, 2).join(" · ") || "—" })}
               </p>
             </div>
             <Select
@@ -1025,7 +1019,7 @@ function CsvMapping({
               <SelectContent>
                 {COL_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>
-                    {COL_LABELS[opt]}
+                    {t(COL_LABEL_KEYS[opt])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1036,13 +1030,13 @@ function CsvMapping({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button variant="outline" onClick={onBack}>
-          Voltar
+          {t("mapping.back")}
         </Button>
         <Button
           onClick={onApply}
           className="bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
         >
-          Continuar para revisão
+          {t("mapping.continue")}
         </Button>
       </div>
     </div>
@@ -1088,10 +1082,11 @@ function ReviewStep({
   onConfirm: () => void;
   onBack: () => void;
 }) {
-  const MES_NOMES = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-  ];
+  const { t, i18n } = useTranslation("import-fatura");
+  const monthFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }),
+    [i18n.language],
+  );
   function shiftMonth(ym: string, delta: number): string {
     const [y, m] = ym.split("-").map(Number);
     const total = y * 12 + (m - 1) + delta;
@@ -1100,7 +1095,7 @@ function ReviewStep({
     return `${ny}-${String(nm).padStart(2, "0")}`;
   }
   const [invY, invM] = invoiceMonth.split("-").map(Number);
-  const invoiceLabel = `${MES_NOMES[(invM ?? 1) - 1]}/${invY}`;
+  const invoiceLabel = monthFormatter.format(new Date(invY ?? 1970, (invM ?? 1) - 1, 1));
   // Opções dos próximos/anteriores 12 meses para o select
   const monthOptions: string[] = (() => {
     const base = new Date();
@@ -1118,14 +1113,13 @@ function ReviewStep({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Esta fatura será importada para
+              {t("review.invoiceForLabel")}
             </p>
             <p className="mt-0.5 text-lg font-bold tracking-tight">
-              Fatura de {invoiceLabel}
+              {t("review.invoiceOf", { label: invoiceLabel })}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Todos os lançamentos abaixo entrarão nesta fatura, mesmo que a
-              data da compra seja de outro mês.
+              {t("review.invoiceNote")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1134,7 +1128,7 @@ function ReviewStep({
               variant="outline"
               onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, -1))}
             >
-              ← Mês anterior
+              {t("review.prevMonth")}
             </Button>
             <Button
               size="sm"
@@ -1144,25 +1138,25 @@ function ReviewStep({
                 setInvoiceMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
               }}
             >
-              Mês atual
+              {t("review.thisMonth")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setInvoiceMonth(shiftMonth(invoiceMonth, 1))}
             >
-              Próximo mês →
+              {t("review.nextMonth")}
             </Button>
             <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
               <SelectTrigger className="h-9 w-[200px]">
-                <SelectValue placeholder="Selecionar outro mês" />
+                <SelectValue placeholder={t("review.otherMonth")} />
               </SelectTrigger>
               <SelectContent className="max-h-[260px]">
                 {monthOptions.map((ym) => {
                   const [y, m] = ym.split("-").map(Number);
                   return (
                     <SelectItem key={ym} value={ym}>
-                      {MES_NOMES[m - 1]}/{y}
+                      {monthFormatter.format(new Date(y, m - 1, 1))}
                     </SelectItem>
                   );
                 })}
@@ -1176,20 +1170,19 @@ function ReviewStep({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold tracking-tight">
-              Confirmar gastos
+              {t("review.confirmTitle")}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Os gastos confirmados serão adicionados à sua lista de gastos, ao
-              Dashboard e à fatura do cartão selecionado.
+              {t("review.confirmDesc")}
             </p>
             <p className="mt-1 text-[11px] font-medium text-muted-foreground/80">
-              Nada será salvo até você confirmar.
+              {t("review.nothingSavedYet")}
             </p>
           </div>
           <div className="text-right">
             <p className="num text-base font-bold">{formatBRL(total)}</p>
             <p className="text-[11px] text-muted-foreground">
-              {selecionados} selecionada(s) · {prontos} pronta(s)
+              {t("review.summary", { sel: selecionados, ready: prontos })}
             </p>
           </div>
         </div>
@@ -1197,7 +1190,7 @@ function ReviewStep({
         <div className="mt-3 grid items-center gap-2 sm:grid-cols-[1fr_auto]">
           <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v)}>
             <SelectTrigger>
-              <SelectValue placeholder="Cartão padrão para essas compras" />
+              <SelectValue placeholder={t("review.defaultCard")} />
             </SelectTrigger>
             <SelectContent>
               {cartoes.map((c) => (
@@ -1208,20 +1201,20 @@ function ReviewStep({
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={aplicarCartaoEmTodos}>
-            Aplicar a todas
+            {t("review.applyAll")}
           </Button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => onToggleAll(true)}>
-            Selecionar todas
+            {t("review.selectAll")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onToggleAll(false)}>
-            Limpar seleção
+            {t("review.clearSel")}
           </Button>
           <Button size="sm" variant="outline" onClick={onAdd}>
             <Plus className="mr-1 h-3.5 w-3.5" />
-            Adicionar linha
+            {t("review.addRow")}
           </Button>
         </div>
       </div>
@@ -1240,7 +1233,7 @@ function ReviewStep({
         {items.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card-elevated p-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Nenhuma compra para revisar.
+              {t("review.empty")}
             </p>
           </div>
         )}
@@ -1248,7 +1241,7 @@ function ReviewStep({
 
       <div className="sticky bottom-0 -mx-5 flex flex-col-reverse gap-2 border-t border-border bg-background px-5 pb-2 pt-3 sm:-mx-6 sm:flex-row sm:justify-between sm:px-6">
         <Button variant="outline" onClick={onBack} disabled={saving}>
-          Voltar
+          {t("review.back")}
         </Button>
         <Button
           onClick={onConfirm}
@@ -1258,10 +1251,10 @@ function ReviewStep({
           {saving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando…
+              {t("review.saving")}
             </>
           ) : (
-            <>Importar {prontos} compra{prontos === 1 ? "" : "s"}</>
+            <>{t("review.importN", { count: prontos })}</>
           )}
         </Button>
       </div>
@@ -1282,6 +1275,7 @@ function ReviewRow({
   onUpdate: (patch: Partial<ReviewItem>) => void;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation("import-fatura");
   const [expanded, setExpanded] = useState(false);
 
   const valorOk = item.valor !== null && item.valor > 0;
@@ -1292,13 +1286,13 @@ function ReviewRow({
 
   let badge: { label: string; tone: string } | null = null;
   if (item.dupStatus === "duplicado_existente")
-    badge = { label: "Já existe no app", tone: "bg-warning/20 text-warning" };
+    badge = { label: t("row.badge.exists"), tone: "bg-warning/20 text-warning" };
   else if (item.dupStatus === "duplicado_lote")
-    badge = { label: "Repetido no envio", tone: "bg-warning/20 text-warning" };
-  else if (!completo) badge = { label: "Incompleto", tone: "bg-destructive/15 text-destructive" };
+    badge = { label: t("row.badge.repeated"), tone: "bg-warning/20 text-warning" };
+  else if (!completo) badge = { label: t("row.badge.incomplete"), tone: "bg-destructive/15 text-destructive" };
   else if (item.confianca === "baixa")
-    badge = { label: "Revisar", tone: "bg-warning/20 text-warning" };
-  else badge = { label: "Novo", tone: "bg-success/15 text-success" };
+    badge = { label: t("row.badge.review"), tone: "bg-warning/20 text-warning" };
+  else badge = { label: t("row.badge.new"), tone: "bg-success/15 text-success" };
 
   return (
     <div
@@ -1313,12 +1307,12 @@ function ReviewRow({
           checked={item.selecionado}
           onChange={(e) => onUpdate({ selecionado: e.target.checked })}
           className="mt-1.5 h-4 w-4 cursor-pointer accent-brand"
-          aria-label="Selecionar"
+          aria-label={t("row.select")}
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="truncate text-sm font-semibold">
-              {item.descricao || item.estabelecimento || "Sem descrição"}
+              {item.descricao || item.estabelecimento || t("row.noDesc")}
             </p>
             <p className="num text-sm font-bold">
               {item.valor !== null ? formatBRL(item.valor) : "—"}
@@ -1326,8 +1320,8 @@ function ReviewRow({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             <span className="num">
-              {item.data || "sem data"}
-              {item.horario ? ` às ${item.horario}` : ""}
+              {item.data || t("row.noDate")}
+              {item.horario ? t("row.at", { time: item.horario }) : ""}
             </span>
             {item.totalParcelas && item.totalParcelas > 1 && (
               <span className="num">
@@ -1355,7 +1349,7 @@ function ReviewRow({
             size="icon"
             variant="ghost"
             onClick={() => setExpanded((v) => !v)}
-            aria-label="Editar"
+            aria-label={t("row.edit")}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -1364,7 +1358,7 @@ function ReviewRow({
             size="icon"
             variant="ghost"
             onClick={onRemove}
-            aria-label="Remover"
+            aria-label={t("row.remove")}
             className="text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -1374,19 +1368,19 @@ function ReviewRow({
 
       {expanded && (
         <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
-          <Field label="Descrição">
+          <Field label={t("row.fields.descricao")}>
             <Input
               value={item.descricao ?? ""}
               onChange={(e) => onUpdate({ descricao: e.target.value })}
             />
           </Field>
-          <Field label="Estabelecimento">
+          <Field label={t("row.fields.estabelecimento")}>
             <Input
               value={item.estabelecimento ?? ""}
               onChange={(e) => onUpdate({ estabelecimento: e.target.value || null })}
             />
           </Field>
-          <Field label="Valor (parcela / unitário)">
+          <Field label={t("row.fields.valor")}>
             <Input
               type="number"
               step="0.01"
@@ -1398,21 +1392,21 @@ function ReviewRow({
               }}
             />
           </Field>
-          <Field label="Data">
+          <Field label={t("row.fields.data")}>
             <Input
               type="date"
               value={item.data ?? ""}
               onChange={(e) => onUpdate({ data: e.target.value || null })}
             />
           </Field>
-          <Field label="Horário (opcional)">
+          <Field label={t("row.fields.horario")}>
             <Input
               type="time"
               value={item.horario ?? ""}
               onChange={(e) => onUpdate({ horario: e.target.value || null })}
             />
           </Field>
-          <Field label="Categoria">
+          <Field label={t("row.fields.categoria")}>
             <Select
               value={item.categoriaSugerida ?? "outros"}
               onValueChange={(v) => onUpdate({ categoriaSugerida: v })}
@@ -1429,13 +1423,13 @@ function ReviewRow({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Cartão">
+          <Field label={t("row.fields.cartao")}>
             <Select
               value={item.cartaoId || ""}
               onValueChange={(v) => onUpdate({ cartaoId: v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={t("row.fields.pickCard")} />
               </SelectTrigger>
               <SelectContent>
                 {cartoes.map((c) => (
@@ -1446,7 +1440,7 @@ function ReviewRow({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Parcela atual">
+          <Field label={t("row.fields.parcela")}>
             <Input
               type="number"
               min="0"
@@ -1457,7 +1451,7 @@ function ReviewRow({
               }}
             />
           </Field>
-          <Field label="Total de parcelas">
+          <Field label={t("row.fields.totalParcelas")}>
             <Input
               type="number"
               min="0"
@@ -1468,7 +1462,7 @@ function ReviewRow({
               }}
             />
           </Field>
-          <Field label="Observação" className="sm:col-span-2">
+          <Field label={t("row.fields.observacao")} className="sm:col-span-2">
             <Input
               value={item.observacao ?? ""}
               onChange={(e) => onUpdate({ observacao: e.target.value || null })}
@@ -1495,6 +1489,7 @@ function PdfStep({
   onProcess: () => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("import-fatura");
   if (loading) {
     return (
       <div className="grid place-items-center py-12">
@@ -1502,10 +1497,9 @@ function PdfStep({
           <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft motion-safe:animate-pulse-soft">
             <FileText className="h-7 w-7" />
           </div>
-          <h3 className="mt-4 text-base font-semibold">Lendo seu PDF…</h3>
+          <h3 className="mt-4 text-base font-semibold">{t("pdf.loadingTitle")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Isso pode levar alguns segundos. Estamos extraindo apenas os
-            lançamentos da fatura.
+            {t("pdf.loadingSub")}
           </p>
           <Loader2 className="mt-4 h-5 w-5 animate-spin text-brand" />
         </div>
@@ -1519,9 +1513,9 @@ function PdfStep({
         className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card-elevated px-4 py-10 text-center transition-colors hover:border-brand"
       >
         <Upload className="h-6 w-6 text-muted-foreground" />
-        <p className="text-sm font-semibold">Clique para enviar o PDF da fatura</p>
+        <p className="text-sm font-semibold">{t("pdf.uploadTitle")}</p>
         <p className="text-xs text-muted-foreground">
-          Aceita PDF com texto selecionável ou escaneado. Até 12 MB.
+          {t("pdf.uploadHint")}
         </p>
         <input
           id="fatura-pdf"
@@ -1550,7 +1544,7 @@ function PdfStep({
             size="icon"
             variant="ghost"
             onClick={onClear}
-            aria-label="Remover PDF"
+            aria-label={t("pdf.removePdf")}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -1559,13 +1553,12 @@ function PdfStep({
 
       <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Vamos ler apenas data, descrição, valor e forma de pagamento. Dados
-        como CPF e número de cartão são ignorados.
+        {t("pdf.privacy")}
       </p>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button variant="outline" onClick={onBack}>
-          Voltar
+          {t("pdf.back")}
         </Button>
         <Button
           onClick={onProcess}
@@ -1573,7 +1566,7 @@ function PdfStep({
           className="bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
         >
           <Sparkles className="mr-2 h-4 w-4" />
-          Analisar PDF
+          {t("pdf.analyze")}
         </Button>
       </div>
     </div>
@@ -1607,15 +1600,16 @@ function fmtInvoiceMonth(ym?: string): string {
   return `${m}/${a}`;
 }
 
-function originLabel(o?: string): string {
-  if (!o) return "Importação";
-  if (o.includes("imagem")) return "Imagem";
-  if (o.includes("pdf")) return "PDF";
-  if (o.includes("csv")) return "CSV";
+function originLabel(o: string | undefined, t: (k: string) => string): string {
+  if (!o) return t("history.origins.default");
+  if (o.includes("imagem")) return t("history.origins.imagem");
+  if (o.includes("pdf")) return t("history.origins.pdf");
+  if (o.includes("csv")) return t("history.origins.csv");
   return o;
 }
 
 function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
+  const { t } = useTranslation("import-fatura");
   // Reativo: useStore garante refresh ao deletar lote
   const lotes = useStore(() => lotesImportacaoTodos());
   const [verLote, setVerLote] = useState<string | null>(null);
@@ -1638,9 +1632,9 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
     try {
       const n = await deleteGastosDoLote(confirmDel.batchId);
       if (n > 0) {
-        toast.success(`Importação removida (${n} ${n === 1 ? "lançamento" : "lançamentos"}). Gastos manuais foram preservados.`);
+        toast.success(t("toast.removed", { count: n }));
       } else {
-        toast.error("Não foi possível remover a importação.");
+        toast.error(t("errorDelete"));
       }
       setConfirmDel(null);
     } finally {
@@ -1652,9 +1646,9 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
     <section className="mt-6 rounded-2xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">Faturas importadas</p>
+          <p className="text-sm font-semibold">{t("history.title")}</p>
           <p className="text-[11px] text-muted-foreground">
-            Histórico de importações. Excluir aqui apaga só os lançamentos do lote — gastos manuais não são afetados.
+            {t("history.subtitle")}
           </p>
         </div>
       </div>
@@ -1670,14 +1664,14 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
-                  {cartao?.nome ?? "Cartão removido"}
+                  {cartao?.nome ?? t("history.removedCard")}
                   {cartao?.banco ? ` · ${cartao.banco}` : ""}
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  Fatura {fmtInvoiceMonth(l.invoiceMonth)} · {originLabel(l.origem)} · Importado em {dataImp}
+                  {t("history.invoiceLine", { month: fmtInvoiceMonth(l.invoiceMonth), origin: originLabel(l.origem, t), date: dataImp })}
                 </p>
                 <p className="num text-[11px] text-muted-foreground">
-                  {l.qtd} {l.qtd === 1 ? "lançamento" : "lançamentos"} · Total {formatBRL(l.total)}
+                  {t("history.countLine", { count: l.qtd, total: formatBRL(l.total) })}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1687,7 +1681,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
                   className="h-8 rounded-full px-3 text-xs"
                   onClick={() => setVerLote(l.batchId)}
                 >
-                  Ver lançamentos
+                  {t("history.view")}
                 </Button>
                 <Button
                   size="sm"
@@ -1703,7 +1697,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
                   }
                 >
                   <Trash2 className="mr-1 h-3.5 w-3.5" />
-                  Excluir
+                  {t("history.delete")}
                 </Button>
               </div>
             </li>
@@ -1715,9 +1709,9 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
       <Dialog open={!!verLote} onOpenChange={(o) => !o && setVerLote(null)}>
         <DialogContent className="max-h-[80vh] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>Lançamentos da importação</DialogTitle>
+            <DialogTitle>{t("history.lancamentosTitle")}</DialogTitle>
             <DialogDescription>
-              {itensVer.length} {itensVer.length === 1 ? "compra" : "compras"} neste lote.
+              {t("history.lancamentosDesc", { count: itensVer.length })}
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2">
@@ -1731,8 +1725,8 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
                     {g.estabelecimento || g.descricao}
                   </p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    Compra: {formatDateBR(g.data)}
-                    {g.invoiceMonth ? ` · Fatura: ${fmtInvoiceMonth(g.invoiceMonth)}` : ""}
+                    {t("history.purchaseDate", { date: formatDateBR(g.data) })}
+                    {g.invoiceMonth ? t("history.invoiceMonth", { month: fmtInvoiceMonth(g.invoiceMonth) }) : ""}
                   </p>
                 </div>
                 <p className="num shrink-0 text-sm font-semibold">{formatBRL(g.valor)}</p>
@@ -1740,7 +1734,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
             ))}
             {itensVer.length === 0 && (
               <li className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-                Nenhum lançamento.
+                {t("history.noItems")}
               </li>
             )}
           </ul>
@@ -1751,16 +1745,22 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta fatura importada?</AlertDialogTitle>
+            <AlertDialogTitle>{t("history.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a excluir a fatura importada de{" "}
-              <strong>{fmtInvoiceMonth(confirmDel?.invoiceMonth)}</strong>, com{" "}
-              <strong>{confirmDel?.qtd ?? 0}</strong> lançamentos e total de{" "}
-              <strong>{formatBRL(confirmDel?.total ?? 0)}</strong>. Essa ação não apaga gastos manuais.
+              <Trans
+                i18nKey="history.deleteDesc"
+                t={t}
+                values={{
+                  month: fmtInvoiceMonth(confirmDel?.invoiceMonth),
+                  count: confirmDel?.qtd ?? 0,
+                  total: formatBRL(confirmDel?.total ?? 0),
+                }}
+                components={[<strong key="m" />, <strong key="c" />, <strong key="t" />]}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={excluindo}>{t("history.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -1769,7 +1769,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
               disabled={excluindo}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {excluindo ? "Excluindo…" : "Excluir importação"}
+              {excluindo ? t("history.deleting") : t("history.confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
