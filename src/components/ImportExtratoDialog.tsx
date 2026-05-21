@@ -764,15 +764,15 @@ export function ImportExtratoDialog({
           <div className="border-t px-6 py-3 bg-card flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              {totalSelecionados} de {items.length} selecionado(s)
+              {t("footer.selectedOf", { sel: totalSelecionados, total: items.length })}
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>
-                Cancelar
+                {t("footer.cancel")}
               </Button>
               <Button size="sm" onClick={handleConfirm} disabled={totalSelecionados === 0}>
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Confirmar importação
+                {t("footer.confirm")}
               </Button>
             </div>
           </div>
