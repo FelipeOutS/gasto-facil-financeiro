@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ImageIcon,
   FileText,
@@ -117,11 +118,11 @@ type ExtratoResumo = {
 
 const FORMA_OPCOES = FORMAS_PAGAMENTO;
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrl(file: File, errMsg: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
-    r.onerror = () => reject(new Error("Não consegui ler o arquivo."));
+    r.onerror = () => reject(new Error(errMsg));
     r.readAsDataURL(file);
   });
 }
@@ -179,6 +180,7 @@ export function ImportExtratoDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { t } = useTranslation("import-extrato");
   useStore(() => 0);
   const categorias = getCategorias();
 
@@ -320,13 +322,13 @@ export function ImportExtratoDialog({
     async (files: File[]) => {
       if (files.length === 0) return;
       if (files.length > 10) {
-        toast.error("Envie no máximo 10 imagens por vez.");
+        toast.error(t("errors.tooManyImages"));
         return;
       }
       setLoading(true);
       setObservacaoIA(null);
       try {
-        const dataUrls = await Promise.all(files.map(fileToDataUrl));
+        const dataUrls = await Promise.all(files.map((f) => fileToDataUrl(f, t("errors.fileRead"))));
         const resp = await apiFetch("/api/import-extrato", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -334,13 +336,13 @@ export function ImportExtratoDialog({
         });
         const json = await resp.json();
         if (!resp.ok) {
-          toast.error(json?.error || "Não consegui ler o extrato.");
+          toast.error(json?.error || t("errors.readFail"));
           setLoading(false);
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
         if (brutos.length === 0) {
-          toast.warning("Nenhuma movimentação encontrada nas imagens.");
+          toast.warning(t("errors.noneFoundImg"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
           return;
@@ -354,12 +356,12 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error(e);
-        toast.error("Erro ao enviar imagens.");
+        toast.error(t("errors.sendImg"));
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- IMPORT: PDF ----------
@@ -367,11 +369,11 @@ export function ImportExtratoDialog({
     async (file: File) => {
       if (!file) return;
       if (file.size === 0) {
-        toast.error("Arquivo PDF vazio.");
+        toast.error(t("errors.pdfEmpty"));
         return;
       }
       if (file.size > 15 * 1024 * 1024) {
-        toast.error("PDF muito grande. Tente um arquivo menor que 15 MB.");
+        toast.error(t("errors.pdfTooBig"));
         return;
       }
       setLoading(true);
@@ -393,24 +395,24 @@ export function ImportExtratoDialog({
         } catch {
           console.error("[import-extrato] resposta não-JSON:", resp.status, raw.slice(0, 200));
           if (resp.status === 413) {
-            toast.error("PDF muito grande. Tente um arquivo menor.");
+            toast.error(t("errors.pdfTooBigShort"));
           } else if (resp.status >= 500 || resp.status === 0) {
-            toast.error("Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
+            toast.error(t("errors.readPdfNo"));
           } else {
-            toast.error("Erro ao processar o extrato. Tente novamente.");
+            toast.error(t("errors.processFail"));
           }
           setLoading(false);
           return;
         }
 
         if (!resp.ok) {
-          toast.error(json?.error || "Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
+          toast.error(json?.error || t("errors.readPdfNo"));
           setLoading(false);
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
         if (brutos.length === 0) {
-          toast.warning("Não encontramos movimentações nesse PDF.");
+          toast.warning(t("errors.noneInPdf"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
           return;
@@ -422,12 +424,12 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error("[import-extrato] erro envio PDF", e);
-        toast.error("Erro ao processar o extrato. Tente novamente.");
+        toast.error(t("errors.processFail"));
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- IMPORT: CSV ----------
@@ -438,7 +440,7 @@ export function ImportExtratoDialog({
         const text = await file.text();
         const { headers, rows } = parseCsvFile(text);
         if (rows.length === 0) {
-          toast.error("CSV vazio ou inválido.");
+          toast.error(t("errors.csvEmpty"));
           setLoading(false);
           return;
         }
@@ -457,9 +459,7 @@ export function ImportExtratoDialog({
           ["valor", "amount", "vlr"].some((k) => norm(h).includes(k)),
         );
         if (idxData < 0 || idxDesc < 0 || idxValor < 0) {
-          toast.error(
-            "CSV sem colunas reconhecíveis. Esperado: Data, Descrição/Histórico, Valor.",
-          );
+          toast.error(t("errors.csvCols"));
           setLoading(false);
           return;
         }
@@ -490,7 +490,7 @@ export function ImportExtratoDialog({
           });
         }
         if (brutos.length === 0) {
-          toast.warning("Nenhuma linha válida no CSV.");
+          toast.warning(t("errors.csvNoValid"));
           setLoading(false);
           return;
         }
@@ -499,12 +499,12 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error(e);
-        toast.error("Erro ao ler CSV.");
+        toast.error(t("errors.csvRead"));
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- REVIEW edits ----------
@@ -550,7 +550,7 @@ export function ImportExtratoDialog({
       (i) => i.selecionado && i.valor !== null && i.valor > 0 && i.data && i.descricao.trim(),
     );
     if (validos.length === 0) {
-      toast.error("Nenhum item válido selecionado.");
+      toast.error(t("errors.noneSelected"));
       return;
     }
 
@@ -666,10 +666,10 @@ export function ImportExtratoDialog({
     }
 
     if (novosCount === 0 && duplicadosIgnorados > 0) {
-      toast("Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.");
+      toast(t("toast.noNew"));
     } else {
       toast.success(
-        `Importação concluída: ${novosCount} novo(s), ${duplicadosIgnorados} duplicado(s) ignorado(s) e ${naoConfirmados} item(ns) não confirmado(s).`,
+        t("toast.done", { novos: novosCount, dup: duplicadosIgnorados, nao: naoConfirmados }),
       );
     }
     handleClose(false);
@@ -687,10 +687,10 @@ export function ImportExtratoDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Upload className="h-5 w-5" />
-            Importar extrato bancário
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Pix, transferências, débito, tarifas, entradas e saídas da conta.
+            {t("desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -699,20 +699,20 @@ export function ImportExtratoDialog({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <SourceCard
                 icon={<ImageIcon className="h-6 w-6" />}
-                title="Imagens / prints"
-                desc="Até 10 prints do extrato"
+                title={t("source.imagens")}
+                desc={t("source.imagensDesc")}
                 onClick={() => setStep("image-upload")}
               />
               <SourceCard
                 icon={<FileText className="h-6 w-6" />}
-                title="PDF"
-                desc="Extrato em PDF (texto ou escaneado)"
+                title={t("source.pdf")}
+                desc={t("source.pdfDesc")}
                 onClick={() => setStep("pdf-upload")}
               />
               <SourceCard
                 icon={<FileSpreadsheet className="h-6 w-6" />}
-                title="CSV"
-                desc="Exportado do internet banking"
+                title={t("source.csv")}
+                desc={t("source.csvDesc")}
                 onClick={() => setStep("csv-upload")}
               />
             </div>
@@ -723,7 +723,7 @@ export function ImportExtratoDialog({
               accept="image/*"
               multiple
               loading={loading}
-              hint="Selecione até 10 imagens do extrato. Aceita JPG e PNG."
+              hint={t("upload.hintImagens")}
               onPick={(files) => handleImagens(files)}
               onBack={() => setStep("source")}
             />
@@ -732,7 +732,7 @@ export function ImportExtratoDialog({
             <UploadStep
               accept="application/pdf"
               loading={loading}
-              hint="Selecione um PDF do extrato. Se for protegido por senha, exporte uma versão sem senha."
+              hint={t("upload.hintPdf")}
               onPick={(files) => files[0] && handlePdf(files[0])}
               onBack={() => setStep("source")}
             />
@@ -741,7 +741,7 @@ export function ImportExtratoDialog({
             <UploadStep
               accept=".csv,text/csv"
               loading={loading}
-              hint="Espera colunas: Data, Descrição/Histórico, Valor."
+              hint={t("upload.hintCsv")}
               onPick={(files) => files[0] && handleCsv(files[0])}
               onBack={() => setStep("source")}
             />
@@ -764,15 +764,15 @@ export function ImportExtratoDialog({
           <div className="border-t px-6 py-3 bg-card flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              {totalSelecionados} de {items.length} selecionado(s)
+              {t("footer.selectedOf", { sel: totalSelecionados, total: items.length })}
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>
-                Cancelar
+                {t("footer.cancel")}
               </Button>
               <Button size="sm" onClick={handleConfirm} disabled={totalSelecionados === 0}>
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Confirmar importação
+                {t("footer.confirm")}
               </Button>
             </div>
           </div>
@@ -824,6 +824,7 @@ function UploadStep({
   onPick: (files: File[]) => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("import-extrato");
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
@@ -831,14 +832,14 @@ function UploadStep({
         onClick={onBack}
         className="text-xs text-muted-foreground hover:text-foreground"
       >
-        ← Voltar
+        {t("upload.back")}
       </button>
       <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
         {loading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">
-              Lendo o extrato com IA, aguarde...
+              {t("upload.loading")}
             </p>
           </div>
         ) : (
@@ -846,7 +847,7 @@ function UploadStep({
             <Sparkles className="mx-auto h-8 w-8 text-primary mb-3" />
             <p className="text-sm font-medium mb-1">{hint}</p>
             <p className="text-xs text-muted-foreground mb-4">
-              Os arquivos não são salvos. A IA extrai apenas as movimentações para você revisar.
+              {t("upload.privacy")}
             </p>
             <input
               ref={ref}
@@ -862,7 +863,7 @@ function UploadStep({
             />
             <Button onClick={() => ref.current?.click()}>
               <Upload className="h-4 w-4 mr-2" />
-              Selecionar arquivo{multiple ? "s" : ""}
+              {multiple ? t("upload.pickMany") : t("upload.pickOne")}
             </Button>
           </>
         )}
@@ -888,16 +889,17 @@ function ReviewStep({
   observacaoIA: string | null;
   resumoExtrato: ExtratoResumo | null;
 }) {
+  const { t } = useTranslation("import-extrato");
   return (
     <div className="space-y-3">
       {resumoExtrato && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border bg-card p-3 text-xs">
-          <ResumoItem label="Banco" value={resumoExtrato.banco ?? "—"} />
-          <ResumoItem label="Período" value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
-          <ResumoItem label="Saldo final" value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
-          <ResumoItem label="Saldo inicial" value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
-          <ResumoItem label="Entradas" value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
-          <ResumoItem label="Saídas" value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
+          <ResumoItem label={t("review.banco")} value={resumoExtrato.banco ?? "—"} />
+          <ResumoItem label={t("review.periodo")} value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
+          <ResumoItem label={t("review.saldoFinal")} value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
+          <ResumoItem label={t("review.saldoInicial")} value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
+          <ResumoItem label={t("review.entradas")} value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
+          <ResumoItem label={t("review.saidas")} value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
         </div>
       )}
       {observacaoIA && (
@@ -908,10 +910,10 @@ function ReviewStep({
       )}
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">
-          {items.length} movimentação(ões) encontrada(s)
+          {t("review.found", { count: items.length })}
         </p>
         <Button size="sm" variant="outline" onClick={onAdd}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar linha
+          <Plus className="h-3.5 w-3.5 mr-1" /> {t("review.addRow")}
         </Button>
       </div>
 
@@ -950,22 +952,23 @@ function ReviewCard({
   onUpdate: (patch: Partial<ReviewItem>) => void;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation("import-extrato");
   const dupBadge =
     item.dupStatus === "duplicado_existente"
-      ? { label: "Já existe no app", color: "bg-amber-500/15 text-amber-600 border-amber-500/30" }
+      ? { label: t("row.badge.exists"), color: "bg-amber-500/15 text-amber-600 border-amber-500/30" }
       : item.dupStatus === "duplicado_lote"
-        ? { label: "Repetido no envio", color: "bg-orange-500/15 text-orange-600 border-orange-500/30" }
+        ? { label: t("row.badge.repeated"), color: "bg-orange-500/15 text-orange-600 border-orange-500/30" }
         : item.valor === null || !item.data || !item.descricao
-          ? { label: "Incompleto", color: "bg-red-500/15 text-red-600 border-red-500/30" }
+          ? { label: t("row.badge.incomplete"), color: "bg-red-500/15 text-red-600 border-red-500/30" }
           : item.statusRevisao === "reserva"
-            ? { label: "Guardado/Cofrinho", color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+            ? { label: t("row.badge.reserva"), color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
             : item.statusRevisao === "resgate_reserva"
-              ? { label: "Retirada do cofrinho", color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+              ? { label: t("row.badge.resgateReserva"), color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
               : item.statusRevisao === "pagamento_fatura_cartao"
-                ? { label: "Pagamento de fatura", color: "bg-sky-500/15 text-sky-600 border-sky-500/30" }
+                ? { label: t("row.badge.pagamentoFatura"), color: "bg-sky-500/15 text-sky-600 border-sky-500/30" }
                 : item.statusRevisao === "revisar"
-                  ? { label: "Revisar", color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" }
-                  : { label: "Novo", color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
+                  ? { label: t("row.badge.revisar"), color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" }
+                  : { label: t("row.badge.novo"), color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
 
   const tipoIcon =
     item.tipoMovimentacao === "despesa" ? (
@@ -998,17 +1001,17 @@ function ReviewCard({
             <Badge variant="outline" className="text-[10px] gap-1">
               {tipoIcon}
               {item.tipoMovimentacao === "despesa"
-                ? "Despesa"
+                ? t("row.tipos.despesa")
                 : item.tipoMovimentacao === "receita"
-                  ? "Receita"
-                  : "Transf. interna"}
+                  ? t("row.tipos.receita")
+                  : t("row.tipos.transferenciaShort")}
             </Badge>
           </div>
         </div>
         <button
           onClick={onRemove}
           className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Remover"
+          aria-label={t("row.remove")}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -1016,7 +1019,7 @@ function ReviewCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <Label className="text-xs">Descrição</Label>
+          <Label className="text-xs">{t("row.descricao")}</Label>
           <Input
             value={item.descricao}
             onChange={(e) => onUpdate({ descricao: e.target.value })}
@@ -1024,7 +1027,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Valor</Label>
+          <Label className="text-xs">{t("row.valor")}</Label>
           <Input
             type="number"
             step="0.01"
@@ -1036,7 +1039,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Data</Label>
+          <Label className="text-xs">{t("row.data")}</Label>
           <Input
             type="date"
             value={item.data ?? ""}
@@ -1045,7 +1048,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Horário (opcional)</Label>
+          <Label className="text-xs">{t("row.horario")}</Label>
           <Input
             type="time"
             value={item.horario ?? ""}
@@ -1054,7 +1057,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Tipo</Label>
+          <Label className="text-xs">{t("row.tipo")}</Label>
           <Select
             value={item.tipoMovimentacao}
             onValueChange={(v) => onUpdate({ tipoMovimentacao: v as TipoMov })}
@@ -1063,15 +1066,15 @@ function ReviewCard({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="despesa">Despesa</SelectItem>
-              <SelectItem value="receita">Receita</SelectItem>
-              <SelectItem value="transferencia_interna">Transferência interna</SelectItem>
+              <SelectItem value="despesa">{t("row.tipos.despesa")}</SelectItem>
+              <SelectItem value="receita">{t("row.tipos.receita")}</SelectItem>
+              <SelectItem value="transferencia_interna">{t("row.tipos.transferencia_interna")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         {item.tipoMovimentacao !== "transferencia_interna" && (
           <div>
-            <Label className="text-xs">Forma de pagamento</Label>
+            <Label className="text-xs">{t("row.formaPg")}</Label>
             <Select
               value={item.formaPagamento}
               onValueChange={(v) => onUpdate({ formaPagamento: v as FormaPagamento })}
@@ -1091,7 +1094,7 @@ function ReviewCard({
         )}
         {item.tipoMovimentacao === "despesa" && (
           <div className="sm:col-span-2">
-            <Label className="text-xs">Categoria</Label>
+            <Label className="text-xs">{t("row.categoria")}</Label>
             <Select
               value={item.categoriaId}
               onValueChange={(v) => onUpdate({ categoriaId: v })}
@@ -1113,7 +1116,7 @@ function ReviewCard({
 
       {item.valor !== null && (
         <div className="text-xs text-muted-foreground pt-1">
-          Total: <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
+          {t("row.total")} <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
         </div>
       )}
     </div>
