@@ -55,6 +55,11 @@ export function SmartLimiteCard({
   totalEntradas: number;
   totalGastos: number;
 }) {
+  const { t } = useTranslation("dashboard");
+  const tMode = (m: CalcMode) => ({
+    label: t(`smartLimite.modes.${m}.label`),
+    desc: t(`smartLimite.modes.${m}.desc`),
+  });
   const contas = useStore(() => getContasAPagar());
   const recorrencias = useStore(() => getRecorrencias());
   const gastos = useStore(() => getGastos());
