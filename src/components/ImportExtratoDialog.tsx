@@ -889,16 +889,17 @@ function ReviewStep({
   observacaoIA: string | null;
   resumoExtrato: ExtratoResumo | null;
 }) {
+  const { t } = useTranslation("import-extrato");
   return (
     <div className="space-y-3">
       {resumoExtrato && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border bg-card p-3 text-xs">
-          <ResumoItem label="Banco" value={resumoExtrato.banco ?? "—"} />
-          <ResumoItem label="Período" value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
-          <ResumoItem label="Saldo final" value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
-          <ResumoItem label="Saldo inicial" value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
-          <ResumoItem label="Entradas" value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
-          <ResumoItem label="Saídas" value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
+          <ResumoItem label={t("review.banco")} value={resumoExtrato.banco ?? "—"} />
+          <ResumoItem label={t("review.periodo")} value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
+          <ResumoItem label={t("review.saldoFinal")} value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
+          <ResumoItem label={t("review.saldoInicial")} value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
+          <ResumoItem label={t("review.entradas")} value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
+          <ResumoItem label={t("review.saidas")} value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
         </div>
       )}
       {observacaoIA && (
@@ -909,10 +910,10 @@ function ReviewStep({
       )}
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">
-          {items.length} movimentação(ões) encontrada(s)
+          {t("review.found", { count: items.length })}
         </p>
         <Button size="sm" variant="outline" onClick={onAdd}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar linha
+          <Plus className="h-3.5 w-3.5 mr-1" /> {t("review.addRow")}
         </Button>
       </div>
 
