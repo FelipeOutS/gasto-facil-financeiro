@@ -459,9 +459,7 @@ export function ImportExtratoDialog({
           ["valor", "amount", "vlr"].some((k) => norm(h).includes(k)),
         );
         if (idxData < 0 || idxDesc < 0 || idxValor < 0) {
-          toast.error(
-            "CSV sem colunas reconhecíveis. Esperado: Data, Descrição/Histórico, Valor.",
-          );
+          toast.error(t("errors.csvCols"));
           setLoading(false);
           return;
         }
