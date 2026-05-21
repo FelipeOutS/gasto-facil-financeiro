@@ -180,6 +180,7 @@ export function ImportExtratoDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { t } = useTranslation("import-extrato");
   useStore(() => 0);
   const categorias = getCategorias();
 
