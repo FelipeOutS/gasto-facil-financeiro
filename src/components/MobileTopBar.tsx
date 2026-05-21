@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuth } from "@/lib/auth-context";
 import { useAlerts } from "@/lib/alerts/use-alerts";
@@ -18,6 +19,7 @@ function getInitials(name?: string | null, email?: string | null) {
  * O avatar navega para a tela normal "Mais opções".
  */
 export function MobileTopBar() {
+  const { t } = useTranslation("nav");
   const { user, profile } = useAuth();
   const { unreadCount } = useAlerts();
 
@@ -36,7 +38,7 @@ export function MobileTopBar() {
         <div className="flex items-center gap-1">
           <Link
             to="/alertas"
-            aria-label="Abrir alertas"
+            aria-label={t("aria.openAlerts")}
             className="relative grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-card/70 text-muted-foreground active:scale-95"
           >
             <Bell className="h-4.5 w-4.5" />
@@ -48,13 +50,13 @@ export function MobileTopBar() {
           </Link>
           <Link
             to="/app/perfil"
-            aria-label="Abrir perfil"
+            aria-label={t("aria.openProfile")}
             className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-xs font-bold text-foreground active:scale-95"
           >
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
-                alt={profile?.nome ?? "Avatar"}
+                alt={profile?.nome ?? t("aria.avatarAlt")}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
