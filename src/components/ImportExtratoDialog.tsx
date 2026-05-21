@@ -118,11 +118,11 @@ type ExtratoResumo = {
 
 const FORMA_OPCOES = FORMAS_PAGAMENTO;
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrl(file: File, errMsg: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
-    r.onerror = () => reject(new Error("Não consegui ler o arquivo."));
+    r.onerror = () => reject(new Error(errMsg));
     r.readAsDataURL(file);
   });
 }
