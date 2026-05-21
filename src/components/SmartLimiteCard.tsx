@@ -383,7 +383,7 @@ export function SmartLimiteCard({
             )}
           >
             <cfg.TagIcon className="h-3 w-3" />
-            {cfg.tagLabel}
+            {t(`smartLimite.tags.${status}`)}
           </span>
         </div>
 
