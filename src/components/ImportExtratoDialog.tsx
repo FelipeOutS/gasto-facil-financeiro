@@ -336,13 +336,13 @@ export function ImportExtratoDialog({
         });
         const json = await resp.json();
         if (!resp.ok) {
-          toast.error(json?.error || "Não consegui ler o extrato.");
+          toast.error(json?.error || t("errors.readFail"));
           setLoading(false);
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
         if (brutos.length === 0) {
-          toast.warning("Nenhuma movimentação encontrada nas imagens.");
+          toast.warning(t("errors.noneFoundImg"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
           return;
@@ -356,7 +356,7 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error(e);
-        toast.error("Erro ao enviar imagens.");
+        toast.error(t("errors.sendImg"));
       } finally {
         setLoading(false);
       }
