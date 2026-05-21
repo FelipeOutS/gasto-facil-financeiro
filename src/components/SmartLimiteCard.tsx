@@ -479,7 +479,7 @@ export function SmartLimiteCard({
                   cfg.subText,
                 )}
               >
-                Meta mensal de gastos
+                {t("smartLimite.metaTitle")}
               </label>
               <div className="mt-1.5 flex items-center gap-2">
                 <div
