@@ -251,7 +251,7 @@ export function DashboardCartoesInsights({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Insight do mês
+              {t("cartoesInsights.insightLabel")}
             </p>
             <p className="mt-1 text-sm font-medium leading-relaxed">{insight.text}</p>
             {comparacao && (
@@ -272,14 +272,14 @@ export function DashboardCartoesInsights({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Cartões com maior uso</h2>
+              <h2 className="text-sm font-semibold">{t("cartoesInsights.maiorUso")}</h2>
             </div>
             <Link
               to="/cartoes"
               search={{ abrir: undefined }}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              Ver todos →
+              {t("cartoesInsights.verTodos")}
             </Link>
           </div>
           <ul className="mt-3 space-y-2.5">
@@ -322,9 +322,9 @@ export function DashboardCartoesInsights({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{u.cartao.nome}</p>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        {u.qtd} {u.qtd === 1 ? "compra" : "compras"} ·{" "}
+                        {u.qtd} {u.qtd === 1 ? t("cartoesInsights.compraSing") : t("cartoesInsights.compraPlur")} ·{" "}
                         {u.limite > 0
-                          ? `${formatBRL(u.usado)} de ${formatBRL(u.limite)}`
+                          ? `${formatBRL(u.usado)} ${i18n.resolvedLanguage?.startsWith("en") ? "of" : "de"} ${formatBRL(u.limite)}`
                           : formatBRL(u.usado)}
                       </p>
                     </div>
@@ -360,27 +360,29 @@ export function DashboardCartoesInsights({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Próximos vencimentos</h2>
+              <h2 className="text-sm font-semibold">{t("cartoesInsights.proxVenc")}</h2>
             </div>
             <Link
               to="/cartoes"
               search={{ abrir: undefined }}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              Ir para cartões →
+              {t("cartoesInsights.irCartoes")}
             </Link>
           </div>
           <ul className="mt-3 space-y-2">
             {proximosVencimentos.map((p) => {
               const dias = p.diasRestantes;
+              const absDias = Math.abs(dias);
+              const unit = absDias === 1 ? t("cartoesInsights.diaSing") : t("cartoesInsights.diaPlur");
               const labelDias =
                 p.status === "vencida"
-                  ? `Vencida há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}`
+                  ? t("cartoesInsights.vencidaHa", { dias: absDias, unit })
                   : dias === 0
-                    ? "Vence hoje"
+                    ? t("cartoesInsights.venceHoje")
                     : dias === 1
-                      ? "Vence amanhã"
-                      : `Faltam ${dias} dias`;
+                      ? t("cartoesInsights.venceAmanha")
+                      : t("cartoesInsights.faltamDias", { dias });
               return (
                 <li key={`${p.cartaoId}-${p.mes}-${p.ano}`}>
                   <button
@@ -409,11 +411,11 @@ export function DashboardCartoesInsights({
                             STATUS_TONE[p.status],
                           )}
                         >
-                          {STATUS_LABEL[p.status]}
+                          {t(`cartoesInsights.status.${p.status}`)}
                         </span>
                       </div>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        Vence dia {p.dataVencimento.getDate().toString().padStart(2, "0")} ·{" "}
+                        {t("cartoesInsights.venceDia", { dia: p.dataVencimento.getDate().toString().padStart(2, "0") })} ·{" "}
                         <span
                           className={cn(
                             p.status === "vencida"
@@ -445,13 +447,13 @@ export function DashboardCartoesInsights({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Maiores gastos do mês</h2>
+              <h2 className="text-sm font-semibold">{t("cartoesInsights.maioresGastos")}</h2>
             </div>
             <Link
               to="/gastos"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              Ver tudo →
+              {t("cartoesInsights.verTudo")}
             </Link>
           </div>
           <ul className="mt-3 space-y-2">
@@ -459,7 +461,7 @@ export function DashboardCartoesInsights({
               const cat = getCategoriaById(g.categoriaId);
               const d = parseDateLocal(g.data);
               const dataLabel = d
-                ? d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+                ? d.toLocaleDateString(locale, { day: "2-digit", month: "short" })
                 : "";
               return (
                 <li
