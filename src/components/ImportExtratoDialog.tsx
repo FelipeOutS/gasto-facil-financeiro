@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ImageIcon,
   FileText,
