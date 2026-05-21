@@ -1,74 +1,70 @@
-## Objetivo
+# Auditoria de Tradução PT/EN — Plano em Fases
 
-Adicionar troca de idioma PT-BR / EN no site inteiro do Gasto Inteligente, com URLs por idioma (`/pt/...` e `/en/...`), seletor visível na landing e dentro da área logada, persistência da escolha e SEO multilíngue (hreflang).
+## Diagnóstico
 
-## Estratégia de URLs
+Encontrei **131 arquivos** com texto em português hardcoded fora do sistema de i18n. Tentar traduzir todos de uma vez em uma resposta:
 
-Como o app tem ~60 rotas em `src/routes/`, **não vou duplicar fisicamente cada arquivo**. Em vez disso:
+- Vai consumir muitos créditos (provavelmente várias respostas de 5-10 min cada).
+- Risco alto de introduzir bugs (typos em chaves, strings quebradas, JSX inválido).
+- Difícil revisar o que mudou.
 
-- O idioma vira um **search param** global (`?lang=pt|en`) validado no `__root.tsx` com `retainSearchParams`, garantindo que ele se preserve em toda navegação interna.
-- Adiciono **rotas de redirect** estáticas `/pt` e `/en` (e `/pt/$` e `/en/$` splat) que recebem `/pt/qualquer/coisa` e fazem `redirect` para `/qualquer/coisa?lang=pt|en`. Assim:
-  - URLs públicas tipo `gastointeligente.com.br/pt/landing` e `/en/landing` funcionam para SEO/compartilhamento.
-  - Internamente o roteamento atual (`/landing`, `/conta`, etc.) continua intacto — zero refactor de 60 arquivos.
-  - O `i18n` lê o idioma de `useSearch({ strict: false }).lang` ou do `localStorage` como fallback.
-- O sitemap passa a listar cada rota em `/pt/...` e `/en/...` com `<xhtml:link rel="alternate" hreflang>`.
-- `__root.tsx` adiciona `<link rel="alternate" hreflang="pt-BR">` e `hreflang="en">` na tag `<head>` baseado na rota atual.
+Por isso vou dividir em **5 fases**, executando uma por turno. Você aprova esta fase 1, eu executo, valido o build, e seguimos.
 
-Essa abordagem entrega o objetivo (URLs por idioma + SEO) sem reescrever a árvore inteira de rotas.
+## Categorização dos 131 arquivos
 
-## Escopo de tradução
+**Não precisa traduzir (~40 arquivos):** servidores (`src/server/*`), parsers (`whatsappParser`, `csv-fatura`), templates de e-mail, dados internos (constantes de plano, categorias seed). Os comentários e strings desses arquivos não aparecem para o usuário, ou são strings de banco/log.
 
-Como o usuário pediu **site inteiro**, vou:
+**Prioridade ALTA — UI visível diariamente (~25 arquivos):**
+- Mobile: `MobileTopBar`, `BottomNav`, `MobileShell`
+- Dashboard: `SmartMonthSummaryCard`, `SmartLimiteCard`, `MonthForecastCard`, `DashboardAlertasBloco`, `DashboardCartoesInsights`, `RadarEconomicoCard`, `FluxoCaixaChart`
+- Modais principais: `UpgradeModal`, `PremiumLockModal`, `InvestimentosLockModal`, `DeleteAccountDialog`, `CancelarAssinaturaDialog`
+- Componentes: `PlanoCard`, `ConnectedAccountBanner`, `ConnectedAccountSwitcher`, `CompraInternacionalCard`, `AvisoWhatsAppBanner`, `BrandLoader`, `PageSkeleton`, `AuthGate`
 
-1. Configurar a infra completa de i18n (esta entrega).
-2. Traduzir nesta entrega: landing pública, header/footer, navegação (BottomNav, DesktopSidebar, MoreSheet), página de login/cadastro/recuperar senha, conta, perfil, ajustes, meu plano, páginas legais (termos, privacidade, lgpd).
-3. Marcar como **trabalho seguinte** (segunda iteração) a tradução de: dashboard, gastos, cartões, contas a pagar/receber, clientes, fornecedores, relatórios, investimentos, metas, orçamento, radar, contador, admin, alertas, AI, e todos os modais/diálogos. São muitas strings — fazer em uma única passada explode o tamanho do PR e quase garantido introduz bugs visuais. Aviso isso explicitamente no fim.
+**Prioridade MÉDIA — formulários e importação (~20 arquivos):**
+- `GastoForm`, `EditGastoDialog`, `WhatsAppExpenseDialog`, `AvatarUpload`, `ClienteSelect`
+- `ImportContaDialog`, `ImportExtratoDialog`, `ImportFaturaDialog`, `ImportInvestimentosFlow`, `ExtratosImportadosDialog`
 
-## Detalhes técnicos
+**Prioridade BAIXA — rotas internas com poucos textos hardcoded (~30 arquivos):**
+- Rotas que já usam `useTranslation` em ~90% do conteúdo mas têm fragmentos soltos.
 
-### Dependências
-- `bun add i18next react-i18next i18next-browser-languagedetector`
+**Hooks/libs com strings de UI (~15 arquivos):**
+- `use-plan`, `use-roles`, `use-mes-referencia`, `use-alerts`, `subscription-guard`, `auth-context`, `active-account`, `recorrencias`, `mes-referencia`, `orcamento`, `relatorios`, `alertas-contas`, `category-visual`.
 
-### Arquivos novos
-- `src/i18n/index.ts` — inicialização do i18next, detector custom (URL `lang` param → localStorage → navegador → `pt`).
-- `src/i18n/locales/pt/common.json` — namespace `common` (header, nav, botões genéricos, footer).
-- `src/i18n/locales/pt/landing.json` — todas as strings de `PublicLanding.tsx`.
-- `src/i18n/locales/pt/auth.json` — login, cadastro, recuperar/reset senha.
-- `src/i18n/locales/pt/account.json` — conta, perfil, ajustes, meu plano.
-- `src/i18n/locales/pt/legal.json` — termos, privacidade, LGPD.
-- `src/i18n/locales/en/*.json` — equivalentes em inglês.
-- `src/i18n/use-locale.ts` — hook que sincroniza `lang` (search param) ↔ `i18n.changeLanguage()` ↔ `localStorage.gi-lang` ↔ `<html lang>`.
-- `src/components/LanguageSwitcher.tsx` — dropdown com globo (lucide `Globe`), aria-label, suporte a teclado, mostra "PT" / "EN".
-- `src/routes/pt.$.tsx` e `src/routes/en.$.tsx` — splat routes que fazem `redirect()` para a rota equivalente sem prefixo, anexando `?lang=pt|en`.
-- `src/routes/pt.tsx` e `src/routes/en.tsx` — redirect de `/pt` e `/en` para `/landing?lang=...`.
+## Fases propostas
 
-### Arquivos editados
-- `src/routes/__root.tsx` — `validateSearch` para `lang`, `search.middlewares: [retainSearchParams(["lang"])]`, importa e inicializa `src/i18n`, atualiza `<html lang>` via `useLocale`, adiciona `<link rel="alternate" hreflang>` no head.
-- `src/components/landing/PublicLanding.tsx` — adiciona `<LanguageSwitcher />` no header ao lado do botão "Entrar"; troca strings hardcoded por `t("...")`.
-- `src/routes/conta.tsx` — adiciona seção "Idioma / Language" com o `LanguageSwitcher` (variante inline).
-- `src/routes/perfil.tsx` ou nova rota `src/routes/ajustes.tsx` — preferência de idioma também acessível aqui (linka da `conta.tsx`).
-- `src/routes/sitemap[.]xml.ts` — gera URLs em `/pt/...` e `/en/...` com `xhtml:link` hreflang.
-- `src/routes/login.tsx`, `src/routes/cadastro.tsx`, `src/routes/recuperar-senha.tsx`, `src/routes/reset-password.tsx` — strings via `t()`.
-- `src/routes/termos.tsx`, `src/routes/privacidade.tsx`, `src/routes/lgpd.tsx` — strings via `t()` (textos legais traduzidos).
-- `src/components/BottomNav.tsx`, `src/components/DesktopSidebar.tsx`, `src/components/MoreSheet.tsx` — labels via `t()`.
+### Fase 1 (esta aprovação) — Mobile shell + Dashboard cards
+Áreas que o usuário vê **toda vez que abre o app**. ~10 arquivos:
+- `MobileTopBar.tsx`, `BottomNav.tsx` (revisar resíduos)
+- `SmartMonthSummaryCard.tsx`, `SmartLimiteCard.tsx`, `MonthForecastCard.tsx`
+- `DashboardAlertasBloco.tsx`, `DashboardCartoesInsights.tsx`
+- `RadarEconomicoCard.tsx`, `FluxoCaixaChart.tsx`
+- `CompraInternacionalCard.tsx`
 
-### Persistência
-- Chave `gi-lang` no `localStorage`. Prioridade de leitura no boot: search param `lang` > localStorage > `navigator.language` (pt-* → pt, resto → en) > `pt`.
-- Trocar idioma: atualiza `i18n`, salva no localStorage, navega com `search: (prev) => ({ ...prev, lang })` para o param ficar persistente em links.
+Cria/atualiza chaves em `dashboard.json` e `common.json` (PT + EN).
 
-### SEO
-- `__root.tsx` injeta dois `<link rel="alternate" hreflang="pt-BR" href="https://gastointeligente.com.br/pt{pathname}">` e `hreflang="en"`, mais `hreflang="x-default"` apontando para PT.
-- `sitemap.xml` lista as duas versões.
-- `<html lang>` reage à mudança via `useEffect` em `useLocale`.
+### Fase 2 — Modais e bloqueios
+`UpgradeModal`, `PremiumLockModal`, `InvestimentosLockModal`, `DeleteAccountDialog`, `CancelarAssinaturaDialog`, `PlanoCard`, `ConnectedAccountBanner/Switcher`, `AvisoWhatsAppBanner`, `BrandLoader`, `PageSkeleton`, `AuthGate`.
 
-### Acessibilidade
-- `LanguageSwitcher` usa `DropdownMenu` do shadcn (já instalado), com `aria-label="Selecionar idioma"`, navegável por Tab/Enter/Setas, indicador visual do idioma atual.
+### Fase 3 — Formulários e diálogos de importação
+`GastoForm`, `EditGastoDialog`, `WhatsAppExpenseDialog`, `AvatarUpload`, `ClienteSelect`, `Import*Dialog`, `ImportInvestimentosFlow`, `ExtratosImportadosDialog`.
 
-## Validação
+### Fase 4 — Hooks/libs com strings de UI
+`use-plan`, `use-roles`, `use-alerts`, `subscription-guard`, `recorrencias`, `mes-referencia`, `orcamento`, `relatorios`, `alertas-contas`, `category-visual`, `auth-context` (toasts).
 
-- `bun run build` precisa passar.
-- Testar manualmente: trocar idioma na landing → texto muda, URL ganha `?lang=en`, refresh preserva, navegar para `/conta` preserva. Acessar `/en/landing` direto → redireciona para `/landing?lang=en` com UI em inglês. localStorage guarda escolha.
+### Fase 5 — Varredura final + rotas residuais
+Re-rodar o scan, pegar o que restou (rotas com fragmentos), corrigir mixes (título PT + descrição EN). Entregar relatório final.
 
-## Fora do escopo (entregas seguintes)
+## Regras aplicadas em todas as fases
 
-Tradução das strings de: dashboard, gastos, cartões, contas a pagar/receber, clientes, fornecedores, relatórios, investimentos, metas, orçamento, radar, contador, admin, alertas, gasto-ai, e todos os componentes/modais auxiliares. A infra ficará pronta — cada página subsequente vira só "extrair strings + adicionar a `pt/en.json`".
+- Não altero layout, lógica de negócio, autenticação, planos ou dados.
+- Não traduzo marca "Gasto Inteligente", nomes próprios, dados cadastrados, R$, nomes de bancos.
+- Uso `useTranslation` que já existe; não crio nova arquitetura.
+- Chaves novas mantêm padrão atual (namespaces por arquivo JSON).
+- Tela `/app/idioma` permanece como está.
+- Após cada fase, confirmo build limpo.
+
+## O que preciso de você
+
+Aprovar este plano para eu executar a **Fase 1** agora. Depois disso seguimos fase por fase em mensagens separadas — assim você controla o gasto e revisa cada parte antes da próxima.
+
+Se preferir outro recorte (ex.: "comece pelas rotas X em vez do dashboard"), me diga.

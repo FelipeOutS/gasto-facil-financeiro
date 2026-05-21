@@ -4,14 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, RefreshCw, Lock, ArrowRight, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { usePlan } from "@/lib/use-plan";
 import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { getMonthlySmartSummary } from "@/lib/finance-ai.functions";
 import { cn } from "@/lib/utils";
-
-const SUGGESTION = "Me explique meu resumo financeiro deste mês";
 
 type Props = {
   mes: number;
@@ -20,6 +19,7 @@ type Props = {
 };
 
 export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
+  const { t } = useTranslation("dashboard");
   const plan = usePlan();
   const navigate = useNavigate();
   const fetchSummary = useServerFn(getMonthlySmartSummary);
@@ -39,7 +39,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
       const res = await fetchSummary({ data: { mes, ano } });
       setReply(res.reply);
     } catch (e: any) {
-      const msg = typeof e?.message === "string" && e.message ? e.message : "Não consegui gerar o resumo agora.";
+      const msg = typeof e?.message === "string" && e.message ? e.message : t("smartSummary.errorFallback");
       setError(msg);
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
       setLockOpen(true);
       return;
     }
-    void navigate({ to: "/gasto-ai", search: { q: SUGGESTION } as any });
+    void navigate({ to: "/gasto-ai", search: { q: t("smartSummary.suggestion") } as any });
   }
 
   return (
@@ -80,10 +80,10 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
           </span>
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">
-              Resumo inteligente
+              {t("smartSummary.eyebrow")}
             </p>
             <h2 className="mt-0.5 text-base font-bold tracking-tight sm:text-lg">
-              Resumo inteligente do mês
+              {t("smartSummary.title")}
             </h2>
           </div>
         </div>
@@ -93,8 +93,8 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
             onClick={() => void load()}
             disabled={loading}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-            aria-label="Gerar de novo"
-            title="Gerar de novo"
+            aria-label={t("smartSummary.regenerate")}
+            title={t("smartSummary.regenerate")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
@@ -107,20 +107,18 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
             <div className="flex items-start gap-2">
               <Lock className="mt-0.5 h-4 w-4 text-primary" />
               <p className="text-sm text-foreground/80">
-                Análise automática do seu mês com IA. Disponível nos planos
-                <strong> Controle Completo Pessoal</strong>, <strong>MEI Completo</strong> e{" "}
-                <strong>Empresa</strong>.
+                <Trans i18nKey="smartSummary.locked" t={t} components={[<strong key="0" />, <span key="1" />, <strong key="2" />, <span key="3" />, <strong key="4" />]} />
               </p>
             </div>
             <Button onClick={() => setLockOpen(true)} className="w-full rounded-2xl bg-brand-grad sm:w-auto">
               <Sparkles className="mr-2 h-4 w-4" />
-              Desbloquear recurso
+              {t("smartSummary.unlock")}
             </Button>
           </div>
         ) : loading && !reply ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analisando seu mês…
+            {t("smartSummary.analyzing")}
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
@@ -130,7 +128,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
               onClick={() => void load()}
               className="ml-2 underline underline-offset-2"
             >
-              tentar de novo
+              {t("smartSummary.retry")}
             </button>
           </div>
         ) : reply ? (
@@ -138,13 +136,13 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{reply}</ReactMarkdown>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Sem dados suficientes neste mês.</p>
+          <p className="text-sm text-muted-foreground">{t("smartSummary.empty")}</p>
         )}
       </div>
 
       <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 pt-1">
         <p className="text-[11px] text-muted-foreground">
-          Análise gerada com seus dados, em tempo real.
+          {t("smartSummary.tagline")}
         </p>
         <Button
           variant="outline"
@@ -152,7 +150,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
           onClick={handlePerguntar}
           className="rounded-full border-primary/30 bg-card/70 text-foreground hover:bg-accent"
         >
-          Perguntar para a IA
+          {t("smartSummary.askAi")}
           <ArrowRight className="ml-1 h-3.5 w-3.5" />
         </Button>
       </div>

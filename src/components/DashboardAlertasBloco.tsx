@@ -16,13 +16,10 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/lib/alerts/use-alerts";
-import {
-  PRIORITY_LABEL,
-  categoryOf,
-  type AlertPriority,
-} from "@/lib/alerts/types";
+import { categoryOf, type AlertPriority } from "@/lib/alerts/types";
 
 function priorityMeta(p: AlertPriority) {
   switch (p) {
@@ -76,6 +73,7 @@ function iconForType(type: string): LucideIcon {
 }
 
 export function DashboardAlertasBloco({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const { top, visible, loading } = useAlerts();
 
   if (loading) return null;
@@ -88,7 +86,7 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
         "rounded-2xl border border-border/60 bg-card/60 p-4 motion-safe:animate-rise",
         className,
       )}
-      aria-label="Alertas importantes"
+      aria-label={t("alertasBloco.aria")}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -96,9 +94,9 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
             <Bell className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-sm font-semibold leading-tight">Alertas importantes</p>
+            <p className="text-sm font-semibold leading-tight">{t("alertasBloco.title")}</p>
             <p className="text-[11px] text-muted-foreground">
-              {total === 0 ? "Tudo certo por aqui." : "O que precisa da sua atenção agora."}
+              {total === 0 ? t("alertasBloco.tudoCerto") : t("alertasBloco.precisaAtencao")}
             </p>
           </div>
         </div>
@@ -107,7 +105,7 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
             to="/alertas"
             className="shrink-0 text-xs font-semibold text-muted-foreground hover:text-foreground"
           >
-            Ver todos
+            {t("alertasBloco.verTodos")}
           </Link>
         )}
       </div>
@@ -115,7 +113,7 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
       {total === 0 ? (
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-700 dark:text-emerald-300">
           <Sparkles className="h-4 w-4" />
-          Nada urgente no radar.
+          {t("alertasBloco.nadaUrgente")}
         </div>
       ) : (
         <ul className="mt-3 space-y-2">
@@ -140,7 +138,7 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
                           meta.badge,
                         )}
                       >
-                        {PRIORITY_LABEL[a.priority]}
+                        {t(`notifications.priority.${a.priority}`)}
                       </span>
                     </div>
                     {a.description && (

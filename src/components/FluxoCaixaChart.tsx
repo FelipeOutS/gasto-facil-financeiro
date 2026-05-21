@@ -17,22 +17,17 @@ import {
   Legend,
 } from "recharts";
 import { TrendingUp, Activity, BarChart3, PieChart as PieIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { formatBRL, formatBRLCompact, parseDateLocal } from "@/lib/format";
 import type { Gasto, Receita } from "@/lib/types";
 
 type ChartKind = "area" | "line" | "bar" | "donut";
 
-const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
-  { id: "area", label: "Área", Icon: TrendingUp },
-  { id: "line", label: "Linha", Icon: Activity },
-  { id: "bar", label: "Barra", Icon: BarChart3 },
-  { id: "donut", label: "Pizza", Icon: PieIcon },
-];
-
-function monthLabel(ano: number, mes: number) {
+function monthLabel(ano: number, mes: number, locale: string) {
   const d = new Date(ano, mes - 1, 1);
-  return d.toLocaleString("pt-BR", { month: "short" }).replace(".", "");
+  const loc = locale.startsWith("en") ? "en-US" : "pt-BR";
+  return d.toLocaleString(loc, { month: "short" }).replace(".", "");
 }
 
 export function FluxoCaixaChart({
@@ -46,7 +41,16 @@ export function FluxoCaixaChart({
   gastos: Gasto[];
   receitas: Receita[];
 }) {
+  const { t, i18n } = useTranslation("dashboard");
   const [tipo, setTipo] = useState<ChartKind>("area");
+  const locale = i18n.resolvedLanguage || i18n.language || "pt";
+
+  const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
+    { id: "area", label: t("fluxo.types.area"), Icon: TrendingUp },
+    { id: "line", label: t("fluxo.types.line"), Icon: Activity },
+    { id: "bar", label: t("fluxo.types.bar"), Icon: BarChart3 },
+    { id: "donut", label: t("fluxo.types.donut"), Icon: PieIcon },
+  ];
 
   // Last 6 months ending at (ano, mes)
   const data = useMemo(() => {
@@ -64,10 +68,10 @@ export function FluxoCaixaChart({
           return !!data && data.getMonth() + 1 === m && data.getFullYear() === y;
         })
         .reduce((s, g) => s + g.valor, 0);
-      out.push({ mes: monthLabel(y, m), entradas: e, gastos: g, saldo: e - g });
+      out.push({ mes: monthLabel(y, m, locale), entradas: e, gastos: g, saldo: e - g });
     }
     return out;
-  }, [ano, mes, gastos, receitas]);
+  }, [ano, mes, gastos, receitas, locale]);
 
   const totalEntradas = data.reduce((s, d) => s + d.entradas, 0);
   const totalGastos = data.reduce((s, d) => s + d.gastos, 0);

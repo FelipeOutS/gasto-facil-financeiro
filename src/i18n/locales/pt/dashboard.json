@@ -240,5 +240,271 @@
       "media": "Média",
       "baixa": "Baixa"
     }
+  },
+  "smartSummary": {
+    "eyebrow": "Resumo inteligente",
+    "title": "Resumo inteligente do mês",
+    "regenerate": "Gerar de novo",
+    "locked": "Análise automática do seu mês com IA. Disponível nos planos <1>Controle Completo Pessoal</1>, <3>MEI Completo</3> e <5>Empresa</5>.",
+    "unlock": "Desbloquear recurso",
+    "analyzing": "Analisando seu mês…",
+    "retry": "tentar de novo",
+    "empty": "Sem dados suficientes neste mês.",
+    "tagline": "Análise gerada com seus dados, em tempo real.",
+    "askAi": "Perguntar para a IA",
+    "errorFallback": "Não consegui gerar o resumo agora.",
+    "suggestion": "Me explique meu resumo financeiro deste mês"
+  },
+  "forecast": {
+    "premium": "Premium",
+    "title": "Previsão de fechamento",
+    "lockedDesc": "Veja se você vai fechar o mês positivo ou negativo. Disponível nos planos <1>Controle Completo Pessoal</1>, <3>MEI Completo</3> e <5>Empresa</5>.",
+    "unlock": "Desbloquear recurso",
+    "loading": "Carregando…",
+    "calculating": "Calculando previsão…",
+    "noData": "Ainda não tenho dados suficientes para projetar este mês. Cadastre suas receitas, contas a pagar e faturas para ver a previsão.",
+    "errorFallback": "Não consegui calcular a previsão.",
+    "resultLabel": "Resultado previsto",
+    "entriesLabel": "Entradas previstas",
+    "exitsLabel": "Saídas previstas",
+    "alreadyReceived": "Já recebido: {{valor}}",
+    "stillToPay": "Ainda a pagar: {{valor}}",
+    "topImpacts": "Maiores impactos pendentes",
+    "viewDetails": "Ver detalhes da previsão",
+    "status": {
+      "positivo": "Saldo positivo",
+      "atencao": "Atenção",
+      "negativo": "Saldo negativo"
+    },
+    "humanMsg": {
+      "positivo": "Se nada mudar até o fim do mês, sua previsão é fechar {{mes}} com saldo positivo de {{valor}}.{{compl}}",
+      "negativo": "Atenção: a previsão é fechar {{mes}} com saldo negativo de {{valor}}.{{compl}} Vale revisar gastos e priorizar pagamentos.",
+      "apertado": "Seu mês está bem apertado. A previsão é fechar {{mes}} perto do zero ({{valor}}).{{compl}}",
+      "compl": " O maior impacto previsto vem de **{{nome}}**."
+    },
+    "dialog": {
+      "title": "Previsão de {{label}}",
+      "description": "Mês de referência: {{label}}. Hoje: {{hoje}}.",
+      "entradas": "Entradas",
+      "saidas": "Saídas",
+      "resultado": "Resultado",
+      "faturas": "Faturas de cartão",
+      "itensPesam": "Itens pendentes que mais pesam",
+      "recebimentos": "Recebimentos previstos",
+      "confirmadasIn": "Confirmadas (já recebidas)",
+      "previstasIn": "Previstas (a receber)",
+      "totalPrevisto": "Total previsto",
+      "confirmadasOut": "Confirmadas (já pagas/registradas)",
+      "pendentesOut": "Pendentes (a pagar)",
+      "atual": "Atual (entradas conf. − saídas conf.)",
+      "previstoFechamento": "Previsto de fechamento",
+      "pago": "Pago: {{valor}}",
+      "pendente": "Pendente: {{valor}}"
+    }
+  },
+  "smartLimite": {
+    "modes": {
+      "variaveis": { "label": "Somente gastos variáveis", "desc": "Ignora contas fixas e faturas já pagas" },
+      "hoje": { "label": "A partir de hoje", "desc": "O quanto você ainda pode gastar até o fim do mês" },
+      "mes": { "label": "Mês inteiro", "desc": "Todos os gastos elegíveis do mês" },
+      "fluxo": { "label": "Fluxo de caixa", "desc": "Tudo que entrou e saiu no mês" }
+    },
+    "title": "Seu limite inteligente",
+    "byDay": "/ dia",
+    "saved": "salvo",
+    "metaTitle": "Meta mensal de gastos",
+    "semMeta": "Sem meta definida",
+    "editar": "Editar",
+    "definir": "Definir",
+    "salvar": "Salvar",
+    "cancelar": "Cancelar",
+    "remover": "Remover meta",
+    "daMetaUsado": "Da meta usado",
+    "comprometido": "Comprometido do mês",
+    "stat": {
+      "meta": "Meta",
+      "variaveis": "Variáveis",
+      "jaGasto": "Já gasto",
+      "restante": "Restante",
+      "diasRestantes": "Dias restantes",
+      "disponivel": "Disponível",
+      "aPagarMaisAssin": "A pagar + assinaturas"
+    },
+    "cta": {
+      "revisar": "Revisar gastos",
+      "ajustar": "Ajustar orçamento"
+    },
+    "tags": {
+      "saudavel": "Tudo sob controle",
+      "atencao": "Atenção ao ritmo",
+      "risco": "Alerta financeiro",
+      "meta_excedida": "Meta excedida",
+      "sem_dados": "Sem dados"
+    },
+    "msg": {
+      "semDados": "Adicione sua renda, suas contas ou defina uma meta para liberar uma análise inteligente do seu mês.",
+      "fluxo": "Este valor considera todas as entradas e saídas do mês.",
+      "metaExcedidaVar": "Seus gastos variáveis passaram da meta em {{valor}}.{{notice}}",
+      "metaExcedida": "Você ultrapassou sua meta mensal em {{valor}}. Hora de revisar os próximos gastos.",
+      "risco": "No ritmo atual, seu mês pode terminar no vermelho.{{notice}}",
+      "atencaoMeta": "Você está chegando perto da meta. Mantenha os gastos abaixo de {{porDia}} por dia.{{notice}}",
+      "atencao": "Seu limite diário está mais apertado. Mantenha os gastos abaixo de {{porDia}} por dia.",
+      "saudavelMeta": "Seu controle de novos gastos está dentro do planejado — até {{porDia}} por dia.{{notice}}",
+      "saudavel": "Você pode gastar até {{porDia}} por dia e fechar o mês com tranquilidade.{{notice}}",
+      "noticeObrigacoes": " Pagamentos já quitados ({{valor}}) não entram nesta meta."
+    }
+  },
+  "radarCard": {
+    "label": {
+      "USD_BRL": "Dólar",
+      "EUR_BRL": "Euro"
+    },
+    "title": "Radar Econômico",
+    "subtitle": "Cotações de referência do dia",
+    "aria": "Abrir Radar Econômico",
+    "outdated": "desatualizado",
+    "outdatedTitle": "Não foi possível atualizar agora",
+    "loading": "Carregando cotações…",
+    "outdatedDesc": "Não conseguimos atualizar os indicadores agora. Exibindo a última cotação disponível.",
+    "updatedAt": "Atualizado em {{quando}} · toque para ver detalhes",
+    "loadError": "Não conseguimos carregar as cotações agora. Tente novamente em instantes.",
+    "msg": {
+      "usdUp": "O dólar subiu hoje. Compras internacionais e assinaturas em dólar podem pesar mais na fatura.",
+      "usdDown": "O dólar caiu hoje. Bom momento para acompanhar compras internacionais e assinaturas em dólar.",
+      "eurUp": "O euro subiu hoje. Compras e viagens para a Europa podem ficar mais caras.",
+      "eurDown": "O euro caiu hoje. Compras e viagens para a Europa podem ficar um pouco mais em conta.",
+      "stable": "As cotações estão relativamente estáveis hoje. Sem grandes impactos em compras internacionais."
+    },
+    "variation": {
+      "up": "Variação positiva no dia",
+      "down": "Variação negativa no dia"
+    },
+    "dialog": {
+      "title": "Radar Econômico",
+      "description": "Cotações de referência para você acompanhar o impacto do câmbio.",
+      "outdated": "Não conseguimos atualizar os indicadores agora. Mostrando a última cotação disponível.",
+      "updatedAt": "Atualizado em {{quando}}",
+      "refresh": "Atualizar",
+      "converter": "Conversor rápido",
+      "currency": "Moeda",
+      "value": "Valor",
+      "convert": "Converter",
+      "approxValue": "Valor aproximado",
+      "rateUsed": "Cotação usada: {{cotacao}} por 1 {{moeda}} · {{quando}}",
+      "estimateNote": "Este valor é uma estimativa. A cobrança final pode variar conforme IOF, spread, data da compra e cotação usada pelo cartão.",
+      "high": "Máx.",
+      "low": "Mín.",
+      "usdItem": "🇺🇸 Dólar (USD)",
+      "eurItem": "🇪🇺 Euro (EUR)"
+    }
+  },
+  "fluxo": {
+    "eyebrow": "Visão financeira",
+    "title": "Fluxo de caixa",
+    "subtitle": "Últimos 6 meses · entradas vs. gastos",
+    "types": {
+      "area": "Área",
+      "line": "Linha",
+      "bar": "Barra",
+      "donut": "Pizza"
+    },
+    "entradas": "Entradas",
+    "gastos": "Gastos",
+    "saldo": "Saldo",
+    "emptyTitle": "Ainda não há histórico suficiente",
+    "emptyDesc": "Continue lançando seus gastos e receitas — o gráfico aparece quando você tiver pelo menos dois meses com dados."
+  },
+  "alertasBloco": {
+    "aria": "Alertas importantes",
+    "title": "Alertas importantes",
+    "tudoCerto": "Tudo certo por aqui.",
+    "precisaAtencao": "O que precisa da sua atenção agora.",
+    "verTodos": "Ver todos",
+    "nadaUrgente": "Nada urgente no radar."
+  },
+  "cartoesInsights": {
+    "insightLabel": "Insight do mês",
+    "faturaVencida": "Atenção: a fatura do {{cartao}} está vencida. Marque como paga ou resolva o quanto antes.",
+    "venceEmDias": "Sua fatura do {{cartao}} vence em {{dias}} {{unit}}.",
+    "limitePct": "Você já usou {{pct}}% do limite do {{cartao}}.",
+    "maiorGastoCat": "Seu maior gasto do mês está em {{cat}} ({{pct}}% do total).",
+    "addMais": "Adicione mais gastos para receber insights personalizados.",
+    "tudoCerto": "Tudo certo por aqui. Nenhum alerta importante no momento.",
+    "maiorUso": "Cartões com maior uso",
+    "verTodos": "Ver todos →",
+    "compraSing": "compra",
+    "compraPlur": "compras",
+    "proxVenc": "Próximos vencimentos",
+    "irCartoes": "Ir para cartões →",
+    "vencidaHa": "Vencida há {{dias}} {{unit}}",
+    "venceHoje": "Vence hoje",
+    "venceAmanha": "Vence amanhã",
+    "faltamDias": "Faltam {{dias}} dias",
+    "venceDia": "Vence dia {{dia}}",
+    "diaSing": "dia",
+    "diaPlur": "dias",
+    "maioresGastos": "Maiores gastos do mês",
+    "verTudo": "Ver tudo →",
+    "outros": "Outros",
+    "compAdd": "Adicione mais um mês de dados para ver a comparação.",
+    "compIgual": "Você gastou praticamente o mesmo do mês anterior.",
+    "compDiff": "Você gastou {{valor}} {{direcao}} que no mês anterior",
+    "amais": "a mais",
+    "amenos": "a menos",
+    "status": {
+      "aberta": "Aberta",
+      "fechada": "Fechada",
+      "vencida": "Vencida",
+      "paga": "Paga"
+    }
+  },
+  "compraInternacional": {
+    "title": "Compras internacionais",
+    "subtitle": "Estime o valor em reais antes de fechar a compra.",
+    "currency": "Moeda",
+    "valueIn": "Valor em {{moeda}}",
+    "currencyNames": { "USD": "dólares", "EUR": "euros" },
+    "placeholder": { "USD": "Ex: 19,90", "EUR": "Ex: 25,00" },
+    "descLabel": "Descrição (opcional)",
+    "descPlaceholder": "Ex: Assinatura, hospedagem…",
+    "cardLabel": "Cartão (opcional)",
+    "selectPlaceholder": "Selecionar",
+    "none": "Nenhum",
+    "valueApprox": "Valor aproximado em reais",
+    "withTaxes": "Com IOF + spread estimado:",
+    "rate": "Cotação",
+    "per": "por 1 {{moeda}}",
+    "estimateNote": "Este valor é uma <1>estimativa</1>. O valor real na fatura depende do IOF, do spread e da cotação usada pelo cartão no dia da cobrança.",
+    "register": "Registrar como gasto",
+    "notSaved": "Nada é salvo até você confirmar.",
+    "toast": {
+      "needAuth": "Entre na sua conta para registrar o gasto.",
+      "needValue": "Informe o valor da compra primeiro.",
+      "needFields": "Confira a descrição e o valor.",
+      "saved": "Gasto registrado como estimativa."
+    },
+    "items": {
+      "USD": "🇺🇸 Dólar (USD)",
+      "EUR": "🇪🇺 Euro (EUR)"
+    },
+    "confirm": {
+      "title": "Registrar compra internacional",
+      "description": "Revise os dados antes de salvar. O valor final na fatura pode mudar conforme IOF, spread e cotação do cartão.",
+      "desc": "Descrição",
+      "descPh": "Ex: Assinatura Netflix",
+      "valueBRL": "Valor estimado (R$)",
+      "date": "Data",
+      "payment": "Forma de pagamento",
+      "card": "Cartão",
+      "category": "Categoria",
+      "noCategory": "Sem categoria",
+      "noCardDash": "—",
+      "footer": "Valor original: <1>{{moeda}} {{valor}}</1> · Cotação usada: <3>{{cotacao}}</3> por 1 {{moeda}}. Esta é uma estimativa — você pode editar o valor quando a fatura chegar.",
+      "cancel": "Cancelar",
+      "save": "Salvar gasto",
+      "saving": "Salvando..."
+    },
+    "obs": "Estimativa de compra em {{moeda}} {{valor}} · cotação {{cotacao}} por 1 {{moeda}}. Valor final pode variar com IOF, spread e cotação do cartão.",
+    "defaultDesc": "Compra em {{moeda}} {{valor}}"
   }
 }

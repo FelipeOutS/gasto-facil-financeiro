@@ -240,5 +240,271 @@
       "media": "Medium",
       "baixa": "Low"
     }
+  },
+  "smartSummary": {
+    "eyebrow": "Smart summary",
+    "title": "Smart month summary",
+    "regenerate": "Regenerate",
+    "locked": "AI-powered automatic analysis of your month. Available on <1>Controle Completo Pessoal</1>, <3>MEI Completo</3> and <5>Empresa</5> plans.",
+    "unlock": "Unlock feature",
+    "analyzing": "Analyzing your month…",
+    "retry": "try again",
+    "empty": "Not enough data this month.",
+    "tagline": "Analysis generated from your real-time data.",
+    "askAi": "Ask the AI",
+    "errorFallback": "Couldn't generate the summary right now.",
+    "suggestion": "Explain my financial summary for this month"
+  },
+  "forecast": {
+    "premium": "Premium",
+    "title": "Month-end forecast",
+    "lockedDesc": "See if you'll close the month positive or negative. Available on <1>Controle Completo Pessoal</1>, <3>MEI Completo</3> and <5>Empresa</5> plans.",
+    "unlock": "Unlock feature",
+    "loading": "Loading…",
+    "calculating": "Calculating forecast…",
+    "noData": "I don't have enough data yet to project this month. Add your income, bills and credit card invoices to see the forecast.",
+    "errorFallback": "Couldn't calculate the forecast.",
+    "resultLabel": "Forecast result",
+    "entriesLabel": "Forecast income",
+    "exitsLabel": "Forecast expenses",
+    "alreadyReceived": "Already received: {{valor}}",
+    "stillToPay": "Still to pay: {{valor}}",
+    "topImpacts": "Largest pending impacts",
+    "viewDetails": "See forecast details",
+    "status": {
+      "positivo": "Positive balance",
+      "atencao": "Heads up",
+      "negativo": "Negative balance"
+    },
+    "humanMsg": {
+      "positivo": "If nothing changes by month end, you're forecast to close {{mes}} with a positive balance of {{valor}}.{{compl}}",
+      "negativo": "Heads up: you're forecast to close {{mes}} with a negative balance of {{valor}}.{{compl}} It's worth reviewing expenses and prioritizing payments.",
+      "apertado": "Your month is quite tight. You're forecast to close {{mes}} near zero ({{valor}}).{{compl}}",
+      "compl": " The biggest forecast impact comes from **{{nome}}**."
+    },
+    "dialog": {
+      "title": "Forecast for {{label}}",
+      "description": "Reference month: {{label}}. Today: {{hoje}}.",
+      "entradas": "Income",
+      "saidas": "Expenses",
+      "resultado": "Result",
+      "faturas": "Credit card invoices",
+      "itensPesam": "Pending items that weigh most",
+      "recebimentos": "Forecast income",
+      "confirmadasIn": "Confirmed (already received)",
+      "previstasIn": "Forecast (to receive)",
+      "totalPrevisto": "Total forecast",
+      "confirmadasOut": "Confirmed (already paid/logged)",
+      "pendentesOut": "Pending (to pay)",
+      "atual": "Current (confirmed in − confirmed out)",
+      "previstoFechamento": "Forecast close",
+      "pago": "Paid: {{valor}}",
+      "pendente": "Pending: {{valor}}"
+    }
+  },
+  "smartLimite": {
+    "modes": {
+      "variaveis": { "label": "Only variable spending", "desc": "Ignores fixed bills and already-paid invoices" },
+      "hoje": { "label": "From today on", "desc": "How much you can still spend until month end" },
+      "mes": { "label": "Whole month", "desc": "All eligible spending of the month" },
+      "fluxo": { "label": "Cash flow", "desc": "Everything that came in and went out this month" }
+    },
+    "title": "Your smart limit",
+    "byDay": "/ day",
+    "saved": "saved",
+    "metaTitle": "Monthly spending goal",
+    "semMeta": "No goal set",
+    "editar": "Edit",
+    "definir": "Set",
+    "salvar": "Save",
+    "cancelar": "Cancel",
+    "remover": "Remove goal",
+    "daMetaUsado": "Goal used",
+    "comprometido": "Committed this month",
+    "stat": {
+      "meta": "Goal",
+      "variaveis": "Variable",
+      "jaGasto": "Spent",
+      "restante": "Remaining",
+      "diasRestantes": "Days left",
+      "disponivel": "Available",
+      "aPagarMaisAssin": "To pay + subscriptions"
+    },
+    "cta": {
+      "revisar": "Review expenses",
+      "ajustar": "Adjust budget"
+    },
+    "tags": {
+      "saudavel": "All under control",
+      "atencao": "Watch the pace",
+      "risco": "Financial alert",
+      "meta_excedida": "Goal exceeded",
+      "sem_dados": "No data"
+    },
+    "msg": {
+      "semDados": "Add your income, bills or set a goal to unlock a smart analysis of your month.",
+      "fluxo": "This value considers all income and expenses of the month.",
+      "metaExcedidaVar": "Your variable spending went over the goal by {{valor}}.{{notice}}",
+      "metaExcedida": "You exceeded your monthly goal by {{valor}}. Time to review the next expenses.",
+      "risco": "At the current pace, your month may end in the red.{{notice}}",
+      "atencaoMeta": "You're getting close to the goal. Keep daily spending below {{porDia}}.{{notice}}",
+      "atencao": "Your daily limit is tighter. Keep daily spending below {{porDia}}.",
+      "saudavelMeta": "Your new spending is on plan — up to {{porDia}} per day.{{notice}}",
+      "saudavel": "You can spend up to {{porDia}} per day and close the month comfortably.{{notice}}",
+      "noticeObrigacoes": " Already-paid bills ({{valor}}) don't count toward this goal."
+    }
+  },
+  "radarCard": {
+    "label": {
+      "USD_BRL": "USD",
+      "EUR_BRL": "EUR"
+    },
+    "title": "Economic Radar",
+    "subtitle": "Reference rates of the day",
+    "aria": "Open Economic Radar",
+    "outdated": "outdated",
+    "outdatedTitle": "Couldn't update right now",
+    "loading": "Loading rates…",
+    "outdatedDesc": "We couldn't refresh the indicators now. Showing the last available rate.",
+    "updatedAt": "Updated at {{quando}} · tap for details",
+    "loadError": "We couldn't load the rates right now. Please try again shortly.",
+    "msg": {
+      "usdUp": "The US dollar went up today. International purchases and USD subscriptions may hit your bill harder.",
+      "usdDown": "The US dollar went down today. A good moment to track international purchases and USD subscriptions.",
+      "eurUp": "The euro went up today. Purchases and travel to Europe may get more expensive.",
+      "eurDown": "The euro went down today. Purchases and travel to Europe may get a bit cheaper.",
+      "stable": "Rates are relatively stable today. No big impact on international purchases."
+    },
+    "variation": {
+      "up": "Positive day-over-day variation",
+      "down": "Negative day-over-day variation"
+    },
+    "dialog": {
+      "title": "Economic Radar",
+      "description": "Reference rates so you can track the impact of FX.",
+      "outdated": "We couldn't refresh the indicators now. Showing the last available rate.",
+      "updatedAt": "Updated at {{quando}}",
+      "refresh": "Refresh",
+      "converter": "Quick converter",
+      "currency": "Currency",
+      "value": "Amount",
+      "convert": "Convert",
+      "approxValue": "Approximate value",
+      "rateUsed": "Rate used: {{cotacao}} per 1 {{moeda}} · {{quando}}",
+      "estimateNote": "This is an estimate. The final charge may vary based on IOF, spread, purchase date and the rate used by the card.",
+      "high": "High",
+      "low": "Low",
+      "usdItem": "🇺🇸 US Dollar (USD)",
+      "eurItem": "🇪🇺 Euro (EUR)"
+    }
+  },
+  "fluxo": {
+    "eyebrow": "Financial overview",
+    "title": "Cash flow",
+    "subtitle": "Last 6 months · income vs. expenses",
+    "types": {
+      "area": "Area",
+      "line": "Line",
+      "bar": "Bar",
+      "donut": "Pie"
+    },
+    "entradas": "Income",
+    "gastos": "Expenses",
+    "saldo": "Balance",
+    "emptyTitle": "Not enough history yet",
+    "emptyDesc": "Keep logging your expenses and income — the chart appears once you have at least two months of data."
+  },
+  "alertasBloco": {
+    "aria": "Important alerts",
+    "title": "Important alerts",
+    "tudoCerto": "All good here.",
+    "precisaAtencao": "What needs your attention now.",
+    "verTodos": "View all",
+    "nadaUrgente": "Nothing urgent on the radar."
+  },
+  "cartoesInsights": {
+    "insightLabel": "Insight of the month",
+    "faturaVencida": "Heads up: the {{cartao}} invoice is overdue. Mark it as paid or settle it as soon as possible.",
+    "venceEmDias": "Your {{cartao}} invoice is due in {{dias}} {{unit}}.",
+    "limitePct": "You've already used {{pct}}% of the {{cartao}} limit.",
+    "maiorGastoCat": "Your largest expense this month is in {{cat}} ({{pct}}% of total).",
+    "addMais": "Add more expenses to get personalized insights.",
+    "tudoCerto": "All good here. No important alerts right now.",
+    "maiorUso": "Most used cards",
+    "verTodos": "View all →",
+    "compraSing": "purchase",
+    "compraPlur": "purchases",
+    "proxVenc": "Upcoming due dates",
+    "irCartoes": "Go to cards →",
+    "vencidaHa": "Overdue by {{dias}} {{unit}}",
+    "venceHoje": "Due today",
+    "venceAmanha": "Due tomorrow",
+    "faltamDias": "{{dias}} days left",
+    "venceDia": "Due on the {{dia}}",
+    "diaSing": "day",
+    "diaPlur": "days",
+    "maioresGastos": "Largest expenses this month",
+    "verTudo": "View all →",
+    "outros": "Other",
+    "compAdd": "Add another month of data to see the comparison.",
+    "compIgual": "You spent about the same as last month.",
+    "compDiff": "You spent {{valor}} {{direcao}} than last month",
+    "amais": "more",
+    "amenos": "less",
+    "status": {
+      "aberta": "Open",
+      "fechada": "Closed",
+      "vencida": "Overdue",
+      "paga": "Paid"
+    }
+  },
+  "compraInternacional": {
+    "title": "International purchases",
+    "subtitle": "Estimate the value in BRL before completing the purchase.",
+    "currency": "Currency",
+    "valueIn": "Amount in {{moeda}}",
+    "currencyNames": { "USD": "US dollars", "EUR": "euros" },
+    "placeholder": { "USD": "Ex: 19.90", "EUR": "Ex: 25.00" },
+    "descLabel": "Description (optional)",
+    "descPlaceholder": "E.g. Subscription, hosting…",
+    "cardLabel": "Card (optional)",
+    "selectPlaceholder": "Select",
+    "none": "None",
+    "valueApprox": "Approximate value in BRL",
+    "withTaxes": "With estimated IOF + spread:",
+    "rate": "Rate",
+    "per": "per 1 {{moeda}}",
+    "estimateNote": "This is an <1>estimate</1>. The actual amount on your invoice depends on IOF, spread and the rate used by your card on the billing date.",
+    "register": "Log as expense",
+    "notSaved": "Nothing is saved until you confirm.",
+    "toast": {
+      "needAuth": "Sign in to log the expense.",
+      "needValue": "Enter the purchase amount first.",
+      "needFields": "Check the description and amount.",
+      "saved": "Expense logged as estimate."
+    },
+    "items": {
+      "USD": "🇺🇸 US Dollar (USD)",
+      "EUR": "🇪🇺 Euro (EUR)"
+    },
+    "confirm": {
+      "title": "Log international purchase",
+      "description": "Review the data before saving. The final invoice amount may change with IOF, spread and the rate used by your card.",
+      "desc": "Description",
+      "descPh": "E.g. Netflix subscription",
+      "valueBRL": "Estimated amount (R$)",
+      "date": "Date",
+      "payment": "Payment method",
+      "card": "Card",
+      "category": "Category",
+      "noCategory": "No category",
+      "noCardDash": "—",
+      "footer": "Original amount: <1>{{moeda}} {{valor}}</1> · Rate used: <3>{{cotacao}}</3> per 1 {{moeda}}. This is an estimate — you can edit the amount when the invoice arrives.",
+      "cancel": "Cancel",
+      "save": "Save expense",
+      "saving": "Saving..."
+    },
+    "obs": "Estimated purchase in {{moeda}} {{valor}} · rate {{cotacao}} per 1 {{moeda}}. Final amount may vary with IOF, spread and the card's rate.",
+    "defaultDesc": "Purchase in {{moeda}} {{valor}}"
   }
 }
