@@ -280,7 +280,7 @@ function Header() {
           : "bg-white/0 border-b border-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:h-14 sm:px-6 md:h-16 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <img
             src="/logos/brand/gasto-inteligente-light.png"
@@ -288,7 +288,7 @@ function Header() {
             width={176}
             height={44}
             fetchPriority="high"
-            className="h-9 w-auto sm:h-11 object-contain"
+            className="h-8 w-auto object-contain sm:h-10 md:h-11"
             draggable={false}
           />
         </a>
@@ -394,7 +394,7 @@ function Hero() {
             "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
         }}
       />
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-0 pb-16 sm:px-6 sm:pt-2 md:pt-8 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
+      <div className="mx-auto -mt-1 grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-0 pb-16 sm:mt-0 sm:px-6 sm:pt-2 md:pt-8 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
         <div className="lg:col-span-6">
           <motion.span
             initial={{ opacity: 0, y: 8 }}
