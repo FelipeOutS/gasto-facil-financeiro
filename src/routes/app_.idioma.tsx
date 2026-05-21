@@ -1,10 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Check, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { BrandMark } from "@/components/BrandMark";
-import { SUPPORTED_LOCALES, type Locale } from "@/i18n";
-import { useLocale } from "@/i18n/use-locale";
+import { LANG_STORAGE_KEY, SUPPORTED_LOCALES, type Locale } from "@/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -14,17 +13,23 @@ export const Route = createFileRoute("/app_/idioma")({
 });
 
 function AppIdiomaPage() {
-  const { t } = useTranslation();
-  const { locale, setLocale } = useLocale();
+  const { t, i18n } = useTranslation();
   const { session } = useAuth();
-  const navigate = useNavigate();
+  const locale: Locale = (i18n.resolvedLanguage || i18n.language || "pt").toLowerCase().startsWith("en")
+    ? "en"
+    : "pt";
 
   function choose(next: Locale) {
-    setLocale(next);
-    window.setTimeout(() => {
-      if (window.history.length > 1) window.history.back();
-      else void navigate({ to: session ? "/app/mais" : "/landing", replace: true });
-    }, 120);
+    if (next === locale) return;
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, next);
+    } catch {
+      // ignore
+    }
+    void i18n.changeLanguage(next);
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = next === "en" ? "en" : "pt-BR";
+    }
   }
 
   const content = (
