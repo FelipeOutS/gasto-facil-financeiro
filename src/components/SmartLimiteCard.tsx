@@ -404,11 +404,11 @@ export function SmartLimiteCard({
                 )}
               />
               <span className={cn("pb-0.5 text-xs font-medium", cfg.muted)}>
-                / dia
+                {t("smartLimite.byDay")}
               </span>
               {savedFlash && (
                 <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-300 ring-1 ring-emerald-500/30 animate-fade-in">
-                  <Check className="h-3 w-3" /> salvo
+                  <Check className="h-3 w-3" /> {t("smartLimite.saved")}
                 </span>
               )}
             </>
