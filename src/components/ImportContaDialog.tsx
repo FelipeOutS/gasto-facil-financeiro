@@ -242,7 +242,7 @@ export function ImportContaDialog({
           beneficiario: c.beneficiario ?? undefined,
           codigoBoleto: c.codigoBoleto ?? undefined,
           codigoPix: c.codigoPix ?? undefined,
-        });
+        }, t);
         return {
           uid: crypto.randomUUID(),
           selecionado: !dupCheck.dup,
