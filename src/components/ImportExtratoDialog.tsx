@@ -490,7 +490,7 @@ export function ImportExtratoDialog({
           });
         }
         if (brutos.length === 0) {
-          toast.warning("Nenhuma linha válida no CSV.");
+          toast.warning(t("errors.csvNoValid"));
           setLoading(false);
           return;
         }
@@ -499,12 +499,12 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error(e);
-        toast.error("Erro ao ler CSV.");
+        toast.error(t("errors.csvRead"));
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- REVIEW edits ----------
