@@ -429,7 +429,7 @@ export function ImportExtratoDialog({
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- IMPORT: CSV ----------
