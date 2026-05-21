@@ -824,6 +824,7 @@ function UploadStep({
   onPick: (files: File[]) => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("import-extrato");
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
@@ -831,14 +832,14 @@ function UploadStep({
         onClick={onBack}
         className="text-xs text-muted-foreground hover:text-foreground"
       >
-        ← Voltar
+        {t("upload.back")}
       </button>
       <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
         {loading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">
-              Lendo o extrato com IA, aguarde...
+              {t("upload.loading")}
             </p>
           </div>
         ) : (
@@ -846,7 +847,7 @@ function UploadStep({
             <Sparkles className="mx-auto h-8 w-8 text-primary mb-3" />
             <p className="text-sm font-medium mb-1">{hint}</p>
             <p className="text-xs text-muted-foreground mb-4">
-              Os arquivos não são salvos. A IA extrai apenas as movimentações para você revisar.
+              {t("upload.privacy")}
             </p>
             <input
               ref={ref}
@@ -862,7 +863,7 @@ function UploadStep({
             />
             <Button onClick={() => ref.current?.click()}>
               <Upload className="h-4 w-4 mr-2" />
-              Selecionar arquivo{multiple ? "s" : ""}
+              {multiple ? t("upload.pickMany") : t("upload.pickOne")}
             </Button>
           </>
         )}
