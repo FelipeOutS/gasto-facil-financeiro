@@ -666,10 +666,10 @@ export function ImportExtratoDialog({
     }
 
     if (novosCount === 0 && duplicadosIgnorados > 0) {
-      toast("Nenhum novo lançamento foi adicionado. Os itens encontrados parecem já estar no app.");
+      toast(t("toast.noNew"));
     } else {
       toast.success(
-        `Importação concluída: ${novosCount} novo(s), ${duplicadosIgnorados} duplicado(s) ignorado(s) e ${naoConfirmados} item(ns) não confirmado(s).`,
+        t("toast.done", { novos: novosCount, dup: duplicadosIgnorados, nao: naoConfirmados }),
       );
     }
     handleClose(false);
