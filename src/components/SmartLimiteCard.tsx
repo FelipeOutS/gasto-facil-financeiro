@@ -555,7 +555,7 @@ export function SmartLimiteCard({
                 cfg.subText,
               )}
             >
-              <span>{temMeta ? "Da meta usado" : "Comprometido do mês"}</span>
+              <span>{temMeta ? t("smartLimite.daMetaUsado") : t("smartLimite.comprometido")}</span>
               <span className="num">{Math.round(pctUsado)}%</span>
             </div>
             <div
