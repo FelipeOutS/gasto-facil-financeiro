@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation, Trans } from "react-i18next";
 import { Globe, ArrowRightLeft, Info, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,13 +47,12 @@ interface RadarResult {
 }
 
 interface Props {
-  /** Pré-selecionar um cartão (ex.: dentro do detalhe de um cartão). */
   cartaoIdInicial?: string;
-  /** Visual compacto para usar em locais com menos espaço. */
   compact?: boolean;
 }
 
 export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
+  const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const cartoes = useStore(getCartoes);
   const categorias = useStore(getCategorias);
@@ -93,18 +93,15 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
     cotacao && Number.isFinite(valorNumMoeda) && valorNumMoeda > 0
       ? valorNumMoeda * cotacao.value
       : 0;
-  // estimativa com IOF (3,5%) + spread médio do cartão (~4%)
   const valorBRLComTaxas = valorBRL * 1.075;
-
-  const cartaoSelecionado = cartoes.find((c) => c.id === cartaoId);
 
   function handleRegistrar() {
     if (!user) {
-      toast.error("Entre na sua conta para registrar o gasto.");
+      toast.error(t("compraInternacional.toast.needAuth"));
       return;
     }
     if (valorBRL <= 0) {
-      toast.error("Informe o valor da compra primeiro.");
+      toast.error(t("compraInternacional.toast.needValue"));
       return;
     }
     setConfirmOpen(true);
@@ -123,9 +120,9 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
             <Globe className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="text-sm font-semibold">Compras internacionais</h3>
+            <h3 className="text-sm font-semibold">{t("compraInternacional.title")}</h3>
             <p className="text-xs text-muted-foreground">
-              Estime o valor em reais antes de fechar a compra.
+              {t("compraInternacional.subtitle")}
             </p>
           </div>
         </div>
@@ -136,25 +133,25 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[120px_1fr]">
         <div className="space-y-1">
-          <Label className="text-[11px]">Moeda</Label>
+          <Label className="text-[11px]">{t("compraInternacional.currency")}</Label>
           <Select value={moeda} onValueChange={(v) => setMoeda(v as Moeda)}>
             <SelectTrigger className="h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="USD">🇺🇸 Dólar (USD)</SelectItem>
-              <SelectItem value="EUR">🇪🇺 Euro (EUR)</SelectItem>
+              <SelectItem value="USD">{t("compraInternacional.items.USD")}</SelectItem>
+              <SelectItem value="EUR">{t("compraInternacional.items.EUR")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
           <Label className="text-[11px]" htmlFor="ci-valor">
-            Valor em {moeda === "USD" ? "dólares" : "euros"}
+            {t("compraInternacional.valueIn", { moeda: t(`compraInternacional.currencyNames.${moeda}`) })}
           </Label>
           <Input
             id="ci-valor"
             inputMode="decimal"
-            placeholder={moeda === "USD" ? "Ex: 19,90" : "Ex: 25,00"}
+            placeholder={t(`compraInternacional.placeholder.${moeda}`)}
             value={valorMoeda}
             onChange={(e) => setValorMoeda(e.target.value)}
             className="h-9"
@@ -165,27 +162,27 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr]">
         <div className="space-y-1">
           <Label className="text-[11px]" htmlFor="ci-desc">
-            Descrição (opcional)
+            {t("compraInternacional.descLabel")}
           </Label>
           <Input
             id="ci-desc"
-            placeholder="Ex: Assinatura, hospedagem…"
+            placeholder={t("compraInternacional.descPlaceholder")}
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             className="h-9"
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-[11px]">Cartão (opcional)</Label>
+          <Label className="text-[11px]">{t("compraInternacional.cardLabel")}</Label>
           <Select
             value={cartaoId || "__none__"}
             onValueChange={(v) => setCartaoId(v === "__none__" ? "" : v)}
           >
             <SelectTrigger className="h-9">
-              <SelectValue placeholder="Selecionar" />
+              <SelectValue placeholder={t("compraInternacional.selectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">Nenhum</SelectItem>
+              <SelectItem value="__none__">{t("compraInternacional.none")}</SelectItem>
               {cartoes.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.nome}
@@ -200,14 +197,14 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] text-muted-foreground">
-              Valor aproximado em reais
+              {t("compraInternacional.valueApprox")}
             </p>
             <p className="text-2xl font-semibold tabular-nums">
               {valorBRL > 0 ? formatBRL(valorBRL) : "—"}
             </p>
             {valorBRL > 0 && (
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Com IOF + spread estimado:{" "}
+                {t("compraInternacional.withTaxes")}{" "}
                 <strong className="tabular-nums">
                   {formatBRL(valorBRLComTaxas)}
                 </strong>
@@ -216,11 +213,11 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
           </div>
           {cotacao && (
             <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">Cotação</p>
+              <p className="text-[11px] text-muted-foreground">{t("compraInternacional.rate")}</p>
               <p className="text-sm font-medium tabular-nums">
                 {formatBRL(cotacao.value)}
               </p>
-              <p className="text-[10px] text-muted-foreground">por 1 {moeda}</p>
+              <p className="text-[10px] text-muted-foreground">{t("compraInternacional.per", { moeda })}</p>
             </div>
           )}
         </div>
@@ -229,9 +226,11 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
       <div className="mt-2 flex items-start gap-2 rounded-lg bg-amber-500/5 px-2.5 py-2 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <p>
-          Este valor é uma <strong>estimativa</strong>. O valor real na fatura
-          depende do IOF, do spread e da cotação usada pelo cartão no dia da
-          cobrança.
+          <Trans
+            i18nKey="compraInternacional.estimateNote"
+            ns="dashboard"
+            components={{ 1: <strong /> }}
+          />
         </p>
       </div>
 
@@ -244,11 +243,11 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
           className="rounded-full"
         >
           <Plus className="mr-1 h-4 w-4" />
-          Registrar como gasto
+          {t("compraInternacional.register")}
         </Button>
         <span className="text-[11px] text-muted-foreground">
           <ArrowRightLeft className="mr-1 inline h-3 w-3" />
-          Nada é salvo até você confirmar.
+          {t("compraInternacional.notSaved")}
         </span>
       </div>
 
@@ -261,7 +260,10 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
         cotacao={cotacao?.value ?? 0}
         descricaoInicial={
           descricao ||
-          `Compra em ${moeda} ${valorNumMoeda ? valorNumMoeda.toFixed(2) : ""}`.trim()
+          t("compraInternacional.defaultDesc", {
+            moeda,
+            valor: valorNumMoeda ? valorNumMoeda.toFixed(2) : "",
+          }).trim()
         }
         cartaoIdInicial={cartaoId}
         categorias={categorias}
@@ -301,6 +303,7 @@ function ConfirmRegistrarDialog({
   cartoes: Array<{ id: string; nome: string }>;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation("dashboard");
   const [descricao, setDescricao] = useState(descricaoInicial);
   const [valorBRL, setValorBRL] = useState(valorBRLEstimado.toFixed(2).replace(".", ","));
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("credito");
@@ -321,14 +324,16 @@ function ConfirmRegistrarDialog({
   async function handleSalvar() {
     const valorNum = parseBRLInput(valorBRL);
     if (!descricao.trim() || valorNum <= 0) {
-      toast.error("Confira a descrição e o valor.");
+      toast.error(t("compraInternacional.toast.needFields"));
       return;
     }
     setSaving(true);
     try {
-      const obs = `Estimativa de compra em ${moeda} ${valorOriginal
-        .toFixed(2)
-        .replace(".", ",")} · cotação ${formatBRL(cotacao)} por 1 ${moeda}. Valor final pode variar com IOF, spread e cotação do cartão.`;
+      const obs = t("compraInternacional.obs", {
+        moeda,
+        valor: valorOriginal.toFixed(2).replace(".", ","),
+        cotacao: formatBRL(cotacao),
+      });
       addGasto({
         descricao: descricao.trim(),
         estabelecimento: descricao.trim(),
@@ -340,7 +345,7 @@ function ConfirmRegistrarDialog({
         observacao: obs,
         origem: "radar_internacional",
       });
-      toast.success("Gasto registrado como estimativa.");
+      toast.success(t("compraInternacional.toast.saved"));
       onSaved();
     } finally {
       setSaving(false);
@@ -351,25 +356,24 @@ function ConfirmRegistrarDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar compra internacional</DialogTitle>
+          <DialogTitle>{t("compraInternacional.confirm.title")}</DialogTitle>
           <DialogDescription>
-            Revise os dados antes de salvar. O valor final na fatura pode
-            mudar conforme IOF, spread e cotação do cartão.
+            {t("compraInternacional.confirm.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Descrição</Label>
+            <Label className="text-xs">{t("compraInternacional.confirm.desc")}</Label>
             <Input
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Ex: Assinatura Netflix"
+              placeholder={t("compraInternacional.confirm.descPh")}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Valor estimado (R$)</Label>
+              <Label className="text-xs">{t("compraInternacional.confirm.valueBRL")}</Label>
               <Input
                 value={valorBRL}
                 onChange={(e) => setValorBRL(e.target.value)}
@@ -377,7 +381,7 @@ function ConfirmRegistrarDialog({
               />
             </div>
             <div>
-              <Label className="text-xs">Data</Label>
+              <Label className="text-xs">{t("compraInternacional.confirm.date")}</Label>
               <Input
                 type="date"
                 value={data}
@@ -387,7 +391,7 @@ function ConfirmRegistrarDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Forma de pagamento</Label>
+              <Label className="text-xs">{t("compraInternacional.confirm.payment")}</Label>
               <Select
                 value={formaPagamento}
                 onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}
@@ -405,17 +409,17 @@ function ConfirmRegistrarDialog({
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Cartão</Label>
+              <Label className="text-xs">{t("compraInternacional.confirm.card")}</Label>
               <Select
                 value={cartaoId || "__none__"}
                 onValueChange={(v) => setCartaoId(v === "__none__" ? "" : v)}
                 disabled={formaPagamento !== "credito"}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder={t("compraInternacional.confirm.noCardDash")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  <SelectItem value="__none__">{t("compraInternacional.none")}</SelectItem>
                   {cartoes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
@@ -426,16 +430,16 @@ function ConfirmRegistrarDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs">Categoria</Label>
+            <Label className="text-xs">{t("compraInternacional.confirm.category")}</Label>
             <Select
               value={categoriaId || "__none__"}
               onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sem categoria" />
+                <SelectValue placeholder={t("compraInternacional.confirm.noCategory")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">Sem categoria</SelectItem>
+                <SelectItem value="__none__">{t("compraInternacional.confirm.noCategory")}</SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -446,18 +450,25 @@ function ConfirmRegistrarDialog({
           </div>
 
           <p className="rounded-lg bg-muted/40 p-2 text-[11px] leading-relaxed text-muted-foreground">
-            Valor original: <strong>{moeda} {valorOriginal.toFixed(2).replace(".", ",")}</strong>
-            {" · "}Cotação usada: <strong>{formatBRL(cotacao)}</strong> por 1 {moeda}.
-            Esta é uma estimativa — você pode editar o valor quando a fatura chegar.
+            <Trans
+              i18nKey="compraInternacional.confirm.footer"
+              ns="dashboard"
+              values={{
+                moeda,
+                valor: valorOriginal.toFixed(2).replace(".", ","),
+                cotacao: formatBRL(cotacao),
+              }}
+              components={{ 1: <strong />, 3: <strong /> }}
+            />
           </p>
         </div>
 
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t("compraInternacional.confirm.cancel")}
           </Button>
           <Button type="button" onClick={handleSalvar} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar gasto"}
+            {saving ? t("compraInternacional.confirm.saving") : t("compraInternacional.confirm.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
