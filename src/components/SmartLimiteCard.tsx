@@ -316,11 +316,11 @@ export function SmartLimiteCard({
                   cfg.subText,
                 )}
               >
-                Seu limite inteligente
+                {t("smartLimite.title")}
               </p>
             </div>
             <p className={cn("mt-2 max-w-md text-xs sm:text-[13px]", cfg.muted)}>
-              {MODE_LABELS[mode].desc}.
+              {tMode(mode).desc}.
             </p>
             <div className="relative mt-2 inline-block">
               <button
@@ -332,7 +332,7 @@ export function SmartLimiteCard({
                 )}
               >
                 <Sliders className="h-3 w-3" />
-                {MODE_LABELS[mode].label}
+                {tMode(mode).label}
               </button>
               {modeOpen && (
                 <div
@@ -341,7 +341,7 @@ export function SmartLimiteCard({
                     "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10",
                   )}
                 >
-                  {(Object.keys(MODE_LABELS) as CalcMode[]).map((m) => (
+                  {MODE_KEYS.map((m) => (
                     <button
                       key={m}
                       type="button"
@@ -363,9 +363,9 @@ export function SmartLimiteCard({
                         )}
                       />
                       <span className="min-w-0">
-                        <span className="block font-semibold">{MODE_LABELS[m].label}</span>
+                        <span className="block font-semibold">{tMode(m).label}</span>
                         <span className="block text-[11px] text-muted-foreground">
-                          {MODE_LABELS[m].desc}
+                          {tMode(m).desc}
                         </span>
                       </span>
                     </button>
