@@ -539,7 +539,7 @@ export function SmartLimiteCard({
                     cfg.muted,
                   )}
                 >
-                  Remover meta
+                  {t("smartLimite.remover")}
                 </button>
               )}
             </div>
