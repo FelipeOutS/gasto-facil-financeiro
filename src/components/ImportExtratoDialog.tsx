@@ -1001,17 +1001,17 @@ function ReviewCard({
             <Badge variant="outline" className="text-[10px] gap-1">
               {tipoIcon}
               {item.tipoMovimentacao === "despesa"
-                ? "Despesa"
+                ? t("row.tipos.despesa")
                 : item.tipoMovimentacao === "receita"
-                  ? "Receita"
-                  : "Transf. interna"}
+                  ? t("row.tipos.receita")
+                  : t("row.tipos.transferenciaShort")}
             </Badge>
           </div>
         </div>
         <button
           onClick={onRemove}
           className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Remover"
+          aria-label={t("row.remove")}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
