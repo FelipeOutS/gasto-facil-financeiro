@@ -41,7 +41,16 @@ export function FluxoCaixaChart({
   gastos: Gasto[];
   receitas: Receita[];
 }) {
+  const { t, i18n } = useTranslation("dashboard");
   const [tipo, setTipo] = useState<ChartKind>("area");
+  const locale = i18n.resolvedLanguage || i18n.language || "pt";
+
+  const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
+    { id: "area", label: t("fluxo.types.area"), Icon: TrendingUp },
+    { id: "line", label: t("fluxo.types.line"), Icon: Activity },
+    { id: "bar", label: t("fluxo.types.bar"), Icon: BarChart3 },
+    { id: "donut", label: t("fluxo.types.donut"), Icon: PieIcon },
+  ];
 
   // Last 6 months ending at (ano, mes)
   const data = useMemo(() => {
@@ -59,10 +68,10 @@ export function FluxoCaixaChart({
           return !!data && data.getMonth() + 1 === m && data.getFullYear() === y;
         })
         .reduce((s, g) => s + g.valor, 0);
-      out.push({ mes: monthLabel(y, m), entradas: e, gastos: g, saldo: e - g });
+      out.push({ mes: monthLabel(y, m, locale), entradas: e, gastos: g, saldo: e - g });
     }
     return out;
-  }, [ano, mes, gastos, receitas]);
+  }, [ano, mes, gastos, receitas, locale]);
 
   const totalEntradas = data.reduce((s, d) => s + d.entradas, 0);
   const totalGastos = data.reduce((s, d) => s + d.gastos, 0);
