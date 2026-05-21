@@ -447,7 +447,7 @@ export function SmartLimiteCard({
                       cfg.subText,
                     )}
                   >
-                    Meta mensal de gastos
+                    {t("smartLimite.metaTitle")}
                   </p>
                   <p
                     className={cn(
@@ -455,7 +455,7 @@ export function SmartLimiteCard({
                       cfg.valueText,
                     )}
                   >
-                    {temMeta ? formatBRL(metaSalva) : "Sem meta definida"}
+                    {temMeta ? formatBRL(metaSalva) : t("smartLimite.semMeta")}
                   </p>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export function SmartLimiteCard({
                 )}
               >
                 <Pencil className="h-3 w-3" />
-                {temMeta ? "Editar" : "Definir"}
+                {temMeta ? t("smartLimite.editar") : t("smartLimite.definir")}
               </button>
             </div>
           ) : (
