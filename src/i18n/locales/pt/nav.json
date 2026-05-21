@@ -3,6 +3,9 @@
     "side": "Navegação lateral",
     "primary": "Navegação principal",
     "openMore": "Abrir mais opções",
+    "openAlerts": "Abrir alertas",
+    "openProfile": "Abrir perfil",
+    "avatarAlt": "Avatar",
     "overdueAccounts": "Há contas atrasadas",
     "soonAccounts": "Há contas vencendo em breve"
   },

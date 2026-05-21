@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   Sparkles,
   TrendingUp,
@@ -34,12 +35,7 @@ type CalcMode = "variaveis" | "hoje" | "mes" | "fluxo";
 const META_TIPO = "meta_gasto_mensal";
 const MODE_KEY = "gf:limite-mode";
 
-const MODE_LABELS: Record<CalcMode, { label: string; desc: string }> = {
-  variaveis: { label: "Somente gastos variáveis", desc: "Ignora contas fixas e faturas já pagas" },
-  hoje: { label: "A partir de hoje", desc: "O quanto você ainda pode gastar até o fim do mês" },
-  mes: { label: "Mês inteiro", desc: "Todos os gastos elegíveis do mês" },
-  fluxo: { label: "Fluxo de caixa", desc: "Tudo que entrou e saiu no mês" },
-};
+const MODE_KEYS: CalcMode[] = ["variaveis", "hoje", "mes", "fluxo"];
 
 function loadMode(): CalcMode {
   if (typeof window === "undefined") return "variaveis";
@@ -59,6 +55,11 @@ export function SmartLimiteCard({
   totalEntradas: number;
   totalGastos: number;
 }) {
+  const { t } = useTranslation("dashboard");
+  const tMode = (m: CalcMode) => ({
+    label: t(`smartLimite.modes.${m}.label`),
+    desc: t(`smartLimite.modes.${m}.desc`),
+  });
   const contas = useStore(() => getContasAPagar());
   const recorrencias = useStore(() => getRecorrencias());
   const gastos = useStore(() => getGastos());
@@ -315,11 +316,11 @@ export function SmartLimiteCard({
                   cfg.subText,
                 )}
               >
-                Seu limite inteligente
+                {t("smartLimite.title")}
               </p>
             </div>
             <p className={cn("mt-2 max-w-md text-xs sm:text-[13px]", cfg.muted)}>
-              {MODE_LABELS[mode].desc}.
+              {tMode(mode).desc}.
             </p>
             <div className="relative mt-2 inline-block">
               <button
@@ -331,7 +332,7 @@ export function SmartLimiteCard({
                 )}
               >
                 <Sliders className="h-3 w-3" />
-                {MODE_LABELS[mode].label}
+                {tMode(mode).label}
               </button>
               {modeOpen && (
                 <div
@@ -340,7 +341,7 @@ export function SmartLimiteCard({
                     "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10",
                   )}
                 >
-                  {(Object.keys(MODE_LABELS) as CalcMode[]).map((m) => (
+                  {MODE_KEYS.map((m) => (
                     <button
                       key={m}
                       type="button"
@@ -362,9 +363,9 @@ export function SmartLimiteCard({
                         )}
                       />
                       <span className="min-w-0">
-                        <span className="block font-semibold">{MODE_LABELS[m].label}</span>
+                        <span className="block font-semibold">{tMode(m).label}</span>
                         <span className="block text-[11px] text-muted-foreground">
-                          {MODE_LABELS[m].desc}
+                          {tMode(m).desc}
                         </span>
                       </span>
                     </button>
@@ -382,7 +383,7 @@ export function SmartLimiteCard({
             )}
           >
             <cfg.TagIcon className="h-3 w-3" />
-            {cfg.tagLabel}
+            {t(`smartLimite.tags.${status}`)}
           </span>
         </div>
 
@@ -403,11 +404,11 @@ export function SmartLimiteCard({
                 )}
               />
               <span className={cn("pb-0.5 text-xs font-medium", cfg.muted)}>
-                / dia
+                {t("smartLimite.byDay")}
               </span>
               {savedFlash && (
                 <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-300 ring-1 ring-emerald-500/30 animate-fade-in">
-                  <Check className="h-3 w-3" /> salvo
+                  <Check className="h-3 w-3" /> {t("smartLimite.saved")}
                 </span>
               )}
             </>
@@ -416,7 +417,7 @@ export function SmartLimiteCard({
 
         {/* Texto explicativo */}
         <p className={cn("mt-2 max-w-xl text-[12px] leading-relaxed", cfg.text)}>
-          {getMensagem(status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
+          {getMensagem(t, status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
         </p>
 
         {/* Meta mensal — edição inline */}
@@ -446,7 +447,7 @@ export function SmartLimiteCard({
                       cfg.subText,
                     )}
                   >
-                    Meta mensal de gastos
+                    {t("smartLimite.metaTitle")}
                   </p>
                   <p
                     className={cn(
@@ -454,7 +455,7 @@ export function SmartLimiteCard({
                       cfg.valueText,
                     )}
                   >
-                    {temMeta ? formatBRL(metaSalva) : "Sem meta definida"}
+                    {temMeta ? formatBRL(metaSalva) : t("smartLimite.semMeta")}
                   </p>
                 </div>
               </div>
@@ -467,7 +468,7 @@ export function SmartLimiteCard({
                 )}
               >
                 <Pencil className="h-3 w-3" />
-                {temMeta ? "Editar" : "Definir"}
+                {temMeta ? t("smartLimite.editar") : t("smartLimite.definir")}
               </button>
             </div>
           ) : (
@@ -478,7 +479,7 @@ export function SmartLimiteCard({
                   cfg.subText,
                 )}
               >
-                Meta mensal de gastos
+                {t("smartLimite.metaTitle")}
               </label>
               <div className="mt-1.5 flex items-center gap-2">
                 <div
@@ -515,7 +516,7 @@ export function SmartLimiteCard({
                     cfg.btnPrimary,
                   )}
                 >
-                  <Check className="h-3.5 w-3.5" /> Salvar
+                  <Check className="h-3.5 w-3.5" /> {t("smartLimite.salvar")}
                 </button>
                 <button
                   type="button"
@@ -524,7 +525,7 @@ export function SmartLimiteCard({
                     "inline-flex h-9 w-9 items-center justify-center rounded-xl ring-1 transition-colors",
                     cfg.btnSecondary,
                   )}
-                  aria-label="Cancelar"
+                  aria-label={t("smartLimite.cancelar")}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -538,7 +539,7 @@ export function SmartLimiteCard({
                     cfg.muted,
                   )}
                 >
-                  Remover meta
+                  {t("smartLimite.remover")}
                 </button>
               )}
             </div>
@@ -554,7 +555,7 @@ export function SmartLimiteCard({
                 cfg.subText,
               )}
             >
-              <span>{temMeta ? "Da meta usado" : "Comprometido do mês"}</span>
+              <span>{temMeta ? t("smartLimite.daMetaUsado") : t("smartLimite.comprometido")}</span>
               <span className="num">{Math.round(pctUsado)}%</span>
             </div>
             <div
@@ -582,26 +583,26 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Target className="h-3.5 w-3.5" />}
-                  label="Meta"
+                  label={t("smartLimite.stat.meta")}
                   value={formatBRL(metaSalva)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
                   value={formatBRL(gastosElegiveis)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  label="Restante"
+                  label={t("smartLimite.stat.restante")}
                   value={formatBRL(restanteMeta)}
                   tone={restanteMeta < 0 ? "neg" : "pos"}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Gauge className="h-3.5 w-3.5" />}
-                  label="Dias restantes"
+                  label={t("smartLimite.stat.diasRestantes")}
                   value={`${diasRestantes}`}
                 />
               </>
@@ -610,26 +611,26 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label="Disponível"
+                  label={t("smartLimite.stat.disponivel")}
                   value={formatBRL(disponivelMes)}
                   tone={disponivelMes < 0 ? "neg" : "pos"}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Gauge className="h-3.5 w-3.5" />}
-                  label="Dias restantes"
+                  label={t("smartLimite.stat.diasRestantes")}
                   value={`${diasRestantes}`}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  label="A pagar + assinaturas"
+                  label={t("smartLimite.stat.aPagarMaisAssin")}
                   value={formatBRL(contasPendentes + recorrenciasPrev)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
                   value={formatBRL(gastosElegiveis)}
                 />
               </>
@@ -646,7 +647,7 @@ export function SmartLimiteCard({
               cfg.btnSecondary,
             )}
           >
-            Revisar gastos
+            {t("smartLimite.cta.revisar")}
             <ArrowRight className="h-3 w-3" />
           </Link>
           <Link
@@ -657,7 +658,7 @@ export function SmartLimiteCard({
               "hover:opacity-80",
             )}
           >
-            Ajustar orçamento
+            {t("smartLimite.cta.ajustar")}
           </Link>
         </div>
       </div>
@@ -708,37 +709,36 @@ function MiniStat({
 }
 
 function getMensagem(
+  t: (key: string, opts?: Record<string, unknown>) => string,
   status: Status,
   porDia: number,
-  disp: number,
+  _disp: number,
   temMeta: boolean,
   restanteMeta: number,
   mode: CalcMode,
   totalObrigacoes: number,
 ): string {
-  const noticeObrigacoes =
+  const notice =
     totalObrigacoes > 0 && (mode === "variaveis" || mode === "hoje")
-      ? ` Pagamentos já quitados (${formatBRL(totalObrigacoes)}) não entram nesta meta.`
+      ? t("smartLimite.msg.noticeObrigacoes", { valor: formatBRL(totalObrigacoes) })
       : "";
-  if (status === "sem_dados")
-    return "Adicione sua renda, suas contas ou defina uma meta para liberar uma análise inteligente do seu mês.";
-  if (mode === "fluxo")
-    return "Este valor considera todas as entradas e saídas do mês.";
+  if (status === "sem_dados") return t("smartLimite.msg.semDados");
+  if (mode === "fluxo") return t("smartLimite.msg.fluxo");
   if (status === "meta_excedida") {
     if (mode === "variaveis")
-      return `Seus gastos variáveis passaram da meta em ${formatBRL(Math.abs(restanteMeta))}.${noticeObrigacoes}`;
-    return `Você ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos.`;
+      return t("smartLimite.msg.metaExcedidaVar", { valor: formatBRL(Math.abs(restanteMeta)), notice });
+    return t("smartLimite.msg.metaExcedida", { valor: formatBRL(Math.abs(restanteMeta)) });
   }
   if (status === "risco")
-    return `No ritmo atual, seu mês pode terminar no vermelho.${noticeObrigacoes}`;
+    return t("smartLimite.msg.risco", { notice });
   if (status === "atencao") {
     if (temMeta)
-      return `Você está chegando perto da meta. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
-    return `Seu limite diário está mais apertado. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.`;
+      return t("smartLimite.msg.atencaoMeta", { porDia: formatBRL(porDia), notice });
+    return t("smartLimite.msg.atencao", { porDia: formatBRL(porDia) });
   }
   if (temMeta)
-    return `Seu controle de novos gastos está dentro do planejado — até ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
-  return `Você pode gastar até ${formatBRL(porDia)} por dia e fechar o mês com tranquilidade.${noticeObrigacoes}`;
+    return t("smartLimite.msg.saudavelMeta", { porDia: formatBRL(porDia), notice });
+  return t("smartLimite.msg.saudavel", { porDia: formatBRL(porDia), notice });
 }
 
 type StatusCfg = {
