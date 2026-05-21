@@ -194,18 +194,18 @@ export function ImportContaDialog({
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json?.error ?? "Falha ao ler a conta.");
+        toast.error(json?.error ?? t("errors.readFail"));
         return;
       }
       if (!json.conta) {
-        toast.warning(json.observacao ?? "Nada de útil identificado.");
+        toast.warning(json.observacao ?? t("errors.nothingFound"));
         return;
       }
       aplicarConta(json.conta);
-      toast.success("Dados extraídos. Revise antes de salvar.");
+      toast.success(t("success.extracted"));
     } catch (err) {
       console.error(err);
-      toast.error("Erro de rede ao processar a conta.");
+      toast.error(t("errors.networkConta"));
     } finally {
       setLoading(false);
     }
@@ -221,14 +221,12 @@ export function ImportContaDialog({
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json?.error ?? "Não foi possível ler este PDF.");
+        toast.error(json?.error ?? t("errors.readPdfFail"));
         return;
       }
       const itens: ContaExtraida[] = Array.isArray(json.itens) ? json.itens : [];
       if (itens.length === 0) {
-        toast.warning(
-          json.observacao ?? "Nenhuma conta foi encontrada neste arquivo.",
-        );
+        toast.warning(json.observacao ?? t("errors.noneInPdf"));
         return;
       }
       const revisao: ItemRevisao[] = itens.map((c) => {
@@ -263,12 +261,10 @@ export function ImportContaDialog({
         };
       });
       setItensPdf(revisao);
-      toast.success(
-        `${itens.length} conta(s) encontrada(s). Revise antes de salvar.`,
-      );
+      toast.success(t("success.foundCount", { count: itens.length }));
     } catch (err) {
       console.error(err);
-      toast.error("Erro de rede ao processar o PDF.");
+      toast.error(t("errors.networkPdf"));
     } finally {
       setLoading(false);
     }
@@ -278,11 +274,11 @@ export function ImportContaDialog({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Selecione uma imagem (JPG, PNG, WEBP).");
+      toast.error(t("errors.pickImage"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx 10MB).");
+      toast.error(t("errors.imageTooBig"));
       return;
     }
     const dataUrl = await fileToDataUrl(file);
@@ -297,11 +293,11 @@ export function ImportContaDialog({
       file.type === "application/pdf" ||
       file.name.toLowerCase().endsWith(".pdf");
     if (!isPdf) {
-      toast.error("Selecione um arquivo PDF.");
+      toast.error(t("errors.pickPdf"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("PDF muito grande (máx 10MB).");
+      toast.error(t("errors.pdfTooBig"));
       return;
     }
     const dataUrl = await fileToDataUrl(file);
@@ -311,7 +307,7 @@ export function ImportContaDialog({
 
   async function handleTexto() {
     if (!texto.trim()) {
-      toast.error("Cole o texto do boleto/Pix.");
+      toast.error(t("errors.pasteText"));
       return;
     }
     await processar({ text: texto });
@@ -319,22 +315,22 @@ export function ImportContaDialog({
 
   function handleSalvar() {
     const valor = parseBRLInput(valorStr);
-    if (!nome.trim()) return toast.error("Informe o nome da conta.");
+    if (!nome.trim()) return toast.error(t("errors.needName"));
     if (!Number.isFinite(valor) || valor <= 0)
-      return toast.error("Valor inválido.");
-    if (!vencimento) return toast.error("Informe o vencimento.");
+      return toast.error(t("errors.invalidValue"));
+    if (!vencimento) return toast.error(t("errors.needDue"));
 
     if (codigoBoleto.trim()) {
       const dup = findContaByCodigo(codigoBoleto, "boleto");
       if (dup) {
-        toast.error("Esta conta parece já estar cadastrada (mesmo código de boleto).");
+        toast.error(t("errors.dupBoleto"));
         return;
       }
     }
     if (codigoPix.trim()) {
       const dup = findContaByCodigo(codigoPix, "pix");
       if (dup) {
-        toast.error("Esta conta parece já estar cadastrada (mesmo código Pix).");
+        toast.error(t("errors.dupPix"));
         return;
       }
     }
@@ -347,7 +343,7 @@ export function ImportContaDialog({
     });
     if (possivel) {
       const ok = window.confirm(
-        `Já existe uma conta parecida ("${possivel.nome}", ${possivel.dataVencimento}). Salvar mesmo assim?`,
+        t("dup.confirm", { name: possivel.nome, date: possivel.dataVencimento }),
       );
       if (!ok) return;
     }
@@ -366,7 +362,7 @@ export function ImportContaDialog({
       bancoEmissor: bancoEmissor.trim() || undefined,
       importBatchId: crypto.randomUUID(),
     });
-    toast.success("Conta importada e salva. ✅");
+    toast.success(t("success.saved"));
     handleClose();
   }
 
@@ -384,17 +380,17 @@ export function ImportContaDialog({
     if (!itensPdf) return;
     const selecionados = itensPdf.filter((it) => it.selecionado);
     if (selecionados.length === 0) {
-      toast.error("Selecione ao menos uma conta para importar.");
+      toast.error(t("errors.needSelectImport"));
       return;
     }
     // Validações
     for (const it of selecionados) {
       const v = parseBRLInput(it.valorStr);
       if (!it.nome.trim())
-        return toast.error(`Informe o nome de uma das contas selecionadas.`);
+        return toast.error(t("errors.needNameItem"));
       if (!Number.isFinite(v) || v <= 0)
-        return toast.error(`Valor inválido em "${it.nome}".`);
-      if (!it.vencimento) return toast.error(`Informe o vencimento de "${it.nome}".`);
+        return toast.error(t("errors.invalidValueItem", { name: it.nome }));
+      if (!it.vencimento) return toast.error(t("errors.needDueItem", { name: it.nome }));
     }
 
     const batchId = crypto.randomUUID();
@@ -423,9 +419,10 @@ export function ImportContaDialog({
       salvas++;
     }
     toast.success(
-      `Importação concluída: ${salvas} conta(s) adicionada(s)${
-        ignoradas > 0 ? `, ${ignoradas} duplicada(s) ignorada(s)` : ""
-      }.`,
+      t("success.batchDone", {
+        salvas,
+        ignoradasMsg: ignoradas > 0 ? t("success.ignoredSuffix", { count: ignoradas }) : "",
+      }),
     );
     handleClose();
   }
@@ -437,10 +434,8 @@ export function ImportContaDialog({
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : handleClose())}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Importar conta</DialogTitle>
-          <DialogDescription>
-            Tire foto, cole o texto ou envie o PDF do boleto/Pix. Você revisa antes de salvar.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
 
         {!modoItem && !modoLote && (
@@ -452,7 +447,7 @@ export function ImportContaDialog({
                 disabled={loading}
               >
                 <ImageIcon className="mr-1 h-4 w-4" />
-                Imagem
+                {t("tabs.imagem")}
               </Button>
               <Button
                 variant={aba === "texto" ? "default" : "outline"}
@@ -460,7 +455,7 @@ export function ImportContaDialog({
                 disabled={loading}
               >
                 <FileText className="mr-1 h-4 w-4" />
-                Texto
+                {t("tabs.texto")}
               </Button>
               <Button
                 variant={aba === "pdf" ? "default" : "outline"}
@@ -468,7 +463,7 @@ export function ImportContaDialog({
                 disabled={loading}
               >
                 <FileType2 className="mr-1 h-4 w-4" />
-                PDF
+                {t("tabs.pdf")}
               </Button>
             </div>
 
@@ -482,9 +477,9 @@ export function ImportContaDialog({
                   onChange={handleFile}
                 />
                 <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">Foto ou print do boleto/Pix</p>
+                <p className="text-sm font-medium">{t("imagem.hint")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  JPG, PNG ou WEBP até 10MB.
+                  {t("imagem.format")}
                 </p>
                 <Button
                   className="mt-3"
@@ -494,10 +489,10 @@ export function ImportContaDialog({
                   {loading ? (
                     <>
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                      Lendo…
+                      {t("imagem.reading")}
                     </>
                   ) : (
-                    "Selecionar imagem"
+                    t("imagem.pick")
                   )}
                 </Button>
               </div>
@@ -505,22 +500,22 @@ export function ImportContaDialog({
 
             {aba === "texto" && (
               <div className="space-y-2">
-                <Label htmlFor="conta-texto">Cole o texto</Label>
+                <Label htmlFor="conta-texto">{t("texto.label")}</Label>
                 <Textarea
                   id="conta-texto"
                   rows={6}
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
-                  placeholder="Cole aqui o texto do boleto, Pix copia e cola, ou da fatura..."
+                  placeholder={t("texto.placeholder")}
                 />
                 <Button onClick={handleTexto} disabled={loading} className="w-full">
                   {loading ? (
                     <>
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                      Lendo…
+                      {t("imagem.reading")}
                     </>
                   ) : (
-                    "Extrair dados"
+                    t("texto.extract")
                   )}
                 </Button>
               </div>
@@ -536,12 +531,8 @@ export function ImportContaDialog({
                   onChange={handlePdf}
                 />
                 <FileType2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">
-                  Envie um PDF do boleto, Pix ou conta
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Você poderá revisar antes de salvar. PDF até 10MB.
-                </p>
+                <p className="text-sm font-medium">{t("pdf.hint")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("pdf.info")}</p>
                 <Button
                   className="mt-3"
                   onClick={() => pdfRef.current?.click()}
@@ -550,10 +541,10 @@ export function ImportContaDialog({
                   {loading ? (
                     <>
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                      Lendo PDF…
+                      {t("pdf.reading")}
                     </>
                   ) : (
-                    "Selecionar PDF"
+                    t("pdf.pick")
                   )}
                 </Button>
               </div>
@@ -566,20 +557,17 @@ export function ImportContaDialog({
             {conta.confianca === "baixa" && (
               <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  Confiança baixa na leitura. Confira todos os campos com atenção
-                  antes de salvar.
-                </span>
+                <span>{t("lowConfidence")}</span>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="imp-nome">Nome da conta</Label>
+              <Label htmlFor="imp-nome">{t("fields.nome")}</Label>
               <Input id="imp-nome" value={nome} onChange={(e) => setNome(e.target.value)} />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="imp-benef">Beneficiário</Label>
+              <Label htmlFor="imp-benef">{t("fields.beneficiario")}</Label>
               <Input
                 id="imp-benef"
                 value={beneficiario}
@@ -589,7 +577,7 @@ export function ImportContaDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="imp-valor">Valor</Label>
+                <Label htmlFor="imp-valor">{t("fields.valor")}</Label>
                 <Input
                   id="imp-valor"
                   inputMode="decimal"
@@ -598,7 +586,7 @@ export function ImportContaDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="imp-venc">Vencimento</Label>
+                <Label htmlFor="imp-venc">{t("fields.vencimento")}</Label>
                 <Input
                   id="imp-venc"
                   type="date"
@@ -610,7 +598,7 @@ export function ImportContaDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Forma</Label>
+                <Label>{t("fields.forma")}</Label>
                 <Select
                   value={forma || "_none"}
                   onValueChange={(v) =>
@@ -618,10 +606,10 @@ export function ImportContaDialog({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder={t("fields.selecione")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">—</SelectItem>
+                    <SelectItem value="_none">{t("fields.none")}</SelectItem>
                     {FORMAS_PAGAMENTO.map((f) => (
                       <SelectItem key={f.id} value={f.id}>
                         {f.label}
@@ -631,16 +619,16 @@ export function ImportContaDialog({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Categoria</Label>
+                <Label>{t("fields.categoria")}</Label>
                 <Select
                   value={categoriaId || "_none"}
                   onValueChange={(v) => setCategoriaId(v === "_none" ? "" : v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder={t("fields.selecione")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">Sem categoria</SelectItem>
+                    <SelectItem value="_none">{t("fields.semCategoria")}</SelectItem>
                     {categorias.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.nome}
@@ -652,17 +640,17 @@ export function ImportContaDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="imp-boleto">Código do boleto</Label>
+              <Label htmlFor="imp-boleto">{t("fields.codigoBoleto")}</Label>
               <Input
                 id="imp-boleto"
                 value={codigoBoleto}
                 onChange={(e) => setCodigoBoleto(e.target.value)}
-                placeholder="Linha digitável"
+                placeholder={t("fields.linhaDigitavel")}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="imp-pix">Pix copia e cola</Label>
+              <Label htmlFor="imp-pix">{t("fields.codigoPix")}</Label>
               <Textarea
                 id="imp-pix"
                 rows={2}
@@ -673,7 +661,7 @@ export function ImportContaDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="imp-chave">Chave Pix</Label>
+                <Label htmlFor="imp-chave">{t("fields.chavePix")}</Label>
                 <Input
                   id="imp-chave"
                   value={chavePix}
@@ -681,7 +669,7 @@ export function ImportContaDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="imp-banco">Banco emissor</Label>
+                <Label htmlFor="imp-banco">{t("fields.banco")}</Label>
                 <Input
                   id="imp-banco"
                   value={bancoEmissor}
@@ -691,7 +679,7 @@ export function ImportContaDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="imp-obs">Observação</Label>
+              <Label htmlFor="imp-obs">{t("fields.observacao")}</Label>
               <Textarea
                 id="imp-obs"
                 rows={2}
@@ -706,8 +694,10 @@ export function ImportContaDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {itensPdf.filter((it) => it.selecionado).length} de {itensPdf.length}{" "}
-                selecionada(s)
+                {t("lote.selectedOf", {
+                  sel: itensPdf.filter((it) => it.selecionado).length,
+                  total: itensPdf.length,
+                })}
               </span>
               <div className="flex gap-2">
                 <button
@@ -719,7 +709,7 @@ export function ImportContaDialog({
                     )
                   }
                 >
-                  Marcar todas
+                  {t("lote.markAll")}
                 </button>
                 <button
                   type="button"
@@ -730,14 +720,14 @@ export function ImportContaDialog({
                     )
                   }
                 >
-                  Desmarcar
+                  {t("lote.unmark")}
                 </button>
               </div>
             </div>
 
             {itensPdf.length === 0 && (
               <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Nenhum item para revisar.
+                {t("lote.empty")}
               </p>
             )}
 
@@ -761,25 +751,25 @@ export function ImportContaDialog({
                     <div className="flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold">
-                          {it.nome || "(sem nome)"}
+                          {it.nome || t("lote.noName")}
                         </span>
                         {it.duplicado && (
                           <Badge
                             variant="outline"
                             className="border-warning/50 text-warning"
                           >
-                            Já existe no app
+                            {t("lote.exists")}
                           </Badge>
                         )}
                         {it.confianca === "baixa" && (
                           <Badge variant="outline" className="text-muted-foreground">
-                            Confiança baixa
+                            {t("lote.lowConfBadge")}
                           </Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {Number.isFinite(v) && v > 0 ? formatBRL(v) : "—"}
-                        {it.vencimento ? ` · vence ${it.vencimento}` : ""}
+                        {it.vencimento ? t("lote.dueOn", { date: it.vencimento }) : ""}
                         {it.beneficiario ? ` · ${it.beneficiario}` : ""}
                         {it.motivoDuplicado ? ` · ${it.motivoDuplicado}` : ""}
                       </p>
@@ -788,7 +778,7 @@ export function ImportContaDialog({
                       variant="ghost"
                       size="icon"
                       onClick={() => removerItem(it.uid)}
-                      title="Remover da lista"
+                      title={t("lote.removeFromList")}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -796,14 +786,14 @@ export function ImportContaDialog({
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Nome</Label>
+                      <Label className="text-xs">{t("fields.nome")}</Label>
                       <Input
                         value={it.nome}
                         onChange={(e) => patchItem(it.uid, { nome: e.target.value })}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Beneficiário</Label>
+                      <Label className="text-xs">{t("fields.beneficiario")}</Label>
                       <Input
                         value={it.beneficiario}
                         onChange={(e) =>
@@ -812,7 +802,7 @@ export function ImportContaDialog({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Valor</Label>
+                      <Label className="text-xs">{t("fields.valor")}</Label>
                       <Input
                         inputMode="decimal"
                         value={it.valorStr}
@@ -820,7 +810,7 @@ export function ImportContaDialog({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Vencimento</Label>
+                      <Label className="text-xs">{t("fields.vencimento")}</Label>
                       <Input
                         type="date"
                         value={it.vencimento}
@@ -828,7 +818,7 @@ export function ImportContaDialog({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Forma</Label>
+                      <Label className="text-xs">{t("fields.forma")}</Label>
                       <Select
                         value={it.forma || "_none"}
                         onValueChange={(v) =>
@@ -838,10 +828,10 @@ export function ImportContaDialog({
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder={t("fields.selecione")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="_none">—</SelectItem>
+                          <SelectItem value="_none">{t("fields.none")}</SelectItem>
                           {FORMAS_PAGAMENTO.map((f) => (
                             <SelectItem key={f.id} value={f.id}>
                               {f.label}
@@ -851,7 +841,7 @@ export function ImportContaDialog({
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Categoria</Label>
+                      <Label className="text-xs">{t("fields.categoria")}</Label>
                       <Select
                         value={it.categoriaId || "_none"}
                         onValueChange={(v) =>
@@ -859,10 +849,10 @@ export function ImportContaDialog({
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder={t("fields.selecione")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="_none">Sem categoria</SelectItem>
+                          <SelectItem value="_none">{t("fields.semCategoria")}</SelectItem>
                           {categorias.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
                               {c.nome}
@@ -877,7 +867,7 @@ export function ImportContaDialog({
                     <div className="space-y-2">
                       {it.codigoBoleto && (
                         <div className="space-y-1">
-                          <Label className="text-xs">Código do boleto</Label>
+                          <Label className="text-xs">{t("fields.codigoBoleto")}</Label>
                           <Input
                             value={it.codigoBoleto}
                             onChange={(e) =>
@@ -888,7 +878,7 @@ export function ImportContaDialog({
                       )}
                       {it.codigoPix && (
                         <div className="space-y-1">
-                          <Label className="text-xs">Pix copia e cola</Label>
+                          <Label className="text-xs">{t("fields.codigoPix")}</Label>
                           <Textarea
                             rows={2}
                             value={it.codigoPix}
@@ -900,7 +890,7 @@ export function ImportContaDialog({
                       )}
                       {it.chavePix && (
                         <div className="space-y-1">
-                          <Label className="text-xs">Chave Pix</Label>
+                          <Label className="text-xs">{t("fields.chavePix")}</Label>
                           <Input
                             value={it.chavePix}
                             onChange={(e) =>
@@ -914,7 +904,7 @@ export function ImportContaDialog({
 
                   {it.observacao && (
                     <div className="space-y-1">
-                      <Label className="text-xs">Observação</Label>
+                      <Label className="text-xs">{t("fields.observacao")}</Label>
                       <Textarea
                         rows={2}
                         value={it.observacao}
@@ -934,23 +924,23 @@ export function ImportContaDialog({
           {modoItem ? (
             <>
               <Button variant="outline" onClick={() => setConta(null)}>
-                Voltar
+                {t("footer.back")}
               </Button>
-              <Button onClick={handleSalvar}>Salvar conta</Button>
+              <Button onClick={handleSalvar}>{t("footer.save")}</Button>
             </>
           ) : modoLote ? (
             <>
               <Button variant="outline" onClick={() => setItensPdf(null)}>
-                Voltar
+                {t("footer.back")}
               </Button>
               <Button onClick={handleSalvarLote}>
                 <CheckCircle2 className="mr-1 h-4 w-4" />
-                Importar selecionadas
+                {t("footer.importSelected")}
               </Button>
             </>
           ) : (
             <Button variant="outline" onClick={handleClose}>
-              Cancelar
+              {t("footer.cancel")}
             </Button>
           )}
         </DialogFooter>
