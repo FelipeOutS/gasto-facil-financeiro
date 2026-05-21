@@ -395,24 +395,24 @@ export function ImportExtratoDialog({
         } catch {
           console.error("[import-extrato] resposta não-JSON:", resp.status, raw.slice(0, 200));
           if (resp.status === 413) {
-            toast.error("PDF muito grande. Tente um arquivo menor.");
+            toast.error(t("errors.pdfTooBigShort"));
           } else if (resp.status >= 500 || resp.status === 0) {
-            toast.error("Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
+            toast.error(t("errors.readPdfNo"));
           } else {
-            toast.error("Erro ao processar o extrato. Tente novamente.");
+            toast.error(t("errors.processFail"));
           }
           setLoading(false);
           return;
         }
 
         if (!resp.ok) {
-          toast.error(json?.error || "Não foi possível ler este PDF. Tente outro arquivo ou exporte uma versão sem senha.");
+          toast.error(json?.error || t("errors.readPdfNo"));
           setLoading(false);
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
         if (brutos.length === 0) {
-          toast.warning("Não encontramos movimentações nesse PDF.");
+          toast.warning(t("errors.noneInPdf"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
           return;
@@ -424,7 +424,7 @@ export function ImportExtratoDialog({
         setStep("review");
       } catch (e) {
         console.error("[import-extrato] erro envio PDF", e);
-        toast.error("Erro ao processar o extrato. Tente novamente.");
+        toast.error(t("errors.processFail"));
       } finally {
         setLoading(false);
       }
