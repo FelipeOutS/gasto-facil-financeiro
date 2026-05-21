@@ -440,7 +440,7 @@ export function ImportExtratoDialog({
         const text = await file.text();
         const { headers, rows } = parseCsvFile(text);
         if (rows.length === 0) {
-          toast.error("CSV vazio ou inválido.");
+          toast.error(t("errors.csvEmpty"));
           setLoading(false);
           return;
         }
