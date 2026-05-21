@@ -550,7 +550,7 @@ export function ImportExtratoDialog({
       (i) => i.selecionado && i.valor !== null && i.valor > 0 && i.data && i.descricao.trim(),
     );
     if (validos.length === 0) {
-      toast.error("Nenhum item válido selecionado.");
+      toast.error(t("errors.noneSelected"));
       return;
     }
 
