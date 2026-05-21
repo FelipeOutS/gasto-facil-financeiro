@@ -36,7 +36,8 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl safe-bottom lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 safe-bottom lg:hidden"
+      style={{ position: "fixed", transform: "translate3d(0,0,0)" }}
       aria-label={t("aria.primary")}
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">

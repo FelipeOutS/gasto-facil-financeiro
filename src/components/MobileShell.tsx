@@ -26,10 +26,15 @@ export function MobileShell({
       <div className={showNav ? "lg:pl-64" : ""}>
         <main
           className={
-            "mx-auto flex min-h-screen min-h-dvh w-full flex-col px-4 pb-[calc(96px+env(safe-area-inset-bottom))] safe-top sm:px-5 md:px-6 lg:px-6 lg:pb-12 xl:px-8 2xl:px-10 page-enter " +
+            "mx-auto flex w-full flex-col px-4 pt-4 pb-[calc(112px+env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:min-h-screen lg:px-6 lg:pt-6 lg:pb-12 xl:px-8 2xl:px-10 page-enter " +
             (wide
               ? "max-w-md md:max-w-3xl lg:max-w-[1200px] xl:max-w-[1440px] 2xl:max-w-[1600px]"
               : "max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl")
+          }
+          style={
+            showNav
+              ? { minHeight: "calc(100dvh - 3rem - max(0.75rem, env(safe-area-inset-top, 0px)))" }
+              : { minHeight: "100dvh" }
           }
         >
           {children}

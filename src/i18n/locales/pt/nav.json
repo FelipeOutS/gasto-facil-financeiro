@@ -38,6 +38,8 @@
     "categorias": "Ajustes",
     "landing": "Conhecer o Gasto Inteligente",
     "admin": "Admin",
+    "perfilMobile": "Meu perfil",
+    "idioma": "Idioma do app",
     "more": "Mais"
   },
   "more": {
@@ -68,6 +70,8 @@
     "meuPlano": "Assinatura e recursos",
     "categorias": "Preferências da conta",
     "landing": "Ver recursos, planos e novidades",
-    "admin": "Painel administrativo"
+    "admin": "Painel administrativo",
+    "perfilMobile": "Dados da conta, perfil e atalhos pessoais",
+    "idioma": "Troque entre Português e English"
   }
 }

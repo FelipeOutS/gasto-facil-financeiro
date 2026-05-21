@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { Bell } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
-import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/lib/auth-context";
+import { useAlerts } from "@/lib/alerts/use-alerts";
 
 function getInitials(name?: string | null, email?: string | null) {
   const src = (name && name.trim()) || (email && email.split("@")[0]) || "U";
@@ -18,11 +19,12 @@ function getInitials(name?: string | null, email?: string | null) {
  */
 export function MobileTopBar() {
   const { user, profile } = useAuth();
+  const { unreadCount } = useAlerts();
 
   const initials = getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email);
 
   return (
-    <div className="lg:hidden sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl safe-top">
+    <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 safe-top lg:hidden">
       <div className="mx-auto flex h-12 max-w-md items-center justify-between gap-3 px-4">
         <Link
           to="/"
@@ -32,10 +34,21 @@ export function MobileTopBar() {
           <BrandMark className="h-7" />
         </Link>
         <div className="flex items-center gap-1">
-          <NotificationBell />
           <Link
-            to="/app/mais"
-            aria-label="Abrir mais opções"
+            to="/alertas"
+            aria-label="Abrir alertas"
+            className="relative grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-card/70 text-muted-foreground active:scale-95"
+          >
+            <Bell className="h-4.5 w-4.5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold leading-none text-background ring-2 ring-background">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            to="/app/perfil"
+            aria-label="Abrir perfil"
             className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-xs font-bold text-foreground active:scale-95"
           >
             {profile?.avatar_url ? (

@@ -35,6 +35,12 @@
     "title": "Idioma do app",
     "description": "Escolha o idioma da interface. A preferência é salva e usada nas próximas visitas."
   },
+  "profileShortcuts": {
+    "title": "Perfil",
+    "description": "Acesse dados da conta, ajustes e atalhos pessoais.",
+    "account": "Dados da conta",
+    "settings": "Ajustes"
+  },
   "meta": {
     "title": "Minha conta — Gasto Inteligente"
   }
