@@ -13,6 +13,7 @@
  *   4) Insight do mês + comparação com mês anterior
  */
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   CalendarClock,
@@ -54,12 +55,6 @@ type Props = {
   onAbrirFatura?: (cartaoId: string, mes: number, ano: number) => void;
 };
 
-const STATUS_LABEL: Record<StatusFatura, string> = {
-  aberta: "Aberta",
-  fechada: "Fechada",
-  vencida: "Vencida",
-  paga: "Paga",
-};
 const STATUS_TONE: Record<StatusFatura, string> = {
   aberta: "bg-brand-soft text-brand-on-soft",
   fechada: "bg-warning/15 text-warning",
@@ -82,6 +77,8 @@ export function DashboardCartoesInsights({
   maiorCategoria,
   onAbrirFatura,
 }: Props) {
+  const { t, i18n } = useTranslation("dashboard");
+  const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "pt-BR";
   // Re-renderiza quando store de cartões/faturas mudar.
   useStore(() => getCartoes().length);
   const cartoes = useStore(() => getCartoes());
