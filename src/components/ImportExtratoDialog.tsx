@@ -1094,7 +1094,7 @@ function ReviewCard({
         )}
         {item.tipoMovimentacao === "despesa" && (
           <div className="sm:col-span-2">
-            <Label className="text-xs">Categoria</Label>
+            <Label className="text-xs">{t("row.categoria")}</Label>
             <Select
               value={item.categoriaId}
               onValueChange={(v) => onUpdate({ categoriaId: v })}
@@ -1116,7 +1116,7 @@ function ReviewCard({
 
       {item.valor !== null && (
         <div className="text-xs text-muted-foreground pt-1">
-          Total: <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
+          {t("row.total")} <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
         </div>
       )}
     </div>
