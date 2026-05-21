@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ export function EditGastoDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { t } = useTranslation("gastos");
   const [snapshot, setSnapshot] = useState<Gasto | null>(gasto);
   useEffect(() => {
     if (gasto) setSnapshot(gasto);
@@ -60,7 +62,6 @@ export function EditGastoDialog({
   const [horario, setHorario] = useState("");
   const [invoiceMonth, setInvoiceMonth] = useState<string>("");
 
-  // Initialize fields from snapshot whenever the dialog opens with a new gasto
   useEffect(() => {
     if (!snapshot || !open) return;
     setValorStr(snapshot.valor ? snapshot.valor.toFixed(2).replace(".", ",") : "");
@@ -89,16 +90,16 @@ export function EditGastoDialog({
     if (!snapshot) return;
     const nome = (descricao || estabelecimento).trim();
     if (!nome) {
-      toast.error("Preencha o nome do gasto.");
+      toast.error(t("form.editar.errNome"));
       return;
     }
     if (!valor || valor <= 0 || !Number.isFinite(valor)) {
-      toast.error("Informe um valor válido.");
+      toast.error(t("form.editar.errValor"));
       return;
     }
     const parsed = parseDateLocal(data);
     if (!parsed) {
-      toast.error("Escolha uma data para o gasto.");
+      toast.error(t("form.editar.errData"));
       return;
     }
     const dataNorm = toLocalISODate(parsed);
@@ -116,11 +117,11 @@ export function EditGastoDialog({
         horario: horario.trim() || undefined,
         invoiceMonth: invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
       });
-      toast.success("Gasto atualizado com sucesso.");
+      toast.success(t("form.editar.ok"));
       onOpenChange(false);
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível atualizar o gasto. Tente novamente.");
+      toast.error(t("form.editar.err"));
     }
   }
 
@@ -133,20 +134,17 @@ export function EditGastoDialog({
           "max-h-[90vh] flex flex-col rounded-2xl",
         )}
       >
-        {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border text-left space-y-1">
-          <DialogTitle className="text-xl font-semibold">Editar gasto</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{t("form.editar.title")}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Atualize os dados do gasto. As alterações refletem em todo o app.
+            {t("form.editar.desc")}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Body (scroll) */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Valor */}
           <div className="rounded-2xl border border-border bg-card p-4">
             <Label htmlFor="edit-valor" className="text-xs text-muted-foreground">
-              Valor
+              {t("form.valor")}
             </Label>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-xl font-bold text-muted-foreground">R$</span>
@@ -162,9 +160,8 @@ export function EditGastoDialog({
             <p className="num mt-1 text-xs text-muted-foreground">{valorPreview}</p>
           </div>
 
-          {/* Categoria */}
           <div>
-            <Label className="text-xs text-muted-foreground">Categoria</Label>
+            <Label className="text-xs text-muted-foreground">{t("form.categoria")}</Label>
             <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
               {categorias.map((c) => {
                 const active = c.id === categoriaId;
@@ -188,11 +185,10 @@ export function EditGastoDialog({
             </div>
           </div>
 
-          {/* Data + Forma de pagamento */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="edit-data" className="text-xs text-muted-foreground">
-                Data
+                {t("form.data")}
               </Label>
               <Input
                 id="edit-data"
@@ -203,7 +199,7 @@ export function EditGastoDialog({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Pagamento</Label>
+              <Label className="text-xs text-muted-foreground">{t("form.pagamento")}</Label>
               <Select
                 value={formaPagamento}
                 onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}
@@ -214,7 +210,7 @@ export function EditGastoDialog({
                 <SelectContent>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.label}
+                      {t(`pagamento.${f.id}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -222,10 +218,9 @@ export function EditGastoDialog({
             </div>
           </div>
 
-          {/* Mês de referência */}
           <div className="rounded-2xl border border-border bg-card p-3">
             <Label htmlFor="edit-invoice" className="text-xs text-muted-foreground">
-              Mês de referência
+              {t("form.mesRefLabel")}
             </Label>
             <Select value={invoiceMonth} onValueChange={setInvoiceMonth}>
               <SelectTrigger className="mt-1.5 h-11 bg-card-elevated sm:max-w-[260px]">
@@ -239,15 +234,12 @@ export function EditGastoDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
-            </p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">{t("form.mesRefHelp")}</p>
           </div>
 
-          {/* Horário (opcional) */}
           <div>
             <Label htmlFor="edit-horario" className="text-xs text-muted-foreground">
-              Horário (opcional)
+              {t("form.editar.horario")}
             </Label>
             <Input
               id="edit-horario"
@@ -258,12 +250,11 @@ export function EditGastoDialog({
             />
           </div>
 
-          {/* Cartão */}
           {formaPagamento === "credito" && (
             <div className="rounded-2xl border border-border bg-card p-3">
               <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CreditCard className="h-3.5 w-3.5" />
-                Cartão
+                {t("form.editar.cartao")}
               </Label>
               {cartoes.length > 0 ? (
                 <Select
@@ -271,7 +262,7 @@ export function EditGastoDialog({
                   onValueChange={(v) => setCartaoId(v || undefined)}
                 >
                   <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
-                    <SelectValue placeholder="Selecionar cartão (opcional)" />
+                    <SelectValue placeholder={t("form.selecionarCartao")} />
                   </SelectTrigger>
                   <SelectContent>
                     {cartoes.map((c) => (
@@ -293,48 +284,45 @@ export function EditGastoDialog({
                 </Select>
               ) : (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Nenhum cartão cadastrado.
+                  {t("form.editar.nenhumCartao")}
                 </p>
               )}
             </div>
           )}
 
-          {/* Estabelecimento */}
           <div>
             <Label htmlFor="edit-estab" className="text-xs text-muted-foreground">
-              Estabelecimento
+              {t("form.estabelecimento")}
             </Label>
             <Input
               id="edit-estab"
-              placeholder="Ex.: Mercado Assaí"
+              placeholder={t("form.estabelecimentoPh")}
               value={estabelecimento}
               onChange={(e) => setEstabelecimento(e.target.value)}
               className="mt-1 h-11 bg-card"
             />
           </div>
 
-          {/* Descrição */}
           <div>
             <Label htmlFor="edit-desc" className="text-xs text-muted-foreground">
-              Descrição
+              {t("form.descricao")}
             </Label>
             <Input
               id="edit-desc"
-              placeholder="Detalhes do gasto"
+              placeholder={t("form.descricaoPh")}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               className="mt-1 h-11 bg-card"
             />
           </div>
 
-          {/* Observação */}
           <div>
             <Label htmlFor="edit-obs" className="text-xs text-muted-foreground">
-              Observação
+              {t("form.observacao")}
             </Label>
             <Textarea
               id="edit-obs"
-              placeholder="Opcional"
+              placeholder={t("form.observacaoPh")}
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               className="mt-1 min-h-[72px] resize-none bg-card"
@@ -342,7 +330,6 @@ export function EditGastoDialog({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-border bg-background px-6 py-3">
           <Button
             type="button"
@@ -350,10 +337,10 @@ export function EditGastoDialog({
             onClick={() => onOpenChange(false)}
             className="h-10"
           >
-            Cancelar
+            {t("form.editar.cancelar")}
           </Button>
           <Button type="button" onClick={handleSave} className="h-10 px-5 font-semibold">
-            Salvar alterações
+            {t("form.editar.salvar")}
           </Button>
         </div>
       </DialogContent>

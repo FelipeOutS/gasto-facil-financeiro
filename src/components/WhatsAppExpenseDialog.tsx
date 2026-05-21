@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -29,8 +30,6 @@ const EXEMPLOS = [
   "Gastei R$ 26,00 na H Nunes Lanchonete hoje no Mercado Pago",
   "Spotify 19,90 assinatura Nubank",
   "Cobasi 221,13 pet cartão Mercado Pago 13/04",
-  "Aluguel 950 pix moradia 25/04",
-  "Notebook 2500 em 10x cartão Inter",
 ];
 
 const MODELO =
@@ -43,6 +42,7 @@ type Props = {
 };
 
 export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
+  const { t, i18n } = useTranslation("gastos");
   const cartoes = useStore(() => getCartoes());
   const categorias = useStore(() => getCategorias());
   const { canWrite, requireSubscription } = useSubscriptionGuard();
@@ -62,9 +62,14 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
 
   const categoria = categorias.find((c) => c.id === categoriaId);
   const cartao = parsed?.cartaoId ? cartoes.find((c) => c.id === parsed.cartaoId) : undefined;
-  const formaLabel = FORMAS_PAGAMENTO.find((f) => f.id === parsed?.formaPagamento)?.label ?? "—";
+  const formaLabel = parsed?.formaPagamento
+    ? t(`pagamento.${parsed.formaPagamento}`)
+    : "—";
+  // ensure FORMAS_PAGAMENTO stays imported (used elsewhere) – referenced for type narrow
+  void FORMAS_PAGAMENTO;
 
   const altaConfianca = !!parsed && parsed.confianca >= 0.7 && parsed.valor > 0;
+  const dateLocale = i18n.resolvedLanguage === "en" ? "en-US" : "pt-BR";
 
   function copiarModelo() {
     navigator.clipboard.writeText(MODELO);
@@ -78,11 +83,11 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
 
   function salvar() {
     if (!parsed || parsed.valor <= 0) {
-      toast.error("Não consegui identificar o valor da mensagem");
+      toast.error(t("whatsapp.errValor"));
       return;
     }
     if (!canWrite) {
-      requireSubscription("Para adicionar gastos, escolha um plano ativo.");
+      requireSubscription(t("whatsapp.errPlano"));
       return;
     }
 
@@ -100,10 +105,11 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
       origem: "whatsapp",
     });
 
-    toast.success("Gasto adicionado!", {
-      description: `${parsed.nome} — ${formatBRL(parsed.valor)}${
-        cartao ? ` no cartão ${cartao.nome}` : ""
-      }`,
+    const cartaoSuffix = cartao ? t("whatsapp.okSalvoCartao", { nome: cartao.nome }) : "";
+    toast.success(t("whatsapp.okSalvo"), {
+      description:
+        t("whatsapp.okSalvoDesc", { nome: parsed.nome, valor: formatBRL(parsed.valor) }) +
+        cartaoSuffix,
     });
 
     setMensagem("");
@@ -120,25 +126,24 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
               <MessageCircle className="h-5 w-5" />
             </span>
             <div>
-              <DialogTitle>Adicionar pelo WhatsApp</DialogTitle>
+              <DialogTitle>{t("whatsapp.title")}</DialogTitle>
               <DialogDescription className="text-xs">
-                Cole ou digite a mensagem. O app interpreta valor, cartão, data e categoria.
+                {t("whatsapp.desc")}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Campo mensagem */}
           <div>
             <Textarea
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
-              placeholder="Ex.: Gastei R$ 26,00 na H Nunes Lanchonete hoje no Mercado Pago"
+              placeholder={t("whatsapp.placeholder")}
               className="min-h-[96px] bg-card-elevated text-sm"
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {EXEMPLOS.slice(0, 3).map((ex) => (
+              {EXEMPLOS.map((ex) => (
                 <button
                   key={ex}
                   type="button"
@@ -151,12 +156,11 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
             </div>
           </div>
 
-          {/* Prévia */}
           {parsed && parsed.valor > 0 && (
             <div className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-fade-in">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" /> Prévia
+                  <Sparkles className="h-3.5 w-3.5" /> {t("whatsapp.previa")}
                 </span>
                 <Badge
                   variant="outline"
@@ -166,7 +170,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
                       : "border-amber-500/40 text-amber-400"
                   }
                 >
-                  {altaConfianca ? "Alta confiança" : "Revisar"}
+                  {altaConfianca ? t("whatsapp.altaConf") : t("whatsapp.revisar")}
                 </Badge>
               </div>
 
@@ -177,37 +181,40 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-card-elevated px-2.5 py-2">
-                  <p className="text-muted-foreground">Categoria</p>
+                  <p className="text-muted-foreground">{t("whatsapp.categoria")}</p>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     {categoria && <CategoryIcon categoria={categoria} size="sm" />}
                     <span className="font-medium">{categoria?.nome ?? "—"}</span>
                   </div>
                 </div>
                 <div className="rounded-lg bg-card-elevated px-2.5 py-2">
-                  <p className="text-muted-foreground">Pagamento</p>
+                  <p className="text-muted-foreground">{t("whatsapp.pagamento")}</p>
                   <p className="mt-0.5 font-medium">{formaLabel}</p>
                 </div>
                 <div className="rounded-lg bg-card-elevated px-2.5 py-2">
-                  <p className="text-muted-foreground">Data</p>
+                  <p className="text-muted-foreground">{t("whatsapp.data")}</p>
                   <p className="mt-0.5 font-medium num">
-                    {new Date(parsed.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                    {new Date(parsed.data + "T00:00:00").toLocaleDateString(dateLocale)}
                   </p>
                 </div>
                 <div className="rounded-lg bg-card-elevated px-2.5 py-2">
-                  <p className="text-muted-foreground">Cartão</p>
+                  <p className="text-muted-foreground">{t("whatsapp.cartao")}</p>
                   <p className="mt-0.5 font-medium truncate">
                     {cartao
                       ? cartao.nome
                       : parsed.cartaoNomeDetectado
-                        ? `${parsed.cartaoNomeDetectado} (não cadastrado)`
+                        ? t("whatsapp.naoCadastrado", { nome: parsed.cartaoNomeDetectado })
                         : "—"}
                   </p>
                 </div>
                 {parsed.parcelas && (
                   <div className="col-span-2 rounded-lg bg-card-elevated px-2.5 py-2">
-                    <p className="text-muted-foreground">Parcelas</p>
+                    <p className="text-muted-foreground">{t("whatsapp.parcelas")}</p>
                     <p className="mt-0.5 font-medium num">
-                      {parsed.parcelas}x de {formatBRL(parsed.valor / parsed.parcelas)}
+                      {t("whatsapp.parcelasPreview", {
+                        n: parsed.parcelas,
+                        valor: formatBRL(parsed.valor / parsed.parcelas),
+                      })}
                     </p>
                   </div>
                 )}
@@ -226,10 +233,8 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
             </div>
           )}
 
-          {/* Aviso de segurança + modelo */}
           <div className="rounded-xl border border-dashed border-border bg-card/40 p-3 text-[11px] text-muted-foreground">
-            🔒 Nunca envie número completo do cartão, CVV, senha ou dados bancários sensíveis.
-            Use apenas nome do cartão, valor, categoria e data.
+            {t("whatsapp.aviso")}
           </div>
 
           <button
@@ -237,27 +242,25 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
             onClick={copiarModelo}
             className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs hover:bg-card-elevated"
           >
-            <span className="text-muted-foreground">Copiar modelo de mensagem</span>
+            <span className="text-muted-foreground">{t("whatsapp.copiarModelo")}</span>
             {copiado ? (
               <Check className="h-3.5 w-3.5 text-emerald-400" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
           </button>
-
-          {/* Configuração técnica do webhook é restrita ao admin master. */}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t("whatsapp.cancelar")}
           </Button>
           <Button
             onClick={salvar}
             disabled={!parsed || parsed.valor <= 0}
             className="bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            {altaConfianca ? "Salvar gasto" : "Salvar mesmo assim"}
+            {altaConfianca ? t("whatsapp.salvar") : t("whatsapp.salvarMesmo")}
           </Button>
         </DialogFooter>
       </DialogContent>

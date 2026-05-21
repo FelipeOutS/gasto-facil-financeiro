@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +34,8 @@ export type GastoFormProps = {
   onSubmit: (data: NovoGastoInput) => void;
 };
 
-export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: GastoFormProps) {
+export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
+  const { t } = useTranslation("gastos");
   const categorias = useStore(() => getCategorias());
   const cartoes = useStore(() => getCartoes());
 
@@ -47,7 +49,6 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const [categoriaId, setCategoriaId] = useState(
     initial?.categoriaId ?? categorias[0]?.id ?? "outros",
   );
-  // Tracks whether the user manually picked a category — once true, never auto-replace.
   const userPickedCategoria = useRef(!!initial?.categoriaId);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>(
     initial?.formaPagamento ?? "credito",
@@ -69,7 +70,6 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
       : ymFromDate(initial?.data ?? todayISO()),
   );
   const userPickedMes = useRef(!!initial?.invoiceMonth);
-  // Quando o usuário muda a data, sugerir mês de referência (sem sobrescrever escolha manual)
   useEffect(() => {
     if (userPickedMes.current) return;
     setInvoiceMonth(ymFromDate(data));
@@ -77,17 +77,15 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
   const opcoesMes = useMemo(() => mesReferenciaOpcoes(data), [data]);
   const [showMore, setShowMore] = useState(false);
 
-  // Suggest category when user types in establishment/description (only if not user-picked)
   useEffect(() => {
     if (userPickedCategoria.current) return;
-    const t = `${estabelecimento} ${descricao}`.trim();
-    if (t.length < 3) return;
-    const sug = suggestCategory(t);
+    const txt = `${estabelecimento} ${descricao}`.trim();
+    if (txt.length < 3) return;
+    const sug = suggestCategory(txt);
     setCategoriaId((prev) => (prev === sug ? prev : sug));
   }, [estabelecimento, descricao]);
 
   const valid = valor > 0 && !!data && !!categoriaId;
-
   const valorPreview = useMemo(() => formatBRL(valor), [valor]);
 
   return (
@@ -116,10 +114,9 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
       }}
       className="space-y-5"
     >
-      {/* Valor card */}
       <div className="rounded-3xl border border-border bg-card p-5">
         <Label htmlFor="valor" className="text-xs text-muted-foreground">
-          Valor
+          {t("form.valor")}
         </Label>
         <div className="mt-1 flex items-baseline gap-2">
           <span className="text-2xl font-bold text-muted-foreground">R$</span>
@@ -135,9 +132,8 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         <p className="num mt-1 text-xs text-muted-foreground">{valorPreview}</p>
       </div>
 
-      {/* Categoria */}
       <div>
-        <Label className="text-xs text-muted-foreground">Categoria</Label>
+        <Label className="text-xs text-muted-foreground">{t("form.categoria")}</Label>
         <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
           {categorias.map((c) => {
             const active = c.id === categoriaId;
@@ -164,11 +160,10 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         </div>
       </div>
 
-      {/* Quick fields */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="data" className="text-xs text-muted-foreground">
-            Data
+            {t("form.data")}
           </Label>
           <Input
             id="data"
@@ -179,7 +174,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Pagamento</Label>
+          <Label className="text-xs text-muted-foreground">{t("form.pagamento")}</Label>
           <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}>
             <SelectTrigger className="mt-1 h-11 bg-card">
               <SelectValue />
@@ -187,7 +182,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
             <SelectContent>
               {FORMAS_PAGAMENTO.map((f) => (
                 <SelectItem key={f.id} value={f.id}>
-                  {f.label}
+                  {t(`pagamento.${f.id}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -195,11 +190,10 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         </div>
       </div>
 
-      {/* Mês de referência */}
       <div className="rounded-2xl border border-border bg-card p-3">
         <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5" />
-          Mês de referência
+          {t("form.mesRefLabel")}
         </Label>
         <Select
           value={invoiceMonth}
@@ -219,21 +213,19 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
             ))}
           </SelectContent>
         </Select>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Escolha o mês ao qual este gasto realmente pertence. Exemplo: uma conta paga em Maio pode ser referente a Abril.
-        </p>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">{t("form.mesRefHelp")}</p>
       </div>
 
       {formaPagamento === "credito" && (
         <div className="rounded-2xl border border-border bg-card p-3 animate-fade-in">
           <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5" />
-            Escolha o cartão
+            {t("form.escolhaCartao")}
           </Label>
           {cartoes.length > 0 ? (
             <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v || undefined)}>
               <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
-                <SelectValue placeholder="Selecionar cartão (opcional)" />
+                <SelectValue placeholder={t("form.selecionarCartao")} />
               </SelectTrigger>
               <SelectContent>
                 {cartoes.map((c) => (
@@ -249,9 +241,9 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
             </Select>
           ) : (
             <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
-              <p className="text-xs text-muted-foreground">Você ainda não tem cartões cadastrados.</p>
+              <p className="text-xs text-muted-foreground">{t("form.semCartoes")}</p>
               <Link to="/cartoes" search={{ abrir: undefined }} className="text-xs font-semibold text-brand hover:underline">
-                Cadastrar cartão
+                {t("form.cadastrarCartao")}
               </Link>
             </div>
           )}
@@ -260,11 +252,11 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
 
       <div>
         <Label htmlFor="estab" className="text-xs text-muted-foreground">
-          Estabelecimento
+          {t("form.estabelecimento")}
         </Label>
         <Input
           id="estab"
-          placeholder="Ex.: Mercado Assaí"
+          placeholder={t("form.estabelecimentoPh")}
           value={estabelecimento}
           onChange={(e) => setEstabelecimento(e.target.value)}
           className="mt-1 h-11 bg-card"
@@ -276,7 +268,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         onClick={() => setShowMore((s) => !s)}
         className="flex w-full items-center justify-between text-sm text-muted-foreground hover:text-foreground"
       >
-        Mais detalhes
+        {t("form.maisDetalhes")}
         {showMore ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
 
@@ -284,11 +276,11 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
           <div>
             <Label htmlFor="desc" className="text-xs text-muted-foreground">
-              Descrição
+              {t("form.descricao")}
             </Label>
             <Input
               id="desc"
-              placeholder="Detalhes do gasto"
+              placeholder={t("form.descricaoPh")}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               className="mt-1 h-11 bg-card-elevated"
@@ -297,11 +289,11 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
 
           <div>
             <Label htmlFor="obs" className="text-xs text-muted-foreground">
-              Observação
+              {t("form.observacao")}
             </Label>
             <Textarea
               id="obs"
-              placeholder="Opcional"
+              placeholder={t("form.observacaoPh")}
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               className="mt-1 min-h-[70px] bg-card-elevated"
@@ -309,13 +301,13 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground">Tipo de gasto</Label>
+            <Label className="text-xs text-muted-foreground">{t("form.tipoGasto")}</Label>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(
                 [
-                  { id: "unico", label: "Único" },
-                  { id: "parcelado", label: "Parcelado", icon: Layers },
-                  { id: "recorrente", label: "Recorrente", icon: Repeat },
+                  { id: "unico", label: t("form.tipoUnico") },
+                  { id: "parcelado", label: t("form.tipoParcelado"), icon: Layers },
+                  { id: "recorrente", label: t("form.tipoRecorrente"), icon: Repeat },
                 ] as const
               ).map((opt) => {
                 const active = tipoGasto === opt.id;
@@ -342,7 +334,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
 
           {tipoGasto === "parcelado" && (
             <div>
-              <Label className="text-xs text-muted-foreground">Parcelas</Label>
+              <Label className="text-xs text-muted-foreground">{t("form.parcelas")}</Label>
               <Input
                 type="number"
                 min={2}
@@ -352,13 +344,13 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
                 className="mt-1 h-11 bg-card-elevated"
               />
               <p className="mt-1 text-xs text-muted-foreground num">
-                {parcelas}x de {formatBRL(valor / parcelas)}
+                {t("form.parcelasPreview", { n: parcelas, valor: formatBRL(valor / parcelas) })}
               </p>
             </div>
           )}
           {tipoGasto === "recorrente" && (
             <div>
-              <Label className="text-xs text-muted-foreground">Repetir por (meses)</Label>
+              <Label className="text-xs text-muted-foreground">{t("form.repetirMeses")}</Label>
               <Input
                 type="number"
                 min={1}
@@ -372,15 +364,15 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
 
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>
-              <p className="text-sm font-medium">Gasto fixo</p>
-              <p className="text-xs text-muted-foreground">Conta mensal recorrente</p>
+              <p className="text-sm font-medium">{t("form.gastoFixo")}</p>
+              <p className="text-xs text-muted-foreground">{t("form.gastoFixoDesc")}</p>
             </div>
             <Switch checked={gastoFixo} onCheckedChange={setGastoFixo} />
           </div>
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>
-              <p className="text-sm font-medium">Essencial</p>
-              <p className="text-xs text-muted-foreground">Aluguel, contas, alimentação base…</p>
+              <p className="text-sm font-medium">{t("form.essencial")}</p>
+              <p className="text-xs text-muted-foreground">{t("form.essencialDesc")}</p>
             </div>
             <Switch checked={essencial} onCheckedChange={setEssencial} />
           </div>
@@ -388,7 +380,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
           <div>
             <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Store className="h-3.5 w-3.5" />
-              Fornecedor (opcional)
+              {t("form.fornecedor")}
             </Label>
             {fornecedoresAtivos.length > 0 ? (
               <Select
@@ -396,10 +388,10 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
                 onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
               >
                 <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
-                  <SelectValue placeholder="Sem fornecedor" />
+                  <SelectValue placeholder={t("form.semFornecedor")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Sem fornecedor</SelectItem>
+                  <SelectItem value="_none">{t("form.semFornecedor")}</SelectItem>
                   {fornecedoresAtivos.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.apelido || f.nome_fantasia || f.nome}
@@ -409,14 +401,12 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
               </Select>
             ) : (
               <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
-                <p className="text-xs text-muted-foreground">
-                  Você ainda não tem fornecedores cadastrados.
-                </p>
+                <p className="text-xs text-muted-foreground">{t("form.semFornecedores")}</p>
                 <Link
                   to="/fornecedores"
                   className="text-xs font-semibold text-brand hover:underline"
                 >
-                  Cadastrar fornecedor
+                  {t("form.cadastrarFornecedor")}
                 </Link>
               </div>
             )}
@@ -430,7 +420,7 @@ export function GastoForm({ initial, submitLabel = "Salvar gasto", onSubmit }: G
         disabled={!valid}
         className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
       >
-        {submitLabel}
+        {submitLabel ?? t("form.salvarGasto")}
       </Button>
     </form>
   );
