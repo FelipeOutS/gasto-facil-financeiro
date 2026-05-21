@@ -3,6 +3,9 @@
     "side": "Side navigation",
     "primary": "Primary navigation",
     "openMore": "Open more options",
+    "openAlerts": "Open alerts",
+    "openProfile": "Open profile",
+    "avatarAlt": "Avatar",
     "overdueAccounts": "There are overdue bills",
     "soonAccounts": "There are bills due soon"
   },
