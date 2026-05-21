@@ -35,6 +35,12 @@
     "title": "App language",
     "description": "Choose the interface language. Your preference is saved and used on future visits."
   },
+  "profileShortcuts": {
+    "title": "Profile",
+    "description": "Access account data, settings and personal shortcuts.",
+    "account": "Account data",
+    "settings": "Settings"
+  },
   "meta": {
     "title": "My account — Gasto Inteligente"
   }

@@ -4,7 +4,10 @@
     "select": "Select language",
     "pt": "Português (BR)",
     "en": "English",
-    "current": "Current language: {{name}}"
+    "current": "Current language: {{name}}",
+    "appTitle": "App language",
+    "appDescription": "Choose the interface language. The change is applied immediately.",
+    "tapToApply": "Tap to apply"
   },
   "nav": {
     "home": "Home",
