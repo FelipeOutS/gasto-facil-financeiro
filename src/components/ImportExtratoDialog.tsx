@@ -687,10 +687,10 @@ export function ImportExtratoDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Upload className="h-5 w-5" />
-            Importar extrato bancário
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Pix, transferências, débito, tarifas, entradas e saídas da conta.
+            {t("desc")}
           </DialogDescription>
         </DialogHeader>
 
