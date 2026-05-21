@@ -1,4 +1,5 @@
 import { Globe, Check } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocale } from "@/i18n/use-locale";
 import { SUPPORTED_LOCALES, type Locale } from "@/i18n";
@@ -32,10 +33,19 @@ export function LanguageSwitcher({
       : "inline-flex h-10 items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
   return (
-    <DropdownMenu>
+    <>
+      <Link
+        to="/app/idioma"
+        aria-label={t("lang.select")}
+        className={cn(triggerClasses, "lg:hidden", className)}
+      >
+        <Globe className="h-4 w-4" aria-hidden="true" />
+        <span>{SHORT_LABEL[locale]}</span>
+      </Link>
+      <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t("lang.select")}
-        className={cn(triggerClasses, className)}
+        className={cn(triggerClasses, "hidden lg:inline-flex", className)}
       >
         <Globe className="h-4 w-4" aria-hidden="true" />
         <span>{SHORT_LABEL[locale]}</span>
@@ -57,6 +67,7 @@ export function LanguageSwitcher({
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </>
   );
 }
