@@ -477,7 +477,7 @@ export function DashboardCartoesInsights({
                       {g.estabelecimento || g.descricao}
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
-                      {cat?.nome ?? "Outros"}
+                      {cat?.nome ?? t("cartoesInsights.outros")}
                       {dataLabel ? ` · ${dataLabel}` : ""}
                     </p>
                   </div>
@@ -503,11 +503,12 @@ function ComparacaoMesAnterior({
   totalMes: number;
   totalMesAnterior: number;
 }) {
+  const { t } = useTranslation("dashboard");
   if (totalMes === 0 && totalMesAnterior === 0) return null;
   if (totalMesAnterior === 0) {
     return (
       <p className="mt-2 text-[11px] text-muted-foreground">
-        Adicione mais um mês de dados para ver a comparação.
+        {t("cartoesInsights.compAdd")}
       </p>
     );
   }
@@ -516,11 +517,12 @@ function ComparacaoMesAnterior({
   if (igual) {
     return (
       <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        Você gastou praticamente o mesmo do mês anterior.
+        {t("cartoesInsights.compIgual")}
       </p>
     );
   }
   const Icon = subiu ? TrendingUp : TrendingDown;
+  const direcao = subiu ? t("cartoesInsights.amais") : t("cartoesInsights.amenos");
   return (
     <p
       className={cn(
@@ -529,8 +531,7 @@ function ComparacaoMesAnterior({
       )}
     >
       <Icon className="h-3 w-3" />
-      {subiu ? "Você gastou" : "Você gastou"} {formatBRL(Math.abs(diff))}{" "}
-      {subiu ? "a mais" : "a menos"} que no mês anterior
+      {t("cartoesInsights.compDiff", { valor: formatBRL(Math.abs(diff)), direcao })}
       {pct !== null && Math.abs(pct) >= 1 ? ` (${subiu ? "+" : ""}${Math.round(pct)}%)` : ""}
       .
     </p>
