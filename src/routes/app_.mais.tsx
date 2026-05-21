@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Lock, LogOut, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronRight, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
@@ -28,7 +28,14 @@ function AppMaisPage() {
   const [signingOut, setSigningOut] = useState(false);
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items = useMemo(
-    () => (isAdminMaster || hasFullAccess ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS),
+    () => {
+      const mobileFirstItems: MoreItem[] = [
+        { to: "/app/perfil", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
+        { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
+      ];
+      const allItems = [...mobileFirstItems, ...MORE_ITEMS];
+      return isAdminMaster || hasFullAccess ? [...allItems, ADMIN_ITEM] : allItems;
+    },
     [hasFullAccess, isAdminMaster],
   );
 
