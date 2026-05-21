@@ -369,11 +369,11 @@ export function ImportExtratoDialog({
     async (file: File) => {
       if (!file) return;
       if (file.size === 0) {
-        toast.error("Arquivo PDF vazio.");
+        toast.error(t("errors.pdfEmpty"));
         return;
       }
       if (file.size > 15 * 1024 * 1024) {
-        toast.error("PDF muito grande. Tente um arquivo menor que 15 MB.");
+        toast.error(t("errors.pdfTooBig"));
         return;
       }
       setLoading(true);
