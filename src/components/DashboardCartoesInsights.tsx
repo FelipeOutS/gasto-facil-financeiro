@@ -178,42 +178,55 @@ export function DashboardCartoesInsights({
       const v = vencidas[0];
       return {
         tone: "destructive" as const,
-        text: `Atenção: a fatura do ${v.cartaoNome} está vencida. Marque como paga ou resolva o quanto antes.`,
+        text: t("cartoesInsights.faturaVencida", { cartao: v.cartaoNome }),
       };
     }
     const proximaQueVence = proximosVencimentos.find(
       (p) => p.status !== "paga" && p.diasRestantes >= 0 && p.diasRestantes <= 5,
     );
     if (proximaQueVence) {
+      const unit = proximaQueVence.diasRestantes === 1
+        ? t("cartoesInsights.diaSing")
+        : t("cartoesInsights.diaPlur");
       return {
         tone: "warning" as const,
-        text: `Sua fatura do ${proximaQueVence.cartaoNome} vence em ${proximaQueVence.diasRestantes} ${proximaQueVence.diasRestantes === 1 ? "dia" : "dias"}.`,
+        text: t("cartoesInsights.venceEmDias", {
+          cartao: proximaQueVence.cartaoNome,
+          dias: proximaQueVence.diasRestantes,
+          unit,
+        }),
       };
     }
     const cartaoEstourando = usoCartoes.find((u) => u.limite > 0 && u.pct >= 80);
     if (cartaoEstourando) {
       return {
         tone: "warning" as const,
-        text: `Você já usou ${Math.round(cartaoEstourando.pct)}% do limite do ${cartaoEstourando.cartao.nome}.`,
+        text: t("cartoesInsights.limitePct", {
+          pct: Math.round(cartaoEstourando.pct),
+          cartao: cartaoEstourando.cartao.nome,
+        }),
       };
     }
     if (maiorCategoria && maiorCategoria.pct >= 30) {
       return {
         tone: "info" as const,
-        text: `Seu maior gasto do mês está em ${maiorCategoria.nome} (${Math.round(maiorCategoria.pct)}% do total).`,
+        text: t("cartoesInsights.maiorGastoCat", {
+          cat: maiorCategoria.nome,
+          pct: Math.round(maiorCategoria.pct),
+        }),
       };
     }
     if (gastosMes.length === 0) {
       return {
         tone: "info" as const,
-        text: "Adicione mais gastos para receber insights personalizados.",
+        text: t("cartoesInsights.addMais"),
       };
     }
     return {
       tone: "success" as const,
-      text: "Tudo certo por aqui. Nenhum alerta importante no momento.",
+      text: t("cartoesInsights.tudoCerto"),
     };
-  }, [proximosVencimentos, usoCartoes, maiorCategoria, gastosMes.length]);
+  }, [proximosVencimentos, usoCartoes, maiorCategoria, gastosMes.length, t]);
 
   const temAlgumaSecao =
     usoCartoes.length > 0 || proximosVencimentos.length > 0 || maioresGastos.length > 0;
