@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Upload,
   Loader2,
@@ -85,21 +86,24 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function checarDuplicado(input: {
-  valor: number | null;
-  dataVencimento: string;
-  nome: string;
-  beneficiario?: string;
-  codigoBoleto?: string;
-  codigoPix?: string;
-}): { dup: boolean; motivo?: string } {
+function checarDuplicado(
+  input: {
+    valor: number | null;
+    dataVencimento: string;
+    nome: string;
+    beneficiario?: string;
+    codigoBoleto?: string;
+    codigoPix?: string;
+  },
+  t: (k: string) => string,
+): { dup: boolean; motivo?: string } {
   if (input.codigoBoleto && input.codigoBoleto.trim()) {
     const d = findContaByCodigo(input.codigoBoleto, "boleto");
-    if (d) return { dup: true, motivo: "Mesmo código de boleto" };
+    if (d) return { dup: true, motivo: t("dup.sameBoletoCode") };
   }
   if (input.codigoPix && input.codigoPix.trim()) {
     const d = findContaByCodigo(input.codigoPix, "pix");
-    if (d) return { dup: true, motivo: "Mesmo Pix copia e cola" };
+    if (d) return { dup: true, motivo: t("dup.samePixCode") };
   }
   if (input.valor && input.valor > 0 && input.dataVencimento && input.nome) {
     const d = findContaDuplicado({
@@ -108,7 +112,7 @@ function checarDuplicado(input: {
       nome: input.nome,
       beneficiario: input.beneficiario,
     });
-    if (d) return { dup: true, motivo: "Valor + vencimento parecidos" };
+    if (d) return { dup: true, motivo: t("dup.similarValueDate") };
   }
   return { dup: false };
 }
@@ -120,6 +124,7 @@ export function ImportContaDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { t } = useTranslation("import-conta");
   const categorias = useStore(() => getCategorias());
   const [aba, setAba] = useState<"imagem" | "texto" | "pdf">("imagem");
   const [texto, setTexto] = useState("");
