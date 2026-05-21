@@ -723,7 +723,7 @@ export function ImportExtratoDialog({
               accept="image/*"
               multiple
               loading={loading}
-              hint="Selecione até 10 imagens do extrato. Aceita JPG e PNG."
+              hint={t("upload.hintImagens")}
               onPick={(files) => handleImagens(files)}
               onBack={() => setStep("source")}
             />
@@ -732,7 +732,7 @@ export function ImportExtratoDialog({
             <UploadStep
               accept="application/pdf"
               loading={loading}
-              hint="Selecione um PDF do extrato. Se for protegido por senha, exporte uma versão sem senha."
+              hint={t("upload.hintPdf")}
               onPick={(files) => files[0] && handlePdf(files[0])}
               onBack={() => setStep("source")}
             />
@@ -741,7 +741,7 @@ export function ImportExtratoDialog({
             <UploadStep
               accept=".csv,text/csv"
               loading={loading}
-              hint="Espera colunas: Data, Descrição/Histórico, Valor."
+              hint={t("upload.hintCsv")}
               onPick={(files) => files[0] && handleCsv(files[0])}
               onBack={() => setStep("source")}
             />
