@@ -35,12 +35,7 @@ type CalcMode = "variaveis" | "hoje" | "mes" | "fluxo";
 const META_TIPO = "meta_gasto_mensal";
 const MODE_KEY = "gf:limite-mode";
 
-const MODE_LABELS: Record<CalcMode, { label: string; desc: string }> = {
-  variaveis: { label: "Somente gastos variáveis", desc: "Ignora contas fixas e faturas já pagas" },
-  hoje: { label: "A partir de hoje", desc: "O quanto você ainda pode gastar até o fim do mês" },
-  mes: { label: "Mês inteiro", desc: "Todos os gastos elegíveis do mês" },
-  fluxo: { label: "Fluxo de caixa", desc: "Tudo que entrou e saiu no mês" },
-};
+const MODE_KEYS: CalcMode[] = ["variaveis", "hoje", "mes", "fluxo"];
 
 function loadMode(): CalcMode {
   if (typeof window === "undefined") return "variaveis";
