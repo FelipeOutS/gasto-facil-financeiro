@@ -361,7 +361,7 @@ export function ImportExtratoDialog({
         setLoading(false);
       }
     },
-    [itensFromBruto],
+    [itensFromBruto, t],
   );
 
   // ---------- IMPORT: PDF ----------
