@@ -699,20 +699,20 @@ export function ImportExtratoDialog({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <SourceCard
                 icon={<ImageIcon className="h-6 w-6" />}
-                title="Imagens / prints"
-                desc="Até 10 prints do extrato"
+                title={t("source.imagens")}
+                desc={t("source.imagensDesc")}
                 onClick={() => setStep("image-upload")}
               />
               <SourceCard
                 icon={<FileText className="h-6 w-6" />}
-                title="PDF"
-                desc="Extrato em PDF (texto ou escaneado)"
+                title={t("source.pdf")}
+                desc={t("source.pdfDesc")}
                 onClick={() => setStep("pdf-upload")}
               />
               <SourceCard
                 icon={<FileSpreadsheet className="h-6 w-6" />}
-                title="CSV"
-                desc="Exportado do internet banking"
+                title={t("source.csv")}
+                desc={t("source.csvDesc")}
                 onClick={() => setStep("csv-upload")}
               />
             </div>
