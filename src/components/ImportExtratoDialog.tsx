@@ -1019,7 +1019,7 @@ function ReviewCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <Label className="text-xs">Descrição</Label>
+          <Label className="text-xs">{t("row.descricao")}</Label>
           <Input
             value={item.descricao}
             onChange={(e) => onUpdate({ descricao: e.target.value })}
@@ -1027,7 +1027,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Valor</Label>
+          <Label className="text-xs">{t("row.valor")}</Label>
           <Input
             type="number"
             step="0.01"
@@ -1039,7 +1039,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Data</Label>
+          <Label className="text-xs">{t("row.data")}</Label>
           <Input
             type="date"
             value={item.data ?? ""}
@@ -1048,7 +1048,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Horário (opcional)</Label>
+          <Label className="text-xs">{t("row.horario")}</Label>
           <Input
             type="time"
             value={item.horario ?? ""}
@@ -1057,7 +1057,7 @@ function ReviewCard({
           />
         </div>
         <div>
-          <Label className="text-xs">Tipo</Label>
+          <Label className="text-xs">{t("row.tipo")}</Label>
           <Select
             value={item.tipoMovimentacao}
             onValueChange={(v) => onUpdate({ tipoMovimentacao: v as TipoMov })}
@@ -1066,15 +1066,15 @@ function ReviewCard({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="despesa">Despesa</SelectItem>
-              <SelectItem value="receita">Receita</SelectItem>
-              <SelectItem value="transferencia_interna">Transferência interna</SelectItem>
+              <SelectItem value="despesa">{t("row.tipos.despesa")}</SelectItem>
+              <SelectItem value="receita">{t("row.tipos.receita")}</SelectItem>
+              <SelectItem value="transferencia_interna">{t("row.tipos.transferencia_interna")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         {item.tipoMovimentacao !== "transferencia_interna" && (
           <div>
-            <Label className="text-xs">Forma de pagamento</Label>
+            <Label className="text-xs">{t("row.formaPg")}</Label>
             <Select
               value={item.formaPagamento}
               onValueChange={(v) => onUpdate({ formaPagamento: v as FormaPagamento })}
