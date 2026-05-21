@@ -17,22 +17,17 @@ import {
   Legend,
 } from "recharts";
 import { TrendingUp, Activity, BarChart3, PieChart as PieIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { formatBRL, formatBRLCompact, parseDateLocal } from "@/lib/format";
 import type { Gasto, Receita } from "@/lib/types";
 
 type ChartKind = "area" | "line" | "bar" | "donut";
 
-const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
-  { id: "area", label: "Área", Icon: TrendingUp },
-  { id: "line", label: "Linha", Icon: Activity },
-  { id: "bar", label: "Barra", Icon: BarChart3 },
-  { id: "donut", label: "Pizza", Icon: PieIcon },
-];
-
-function monthLabel(ano: number, mes: number) {
+function monthLabel(ano: number, mes: number, locale: string) {
   const d = new Date(ano, mes - 1, 1);
-  return d.toLocaleString("pt-BR", { month: "short" }).replace(".", "");
+  const loc = locale.startsWith("en") ? "en-US" : "pt-BR";
+  return d.toLocaleString(loc, { month: "short" }).replace(".", "");
 }
 
 export function FluxoCaixaChart({
