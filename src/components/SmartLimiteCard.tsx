@@ -647,7 +647,7 @@ export function SmartLimiteCard({
               cfg.btnSecondary,
             )}
           >
-            Revisar gastos
+            {t("smartLimite.cta.revisar")}
             <ArrowRight className="h-3 w-3" />
           </Link>
           <Link
@@ -658,7 +658,7 @@ export function SmartLimiteCard({
               "hover:opacity-80",
             )}
           >
-            Ajustar orçamento
+            {t("smartLimite.cta.ajustar")}
           </Link>
         </div>
       </div>
