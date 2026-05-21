@@ -516,7 +516,7 @@ export function SmartLimiteCard({
                     cfg.btnPrimary,
                   )}
                 >
-                  <Check className="h-3.5 w-3.5" /> Salvar
+                  <Check className="h-3.5 w-3.5" /> {t("smartLimite.salvar")}
                 </button>
                 <button
                   type="button"
