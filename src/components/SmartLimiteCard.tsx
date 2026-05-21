@@ -583,26 +583,26 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Target className="h-3.5 w-3.5" />}
-                  label="Meta"
+                  label={t("smartLimite.stat.meta")}
                   value={formatBRL(metaSalva)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
                   value={formatBRL(gastosElegiveis)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  label="Restante"
+                  label={t("smartLimite.stat.restante")}
                   value={formatBRL(restanteMeta)}
                   tone={restanteMeta < 0 ? "neg" : "pos"}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Gauge className="h-3.5 w-3.5" />}
-                  label="Dias restantes"
+                  label={t("smartLimite.stat.diasRestantes")}
                   value={`${diasRestantes}`}
                 />
               </>
@@ -611,26 +611,26 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label="Disponível"
+                  label={t("smartLimite.stat.disponivel")}
                   value={formatBRL(disponivelMes)}
                   tone={disponivelMes < 0 ? "neg" : "pos"}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Gauge className="h-3.5 w-3.5" />}
-                  label="Dias restantes"
+                  label={t("smartLimite.stat.diasRestantes")}
                   value={`${diasRestantes}`}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  label="A pagar + assinaturas"
+                  label={t("smartLimite.stat.aPagarMaisAssin")}
                   value={formatBRL(contasPendentes + recorrenciasPrev)}
                 />
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? "Variáveis" : "Já gasto"}
+                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
                   value={formatBRL(gastosElegiveis)}
                 />
               </>
