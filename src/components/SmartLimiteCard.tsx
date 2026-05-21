@@ -709,37 +709,36 @@ function MiniStat({
 }
 
 function getMensagem(
+  t: (key: string, opts?: Record<string, unknown>) => string,
   status: Status,
   porDia: number,
-  disp: number,
+  _disp: number,
   temMeta: boolean,
   restanteMeta: number,
   mode: CalcMode,
   totalObrigacoes: number,
 ): string {
-  const noticeObrigacoes =
+  const notice =
     totalObrigacoes > 0 && (mode === "variaveis" || mode === "hoje")
-      ? ` Pagamentos já quitados (${formatBRL(totalObrigacoes)}) não entram nesta meta.`
+      ? t("smartLimite.msg.noticeObrigacoes", { valor: formatBRL(totalObrigacoes) })
       : "";
-  if (status === "sem_dados")
-    return "Adicione sua renda, suas contas ou defina uma meta para liberar uma análise inteligente do seu mês.";
-  if (mode === "fluxo")
-    return "Este valor considera todas as entradas e saídas do mês.";
+  if (status === "sem_dados") return t("smartLimite.msg.semDados");
+  if (mode === "fluxo") return t("smartLimite.msg.fluxo");
   if (status === "meta_excedida") {
     if (mode === "variaveis")
-      return `Seus gastos variáveis passaram da meta em ${formatBRL(Math.abs(restanteMeta))}.${noticeObrigacoes}`;
-    return `Você ultrapassou sua meta mensal em ${formatBRL(Math.abs(restanteMeta))}. Hora de revisar os próximos gastos.`;
+      return t("smartLimite.msg.metaExcedidaVar", { valor: formatBRL(Math.abs(restanteMeta)), notice });
+    return t("smartLimite.msg.metaExcedida", { valor: formatBRL(Math.abs(restanteMeta)) });
   }
   if (status === "risco")
-    return `No ritmo atual, seu mês pode terminar no vermelho.${noticeObrigacoes}`;
+    return t("smartLimite.msg.risco", { notice });
   if (status === "atencao") {
     if (temMeta)
-      return `Você está chegando perto da meta. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
-    return `Seu limite diário está mais apertado. Mantenha os gastos abaixo de ${formatBRL(porDia)} por dia.`;
+      return t("smartLimite.msg.atencaoMeta", { porDia: formatBRL(porDia), notice });
+    return t("smartLimite.msg.atencao", { porDia: formatBRL(porDia) });
   }
   if (temMeta)
-    return `Seu controle de novos gastos está dentro do planejado — até ${formatBRL(porDia)} por dia.${noticeObrigacoes}`;
-  return `Você pode gastar até ${formatBRL(porDia)} por dia e fechar o mês com tranquilidade.${noticeObrigacoes}`;
+    return t("smartLimite.msg.saudavelMeta", { porDia: formatBRL(porDia), notice });
+  return t("smartLimite.msg.saudavel", { porDia: formatBRL(porDia), notice });
 }
 
 type StatusCfg = {
