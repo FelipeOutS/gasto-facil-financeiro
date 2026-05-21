@@ -525,7 +525,7 @@ export function SmartLimiteCard({
                     "inline-flex h-9 w-9 items-center justify-center rounded-xl ring-1 transition-colors",
                     cfg.btnSecondary,
                   )}
-                  aria-label="Cancelar"
+                  aria-label={t("smartLimite.cancelar")}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
