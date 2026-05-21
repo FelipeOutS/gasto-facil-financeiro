@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation, Trans } from "react-i18next";
 import {
   TrendingUp,
   TrendingDown,
@@ -36,21 +37,18 @@ type Props = {
 
 const STATUS_STYLES = {
   positivo: {
-    label: "Saldo positivo",
     bg: "from-emerald-500/10 via-card to-card",
     ring: "ring-emerald-500/30",
     text: "text-emerald-600 dark:text-emerald-400",
     icon: TrendingUp,
   },
   atencao: {
-    label: "Atenção",
     bg: "from-amber-500/10 via-card to-card",
     ring: "ring-amber-500/30",
     text: "text-amber-600 dark:text-amber-400",
     icon: AlertTriangle,
   },
   negativo: {
-    label: "Saldo negativo",
     bg: "from-rose-500/10 via-card to-card",
     ring: "ring-rose-500/30",
     text: "text-rose-600 dark:text-rose-400",
@@ -59,6 +57,7 @@ const STATUS_STYLES = {
 } as const;
 
 export function MonthForecastCard({ mes, ano, className }: Props) {
+  const { t } = useTranslation("dashboard");
   const plan = usePlan();
   const fetchForecast = useServerFn(getMonthForecast);
   const [data, setData] = useState<Forecast | null>(null);
@@ -80,7 +79,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
         if (!cancel) setData(r as Forecast);
       })
       .catch((e: any) => {
-        if (!cancel) setError(typeof e?.message === "string" ? e.message : "Não consegui calcular a previsão.");
+        if (!cancel) setError(typeof e?.message === "string" ? e.message : t("forecast.errorFallback"));
       })
       .finally(() => {
         if (!cancel) setLoading(false);
@@ -88,7 +87,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
     return () => {
       cancel = true;
     };
-  }, [allowed, mes, ano, fetchForecast]);
+  }, [allowed, mes, ano, fetchForecast, t]);
 
   // Bloqueio premium
   if (!plan.loading && !allowed) {
@@ -105,11 +104,18 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
               <Lock className="h-5 w-5 text-primary" />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Premium</p>
-              <h2 className="mt-0.5 text-base font-bold tracking-tight sm:text-lg">Previsão de fechamento</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">
+                {t("forecast.premium")}
+              </p>
+              <h2 className="mt-0.5 text-base font-bold tracking-tight sm:text-lg">
+                {t("forecast.title")}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Veja se você vai fechar o mês positivo ou negativo. Disponível nos planos
-                <strong> Controle Completo Pessoal</strong>, <strong>MEI Completo</strong> e <strong>Empresa</strong>.
+                <Trans
+                  i18nKey="forecast.lockedDesc"
+                  ns="dashboard"
+                  components={[<strong key="0" />, <strong key="1" />, <strong key="2" />]}
+                />
               </p>
             </div>
           </div>
@@ -118,7 +124,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
             className="mt-3 w-full rounded-2xl bg-brand-grad sm:w-auto"
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            Desbloquear recurso
+            {t("forecast.unlock")}
           </Button>
         </section>
         {rule && (
@@ -156,34 +162,36 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
             </span>
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Previsão de fechamento
+                {t("forecast.title")}
               </p>
               <h2 className="mt-0.5 truncate text-base font-bold tracking-tight sm:text-lg">
-                {data?.label ?? "Carregando…"}
+                {data?.label ?? t("forecast.loading")}
               </h2>
             </div>
           </div>
           {data && (
             <span className={cn("rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold ring-1", cfg.ring, cfg.text)}>
-              {cfg.label}
+              {t(`forecast.status.${status}`)}
             </span>
           )}
         </div>
 
         {loading && !data ? (
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Calculando previsão…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("forecast.calculating")}
           </div>
         ) : error ? (
           <p className="mt-4 text-sm text-destructive">{error}</p>
         ) : !data?.temDados ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            Ainda não tenho dados suficientes para projetar este mês. Cadastre suas receitas, contas a pagar e faturas para ver a previsão.
+            {t("forecast.noData")}
           </p>
         ) : (
           <>
             <div className="mt-4 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Resultado previsto</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                {t("forecast.resultLabel")}
+              </span>
               <span className={cn("text-2xl font-bold tracking-tight sm:text-3xl", cfg.text)}>
                 {formatBRL(data.resultadoPrevisto)}
               </span>
@@ -192,24 +200,24 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
             <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
               <Pill
                 icon={<ArrowUp className="h-3.5 w-3.5" />}
-                label="Entradas previstas"
+                label={t("forecast.entriesLabel")}
                 value={data.entradasConfirmadas + data.entradasPrevistas}
                 tone="up"
-                sub={`Já recebido: ${formatBRL(data.entradasConfirmadas)}`}
+                sub={t("forecast.alreadyReceived", { valor: formatBRL(data.entradasConfirmadas) })}
               />
               <Pill
                 icon={<ArrowDown className="h-3.5 w-3.5" />}
-                label="Saídas previstas"
+                label={t("forecast.exitsLabel")}
                 value={data.saidasConfirmadas + data.saidasPendentes}
                 tone="down"
-                sub={`Ainda a pagar: ${formatBRL(data.saidasPendentes)}`}
+                sub={t("forecast.stillToPay", { valor: formatBRL(data.saidasPendentes) })}
               />
             </div>
 
             {data.impactos.length > 0 && (
               <div className="mt-3 rounded-2xl border border-border/60 bg-background/60 p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Maiores impactos pendentes
+                  {t("forecast.topImpacts")}
                 </p>
                 <ul className="mt-1.5 space-y-1">
                   {data.impactos.slice(0, 3).map((it, i) => (
@@ -225,7 +233,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
             )}
 
             <p className="mt-3 text-sm leading-relaxed text-foreground/85">
-              {humanMessage(data)}
+              {humanMessage(t, data)}
             </p>
 
             <button
@@ -233,7 +241,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
               onClick={() => setDetailOpen(true)}
               className="mt-3 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-semibold text-foreground/90 hover:bg-accent"
             >
-              Ver detalhes da previsão
+              {t("forecast.viewDetails")}
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </>
@@ -281,18 +289,21 @@ function Pill({
   );
 }
 
-function humanMessage(d: Forecast): string {
+function humanMessage(
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  d: Forecast,
+): string {
   const valor = formatBRL(Math.abs(d.resultadoPrevisto));
-  const mesNome = d.label.split(" de ")[0];
+  const mes = d.label.split(" de ")[0].split(" of ")[0];
   const principal = d.impactos[0]?.nome;
-  const compl = principal ? ` O maior impacto previsto vem de **${principal}**.` : "";
+  const compl = principal ? t("forecast.humanMsg.compl", { nome: principal }) : "";
   if (d.status === "positivo") {
-    return `Se nada mudar até o fim do mês, sua previsão é fechar ${mesNome} com saldo positivo de ${valor}.${compl}`;
+    return t("forecast.humanMsg.positivo", { mes, valor, compl });
   }
   if (d.status === "negativo") {
-    return `Atenção: a previsão é fechar ${mesNome} com saldo negativo de ${valor}.${compl} Vale revisar gastos e priorizar pagamentos.`;
+    return t("forecast.humanMsg.negativo", { mes, valor, compl });
   }
-  return `Seu mês está bem apertado. A previsão é fechar ${mesNome} perto do zero (${formatBRL(d.resultadoPrevisto)}).${compl}`;
+  return t("forecast.humanMsg.apertado", { mes, valor: formatBRL(d.resultadoPrevisto), compl });
 }
 
 function ForecastDetailDialog({
@@ -304,36 +315,37 @@ function ForecastDetailDialog({
   onOpenChange: (v: boolean) => void;
   data: Forecast;
 }) {
+  const { t } = useTranslation("dashboard");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Previsão de {data.label}</DialogTitle>
+          <DialogTitle>{t("forecast.dialog.title", { label: data.label })}</DialogTitle>
           <DialogDescription>
-            Mês de referência: {data.label}. Hoje: {data.hoje}.
+            {t("forecast.dialog.description", { label: data.label, hoje: data.hoje })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
-          <Block title="Entradas">
-            <Row label="Confirmadas (já recebidas)" value={data.entradasConfirmadas} />
-            <Row label="Previstas (a receber)" value={data.entradasPrevistas} muted />
-            <Row label="Total previsto" value={data.entradasConfirmadas + data.entradasPrevistas} strong />
+          <Block title={t("forecast.dialog.entradas")}>
+            <Row label={t("forecast.dialog.confirmadasIn")} value={data.entradasConfirmadas} />
+            <Row label={t("forecast.dialog.previstasIn")} value={data.entradasPrevistas} muted />
+            <Row label={t("forecast.dialog.totalPrevisto")} value={data.entradasConfirmadas + data.entradasPrevistas} strong />
           </Block>
 
-          <Block title="Saídas">
-            <Row label="Confirmadas (já pagas/registradas)" value={data.saidasConfirmadas} />
-            <Row label="Pendentes (a pagar)" value={data.saidasPendentes} muted />
-            <Row label="Total previsto" value={data.saidasConfirmadas + data.saidasPendentes} strong />
+          <Block title={t("forecast.dialog.saidas")}>
+            <Row label={t("forecast.dialog.confirmadasOut")} value={data.saidasConfirmadas} />
+            <Row label={t("forecast.dialog.pendentesOut")} value={data.saidasPendentes} muted />
+            <Row label={t("forecast.dialog.totalPrevisto")} value={data.saidasConfirmadas + data.saidasPendentes} strong />
           </Block>
 
-          <Block title="Resultado">
-            <Row label="Atual (entradas conf. − saídas conf.)" value={data.resultadoAtual} />
-            <Row label="Previsto de fechamento" value={data.resultadoPrevisto} strong />
+          <Block title={t("forecast.dialog.resultado")}>
+            <Row label={t("forecast.dialog.atual")} value={data.resultadoAtual} />
+            <Row label={t("forecast.dialog.previstoFechamento")} value={data.resultadoPrevisto} strong />
           </Block>
 
           {data.faturasDetalhe.length > 0 && (
-            <Block title="Faturas de cartão">
+            <Block title={t("forecast.dialog.faturas")}>
               {data.faturasDetalhe.map((f, i) => (
                 <div key={i} className="rounded-xl bg-muted/40 p-2.5">
                   <div className="flex items-center justify-between">
@@ -341,8 +353,8 @@ function ForecastDetailDialog({
                     <span className="tabular-nums">{formatBRL(f.total)}</span>
                   </div>
                   <div className="mt-1 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                    <span>Pago: {formatBRL(f.pago)}</span>
-                    <span>Pendente: {formatBRL(f.pendente)}</span>
+                    <span>{t("forecast.dialog.pago", { valor: formatBRL(f.pago) })}</span>
+                    <span>{t("forecast.dialog.pendente", { valor: formatBRL(f.pendente) })}</span>
                   </div>
                 </div>
               ))}
@@ -350,7 +362,7 @@ function ForecastDetailDialog({
           )}
 
           {data.impactos.length > 0 && (
-            <Block title="Itens pendentes que mais pesam">
+            <Block title={t("forecast.dialog.itensPesam")}>
               {data.impactos.map((it, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
@@ -364,7 +376,7 @@ function ForecastDetailDialog({
           )}
 
           {data.receitas.length > 0 && (
-            <Block title="Recebimentos previstos">
+            <Block title={t("forecast.dialog.recebimentos")}>
               {data.receitas.map((r, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
