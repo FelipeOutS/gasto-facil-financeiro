@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Shield,
@@ -19,6 +19,10 @@ import {
   Check,
   Lock,
   ExternalLink,
+  Home,
+  ChevronRight,
+  ArrowUpDown,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
