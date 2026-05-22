@@ -332,6 +332,10 @@ export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
   "drogaria sao paulo": "/logos/empresas/drogaria-sao-paulo.webp",
   "drogarias sao paulo": "/logos/empresas/drogaria-sao-paulo.webp",
   "dsp": "/logos/empresas/drogaria-sao-paulo.webp",
+  "chat gpt": "/logos/empresas/chatgpt.svg",
+  "chatgpt": "/logos/empresas/chatgpt.svg",
+  "openai": "/logos/empresas/chatgpt.svg",
+  "open ai": "/logos/empresas/chatgpt.svg",
 };
 
 export function getLogoCandidates(
