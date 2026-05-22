@@ -840,6 +840,7 @@ function ClienteItem({
               {c.email}
             </p>
           )}
+          </div>
         </div>
         <div className="flex gap-1">
           <Button
