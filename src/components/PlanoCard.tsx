@@ -1,16 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Crown, Sparkles, ArrowRight, Hourglass } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { usePlan } from "@/lib/use-plan";
 import { PLAN_LABEL } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 /**
  * Card compacto de assinatura para o Dashboard.
- * - Admin Master: "Acesso total", sem CTA comercial.
- * - Plano ativo: mostra plano atual + "Gerenciar plano".
- * - Sem assinatura / aguardando: chamada para ver planos.
  */
 export function PlanoCard({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } = usePlan();
 
   if (loading) {
@@ -23,7 +22,7 @@ export function PlanoCard({ className }: { className?: string }) {
       >
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/50" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-muted-foreground">Verificando assinatura…</p>
+          <p className="text-sm font-semibold text-muted-foreground">{t("planCard.checking")}</p>
         </div>
       </div>
     );
@@ -36,7 +35,6 @@ export function PlanoCard({ className }: { className?: string }) {
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago = !isAdminMaster && status === "ativo" && !semAssinatura;
 
-  // Admin Master — discreto, sem CTA
   if (isAdminMaster) {
     return (
       <div
@@ -50,9 +48,9 @@ export function PlanoCard({ className }: { className?: string }) {
             <Crown className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Acesso total</p>
+            <p className="text-sm font-semibold">{t("planCard.fullAccess")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Admin Master — todos os recursos liberados.
+              {t("planCard.fullAccessDesc")}
             </p>
           </div>
         </div>
@@ -60,7 +58,6 @@ export function PlanoCard({ className }: { className?: string }) {
     );
   }
 
-  // Trial ativo
   if (!isAdminMaster && isTrialActive) {
     return (
       <Link
@@ -75,20 +72,19 @@ export function PlanoCard({ className }: { className?: string }) {
             <Sparkles className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Teste grátis ativo</p>
+            <p className="text-sm font-semibold">{t("planCard.trialActive")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {PLAN_LABEL[plan]} liberado — faltam {trialDaysLeft} dia{trialDaysLeft === 1 ? "" : "s"}.
+              {t("planCard.trialDesc", { count: trialDaysLeft, plan: PLAN_LABEL[plan] })}
             </p>
           </div>
         </div>
         <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-          Ver planos <ArrowRight className="h-3 w-3" />
+          {t("planCard.viewPlans")} <ArrowRight className="h-3 w-3" />
         </span>
       </Link>
     );
   }
 
-  // Plano ativo
   if (ativoPago) {
     return (
       <Link
@@ -103,20 +99,19 @@ export function PlanoCard({ className }: { className?: string }) {
             <Sparkles className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Seu plano está ativo</p>
+            <p className="text-sm font-semibold">{t("planCard.active")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Você está usando o plano {PLAN_LABEL[plan]}.
+              {t("planCard.activeDesc", { plan: PLAN_LABEL[plan] })}
             </p>
           </div>
         </div>
         <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-          Gerenciar
+          {t("planCard.manage")}
         </span>
       </Link>
     );
   }
 
-  // Aguardando pagamento
   if (aguardando) {
     return (
       <Link
@@ -131,20 +126,19 @@ export function PlanoCard({ className }: { className?: string }) {
             <Hourglass className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Pagamento pendente</p>
+            <p className="text-sm font-semibold">{t("planCard.pending")}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Finalize o pagamento do {PLAN_LABEL[plan]} para ativar.
+              {t("planCard.pendingDesc", { plan: PLAN_LABEL[plan] })}
             </p>
           </div>
         </div>
         <span className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-[11px] font-semibold text-white">
-          Continuar
+          {t("planCard.continue")}
         </span>
       </Link>
     );
   }
 
-  // Sem assinatura — CTA comercial discreto
   return (
     <Link
       to="/meu-plano"
@@ -158,14 +152,14 @@ export function PlanoCard({ className }: { className?: string }) {
           <Crown className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold">Desbloqueie recursos avançados</p>
+          <p className="text-sm font-semibold">{t("planCard.unlock")}</p>
           <p className="truncate text-xs text-muted-foreground">
-            Escolha um plano para liberar importações, relatórios e mais.
+            {t("planCard.unlockDesc")}
           </p>
         </div>
       </div>
       <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-        Ver planos <ArrowRight className="h-3 w-3" />
+        {t("planCard.viewPlans")} <ArrowRight className="h-3 w-3" />
       </span>
     </Link>
   );
