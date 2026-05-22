@@ -164,15 +164,15 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
             <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/20 to-primary/20 ring-1 ring-primary/20">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-center">Assinatura necessária</DialogTitle>
+            <DialogTitle className="text-center">{t("subscription.required")}</DialogTitle>
             <DialogDescription className="text-center">
-              {message ?? "Para adicionar gastos, escolha um plano ativo."}
+              {message ?? t("subscription.defaultMessage")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full rounded-2xl">
               <Link to="/meu-plano" onClick={() => setOpen(false)}>
-                Ver planos <ArrowRight className="ml-2 h-4 w-4" />
+                {t("subscription.viewPlans")} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button
@@ -180,7 +180,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
               className="w-full rounded-2xl"
               onClick={() => setOpen(false)}
             >
-              Agora não
+              {t("subscription.notNow")}
             </Button>
           </DialogFooter>
         </DialogContent>
