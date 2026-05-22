@@ -379,16 +379,16 @@ export function CalendarioFinanceiro({
         {!compact && (
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" /> A pagar
+              <span className="h-2 w-2 rounded-full bg-amber-400" /> {t("calendario.aPagar")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-sky-400" /> A receber
+              <span className="h-2 w-2 rounded-full bg-sky-400" /> {t("calendario.aReceber")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-rose-500" /> Atrasada
+              <span className="h-2 w-2 rounded-full bg-rose-500" /> {t("calendario.atrasada")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Paga / Recebida
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("calendario.pagaRecebida")}
             </span>
           </div>
         )}
