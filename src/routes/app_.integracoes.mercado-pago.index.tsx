@@ -352,15 +352,64 @@ function MercadoPagoIntegrationPage() {
             )}
             {isConnected && (
               <>
-                <Button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  size="lg"
-                  className="h-12 rounded-2xl text-base font-semibold"
-                >
-                  <RefreshCw className={cn("mr-2 h-5 w-5", syncing && "animate-spin")} />
-                  {syncing ? "Sincronizando..." : "Sincronizar agora"}
-                </Button>
+                {/* Painel de Sincronização */}
+                <div className="rounded-2xl border border-border/70 bg-card-elevated/30 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Sincronização
+                    </p>
+                    {lastSyncMsg && !syncing && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" /> concluída
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Escolha o período. Para 6 ou 12 meses, a busca é feita mês a mês.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        ["last30", "Últimos 30 dias"],
+                        ["current_month", "Mês atual"],
+                        ["last_month", "Mês anterior"],
+                        ["last3", "Últimos 3 meses"],
+                        ["last6", "Últimos 6 meses"],
+                        ["last12", "Últimos 12 meses"],
+                      ] as const
+                    ).map(([v, l]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        disabled={syncing}
+                        onClick={() => setSyncPeriod(v)}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+                          syncPeriod === v
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-card text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    size="lg"
+                    className="mt-3 h-12 w-full rounded-2xl text-base font-semibold"
+                  >
+                    <RefreshCw className={cn("mr-2 h-5 w-5", syncing && "animate-spin")} />
+                    {syncing ? "Importando movimentações..." : "Sincronizar período"}
+                  </Button>
+                  {lastSyncMsg && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                      {lastSyncMsg}
+                    </p>
+                  )}
+                </div>
+
                 <Button
                   asChild
                   variant="outline"
