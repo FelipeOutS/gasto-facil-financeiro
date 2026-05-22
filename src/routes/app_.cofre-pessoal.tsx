@@ -991,8 +991,10 @@ function EntryForm({
   initial,
   onSubmit,
   onCancel,
+  submitLabel,
 }: {
   initial?: DecryptedEntry;
+  submitLabel?: string;
   onSubmit: (data: {
     name: string;
     category: string;
