@@ -83,6 +83,9 @@ function MercadoPagoIntegrationPage() {
       if (res.ok) {
         const json = (await res.json()) as StatusResponse;
         setStatus(json);
+      } else if (res.status === 401) {
+        toast.error("Você precisa estar logado para conectar o Mercado Pago.");
+        void navigate({ to: "/login" });
       } else {
         setStatus({ configured: false, integration: null, importedCount: 0 });
       }
@@ -91,7 +94,7 @@ function MercadoPagoIntegrationPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     void loadStatus();
@@ -103,7 +106,7 @@ function MercadoPagoIntegrationPage() {
       toast.success("Conta Mercado Pago conectada!");
     } else if (search.error) {
       const errMap: Record<string, string> = {
-        not_configured: "Integração ainda não configurada pelo administrador.",
+        not_configured: "Integração preparada, aguardando configuração das credenciais.",
         invalid_state: "Sessão de autorização expirada. Tente novamente.",
         oauth_exchange_failed: "Não foi possível concluir a autorização.",
         missing_params: "Resposta do Mercado Pago incompleta.",
