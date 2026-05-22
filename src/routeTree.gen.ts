@@ -72,9 +72,9 @@ import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-rada
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as AppIntegracoesMercadoPagoRouteImport } from './routes/app_.integracoes.mercado-pago'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
+import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -402,12 +402,6 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIntegracoesMercadoPagoRoute =
-  AppIntegracoesMercadoPagoRouteImport.update({
-    id: '/app_/integracoes/mercado-pago',
-    path: '/app/integracoes/mercado-pago',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -418,6 +412,12 @@ const ApiCheckoutCreateRoute = ApiCheckoutCreateRouteImport.update({
   path: '/api/checkout/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIntegracoesMercadoPagoIndexRoute =
+  AppIntegracoesMercadoPagoIndexRouteImport.update({
+    id: '/app_/integracoes/mercado-pago/',
+    path: '/app/integracoes/mercado-pago/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -448,9 +448,9 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
 } as any)
 const AppIntegracoesMercadoPagoMovimentacoesRoute =
   AppIntegracoesMercadoPagoMovimentacoesRouteImport.update({
-    id: '/movimentacoes',
-    path: '/movimentacoes',
-    getParentRoute: () => AppIntegracoesMercadoPagoRoute,
+    id: '/app_/integracoes/mercado-pago/movimentacoes',
+    path: '/app/integracoes/mercado-pago/movimentacoes',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWhatsappExpenseRoute =
   ApiPublicWhatsappExpenseRouteImport.update({
@@ -547,7 +547,6 @@ export interface FileRoutesByFullPath {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -561,6 +560,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app/integracoes/mercado-pago/': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -626,7 +626,6 @@ export interface FileRoutesByTo {
   '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -640,6 +639,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -706,7 +706,6 @@ export interface FileRoutesById {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app_/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -720,6 +719,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app_/integracoes/mercado-pago/': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -787,7 +787,6 @@ export interface FileRouteTypes {
     | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/app/integracoes/mercado-pago'
     | '/lovable/email/suppression'
     | '/app/integracoes/'
     | '/api/integrations/mercadopago/$action'
@@ -801,6 +800,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app/integracoes/mercado-pago/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -866,7 +866,6 @@ export interface FileRouteTypes {
     | '/pt'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/app/integracoes/mercado-pago'
     | '/lovable/email/suppression'
     | '/app/integracoes'
     | '/api/integrations/mercadopago/$action'
@@ -880,6 +879,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app/integracoes/mercado-pago'
   id:
     | '__root__'
     | '/'
@@ -945,7 +945,6 @@ export interface FileRouteTypes {
     | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/app_/integracoes/mercado-pago'
     | '/lovable/email/suppression'
     | '/app_/integracoes/'
     | '/api/integrations/mercadopago/$action'
@@ -959,6 +958,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app_/integracoes/mercado-pago/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1025,7 +1025,6 @@ export interface RootRouteChildren {
   PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
-  AppIntegracoesMercadoPagoRoute: typeof AppIntegracoesMercadoPagoRouteWithChildren
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
@@ -1033,11 +1032,13 @@ export interface RootRouteChildren {
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
+  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
+  AppIntegracoesMercadoPagoIndexRoute: typeof AppIntegracoesMercadoPagoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1483,13 +1484,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app_/integracoes/mercado-pago': {
-      id: '/app_/integracoes/mercado-pago'
-      path: '/app/integracoes/mercado-pago'
-      fullPath: '/app/integracoes/mercado-pago'
-      preLoaderRoute: typeof AppIntegracoesMercadoPagoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -1502,6 +1496,13 @@ declare module '@tanstack/react-router' {
       path: '/api/checkout/create'
       fullPath: '/api/checkout/create'
       preLoaderRoute: typeof ApiCheckoutCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app_/integracoes/mercado-pago/': {
+      id: '/app_/integracoes/mercado-pago/'
+      path: '/app/integracoes/mercado-pago'
+      fullPath: '/app/integracoes/mercado-pago/'
+      preLoaderRoute: typeof AppIntegracoesMercadoPagoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/transactional/send': {
@@ -1541,10 +1542,10 @@ declare module '@tanstack/react-router' {
     }
     '/app_/integracoes/mercado-pago/movimentacoes': {
       id: '/app_/integracoes/mercado-pago/movimentacoes'
-      path: '/movimentacoes'
+      path: '/app/integracoes/mercado-pago/movimentacoes'
       fullPath: '/app/integracoes/mercado-pago/movimentacoes'
       preLoaderRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRouteImport
-      parentRoute: typeof AppIntegracoesMercadoPagoRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/whatsapp/expense': {
       id: '/api/public/whatsapp/expense'
@@ -1583,21 +1584,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AppIntegracoesMercadoPagoRouteChildren {
-  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
-}
-
-const AppIntegracoesMercadoPagoRouteChildren: AppIntegracoesMercadoPagoRouteChildren =
-  {
-    AppIntegracoesMercadoPagoMovimentacoesRoute:
-      AppIntegracoesMercadoPagoMovimentacoesRoute,
-  }
-
-const AppIntegracoesMercadoPagoRouteWithChildren =
-  AppIntegracoesMercadoPagoRoute._addFileChildren(
-    AppIntegracoesMercadoPagoRouteChildren,
-  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -1663,7 +1649,6 @@ const rootRouteChildren: RootRouteChildren = {
   PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
-  AppIntegracoesMercadoPagoRoute: AppIntegracoesMercadoPagoRouteWithChildren,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,
@@ -1673,11 +1658,14 @@ const rootRouteChildren: RootRouteChildren = {
     ApiIntegrationsMercadopagoConnectRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
+  AppIntegracoesMercadoPagoMovimentacoesRoute:
+    AppIntegracoesMercadoPagoMovimentacoesRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
+  AppIntegracoesMercadoPagoIndexRoute: AppIntegracoesMercadoPagoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

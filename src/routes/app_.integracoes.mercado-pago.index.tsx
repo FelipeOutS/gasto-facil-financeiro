@@ -50,7 +50,7 @@ type SyncResponse =
 
 type Search = { connected?: string; error?: string };
 
-export const Route = createFileRoute("/app_/integracoes/mercado-pago")({
+export const Route = createFileRoute("/app_/integracoes/mercado-pago/")({
   head: () => ({
     meta: [
       { title: "Mercado Pago — Integrações — Gasto Inteligente" },
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago")({
 });
 
 function MercadoPagoIntegrationPage() {
-  const search = useSearch({ from: "/app_/integracoes/mercado-pago" });
+  const search = useSearch({ from: "/app_/integracoes/mercado-pago/" });
   const navigate = useNavigate();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
