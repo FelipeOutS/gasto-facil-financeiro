@@ -207,6 +207,14 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "cpfl": "cpfl.com.br",
   "light": "light.com.br",
   "sabesp": "sabesp.com.br",
+  "conta de agua": "sabesp.com.br",
+  "conta de água": "sabesp.com.br",
+  "agua": "sabesp.com.br",
+  "água": "sabesp.com.br",
+  "conta de luz": "enel.com.br",
+  "luz": "enel.com.br",
+  "energia eletrica": "enel.com.br",
+  "energia elétrica": "enel.com.br",
   "comgas": "comgas.com.br",
 
   // Supermercados / varejo BR
@@ -358,7 +366,9 @@ export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
 export function getLogoCandidates(
   domain: string | null | undefined,
   name?: string | null,
+  opts?: { trustedOnly?: boolean },
 ): string[] {
+  const trustedOnly = opts?.trustedOnly === true;
   const urls: string[] = [];
   const seen = new Set<string>();
   const pushUrl = (u: string) => {
@@ -382,12 +392,15 @@ export function getLogoCandidates(
     pushUrl(LOCAL_LOGO_OVERRIDES[firstWord]);
   }
 
-  // 2) Domínio explicitamente fornecido pelo dado (ex.: campo website do
-  //    fornecedor) — confiável.
+  // 2) Domínio explicitamente fornecido pelo dado — confiável.
   if (domain) pushFor(domain, true);
 
-  // 3) Palpites a partir do nome — trusted=true só para hits do SEED.
+  // 3) Palpites a partir do nome.
+  //    Em modo trustedOnly, ignoramos chutes por TLD (que costumam cair em
+  //    favicons genéricos e causam "flicker" antes de aparecer o ícone da
+  //    categoria). Só passam hits explícitos do SEED.
   for (const guess of guessDomainsFromName(name)) {
+    if (trustedOnly && !guess.trusted) continue;
     pushFor(guess.domain, guess.trusted);
   }
   return urls;
