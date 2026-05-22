@@ -884,14 +884,23 @@ function DetailView({
         onBack={onBack}
         subtitle="Visualize, copie ou edite as informações deste acesso com segurança."
       />
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
-        {strengthBadge(entry.password_strength)}
-        {entry.favorite && (
-          <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
-            <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
-          </Badge>
-        )}
+      <div className="mb-4 flex items-center gap-3">
+        <CompanyLogo site={entry.site} name={entry.name} className="h-14 w-14" rounded="2xl" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-semibold">{entry.name}</p>
+          {entry.site && (
+            <p className="truncate text-xs text-muted-foreground">{extractDomain(entry.site) ?? entry.site}</p>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
+            {strengthBadge(entry.password_strength)}
+            {entry.favorite && (
+              <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
+                <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
 
 
