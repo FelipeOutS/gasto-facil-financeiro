@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
+import { getUserFromRequest, unauthorizedResponse, isAdminMasterUser, forbiddenResponse } from "@/server/api-auth";
 import { startMercadoPagoOAuth } from "@/server/mercado-pago-integration.server";
 
 /**
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/api/integrations/mercadopago/connect")({
       POST: async ({ request }) => {
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse();
+        if (!isAdminMasterUser(user)) return forbiddenResponse();
 
         const result = startMercadoPagoOAuth(user.id);
         if ("error" in result) {
@@ -30,6 +31,9 @@ export const Route = createFileRoute("/api/integrations/mercadopago/connect")({
         const user = await getUserFromRequest(request);
         if (!user) {
           return Response.redirect(new URL("/login", request.url).toString(), 302);
+        }
+        if (!isAdminMasterUser(user)) {
+          return Response.redirect(new URL("/app/dashboard", request.url).toString(), 302);
         }
         const result = startMercadoPagoOAuth(user.id);
         if ("error" in result) {
