@@ -94,6 +94,8 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "google play": "play.google.com",
   "google cloud": "cloud.google.com",
   "apple": "apple.com",
+  "xiaomi": "mi.com",
+  "mi": "mi.com",
   "icloud": "icloud.com",
   "itunes": "apple.com",
   "microsoft": "microsoft.com",
@@ -309,9 +311,9 @@ export const LOGO_DEV_PUBLIC_TOKEN =
 
 /**
  * Gera URLs candidatas para um domínio em ordem de qualidade.
- * Priorizamos Logo.dev em alta resolução (vetorial / 256px retina), depois
- * o favicon de 256px do DuckDuckGo. NÃO usamos Google s2 (sempre devolve
- * 16/32px borrado) nem favicon "ico" pequeno como primeira opção.
+ * Priorizamos Logo.dev em alta resolução; depois tentamos provedores que
+ * costumam entregar ícones maiores. O componente rejeita imagens minúsculas
+ * no carregamento, evitando favicon borrado esticado.
  */
 export function logoUrlsForDomain(domain: string, trusted = true): string[] {
   const urls = [
@@ -319,9 +321,10 @@ export function logoUrlsForDomain(domain: string, trusted = true): string[] {
     `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=256&format=png&retina=true`,
   ];
   if (trusted) {
-    // Só usamos favicon como rede de segurança para domínios confiáveis,
-    // e mesmo assim em 256px (ip3 entrega webp decente para a maioria
-    // dos sites grandes).
+    // Rede de segurança para domínios explícitos ou mapeados no SEED.
+    urls.push(`https://favicon.im/${domain}?larger=true`);
+    urls.push(`https://favicon.yandex.net/favicon/v2/${domain}?size=120`);
+    urls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
     urls.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
   }
   return urls;
@@ -343,6 +346,8 @@ export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
   "magazine luiza": "/logos/empresas/magalu.svg",
   "magazineluiza": "/logos/empresas/magalu.svg",
   "magalu": "/logos/empresas/magalu.svg",
+  "xiaomi": "/logos/empresas/xiaomi.svg",
+  "mi": "/logos/empresas/xiaomi.svg",
 };
 
 export function getLogoCandidates(
