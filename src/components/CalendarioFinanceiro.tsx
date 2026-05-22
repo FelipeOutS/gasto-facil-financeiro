@@ -220,7 +220,7 @@ export function CalendarioFinanceiro({
           </span>
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Calendário financeiro
+              {t("calendario.eyebrow")}
             </p>
             <h2 className="mt-0.5 truncate text-base font-bold capitalize tracking-tight lg:text-lg">
               {formatMonthYear(ano, mes)}
