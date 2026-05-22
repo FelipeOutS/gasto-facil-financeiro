@@ -81,6 +81,11 @@ function TransactionAvatarBase({ estabelecimento, categoria, size = "md", classN
         variant="circle"
         className={cn(wrapperSize[size], "shrink-0", className)}
         fallback={fallbackNode}
+        // Quando temos um ícone de categoria pronto, evitamos tentar palpites
+        // de domínio por TLD — eles causam flicker (favicons genéricos
+        // aparecendo por 1-2s) antes de cair no fallback. Marcas conhecidas
+        // (SEED: ifood, sabesp, enel, netflix...) continuam carregando.
+        trustedOnly={!!fallbackNode}
       />
     );
   }
