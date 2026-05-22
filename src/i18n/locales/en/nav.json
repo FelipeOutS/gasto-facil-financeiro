@@ -43,7 +43,8 @@
     "admin": "Admin",
     "perfilMobile": "My profile",
     "idioma": "App language",
-    "more": "More"
+    "more": "More",
+    "integracoes": "Integrations"
   },
   "more": {
     "title": "More options",
@@ -75,6 +76,7 @@
     "landing": "See features, plans and news",
     "admin": "Admin panel",
     "perfilMobile": "Account data, profile and personal shortcuts",
-    "idioma": "Switch between Português and English"
+    "idioma": "Switch between Português and English",
+    "integracoes": "Connect Mercado Pago and other services"
   }
 }

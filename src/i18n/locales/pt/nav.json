@@ -43,7 +43,8 @@
     "admin": "Admin",
     "perfilMobile": "Meu perfil",
     "idioma": "Idioma do app",
-    "more": "Mais"
+    "more": "Mais",
+    "integracoes": "Integrações"
   },
   "more": {
     "title": "Mais opções",
@@ -75,6 +76,7 @@
     "landing": "Ver recursos, planos e novidades",
     "admin": "Painel administrativo",
     "perfilMobile": "Dados da conta, perfil e atalhos pessoais",
-    "idioma": "Troque entre Português e English"
+    "idioma": "Troque entre Português e English",
+    "integracoes": "Conecte Mercado Pago e outros serviços"
   }
 }
