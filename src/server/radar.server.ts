@@ -190,14 +190,20 @@ async function fetchAwesomeApi(): Promise<Record<string, AwesomeApiQuote>> {
 async function fetchPtaxDay(currency: "USD" | "EUR", date: Date): Promise<PtaxRow[]> {
   const dataCotacao = ptaxDate(date);
   const url = `${PTAX_BASE_URL}/CotacaoMoedaDia(moeda=@moeda,dataCotacao=@dataCotacao)?@moeda='${currency}'&@dataCotacao='${dataCotacao}'&$top=100&$format=json`;
-  const res = await fetchWithTimeout(url);
-  const body = await res.text();
-  if (!res.ok) {
-    console.error(`[radar] PTAX ${currency} ${dataCotacao} respondeu ${res.status}: ${body.slice(0, 800)}`);
+  try {
+    const res = await fetchWithTimeout(url);
+    const body = await res.text();
+    if (!res.ok) {
+      console.error(`[radar] PTAX ${currency} ${dataCotacao} respondeu ${res.status}: ${body.slice(0, 800)}`);
+      return [];
+    }
+    const parsed = JSON.parse(body) as { value?: PtaxRow[] };
+    return Array.isArray(parsed.value) ? parsed.value : [];
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[radar] PTAX ${currency} ${dataCotacao} falhou: ${msg}`);
     return [];
   }
-  const parsed = JSON.parse(body) as { value?: PtaxRow[] };
-  return Array.isArray(parsed.value) ? parsed.value : [];
 }
 
 async function fetchSgs(code: number): Promise<SgsRow[]> {
