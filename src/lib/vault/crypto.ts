@@ -42,9 +42,41 @@ async function deriveKey(password: string, saltB64: string, iterations: number):
     { name: "PBKDF2", salt: b64decode(saltB64), iterations, hash: "SHA-256" },
     baseKey,
     { name: "AES-GCM", length: 256 },
-    false,
+    true, // extractable: needed to wrap with a PIN/biometric secret
     ["encrypt", "decrypt"],
   );
+}
+
+/** Export the master AES-GCM key as raw bytes (32 bytes). */
+export async function exportMasterKeyRaw(key: CryptoKey): Promise<Uint8Array<ArrayBuffer>> {
+  const raw = await crypto.subtle.exportKey("raw", key);
+  const out = new Uint8Array(new ArrayBuffer(raw.byteLength));
+  out.set(new Uint8Array(raw));
+  return out;
+}
+
+/** Import raw 32-byte material back into an AES-GCM master key. */
+export async function importMasterKeyRaw(raw: Uint8Array): Promise<CryptoKey> {
+  const buf = new Uint8Array(new ArrayBuffer(raw.byteLength));
+  buf.set(raw);
+  return crypto.subtle.importKey(
+    "raw",
+    buf,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"],
+  );
+}
+
+/** Public helpers used by the quick-unlock module. */
+export function vaultRandomBytes(len: number): Uint8Array<ArrayBuffer> {
+  return randomBytes(len);
+}
+export function vaultB64encode(buf: ArrayBuffer | Uint8Array): string {
+  return b64encode(buf);
+}
+export function vaultB64decode(str: string): Uint8Array<ArrayBuffer> {
+  return b64decode(str);
 }
 
 export async function createMasterKey(
