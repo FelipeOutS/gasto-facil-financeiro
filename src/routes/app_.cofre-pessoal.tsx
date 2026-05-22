@@ -1101,7 +1101,7 @@ function EntryForm({
         <div className="space-y-1.5">
           <Label htmlFor="f-site">Site ou aplicativo</Label>
           <div className="flex items-center gap-3">
-            <CompanyLogo site={site || name} name={name || site || "?"} className="h-12 w-12" />
+            <CompanyLogo site={site || null} name={name || site || "?"} className="h-12 w-12" />
             <div className="min-w-0 flex-1">
               <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br ou https://exemplo.com" inputMode="url" />
               {site && extractDomain(site) && (
