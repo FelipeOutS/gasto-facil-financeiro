@@ -892,6 +892,7 @@ function VaultMain({
       <QuickUnlockSettingsView
         userId={userId}
         userLabel={settings.hint ?? "Cofre Pessoal"}
+        settings={settings}
         masterKey={masterKey}
         onBack={() => setView({ kind: "list" })}
       />
@@ -2150,11 +2151,13 @@ function BackupView({
 function QuickUnlockSettingsView({
   userId,
   userLabel,
+  settings,
   masterKey,
   onBack,
 }: {
   userId: string;
   userLabel: string;
+  settings: VaultSettingsRow;
   masterKey: CryptoKey;
   onBack: () => void;
 }) {
@@ -2162,10 +2165,15 @@ function QuickUnlockSettingsView({
   const [bioAvailable, setBioAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // PIN setup state
+  // Painel ativo dentro do card de PIN
+  // "none" | "setup" (sem PIN) | "change" (alterar) | "forgot" (esqueci)
+  type Panel = "none" | "setup" | "change" | "forgot";
+  const [panel, setPanel] = useState<Panel>("none");
+  const [stage, setStage] = useState<"verify" | "set" | "confirm">("verify");
+  const [masterPwd, setMasterPwd] = useState("");
+  const [showMaster, setShowMaster] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
-  const [pinStage, setPinStage] = useState<"idle" | "set" | "confirm">("idle");
 
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setBioAvailable);
@@ -2175,7 +2183,52 @@ function QuickUnlockSettingsView({
     setRec(getQuickUnlock(userId));
   }
 
-  async function handleEnablePin() {
+  function resetPanel() {
+    setPanel("none");
+    setStage("verify");
+    setMasterPwd("");
+    setPin("");
+    setPinConfirm("");
+    setShowMaster(false);
+  }
+
+  function openSetup() {
+    resetPanel();
+    setPanel("setup");
+    setStage("set");
+  }
+  function openChange() {
+    resetPanel();
+    setPanel("change");
+    setStage("verify");
+  }
+  function openForgot() {
+    resetPanel();
+    setPanel("forgot");
+    setStage("verify");
+  }
+
+  async function handleVerifyMaster() {
+    if (!masterPwd) {
+      toast.error("Digite a senha mestra");
+      return;
+    }
+    setBusy(true);
+    try {
+      const k = await unlockMasterKey(masterPwd, settings);
+      if (!k) {
+        toast.error("Senha mestra incorreta");
+        return;
+      }
+      setStage("set");
+    } finally {
+      setMasterPwd("");
+      setShowMaster(false);
+      setBusy(false);
+    }
+  }
+
+  async function handleSavePin() {
     if (pin.length < 4) {
       toast.error("O PIN deve ter ao menos 4 dígitos");
       return;
@@ -2186,14 +2239,16 @@ function QuickUnlockSettingsView({
     }
     setBusy(true);
     try {
+      // Alterar/esqueci: garante que registros antigos sejam invalidados
+      if (panel === "change" || panel === "forgot") {
+        disableQuickUnlock(userId);
+      }
       await enablePinUnlock(userId, pin, masterKey);
-      toast.success("PIN configurado");
-      setPin("");
-      setPinConfirm("");
-      setPinStage("idle");
+      toast.success(panel === "setup" ? "PIN configurado" : "PIN alterado com sucesso");
+      resetPanel();
       refresh();
     } catch (e) {
-      toast.error("Falha ao configurar PIN", { description: (e as Error).message });
+      toast.error("Falha ao salvar PIN", { description: (e as Error).message });
     } finally {
       setBusy(false);
     }
@@ -2212,11 +2267,23 @@ function QuickUnlockSettingsView({
     }
   }
 
-  function handleDisable() {
+  function handleRemovePin() {
+    if (!window.confirm("Remover o PIN deste dispositivo? Você precisará da senha mestra para entrar.")) return;
+    disableQuickUnlock(userId);
+    resetPanel();
+    refresh();
+    toast.success("PIN removido deste dispositivo");
+  }
+
+  function handleRemoveBio() {
+    if (!window.confirm("Remover a biometria deste dispositivo?")) return;
     disableQuickUnlock(userId);
     refresh();
-    toast.success("Desbloqueio rápido desativado");
+    toast.success("Biometria removida deste dispositivo");
   }
+
+  const hasPin = rec?.kind === "pin";
+  const hasBio = rec?.kind === "webauthn";
 
   return (
     <>
@@ -2232,142 +2299,274 @@ function QuickUnlockSettingsView({
         <div>
           <p className="font-medium text-foreground">Como isso funciona</p>
           <p className="mt-1">
-            Sua senha mestra continua sendo a única forma de criar o cofre. Para acelerar o dia a dia, sua chave é guardada cifrada neste dispositivo e só pode ser aberta com o PIN ou biometria que você escolher. Após 5 tentativas erradas no PIN, o desbloqueio rápido é apagado automaticamente.
+            Seu PIN é usado apenas para desbloqueio rápido neste dispositivo. Por segurança, ele <strong>não pode ser visualizado</strong>, apenas alterado. Sua senha mestra continua sendo a única forma de criar o cofre — a chave do cofre fica guardada cifrada localmente e só é aberta com o PIN ou biometria.
           </p>
         </div>
       </Card>
 
-      {/* Estado atual */}
-      {rec && (
-        <Card className="mb-4 p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-400">
-              {rec.kind === "pin" ? <KeyRound className="h-5 w-5" /> : <Fingerprint className="h-5 w-5" />}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">
-                {rec.kind === "pin" ? "PIN configurado" : "Biometria configurada"}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Ativado em {new Date(rec.createdAt).toLocaleDateString("pt-BR")} — válido só neste dispositivo/navegador.
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleDisable} disabled={busy}>
-              <Trash2 className="h-4 w-4" /> Remover
-            </Button>
+      {/* ============ CARD: PIN rápido ============ */}
+      <Card className="mb-4 p-5">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "grid h-10 w-10 place-items-center rounded-lg",
+              hasPin ? "bg-emerald-500/15 text-emerald-400" : "bg-brand-soft text-brand-on-soft",
+            )}
+          >
+            <KeyRound className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">PIN rápido</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {hasPin
+                ? `Ativo neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
+                : "4 a 8 dígitos numéricos. Recomendado: 6."}
+            </p>
           </div>
-        </Card>
-      )}
-
-      {/* Configurar PIN */}
-      {(!rec || rec.kind !== "pin") && (
-        <Card className="mb-4 p-5">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
-              <KeyRound className="h-5 w-5" />
+          {hasPin && (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> PIN configurado
             </span>
-            <div>
-              <p className="text-sm font-semibold">PIN de acesso</p>
-              <p className="text-[11px] text-muted-foreground">4 a 8 dígitos numéricos. Recomendado: 6.</p>
-            </div>
-          </div>
+          )}
+        </div>
 
-          {pinStage === "idle" && (
-            <Button
+        {/* Status + ações principais quando há PIN */}
+        {hasPin && panel === "none" && (
+          <>
+            <p className="mt-3 rounded-lg bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+              Por segurança, não exibimos o PIN cadastrado. Você pode alterá-lo ou removê-lo a qualquer momento.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Button
+                type="button"
+                onClick={openChange}
+                className="h-11 bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+              >
+                <KeyRound className="h-4 w-4" /> Alterar PIN
+              </Button>
+              <Button type="button" variant="outline" onClick={handleRemovePin} className="h-11">
+                <Trash2 className="h-4 w-4" /> Remover PIN
+              </Button>
+            </div>
+            <button
               type="button"
-              onClick={() => setPinStage("set")}
-              className="h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+              onClick={openForgot}
+              className="mt-3 text-[12px] font-medium text-brand underline-offset-4 hover:underline"
             >
-              Configurar PIN
-            </Button>
-          )}
+              Esqueci meu PIN
+            </button>
+          </>
+        )}
 
-          {pinStage === "set" && (
-            <div className="space-y-3">
-              <Label>Crie um PIN</Label>
-              <Input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={8}
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                placeholder="••••••"
-                className="h-12 text-center text-xl tracking-[0.5em] font-mono"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => { setPin(""); setPinStage("idle"); }}>
-                  Cancelar
-                </Button>
-                <Button
-                  className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
-                  disabled={pin.length < 4}
-                  onClick={() => setPinStage("confirm")}
-                >
-                  Continuar
-                </Button>
+        {/* Botão de configurar quando não há PIN */}
+        {!hasPin && panel === "none" && (
+          <Button
+            type="button"
+            onClick={openSetup}
+            className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+          >
+            Configurar PIN
+          </Button>
+        )}
+
+        {/* Painel inline (setup / change / forgot) */}
+        {panel !== "none" && (
+          <div className="mt-4 space-y-3 border-t border-border pt-4">
+            {panel === "forgot" && stage === "verify" && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-[11px] text-foreground/90">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <p>
+                  Por segurança, não exibimos o PIN cadastrado. Confirme sua senha mestra para criar um novo PIN.
+                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {pinStage === "confirm" && (
-            <div className="space-y-3">
-              <Label>Confirme o PIN</Label>
-              <Input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={8}
-                value={pinConfirm}
-                onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
-                placeholder="••••••"
-                className="h-12 text-center text-xl tracking-[0.5em] font-mono"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => { setPinConfirm(""); setPinStage("set"); }}>
-                  Voltar
-                </Button>
-                <Button
-                  className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
-                  disabled={busy || pinConfirm.length < 4}
-                  onClick={handleEnablePin}
-                >
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  Ativar PIN
-                </Button>
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
+            {/* Verificação de senha mestra */}
+            {(panel === "change" || panel === "forgot") && stage === "verify" && (
+              <>
+                <Label>Senha mestra</Label>
+                <div className="relative">
+                  <Input
+                    type={showMaster ? "text" : "password"}
+                    value={masterPwd}
+                    onChange={(e) => setMasterPwd(e.target.value)}
+                    placeholder="Digite a senha mestra"
+                    autoFocus
+                    className="h-12 pr-11"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !busy) {
+                        e.preventDefault();
+                        void handleVerifyMaster();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMaster((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-accent"
+                    aria-label={showMaster ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {showMaster ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={resetPanel} disabled={busy}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
+                    disabled={busy || !masterPwd}
+                    onClick={handleVerifyMaster}
+                  >
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    Confirmar
+                  </Button>
+                </div>
+              </>
+            )}
 
-      {/* Configurar biometria */}
-      {(!rec || rec.kind !== "webauthn") && (
-        <Card className="p-5">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
-              <Fingerprint className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Biometria / Face ID</p>
-              <p className="text-[11px] text-muted-foreground">
-                {bioAvailable
-                  ? "Usa o autenticador do seu dispositivo. Requer suporte à extensão PRF do navegador."
-                  : "Indisponível neste dispositivo ou navegador."}
-              </p>
-            </div>
+            {/* Novo PIN */}
+            {stage === "set" && (
+              <>
+                <Label>{panel === "setup" ? "Crie um PIN" : "Crie um novo PIN"}</Label>
+                <Input
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={8}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="••••••"
+                  className="h-12 text-center text-xl tracking-[0.5em] font-mono"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={resetPanel}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
+                    disabled={pin.length < 4}
+                    onClick={() => setStage("confirm")}
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Confirmar PIN */}
+            {stage === "confirm" && (
+              <>
+                <Label>Confirme o PIN</Label>
+                <Input
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={8}
+                  value={pinConfirm}
+                  onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
+                  placeholder="••••••"
+                  className="h-12 text-center text-xl tracking-[0.5em] font-mono"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setPinConfirm(""); setStage("set"); }}>
+                    Voltar
+                  </Button>
+                  <Button
+                    className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
+                    disabled={busy || pinConfirm.length < 4}
+                    onClick={handleSavePin}
+                  >
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {panel === "setup" ? "Ativar PIN" : "Salvar novo PIN"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
+        )}
+      </Card>
+
+      {/* ============ CARD: Biometria ============ */}
+      <Card className="mb-4 p-5">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "grid h-10 w-10 place-items-center rounded-lg",
+              hasBio ? "bg-emerald-500/15 text-emerald-400" : "bg-brand-soft text-brand-on-soft",
+            )}
+          >
+            <Fingerprint className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Biometria / Face ID</p>
+            <p className="text-[11px] text-muted-foreground">
+              {hasBio
+                ? `Ativa neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
+                : bioAvailable
+                ? "Usa o autenticador do seu dispositivo. Requer suporte à extensão PRF do navegador."
+                : "Indisponível neste dispositivo ou navegador."}
+            </p>
+          </div>
+          {hasBio && (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Biometria ativa
+            </span>
+          )}
+        </div>
+        {hasBio ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRemoveBio}
+            className="mt-3 h-11 w-full"
+          >
+            <Trash2 className="h-4 w-4" /> Remover biometria
+          </Button>
+        ) : (
           <Button
             type="button"
             onClick={handleEnableBiometric}
-            disabled={busy || !bioAvailable}
-            className="h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+            disabled={busy || !bioAvailable || hasPin}
+            className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
             Configurar biometria
           </Button>
-        </Card>
-      )}
+        )}
+        {hasPin && !hasBio && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Remova o PIN primeiro para configurar a biometria (apenas um método de desbloqueio rápido por dispositivo).
+          </p>
+        )}
+      </Card>
+
+      {/* ============ CARD: Segurança ============ */}
+      <Card className="p-5">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Segurança</p>
+            <p className="text-[11px] text-muted-foreground">Proteções automáticas do desbloqueio rápido.</p>
+          </div>
+        </div>
+        <ul className="mt-3 space-y-2 text-[12px] text-muted-foreground">
+          <li className="flex items-start gap-2">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span>O PIN <strong>nunca</strong> é salvo em texto puro — apenas a chave do cofre cifrada por uma derivação PBKDF2 do seu PIN.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span>Após <strong>5 tentativas incorretas</strong>, o desbloqueio rápido é desativado automaticamente. Use a senha mestra para configurar novamente.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span>O PIN vale somente neste dispositivo/navegador — não é sincronizado.</span>
+          </li>
+        </ul>
+      </Card>
     </>
   );
 }
