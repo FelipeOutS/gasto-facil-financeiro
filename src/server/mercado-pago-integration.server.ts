@@ -330,7 +330,27 @@ export type SyncOptions = {
   period?: SyncPeriod;
   beginDate?: string;
   endDate?: string;
+  /** Lista de meses no formato "YYYY-MM" para sincronização mês a mês. */
+  months?: string[];
 };
+
+/** Converte "YYYY-MM" em intervalo [início, fim] do mês. */
+function monthKeyToRange(key: string): { from: Date; to: Date } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if (month < 1 || month > 12) return null;
+  const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
+  const to = new Date(year, month, 0, 23, 59, 59, 999);
+  return { from, to };
+}
+
+function monthKeyLabel(key: string): string {
+  const r = monthKeyToRange(key);
+  if (!r) return key;
+  return r.from.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
 
 function computePeriodRange(opts: SyncOptions): { begin: Date; end: Date } {
   const now = new Date();
