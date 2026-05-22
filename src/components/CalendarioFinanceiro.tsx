@@ -63,6 +63,7 @@ export function CalendarioFinanceiro({
   onChangeMonth: (delta: number) => void;
   compact?: boolean;
 }) {
+  const { t, i18n } = useTranslation("dashboard");
   const { user } = useAuth();
   const contas = useStore(() => getContasAPagar());
   const [receber, setReceber] = useState<ContaReceber[]>([]);
