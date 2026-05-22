@@ -748,7 +748,7 @@ function Index() {
       </section>
 
       {/* Alertas, limite mensal e renda */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
         {temAlertasDashboard && (
           <div className="flex min-w-0 xl:col-span-8">
             <div className="flex w-full">
