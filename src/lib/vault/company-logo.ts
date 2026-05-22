@@ -44,20 +44,50 @@ export function extractDomain(input: string | null | undefined): string | null {
   return lastTwo;
 }
 
+/** Build plausible domain guesses from a free-form company name. */
+export function guessDomainsFromName(name: string | null | undefined): string[] {
+  if (!name) return [];
+  const cleaned = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(aplicativo|app|site|web|conta|login|acesso|portal|minha|meu)\b/g, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return [];
+  const slug = cleaned.replace(/\s+/g, "");
+  const firstWord = cleaned.split(" ")[0];
+  const candidates = new Set<string>();
+  for (const base of [slug, firstWord]) {
+    if (!base || base.length < 2) continue;
+    for (const tld of [".com", ".com.br", ".io", ".dev", ".app", ".co"]) {
+      candidates.add(`${base}${tld}`);
+    }
+  }
+  return [...candidates];
+}
+
 /** Ordered list of candidate logo URLs to try (with onError fallthrough). */
 export function getCompanyLogoCandidates(
   domain: string | null | undefined,
+  name?: string | null,
 ): string[] {
-  if (!domain) return [];
-  const d = extractDomain(domain) ?? domain;
-  return [
-    // Logo.dev — public demo token (returns brand logos for known domains).
-    `https://img.logo.dev/${d}?token=pk_X-1ZO13ESQOXMI5MlVUVQQ&size=128&format=png`,
-    // DuckDuckGo favicon proxy — broad coverage, transparent backgrounds.
-    `https://icons.duckduckgo.com/ip3/${d}.ico`,
-    // Google s2 — last-resort favicon.
-    `https://www.google.com/s2/favicons?domain=${d}&sz=128`,
-  ];
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  const pushFor = (d: string) => {
+    const norm = extractDomain(d) ?? d;
+    if (!norm || seen.has(norm)) return;
+    seen.add(norm);
+    urls.push(
+      `https://img.logo.dev/${norm}?token=pk_X-1ZO13ESQOXMI5MlVUVQQ&size=128&format=png`,
+      `https://icons.duckduckgo.com/ip3/${norm}.ico`,
+      `https://www.google.com/s2/favicons?domain=${norm}&sz=128`,
+    );
+  };
+  if (domain) pushFor(domain);
+  for (const guess of guessDomainsFromName(name)) pushFor(guess);
+  return urls;
 }
 
 /** Convenience: derive a stable color from a string for the letter avatar. */
