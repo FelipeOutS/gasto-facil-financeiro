@@ -101,7 +101,7 @@ function sgsUrl(code: number): string {
 }
 
 /** Timeout do fetch externo. */
-const FETCH_TIMEOUT_MS = 5000;
+const FETCH_TIMEOUT_MS = 10000;
 
 interface AwesomeApiQuote {
   code: string;
