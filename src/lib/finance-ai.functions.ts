@@ -927,6 +927,7 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
       .object({
         mes: z.number().int().min(1).max(12).optional(),
         ano: z.number().int().min(2000).max(2100).optional(),
+        lang: z.enum(["pt", "en"]).optional(),
       })
       .parse(data ?? {}),
   )
@@ -946,16 +947,30 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
     const now = new Date();
     const mes = data.mes ?? now.getMonth() + 1;
     const ano = data.ano ?? now.getFullYear();
+    const lang = data.lang ?? "pt";
 
     const block = await buildMonthFullSummary(supabase, userId, mes, ano);
 
+    const langInstruction =
+      lang === "en"
+        ? "IMPORTANT: Write the entire response in ENGLISH. Use 'Note:' for the attention block and 'Suggestion:' for the closing tip. Keep monetary values in BRL format (R$ 1,234.56)."
+        : "IMPORTANTE: Responda em PORTUGUÊS do Brasil.";
+
+    const monthName =
+      lang === "en"
+        ? new Date(ano, mes - 1, 1).toLocaleString("en-US", { month: "long" })
+        : NOMES_MES_PT[mes - 1];
+
+    const userPrompt =
+      lang === "en"
+        ? `Generate the smart summary for ${monthName} ${ano} based only on the data above.`
+        : `Gere o resumo inteligente do mês ${monthName} de ${ano} com base apenas nos dados acima.`;
+
     const messages = [
       { role: "system", content: SMART_SUMMARY_PROMPT },
+      { role: "system", content: langInstruction },
       { role: "system", content: `DADOS DO MÊS\n${block}` },
-      {
-        role: "user",
-        content: `Gere o resumo inteligente do mês ${NOMES_MES_PT[mes - 1]} de ${ano} com base apenas nos dados acima.`,
-      },
+      { role: "user", content: userPrompt },
     ];
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
