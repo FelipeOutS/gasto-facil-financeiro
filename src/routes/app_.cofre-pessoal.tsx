@@ -1100,6 +1100,7 @@ function VaultMain({
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </button>
+        <button
           type="button"
           onClick={() => setView({ kind: "change_master" })}
           className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
