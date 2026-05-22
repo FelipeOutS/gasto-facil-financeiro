@@ -1079,8 +1079,27 @@ function VaultMain({
       )}
 
       {/* Ações secundárias */}
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <button
+          type="button"
+          onClick={() => setView({ kind: "quick_unlock" })}
+          className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+            <Fingerprint className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Desbloqueio rápido</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {getQuickUnlock(userId)?.kind === "pin"
+                ? "PIN ativo neste dispositivo"
+                : getQuickUnlock(userId)?.kind === "webauthn"
+                ? "Biometria ativa neste dispositivo"
+                : "Configure PIN ou biometria"}
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </button>
           type="button"
           onClick={() => setView({ kind: "change_master" })}
           className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
