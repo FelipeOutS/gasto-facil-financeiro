@@ -186,8 +186,9 @@ export function CalendarioFinanceiro({
   }, [days, eventosPorDia, mes]);
 
   const eventosDoDia = diaSelecionado ? (eventosPorDia.get(diaSelecionado) ?? []) : [];
+  const localeBcp = i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
   const dataSelecionadaLabel = diaSelecionado
-    ? (parseDateLocal(diaSelecionado) ?? new Date()).toLocaleDateString("pt-BR", {
+    ? (parseDateLocal(diaSelecionado) ?? new Date()).toLocaleDateString(localeBcp, {
         weekday: "long",
         day: "2-digit",
         month: "long",
