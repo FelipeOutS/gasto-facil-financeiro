@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Shield,
   LockKeyhole,
@@ -23,6 +23,10 @@ import {
   ChevronRight,
   ArrowUpDown,
   ShieldCheck,
+  Download,
+  Settings as SettingsIcon,
+  Info,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
@@ -32,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   createMasterKey,
@@ -45,11 +50,21 @@ import {
   updateEntry,
   deleteEntry,
   decryptOne,
+  rotateMasterKey,
+  buildEncryptedBackup,
   type VaultEntryRow,
   type DecryptedEntry,
+  type VaultSettingsRow,
 } from "@/lib/vault/service";
 import { evaluateStrength, generateStrongPassword, type Strength } from "@/lib/vault/strength";
-import { useVaultKey, setMasterKey } from "@/lib/vault/use-vault";
+import {
+  useVaultKey,
+  setMasterKey,
+  getCachedSecret,
+  setCachedSecret,
+  evictCached,
+  clearSecretCache,
+} from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
 import { extractDomain } from "@/lib/brand/resolver";
 
@@ -70,14 +85,16 @@ const CATEGORIAS = [
   { id: "lojas", label: "Lojas" },
   { id: "outros", label: "Outros" },
 ] as const;
-
 type CategoriaId = (typeof CATEGORIAS)[number]["id"];
 
+// =====================================================================
+// Página principal
+// =====================================================================
 function CofrePessoalPage() {
   const { user } = useAuth();
   const { isUnlocked, masterKey, lock } = useVaultKey();
   const [bootstrapState, setBootstrapState] = useState<"loading" | "needs_setup" | "needs_unlock" | "ready">("loading");
-  const [settings, setSettings] = useState<Awaited<ReturnType<typeof fetchVaultSettings>>>(null);
+  const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,7 +106,7 @@ function CofrePessoalPage() {
         else setBootstrapState("ready");
       })
       .catch((e) => {
-        toast.error("Falha ao carregar cofre", { description: e.message });
+        toast.error("Falha ao carregar cofre", { description: (e as Error).message });
         setBootstrapState("needs_setup");
       });
   }, [user, isUnlocked]);
@@ -97,18 +114,13 @@ function CofrePessoalPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-8">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
-        {bootstrapState === "loading" && (
-          <div className="grid place-items-center py-24 text-muted-foreground">
-            <LockKeyhole className="mb-3 h-8 w-8 animate-pulse" />
-            <p className="text-sm">Carregando seu cofre…</p>
-          </div>
-        )}
+        {bootstrapState === "loading" && <BootLoading />}
         {bootstrapState === "needs_setup" && (
           <SetupView
             userId={user.id}
-            onReady={async (s) => {
+            onReady={(s) => {
               setSettings(s);
               setBootstrapState("ready");
             }}
@@ -120,15 +132,39 @@ function CofrePessoalPage() {
             onUnlocked={() => setBootstrapState("ready")}
           />
         )}
-        {bootstrapState === "ready" && masterKey && (
-          <VaultMain userId={user.id} masterKey={masterKey} onLock={lock} hint={settings?.hint ?? null} />
+        {bootstrapState === "ready" && masterKey && settings && (
+          <VaultMain
+            userId={user.id}
+            masterKey={masterKey}
+            onLock={lock}
+            settings={settings}
+            onSettingsChanged={setSettings}
+          />
         )}
       </div>
     </div>
   );
 }
 
-// ===== Header reutilizável =====
+function BootLoading() {
+  return (
+    <div className="space-y-4 py-12">
+      <div className="grid place-items-center text-muted-foreground">
+        <LockKeyhole className="mb-3 h-8 w-8 animate-pulse" />
+        <p className="text-sm">Carregando seu cofre…</p>
+      </div>
+      <div className="mx-auto max-w-3xl space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// Header reutilizável
+// =====================================================================
 function PageHeader({
   title,
   subtitle,
@@ -144,7 +180,6 @@ function PageHeader({
 }) {
   return (
     <header className="mb-6 animate-fade-in">
-      {/* Breadcrumb + atalho dashboard */}
       <div className="mb-3 flex items-center justify-between gap-3">
         <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
           <Link to="/" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
@@ -198,19 +233,20 @@ function PageHeader({
     </header>
   );
 }
-
-// Compat: alguns sub-componentes ainda chamam HeaderHero
 function HeaderHero({ subtitle }: { subtitle: string }) {
   return <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />;
 }
 
-// ===== Setup (criar senha mestra) =====
-function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<ReturnType<typeof fetchVaultSettings>>) => void }) {
+// =====================================================================
+// Setup (criar senha mestra)
+// =====================================================================
+function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSettingsRow) => void }) {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [hint, setHint] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const strength = evaluateStrength(pwd);
 
   async function handleCreate() {
     if (pwd.length < 8) {
@@ -224,24 +260,18 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<R
     setBusy(true);
     try {
       const built = await createMasterKey(pwd);
-      await saveVaultSettings({
+      const row: VaultSettingsRow = {
         user_id: userId,
         salt: built.salt,
         verifier: built.verifier,
         verifier_iv: built.verifier_iv,
         iterations: built.iterations,
         hint: hint || null,
-      });
+      };
+      await saveVaultSettings(row);
       setMasterKey(built.key);
       toast.success("Cofre criado e desbloqueado");
-      onReady({
-        user_id: userId,
-        salt: built.salt,
-        verifier: built.verifier,
-        verifier_iv: built.verifier_iv,
-        iterations: built.iterations,
-        hint: hint || null,
-      });
+      onReady(row);
     } catch (e) {
       toast.error("Não foi possível criar o cofre", { description: (e as Error).message });
     } finally {
@@ -269,17 +299,26 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<R
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 placeholder="Mínimo 8 caracteres"
-                className="pr-10"
+                className="pr-10 font-mono"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={show ? "Ocultar" : "Mostrar"}
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {pwd && (
+              <div className="flex items-center gap-2 pt-0.5">
+                {strengthBadge(strength)}
+                <p className="text-[11px] text-muted-foreground">
+                  {strength === "forte" ? "Excelente!" : strength === "media" ? "Boa, mas pode melhorar." : "Use 12+ caracteres, números e símbolos."}
+                </p>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="vault-pwd2">Confirmar senha</Label>
@@ -288,6 +327,7 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<R
               type={show ? "text" : "password"}
               value={pwd2}
               onChange={(e) => setPwd2(e.target.value)}
+              className="font-mono"
             />
           </div>
           <div className="space-y-1.5">
@@ -300,8 +340,13 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<R
             />
             <p className="text-[11px] text-muted-foreground">Não escreva a senha aqui. Use apenas uma pista.</p>
           </div>
-          <Button onClick={handleCreate} disabled={busy} className="w-full">
-            <KeyRound className="h-4 w-4" /> {busy ? "Criando…" : "Criar cofre"}
+          <Button
+            onClick={handleCreate}
+            disabled={busy}
+            className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {busy ? "Criando…" : "Criar cofre"}
           </Button>
         </div>
       </Card>
@@ -309,32 +354,57 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: Awaited<R
   );
 }
 
-// ===== Unlock =====
+// =====================================================================
+// Unlock (com proteção contra tentativas)
+// =====================================================================
 function UnlockView({
   settings,
   onUnlocked,
 }: {
-  settings: NonNullable<Awaited<ReturnType<typeof fetchVaultSettings>>>;
+  settings: VaultSettingsRow;
   onUnlocked: () => void;
 }) {
   const [pwd, setPwd] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fails, setFails] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (cooldownUntil <= now) return;
+    const t = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(t);
+  }, [cooldownUntil, now]);
+
+  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
+  const isCoolingDown = cooldownLeft > 0;
 
   async function handleUnlock() {
-    if (!pwd) return;
+    if (!pwd || isCoolingDown) return;
     setBusy(true);
     try {
       const key = await unlockMasterKey(pwd, settings);
       if (!key) {
-        toast.error("Senha mestra incorreta");
+        const next = fails + 1;
+        setFails(next);
+        setPwd("");
+        if (next >= 3) {
+          const delay = Math.min(60, 2 ** (next - 2)) * 1000; // 2s, 4s, 8s, ... até 60s
+          setCooldownUntil(Date.now() + delay);
+          toast.error("Senha mestra incorreta", {
+            description: `Muitas tentativas. Aguarde ${Math.ceil(delay / 1000)}s antes de tentar novamente.`,
+          });
+        } else {
+          toast.error("Senha mestra incorreta");
+        }
         return;
       }
       setMasterKey(key);
+      setFails(0);
       onUnlocked();
     } finally {
       setBusy(false);
-      setPwd("");
     }
   }
 
@@ -363,12 +433,14 @@ function UnlockView({
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 autoFocus
-                className="pr-10"
+                className="pr-10 font-mono"
+                disabled={isCoolingDown}
               />
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={show ? "Ocultar" : "Mostrar"}
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -378,9 +450,19 @@ function UnlockView({
                 <span className="font-medium">Dica:</span> {settings.hint}
               </p>
             )}
+            {isCoolingDown && (
+              <p className="text-[11px] text-amber-400">
+                Muitas tentativas. Aguarde {cooldownLeft}s antes de tentar novamente.
+              </p>
+            )}
           </div>
-          <Button type="submit" disabled={busy || !pwd} className="w-full">
-            <KeyRound className="h-4 w-4" /> {busy ? "Desbloqueando…" : "Desbloquear cofre"}
+          <Button
+            type="submit"
+            disabled={busy || !pwd || isCoolingDown}
+            className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {busy ? "Desbloqueando…" : isCoolingDown ? `Aguarde ${cooldownLeft}s` : "Desbloquear cofre"}
           </Button>
         </form>
       </Card>
@@ -388,69 +470,105 @@ function UnlockView({
   );
 }
 
-// ===== Main vault =====
-type View = { kind: "list" } | { kind: "create" } | { kind: "edit"; entry: DecryptedEntry } | { kind: "detail"; entry: DecryptedEntry };
+// =====================================================================
+// Views internas
+// =====================================================================
+type View =
+  | { kind: "list" }
+  | { kind: "create" }
+  | { kind: "edit"; entry: DecryptedEntry }
+  | { kind: "detail"; entry: DecryptedEntry }
+  | { kind: "change_master" }
+  | { kind: "backup" };
 
 function VaultMain({
   userId,
   masterKey,
   onLock,
-  hint,
+  settings,
+  onSettingsChanged,
 }: {
   userId: string;
   masterKey: CryptoKey;
   onLock: () => void;
-  hint: string | null;
+  settings: VaultSettingsRow;
+  onSettingsChanged: (s: VaultSettingsRow) => void;
 }) {
   const [entries, setEntries] = useState<VaultEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [cat, setCat] = useState<CategoriaId>("todos");
   const [onlyFav, setOnlyFav] = useState(false);
   const [strengthFilter, setStrengthFilter] = useState<"todas" | Strength>("todas");
   const [sort, setSort] = useState<"recent" | "az" | "fav" | "updated" | "weak">("fav");
   const [view, setView] = useState<View>({ kind: "list" });
 
-  async function reload() {
+  // Debounce de busca
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 150);
+    return () => window.clearTimeout(t);
+  }, [query]);
+
+  // Decifrar tudo em memória uma vez para alimentar busca + cache
+  const reloadDecryptCache = useCallback(async (rows: VaultEntryRow[]) => {
+    await Promise.all(
+      rows.map(async (r) => {
+        if (getCachedSecret(r.id)) return;
+        try {
+          const dec = await decryptOne(masterKey, r);
+          setCachedSecret(r.id, dec.secret);
+        } catch {
+          // ignora um item falho
+        }
+      }),
+    );
+  }, [masterKey]);
+
+  const reload = useCallback(async () => {
     setLoading(true);
     try {
-      setEntries(await fetchEntries(userId));
+      const rows = await fetchEntries(userId);
+      setEntries(rows);
+      void reloadDecryptCache(rows);
     } catch (e) {
       toast.error("Falha ao listar acessos", { description: (e as Error).message });
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, reloadDecryptCache]);
+
   useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    void reload();
+  }, [reload]);
 
   const stats = useMemo(() => {
     const total = entries.length;
     const fortes = entries.filter((e) => e.password_strength === "forte").length;
     const fracas = entries.filter((e) => e.password_strength === "fraca").length;
     const favs = entries.filter((e) => e.favorite).length;
-    const last = entries
-      .map((e) => e.updated_at)
-      .sort()
-      .pop();
-    return { total, fortes, fracas, favs, last };
+    return { total, fortes, fracas, favs };
   }, [entries]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery;
     const weakOrder: Record<string, number> = { fraca: 0, media: 1, forte: 2 };
     const list = entries.filter((e) => {
       if (cat !== "todos" && e.category !== cat) return false;
       if (onlyFav && !e.favorite) return false;
       if (strengthFilter !== "todas" && e.password_strength !== strengthFilter) return false;
       if (!q) return true;
-      return (
-        e.name.toLowerCase().includes(q) ||
-        e.category.toLowerCase().includes(q) ||
-        (e.site ?? "").toLowerCase().includes(q)
-      );
+      const sec = getCachedSecret(e.id);
+      const hay = [
+        e.name,
+        e.category,
+        e.site ?? "",
+        sec?.username ?? "",
+        sec?.notes ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
     });
     const sorted = [...list];
     sorted.sort((a, b) => {
@@ -458,13 +576,13 @@ function VaultMain({
       if (sort === "recent") return b.created_at.localeCompare(a.created_at);
       if (sort === "updated") return b.updated_at.localeCompare(a.updated_at);
       if (sort === "weak") return (weakOrder[a.password_strength] ?? 9) - (weakOrder[b.password_strength] ?? 9);
-      // fav primeiro, depois nome
       if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
     return sorted;
-  }, [entries, query, cat, onlyFav, strengthFilter, sort]);
+  }, [entries, debouncedQuery, cat, onlyFav, strengthFilter, sort]);
 
+  // ===== Sub-views =====
   if (view.kind === "create") {
     return (
       <>
@@ -494,7 +612,7 @@ function VaultMain({
           subtitle="Atualize as informações salvas neste acesso."
           crumbs={[
             { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
-            { label: view.entry.name, to: undefined },
+            { label: view.entry.name },
             { label: "Editar" },
           ]}
           onBack={() => setView({ kind: "detail", entry: view.entry })}
@@ -510,12 +628,15 @@ function VaultMain({
               key: masterKey,
               previousPassword: view.entry.secret.password,
             });
+            evictCached(view.entry.id);
+            setCachedSecret(view.entry.id, data.secret);
             toast.success("Acesso atualizado");
             await reload();
             const fresh = await fetchEntries(userId);
             const updated = fresh.find((x) => x.id === view.entry.id);
             if (updated) {
               const dec = await decryptOne(masterKey, updated);
+              setCachedSecret(updated.id, dec.secret);
               setView({ kind: "detail", entry: dec });
             } else {
               setView({ kind: "list" });
@@ -531,17 +652,42 @@ function VaultMain({
         entry={view.entry}
         onBack={() => setView({ kind: "list" })}
         onEdit={() => setView({ kind: "edit", entry: view.entry })}
-        onDelete={async () => {
-          if (!confirm(`Excluir "${view.entry.name}"? Esta ação não pode ser desfeita.`)) return;
-          await deleteEntry(view.entry.id);
-          toast.success("Acesso excluído");
+        onDeleted={async () => {
+          evictCached(view.entry.id);
           await reload();
           setView({ kind: "list" });
         }}
       />
     );
   }
+  if (view.kind === "change_master") {
+    return (
+      <ChangeMasterView
+        userId={userId}
+        currentKey={masterKey}
+        currentSettings={settings}
+        onBack={() => setView({ kind: "list" })}
+        onChanged={(newSettings) => {
+          onSettingsChanged(newSettings);
+          clearSecretCache();
+          // Força novo unlock para usar a nova senha
+          setMasterKey(null);
+          toast.success("Senha mestra alterada. Faça o desbloqueio com a nova senha.");
+        }}
+      />
+    );
+  }
+  if (view.kind === "backup") {
+    return (
+      <BackupView
+        userId={userId}
+        settings={settings}
+        onBack={() => setView({ kind: "list" })}
+      />
+    );
+  }
 
+  // ===== Lista =====
   return (
     <>
       <PageHeader
@@ -552,12 +698,12 @@ function VaultMain({
           <>
             <Button
               onClick={() => setView({ kind: "create" })}
-              className="bg-brand-grad font-semibold shadow-md shadow-brand/20"
+              className="bg-brand text-brand-foreground font-semibold shadow-md hover:bg-brand/90"
             >
               <Plus className="h-4 w-4" /> Adicionar acesso
             </Button>
             <Button variant="outline" onClick={onLock} title="Bloquear cofre">
-              <Lock className="h-4 w-4" /> Bloquear cofre
+              <Lock className="h-4 w-4" /> Bloquear
             </Button>
           </>
         }
@@ -575,7 +721,7 @@ function VaultMain({
             </span>
           </div>
           <p className="mt-1 text-muted-foreground">
-            Seus dados sensíveis ficam protegidos com criptografia e só aparecem quando você autorizar.
+            Seus dados são criptografados no seu dispositivo. O cofre se bloqueia sozinho por inatividade ou ao deixar o app em segundo plano.
           </p>
         </div>
       </Card>
@@ -593,7 +739,7 @@ function VaultMain({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nome, usuário, categoria ou site"
+            placeholder="Buscar por nome, usuário, e-mail, site, categoria…"
             className="h-10 pl-9"
           />
         </div>
@@ -675,13 +821,29 @@ function VaultMain({
         ))}
       </div>
 
-
       {loading ? (
-        <div className="grid place-items-center py-12 text-sm text-muted-foreground">Carregando acessos…</div>
+        <ul className="space-y-2.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i}>
+              <Card className="flex items-center gap-3 p-3.5">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-1/3" />
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </Card>
+            </li>
+          ))}
+        </ul>
       ) : filtered.length === 0 ? (
-        <EmptyState onAdd={() => setView({ kind: "create" })} hasAny={entries.length > 0} />
+        entries.length === 0 ? (
+          <EmptyVault onAdd={() => setView({ kind: "create" })} />
+        ) : (
+          <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
+        )
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="space-y-2.5">
           {filtered.map((e) => (
             <EntryCard
               key={e.id}
@@ -689,19 +851,20 @@ function VaultMain({
               masterKey={masterKey}
               onOpen={async () => {
                 const dec = await decryptOne(masterKey, e);
+                setCachedSecret(e.id, dec.secret);
                 setView({ kind: "detail", entry: dec });
               }}
               onToggleFav={async () => {
-                const dec = await decryptOne(masterKey, e);
+                const sec = getCachedSecret(e.id) ?? (await decryptOne(masterKey, e)).secret;
                 await updateEntry({
                   id: e.id,
                   name: e.name,
                   category: e.category,
                   site: e.site,
                   favorite: !e.favorite,
-                  secret: dec.secret,
+                  secret: sec,
                   key: masterKey,
-                  previousPassword: dec.secret.password,
+                  previousPassword: sec.password,
                 });
                 await reload();
               }}
@@ -710,9 +873,51 @@ function VaultMain({
         </ul>
       )}
 
-      {hint && entries.length > 0 && (
-        <p className="mt-8 text-center text-[11px] text-muted-foreground">
-          Dica da senha mestra: <span className="font-medium">{hint}</span>
+      {/* Ações secundárias */}
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setView({ kind: "change_master" })}
+          className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+            <SettingsIcon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Alterar senha mestra</p>
+            <p className="truncate text-[11px] text-muted-foreground">Troca a senha que protege o cofre.</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setView({ kind: "backup" })}
+          className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+            <Download className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Exportar backup criptografado</p>
+            <p className="truncate text-[11px] text-muted-foreground">Baixa um arquivo .json com seus dados cifrados.</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </button>
+      </div>
+
+      <Card className="mt-3 flex items-start gap-3 border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+        <div>
+          <p className="font-medium text-foreground">Preenchimento automático</p>
+          <p className="mt-1 leading-relaxed">
+            Por enquanto, o Cofre Pessoal permite copiar e abrir seus acessos com segurança. O preenchimento direto no teclado do celular (estilo Bitwarden/1Password) exige um aplicativo nativo ou extensão, e está sendo avaliado para uma versão futura.
+          </p>
+        </div>
+      </Card>
+
+      {settings.hint && entries.length > 0 && (
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
+          Dica da senha mestra: <span className="font-medium">{settings.hint}</span>
         </p>
       )}
     </>
@@ -737,23 +942,36 @@ function StatCard({ label, value, tone, small }: { label: string; value: number 
   );
 }
 
-function EmptyState({ onAdd, hasAny }: { onAdd: () => void; hasAny: boolean }) {
+function EmptyVault({ onAdd }: { onAdd: () => void }) {
   return (
-    <Card className="grid place-items-center gap-3 py-12 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
-        <Shield className="h-6 w-6" />
+    <Card className="grid place-items-center gap-3 py-14 text-center animate-fade-in">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
+        <Shield className="h-7 w-7" />
       </span>
       <div>
-        <p className="font-semibold">{hasAny ? "Nenhum acesso encontrado" : "Seu cofre está vazio"}</p>
+        <p className="font-semibold">Seu cofre está vazio</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {hasAny ? "Ajuste o filtro ou a busca." : "Comece adicionando seu primeiro login."}
+          Adicione seu primeiro acesso para começar a organizar suas senhas com segurança.
         </p>
       </div>
-      {!hasAny && (
-        <Button onClick={onAdd}>
-          <Plus className="h-4 w-4" /> Adicionar acesso
-        </Button>
-      )}
+      <Button onClick={onAdd} className="bg-brand text-brand-foreground hover:bg-brand/90">
+        <Plus className="h-4 w-4" /> Adicionar primeiro acesso
+      </Button>
+    </Card>
+  );
+}
+
+function NoResults({ onClear }: { onClear: () => void }) {
+  return (
+    <Card className="grid place-items-center gap-3 py-12 text-center animate-fade-in">
+      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+        <Search className="h-6 w-6" />
+      </span>
+      <div>
+        <p className="font-semibold">Nenhum resultado</p>
+        <p className="mt-1 text-xs text-muted-foreground">Tente outra busca ou limpe os filtros.</p>
+      </div>
+      <Button variant="outline" onClick={onClear}>Limpar filtros</Button>
     </Card>
   );
 }
@@ -779,17 +997,91 @@ function maskUsername(u: string): string {
   return `${u.slice(0, 2)}${"•".repeat(Math.max(0, u.length - 2))}`;
 }
 
-async function copyWithToast(text: string, label: string, sensitive = false) {
+// ====== Copy helpers (com feedback + auto-clear de clipboard) ======
+const CLIPBOARD_CLEAR_MS = 20_000;
+async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado`, {
-      description: sensitive ? "Por segurança, limpe sua área de transferência depois de usar." : undefined,
-    });
+    return true;
   } catch {
-    toast.error("Não foi possível copiar");
+    return false;
   }
 }
+function scheduleClipboardClear(originalText: string) {
+  window.setTimeout(async () => {
+    try {
+      const current = await navigator.clipboard.readText();
+      if (current === originalText) {
+        await navigator.clipboard.writeText("");
+      }
+    } catch {
+      // WebView/iOS pode não permitir leitura — ignora silenciosamente
+    }
+  }, CLIPBOARD_CLEAR_MS);
+}
+async function copyWithToast(text: string, label: string, sensitive = false) {
+  const ok = await copyToClipboard(text);
+  if (!ok) {
+    toast.error("Não foi possível copiar");
+    return false;
+  }
+  if (sensitive) {
+    toast.success(`${label} copiada`, {
+      description: "Por segurança, será removida da área de transferência em alguns segundos.",
+    });
+    scheduleClipboardClear(text);
+  } else {
+    toast.success(`${label} copiado`);
+  }
+  return true;
+}
 
+/** Botão com feedback de check verde por 1s após copiar */
+function CopyButton({
+  value,
+  label,
+  sensitive,
+  size = "icon",
+  className,
+  variant = "outline",
+  children,
+}: {
+  value: string;
+  label: string;
+  sensitive?: boolean;
+  size?: "icon" | "sm" | "default";
+  className?: string;
+  variant?: "outline" | "ghost" | "secondary" | "default";
+  children?: React.ReactNode;
+}) {
+  const [done, setDone] = useState(false);
+  const timerRef = useRef<number | null>(null);
+  return (
+    <Button
+      size={size as never}
+      variant={variant as never}
+      className={cn("transition-all", done && "border-emerald-500/60 text-emerald-400", className)}
+      onClick={async (e) => {
+        e.stopPropagation();
+        const ok = await copyWithToast(value, label, sensitive);
+        if (ok) {
+          setDone(true);
+          if (timerRef.current) window.clearTimeout(timerRef.current);
+          timerRef.current = window.setTimeout(() => setDone(false), 1000);
+        }
+      }}
+      title={`Copiar ${label.toLowerCase()}`}
+      type="button"
+    >
+      {done ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      {children}
+    </Button>
+  );
+}
+
+// =====================================================================
+// EntryCard
+// =====================================================================
 function EntryCard({
   row,
   masterKey,
@@ -801,39 +1093,48 @@ function EntryCard({
   onOpen: () => void;
   onToggleFav: () => void;
 }) {
-  const [maskedUser, setMaskedUser] = useState<string>("•••");
+  const [maskedUser, setMaskedUser] = useState<string>(() => {
+    const sec = getCachedSecret(row.id);
+    return sec ? maskUsername(sec.username ?? "") : "•••";
+  });
+
   useEffect(() => {
     let alive = true;
+    const sec = getCachedSecret(row.id);
+    if (sec) {
+      setMaskedUser(maskUsername(sec.username ?? ""));
+      return () => { alive = false; };
+    }
     decryptOne(masterKey, row)
       .then((d) => {
-        if (alive) setMaskedUser(maskUsername(d.secret.username ?? ""));
+        if (!alive) return;
+        setCachedSecret(row.id, d.secret);
+        setMaskedUser(maskUsername(d.secret.username ?? ""));
       })
       .catch(() => {});
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [row, masterKey]);
 
-  async function handleCopyUser() {
+  async function getSecret() {
+    const cached = getCachedSecret(row.id);
+    if (cached) return cached;
     const dec = await decryptOne(masterKey, row);
-    await copyWithToast(dec.secret.username ?? "", "Usuário");
-  }
-  async function handleCopyPwd() {
-    const dec = await decryptOne(masterKey, row);
-    await copyWithToast(dec.secret.password ?? "", "Senha", true);
+    setCachedSecret(row.id, dec.secret);
+    return dec.secret;
   }
 
   return (
     <li>
-      <Card className="group flex items-center gap-3 p-3.5">
+      <Card className="group flex items-center gap-3 p-3.5 transition-colors hover:bg-accent/20">
         <button
           onClick={onOpen}
           className="shrink-0 rounded-xl outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-brand"
           aria-label="Abrir detalhes"
+          type="button"
         >
           <CompanyLogo site={row.site} name={row.name} />
         </button>
-        <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+        <button onClick={onOpen} className="min-w-0 flex-1 text-left" type="button">
           <div className="flex items-center gap-2">
             <p className="truncate text-sm font-semibold">{row.name}</p>
             {row.favorite && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
@@ -845,13 +1146,30 @@ function EntryCard({
           </div>
         </button>
         <div className="flex flex-col gap-1">
-          <Button size="icon" variant="ghost" onClick={onToggleFav} title="Favoritar" className="h-8 w-8">
+          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onToggleFav(); }} title="Favoritar" className="h-8 w-8" type="button">
             {row.favorite ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> : <StarOff className="h-4 w-4" />}
           </Button>
-          <Button size="icon" variant="ghost" onClick={handleCopyUser} title="Copiar usuário" className="h-8 w-8">
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" onClick={handleCopyPwd} title="Copiar senha" className="h-8 w-8">
+          <CopyButton
+            value=""
+            label="Usuário"
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+          >
+            {/* override: usa getSecret on click */}
+          </CopyButton>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            type="button"
+            title="Copiar senha"
+            onClick={async (e) => {
+              e.stopPropagation();
+              const sec = await getSecret();
+              await copyWithToast(sec.password ?? "", "Senha", true);
+            }}
+          >
             <KeyRound className="h-4 w-4" />
           </Button>
         </div>
@@ -860,19 +1178,51 @@ function EntryCard({
   );
 }
 
-// ===== Detail =====
+// =====================================================================
+// Detail (com auto-hide e inline delete)
+// =====================================================================
+const PWD_AUTO_HIDE_MS = 20_000;
+
 function DetailView({
   entry,
   onBack,
   onEdit,
-  onDelete,
+  onDeleted,
 }: {
   entry: DecryptedEntry;
   onBack: () => void;
   onEdit: () => void;
-  onDelete: () => void;
+  onDeleted: () => void;
 }) {
   const [showPwd, setShowPwd] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const hideTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!showPwd) {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      return;
+    }
+    hideTimerRef.current = window.setTimeout(() => setShowPwd(false), PWD_AUTO_HIDE_MS);
+    return () => {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    };
+  }, [showPwd]);
+
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    try {
+      await deleteEntry(entry.id);
+      toast.success("Acesso excluído");
+      onDeleted();
+    } catch (e) {
+      toast.error("Falha ao excluir", { description: (e as Error).message });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -884,7 +1234,7 @@ function DetailView({
         onBack={onBack}
         subtitle="Visualize, copie ou edite as informações deste acesso com segurança."
       />
-      <div className="mb-4 flex items-center gap-3">
+      <Card className="mb-4 flex items-center gap-3 p-4">
         <CompanyLogo site={entry.site} name={entry.name} className="h-14 w-14" rounded="2xl" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold">{entry.name}</p>
@@ -901,8 +1251,7 @@ function DetailView({
             )}
           </div>
         </div>
-      </div>
-
+      </Card>
 
       <Card className="space-y-5 p-5">
         <Field label="Usuário ou e-mail" value={entry.secret.username ?? ""} copyLabel="Usuário" />
@@ -915,18 +1264,16 @@ function DetailView({
               value={entry.secret.password ?? ""}
               className="font-mono"
             />
-            <Button size="icon" variant="outline" onClick={() => setShowPwd((s) => !s)} title="Mostrar/ocultar">
+            <Button size="icon" variant="outline" onClick={() => setShowPwd((s) => !s)} title="Mostrar/ocultar" type="button">
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => copyWithToast(entry.secret.password ?? "", "Senha", true)}
-              title="Copiar senha"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+            <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive />
           </div>
+          {showPwd && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              A senha será ocultada automaticamente em alguns segundos.
+            </p>
+          )}
         </div>
         {entry.site && (
           <Field
@@ -937,10 +1284,10 @@ function DetailView({
               <a
                 href={/^https?:\/\//.test(entry.site) ? entry.site : `https://${entry.site}`}
                 target="_blank"
-                rel="noreferrer"
+                rel="noreferrer noopener"
                 className="inline-flex items-center gap-1 text-xs text-brand hover:underline"
               >
-                <ExternalLink className="h-3 w-3" /> abrir
+                <ExternalLink className="h-3 w-3" /> Abrir site
               </a>
             }
           />
@@ -967,16 +1314,48 @@ function DetailView({
         </div>
       </Card>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={onEdit}>
-          <Pencil className="h-4 w-4" /> Editar
-        </Button>
-        <Button variant="outline" onClick={() => copyWithToast(entry.secret.password ?? "", "Senha", true)}>
-          <Copy className="h-4 w-4" /> Copiar senha
-        </Button>
-        <Button variant="destructive" onClick={onDelete}>
-          <Trash2 className="h-4 w-4" /> Excluir
-        </Button>
+      {/* Ações: confirmação inline para exclusão (sem window.confirm) */}
+      <div className="mt-4">
+        {!confirmingDelete ? (
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={onEdit} className="bg-brand text-brand-foreground hover:bg-brand/90">
+              <Pencil className="h-4 w-4" /> Editar
+            </Button>
+            <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive variant="outline" size="default">
+              <span className="ml-1.5">Copiar senha</span>
+            </CopyButton>
+            <Button variant="outline" onClick={() => setConfirmingDelete(true)} className="text-red-400 hover:text-red-300">
+              <Trash2 className="h-4 w-4" /> Excluir
+            </Button>
+          </div>
+        ) : (
+          <Card className="border-red-500/40 bg-red-500/5 p-4 animate-fade-in">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-500/15 text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Excluir “{entry.name}”?</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Esta ação não pode ser desfeita. O acesso será removido do seu cofre.
+                </p>
+                <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button variant="outline" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {deleting ? "Excluindo…" : "Excluir definitivamente"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </>
   );
@@ -988,16 +1367,16 @@ function Field({ label, value, copyLabel, trailing }: { label: string; value: st
       <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</Label>
       <div className="mt-1.5 flex items-center gap-2">
         <Input readOnly value={value} />
-        <Button size="icon" variant="outline" onClick={() => copyWithToast(value, copyLabel)} title={`Copiar ${copyLabel.toLowerCase()}`}>
-          <Copy className="h-4 w-4" />
-        </Button>
+        <CopyButton value={value} label={copyLabel} />
       </div>
       {trailing && <div className="mt-1.5">{trailing}</div>}
     </div>
   );
 }
 
-// ===== Form (create/edit) =====
+// =====================================================================
+// Form (create/edit)
+// =====================================================================
 function EntryForm({
   initial,
   onSubmit,
@@ -1028,6 +1407,7 @@ function EntryForm({
   const pwdRef = useRef<HTMLInputElement>(null);
 
   async function submit() {
+    if (busy) return;
     if (!name.trim()) {
       toast.error("Informe o nome do acesso");
       return;
@@ -1035,8 +1415,6 @@ function EntryForm({
     setBusy(true);
     try {
       const rawSite = site.trim();
-      // Persist a clean public domain when we can extract one — keeps logo
-      // lookup consistent across edits and saves storage of long URLs.
       const cleanSite = rawSite ? (extractDomain(rawSite) ?? rawSite) : null;
       await onSubmit({
         name: name.trim(),
@@ -1141,6 +1519,10 @@ function EntryForm({
               className="pr-20 font-mono"
               autoComplete="new-password"
               placeholder="••••••••"
+              onFocus={(e) => {
+                // Em telas pequenas, sobe o campo quando o teclado abrir
+                setTimeout(() => e.currentTarget?.scrollIntoView?.({ block: "center", behavior: "smooth" }), 200);
+              }}
             />
             <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
               <button
@@ -1172,7 +1554,7 @@ function EntryForm({
         </div>
       </Card>
 
-      {/* Bloco 3: Observações & favorito */}
+      {/* Bloco 3: Segurança e observações */}
       <Card className="space-y-4 p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">3</span>
@@ -1222,9 +1604,9 @@ function EntryForm({
         </button>
       </Card>
 
-      {/* Ações — barra sólida sempre visível, com safe area para mobile/WebView */}
+      {/* Barra de ações: SEMPRE visível, sólida, com safe-area */}
       <div
-        className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:-mx-8 lg:px-8"
+        className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
@@ -1241,11 +1623,11 @@ function EntryForm({
             type="button"
             onClick={submit}
             disabled={busy || !name.trim()}
-            className="bg-brand-grad h-12 w-full text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 transition-transform active:scale-[0.98] disabled:opacity-60 sm:h-11 sm:w-auto sm:px-8"
+            className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 transition-transform hover:bg-brand/90 active:scale-[0.98] disabled:opacity-60 sm:h-11 sm:w-auto sm:px-8"
           >
             {busy ? (
               <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Salvando…
               </>
             ) : (
@@ -1256,7 +1638,246 @@ function EntryForm({
           </Button>
         </div>
       </div>
-
     </div>
+  );
+}
+
+// =====================================================================
+// Alterar senha mestra
+// =====================================================================
+function ChangeMasterView({
+  userId,
+  currentKey,
+  currentSettings,
+  onBack,
+  onChanged,
+}: {
+  userId: string;
+  currentKey: CryptoKey;
+  currentSettings: VaultSettingsRow;
+  onBack: () => void;
+  onChanged: (s: VaultSettingsRow) => void;
+}) {
+  const [oldPwd, setOldPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [hint, setHint] = useState(currentSettings.hint ?? "");
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const strength = evaluateStrength(newPwd);
+
+  async function submit() {
+    if (busy) return;
+    if (newPwd.length < 8) {
+      toast.error("A nova senha deve ter pelo menos 8 caracteres");
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      toast.error("As novas senhas não conferem");
+      return;
+    }
+    setBusy(true);
+    try {
+      // Valida senha atual
+      const verify = await unlockMasterKey(oldPwd, currentSettings);
+      if (!verify) {
+        toast.error("Senha mestra atual incorreta");
+        setBusy(false);
+        return;
+      }
+      await rotateMasterKey({
+        userId,
+        currentKey,
+        newPassword: newPwd,
+        hint: hint || null,
+      });
+      const fresh = await fetchVaultSettings(userId);
+      if (fresh) onChanged(fresh);
+    } catch (e) {
+      toast.error("Falha ao alterar a senha mestra", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Alterar senha mestra"
+        subtitle="Troque a senha que protege seu cofre. Todos os acessos serão recriptografados com a nova senha."
+        crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Alterar senha mestra" }]}
+        onBack={onBack}
+      />
+
+      <Card className="mb-4 flex items-start gap-3 border-amber-500/40 bg-amber-500/5 p-4">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+        <p className="text-xs leading-relaxed text-foreground/90">
+          Se você esquecer a nova senha mestra, <strong>não será possível recuperar os dados do cofre</strong>. Guarde a nova senha em local seguro antes de continuar.
+        </p>
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="cm-old">Senha mestra atual</Label>
+          <div className="relative">
+            <Input
+              id="cm-old"
+              type={show ? "text" : "password"}
+              value={oldPwd}
+              onChange={(e) => setOldPwd(e.target.value)}
+              className="pr-10 font-mono"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShow((s) => !s)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={show ? "Ocultar" : "Mostrar"}
+            >
+              {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cm-new">Nova senha mestra</Label>
+          <Input
+            id="cm-new"
+            type={show ? "text" : "password"}
+            value={newPwd}
+            onChange={(e) => setNewPwd(e.target.value)}
+            className="font-mono"
+            autoComplete="new-password"
+            placeholder="Mínimo 8 caracteres"
+          />
+          {newPwd && (
+            <div className="flex items-center gap-2 pt-0.5">
+              {strengthBadge(strength)}
+              <p className="text-[11px] text-muted-foreground">
+                {strength === "forte" ? "Excelente!" : strength === "media" ? "Pode melhorar." : "Use 12+ caracteres, números e símbolos."}
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cm-conf">Confirmar nova senha</Label>
+          <Input
+            id="cm-conf"
+            type={show ? "text" : "password"}
+            value={confirmPwd}
+            onChange={(e) => setConfirmPwd(e.target.value)}
+            className="font-mono"
+            autoComplete="new-password"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cm-hint">Dica (opcional)</Label>
+          <Input
+            id="cm-hint"
+            value={hint}
+            onChange={(e) => setHint(e.target.value)}
+            placeholder="Ex.: meu time favorito + ano"
+          />
+        </div>
+      </Card>
+
+      <div
+        className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+      >
+        <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <Button type="button" variant="outline" onClick={onBack} disabled={busy} className="h-11 sm:h-10 sm:w-auto">
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={busy || !oldPwd || !newPwd || !confirmPwd}
+            className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 hover:bg-brand/90 sm:h-11 sm:w-auto sm:px-8"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {busy ? "Alterando…" : "Alterar senha mestra"}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// =====================================================================
+// Export (backup criptografado)
+// =====================================================================
+function BackupView({
+  userId,
+  settings,
+  onBack,
+}: {
+  userId: string;
+  settings: VaultSettingsRow;
+  onBack: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  async function handleExport() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const json = await buildEncryptedBackup({ userId, settings });
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `cofre-pessoal-backup-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Backup exportado");
+    } catch (e) {
+      toast.error("Falha ao exportar", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Backup criptografado"
+        subtitle="Baixe um arquivo .json com todos os seus acessos ainda cifrados."
+        crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Backup" }]}
+        onBack={onBack}
+      />
+      <Card className="space-y-4 p-5">
+        <div className="flex items-start gap-3 rounded-xl bg-brand-soft/40 p-3 text-foreground/90">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-on-soft" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-medium text-foreground">As senhas continuam protegidas</p>
+            <p className="mt-1 text-muted-foreground">
+              O arquivo é exportado com os dados <strong>já criptografados</strong>. Para abrir o backup no futuro, será necessária a senha mestra atual.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 p-3 text-foreground/90">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-medium text-foreground">A restauração ainda não está disponível</p>
+            <p className="mt-1 text-muted-foreground">
+              Você pode guardar o arquivo agora como cópia de segurança. A função de restaurar a partir do backup será liberada em uma versão futura.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleExport}
+          disabled={busy}
+          className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {busy ? "Gerando…" : "Exportar backup criptografado"}
+        </Button>
+      </Card>
+    </>
   );
 }
