@@ -111,6 +111,15 @@ function BrandLogoBase({
         src={candidates[idx]}
         alt=""
         onError={() => setIdx((i) => i + 1)}
+        onLoad={(e) => {
+          // Rejeita imagens minúsculas (favicons 16/32px), que ficam
+          // pixeladas/borradas quando renderizadas em h-11/h-14. Avança
+          // pra próxima fonte ou cai no fallback elegante.
+          const img = e.currentTarget;
+          if (img.naturalWidth > 0 && img.naturalWidth < 48) {
+            setIdx((i) => i + 1);
+          }
+        }}
         className="h-full w-full object-contain p-1.5"
         loading="lazy"
         decoding="async"
