@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
 import { startMercadoPagoOAuth } from "@/server/mercado-pago-integration.server";
 
@@ -9,9 +9,28 @@ import { startMercadoPagoOAuth } from "@/server/mercado-pago-integration.server"
 export const Route = createFileRoute("/api/integrations/mercadopago/connect")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
+      POST: async ({ request }) => {
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse();
+
+        const result = startMercadoPagoOAuth(user.id);
+        if ("error" in result) {
+          return Response.json(
+            {
+              error: "not_configured",
+              message: "Integração preparada, aguardando configuração das credenciais.",
+            },
+            { status: 503 },
+          );
+        }
+
+        return Response.json({ url: result.url });
+      },
+      GET: async ({ request }) => {
+        const user = await getUserFromRequest(request);
+        if (!user) {
+          return Response.redirect(new URL("/login", request.url).toString(), 302);
+        }
         const result = startMercadoPagoOAuth(user.id);
         if ("error" in result) {
           // App ainda não configurado — manda de volta com flag
