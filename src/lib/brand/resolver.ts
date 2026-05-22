@@ -300,18 +300,43 @@ export function logoUrlsForDomain(domain: string): string[] {
   ];
 }
 
+/**
+ * Overrides locais para marcas que Logo.dev / DuckDuckGo / Google não
+ * conseguem entregar com qualidade. Aplicados ANTES da cascata externa.
+ * Chave: nome normalizado (ver `normalizeMerchantName`).
+ */
+export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
+  "oxxo": "/logos/empresas/oxxo.webp",
+};
+
 export function getLogoCandidates(
   domain: string | null | undefined,
   name?: string | null,
 ): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
+  const pushUrl = (u: string) => {
+    if (!u || seen.has(u)) return;
+    seen.add(u);
+    urls.push(u);
+  };
   const pushFor = (d: string) => {
     const norm = extractDomain(d) ?? d;
-    if (!norm || seen.has(norm)) return;
-    seen.add(norm);
-    urls.push(...logoUrlsForDomain(norm));
+    if (!norm) return;
+    for (const u of logoUrlsForDomain(norm)) pushUrl(u);
   };
+
+  // 1) Override local (asset estático no /public).
+  const normName = normalizeMerchantName(name);
+  if (normName && LOCAL_LOGO_OVERRIDES[normName]) {
+    pushUrl(LOCAL_LOGO_OVERRIDES[normName]);
+  }
+  const firstWord = normName.split(" ")[0];
+  if (firstWord && firstWord !== normName && LOCAL_LOGO_OVERRIDES[firstWord]) {
+    pushUrl(LOCAL_LOGO_OVERRIDES[firstWord]);
+  }
+
+  // 2) Cascata externa por domínio.
   if (domain) pushFor(domain);
   for (const guess of guessDomainsFromName(name)) pushFor(guess);
   return urls;
