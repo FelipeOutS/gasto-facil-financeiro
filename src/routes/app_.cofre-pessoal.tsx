@@ -349,6 +349,7 @@ function VaultMain({
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<CategoriaId>("todos");
+  const [onlyFav, setOnlyFav] = useState(false);
   const [view, setView] = useState<View>({ kind: "list" });
 
   async function reload() {
@@ -370,17 +371,19 @@ function VaultMain({
     const total = entries.length;
     const fortes = entries.filter((e) => e.password_strength === "forte").length;
     const fracas = entries.filter((e) => e.password_strength === "fraca").length;
+    const favs = entries.filter((e) => e.favorite).length;
     const last = entries
       .map((e) => e.updated_at)
       .sort()
       .pop();
-    return { total, fortes, fracas, last };
+    return { total, fortes, fracas, favs, last };
   }, [entries]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return entries.filter((e) => {
       if (cat !== "todos" && e.category !== cat) return false;
+      if (onlyFav && !e.favorite) return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
@@ -388,7 +391,7 @@ function VaultMain({
         (e.site ?? "").toLowerCase().includes(q)
       );
     });
-  }, [entries, query, cat]);
+  }, [entries, query, cat, onlyFav]);
 
   if (view.kind === "create") {
     return (
@@ -456,15 +459,24 @@ function VaultMain({
     <>
       <HeaderHero subtitle="Organize seus logins, senhas e informações importantes em um só lugar." />
 
+      <Card className="mb-5 flex items-start gap-3 border-brand/20 bg-brand-soft/40 p-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+          <Shield className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 text-xs leading-relaxed text-foreground/90">
+          <p className="font-semibold text-sm">Área protegida</p>
+          <p className="mt-0.5 text-muted-foreground">
+            Guarde logins, senhas e informações importantes em um só lugar. Suas senhas ficam protegidas com criptografia
+            e só você deve acessar esta área.
+          </p>
+        </div>
+      </Card>
+
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Acessos salvos" value={stats.total} />
+        <StatCard label="Favoritos" value={stats.favs} />
         <StatCard label="Senhas fortes" value={stats.fortes} tone="success" />
         <StatCard label="Senhas fracas" value={stats.fracas} tone="warning" />
-        <StatCard
-          label="Última atualização"
-          value={stats.last ? new Date(stats.last).toLocaleDateString("pt-BR") : "—"}
-          small
-        />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -486,6 +498,19 @@ function VaultMain({
       </div>
 
       <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+        <button
+          onClick={() => setOnlyFav((v) => !v)}
+          className={cn(
+            "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+            onlyFav
+              ? "border-amber-400/60 bg-amber-400/10 text-amber-300"
+              : "border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+          )}
+        >
+          <Star className={cn("h-3.5 w-3.5", onlyFav && "fill-amber-400 text-amber-400")} />
+          Favoritos
+        </button>
+        <span className="mx-1 w-px shrink-0 self-stretch bg-border" />
         {CATEGORIAS.map((c) => (
           <button
             key={c.id}
@@ -872,94 +897,172 @@ function EntryForm({
     toast.success("Senha forte gerada");
   }
 
+  const formCategorias = CATEGORIAS.filter((c) => c.id !== "todos");
+
   return (
-    <Card className="space-y-4 p-5">
-      <div className="space-y-1.5">
-        <Label htmlFor="f-name">Nome do acesso</Label>
-        <Input id="f-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Instagram pessoal" autoFocus />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="space-y-4">
+      {/* Bloco 1: Identificação */}
+      <Card className="space-y-4 p-5">
+        <div className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">1</span>
+          <h2 className="text-sm font-semibold">Identificação do acesso</h2>
+        </div>
         <div className="space-y-1.5">
-          <Label htmlFor="f-cat">Categoria</Label>
-          <select
-            id="f-cat"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-          >
-            {CATEGORIAS.filter((c) => c.id !== "todos").map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
-            ))}
-          </select>
+          <Label htmlFor="f-name">Nome do acesso</Label>
+          <Input id="f-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Instagram pessoal" autoFocus />
+        </div>
+        <div className="space-y-2">
+          <Label>Categoria</Label>
+          <div className="flex flex-wrap gap-2">
+            {formCategorias.map((c) => {
+              const selected = category === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCategory(c.id)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all active:scale-[0.97]",
+                    selected
+                      ? "border-brand bg-brand-soft text-brand-on-soft shadow-[0_0_0_1px_hsl(var(--brand)/0.4)]"
+                      : "border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-foreground",
+                  )}
+                >
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-site">Site ou aplicativo</Label>
-          <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br" />
+          <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br" inputMode="url" />
         </div>
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="f-user">Usuário ou e-mail</Label>
-        <Input id="f-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" />
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="f-pwd">Senha</Label>
-          <button type="button" onClick={fillStrong} className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
-            <Sparkles className="h-3 w-3" /> Gerar senha forte
-          </button>
+      </Card>
+
+      {/* Bloco 2: Login */}
+      <Card className="space-y-4 p-5">
+        <div className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">2</span>
+          <h2 className="text-sm font-semibold">Dados de login</h2>
         </div>
-        <div className="relative">
-          <Input
-            ref={pwdRef}
-            id="f-pwd"
-            type={showPwd ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="pr-20 font-mono"
-            autoComplete="new-password"
+        <div className="space-y-1.5">
+          <Label htmlFor="f-user">Usuário, e-mail ou telefone</Label>
+          <Input id="f-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" placeholder="seu@email.com" />
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="f-pwd">Senha</Label>
+            <button type="button" onClick={fillStrong} className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
+              <Sparkles className="h-3 w-3" /> Gerar senha forte
+            </button>
+          </div>
+          <div className="relative">
+            <Input
+              ref={pwdRef}
+              id="f-pwd"
+              type={showPwd ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pr-20 font-mono"
+              autoComplete="new-password"
+              placeholder="••••••••"
+            />
+            <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => !s)}
+                aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:text-foreground"
+              >
+                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => copyWithToast(password, "Senha", true)}
+                aria-label="Copiar senha"
+                className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          {password && (
+            <div className="flex items-center gap-2 pt-1">
+              {strengthBadge(strength)}
+              <p className="text-[11px] text-muted-foreground">
+                {strength === "forte" ? "Boa! Sua senha está bem protegida." : strength === "media" ? "Pode melhorar adicionando símbolos e mais caracteres." : "Use 12+ caracteres, com números e símbolos."}
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Bloco 3: Observações & favorito */}
+      <Card className="space-y-4 p-5">
+        <div className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">3</span>
+          <h2 className="text-sm font-semibold">Segurança e observações</h2>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="f-notes">Observações privadas</Label>
+          <Textarea
+            id="f-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            placeholder="Códigos de recuperação, perguntas secretas, anotações…"
           />
-          <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
-            <button
-              type="button"
-              onClick={() => setShowPwd((s) => !s)}
-              className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:text-foreground"
-            >
-              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => copyWithToast(password, "Senha", true)}
-              className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:text-foreground"
-            >
-              <Copy className="h-4 w-4" />
-            </button>
-          </div>
+          <p className="text-[11px] text-muted-foreground">
+            As observações também são criptografadas. Não escreva aqui o que não quiser proteger.
+          </p>
         </div>
-        {password && (
-          <div className="flex items-center gap-2 pt-1">
-            {strengthBadge(strength)}
-            <p className="text-[11px] text-muted-foreground">
-              {strength === "forte" ? "Boa! Sua senha está bem protegida." : strength === "media" ? "Pode melhorar adicionando símbolos e mais caracteres." : "Use 12+ caracteres, com números e símbolos."}
-            </p>
+        <button
+          type="button"
+          onClick={() => setFavorite((v) => !v)}
+          className={cn(
+            "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors",
+            favorite ? "border-amber-400/60 bg-amber-400/5" : "border-border bg-card hover:bg-accent/30",
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <Star className={cn("h-4 w-4", favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+            <div>
+              <p className="text-sm font-medium">Marcar como favorito</p>
+              <p className="text-[11px] text-muted-foreground">Aparece no topo da lista do cofre.</p>
+            </div>
           </div>
-        )}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="f-notes">Observações</Label>
-        <Textarea id="f-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Códigos de recuperação, perguntas secretas…" />
-      </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} className="h-4 w-4" />
-        Marcar como favorito
-      </label>
-      <div className="flex gap-2 pt-2">
-        <Button onClick={submit} disabled={busy} className="flex-1">
-          <Check className="h-4 w-4" /> {busy ? "Salvando…" : "Salvar acesso"}
-        </Button>
-        <Button variant="outline" onClick={onCancel} disabled={busy}>
+          <span
+            className={cn(
+              "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+              favorite ? "bg-amber-400" : "bg-muted",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-4 w-4 transform rounded-full bg-background shadow transition-transform",
+                favorite ? "translate-x-4" : "translate-x-0.5",
+              )}
+            />
+          </span>
+        </button>
+      </Card>
+
+      {/* Ações */}
+      <div className="sticky bottom-2 z-10 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <Button variant="ghost" onClick={onCancel} disabled={busy} className="sm:w-auto">
           Cancelar
         </Button>
+        <Button
+          onClick={submit}
+          disabled={busy || !name.trim()}
+          size="lg"
+          className="h-12 w-full bg-gradient-to-r from-brand to-brand/80 text-base font-semibold shadow-lg shadow-brand/20 hover:from-brand hover:to-brand/90 sm:w-auto sm:px-8"
+        >
+          <Check className="h-4 w-4" /> {busy ? "Salvando…" : "Salvar acesso"}
+        </Button>
       </div>
-    </Card>
+    </div>
   );
 }
