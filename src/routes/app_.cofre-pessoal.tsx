@@ -372,13 +372,20 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSett
 // Unlock (com proteção contra tentativas)
 // =====================================================================
 function UnlockView({
+  userId,
+  userLabel,
   settings,
   onUnlocked,
 }: {
+  userId: string;
+  userLabel: string;
   settings: VaultSettingsRow;
   onUnlocked: () => void;
 }) {
+  const [quick, setQuick] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [mode, setMode] = useState<"quick" | "master">(quick ? "quick" : "master");
   const [pwd, setPwd] = useState("");
+  const [pin, setPin] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fails, setFails] = useState(0);
@@ -404,7 +411,7 @@ function UnlockView({
         setFails(next);
         setPwd("");
         if (next >= 3) {
-          const delay = Math.min(60, 2 ** (next - 2)) * 1000; // 2s, 4s, 8s, ... até 60s
+          const delay = Math.min(60, 2 ** (next - 2)) * 1000;
           setCooldownUntil(Date.now() + delay);
           toast.error("Senha mestra incorreta", {
             description: `Muitas tentativas. Aguarde ${Math.ceil(delay / 1000)}s antes de tentar novamente.`,
@@ -422,65 +429,236 @@ function UnlockView({
     }
   }
 
+  async function handlePinUnlock(value: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const key = await unlockWithPin(userId, value);
+      setMasterKey(key);
+      setPin("");
+      onUnlocked();
+    } catch (e) {
+      setPin("");
+      toast.error((e as Error).message);
+      // Atualiza estado: se PIN foi invalidado (limite), cai para senha mestra
+      const refreshed = getQuickUnlock(userId);
+      setQuick(refreshed);
+      if (!refreshed) setMode("master");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleBiometricUnlock() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const key = await unlockWithBiometric(userId);
+      setMasterKey(key);
+      onUnlocked();
+    } catch (e) {
+      toast.error("Falha na biometria", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // PIN: dispara ao completar 6 dígitos (ou 4-8 — ao pressionar Enter / botão)
+  useEffect(() => {
+    if (mode !== "quick") return;
+    if (!quick || quick.kind !== "pin") return;
+    if (pin.length === 6) handlePinUnlock(pin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, mode, quick]);
+
+  // Subtítulo dinâmico
+  const subtitle = mode === "quick" && quick?.kind === "pin"
+    ? "Digite seu PIN de acesso rápido para abrir o cofre."
+    : mode === "quick" && quick?.kind === "webauthn"
+    ? "Use sua biometria para abrir o cofre."
+    : "Digite sua senha mestra para acessar seus logins e dados sensíveis.";
+
   return (
     <>
-      <HeaderHero subtitle="Digite sua senha mestra para acessar seus logins e dados sensíveis." />
+      <HeaderHero subtitle={subtitle} />
       <Card className="mx-auto max-w-md p-6">
         <div className="mb-5 grid place-items-center">
           <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
-            <Lock className="h-7 w-7" />
+            {mode === "quick" && quick?.kind === "webauthn" ? (
+              <Fingerprint className="h-7 w-7" />
+            ) : (
+              <Lock className="h-7 w-7" />
+            )}
           </span>
         </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleUnlock();
-          }}
-          className="space-y-4"
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="unlock-pwd">Senha mestra</Label>
-            <div className="relative">
-              <Input
-                id="unlock-pwd"
-                type={show ? "text" : "password"}
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                autoFocus
-                className="pr-10 font-mono"
-                disabled={isCoolingDown}
-              />
+
+        {mode === "quick" && quick?.kind === "pin" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-center block">PIN de acesso</Label>
+              <PinDots length={6} value={pin} />
+            </div>
+            <PinPad
+              disabled={busy}
+              onDigit={(d) => setPin((p) => (p.length >= 6 ? p : p + d))}
+              onBackspace={() => setPin((p) => p.slice(0, -1))}
+            />
+            <button
+              type="button"
+              onClick={() => { setMode("master"); setPin(""); }}
+              className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Usar senha mestra
+            </button>
+          </div>
+        )}
+
+        {mode === "quick" && quick?.kind === "webauthn" && (
+          <div className="space-y-4">
+            <Button
+              type="button"
+              onClick={handleBiometricUnlock}
+              disabled={busy}
+              className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+              {busy ? "Autenticando…" : "Desbloquear com biometria"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setMode("master")}
+              className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Usar senha mestra
+            </button>
+          </div>
+        )}
+
+        {mode === "master" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleUnlock(); }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="unlock-pwd">Senha mestra</Label>
+              <div className="relative">
+                <Input
+                  id="unlock-pwd"
+                  type={show ? "text" : "password"}
+                  value={pwd}
+                  onChange={(e) => setPwd(e.target.value)}
+                  autoFocus
+                  className="pr-10 font-mono"
+                  disabled={isCoolingDown}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={show ? "Ocultar" : "Mostrar"}
+                >
+                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {settings.hint && (
+                <p className="text-[11px] text-muted-foreground">
+                  <span className="font-medium">Dica:</span> {settings.hint}
+                </p>
+              )}
+              {isCoolingDown && (
+                <p className="text-[11px] text-amber-400">
+                  Muitas tentativas. Aguarde {cooldownLeft}s antes de tentar novamente.
+                </p>
+              )}
+            </div>
+            <Button
+              type="submit"
+              disabled={busy || !pwd || isCoolingDown}
+              className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+              {busy ? "Desbloqueando…" : isCoolingDown ? `Aguarde ${cooldownLeft}s` : "Desbloquear cofre"}
+            </Button>
+            {quick && (
               <button
                 type="button"
-                onClick={() => setShow((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={show ? "Ocultar" : "Mostrar"}
+                onClick={() => setMode("quick")}
+                className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {quick.kind === "pin" ? "Voltar para PIN rápido" : "Voltar para biometria"}
               </button>
-            </div>
-            {settings.hint && (
-              <p className="text-[11px] text-muted-foreground">
-                <span className="font-medium">Dica:</span> {settings.hint}
-              </p>
             )}
-            {isCoolingDown && (
-              <p className="text-[11px] text-amber-400">
-                Muitas tentativas. Aguarde {cooldownLeft}s antes de tentar novamente.
-              </p>
-            )}
-          </div>
-          <Button
-            type="submit"
-            disabled={busy || !pwd || isCoolingDown}
-            className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-            {busy ? "Desbloqueando…" : isCoolingDown ? `Aguarde ${cooldownLeft}s` : "Desbloquear cofre"}
-          </Button>
-        </form>
+          </form>
+        )}
       </Card>
+      {/* userLabel é só para criar credenciais novas em outros pontos */}
+      <span className="sr-only">{userLabel}</span>
     </>
+  );
+}
+
+// Componentes auxiliares para PIN
+function PinDots({ length, value }: { length: number; value: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      {Array.from({ length }).map((_, i) => {
+        const filled = i < value.length;
+        return (
+          <span
+            key={i}
+            className={cn(
+              "h-3.5 w-3.5 rounded-full border transition-colors",
+              filled ? "border-brand bg-brand" : "border-border bg-transparent",
+            )}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function PinPad({
+  disabled,
+  onDigit,
+  onBackspace,
+}: {
+  disabled?: boolean;
+  onDigit: (d: string) => void;
+  onBackspace: () => void;
+}) {
+  const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+  return (
+    <div className="grid grid-cols-3 gap-2.5">
+      {digits.map((d) => (
+        <button
+          key={d}
+          type="button"
+          disabled={disabled}
+          onClick={() => onDigit(d)}
+          className="h-14 rounded-xl border border-border bg-card text-xl font-semibold tabular-nums text-foreground transition-colors hover:bg-accent/40 active:scale-[0.98] disabled:opacity-50"
+        >
+          {d}
+        </button>
+      ))}
+      <span />
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onDigit("0")}
+        className="h-14 rounded-xl border border-border bg-card text-xl font-semibold tabular-nums text-foreground transition-colors hover:bg-accent/40 active:scale-[0.98] disabled:opacity-50"
+      >
+        0
+      </button>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onBackspace}
+        className="grid h-14 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent/40 active:scale-[0.98] disabled:opacity-50"
+        aria-label="Apagar"
+      >
+        <Backspace className="h-5 w-5" />
+      </button>
+    </div>
   );
 }
 
