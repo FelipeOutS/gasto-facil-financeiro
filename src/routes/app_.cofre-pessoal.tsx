@@ -50,6 +50,8 @@ import {
 } from "@/lib/vault/service";
 import { evaluateStrength, generateStrongPassword, type Strength } from "@/lib/vault/strength";
 import { useVaultKey, setMasterKey } from "@/lib/vault/use-vault";
+import { CompanyLogo } from "@/components/vault/CompanyLogo";
+import { extractDomain } from "@/lib/vault/company-logo";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
@@ -826,10 +828,10 @@ function EntryCard({
       <Card className="group flex items-center gap-3 p-3.5">
         <button
           onClick={onOpen}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-card-elevated text-foreground ring-1 ring-border/60"
+          className="shrink-0 rounded-xl outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-brand"
           aria-label="Abrir detalhes"
         >
-          <Shield className="h-5 w-5" />
+          <CompanyLogo site={row.site} name={row.name} />
         </button>
         <button onClick={onOpen} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
@@ -882,14 +884,23 @@ function DetailView({
         onBack={onBack}
         subtitle="Visualize, copie ou edite as informações deste acesso com segurança."
       />
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
-        {strengthBadge(entry.password_strength)}
-        {entry.favorite && (
-          <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
-            <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
-          </Badge>
-        )}
+      <div className="mb-4 flex items-center gap-3">
+        <CompanyLogo site={entry.site} name={entry.name} className="h-14 w-14" rounded="2xl" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-semibold">{entry.name}</p>
+          {entry.site && (
+            <p className="truncate text-xs text-muted-foreground">{extractDomain(entry.site) ?? entry.site}</p>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
+            {strengthBadge(entry.password_strength)}
+            {entry.favorite && (
+              <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
+                <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
 
 
@@ -1023,10 +1034,14 @@ function EntryForm({
     }
     setBusy(true);
     try {
+      const rawSite = site.trim();
+      // Persist a clean public domain when we can extract one — keeps logo
+      // lookup consistent across edits and saves storage of long URLs.
+      const cleanSite = rawSite ? (extractDomain(rawSite) ?? rawSite) : null;
       await onSubmit({
         name: name.trim(),
         category,
-        site: site.trim() || null,
+        site: cleanSite,
         favorite,
         secret: { username, password, notes },
       });
@@ -1085,7 +1100,17 @@ function EntryForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-site">Site ou aplicativo</Label>
-          <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br" inputMode="url" />
+          <div className="flex items-center gap-3">
+            <CompanyLogo site={site || name} name={name || site || "?"} className="h-12 w-12" />
+            <div className="min-w-0 flex-1">
+              <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br ou https://exemplo.com" inputMode="url" />
+              {site && extractDomain(site) && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Salvaremos como <span className="font-medium text-foreground">{extractDomain(site)}</span> para buscar o logo automaticamente.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </Card>
 
