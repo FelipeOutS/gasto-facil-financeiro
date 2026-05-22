@@ -80,6 +80,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
+import { Route as ApiIntegrationsMercadopagoConnectRouteImport } from './routes/api/integrations.mercadopago.connect'
 
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
@@ -441,6 +442,12 @@ const ApiPublicWebhooksMercadopagoRoute =
     path: '/api/public/webhooks/mercadopago',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiIntegrationsMercadopagoConnectRoute =
+  ApiIntegrationsMercadopagoConnectRouteImport.update({
+    id: '/api/integrations/mercadopago/connect',
+    path: '/api/integrations/mercadopago/connect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -507,6 +514,7 @@ export interface FileRoutesByFullPath {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -580,6 +588,7 @@ export interface FileRoutesByTo {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -654,6 +663,7 @@ export interface FileRoutesById {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -729,6 +739,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
+    | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/lovable/email/auth/preview'
@@ -802,6 +813,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
+    | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/lovable/email/auth/preview'
@@ -875,6 +887,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/lovable/email/suppression'
+    | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/lovable/email/auth/preview'
@@ -949,6 +962,7 @@ export interface RootRouteChildren {
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1457,6 +1471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/integrations/mercadopago/connect': {
+      id: '/api/integrations/mercadopago/connect'
+      path: '/api/integrations/mercadopago/connect'
+      fullPath: '/api/integrations/mercadopago/connect'
+      preLoaderRoute: typeof ApiIntegrationsMercadopagoConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1525,6 +1546,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiIntegrationsMercadopagoConnectRoute:
+    ApiIntegrationsMercadopagoConnectRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
