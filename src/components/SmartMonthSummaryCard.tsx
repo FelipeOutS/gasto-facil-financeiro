@@ -19,7 +19,7 @@ type Props = {
 };
 
 export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
-  const { t } = useTranslation("dashboard");
+  const { t, i18n } = useTranslation("dashboard");
   const plan = usePlan();
   const navigate = useNavigate();
   const fetchSummary = useServerFn(getMonthlySmartSummary);
