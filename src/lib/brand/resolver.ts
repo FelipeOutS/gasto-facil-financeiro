@@ -307,6 +307,9 @@ export function logoUrlsForDomain(domain: string): string[] {
  */
 export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
   "oxxo": "/logos/empresas/oxxo.webp",
+  "drogaria sao paulo": "/logos/empresas/drogaria-sao-paulo.webp",
+  "drogarias sao paulo": "/logos/empresas/drogaria-sao-paulo.webp",
+  "dsp": "/logos/empresas/drogaria-sao-paulo.webp",
 };
 
 export function getLogoCandidates(
