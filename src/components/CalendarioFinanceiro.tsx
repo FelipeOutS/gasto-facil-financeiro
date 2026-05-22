@@ -365,7 +365,7 @@ export function CalendarioFinanceiro({
                       >
                         {r.pagar > 0 && r.receber === 0 && `−${formatBRL(r.pagar)}`}
                         {r.receber > 0 && r.pagar === 0 && `+${formatBRL(r.receber)}`}
-                        {r.pagar > 0 && r.receber > 0 && `${evs.length} itens`}
+                        {r.pagar > 0 && r.receber > 0 && t("calendario.itens", { count: evs.length })}
                       </span>
                     )}
                   </div>
