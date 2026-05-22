@@ -783,7 +783,13 @@ function FornecedorItem({
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <BrandLogo
+            name={f.apelido || f.nome_fantasia || f.nome || "?"}
+            domain={extractDomain(f.email ?? null)}
+            size="md"
+          />
+          <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold">
               {f.apelido || f.nome_fantasia || f.nome}
