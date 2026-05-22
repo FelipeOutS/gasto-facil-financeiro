@@ -69,6 +69,16 @@ import {
 } from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
 import { extractDomain } from "@/lib/brand/resolver";
+import {
+  getQuickUnlock,
+  disableQuickUnlock,
+  enablePinUnlock,
+  unlockWithPin,
+  enableBiometricUnlock,
+  unlockWithBiometric,
+  isPlatformAuthenticatorAvailable,
+  type QuickUnlockRecord,
+} from "@/lib/vault/quick-unlock";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
