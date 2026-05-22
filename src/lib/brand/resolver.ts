@@ -207,6 +207,14 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "cpfl": "cpfl.com.br",
   "light": "light.com.br",
   "sabesp": "sabesp.com.br",
+  "conta de agua": "sabesp.com.br",
+  "conta de água": "sabesp.com.br",
+  "agua": "sabesp.com.br",
+  "água": "sabesp.com.br",
+  "conta de luz": "enel.com.br",
+  "luz": "enel.com.br",
+  "energia eletrica": "enel.com.br",
+  "energia elétrica": "enel.com.br",
   "comgas": "comgas.com.br",
 
   // Supermercados / varejo BR
