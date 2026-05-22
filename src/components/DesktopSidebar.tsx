@@ -76,7 +76,6 @@ const ITEMS: NavItem[] = [
   { to: "/guardado", labelKey: "guardado", icon: Wallet },
   { to: "/metas", labelKey: "metas", icon: Target },
   { to: "/contas-conectadas", labelKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
-  { to: "/app/integracoes", labelKey: "integracoes", icon: Plug },
   { to: "/meu-plano", labelKey: "meuPlano", icon: Crown },
   { to: "/categorias", labelKey: "categorias", icon: Settings2 },
   { to: "/landing", labelKey: "landing", icon: Sparkles },
@@ -93,7 +92,12 @@ export function DesktopSidebar() {
   const { user, profile } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
   const items: NavItem[] = useMemo(
-    () => (isAdminMaster ? [...ITEMS, { to: "/admin", labelKey: "admin", icon: Shield }] : ITEMS),
+    () => {
+      const base = isAdminMaster
+        ? [...ITEMS, { to: "/app/integracoes", labelKey: "integracoes", icon: Plug } as NavItem]
+        : ITEMS;
+      return isAdminMaster ? [...base, { to: "/admin", labelKey: "admin", icon: Shield }] : base;
+    },
     [isAdminMaster],
   );
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
