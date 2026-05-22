@@ -28,9 +28,12 @@ export function generateSalt(): string {
 
 async function deriveKey(password: string, saltB64: string, iterations: number): Promise<CryptoKey> {
   const enc = new TextEncoder();
+  const pwd = enc.encode(password);
+  const pwdBuf = new Uint8Array(new ArrayBuffer(pwd.byteLength));
+  pwdBuf.set(pwd);
   const baseKey = await crypto.subtle.importKey(
     "raw",
-    enc.encode(password),
+    pwdBuf,
     { name: "PBKDF2" },
     false,
     ["deriveKey"],
