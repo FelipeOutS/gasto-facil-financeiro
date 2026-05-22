@@ -69,7 +69,7 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago/")({
 });
 
 function MercadoPagoIntegrationPage() {
-  const search = useSearch({ from: "/app_/integracoes/mercado-pago" });
+  const search = useSearch({ from: "/app_/integracoes/mercado-pago/" });
   const navigate = useNavigate();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
