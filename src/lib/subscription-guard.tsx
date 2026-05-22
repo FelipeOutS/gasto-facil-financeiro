@@ -8,6 +8,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Link } from "@tanstack/react-router";
 import { Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   Dialog,
   DialogContent,
