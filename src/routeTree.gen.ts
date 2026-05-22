@@ -60,6 +60,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
+import { Route as AppIntegracoesRouteImport } from './routes/app_.integracoes'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
@@ -339,6 +340,11 @@ const AppMaisRoute = AppMaisRouteImport.update({
   path: '/app/mais',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIntegracoesRoute = AppIntegracoesRouteImport.update({
+  id: '/app_/integracoes',
+  path: '/app/integracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIdiomaRoute = AppIdiomaRouteImport.update({
   id: '/app_/idioma',
   path: '/app/idioma',
@@ -516,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/idioma': typeof AppIdiomaRoute
+  '/app/integracoes': typeof AppIntegracoesRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -592,6 +599,7 @@ export interface FileRoutesByTo {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/idioma': typeof AppIdiomaRoute
+  '/app/integracoes': typeof AppIntegracoesRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -669,6 +677,7 @@ export interface FileRoutesById {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app_/idioma': typeof AppIdiomaRoute
+  '/app_/integracoes': typeof AppIntegracoesRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
@@ -747,6 +756,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app/idioma'
+    | '/app/integracoes'
     | '/app/mais'
     | '/app/perfil'
     | '/clientes/relatorio'
@@ -823,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app/idioma'
+    | '/app/integracoes'
     | '/app/mais'
     | '/app/perfil'
     | '/clientes/relatorio'
@@ -899,6 +910,7 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app_/idioma'
+    | '/app_/integracoes'
     | '/app_/mais'
     | '/app_/perfil'
     | '/clientes_/relatorio'
@@ -976,6 +988,7 @@ export interface RootRouteChildren {
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
+  AppIntegracoesRoute: typeof AppIntegracoesRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
@@ -1359,6 +1372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMaisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/integracoes': {
+      id: '/app_/integracoes'
+      path: '/app/integracoes'
+      fullPath: '/app/integracoes'
+      preLoaderRoute: typeof AppIntegracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app_/idioma': {
       id: '/app_/idioma'
       path: '/app/idioma'
@@ -1576,6 +1596,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   AppIdiomaRoute: AppIdiomaRoute,
+  AppIntegracoesRoute: AppIntegracoesRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
