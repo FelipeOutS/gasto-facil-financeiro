@@ -59,3 +59,25 @@ export function unauthorizedResponse(message = "Você precisa estar logado para 
     headers: { "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Allowlist espelhada de `src/lib/plans.ts` (ADMIN_MASTER_EMAILS).
+ * Mantida aqui para evitar import de módulo client em código de servidor.
+ */
+const ADMIN_MASTER_EMAILS: ReadonlyArray<string> = [
+  "felipe.out.silva@outlook.com",
+  "michael@medeiroscenografia.com.br",
+];
+
+export function isAdminMasterUser(user: { email?: string | null } | null | undefined): boolean {
+  const email = user?.email?.trim().toLowerCase();
+  if (!email) return false;
+  return ADMIN_MASTER_EMAILS.includes(email);
+}
+
+export function forbiddenResponse(message = "Acesso restrito ao administrador master."): Response {
+  return new Response(JSON.stringify({ error: "forbidden", message }), {
+    status: 403,
+    headers: { "Content-Type": "application/json" },
+  });
+}

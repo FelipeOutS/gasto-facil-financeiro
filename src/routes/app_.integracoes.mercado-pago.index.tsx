@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
+import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api-fetch";
@@ -73,7 +74,11 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago/")({
     connected: typeof s.connected === "string" ? s.connected : undefined,
     error: typeof s.error === "string" ? s.error : undefined,
   }),
-  component: MercadoPagoIntegrationPage,
+  component: () => (
+    <AdminMasterGate>
+      <MercadoPagoIntegrationPage />
+    </AdminMasterGate>
+  ),
 });
 
 const BENEFITS: { icon: React.ReactNode; label: string }[] = [

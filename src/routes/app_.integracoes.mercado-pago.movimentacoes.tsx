@@ -17,6 +17,7 @@ import {
   Filter,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,11 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago/movimentaco
       },
     ],
   }),
-  component: MovimentacoesPage,
+  component: () => (
+    <AdminMasterGate>
+      <MovimentacoesPage />
+    </AdminMasterGate>
+  ),
 });
 
 // ---------- helpers ----------

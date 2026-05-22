@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
-import { ADMIN_ITEM, MORE_ITEMS, type MoreItem } from "@/lib/more-menu";
+import { ADMIN_ITEM, INTEGRACOES_ITEM, MORE_ITEMS, type MoreItem } from "@/lib/more-menu";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
@@ -34,7 +34,9 @@ function AppMaisPage() {
         { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
       ];
       const allItems = [...mobileFirstItems, ...MORE_ITEMS];
-      return isAdminMaster || hasFullAccess ? [...allItems, ADMIN_ITEM] : allItems;
+      if (isAdminMaster) return [...allItems, INTEGRACOES_ITEM, ADMIN_ITEM];
+      if (hasFullAccess) return [...allItems, ADMIN_ITEM];
+      return allItems;
     },
     [hasFullAccess, isAdminMaster],
   );
