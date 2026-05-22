@@ -51,11 +51,10 @@ export async function createMasterKey(
   const iterations = DEFAULT_ITERATIONS;
   const key = await deriveKey(password, salt, iterations);
   const iv = randomBytes(12);
-  const ct = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    new TextEncoder().encode(VERIFIER_PLAINTEXT),
-  );
+  const plain = new TextEncoder().encode(VERIFIER_PLAINTEXT);
+  const plainBuf = new Uint8Array(new ArrayBuffer(plain.byteLength));
+  plainBuf.set(plain);
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plainBuf);
   return { salt, iterations, verifier: b64encode(ct), verifier_iv: b64encode(iv), key };
 }
 
