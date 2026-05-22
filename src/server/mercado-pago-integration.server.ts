@@ -300,7 +300,7 @@ export function mapMercadoPagoTransactionToGastoInteligente(p: MpPayment, userId
     payment_method: mapPaymentMethod(p),
     status,
     occurred_at: p.date_approved ?? p.date_created ?? null,
-    raw_payload: p as unknown as Record<string, unknown>,
+    raw_payload: p as unknown as never,
   };
 }
 
