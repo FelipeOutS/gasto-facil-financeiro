@@ -80,6 +80,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as AppIntegracoesMercadoPagoMovimentacoesRouteImport } from './routes/app_.integracoes.mercado-pago.movimentacoes'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 import { Route as ApiIntegrationsMercadopagoConnectRouteImport } from './routes/api/integrations.mercadopago.connect'
@@ -445,6 +446,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIntegracoesMercadoPagoMovimentacoesRoute =
+  AppIntegracoesMercadoPagoMovimentacoesRouteImport.update({
+    id: '/movimentacoes',
+    path: '/movimentacoes',
+    getParentRoute: () => AppIntegracoesMercadoPagoRoute,
+  } as any)
 const ApiPublicWhatsappExpenseRoute =
   ApiPublicWhatsappExpenseRouteImport.update({
     id: '/api/public/whatsapp/expense',
@@ -541,13 +548,14 @@ export interface FileRoutesByFullPath {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRoute
+  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -619,13 +627,14 @@ export interface FileRoutesByTo {
   '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRoute
+  '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -698,13 +707,14 @@ export interface FileRoutesById {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/app_/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRoute
+  '/app_/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app_/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -785,6 +795,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app/integracoes/mercado-pago/movimentacoes'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -863,6 +874,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app/integracoes/mercado-pago/movimentacoes'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -941,6 +953,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/connect'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app_/integracoes/mercado-pago/movimentacoes'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1525,6 +1538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/integracoes/mercado-pago/movimentacoes': {
+      id: '/app_/integracoes/mercado-pago/movimentacoes'
+      path: '/movimentacoes'
+      fullPath: '/app/integracoes/mercado-pago/movimentacoes'
+      preLoaderRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRouteImport
+      parentRoute: typeof AppIntegracoesMercadoPagoRoute
+    }
     '/api/public/whatsapp/expense': {
       id: '/api/public/whatsapp/expense'
       path: '/api/public/whatsapp/expense'
@@ -1563,12 +1583,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppIntegracoesMercadoPagoRouteChildren {
+  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+}
+
+const AppIntegracoesMercadoPagoRouteChildren: AppIntegracoesMercadoPagoRouteChildren =
+  {
+    AppIntegracoesMercadoPagoMovimentacoesRoute:
+      AppIntegracoesMercadoPagoMovimentacoesRoute,
+  }
+
+const AppIntegracoesMercadoPagoRouteWithChildren =
+  AppIntegracoesMercadoPagoRoute._addFileChildren(
+    AppIntegracoesMercadoPagoRouteChildren,
+  )
+
 interface AppIntegracoesRouteChildren {
-  AppIntegracoesMercadoPagoRoute: typeof AppIntegracoesMercadoPagoRoute
+  AppIntegracoesMercadoPagoRoute: typeof AppIntegracoesMercadoPagoRouteWithChildren
 }
 
 const AppIntegracoesRouteChildren: AppIntegracoesRouteChildren = {
-  AppIntegracoesMercadoPagoRoute: AppIntegracoesMercadoPagoRoute,
+  AppIntegracoesMercadoPagoRoute: AppIntegracoesMercadoPagoRouteWithChildren,
 }
 
 const AppIntegracoesRouteWithChildren = AppIntegracoesRoute._addFileChildren(
