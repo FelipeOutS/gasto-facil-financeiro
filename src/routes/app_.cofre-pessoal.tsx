@@ -542,17 +542,38 @@ function VaultMain({
 
   return (
     <>
-      <HeaderHero subtitle="Organize seus logins, senhas e informações importantes em um só lugar." />
+      <PageHeader
+        title="Cofre Pessoal"
+        subtitle="Organize logins, senhas e informações importantes em um só lugar."
+        crumbs={[{ label: "Cofre Pessoal" }]}
+        actions={
+          <>
+            <Button
+              onClick={() => setView({ kind: "create" })}
+              className="bg-brand-grad font-semibold shadow-md shadow-brand/20"
+            >
+              <Plus className="h-4 w-4" /> Adicionar acesso
+            </Button>
+            <Button variant="outline" onClick={onLock} title="Bloquear cofre">
+              <Lock className="h-4 w-4" /> Bloquear cofre
+            </Button>
+          </>
+        }
+      />
 
-      <Card className="mb-5 flex items-start gap-3 border-brand/20 bg-brand-soft/40 p-4">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-          <Shield className="h-4 w-4" />
+      <Card className="mb-5 flex items-start gap-3 border-brand/30 bg-brand-soft/30 p-4 shadow-sm animate-fade-in">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft ring-1 ring-brand/30">
+          <ShieldCheck className="h-5 w-5" />
         </span>
         <div className="min-w-0 text-xs leading-relaxed text-foreground/90">
-          <p className="font-semibold text-sm">Área protegida</p>
-          <p className="mt-0.5 text-muted-foreground">
-            Guarde logins, senhas e informações importantes em um só lugar. Suas senhas ficam protegidas com criptografia
-            e só você deve acessar esta área.
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold">Área protegida</p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Proteção ativa
+            </span>
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            Seus dados sensíveis ficam protegidos com criptografia e só aparecem quando você autorizar.
           </p>
         </div>
       </Card>
@@ -564,25 +585,34 @@ function VaultMain({
         <StatCard label="Senhas fracas" value={stats.fracas} tone="warning" />
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nome, usuário, categoria ou site"
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
-        <Button onClick={() => setView({ kind: "create" })}>
-          <Plus className="h-4 w-4" /> Adicionar acesso
-        </Button>
-        <Button variant="outline" onClick={onLock} title="Bloquear cofre">
-          <Lock className="h-4 w-4" /> Bloquear
-        </Button>
+        <div className="relative">
+          <ArrowUpDown className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            className="h-10 appearance-none rounded-md border border-input bg-card pl-8 pr-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            aria-label="Ordenar"
+          >
+            <option value="fav">Favoritos primeiro</option>
+            <option value="recent">Mais recentes</option>
+            <option value="updated">Última alteração</option>
+            <option value="az">A–Z</option>
+            <option value="weak">Senhas fracas primeiro</option>
+          </select>
+        </div>
       </div>
 
-      <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+      <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-2">
         <button
           onClick={() => setOnlyFav((v) => !v)}
           className={cn(
@@ -611,6 +641,38 @@ function VaultMain({
           </button>
         ))}
       </div>
+
+      <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+        <span className="shrink-0 self-center pr-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Força
+        </span>
+        {([
+          { id: "todas", label: "Todas" },
+          { id: "forte", label: "Fortes" },
+          { id: "media", label: "Médias" },
+          { id: "fraca", label: "Fracas" },
+        ] as const).map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setStrengthFilter(s.id as typeof strengthFilter)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              strengthFilter === s.id
+                ? s.id === "forte"
+                  ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
+                  : s.id === "media"
+                  ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                  : s.id === "fraca"
+                  ? "border-red-500/60 bg-red-500/15 text-red-300"
+                  : "border-brand bg-brand-soft text-brand-on-soft"
+                : "border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+            )}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
 
       {loading ? (
         <div className="grid place-items-center py-12 text-sm text-muted-foreground">Carregando acessos…</div>
