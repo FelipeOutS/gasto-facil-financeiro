@@ -610,9 +610,9 @@ function Index() {
                 <Target className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Metas</p>
+                <p className="truncate text-sm font-medium">{t("metasFallback.title")}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {metasAndamento.length} em andamento
+                  {t("metasFallback.andamento", { count: metasAndamento.length })}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
