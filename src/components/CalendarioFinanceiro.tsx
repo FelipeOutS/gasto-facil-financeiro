@@ -231,14 +231,14 @@ export function CalendarioFinanceiro({
           <button
             onClick={() => onChangeMonth(-1)}
             className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
-            aria-label="Mês anterior"
+            aria-label={t("calendario.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => onChangeMonth(1)}
             className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
-            aria-label="Próximo mês"
+            aria-label={t("calendario.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
