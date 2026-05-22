@@ -8,6 +8,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Link } from "@tanstack/react-router";
 import { Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   Dialog,
   DialogContent,
@@ -51,13 +53,13 @@ export function isStatusActive(status: string | null | undefined): boolean {
 export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data: userRes } = await supabase.auth.getUser();
   const user = userRes?.user;
-  if (!user) return { ok: false, reason: "Você precisa estar logado." };
+  if (!user) return { ok: false, reason: i18n.t("common:subscription.needLogin") };
 
   if (isAdminMasterEmail(user.email)) return { ok: true };
   const subscription = await getCurrentUserSubscription();
   if (!subscription.active || subscription.plan === "free" || subscription.plan === "sem_assinatura") {
     console.info("[ensureCanWriteFinancialData] bloqueado", subscription.debug);
-    return { ok: false, reason: "Você precisa de uma assinatura ativa para usar este recurso." };
+    return { ok: false, reason: i18n.t("common:subscription.needActive") };
   }
   return { ok: true };
 }
@@ -85,6 +87,7 @@ type GuardCtx = {
 const Ctx = createContext<GuardCtx | null>(null);
 
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
   const { hasFullAccess, loading: rolesLoading } = useRoles();
@@ -117,16 +120,16 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
       // Em conta conectada o problema não é assinatura, é permissão.
       const lvlMsg =
         accessLevel === "view"
-          ? "Esta conta foi compartilhada com você apenas para visualização."
+          ? t("subscription.shared.viewOnly")
           : accessLevel === "view_create"
-            ? "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes."
-            : "Sem permissão suficiente para esta ação.";
+            ? t("subscription.shared.viewCreate")
+            : t("subscription.shared.noPermission");
       toast.error(lvlMsg);
       return;
     }
-    setMessage(msg ?? "Para adicionar gastos, escolha um plano ativo.");
+    setMessage(msg ?? t("subscription.defaultMessage"));
     setOpen(true);
-  }, [isOwnAccount, accessLevel]);
+  }, [isOwnAccount, accessLevel, t]);
 
   const guard = useCallback(
     <T extends (...args: never[]) => unknown>(fn: T): T => {
@@ -161,15 +164,15 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
             <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/20 to-primary/20 ring-1 ring-primary/20">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-center">Assinatura necessária</DialogTitle>
+            <DialogTitle className="text-center">{t("subscription.required")}</DialogTitle>
             <DialogDescription className="text-center">
-              {message ?? "Para adicionar gastos, escolha um plano ativo."}
+              {message ?? t("subscription.defaultMessage")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button asChild className="w-full rounded-2xl">
               <Link to="/meu-plano" onClick={() => setOpen(false)}>
-                Ver planos <ArrowRight className="ml-2 h-4 w-4" />
+                {t("subscription.viewPlans")} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button
@@ -177,7 +180,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
               className="w-full rounded-2xl"
               onClick={() => setOpen(false)}
             >
-              Agora não
+              {t("subscription.notNow")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -195,7 +198,7 @@ export function useSubscriptionGuard(): GuardCtx {
       canAdmin: false,
       canUseFeature: () => false,
       requireSubscription: () => {
-        toast.error("Você precisa de uma assinatura ativa para usar este recurso.");
+        toast.error(i18n.t("common:subscription.needActive"));
       },
       guard: ((fn: unknown) => fn) as GuardCtx["guard"],
     };
