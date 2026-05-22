@@ -40,6 +40,12 @@ export type BrandLogoProps = {
   fallback?: ReactNode;
   /** "square" mostra logo sobre fundo branco; "circle" mostra como avatar redondo. */
   variant?: "square" | "circle";
+  /**
+   * Quando true, só tenta logos de marcas explicitamente conhecidas (SEED ou
+   * domínio passado). Evita o "flicker" de favicons genéricos para nomes
+   * livres como "PIRUETA BOA ESPERANÇA" — vai direto ao fallback de categoria.
+   */
+  trustedOnly?: boolean;
 };
 
 function BrandLogoBase({
@@ -51,9 +57,10 @@ function BrandLogoBase({
   fallbackIcon,
   fallback,
   variant = "square",
+  trustedOnly,
 }: BrandLogoProps) {
   const cleanDomain = extractDomain(domain ?? "") ?? domain ?? null;
-  const candidates = getLogoCandidates(cleanDomain, name);
+  const candidates = getLogoCandidates(cleanDomain, name, { trustedOnly });
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
