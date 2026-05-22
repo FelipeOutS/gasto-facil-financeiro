@@ -34,10 +34,10 @@ type Props = {
   className?: string;
 };
 
-function inferCategoriaFromName(nome: string): Categoria | null {
+function inferCategoriaFromName(nome: string): Categoria {
   const key = resolveCategoryKey(nome);
-  if (!key || key === "outros") return null;
-  const def = DEFAULT_CATEGORIES.find((c) => c.id === key);
+  const safeKey = key || "outros";
+  const def = DEFAULT_CATEGORIES.find((c) => c.id === safeKey);
   if (def) {
     return {
       id: def.id,
@@ -49,10 +49,10 @@ function inferCategoriaFromName(nome: string): Categoria | null {
   }
   const iconName = (ICON_MAP["MoreHorizontal"] ? "MoreHorizontal" : "MoreHorizontal") as keyof typeof ICON_MAP;
   return {
-    id: key,
-    nome: key,
+    id: safeKey,
+    nome: safeKey,
     iconName,
-    colorVar: `--cat-${key}`,
+    colorVar: `--cat-${safeKey}`,
     criadaPeloUsuario: false,
   } as Categoria;
 }
