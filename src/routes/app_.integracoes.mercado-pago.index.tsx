@@ -99,6 +99,10 @@ function MercadoPagoIntegrationPage() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [syncPeriod, setSyncPeriod] = useState<
+    "last30" | "current_month" | "last_month" | "last3" | "last6" | "last12"
+  >("last30");
+  const [lastSyncMsg, setLastSyncMsg] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
     try {
