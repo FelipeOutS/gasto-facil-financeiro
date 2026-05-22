@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import {
   ChevronLeft,
@@ -581,16 +581,21 @@ function Index() {
                     {Math.round(pct)}%
                   </span>
                   <span className="num text-muted-foreground">
-                    Falta {formatBRL(restante)}
+                    {t("metaProxima.falta", { valor: formatBRL(restante) })}
                   </span>
                 </div>
                 {bd.guardado > 0 && (
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    Inclui <span className="num font-semibold text-foreground">{formatBRL(bd.guardado)}</span> do Guardado vinculado
+                    <Trans
+                      i18nKey="metaProxima.incluiGuardado"
+                      t={t}
+                      values={{ valor: formatBRL(bd.guardado) }}
+                      components={{ strong: <span className="num font-semibold text-foreground" /> }}
+                    />
                   </p>
                 )}
                 <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                  {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
+                  {metasAndamento.length} {metasAndamento.length === 1 ? t("metaProxima.ativaSing") : t("metaProxima.ativaPlur")}
                 </div>
               </section>
             </div>
@@ -605,9 +610,9 @@ function Index() {
                 <Target className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Metas</p>
+                <p className="truncate text-sm font-medium">{t("metasFallback.title")}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {metasAndamento.length} em andamento
+                  {t("metasFallback.andamento", { count: metasAndamento.length })}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -797,20 +802,20 @@ function Index() {
           </div>
           <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
           <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {guardado.length} {guardado.length === 1 ? "reserva" : "reservas"}
+            {t("atalhos.guardadoSub", { count: guardado.length })}
           </p>
         </Link>
         <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Gastos fixos
+              {t("atalhos.fixosEyebrow")}
             </p>
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
           <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
           {totalEntradas > 0 ? (
             <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              {Math.round((gastosFixos / totalEntradas) * 100)}% da renda
+              {t("atalhos.fixosPctRenda", { pct: Math.round((gastosFixos / totalEntradas) * 100) })}
             </p>
           ) : (
             <p className="mt-0.5 text-[10px] text-muted-foreground">—</p>
@@ -822,12 +827,12 @@ function Index() {
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Metas
+              {t("atalhos.metasEyebrow")}
             </p>
             <Target className="h-3.5 w-3.5 text-brand" />
           </div>
           <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">em andamento</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{t("atalhos.metasSub")}</p>
         </Link>
       </section>
 

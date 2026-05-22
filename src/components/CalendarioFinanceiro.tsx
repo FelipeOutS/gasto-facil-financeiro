@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, ArrowDown, ArrowUp, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -62,6 +63,7 @@ export function CalendarioFinanceiro({
   onChangeMonth: (delta: number) => void;
   compact?: boolean;
 }) {
+  const { t, i18n } = useTranslation("dashboard");
   const { user } = useAuth();
   const contas = useStore(() => getContasAPagar());
   const [receber, setReceber] = useState<ContaReceber[]>([]);
@@ -127,17 +129,17 @@ export function CalendarioFinanceiro({
 
   function statusInfo(status: string, tipo: EventoTipo) {
     if (status === "pago" || status === "recebido") {
-      return { dot: "bg-emerald-500", label: tipo === "pagar" ? "Paga" : "Recebida", tone: "text-emerald-400" };
+      return { dot: "bg-emerald-500", label: tipo === "pagar" ? t("calendario.paga") : t("calendario.recebida"), tone: "text-emerald-400" };
     }
     if (status === "atrasado") {
-      return { dot: "bg-rose-500", label: "Atrasada", tone: "text-rose-400" };
+      return { dot: "bg-rose-500", label: t("calendario.atrasada"), tone: "text-rose-400" };
     }
     if (status === "parcial") {
-      return { dot: "bg-amber-500", label: "Parcial", tone: "text-amber-400" };
+      return { dot: "bg-amber-500", label: t("calendario.parcial"), tone: "text-amber-400" };
     }
     return tipo === "pagar"
-      ? { dot: "bg-amber-400", label: "A pagar", tone: "text-amber-300" }
-      : { dot: "bg-sky-400", label: "A receber", tone: "text-sky-300" };
+      ? { dot: "bg-amber-400", label: t("calendario.aPagar"), tone: "text-amber-300" }
+      : { dot: "bg-sky-400", label: t("calendario.aReceber"), tone: "text-sky-300" };
   }
 
   function resumoDia(eventos: EventoDia[]) {
@@ -184,8 +186,9 @@ export function CalendarioFinanceiro({
   }, [days, eventosPorDia, mes]);
 
   const eventosDoDia = diaSelecionado ? (eventosPorDia.get(diaSelecionado) ?? []) : [];
+  const localeBcp = i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
   const dataSelecionadaLabel = diaSelecionado
-    ? (parseDateLocal(diaSelecionado) ?? new Date()).toLocaleDateString("pt-BR", {
+    ? (parseDateLocal(diaSelecionado) ?? new Date()).toLocaleDateString(localeBcp, {
         weekday: "long",
         day: "2-digit",
         month: "long",
@@ -217,7 +220,7 @@ export function CalendarioFinanceiro({
           </span>
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Calendário financeiro
+              {t("calendario.eyebrow")}
             </p>
             <h2 className="mt-0.5 truncate text-base font-bold capitalize tracking-tight lg:text-lg">
               {formatMonthYear(ano, mes)}
@@ -228,14 +231,14 @@ export function CalendarioFinanceiro({
           <button
             onClick={() => onChangeMonth(-1)}
             className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
-            aria-label="Mês anterior"
+            aria-label={t("calendario.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => onChangeMonth(1)}
             className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
-            aria-label="Próximo mês"
+            aria-label={t("calendario.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -245,13 +248,13 @@ export function CalendarioFinanceiro({
       {/* KPIs do mês */}
       <div className="relative mt-3 grid grid-cols-3 gap-2 text-xs">
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A pagar</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aPagar")}</p>
           <p className="mt-0.5 truncate text-sm font-bold text-amber-300">
             <Money value={resumoMes.pagar} />
           </p>
         </div>
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A receber</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aReceber")}</p>
           <p className="mt-0.5 truncate text-sm font-bold text-sky-300">
             <Money value={resumoMes.receber} />
           </p>
@@ -264,7 +267,7 @@ export function CalendarioFinanceiro({
               : "border-border bg-background/40",
           )}
         >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Atrasadas</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.atrasadas")}</p>
           <p
             className={cn(
               "mt-0.5 text-sm font-bold",
@@ -362,7 +365,7 @@ export function CalendarioFinanceiro({
                       >
                         {r.pagar > 0 && r.receber === 0 && `−${formatBRL(r.pagar)}`}
                         {r.receber > 0 && r.pagar === 0 && `+${formatBRL(r.receber)}`}
-                        {r.pagar > 0 && r.receber > 0 && `${evs.length} itens`}
+                        {r.pagar > 0 && r.receber > 0 && t("calendario.itens", { count: evs.length })}
                       </span>
                     )}
                   </div>
@@ -376,16 +379,16 @@ export function CalendarioFinanceiro({
         {!compact && (
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" /> A pagar
+              <span className="h-2 w-2 rounded-full bg-amber-400" /> {t("calendario.aPagar")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-sky-400" /> A receber
+              <span className="h-2 w-2 rounded-full bg-sky-400" /> {t("calendario.aReceber")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-rose-500" /> Atrasada
+              <span className="h-2 w-2 rounded-full bg-rose-500" /> {t("calendario.atrasada")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Paga / Recebida
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("calendario.pagaRecebida")}
             </span>
           </div>
         )}
@@ -434,14 +437,14 @@ export function CalendarioFinanceiro({
 
         {/* Próximos vencimentos */}
         <div className="mt-4">
-          <p className="text-xs font-semibold text-muted-foreground">Próximos vencimentos</p>
+          <p className="text-xs font-semibold text-muted-foreground">{t("calendario.proximosVencimentos")}</p>
           {proximos.length === 0 ? (
-            <p className="mt-2 text-xs text-muted-foreground">Nenhum vencimento próximo. 🎉</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("calendario.nenhumProximo")}</p>
           ) : (
             <ul className="mt-2 space-y-1.5">
               {proximos.map((ev) => {
                 const info = statusInfo(ev.status, ev.tipo);
-                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString("pt-BR", {
+                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString(localeBcp, {
                   day: "2-digit",
                   month: "short",
                 });
@@ -479,8 +482,8 @@ export function CalendarioFinanceiro({
             <DialogTitle className="capitalize">{dataSelecionadaLabel}</DialogTitle>
             <DialogDescription>
               {eventosDoDia.length === 0
-                ? "Nenhum lançamento financeiro neste dia."
-                : `${eventosDoDia.length} ${eventosDoDia.length === 1 ? "lançamento" : "lançamentos"}`}
+                ? t("calendario.semLancamentos")
+                : (eventosDoDia.length === 1 ? t("calendario.lancamentoSing", { count: 1 }) : t("calendario.lancamentoPlur", { count: eventosDoDia.length }))}
             </DialogDescription>
           </DialogHeader>
 

@@ -86,6 +86,25 @@
     "title": "Minha renda",
     "esteMes": "{{valor}} este mês"
   },
+  "calendario": {
+    "eyebrow": "Calendário financeiro",
+    "prevMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
+    "aPagar": "A pagar",
+    "aReceber": "A receber",
+    "atrasadas": "Atrasadas",
+    "atrasada": "Atrasada",
+    "parcial": "Parcial",
+    "paga": "Paga",
+    "recebida": "Recebida",
+    "pagaRecebida": "Paga / Recebida",
+    "itens": "{{count}} itens",
+    "proximosVencimentos": "Próximos vencimentos",
+    "nenhumProximo": "Nenhum vencimento próximo. 🎉",
+    "semLancamentos": "Nenhum lançamento financeiro neste dia.",
+    "lancamentoSing": "{{count}} lançamento",
+    "lancamentoPlur": "{{count}} lançamentos"
+  },
   "atividade": {
     "eyebrow": "Atividade",
     "title": "Transações recentes",
