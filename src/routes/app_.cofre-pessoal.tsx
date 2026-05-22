@@ -127,28 +127,79 @@ function CofrePessoalPage() {
 }
 
 // ===== Header reutilizável =====
-function HeaderHero({ subtitle }: { subtitle: string }) {
+function PageHeader({
+  title,
+  subtitle,
+  crumbs,
+  onBack,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  crumbs: { label: string; to?: string }[];
+  onBack?: () => void;
+  actions?: React.ReactNode;
+}) {
   return (
-    <header className="mb-6 flex items-start gap-3">
-      <button
-        type="button"
-        onClick={() => window.history.back()}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground active:scale-95 lg:hidden"
-        aria-label="Voltar"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-            <Shield className="h-5 w-5" />
-          </span>
-          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Cofre Pessoal</h1>
-        </div>
-        <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>
+    <header className="mb-6 animate-fade-in">
+      {/* Breadcrumb + atalho dashboard */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+          <Link to="/" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+            <Home className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          {crumbs.map((c, i) => (
+            <span key={i} className="flex items-center gap-1 truncate">
+              <ChevronRight className="h-3 w-3 shrink-0 opacity-60" />
+              {c.to ? (
+                <Link to={c.to} className="truncate rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+                  {c.label}
+                </Link>
+              ) : (
+                <span className="truncate px-1.5 py-0.5 font-medium text-foreground">{c.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
+        <Link
+          to="/"
+          className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground sm:inline-flex"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Dashboard
+        </Link>
       </div>
+
+      <div className="flex items-start gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground active:scale-95"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+              <Shield className="h-5 w-5" />
+            </span>
+            <h1 className="truncate text-2xl font-bold tracking-tight lg:text-3xl">{title}</h1>
+          </div>
+          {subtitle && <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>}
+        </div>
+        {actions && <div className="hidden shrink-0 items-center gap-2 sm:flex">{actions}</div>}
+      </div>
+      {actions && <div className="mt-3 flex flex-wrap items-center gap-2 sm:hidden">{actions}</div>}
     </header>
   );
+}
+
+// Compat: alguns sub-componentes ainda chamam HeaderHero
+function HeaderHero({ subtitle }: { subtitle: string }) {
+  return <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />;
 }
 
 // ===== Setup (criar senha mestra) =====
