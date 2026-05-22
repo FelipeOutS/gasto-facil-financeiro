@@ -10,6 +10,7 @@ import {
   Landmark,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { AdminMasterGate } from "@/components/AdminMasterGate";
 
 export const Route = createFileRoute("/app_/integracoes/")({
   head: () => ({
@@ -22,7 +23,11 @@ export const Route = createFileRoute("/app_/integracoes/")({
       },
     ],
   }),
-  component: IntegracoesIndexPage,
+  component: () => (
+    <AdminMasterGate>
+      <IntegracoesIndexPage />
+    </AdminMasterGate>
+  ),
 });
 
 function IntegracoesIndexPage() {
