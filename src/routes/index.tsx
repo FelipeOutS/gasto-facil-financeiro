@@ -629,13 +629,13 @@ function Index() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                <h2 className="text-sm font-semibold">Por categoria</h2>
+                <h2 className="text-sm font-semibold">{t("porCategoria.title")}</h2>
               </div>
               <Link
                 to="/resumo"
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                Ver tudo →
+                {t("porCategoria.verTudo")}
               </Link>
             </div>
             <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-[140px_1fr]">
