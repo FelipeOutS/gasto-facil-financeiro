@@ -61,6 +61,17 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
   // ---------- variant: bank + onDark (superfícies de cartão de crédito) ----------
   if (variant === "bank" && onDark) {
     if (staticUrl) {
+      // Slugs cujo SVG local já é monocromático claro (branco) — renderiza
+      // direto sobre o cartão escuro, mantendo o visual "premium".
+      const WHITE_OPTIMIZED_SLUGS = new Set([
+        "mercadopago-branco",
+        "logo-santander",
+        "Banco_Bradesco",
+        "logo-caixa",
+        "banco-inter",
+        "Logo_C6_Bank",
+      ]);
+      // Wordmarks horizontais — variante wide para crescer um pouco.
       const WIDE_BANK_SLUGS = new Set([
         "mercadopago-branco",
         "logo-santander",
@@ -70,7 +81,37 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
         "will-bank",
         "banco-inter",
       ]);
-      const isWide = !!resolved.slug && WIDE_BANK_SLUGS.has(resolved.slug);
+      const slug = resolved.slug ?? "";
+      const isWhiteOptimized = WHITE_OPTIMIZED_SLUGS.has(slug);
+      const isWide = WIDE_BANK_SLUGS.has(slug);
+
+      // SVG colorido (Nubank roxo, PicPay verde, Itaú, BB, Neon, Will Bank) —
+      // envolve em uma "pílula" branca discreta para garantir contraste em
+      // qualquer gradiente de cartão. Instantâneo, sem requisição de rede.
+      if (!isWhiteOptimized) {
+        return (
+          <span
+            className={cn(
+              "bank-logo-container relative inline-flex items-center justify-start overflow-visible",
+              className,
+            )}
+            aria-hidden
+          >
+            <span className="inline-flex h-9 items-center justify-center rounded-md bg-white/95 px-2.5 py-1 shadow-sm ring-1 ring-black/5">
+              <img
+                src={staticUrl}
+                alt=""
+                className={cn(
+                  "block h-auto w-auto max-h-6 max-w-[120px] object-contain",
+                  imgClassName,
+                )}
+                decoding="async"
+              />
+            </span>
+          </span>
+        );
+      }
+
       return (
         <span
           className={cn(
