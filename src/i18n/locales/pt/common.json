@@ -44,5 +44,18 @@
     "lgpd": "LGPD",
     "rights": "© {{year}} Gasto Inteligente. Todos os direitos reservados.",
     "madeWith": "Feito com cuidado para sua vida financeira."
+  },
+  "subscription": {
+    "required": "Assinatura necessária",
+    "defaultMessage": "Para adicionar gastos, escolha um plano ativo.",
+    "viewPlans": "Ver planos",
+    "notNow": "Agora não",
+    "needActive": "Você precisa de uma assinatura ativa para usar este recurso.",
+    "needLogin": "Você precisa estar logado.",
+    "shared": {
+      "viewOnly": "Esta conta foi compartilhada com você apenas para visualização.",
+      "viewCreate": "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes.",
+      "noPermission": "Sem permissão suficiente para esta ação."
+    }
   }
 }
