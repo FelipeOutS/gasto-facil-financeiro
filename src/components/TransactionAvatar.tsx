@@ -1,18 +1,19 @@
 /**
  * TransactionAvatar — Avatar global para qualquer transação/gasto exibido no app.
  *
- * Regra:
- *   1. Se o estabelecimento tiver logo conhecido → mostra apenas o logo da empresa.
- *   2. Senão, se houver categoria → mostra o ícone vetorial da categoria.
- *   3. Senão, tenta inferir uma categoria pelo NOME do estabelecimento
- *      (ex: "Aluguel" → ícone de moradia/casa).
- *   4. Fallback final → BrandLogo merchant (círculo com inicial).
+ * Prioridade (regra obrigatória):
+ *   1. Logo real da empresa/estabelecimento (BrandLogo global, com cascata
+ *      Logo.dev → DuckDuckGo → Google s2).
+ *   2. Se nenhum logo carregar, ícone vetorial da categoria.
+ *   3. Sem categoria útil → ícone inferido pelo nome.
+ *   4. Fallback final → inicial colorida.
+ *
+ * A categoria NUNCA bloqueia a tentativa de buscar o logo da marca.
  */
 import { memo } from "react";
-import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo as BrandLogoLegacy } from "@/components/BrandLogo";
 import { BrandLogo as GlobalBrandLogo } from "@/components/brand/BrandLogo";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { hasMerchantLogo } from "@/lib/logos";
 import type { Categoria } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { resolveCategoryKey } from "@/lib/category-visual";
@@ -33,12 +34,6 @@ type Props = {
   className?: string;
 };
 
-/**
- * Constrói uma Categoria "virtual" a partir do nome do estabelecimento
- * quando o gasto não tem categoria atribuída ou está como "outros".
- * Garante que nomes como "Aluguel", "Condomínio", "Luz", "Mercado" etc
- * recebam o ícone vetorial correto em vez de cair na inicial textual.
- */
 function inferCategoriaFromName(nome: string): Categoria | null {
   const key = resolveCategoryKey(nome);
   if (!key || key === "outros") return null;
@@ -52,8 +47,6 @@ function inferCategoriaFromName(nome: string): Categoria | null {
       criadaPeloUsuario: false,
     } as Categoria;
   }
-  // Aliases visuais (uber, energia, etc) que não estão em DEFAULT_CATEGORIES.
-  // Usa um ícone padrão e a CSS var correspondente.
   const iconName = (ICON_MAP["MoreHorizontal"] ? "MoreHorizontal" : "MoreHorizontal") as keyof typeof ICON_MAP;
   return {
     id: key,
@@ -66,53 +59,40 @@ function inferCategoriaFromName(nome: string): Categoria | null {
 
 function TransactionAvatarBase({ estabelecimento, categoria, size = "md", className }: Props) {
   const merchantName = (estabelecimento || "").trim();
+  const brandSize = size === "sm" ? "sm" : size === "lg" ? "lg" : "md";
 
-  // 1) Logo da empresa, quando reconhecido.
-  if (merchantName && hasMerchantLogo(merchantName)) {
-    return (
-      <BrandLogo
-        name={merchantName}
-        variant="merchant"
-        className={cn(wrapperSize[size], "shrink-0", className)}
-      />
-    );
-  }
-
-  // 2) Ícone vetorial da categoria explícita (ignora "outros" para deixar
-  // a heurística pelo nome ter chance de ganhar quando o nome é descritivo).
+  // Categoria que usaremos como fallback visual (preferindo a explícita;
+  // depois inferida pelo nome; depois "outros").
   const categoriaIsOutros = categoria && (categoria.id === "outros" || categoria.nome?.toLowerCase() === "outros");
-  if (categoria && !categoriaIsOutros) {
-    return <CategoryIcon categoria={categoria} size={size} className={className} />;
-  }
+  const categoriaUtil: Categoria | undefined =
+    (categoria && !categoriaIsOutros ? categoria : undefined) ||
+    (merchantName ? inferCategoriaFromName(merchantName) ?? undefined : undefined) ||
+    categoria;
 
-  // 3) Inferência pelo nome do estabelecimento (ex: "Aluguel" → moradia).
+  // 1) Sempre que houver um nome, tenta logo real PRIMEIRO.
   if (merchantName) {
-    const inferida = inferCategoriaFromName(merchantName);
-    if (inferida) {
-      return <CategoryIcon categoria={inferida} size={size} className={className} />;
-    }
-  }
-
-  // 4) Categoria "outros" (ou ausente) com nome livre → tenta logo real via Logo.dev.
-  if (merchantName) {
-    const brandSize = size === "sm" ? "sm" : size === "lg" ? "lg" : "md";
+    const fallbackNode = categoriaUtil ? (
+      <CategoryIcon categoria={categoriaUtil} size={size} className={className} />
+    ) : undefined;
     return (
       <GlobalBrandLogo
         name={merchantName}
         size={brandSize}
-        className={cn("shrink-0", className)}
+        variant="circle"
+        className={cn(wrapperSize[size], "shrink-0", className)}
+        fallback={fallbackNode}
       />
     );
   }
 
-  // 5) Sem nome — usa ícone de "outros" se houver categoria.
-  if (categoria) {
-    return <CategoryIcon categoria={categoria} size={size} className={className} />;
+  // 2) Sem nome — usa categoria explícita ou inferida.
+  if (categoriaUtil) {
+    return <CategoryIcon categoria={categoriaUtil} size={size} className={className} />;
   }
 
-  // 6) Fallback final absoluto.
+  // 3) Fallback final.
   return (
-    <BrandLogo
+    <BrandLogoLegacy
       name="?"
       variant="merchant"
       className={cn(wrapperSize[size], "shrink-0", className)}

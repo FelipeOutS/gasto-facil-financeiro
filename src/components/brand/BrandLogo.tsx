@@ -36,6 +36,8 @@ export type BrandLogoProps = {
   rounded?: "lg" | "xl" | "2xl" | "full";
   className?: string;
   fallbackIcon?: ReactNode;
+  /** Substitui completamente o fallback (inclusive estilos) quando nenhum logo carrega. */
+  fallback?: ReactNode;
   /** "square" mostra logo sobre fundo branco; "circle" mostra como avatar redondo. */
   variant?: "square" | "circle";
 };
@@ -47,6 +49,7 @@ function BrandLogoBase({
   rounded = "xl",
   className,
   fallbackIcon,
+  fallback,
   variant = "square",
 }: BrandLogoProps) {
   const cleanDomain = extractDomain(domain ?? "") ?? domain ?? null;
@@ -66,6 +69,9 @@ function BrandLogoBase({
     rounded === "lg"  ? "rounded-lg" : "rounded-xl";
 
   if (failed || !candidates.length) {
+    if (fallback !== undefined && fallback !== null) {
+      return <>{fallback}</>;
+    }
     if (fallbackIcon) {
       return (
         <span

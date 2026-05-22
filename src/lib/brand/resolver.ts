@@ -5,10 +5,6 @@
  *  - mapa seed de marcas conhecidas (Brasil + globais)
  *  - heurística por sufixo TLD a partir do nome normalizado
  *  - extração de domínio quando o usuário já informou uma URL
- *
- * Não consulta DB aqui — apenas lógica pura. O resolver server-side
- * (brand.functions.ts) usa este módulo para gerar candidatos e
- * persistir o resultado em `brand_assets` / `merchant_brand_aliases`.
  */
 
 import { normalizeMerchantName, slugifyMerchantName } from "./normalize";
@@ -20,7 +16,6 @@ const KNOWN_PUBLIC_SUFFIXES = new Set([
   "com.au","com.tr","com.sg","com.hk",
 ]);
 
-/** Extrai o domínio principal a partir de uma URL ou string livre. */
 export function extractDomain(input: string | null | undefined): string | null {
   if (!input) return null;
   let raw = String(input).trim().toLowerCase();
@@ -37,10 +32,12 @@ export function extractDomain(input: string | null | undefined): string | null {
   return KNOWN_PUBLIC_SUFFIXES.has(lastTwo) ? lastThree : lastTwo;
 }
 
-/** Mapa seed: ajuda inicial para os casos mais comuns no Brasil. */
+/** Mapa seed: ajuda inicial para os casos mais comuns. */
 export const SEED_BRAND_DOMAINS: Record<string, string> = {
+  // Bancos BR
   "nubank": "nubank.com.br",
   "nu pagamentos": "nubank.com.br",
+  "nu": "nubank.com.br",
   "mercado pago": "mercadopago.com.br",
   "mercadopago": "mercadopago.com.br",
   "mercado livre": "mercadolivre.com.br",
@@ -50,85 +47,219 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "banco inter": "bancointer.com.br",
   "c6 bank": "c6bank.com.br",
   "c6bank": "c6bank.com.br",
+  "c6": "c6bank.com.br",
   "itau": "itau.com.br",
-  "itaú": "itau.com.br",
+  "itau unibanco": "itau.com.br",
   "bradesco": "bradesco.com.br",
   "santander": "santander.com.br",
   "banco do brasil": "bb.com.br",
   "bb": "bb.com.br",
   "caixa": "caixa.gov.br",
   "caixa economica": "caixa.gov.br",
+  "caixa economica federal": "caixa.gov.br",
   "pagseguro": "pagseguro.uol.com.br",
+  "pagbank": "pagseguro.uol.com.br",
   "will bank": "willbank.com.br",
+  "willbank": "willbank.com.br",
   "neon": "neon.com.br",
+  "next": "next.me",
+  "original": "original.com.br",
+  "safra": "safra.com.br",
+  "sicoob": "sicoob.com.br",
+  "sicredi": "sicredi.com.br",
+  "btg": "btgpactual.com",
+  "btg pactual": "btgpactual.com",
+  "xp": "xpi.com.br",
+  "xp investimentos": "xpi.com.br",
+  "rico": "rico.com.vc",
+
+  // Plataformas
   "hotmart": "hotmart.com",
+  "kiwify": "kiwify.com.br",
+  "eduzz": "eduzz.com",
+  "monetizze": "monetizze.com.br",
   "spotify": "spotify.com",
   "netflix": "netflix.com",
   "amazon": "amazon.com.br",
+  "amazon prime": "amazon.com.br",
+  "prime video": "primevideo.com",
   "google": "google.com",
+  "google play": "play.google.com",
+  "google cloud": "cloud.google.com",
   "apple": "apple.com",
+  "icloud": "icloud.com",
+  "itunes": "apple.com",
   "microsoft": "microsoft.com",
+  "office": "microsoft.com",
+  "office 365": "microsoft.com",
+  "xbox": "xbox.com",
+  "playstation": "playstation.com",
+  "steam": "steampowered.com",
   "guppy": "guppy.io",
+  "gupy": "gupy.io",
   "lovable": "lovable.dev",
-  "chat gpt": "chatgpt.com",
-  "chatgpt": "chatgpt.com",
+  "chat gpt": "openai.com",
+  "chatgpt": "openai.com",
   "openai": "openai.com",
+  "anthropic": "anthropic.com",
+  "claude": "claude.ai",
+  "midjourney": "midjourney.com",
+
+  // Delivery / mobilidade
   "ifood": "ifood.com.br",
   "uber": "uber.com",
   "uber eats": "ubereats.com",
+  "uber trip": "uber.com",
+  "99": "99app.com",
+  "99 app": "99app.com",
+  "99app": "99app.com",
+  "99 pop": "99app.com",
   "rappi": "rappi.com.br",
+  "cabify": "cabify.com",
+  "blablacar": "blablacar.com.br",
+
+  // E-commerce
   "renner": "lojasrenner.com.br",
   "lojas renner": "lojasrenner.com.br",
   "magazine luiza": "magazineluiza.com.br",
   "magalu": "magazineluiza.com.br",
   "americanas": "americanas.com.br",
+  "submarino": "submarino.com.br",
+  "casas bahia": "casasbahia.com.br",
+  "ponto frio": "pontofrio.com.br",
   "shopee": "shopee.com.br",
+  "shein": "shein.com",
   "aliexpress": "aliexpress.com",
+  "amazon marketplace": "amazon.com.br",
+  "centauro": "centauro.com.br",
+  "nike": "nike.com.br",
+  "adidas": "adidas.com.br",
+  "zara": "zara.com",
+  "cea": "cea.com.br",
+  "c&a": "cea.com.br",
+  "riachuelo": "riachuelo.com.br",
+  "marisa": "marisa.com.br",
+
+  // Streaming / midia
   "youtube": "youtube.com",
   "youtube premium": "youtube.com",
+  "youtube music": "music.youtube.com",
   "disney": "disneyplus.com",
   "disney plus": "disneyplus.com",
   "hbo": "max.com",
   "hbo max": "max.com",
   "max": "max.com",
-  "prime video": "primevideo.com",
-  "globo": "globoplay.com",
   "globoplay": "globoplay.com",
+  "globo": "globoplay.com",
+  "deezer": "deezer.com",
+  "tidal": "tidal.com",
+  "paramount": "paramountplus.com",
+  "paramount plus": "paramountplus.com",
+  "apple tv": "tv.apple.com",
+  "apple music": "music.apple.com",
+  "twitch": "twitch.tv",
+
+  // Devs / produtividade
   "adobe": "adobe.com",
+  "figma": "figma.com",
+  "notion": "notion.so",
+  "slack": "slack.com",
   "github": "github.com",
+  "gitlab": "gitlab.com",
   "linkedin": "linkedin.com",
+  "vercel": "vercel.com",
+  "cloudflare": "cloudflare.com",
+  "aws": "aws.amazon.com",
+  "supabase": "supabase.com",
+  "stripe": "stripe.com",
+
+  // Sociais
   "instagram": "instagram.com",
   "facebook": "facebook.com",
   "whatsapp": "whatsapp.com",
+  "tiktok": "tiktok.com",
+  "x": "x.com",
+  "twitter": "x.com",
+
+  // Telecom
   "tim": "tim.com.br",
   "vivo": "vivo.com.br",
   "claro": "claro.com.br",
   "oi": "oi.com.br",
+  "algar": "algartelecom.com.br",
+  "sky": "sky.com.br",
+
+  // Combustível / utilidades
+  "shell": "shell.com.br",
+  "ipiranga": "ipiranga.com.br",
+  "petrobras": "petrobras.com.br",
+  "br": "br.com.br",
+  "enel": "enel.com.br",
+  "cpfl": "cpfl.com.br",
+  "light": "light.com.br",
+  "sabesp": "sabesp.com.br",
+  "comgas": "comgas.com.br",
+
+  // Supermercados / varejo BR
+  "carrefour": "carrefour.com.br",
+  "extra": "extra.com.br",
+  "pao de acucar": "paodeacucar.com",
+  "assai": "assai.com.br",
+  "atacadao": "atacadao.com.br",
+  "dia": "dia.com.br",
+  "sams club": "samsclub.com.br",
+  "cobasi": "cobasi.com.br",
+  "petz": "petz.com.br",
+  "raia": "drogaraia.com.br",
+  "drogaraia": "drogaraia.com.br",
+  "drogasil": "drogasil.com.br",
+  "pacheco": "drogariaspacheco.com.br",
+  "totalpass": "totalpass.com",
+  "gympass": "gympass.com",
+  "wellhub": "wellhub.com",
+  "smartfit": "smartfit.com.br",
+
+  // Educação
+  "coursera": "coursera.org",
+  "udemy": "udemy.com",
+  "alura": "alura.com.br",
+  "rocketseat": "rocketseat.com.br",
+  "duolingo": "duolingo.com",
 };
 
-/** Palpita domínios prováveis a partir do nome (várias TLDs). */
 export function guessDomainsFromName(name: string | null | undefined): string[] {
   const norm = normalizeMerchantName(name);
   if (!norm) return [];
-  if (SEED_BRAND_DOMAINS[norm]) return [SEED_BRAND_DOMAINS[norm]];
+
+  const out: string[] = [];
+  const push = (d: string) => { if (d && !out.includes(d)) out.push(d); };
+
+  if (SEED_BRAND_DOMAINS[norm]) push(SEED_BRAND_DOMAINS[norm]);
+
+  // Tenta primeira palavra também (ex.: "mercado pago compra 2x" → "mercado")
+  const firstWord = norm.split(" ")[0];
+  if (firstWord && firstWord !== norm && SEED_BRAND_DOMAINS[firstWord]) {
+    push(SEED_BRAND_DOMAINS[firstWord]);
+  }
+  // Duas primeiras palavras (ex.: "mercado pago foo bar")
+  const firstTwo = norm.split(" ").slice(0, 2).join(" ");
+  if (firstTwo && firstTwo !== norm && SEED_BRAND_DOMAINS[firstTwo]) {
+    push(SEED_BRAND_DOMAINS[firstTwo]);
+  }
 
   const slug = slugifyMerchantName(name);
-  const firstWord = norm.split(" ")[0];
-  const out = new Set<string>();
   for (const base of [slug, firstWord]) {
     if (!base || base.length < 2) continue;
-    for (const tld of [".com.br", ".com", ".io", ".dev", ".app", ".co"]) {
-      out.add(`${base}${tld}`);
+    for (const tld of [".com.br", ".com", ".com.br", ".io", ".dev", ".app", ".co", ".net"]) {
+      push(`${base}${tld}`);
     }
   }
-  return [...out];
+  return out;
 }
 
-/** Token público do Logo.dev — publishable, ok no frontend. */
 export const LOGO_DEV_PUBLIC_TOKEN =
   (import.meta as any).env?.VITE_LOGO_DEV_KEY || "pk_X-1ZO13ESQOXMI5MlVUVQQ";
 
-/** Constrói a cascata de URLs candidatas para um domínio. */
 export function logoUrlsForDomain(domain: string): string[] {
   return [
     `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=128&format=png`,
@@ -137,7 +268,6 @@ export function logoUrlsForDomain(domain: string): string[] {
   ];
 }
 
-/** Cascata completa: domínio explícito + palpites por nome. */
 export function getLogoCandidates(
   domain: string | null | undefined,
   name?: string | null,
@@ -155,7 +285,6 @@ export function getLogoCandidates(
   return urls;
 }
 
-/** Cor estável (HSL) derivada de uma seed string — para letter avatar. */
 export function colorForSeed(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
