@@ -875,7 +875,14 @@ function ContaCard({
       )}
     >
       <div className="flex items-start gap-3">
-        {cat ? (
+        {(fornecedorNome || conta.beneficiario || conta.nome) ? (
+          <BrandLogo
+            name={fornecedorNome || conta.beneficiario || conta.nome}
+            domain={extractDomain(conta.bancoEmissor ?? null)}
+            size="sm"
+            fallbackIcon={cat ? undefined : <Receipt className="h-4 w-4" />}
+          />
+        ) : cat ? (
           <CategoryIcon categoria={cat} size="sm" />
         ) : (
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated text-muted-foreground">
