@@ -92,16 +92,27 @@ function TransactionAvatarBase({ estabelecimento, categoria, size = "md", classN
     }
   }
 
-  // 4) Categoria "outros" sem nome reconhecido → ainda renderiza o ícone
-  // vetorial de "outros" em vez de cair na inicial textual.
+  // 4) Categoria "outros" (ou ausente) com nome livre → tenta logo real via Logo.dev.
+  if (merchantName) {
+    const brandSize = size === "sm" ? "sm" : size === "lg" ? "lg" : "md";
+    return (
+      <GlobalBrandLogo
+        name={merchantName}
+        size={brandSize}
+        className={cn("shrink-0", className)}
+      />
+    );
+  }
+
+  // 5) Sem nome — usa ícone de "outros" se houver categoria.
   if (categoria) {
     return <CategoryIcon categoria={categoria} size={size} className={className} />;
   }
 
-  // 5) Fallback final.
+  // 6) Fallback final absoluto.
   return (
     <BrandLogo
-      name={merchantName || "?"}
+      name="?"
       variant="merchant"
       className={cn(wrapperSize[size], "shrink-0", className)}
     />
