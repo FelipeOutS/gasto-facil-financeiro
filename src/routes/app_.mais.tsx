@@ -1,15 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
-import { ADMIN_ITEM, INTEGRACOES_ITEM, MORE_ITEMS, type MoreItem } from "@/lib/more-menu";
+import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
-import { useRoles } from "@/lib/use-roles";
 import { cn } from "@/lib/utils";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
@@ -19,26 +18,22 @@ export const Route = createFileRoute("/app_/mais")({
   component: AppMaisPage,
 });
 
+const PERSONAL_ITEMS: NavLeaf[] = [
+  { to: "/app/perfil", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
+  { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
+];
+
 function AppMaisPage() {
   const { t } = useTranslation("nav");
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
-  const { hasFullAccess } = useRoles();
   const [signingOut, setSigningOut] = useState(false);
   const isAdminMaster = isAdminMasterEmail(user?.email);
-  const items = useMemo(
-    () => {
-      const mobileFirstItems: MoreItem[] = [
-        { to: "/app/perfil", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
-        { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
-      ];
-      const allItems = [...mobileFirstItems, ...MORE_ITEMS];
-      if (isAdminMaster) return [...allItems, INTEGRACOES_ITEM, ADMIN_ITEM];
-      if (hasFullAccess) return [...allItems, ADMIN_ITEM];
-      return allItems;
-    },
-    [hasFullAccess, isAdminMaster],
+
+  const groups = useMemo(
+    () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
+    [isAdminMaster],
   );
 
   const displayName =
@@ -48,7 +43,7 @@ function AppMaisPage() {
     user?.email?.split("@")[0] ||
     t("header.fallbackUser");
 
-  function getRule(item: MoreItem) {
+  function getRule(item: NavLeaf) {
     return (
       ROUTE_RULE[item.to] ??
       (item.feature
@@ -61,8 +56,8 @@ function AppMaisPage() {
     );
   }
 
-  function isLocked(item: MoreItem) {
-    if (isAdminMaster || hasFullAccess) return false;
+  function isLocked(item: NavLeaf) {
+    if (isAdminMaster) return false;
     const rule = getRule(item);
     return rule ? !can(rule.feature) : false;
   }
@@ -72,6 +67,39 @@ function AppMaisPage() {
     setSigningOut(true);
     await signOut();
     void navigate({ to: "/login", replace: true });
+  }
+
+  function renderCard(item: NavLeaf) {
+    const Icon = item.icon;
+    const locked = isLocked(item);
+    return (
+      <Link
+        key={item.to}
+        to={locked ? "/meu-plano" : item.to}
+        preload="intent"
+        preloadDelay={0}
+        className={cn(
+          "group flex min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 text-left shadow-card transition-colors active:scale-[0.99]",
+          locked ? "opacity-75" : "hover:bg-card-elevated",
+        )}
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card-elevated text-foreground ring-1 ring-border/60">
+          <Icon className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <span className="truncate">{t(`items.${item.labelKey}`)}</span>
+            {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+          </span>
+          {item.descKey && (
+            <span className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground">
+              {t(`descriptions.${item.descKey}`)}
+            </span>
+          )}
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Link>
+    );
   }
 
   return (
@@ -97,22 +125,19 @@ function AppMaisPage() {
             url={profile?.avatar_url}
             name={displayName}
             email={user?.email}
-            size={58}
+            size={56}
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{displayName}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
-      </section>
-
-      <section className="mt-3 rounded-3xl border border-border bg-card p-4 shadow-card">
-        <div className="flex items-center justify-between gap-3">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-card-elevated px-3 py-2.5">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               {t("more.currentPlan")}
             </p>
-            <p className="mt-1 truncate text-base font-semibold">{PLAN_LABEL[plan]}</p>
+            <p className="mt-0.5 truncate text-sm font-semibold">{PLAN_LABEL[plan]}</p>
           </div>
           {isTrialActive && (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-[10px] font-semibold text-warning">
@@ -123,48 +148,47 @@ function AppMaisPage() {
         </div>
       </section>
 
-      <section className="mt-5 grid grid-cols-1 gap-3 pb-3">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const locked = isLocked(item);
-          return (
-            <Link
-              key={item.to}
-              to={locked ? "/meu-plano" : item.to}
-              preload="intent"
-              preloadDelay={0}
-              className={cn(
-                "group flex min-h-[76px] items-center gap-3 rounded-3xl border border-border bg-card p-4 text-left shadow-card transition-colors active:scale-[0.99]",
-                locked ? "opacity-75" : "hover:bg-card-elevated",
-              )}
-            >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-foreground ring-1 ring-border/60">
-                <Icon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-sm font-semibold">
-                  <span className="truncate">{t(`items.${item.labelKey}`)}</span>
-                  {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-                </span>
-                <span className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
-                  {t(`descriptions.${item.descKey}`)}
-                </span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            </Link>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="mt-1 flex min-h-[58px] items-center justify-center gap-2 rounded-3xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive active:scale-[0.99] disabled:opacity-60"
+      {/* Dashboard + pessoal */}
+      <section className="mt-5 space-y-2">
+        <Link
+          to="/"
+          preload="intent"
+          preloadDelay={0}
+          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card active:scale-[0.99]"
         >
-          <LogOut className="h-4 w-4" />
-          {t("more.signOut")}
-        </button>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+            <Home className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{t("items.dashboard")}</span>
+            <span className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+              {t("header.tagline")}
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+        {PERSONAL_ITEMS.map(renderCard)}
       </section>
+
+      {/* Grupos */}
+      {groups.map((group) => (
+        <section key={group.id} className="mt-6">
+          <h2 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t(group.labelKey)}
+          </h2>
+          <div className="space-y-2">{group.items.map(renderCard)}</div>
+        </section>
+      ))}
+
+      <button
+        type="button"
+        onClick={handleSignOut}
+        disabled={signingOut}
+        className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-3xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive active:scale-[0.99] disabled:opacity-60"
+      >
+        <LogOut className="h-4 w-4" />
+        {t("more.signOut")}
+      </button>
     </MobileShell>
   );
 }
