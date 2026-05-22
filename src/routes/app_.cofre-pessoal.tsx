@@ -349,6 +349,7 @@ function VaultMain({
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<CategoriaId>("todos");
+  const [onlyFav, setOnlyFav] = useState(false);
   const [view, setView] = useState<View>({ kind: "list" });
 
   async function reload() {
@@ -370,17 +371,19 @@ function VaultMain({
     const total = entries.length;
     const fortes = entries.filter((e) => e.password_strength === "forte").length;
     const fracas = entries.filter((e) => e.password_strength === "fraca").length;
+    const favs = entries.filter((e) => e.favorite).length;
     const last = entries
       .map((e) => e.updated_at)
       .sort()
       .pop();
-    return { total, fortes, fracas, last };
+    return { total, fortes, fracas, favs, last };
   }, [entries]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return entries.filter((e) => {
       if (cat !== "todos" && e.category !== cat) return false;
+      if (onlyFav && !e.favorite) return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
@@ -388,7 +391,7 @@ function VaultMain({
         (e.site ?? "").toLowerCase().includes(q)
       );
     });
-  }, [entries, query, cat]);
+  }, [entries, query, cat, onlyFav]);
 
   if (view.kind === "create") {
     return (
