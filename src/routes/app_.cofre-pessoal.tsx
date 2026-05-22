@@ -51,7 +51,7 @@ import {
 import { evaluateStrength, generateStrongPassword, type Strength } from "@/lib/vault/strength";
 import { useVaultKey, setMasterKey } from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
-import { extractDomain } from "@/lib/vault/company-logo";
+import { extractDomain } from "@/lib/brand/resolver";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
