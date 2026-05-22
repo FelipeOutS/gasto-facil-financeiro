@@ -828,10 +828,10 @@ function EntryCard({
       <Card className="group flex items-center gap-3 p-3.5">
         <button
           onClick={onOpen}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-card-elevated text-foreground ring-1 ring-border/60"
+          className="shrink-0 rounded-xl outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-brand"
           aria-label="Abrir detalhes"
         >
-          <Shield className="h-5 w-5" />
+          <CompanyLogo site={row.site} name={row.name} />
         </button>
         <button onClick={onOpen} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
