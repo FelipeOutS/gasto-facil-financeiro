@@ -160,9 +160,9 @@ export function FluxoCaixaChart({
       {semHistoricoSuficiente ? (
         <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 py-6 text-center">
           <TrendingUp className="h-6 w-6 text-muted-foreground" />
-          <p className="mt-2 text-sm font-medium">Ainda não há histórico suficiente</p>
+          <p className="mt-2 text-sm font-medium">{t("fluxo.emptyTitle")}</p>
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            Continue lançando seus gastos e receitas — o gráfico aparece quando você tiver pelo menos dois meses com dados.
+            {t("fluxo.emptyDesc")}
           </p>
         </div>
       ) : (
