@@ -9,15 +9,15 @@ function b64encode(buf: ArrayBuffer | Uint8Array): string {
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
   return btoa(s);
 }
-function b64decode(str: string): Uint8Array {
+function b64decode(str: string): Uint8Array<ArrayBuffer> {
   const bin = atob(str);
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
 
-function randomBytes(len: number): Uint8Array {
-  const b = new Uint8Array(len);
+function randomBytes(len: number): Uint8Array<ArrayBuffer> {
+  const b = new Uint8Array(new ArrayBuffer(len));
   crypto.getRandomValues(b);
   return b;
 }
