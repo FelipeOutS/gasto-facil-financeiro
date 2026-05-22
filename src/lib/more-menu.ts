@@ -50,6 +50,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat, feature: "assinaturas_recorrencias" },
   { to: "/investimentos", labelKey: "investimentos", descKey: "investimentos", icon: TrendingUp, feature: "investimentos" },
   { to: "/contas-conectadas", labelKey: "contasConectadas", descKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
+  { to: "/app/integracoes", labelKey: "integracoes", descKey: "integracoes", icon: Plug },
   { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
   { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
   { to: "/landing", labelKey: "landing", descKey: "landing", icon: Sparkles },
