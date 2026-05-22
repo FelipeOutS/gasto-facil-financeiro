@@ -36,7 +36,8 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchSummary({ data: { mes, ano } });
+      const lang = i18n.language?.toLowerCase().startsWith("en") ? "en" : "pt";
+      const res = await fetchSummary({ data: { mes, ano, lang } });
       setReply(res.reply);
     } catch (e: any) {
       const msg = typeof e?.message === "string" && e.message ? e.message : t("smartSummary.errorFallback");
