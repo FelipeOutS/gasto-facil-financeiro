@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, ArrowDown, ArrowUp, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
