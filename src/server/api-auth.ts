@@ -28,8 +28,8 @@ function getTokenFromCookies(request: Request): string {
   const pairs = cookie.split(";").map((part) => part.trim());
   for (const pair of pairs) {
     const [rawName, ...rawValue] = pair.split("=");
-    const name = decodeURIComponent(rawName ?? "");
-    const value = decodeURIComponent(rawValue.join("=") ?? "");
+    const name = safeDecode(rawName ?? "");
+    const value = safeDecode(rawValue.join("=") ?? "");
     if (!value) continue;
     if (name === "sb-access-token" || name.endsWith("-auth-token")) {
       try {
@@ -42,6 +42,14 @@ function getTokenFromCookies(request: Request): string {
     }
   }
   return "";
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 export function unauthorizedResponse(message = "Você precisa estar logado para conectar o Mercado Pago."): Response {
