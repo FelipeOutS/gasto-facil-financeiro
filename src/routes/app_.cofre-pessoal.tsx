@@ -892,6 +892,7 @@ function VaultMain({
       <QuickUnlockSettingsView
         userId={userId}
         userLabel={settings.hint ?? "Cofre Pessoal"}
+        settings={settings}
         masterKey={masterKey}
         onBack={() => setView({ kind: "list" })}
       />
