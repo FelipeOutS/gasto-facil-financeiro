@@ -87,6 +87,7 @@ type GuardCtx = {
 const Ctx = createContext<GuardCtx | null>(null);
 
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
   const { hasFullAccess, loading: rolesLoading } = useRoles();
