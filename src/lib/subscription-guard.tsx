@@ -53,13 +53,13 @@ export function isStatusActive(status: string | null | undefined): boolean {
 export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data: userRes } = await supabase.auth.getUser();
   const user = userRes?.user;
-  if (!user) return { ok: false, reason: "Você precisa estar logado." };
+  if (!user) return { ok: false, reason: i18n.t("common:subscription.needLogin") };
 
   if (isAdminMasterEmail(user.email)) return { ok: true };
   const subscription = await getCurrentUserSubscription();
   if (!subscription.active || subscription.plan === "free" || subscription.plan === "sem_assinatura") {
     console.info("[ensureCanWriteFinancialData] bloqueado", subscription.debug);
-    return { ok: false, reason: "Você precisa de uma assinatura ativa para usar este recurso." };
+    return { ok: false, reason: i18n.t("common:subscription.needActive") };
   }
   return { ok: true };
 }
