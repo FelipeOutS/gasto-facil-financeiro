@@ -20,7 +20,6 @@ import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { HandCoins as HandCoinsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
