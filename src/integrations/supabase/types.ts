@@ -1076,6 +1076,78 @@ export type Database = {
           },
         ]
       }
+      imported_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          integration_id: string | null
+          occurred_at: string | null
+          payment_method: string | null
+          provider: string
+          provider_transaction_id: string
+          raw_payload: Json | null
+          status: string | null
+          title: string | null
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          integration_id?: string | null
+          occurred_at?: string | null
+          payment_method?: string | null
+          provider: string
+          provider_transaction_id: string
+          raw_payload?: Json | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          integration_id?: string | null
+          occurred_at?: string | null
+          payment_method?: string | null
+          provider?: string
+          provider_transaction_id?: string
+          raw_payload?: Json | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imported_transactions_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "user_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_transactions_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "user_integrations_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investimentos_ativos: {
         Row: {
           created_at: string
@@ -1932,6 +2004,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_integrations: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          provider: string
+          provider_user_id: string | null
+          refresh_token: string | null
+          scope: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider: string
+          provider_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider?: string
+          provider_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           account_type: string | null
@@ -2129,7 +2249,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_integrations_safe: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          last_error: string | null
+          last_sync_at: string | null
+          provider: string | null
+          provider_user_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider?: string | null
+          provider_user_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider?: string | null
+          provider_user_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       account_access_level: {
