@@ -66,7 +66,7 @@ function TransactionAvatarBase({ estabelecimento, categoria, size = "md", classN
   const categoriaIsOutros = categoria && (categoria.id === "outros" || categoria.nome?.toLowerCase() === "outros");
   const categoriaUtil: Categoria | undefined =
     (categoria && !categoriaIsOutros ? categoria : undefined) ||
-    (merchantName ? inferCategoriaFromName(merchantName) ?? undefined : undefined) ||
+    (merchantName ? inferCategoriaFromName(merchantName) : undefined) ||
     categoria;
 
   // 1) Sempre que houver um nome, tenta logo real PRIMEIRO.
