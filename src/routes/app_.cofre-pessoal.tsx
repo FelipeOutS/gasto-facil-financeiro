@@ -459,15 +459,24 @@ function VaultMain({
     <>
       <HeaderHero subtitle="Organize seus logins, senhas e informações importantes em um só lugar." />
 
+      <Card className="mb-5 flex items-start gap-3 border-brand/20 bg-brand-soft/40 p-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+          <Shield className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 text-xs leading-relaxed text-foreground/90">
+          <p className="font-semibold text-sm">Área protegida</p>
+          <p className="mt-0.5 text-muted-foreground">
+            Guarde logins, senhas e informações importantes em um só lugar. Suas senhas ficam protegidas com criptografia
+            e só você deve acessar esta área.
+          </p>
+        </div>
+      </Card>
+
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Acessos salvos" value={stats.total} />
+        <StatCard label="Favoritos" value={stats.favs} />
         <StatCard label="Senhas fortes" value={stats.fortes} tone="success" />
         <StatCard label="Senhas fracas" value={stats.fracas} tone="warning" />
-        <StatCard
-          label="Última atualização"
-          value={stats.last ? new Date(stats.last).toLocaleDateString("pt-BR") : "—"}
-          small
-        />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -489,6 +498,19 @@ function VaultMain({
       </div>
 
       <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+        <button
+          onClick={() => setOnlyFav((v) => !v)}
+          className={cn(
+            "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+            onlyFav
+              ? "border-amber-400/60 bg-amber-400/10 text-amber-300"
+              : "border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+          )}
+        >
+          <Star className={cn("h-3.5 w-3.5", onlyFav && "fill-amber-400 text-amber-400")} />
+          Favoritos
+        </button>
+        <span className="mx-1 w-px shrink-0 self-stretch bg-border" />
         {CATEGORIAS.map((c) => (
           <button
             key={c.id}
