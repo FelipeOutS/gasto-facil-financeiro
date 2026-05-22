@@ -30,13 +30,53 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
         if (!isAdminMasterUser(user)) return forbiddenResponse();
 
         if (params.action === "sync") {
-          let body: { period?: string; beginDate?: string; endDate?: string } = {};
+          let body: { period?: string; beginDate?: string; endDate?: string; months?: unknown } = {};
           try {
             const text = await request.text();
             if (text) body = JSON.parse(text);
           } catch {
             body = {};
           }
+
+          // === Modo MESES (preferido) ===
+          if (Array.isArray(body.months)) {
+            const raw = body.months as unknown[];
+            if (raw.length === 0) {
+              return Response.json(
+                { ok: false, error: "no_months", message: "Selecione pelo menos um mês para sincronizar." },
+                { status: 400 },
+              );
+            }
+            if (raw.length > 12) {
+              return Response.json(
+                { ok: false, error: "too_many_months", message: "Selecione no máximo 12 meses por sincronização." },
+                { status: 400 },
+              );
+            }
+            const re = /^\d{4}-(0[1-9]|1[0-2])$/;
+            const now = new Date();
+            const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            const months: string[] = [];
+            for (const item of raw) {
+              if (typeof item !== "string" || !re.test(item)) {
+                return Response.json(
+                  { ok: false, error: "invalid_month", message: "Formato de mês inválido. Use AAAA-MM." },
+                  { status: 400 },
+                );
+              }
+              if (item > nowKey) {
+                return Response.json(
+                  { ok: false, error: "future_month", message: "Não é possível sincronizar meses futuros." },
+                  { status: 400 },
+                );
+              }
+              if (!months.includes(item)) months.push(item);
+            }
+            const result = await syncMercadoPagoTransactions(user.id, { period: "months", months });
+            return Response.json(result, { status: result.ok ? 200 : 400 });
+          }
+
+          // === Modo PERÍODO (compatibilidade) ===
           const allowed = new Set([
             "last30",
             "current_month",
