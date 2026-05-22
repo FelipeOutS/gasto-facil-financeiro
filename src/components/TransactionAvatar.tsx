@@ -10,6 +10,7 @@
  */
 import { memo } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo as GlobalBrandLogo } from "@/components/brand/BrandLogo";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { hasMerchantLogo } from "@/lib/logos";
 import type { Categoria } from "@/lib/types";
