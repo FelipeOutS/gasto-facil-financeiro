@@ -49,6 +49,10 @@ export function normalizeMerchantName(input: string | null | undefined): string 
   base = base
     .replace(/\*+/g, " ")
     .replace(/[^a-z0-9 ]+/g, " ")
+    // Separa letras grudadas em dígitos: "raia2975" → "raia 2975"; "lj0098" → "lj 0098"
+    .replace(/([a-z])(\d)/g, "$1 $2")
+    .replace(/(\d)([a-z])/g, "$1 $2")
+    // Remove números isolados (códigos de loja, ids, etc.)
     .replace(/\b\d+\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
