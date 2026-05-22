@@ -1034,10 +1034,14 @@ function EntryForm({
     }
     setBusy(true);
     try {
+      const rawSite = site.trim();
+      // Persist a clean public domain when we can extract one — keeps logo
+      // lookup consistent across edits and saves storage of long URLs.
+      const cleanSite = rawSite ? (extractDomain(rawSite) ?? rawSite) : null;
       await onSubmit({
         name: name.trim(),
         category,
-        site: site.trim() || null,
+        site: cleanSite,
         favorite,
         secret: { username, password, notes },
       });
