@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Shield,
@@ -19,6 +19,10 @@ import {
   Check,
   Lock,
   ExternalLink,
+  Home,
+  ChevronRight,
+  ArrowUpDown,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
@@ -123,28 +127,79 @@ function CofrePessoalPage() {
 }
 
 // ===== Header reutilizável =====
-function HeaderHero({ subtitle }: { subtitle: string }) {
+function PageHeader({
+  title,
+  subtitle,
+  crumbs,
+  onBack,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  crumbs: { label: string; to?: string }[];
+  onBack?: () => void;
+  actions?: React.ReactNode;
+}) {
   return (
-    <header className="mb-6 flex items-start gap-3">
-      <button
-        type="button"
-        onClick={() => window.history.back()}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground active:scale-95 lg:hidden"
-        aria-label="Voltar"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-            <Shield className="h-5 w-5" />
-          </span>
-          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Cofre Pessoal</h1>
-        </div>
-        <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>
+    <header className="mb-6 animate-fade-in">
+      {/* Breadcrumb + atalho dashboard */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+          <Link to="/" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+            <Home className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          {crumbs.map((c, i) => (
+            <span key={i} className="flex items-center gap-1 truncate">
+              <ChevronRight className="h-3 w-3 shrink-0 opacity-60" />
+              {c.to ? (
+                <Link to={c.to} className="truncate rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+                  {c.label}
+                </Link>
+              ) : (
+                <span className="truncate px-1.5 py-0.5 font-medium text-foreground">{c.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
+        <Link
+          to="/"
+          className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground sm:inline-flex"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Dashboard
+        </Link>
       </div>
+
+      <div className="flex items-start gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground active:scale-95"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+              <Shield className="h-5 w-5" />
+            </span>
+            <h1 className="truncate text-2xl font-bold tracking-tight lg:text-3xl">{title}</h1>
+          </div>
+          {subtitle && <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>}
+        </div>
+        {actions && <div className="hidden shrink-0 items-center gap-2 sm:flex">{actions}</div>}
+      </div>
+      {actions && <div className="mt-3 flex flex-wrap items-center gap-2 sm:hidden">{actions}</div>}
     </header>
   );
+}
+
+// Compat: alguns sub-componentes ainda chamam HeaderHero
+function HeaderHero({ subtitle }: { subtitle: string }) {
+  return <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />;
 }
 
 // ===== Setup (criar senha mestra) =====
@@ -350,6 +405,8 @@ function VaultMain({
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<CategoriaId>("todos");
   const [onlyFav, setOnlyFav] = useState(false);
+  const [strengthFilter, setStrengthFilter] = useState<"todas" | Strength>("todas");
+  const [sort, setSort] = useState<"recent" | "az" | "fav" | "updated" | "weak">("fav");
   const [view, setView] = useState<View>({ kind: "list" });
 
   async function reload() {
@@ -381,9 +438,11 @@ function VaultMain({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return entries.filter((e) => {
+    const weakOrder: Record<string, number> = { fraca: 0, media: 1, forte: 2 };
+    const list = entries.filter((e) => {
       if (cat !== "todos" && e.category !== cat) return false;
       if (onlyFav && !e.favorite) return false;
+      if (strengthFilter !== "todas" && e.password_strength !== strengthFilter) return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
@@ -391,12 +450,28 @@ function VaultMain({
         (e.site ?? "").toLowerCase().includes(q)
       );
     });
-  }, [entries, query, cat, onlyFav]);
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      if (sort === "az") return a.name.localeCompare(b.name);
+      if (sort === "recent") return b.created_at.localeCompare(a.created_at);
+      if (sort === "updated") return b.updated_at.localeCompare(a.updated_at);
+      if (sort === "weak") return (weakOrder[a.password_strength] ?? 9) - (weakOrder[b.password_strength] ?? 9);
+      // fav primeiro, depois nome
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    return sorted;
+  }, [entries, query, cat, onlyFav, strengthFilter, sort]);
 
   if (view.kind === "create") {
     return (
       <>
-        <HeaderHero subtitle="Adicione um novo acesso ao seu cofre." />
+        <PageHeader
+          title="Novo acesso"
+          subtitle="Salve um login, senha ou informação importante no seu cofre."
+          crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Novo acesso" }]}
+          onBack={() => setView({ kind: "list" })}
+        />
         <EntryForm
           onCancel={() => setView({ kind: "list" })}
           onSubmit={async (data) => {
@@ -412,9 +487,19 @@ function VaultMain({
   if (view.kind === "edit") {
     return (
       <>
-        <HeaderHero subtitle={`Editando: ${view.entry.name}`} />
+        <PageHeader
+          title="Editar acesso"
+          subtitle="Atualize as informações salvas neste acesso."
+          crumbs={[
+            { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+            { label: view.entry.name, to: undefined },
+            { label: "Editar" },
+          ]}
+          onBack={() => setView({ kind: "detail", entry: view.entry })}
+        />
         <EntryForm
           initial={view.entry}
+          submitLabel="Salvar alterações"
           onCancel={() => setView({ kind: "detail", entry: view.entry })}
           onSubmit={async (data) => {
             await updateEntry({
@@ -457,17 +542,38 @@ function VaultMain({
 
   return (
     <>
-      <HeaderHero subtitle="Organize seus logins, senhas e informações importantes em um só lugar." />
+      <PageHeader
+        title="Cofre Pessoal"
+        subtitle="Organize logins, senhas e informações importantes em um só lugar."
+        crumbs={[{ label: "Cofre Pessoal" }]}
+        actions={
+          <>
+            <Button
+              onClick={() => setView({ kind: "create" })}
+              className="bg-brand-grad font-semibold shadow-md shadow-brand/20"
+            >
+              <Plus className="h-4 w-4" /> Adicionar acesso
+            </Button>
+            <Button variant="outline" onClick={onLock} title="Bloquear cofre">
+              <Lock className="h-4 w-4" /> Bloquear cofre
+            </Button>
+          </>
+        }
+      />
 
-      <Card className="mb-5 flex items-start gap-3 border-brand/20 bg-brand-soft/40 p-4">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-          <Shield className="h-4 w-4" />
+      <Card className="mb-5 flex items-start gap-3 border-brand/30 bg-brand-soft/30 p-4 shadow-sm animate-fade-in">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft ring-1 ring-brand/30">
+          <ShieldCheck className="h-5 w-5" />
         </span>
         <div className="min-w-0 text-xs leading-relaxed text-foreground/90">
-          <p className="font-semibold text-sm">Área protegida</p>
-          <p className="mt-0.5 text-muted-foreground">
-            Guarde logins, senhas e informações importantes em um só lugar. Suas senhas ficam protegidas com criptografia
-            e só você deve acessar esta área.
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold">Área protegida</p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Proteção ativa
+            </span>
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            Seus dados sensíveis ficam protegidos com criptografia e só aparecem quando você autorizar.
           </p>
         </div>
       </Card>
@@ -479,25 +585,34 @@ function VaultMain({
         <StatCard label="Senhas fracas" value={stats.fracas} tone="warning" />
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nome, usuário, categoria ou site"
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
-        <Button onClick={() => setView({ kind: "create" })}>
-          <Plus className="h-4 w-4" /> Adicionar acesso
-        </Button>
-        <Button variant="outline" onClick={onLock} title="Bloquear cofre">
-          <Lock className="h-4 w-4" /> Bloquear
-        </Button>
+        <div className="relative">
+          <ArrowUpDown className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            className="h-10 appearance-none rounded-md border border-input bg-card pl-8 pr-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            aria-label="Ordenar"
+          >
+            <option value="fav">Favoritos primeiro</option>
+            <option value="recent">Mais recentes</option>
+            <option value="updated">Última alteração</option>
+            <option value="az">A–Z</option>
+            <option value="weak">Senhas fracas primeiro</option>
+          </select>
+        </div>
       </div>
 
-      <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+      <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-2">
         <button
           onClick={() => setOnlyFav((v) => !v)}
           className={cn(
@@ -526,6 +641,38 @@ function VaultMain({
           </button>
         ))}
       </div>
+
+      <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
+        <span className="shrink-0 self-center pr-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Força
+        </span>
+        {([
+          { id: "todas", label: "Todas" },
+          { id: "forte", label: "Fortes" },
+          { id: "media", label: "Médias" },
+          { id: "fraca", label: "Fracas" },
+        ] as const).map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setStrengthFilter(s.id as typeof strengthFilter)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              strengthFilter === s.id
+                ? s.id === "forte"
+                  ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
+                  : s.id === "media"
+                  ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                  : s.id === "fraca"
+                  ? "border-red-500/60 bg-red-500/15 text-red-300"
+                  : "border-brand bg-brand-soft text-brand-on-soft"
+                : "border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+            )}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
 
       {loading ? (
         <div className="grid place-items-center py-12 text-sm text-muted-foreground">Carregando acessos…</div>
@@ -726,26 +873,25 @@ function DetailView({
   const [showPwd, setShowPwd] = useState(false);
   return (
     <>
-      <header className="mb-6 flex items-start gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-2xl font-bold tracking-tight">{entry.name}</h1>
-            {entry.favorite && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
-            {strengthBadge(entry.password_strength)}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={entry.name}
+        crumbs={[
+          { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+          { label: "Detalhes do acesso" },
+        ]}
+        onBack={onBack}
+        subtitle="Visualize, copie ou edite as informações deste acesso com segurança."
+      />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
+        {strengthBadge(entry.password_strength)}
+        {entry.favorite && (
+          <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
+            <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
+          </Badge>
+        )}
+      </div>
+
 
       <Card className="space-y-5 p-5">
         <Field label="Usuário ou e-mail" value={entry.secret.username ?? ""} copyLabel="Usuário" />
@@ -845,8 +991,10 @@ function EntryForm({
   initial,
   onSubmit,
   onCancel,
+  submitLabel,
 }: {
   initial?: DecryptedEntry;
+  submitLabel?: string;
   onSubmit: (data: {
     name: string;
     category: string;
@@ -1049,20 +1197,41 @@ function EntryForm({
         </button>
       </Card>
 
-      {/* Ações */}
-      <div className="sticky bottom-2 z-10 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button variant="ghost" onClick={onCancel} disabled={busy} className="sm:w-auto">
-          Cancelar
-        </Button>
-        <Button
-          onClick={submit}
-          disabled={busy || !name.trim()}
-          size="lg"
-          className="h-12 w-full bg-gradient-to-r from-brand to-brand/80 text-base font-semibold shadow-lg shadow-brand/20 hover:from-brand hover:to-brand/90 sm:w-auto sm:px-8"
-        >
-          <Check className="h-4 w-4" /> {busy ? "Salvando…" : "Salvar acesso"}
-        </Button>
+      {/* Ações — barra sólida sempre visível, com safe area para mobile/WebView */}
+      <div
+        className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:-mx-8 lg:px-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+      >
+        <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={busy}
+            className="h-11 sm:h-10 sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={busy || !name.trim()}
+            className="bg-brand-grad h-12 w-full text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 transition-transform active:scale-[0.98] disabled:opacity-60 sm:h-11 sm:w-auto sm:px-8"
+          >
+            {busy ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                Salvando…
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" /> {submitLabel ?? "Salvar acesso"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
     </div>
   );
 }
