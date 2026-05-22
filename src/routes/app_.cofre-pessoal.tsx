@@ -863,6 +863,8 @@ function VaultMain({
         onChanged={(newSettings) => {
           onSettingsChanged(newSettings);
           clearSecretCache();
+          // Invalida desbloqueio rápido — a chave mestra mudou
+          disableQuickUnlock(userId);
           // Força novo unlock para usar a nova senha
           setMasterKey(null);
           toast.success("Senha mestra alterada. Faça o desbloqueio com a nova senha.");
@@ -875,6 +877,16 @@ function VaultMain({
       <BackupView
         userId={userId}
         settings={settings}
+        onBack={() => setView({ kind: "list" })}
+      />
+    );
+  }
+  if (view.kind === "quick_unlock") {
+    return (
+      <QuickUnlockSettingsView
+        userId={userId}
+        userLabel={settings.hint ?? "Cofre Pessoal"}
+        masterKey={masterKey}
         onBack={() => setView({ kind: "list" })}
       />
     );
