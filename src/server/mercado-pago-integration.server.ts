@@ -455,11 +455,100 @@ export async function syncMercadoPagoTransactions(
   if (!integration?.access_token) return { ok: false, error: "token_refresh_failed" };
 
   const summary: SyncSummary = { imported: 0, updated: 0, ignored: 0, errors: 0, fetched: 0 };
-  const { begin, end } = computePeriodRange(options);
-  const chunks = chunkMonthly(begin, end);
-  let lastChunkError: string | null = null;
+
+  async function upsertPayments(payments: MpPayment[]) {
+    for (const p of payments) {
+      try {
+        const row = mapMercadoPagoTransactionToGastoInteligente(p, userId, integration!.id);
+        const { data: existing } = await supabaseAdmin
+          .from("imported_transactions")
+          .select("id, status, amount")
+          .eq("user_id", userId)
+          .eq("provider", PROVIDER)
+          .eq("provider_transaction_id", row.provider_transaction_id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { error: insErr } = await supabaseAdmin.from("imported_transactions").insert(row);
+          if (insErr) summary.errors += 1;
+          else summary.imported += 1;
+        } else if (
+          existing.status !== row.status ||
+          Number(existing.amount) !== Number(row.amount)
+        ) {
+          const { error: updErr } = await supabaseAdmin
+            .from("imported_transactions")
+            .update({
+              status: row.status,
+              amount: row.amount,
+              raw_payload: row.raw_payload,
+              occurred_at: row.occurred_at,
+            })
+            .eq("id", existing.id);
+          if (updErr) summary.errors += 1;
+          else summary.updated += 1;
+        } else {
+          summary.ignored += 1;
+        }
+      } catch {
+        summary.errors += 1;
+      }
+    }
+  }
 
   try {
+    // === Modo MESES: sincroniza mês a mês com tratamento de falha por mês ===
+    if (options.months && options.months.length > 0) {
+      const failedMonths: Array<{ month: string; message: string }> = [];
+      const now = new Date();
+      const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const uniqueMonths = Array.from(new Set(options.months)).filter((k) => k <= nowKey);
+
+      for (const key of uniqueMonths) {
+        const range = monthKeyToRange(key);
+        if (!range) {
+          failedMonths.push({ month: key, message: "Formato de mês inválido." });
+          continue;
+        }
+        try {
+          const { results, error } = await fetchPaymentsChunk(
+            integration.access_token,
+            range.from,
+            range.to,
+          );
+          if (error && results.length === 0) {
+            failedMonths.push({
+              month: key,
+              message: "Erro ao buscar movimentações deste mês.",
+            });
+            summary.errors += 1;
+            continue;
+          }
+          summary.fetched += results.length;
+          await upsertPayments(results);
+        } catch {
+          failedMonths.push({
+            month: key,
+            message: "Erro ao buscar movimentações deste mês.",
+          });
+          summary.errors += 1;
+        }
+      }
+      summary.failedMonths = failedMonths;
+
+      await supabaseAdmin
+        .from("user_integrations")
+        .update({ last_sync_at: new Date().toISOString(), last_error: null, status: "connected" })
+        .eq("id", integration.id);
+
+      return { ok: true, summary };
+    }
+
+    // === Modo PERÍODO (compatibilidade) ===
+    const { begin, end } = computePeriodRange(options);
+    const chunks = chunkMonthly(begin, end);
+    let lastChunkError: string | null = null;
+
     for (const c of chunks) {
       const { results, error } = await fetchPaymentsChunk(integration.access_token, c.from, c.to);
       if (error && results.length === 0) {
@@ -468,44 +557,7 @@ export async function syncMercadoPagoTransactions(
         continue;
       }
       summary.fetched += results.length;
-
-      for (const p of results) {
-        try {
-          const row = mapMercadoPagoTransactionToGastoInteligente(p, userId, integration.id);
-          const { data: existing } = await supabaseAdmin
-            .from("imported_transactions")
-            .select("id, status, amount")
-            .eq("user_id", userId)
-            .eq("provider", PROVIDER)
-            .eq("provider_transaction_id", row.provider_transaction_id)
-            .maybeSingle();
-
-          if (!existing) {
-            const { error: insErr } = await supabaseAdmin.from("imported_transactions").insert(row);
-            if (insErr) summary.errors += 1;
-            else summary.imported += 1;
-          } else if (
-            existing.status !== row.status ||
-            Number(existing.amount) !== Number(row.amount)
-          ) {
-            const { error: updErr } = await supabaseAdmin
-              .from("imported_transactions")
-              .update({
-                status: row.status,
-                amount: row.amount,
-                raw_payload: row.raw_payload,
-                occurred_at: row.occurred_at,
-              })
-              .eq("id", existing.id);
-            if (updErr) summary.errors += 1;
-            else summary.updated += 1;
-          } else {
-            summary.ignored += 1;
-          }
-        } catch {
-          summary.errors += 1;
-        }
-      }
+      await upsertPayments(results);
     }
 
     if (summary.fetched === 0 && lastChunkError) {
@@ -517,6 +569,7 @@ export async function syncMercadoPagoTransactions(
       .from("user_integrations")
       .update({ last_sync_at: new Date().toISOString(), last_error: null, status: "connected" })
       .eq("id", integration.id);
+
 
     return { ok: true, summary };
   } catch (err) {
