@@ -558,10 +558,10 @@ function Index() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
-                    <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+                    <h2 className="text-sm font-semibold">{t("metaProxima.title")}</h2>
                   </div>
                   <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                    Ver todas →
+                    {t("metaProxima.verTodas")}
                   </Link>
                 </div>
                 <div className="mt-3 flex items-baseline justify-between gap-3">
