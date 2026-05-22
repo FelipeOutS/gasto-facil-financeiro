@@ -53,9 +53,10 @@ type SyncResponse =
         ignored: number;
         errors: number;
         fetched: number;
+        failedMonths?: Array<{ month: string; message: string }>;
       };
     }
-  | { ok: false; error: string };
+  | { ok: false; error: string; message?: string };
 
 type Search = { connected?: string; error?: string };
 
@@ -91,6 +92,44 @@ const BENEFITS: { icon: React.ReactNode; label: string }[] = [
   { icon: <Coins className="h-3.5 w-3.5" />, label: "Cashback" },
 ];
 
+type MonthOption = { key: string; monthName: string; year: number; label: string };
+
+/** Gera os últimos 12 meses, do mais recente para o mais antigo. */
+const LAST_12_MONTHS: MonthOption[] = (() => {
+  const out: MonthOption[] = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const monthName = d.toLocaleDateString("pt-BR", { month: "long" });
+    out.push({
+      key,
+      monthName,
+      year: d.getFullYear(),
+      label: `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${d.getFullYear()}`,
+    });
+  }
+  return out;
+})();
+
+function monthKeyLabel(key: string): string {
+  const found = LAST_12_MONTHS.find((m) => m.key === key);
+  if (found) return found.label;
+  const m = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!m) return key;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, 1);
+  const name = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function formatMonthsList(keys: string[]): string {
+  // mantém ordem do LAST_12_MONTHS (mais recente primeiro)
+  const ordered = LAST_12_MONTHS.filter((m) => keys.includes(m.key)).map((m) => m.label);
+  if (ordered.length <= 1) return ordered.join("");
+  if (ordered.length === 2) return `${ordered[0]} e ${ordered[1]}`;
+  return `${ordered.slice(0, -1).join(", ")} e ${ordered[ordered.length - 1]}`;
+}
+
 function MercadoPagoIntegrationPage() {
   const search = useSearch({ from: "/app_/integracoes/mercado-pago/" });
   const navigate = useNavigate();
@@ -99,10 +138,9 @@ function MercadoPagoIntegrationPage() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [syncPeriod, setSyncPeriod] = useState<
-    "last30" | "current_month" | "last_month" | "last3" | "last6" | "last12"
-  >("last30");
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [lastSyncMsg, setLastSyncMsg] = useState<string | null>(null);
+  const [lastFailedMonths, setLastFailedMonths] = useState<Array<{ month: string; message: string }>>([]);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -187,21 +225,33 @@ function MercadoPagoIntegrationPage() {
 
   async function handleSync() {
     if (syncing) return;
+    if (selectedMonths.length === 0) {
+      toast.error("Selecione pelo menos um mês para sincronizar.");
+      return;
+    }
     setSyncing(true);
     setLastSyncMsg(null);
+    setLastFailedMonths([]);
     try {
       const res = await apiFetch("/api/integrations/mercadopago/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ period: syncPeriod }),
+        body: JSON.stringify({ months: selectedMonths }),
       });
       const json = (await res.json()) as SyncResponse;
       if (json.ok) {
-        const msg = `${json.summary.imported} importadas, ${json.summary.updated} atualizadas, ${json.summary.ignored} já existentes (${json.summary.fetched} verificadas).`;
-        setLastSyncMsg(msg);
-        toast.success(`Sincronização concluída: ${msg}`);
+        const { imported, updated, ignored, failedMonths } = json.summary;
+        const base = `${imported} novas, ${updated} atualizadas e ${ignored} já existentes.`;
+        setLastSyncMsg(base);
+        const failed = failedMonths ?? [];
+        setLastFailedMonths(failed);
+        if (failed.length > 0) {
+          toast.warning("Sincronização concluída com alertas. Alguns meses não puderam ser importados.");
+        } else {
+          toast.success(`Sincronização concluída: ${base}`);
+        }
       } else {
-        toast.error(`Falha na sincronização: ${json.error}`);
+        toast.error(json.message ?? `Falha na sincronização: ${json.error}`);
       }
       await loadStatus();
     } catch {
@@ -356,59 +406,150 @@ function MercadoPagoIntegrationPage() {
                 <div className="rounded-2xl border border-border/70 bg-card-elevated/30 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Sincronização
+                      Escolha os meses para importar
                     </p>
-                    {lastSyncMsg && !syncing && (
+                    {lastSyncMsg && !syncing && lastFailedMonths.length === 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-3 w-3" /> concluída
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Escolha o período. Para 6 ou 12 meses, a busca é feita mês a mês.
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Selecione um ou mais meses. A sincronização será feita mês a mês para evitar
+                    falhas e duplicidades.
                   </p>
+
+                  {/* Atalhos rápidos */}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {(
                       [
-                        ["last30", "Últimos 30 dias"],
-                        ["current_month", "Mês atual"],
-                        ["last_month", "Mês anterior"],
-                        ["last3", "Últimos 3 meses"],
-                        ["last6", "Últimos 6 meses"],
-                        ["last12", "Últimos 12 meses"],
+                        ["current", "Mês atual"],
+                        ["3", "Últimos 3 meses"],
+                        ["6", "Últimos 6 meses"],
+                        ["12", "Últimos 12 meses"],
                       ] as const
-                    ).map(([v, l]) => (
+                    ).map(([key, label]) => (
                       <button
-                        key={v}
+                        key={key}
                         type="button"
                         disabled={syncing}
-                        onClick={() => setSyncPeriod(v)}
-                        className={cn(
-                          "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
-                          syncPeriod === v
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-card text-muted-foreground hover:text-foreground",
-                        )}
+                        onClick={() => {
+                          const count = key === "current" ? 1 : Number(key);
+                          setSelectedMonths(LAST_12_MONTHS.slice(0, count).map((m) => m.key));
+                        }}
+                        className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-60"
                       >
-                        {l}
+                        {label}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      disabled={syncing || selectedMonths.length === 0}
+                      onClick={() => setSelectedMonths([])}
+                      className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-40"
+                    >
+                      Limpar seleção
+                    </button>
                   </div>
+
+                  {/* Grid de meses */}
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                    {LAST_12_MONTHS.map((m) => {
+                      const selected = selectedMonths.includes(m.key);
+                      return (
+                        <button
+                          key={m.key}
+                          type="button"
+                          disabled={syncing}
+                          onClick={() =>
+                            setSelectedMonths((prev) =>
+                              prev.includes(m.key)
+                                ? prev.filter((k) => k !== m.key)
+                                : [...prev, m.key],
+                            )
+                          }
+                          className={cn(
+                            "group relative flex min-h-[64px] flex-col items-start justify-center gap-0.5 rounded-xl border px-3 py-2.5 text-left transition-all disabled:opacity-60",
+                            selected
+                              ? "border-primary bg-primary/10 ring-1 ring-primary/40 shadow-sm"
+                              : "border-border bg-card hover:border-primary/30 hover:bg-card-elevated/50",
+                          )}
+                          aria-pressed={selected}
+                        >
+                          <span
+                            className={cn(
+                              "text-sm font-semibold capitalize",
+                              selected ? "text-primary" : "text-foreground",
+                            )}
+                          >
+                            {m.monthName}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">{m.year}</span>
+                          {selected && (
+                            <CheckCircle2 className="absolute right-2 top-2 h-4 w-4 text-primary" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Resumo dos selecionados */}
+                  {selectedMonths.length > 0 && (
+                    <div className="mt-3 rounded-xl border border-border/60 bg-card/40 px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Meses selecionados
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-foreground/80">
+                        {selectedMonths.length > 5
+                          ? `${selectedMonths.length} meses selecionados`
+                          : formatMonthsList(selectedMonths)}
+                      </p>
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleSync}
-                    disabled={syncing}
+                    disabled={syncing || selectedMonths.length === 0}
                     size="lg"
                     className="mt-3 h-12 w-full rounded-2xl text-base font-semibold"
                   >
                     <RefreshCw className={cn("mr-2 h-5 w-5", syncing && "animate-spin")} />
-                    {syncing ? "Importando movimentações..." : "Sincronizar período"}
+                    {syncing
+                      ? "Importando movimentações..."
+                      : selectedMonths.length === 0
+                        ? "Sincronizar meses selecionados"
+                        : `Sincronizar ${selectedMonths.length} ${selectedMonths.length === 1 ? "mês" : "meses"}`}
                   </Button>
-                  {lastSyncMsg && (
-                    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                      {lastSyncMsg}
+
+                  {selectedMonths.length === 0 && !syncing && (
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Selecione pelo menos um mês para sincronizar.
                     </p>
                   )}
+                  {syncing && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                      Estamos buscando os dados mês a mês. Isso pode levar alguns segundos.
+                    </p>
+                  )}
+                  {lastSyncMsg && !syncing && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                      Sincronização concluída: {lastSyncMsg}
+                    </p>
+                  )}
+                  {lastFailedMonths.length > 0 && !syncing && (
+                    <div className="mt-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] leading-relaxed text-warning">
+                      <p className="font-semibold">Alguns meses não puderam ser importados:</p>
+                      <ul className="mt-1 list-disc pl-4">
+                        {lastFailedMonths.map((f) => (
+                          <li key={f.month} className="capitalize">
+                            {monthKeyLabel(f.month)} — tente novamente depois.
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
+
 
                 <Button
                   asChild
