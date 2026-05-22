@@ -86,6 +86,25 @@
     "title": "My income",
     "esteMes": "{{valor}} this month"
   },
+  "calendario": {
+    "eyebrow": "Financial calendar",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "aPagar": "To pay",
+    "aReceber": "To receive",
+    "atrasadas": "Overdue",
+    "atrasada": "Overdue",
+    "parcial": "Partial",
+    "paga": "Paid",
+    "recebida": "Received",
+    "pagaRecebida": "Paid / Received",
+    "itens": "{{count}} items",
+    "proximosVencimentos": "Upcoming due dates",
+    "nenhumProximo": "No upcoming due dates. 🎉",
+    "semLancamentos": "No financial entries on this day.",
+    "lancamentoSing": "{{count}} entry",
+    "lancamentoPlur": "{{count}} entries"
+  },
   "atividade": {
     "eyebrow": "Activity",
     "title": "Recent transactions",
