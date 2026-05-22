@@ -405,6 +405,8 @@ function VaultMain({
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<CategoriaId>("todos");
   const [onlyFav, setOnlyFav] = useState(false);
+  const [strengthFilter, setStrengthFilter] = useState<"todas" | Strength>("todas");
+  const [sort, setSort] = useState<"recent" | "az" | "fav" | "updated" | "weak">("fav");
   const [view, setView] = useState<View>({ kind: "list" });
 
   async function reload() {
@@ -436,9 +438,11 @@ function VaultMain({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return entries.filter((e) => {
+    const weakOrder: Record<string, number> = { fraca: 0, media: 1, forte: 2 };
+    const list = entries.filter((e) => {
       if (cat !== "todos" && e.category !== cat) return false;
       if (onlyFav && !e.favorite) return false;
+      if (strengthFilter !== "todas" && e.password_strength !== strengthFilter) return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
@@ -446,12 +450,28 @@ function VaultMain({
         (e.site ?? "").toLowerCase().includes(q)
       );
     });
-  }, [entries, query, cat, onlyFav]);
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      if (sort === "az") return a.name.localeCompare(b.name);
+      if (sort === "recent") return b.created_at.localeCompare(a.created_at);
+      if (sort === "updated") return b.updated_at.localeCompare(a.updated_at);
+      if (sort === "weak") return (weakOrder[a.password_strength] ?? 9) - (weakOrder[b.password_strength] ?? 9);
+      // fav primeiro, depois nome
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    return sorted;
+  }, [entries, query, cat, onlyFav, strengthFilter, sort]);
 
   if (view.kind === "create") {
     return (
       <>
-        <HeaderHero subtitle="Adicione um novo acesso ao seu cofre." />
+        <PageHeader
+          title="Novo acesso"
+          subtitle="Salve um login, senha ou informação importante no seu cofre."
+          crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Novo acesso" }]}
+          onBack={() => setView({ kind: "list" })}
+        />
         <EntryForm
           onCancel={() => setView({ kind: "list" })}
           onSubmit={async (data) => {
@@ -467,9 +487,19 @@ function VaultMain({
   if (view.kind === "edit") {
     return (
       <>
-        <HeaderHero subtitle={`Editando: ${view.entry.name}`} />
+        <PageHeader
+          title="Editar acesso"
+          subtitle="Atualize as informações salvas neste acesso."
+          crumbs={[
+            { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+            { label: view.entry.name, to: undefined },
+            { label: "Editar" },
+          ]}
+          onBack={() => setView({ kind: "detail", entry: view.entry })}
+        />
         <EntryForm
           initial={view.entry}
+          submitLabel="Salvar alterações"
           onCancel={() => setView({ kind: "detail", entry: view.entry })}
           onSubmit={async (data) => {
             await updateEntry({
