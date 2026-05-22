@@ -248,13 +248,13 @@ export function CalendarioFinanceiro({
       {/* KPIs do mês */}
       <div className="relative mt-3 grid grid-cols-3 gap-2 text-xs">
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A pagar</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aPagar")}</p>
           <p className="mt-0.5 truncate text-sm font-bold text-amber-300">
             <Money value={resumoMes.pagar} />
           </p>
         </div>
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A receber</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aReceber")}</p>
           <p className="mt-0.5 truncate text-sm font-bold text-sky-300">
             <Money value={resumoMes.receber} />
           </p>
@@ -267,7 +267,7 @@ export function CalendarioFinanceiro({
               : "border-border bg-background/40",
           )}
         >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Atrasadas</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.atrasadas")}</p>
           <p
             className={cn(
               "mt-0.5 text-sm font-bold",
