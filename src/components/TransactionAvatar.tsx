@@ -34,10 +34,10 @@ type Props = {
   className?: string;
 };
 
-function inferCategoriaFromName(nome: string): Categoria | null {
+function inferCategoriaFromName(nome: string): Categoria {
   const key = resolveCategoryKey(nome);
-  if (!key || key === "outros") return null;
-  const def = DEFAULT_CATEGORIES.find((c) => c.id === key);
+  const safeKey = key || "outros";
+  const def = DEFAULT_CATEGORIES.find((c) => c.id === safeKey);
   if (def) {
     return {
       id: def.id,
@@ -49,10 +49,10 @@ function inferCategoriaFromName(nome: string): Categoria | null {
   }
   const iconName = (ICON_MAP["MoreHorizontal"] ? "MoreHorizontal" : "MoreHorizontal") as keyof typeof ICON_MAP;
   return {
-    id: key,
-    nome: key,
+    id: safeKey,
+    nome: safeKey,
     iconName,
-    colorVar: `--cat-${key}`,
+    colorVar: `--cat-${safeKey}`,
     criadaPeloUsuario: false,
   } as Categoria;
 }
@@ -66,7 +66,7 @@ function TransactionAvatarBase({ estabelecimento, categoria, size = "md", classN
   const categoriaIsOutros = categoria && (categoria.id === "outros" || categoria.nome?.toLowerCase() === "outros");
   const categoriaUtil: Categoria | undefined =
     (categoria && !categoriaIsOutros ? categoria : undefined) ||
-    (merchantName ? inferCategoriaFromName(merchantName) ?? undefined : undefined) ||
+    (merchantName ? inferCategoriaFromName(merchantName) : undefined) ||
     categoria;
 
   // 1) Sempre que houver um nome, tenta logo real PRIMEIRO.
