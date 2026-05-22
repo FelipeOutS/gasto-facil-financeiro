@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { Building2, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBankLogo, getMerchantLogo, type BrandResolved } from "@/lib/logos";
+import { getLogoCandidates } from "@/lib/brand/resolver";
 
 type Variant = "bank" | "merchant";
 
@@ -14,33 +15,35 @@ type Props = {
 };
 
 /**
- * Renders a brand logo with elegant fallback (colored circle + initial).
- * Keeps the previously displayed logo visible until the next one is decoded
- * to prevent flashes / empty space when switching between cards.
+ * Renders a brand logo.
+ *
+ * Cascade:
+ *  1. Static SVG bundled locally (BANK_URL / MERCHANT_URL).
+ *  2. Dynamic candidates from the global resolver (Logo.dev → favicon.im →
+ *     Google s2 → DuckDuckGo). This lets any bank/merchant the user types
+ *     show a real logo even when we don't ship a local SVG for it.
+ *  3. Elegant colored initial fallback.
  */
 function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props) {
   const resolved: BrandResolved =
     variant === "bank" ? getBankLogo(name) : getMerchantLogo(name);
 
-  // The URL we are currently *displaying*. Starts as the resolved URL so the
-  // very first paint shows the correct logo (no fallback flicker).
+  // Static logo display: keep the previously displayed url visible while a
+  // new one decodes — prevents flicker when switching cards.
   const [displayedUrl, setDisplayedUrl] = useState<string | null>(resolved.logoUrl);
-  const [errored, setErrored] = useState(false);
+  const [staticErrored, setStaticErrored] = useState(false);
   const lastLoadedRef = useRef<string | null>(null);
 
-  // When the resolved URL changes, decode the new image off-screen first; only
-  // swap the visible <img> src once it's ready. Static Vite imports mean the
-  // file is already in the bundle/HTTP cache, so this resolves immediately.
   useEffect(() => {
     const next = resolved.logoUrl;
     if (!next) {
       setDisplayedUrl(null);
-      setErrored(false);
+      setStaticErrored(false);
       return;
     }
     if (next === lastLoadedRef.current) {
       setDisplayedUrl(next);
-      setErrored(false);
+      setStaticErrored(false);
       return;
     }
     let cancelled = false;
@@ -50,7 +53,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       if (cancelled) return;
       lastLoadedRef.current = next;
       setDisplayedUrl(next);
-      setErrored(false);
+      setStaticErrored(false);
     };
     if (img.complete && img.naturalWidth > 0) {
       apply();
@@ -58,7 +61,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       img.onload = apply;
       img.onerror = () => {
         if (cancelled) return;
-        setErrored(true);
+        setStaticErrored(true);
       };
     }
     return () => {
@@ -66,49 +69,113 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
     };
   }, [resolved.logoUrl]);
 
-  const showLogo = !!displayedUrl && !errored;
+  // Dynamic candidates (Logo.dev etc.) — only used if no static logo.
+  const dynamicCandidates = useMemo(() => {
+    if (resolved.logoUrl || !name) return [];
+    return getLogoCandidates(null, name);
+  }, [resolved.logoUrl, name]);
+  const [dynIdx, setDynIdx] = useState(0);
+  useEffect(() => {
+    setDynIdx(0);
+  }, [dynamicCandidates]);
+  const dynamicUrl =
+    dynamicCandidates.length && dynIdx < dynamicCandidates.length
+      ? dynamicCandidates[dynIdx]
+      : null;
+
+  const showStatic = !!displayedUrl && !staticErrored;
   const bg = resolved.brandColor || (variant === "bank" ? "#3b82f6" : "#64748b");
   const FallbackIcon = variant === "bank" ? Building2 : Store;
 
-  if (variant === "bank" && onDark && showLogo) {
-    const WIDE_BANK_SLUGS = new Set([
-      "mercadopago-branco",
-      "logo-santander",
-      "Banco_Bradesco",
-      "banco-do-brasil",
-      "picpay",
-      "will-bank",
-      "banco-inter",
-    ]);
-    const isWide = !!resolved.slug && WIDE_BANK_SLUGS.has(resolved.slug);
+  // ---------- variant: bank + onDark (credit card surfaces) ----------
+  if (variant === "bank" && onDark) {
+    if (showStatic) {
+      const WIDE_BANK_SLUGS = new Set([
+        "mercadopago-branco",
+        "logo-santander",
+        "Banco_Bradesco",
+        "banco-do-brasil",
+        "picpay",
+        "will-bank",
+        "banco-inter",
+      ]);
+      const isWide = !!resolved.slug && WIDE_BANK_SLUGS.has(resolved.slug);
+      return (
+        <span
+          className={cn(
+            "bank-logo-container relative inline-flex items-center justify-start overflow-hidden",
+            isWide && "bank-logo-wide",
+            className,
+          )}
+          aria-hidden
+        >
+          <img
+            src={displayedUrl!}
+            alt=""
+            className={cn(
+              "block h-auto w-auto max-h-full max-w-full object-contain object-left",
+              imgClassName,
+            )}
+            onError={() => setStaticErrored(true)}
+            decoding="async"
+          />
+        </span>
+      );
+    }
+    // Dynamic fallback (Logo.dev) — render inside a soft white pill so the
+    // colored bank wordmark stays legible on top of the dark card.
+    if (dynamicUrl) {
+      return (
+        <span
+          className={cn(
+            "bank-logo-container relative inline-flex items-center justify-center overflow-hidden",
+            className,
+          )}
+          aria-hidden
+        >
+          <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white/95 p-1 ring-1 ring-black/5">
+            <img
+              src={dynamicUrl}
+              alt=""
+              className="h-full w-full object-contain"
+              onError={() => setDynIdx((i) => i + 1)}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth > 0 && img.naturalWidth < 32) {
+                  setDynIdx((i) => i + 1);
+                }
+              }}
+              decoding="async"
+            />
+          </span>
+        </span>
+      );
+    }
+    // Final fallback — colored initial pill.
     return (
       <span
         className={cn(
           "bank-logo-container relative inline-flex items-center justify-start overflow-hidden",
-          isWide && "bank-logo-wide",
           className,
         )}
         aria-hidden
       >
-        <img
-          src={displayedUrl!}
-          alt=""
-          className={cn(
-            "block h-auto w-auto max-h-full max-w-full object-contain object-left",
-            imgClassName,
+        <span
+          className="grid h-10 w-10 place-items-center rounded-lg text-sm font-bold text-white"
+          style={{ background: bg }}
+        >
+          {resolved.initial && resolved.initial !== "?" ? (
+            resolved.initial
+          ) : (
+            <FallbackIcon className="h-4 w-4 text-white" />
           )}
-          onError={() => setErrored(true)}
-          decoding="async"
-          // No lazy loading — these must appear instantly when a card is selected.
-        />
+        </span>
       </span>
     );
   }
 
-  // Merchant (or non-onDark bank): when a logo is available, render it
-  // transparently — no white box, no circle, the SVG breathes over the dark
-  // surface. The colored circle is reserved for the fallback (initial).
-  if (showLogo) {
+  // ---------- variant: merchant / non-onDark bank ----------
+  if (showStatic) {
     return (
       <span
         className={cn(
@@ -122,7 +189,34 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
           src={displayedUrl!}
           alt=""
           className={cn("h-full w-full object-contain", imgClassName)}
-          onError={() => setErrored(true)}
+          onError={() => setStaticErrored(true)}
+          decoding="async"
+        />
+      </span>
+    );
+  }
+
+  if (dynamicUrl) {
+    return (
+      <span
+        className={cn(
+          "transaction-avatar logo-mode relative grid place-items-center overflow-hidden rounded-full bg-white/95 ring-1 ring-black/5",
+          "h-9 w-9",
+          className,
+        )}
+        aria-hidden
+      >
+        <img
+          src={dynamicUrl}
+          alt=""
+          className={cn("h-full w-full object-contain p-1", imgClassName)}
+          onError={() => setDynIdx((i) => i + 1)}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalWidth < 32) {
+              setDynIdx((i) => i + 1);
+            }
+          }}
           decoding="async"
         />
       </span>
