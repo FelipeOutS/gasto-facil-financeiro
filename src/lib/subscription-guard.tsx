@@ -198,7 +198,7 @@ export function useSubscriptionGuard(): GuardCtx {
       canAdmin: false,
       canUseFeature: () => false,
       requireSubscription: () => {
-        toast.error("Você precisa de uma assinatura ativa para usar este recurso.");
+        toast.error(i18n.t("common:subscription.needActive"));
       },
       guard: ((fn: unknown) => fn) as GuardCtx["guard"],
     };
