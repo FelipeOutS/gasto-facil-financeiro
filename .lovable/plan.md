@@ -1,70 +1,92 @@
-# Auditoria de Tradução PT/EN — Plano em Fases
+# Logos automáticos globais (Logo.dev + cache)
 
-## Diagnóstico
+## Objetivo
+Componente `BrandLogo` global que resolve logos por domínio via Logo.dev, com cache em banco, normalização de nomes e fallback elegante. Aplicar em todos os pontos do app onde aparece nome de empresa/banco/serviço — sem quebrar layout existente.
 
-Encontrei **131 arquivos** com texto em português hardcoded fora do sistema de i18n. Tentar traduzir todos de uma vez em uma resposta:
+## 1. Banco de dados (1 migration)
 
-- Vai consumir muitos créditos (provavelmente várias respostas de 5-10 min cada).
-- Risco alto de introduzir bugs (typos em chaves, strings quebradas, JSX inválido).
-- Difícil revisar o que mudou.
+**Tabela `brand_assets`** (cache global por domínio)
+- `id`, `domain` (unique), `company_name`, `normalized_name`
+- `logo_url`, `primary_color`, `secondary_color`
+- `source` ('logo.dev' | 'manual'), `status` ('found' | 'not_found' | 'manual')
+- `last_checked_at`, `created_at`, `updated_at`
+- Índice em `domain` e `normalized_name`
+- RLS: leitura pública autenticada; escrita só via service role (server fn)
 
-Por isso vou dividir em **5 fases**, executando uma por turno. Você aprova esta fase 1, eu executo, valido o build, e seguimos.
+**Tabela `merchant_brand_aliases`** (nome digitado → domínio)
+- `id`, `user_id` (nullable), `merchant_name`, `normalized_merchant_name`
+- `domain`, `confidence`, `source` ('automatic' | 'user' | 'global')
+- timestamps + índice em `normalized_merchant_name`
+- RLS: usuário lê seus próprios + aliases globais (user_id IS NULL); só edita os próprios
 
-## Categorização dos 131 arquivos
+Trigger `updated_at` reaproveitando função existente.
 
-**Não precisa traduzir (~40 arquivos):** servidores (`src/server/*`), parsers (`whatsappParser`, `csv-fatura`), templates de e-mail, dados internos (constantes de plano, categorias seed). Os comentários e strings desses arquivos não aparecem para o usuário, ou são strings de banco/log.
+## 2. Normalização (`src/lib/brand/normalize.ts`)
+`normalizeMerchantName(input)`:
+- lowercase, remove acentos (NFD), remove caracteres não alfanuméricos
+- remove stop-words: `pagamento|compra|pix|boleto|transferencia|debito|credito|loja|ltda|sa|eireli|me|comercio|assinatura|mensalidade|plano|cartao|*compra|brl`
+- normaliza espaços; preserva núcleo do nome
 
-**Prioridade ALTA — UI visível diariamente (~25 arquivos):**
-- Mobile: `MobileTopBar`, `BottomNav`, `MobileShell`
-- Dashboard: `SmartMonthSummaryCard`, `SmartLimiteCard`, `MonthForecastCard`, `DashboardAlertasBloco`, `DashboardCartoesInsights`, `RadarEconomicoCard`, `FluxoCaixaChart`
-- Modais principais: `UpgradeModal`, `PremiumLockModal`, `InvestimentosLockModal`, `DeleteAccountDialog`, `CancelarAssinaturaDialog`
-- Componentes: `PlanoCard`, `ConnectedAccountBanner`, `ConnectedAccountSwitcher`, `CompraInternacionalCard`, `AvisoWhatsAppBanner`, `BrandLoader`, `PageSkeleton`, `AuthGate`
+## 3. Resolver (`src/lib/brand/resolver.ts`)
+Ordem:
+1. Cache em memória (Map) por nome normalizado
+2. `merchant_brand_aliases` (próprios + globais)
+3. `brand_assets` por domínio se já houver
+4. Heurística: mapa seed (nubank, mercado pago, hotmart, lovable, etc.) + `guessDomainsFromName` (`.com.br`, `.com`, `.io`, `.dev`, `.app`, `.co`)
+5. Se nada bater → fallback iniciais
 
-**Prioridade MÉDIA — formulários e importação (~20 arquivos):**
-- `GastoForm`, `EditGastoDialog`, `WhatsAppExpenseDialog`, `AvatarUpload`, `ClienteSelect`
-- `ImportContaDialog`, `ImportExtratoDialog`, `ImportFaturaDialog`, `ImportInvestimentosFlow`, `ExtratosImportadosDialog`
+Server fn `resolveBrand({ name, domain? })`:
+- consulta DB, se vazio testa candidatos contra Logo.dev (HEAD/GET), salva resultado em `brand_assets` (status found/not_found) e alias se aplicável
 
-**Prioridade BAIXA — rotas internas com poucos textos hardcoded (~30 arquivos):**
-- Rotas que já usam `useTranslation` em ~90% do conteúdo mas têm fragmentos soltos.
+## 4. Componente `BrandLogo` (`src/components/brand/BrandLogo.tsx`)
+Props: `name`, `domain?`, `size` (sm/md/lg), `rounded`, `className`, `fallbackIcon?`, `variant?` ('square'|'circle')
 
-**Hooks/libs com strings de UI (~15 arquivos):**
-- `use-plan`, `use-roles`, `use-mes-referencia`, `use-alerts`, `subscription-guard`, `auth-context`, `active-account`, `recorrencias`, `mes-referencia`, `orcamento`, `relatorios`, `alertas-contas`, `category-visual`.
+Cascata client-side:
+- Se `domain` conhecido → `https://img.logo.dev/${domain}?token=${VITE_LOGO_DEV_KEY}&size=128&format=png`
+- onError → fallback DuckDuckGo / Google s2 favicon (re-usa `company-logo.ts` existente)
+- onError final → círculo com inicial e cor estável (`colorFor`)
+- Lazy load, decoding async, sem flash (mantém último carregado)
 
-## Fases propostas
+Chave pública Logo.dev em `VITE_LOGO_DEV_KEY` (publishable token — ok no frontend).
 
-### Fase 1 (esta aprovação) — Mobile shell + Dashboard cards
-Áreas que o usuário vê **toda vez que abre o app**. ~10 arquivos:
-- `MobileTopBar.tsx`, `BottomNav.tsx` (revisar resíduos)
-- `SmartMonthSummaryCard.tsx`, `SmartLimiteCard.tsx`, `MonthForecastCard.tsx`
-- `DashboardAlertasBloco.tsx`, `DashboardCartoesInsights.tsx`
-- `RadarEconomicoCard.tsx`, `FluxoCaixaChart.tsx`
-- `CompraInternacionalCard.tsx`
+## 5. Aplicação global
+Refatora `TransactionAvatar` e `BrandLogo` legado para delegar ao novo componente quando não houver logo local em `/public/logos/*` (mantém logos locais com prioridade — já são SVGs otimizados).
 
-Cria/atualiza chaves em `dashboard.json` e `common.json` (PT + EN).
+Pontos aplicados:
+- `TransactionAvatar` (gastos, lista, detalhe, recorrentes, importações)
+- Cards de cartões (`src/routes/cartoes.tsx`)
+- Bancos / `dinheiro_guardado` (`src/routes/guardado.tsx`)
+- Assinaturas (`src/routes/assinaturas.tsx`)
+- Clientes / Fornecedores (avatar com logo do CNPJ)
+- Contas a pagar / receber
+- Cofre Pessoal (já usa `CompanyLogo` — migra para `BrandLogo`)
+- Dashboard insights de cartões/empresas
 
-### Fase 2 — Modais e bloqueios
-`UpgradeModal`, `PremiumLockModal`, `InvestimentosLockModal`, `DeleteAccountDialog`, `CancelarAssinaturaDialog`, `PlanoCard`, `ConnectedAccountBanner/Switcher`, `AvisoWhatsAppBanner`, `BrandLoader`, `PageSkeleton`, `AuthGate`.
+## 6. Segurança / chaves
+- Logo.dev publishable key (`pk_*`) usada direto no frontend via `VITE_LOGO_DEV_KEY`.
+- Se usuário quiser API privada (cores, search): adiciona secret `LOGO_DEV_SECRET` + server fn proxy. Não bloqueia esta entrega.
+- RLS conforme tabela 1.
 
-### Fase 3 — Formulários e diálogos de importação
-`GastoForm`, `EditGastoDialog`, `WhatsAppExpenseDialog`, `AvatarUpload`, `ClienteSelect`, `Import*Dialog`, `ImportInvestimentosFlow`, `ExtratosImportadosDialog`.
+## 7. Correção manual
+Reutiliza painel já existente do Cofre Pessoal; adiciona menu "Corrigir logo" em `EntryDetail` que abre input de domínio e grava alias.
 
-### Fase 4 — Hooks/libs com strings de UI
-`use-plan`, `use-roles`, `use-alerts`, `subscription-guard`, `recorrencias`, `mes-referencia`, `orcamento`, `relatorios`, `alertas-contas`, `category-visual`, `auth-context` (toasts).
+## 8. Não-quebrar
+- Mantém todos os logos locais em `public/logos/*` com prioridade.
+- Não toca em rotas, auth, RLS de outras tabelas, planos.
+- Layouts atuais inalterados — só substitui o avatar interno.
 
-### Fase 5 — Varredura final + rotas residuais
-Re-rodar o scan, pegar o que restou (rotas com fragmentos), corrigir mixes (título PT + descrição EN). Entregar relatório final.
+## Arquivos novos
+- `supabase/migrations/<ts>_brand_assets.sql`
+- `src/lib/brand/normalize.ts`
+- `src/lib/brand/resolver.ts`
+- `src/lib/brand/brand.functions.ts` (server fn `resolveBrand`)
+- `src/components/brand/BrandLogo.tsx`
 
-## Regras aplicadas em todas as fases
+## Arquivos editados
+- `src/components/TransactionAvatar.tsx` (cascade fallback → BrandLogo)
+- `src/components/BrandLogo.tsx` legado → re-export do novo (mantém API)
+- `src/components/vault/CompanyLogo.tsx` → wrapper do novo BrandLogo
+- `.env` referência a `VITE_LOGO_DEV_KEY` (precisa do usuário adicionar)
 
-- Não altero layout, lógica de negócio, autenticação, planos ou dados.
-- Não traduzo marca "Gasto Inteligente", nomes próprios, dados cadastrados, R$, nomes de bancos.
-- Uso `useTranslation` que já existe; não crio nova arquitetura.
-- Chaves novas mantêm padrão atual (namespaces por arquivo JSON).
-- Tela `/app/idioma` permanece como está.
-- Após cada fase, confirmo build limpo.
-
-## O que preciso de você
-
-Aprovar este plano para eu executar a **Fase 1** agora. Depois disso seguimos fase por fase em mensagens separadas — assim você controla o gasto e revisa cada parte antes da próxima.
-
-Se preferir outro recorte (ex.: "comece pelas rotas X em vez do dashboard"), me diga.
+## Pergunta antes de prosseguir
+A chave Logo.dev `pk_X-1ZO13ESQOXMI5MlVUVQQ` (já usada no Cofre Pessoal) é a do usuário? Se sim, reutilizo. Se houver chave nova, peço via secret.

@@ -109,6 +109,51 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_assets: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          domain: string
+          id: string
+          last_checked_at: string
+          logo_url: string | null
+          normalized_name: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          domain: string
+          id?: string
+          last_checked_at?: string
+          logo_url?: string | null
+          normalized_name?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          domain?: string
+          id?: string
+          last_checked_at?: string
+          logo_url?: string | null
+          normalized_name?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cartoes: {
         Row: {
           banco: string
@@ -1421,6 +1466,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      merchant_brand_aliases: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          domain: string
+          id: string
+          merchant_name: string
+          normalized_merchant_name: string
+          source: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          domain: string
+          id?: string
+          merchant_name: string
+          normalized_merchant_name: string
+          source?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          domain?: string
+          id?: string
+          merchant_name?: string
+          normalized_merchant_name?: string
+          source?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
