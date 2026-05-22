@@ -26,6 +26,8 @@ import { usePlan } from "@/lib/use-plan";
 import { UpgradeModal, LockChip } from "@/components/UpgradeModal";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { extractDomain } from "@/lib/brand/resolver";
 import { ImportContaDialog } from "@/components/ImportContaDialog";
 import { Copy, Upload } from "lucide-react";
 import {
