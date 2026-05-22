@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Wallet, Info } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 
-export const Route = createFileRoute("/app_/integracoes")({
+export const Route = createFileRoute("/app_/integracoes/")({
   head: () => ({
     meta: [
       { title: "Integrações — Gasto Inteligente" },
