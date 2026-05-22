@@ -897,6 +897,16 @@ function VaultMain({
       />
     );
   }
+  if (view.kind === "health") {
+    return (
+      <HealthView
+        entries={entries}
+        onBack={() => setView({ kind: "list" })}
+        onOpenEntry={(entry) => setView({ kind: "detail", entry })}
+        masterKey={masterKey}
+      />
+    );
+  }
 
   // ===== Lista =====
   return (
