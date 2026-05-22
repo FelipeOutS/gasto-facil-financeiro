@@ -50,7 +50,7 @@ type SyncResponse =
 
 type Search = { connected?: string; error?: string };
 
-export const Route = createFileRoute("/app_/integracoes/mercado-pago")({
+export const Route = createFileRoute("/app_/integracoes/mercado-pago/")({
   head: () => ({
     meta: [
       { title: "Mercado Pago — Integrações — Gasto Inteligente" },
