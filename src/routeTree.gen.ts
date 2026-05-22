@@ -448,9 +448,9 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
 } as any)
 const AppIntegracoesMercadoPagoMovimentacoesRoute =
   AppIntegracoesMercadoPagoMovimentacoesRouteImport.update({
-    id: '/movimentacoes',
-    path: '/movimentacoes',
-    getParentRoute: () => AppIntegracoesMercadoPagoRoute,
+    id: '/app_/integracoes/mercado-pago/movimentacoes',
+    path: '/app/integracoes/mercado-pago/movimentacoes',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWhatsappExpenseRoute =
   ApiPublicWhatsappExpenseRouteImport.update({
@@ -1032,6 +1032,7 @@ export interface RootRouteChildren {
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
+  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1541,10 +1542,10 @@ declare module '@tanstack/react-router' {
     }
     '/app_/integracoes/mercado-pago/movimentacoes': {
       id: '/app_/integracoes/mercado-pago/movimentacoes'
-      path: '/movimentacoes'
+      path: '/app/integracoes/mercado-pago/movimentacoes'
       fullPath: '/app/integracoes/mercado-pago/movimentacoes'
       preLoaderRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRouteImport
-      parentRoute: typeof AppIntegracoesMercadoPagoRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/whatsapp/expense': {
       id: '/api/public/whatsapp/expense'
@@ -1657,6 +1658,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiIntegrationsMercadopagoConnectRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
+  AppIntegracoesMercadoPagoMovimentacoesRoute:
+    AppIntegracoesMercadoPagoMovimentacoesRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -1667,12 +1670,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
