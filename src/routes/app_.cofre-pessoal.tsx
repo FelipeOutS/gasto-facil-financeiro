@@ -671,7 +671,8 @@ type View =
   | { kind: "edit"; entry: DecryptedEntry }
   | { kind: "detail"; entry: DecryptedEntry }
   | { kind: "change_master" }
-  | { kind: "backup" };
+  | { kind: "backup" }
+  | { kind: "quick_unlock" };
 
 function VaultMain({
   userId,
