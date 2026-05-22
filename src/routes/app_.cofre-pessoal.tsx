@@ -27,6 +27,8 @@ import {
   Settings as SettingsIcon,
   Info,
   Loader2,
+  Fingerprint,
+  Delete as Backspace,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
