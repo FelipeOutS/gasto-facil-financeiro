@@ -622,7 +622,7 @@ function Index() {
       </section>
 
       {/* Contas a receber */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4">
         <ContasAReceberCard />
       </section>
 
