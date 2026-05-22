@@ -791,7 +791,7 @@ function Index() {
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Total guardado
+              {t("atalhos.guardadoEyebrow")}
             </p>
             <Wallet className="h-3.5 w-3.5 text-brand" />
           </div>
