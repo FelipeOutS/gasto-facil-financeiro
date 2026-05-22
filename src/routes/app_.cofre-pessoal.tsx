@@ -822,7 +822,7 @@ function VaultMain({
       </div>
 
       {loading ? (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <li key={i}>
               <Card className="flex items-center gap-3 p-3.5">
@@ -843,7 +843,7 @@ function VaultMain({
           <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
         )
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((e) => (
             <EntryCard
               key={e.id}
