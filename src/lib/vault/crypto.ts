@@ -89,13 +89,17 @@ export async function encryptSecret(key: CryptoKey, secret: EntrySecret): Promis
   notes_cipher: string;
   cipher_iv: string;
 }> {
-  const enc = (txt: string, iv: Uint8Array) =>
-    crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(txt));
+  const enc = (txt: string, iv: Uint8Array<ArrayBuffer>) => {
+    const data = new TextEncoder().encode(txt);
+    const buf = new Uint8Array(new ArrayBuffer(data.byteLength));
+    buf.set(data);
+    return crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buf);
+  };
   const ivU = randomBytes(12);
   const ivP = randomBytes(12);
   const ivN = randomBytes(12);
   // We persist a single canonical IV (for ref) and encode each cipher with own IV concatenated: iv||ct
-  async function encField(txt: string, iv: Uint8Array): Promise<string> {
+  async function encField(txt: string, iv: Uint8Array<ArrayBuffer>): Promise<string> {
     const ct = await enc(txt, iv);
     const out = new Uint8Array(iv.length + ct.byteLength);
     out.set(iv, 0);
