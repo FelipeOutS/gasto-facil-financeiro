@@ -315,10 +315,115 @@ export type SyncSummary = {
   fetched: number;
 };
 
-export async function syncMercadoPagoTransactions(userId: string): Promise<
-  | { ok: true; summary: SyncSummary }
-  | { ok: false; error: string }
-> {
+export type SyncPeriod =
+  | "last30"
+  | "current_month"
+  | "last_month"
+  | "last3"
+  | "last6"
+  | "last12"
+  | "custom";
+
+export type SyncOptions = {
+  period?: SyncPeriod;
+  beginDate?: string;
+  endDate?: string;
+};
+
+function computePeriodRange(opts: SyncOptions): { begin: Date; end: Date } {
+  const now = new Date();
+  const end = new Date(now);
+  let begin = new Date(now);
+  switch (opts.period ?? "last30") {
+    case "current_month":
+      begin = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case "last_month":
+      return {
+        begin: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+        end: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999),
+      };
+    case "last3":
+      begin.setMonth(begin.getMonth() - 3);
+      break;
+    case "last6":
+      begin.setMonth(begin.getMonth() - 6);
+      break;
+    case "last12":
+      begin.setMonth(begin.getMonth() - 12);
+      break;
+    case "custom":
+      return {
+        begin: opts.beginDate ? new Date(opts.beginDate) : new Date(now.getTime() - 30 * 86400000),
+        end: opts.endDate ? new Date(opts.endDate) : end,
+      };
+    case "last30":
+    default:
+      begin = new Date(now.getTime() - 30 * 86400000);
+      break;
+  }
+  return { begin, end };
+}
+
+/** Quebra o intervalo em blocos mensais para evitar limites de offset/total da API. */
+function chunkMonthly(begin: Date, end: Date): Array<{ from: Date; to: Date }> {
+  const chunks: Array<{ from: Date; to: Date }> = [];
+  let cursor = new Date(begin);
+  while (cursor < end) {
+    const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    const to = next < end ? new Date(next.getTime() - 1) : new Date(end);
+    chunks.push({ from: new Date(cursor), to });
+    cursor = next;
+  }
+  if (chunks.length === 0) chunks.push({ from: new Date(begin), to: new Date(end) });
+  return chunks;
+}
+
+async function fetchPaymentsChunk(
+  accessToken: string,
+  from: Date,
+  to: Date,
+): Promise<{ results: MpPayment[]; error: string | null }> {
+  const limit = 50;
+  const all: MpPayment[] = [];
+  let offset = 0;
+  const HARD_MAX = 5000;
+
+  while (all.length < HARD_MAX) {
+    const url = new URL(MP_PAYMENTS_SEARCH);
+    url.searchParams.set("sort", "date_created");
+    url.searchParams.set("criteria", "desc");
+    url.searchParams.set("range", "date_created");
+    url.searchParams.set("begin_date", from.toISOString());
+    url.searchParams.set("end_date", to.toISOString());
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("offset", String(offset));
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return { results: all, error: `${res.status} ${text.slice(0, 200)}` };
+    }
+    const json = (await res.json()) as {
+      results?: MpPayment[];
+      paging?: { total?: number; limit?: number; offset?: number };
+    };
+    const page = json.results ?? [];
+    all.push(...page);
+    const total = json.paging?.total ?? page.length;
+    offset += limit;
+    if (page.length < limit) break;
+    if (offset >= total) break;
+  }
+  return { results: all, error: null };
+}
+
+export async function syncMercadoPagoTransactions(
+  userId: string,
+  options: SyncOptions = {},
+): Promise<{ ok: true; summary: SyncSummary } | { ok: false; error: string }> {
   if (!isMercadoPagoConfigured()) return { ok: false, error: "mercado_pago_not_configured" };
   let integration = await getIntegration(userId);
   if (!integration || integration.status !== "connected" || !integration.access_token) {
@@ -328,64 +433,62 @@ export async function syncMercadoPagoTransactions(userId: string): Promise<
   if (!integration?.access_token) return { ok: false, error: "token_refresh_failed" };
 
   const summary: SyncSummary = { imported: 0, updated: 0, ignored: 0, errors: 0, fetched: 0 };
-
-  // Importa os últimos 90 dias por padrão (primeira versão)
-  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-  const url = new URL(MP_PAYMENTS_SEARCH);
-  url.searchParams.set("sort", "date_created");
-  url.searchParams.set("criteria", "desc");
-  url.searchParams.set("range", "date_created");
-  url.searchParams.set("begin_date", since);
-  url.searchParams.set("end_date", "NOW");
-  url.searchParams.set("limit", "50");
+  const { begin, end } = computePeriodRange(options);
+  const chunks = chunkMonthly(begin, end);
+  let lastChunkError: string | null = null;
 
   try {
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${integration.access_token}`, Accept: "application/json" },
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      await markIntegrationError(userId, `sync_fetch_failed: ${res.status} ${text.slice(0, 200)}`);
-      return { ok: false, error: "sync_fetch_failed" };
-    }
-    const json = (await res.json()) as { results?: MpPayment[] };
-    const results = json.results ?? [];
-    summary.fetched = results.length;
-
-    for (const p of results) {
-      try {
-        const row = mapMercadoPagoTransactionToGastoInteligente(p, userId, integration.id);
-        // upsert por (user_id, provider, provider_transaction_id)
-        const { data: existing } = await supabaseAdmin
-          .from("imported_transactions")
-          .select("id, status, amount")
-          .eq("user_id", userId)
-          .eq("provider", PROVIDER)
-          .eq("provider_transaction_id", row.provider_transaction_id)
-          .maybeSingle();
-
-        if (!existing) {
-          const { error } = await supabaseAdmin.from("imported_transactions").insert(row);
-          if (error) summary.errors += 1;
-          else summary.imported += 1;
-        } else if (existing.status !== row.status || Number(existing.amount) !== Number(row.amount)) {
-          const { error } = await supabaseAdmin
-            .from("imported_transactions")
-            .update({
-              status: row.status,
-              amount: row.amount,
-              raw_payload: row.raw_payload,
-              occurred_at: row.occurred_at,
-            })
-            .eq("id", existing.id);
-          if (error) summary.errors += 1;
-          else summary.updated += 1;
-        } else {
-          summary.ignored += 1;
-        }
-      } catch {
+    for (const c of chunks) {
+      const { results, error } = await fetchPaymentsChunk(integration.access_token, c.from, c.to);
+      if (error && results.length === 0) {
+        lastChunkError = error;
         summary.errors += 1;
+        continue;
       }
+      summary.fetched += results.length;
+
+      for (const p of results) {
+        try {
+          const row = mapMercadoPagoTransactionToGastoInteligente(p, userId, integration.id);
+          const { data: existing } = await supabaseAdmin
+            .from("imported_transactions")
+            .select("id, status, amount")
+            .eq("user_id", userId)
+            .eq("provider", PROVIDER)
+            .eq("provider_transaction_id", row.provider_transaction_id)
+            .maybeSingle();
+
+          if (!existing) {
+            const { error: insErr } = await supabaseAdmin.from("imported_transactions").insert(row);
+            if (insErr) summary.errors += 1;
+            else summary.imported += 1;
+          } else if (
+            existing.status !== row.status ||
+            Number(existing.amount) !== Number(row.amount)
+          ) {
+            const { error: updErr } = await supabaseAdmin
+              .from("imported_transactions")
+              .update({
+                status: row.status,
+                amount: row.amount,
+                raw_payload: row.raw_payload,
+                occurred_at: row.occurred_at,
+              })
+              .eq("id", existing.id);
+            if (updErr) summary.errors += 1;
+            else summary.updated += 1;
+          } else {
+            summary.ignored += 1;
+          }
+        } catch {
+          summary.errors += 1;
+        }
+      }
+    }
+
+    if (summary.fetched === 0 && lastChunkError) {
+      await markIntegrationError(userId, `sync_fetch_failed: ${lastChunkError}`);
+      return { ok: false, error: "sync_fetch_failed" };
     }
 
     await supabaseAdmin
