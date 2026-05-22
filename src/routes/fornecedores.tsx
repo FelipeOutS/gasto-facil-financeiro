@@ -25,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { extractDomain } from "@/lib/brand/resolver";
 import {
   Dialog,
   DialogContent,
