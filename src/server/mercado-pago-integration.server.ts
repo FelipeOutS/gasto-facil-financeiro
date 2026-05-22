@@ -313,6 +313,7 @@ export type SyncSummary = {
   ignored: number;
   errors: number;
   fetched: number;
+  failedMonths?: Array<{ month: string; message: string }>;
 };
 
 export type SyncPeriod =
@@ -322,7 +323,8 @@ export type SyncPeriod =
   | "last3"
   | "last6"
   | "last12"
-  | "custom";
+  | "custom"
+  | "months";
 
 export type SyncOptions = {
   period?: SyncPeriod;
