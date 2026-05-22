@@ -92,6 +92,44 @@ const BENEFITS: { icon: React.ReactNode; label: string }[] = [
   { icon: <Coins className="h-3.5 w-3.5" />, label: "Cashback" },
 ];
 
+type MonthOption = { key: string; monthName: string; year: number; label: string };
+
+/** Gera os últimos 12 meses, do mais recente para o mais antigo. */
+const LAST_12_MONTHS: MonthOption[] = (() => {
+  const out: MonthOption[] = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const monthName = d.toLocaleDateString("pt-BR", { month: "long" });
+    out.push({
+      key,
+      monthName,
+      year: d.getFullYear(),
+      label: `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${d.getFullYear()}`,
+    });
+  }
+  return out;
+})();
+
+function monthKeyLabel(key: string): string {
+  const found = LAST_12_MONTHS.find((m) => m.key === key);
+  if (found) return found.label;
+  const m = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!m) return key;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, 1);
+  const name = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function formatMonthsList(keys: string[]): string {
+  // mantém ordem do LAST_12_MONTHS (mais recente primeiro)
+  const ordered = LAST_12_MONTHS.filter((m) => keys.includes(m.key)).map((m) => m.label);
+  if (ordered.length <= 1) return ordered.join("");
+  if (ordered.length === 2) return `${ordered[0]} e ${ordered[1]}`;
+  return `${ordered.slice(0, -1).join(", ")} e ${ordered[ordered.length - 1]}`;
+}
+
 function MercadoPagoIntegrationPage() {
   const search = useSearch({ from: "/app_/integracoes/mercado-pago/" });
   const navigate = useNavigate();
