@@ -53,9 +53,10 @@ type SyncResponse =
         ignored: number;
         errors: number;
         fetched: number;
+        failedMonths?: Array<{ month: string; message: string }>;
       };
     }
-  | { ok: false; error: string };
+  | { ok: false; error: string; message?: string };
 
 type Search = { connected?: string; error?: string };
 
