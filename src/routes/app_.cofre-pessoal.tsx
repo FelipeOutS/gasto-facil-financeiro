@@ -1100,7 +1100,17 @@ function EntryForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-site">Site ou aplicativo</Label>
-          <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br" inputMode="url" />
+          <div className="flex items-center gap-3">
+            <CompanyLogo site={site || name} name={name || site || "?"} className="h-12 w-12" />
+            <div className="min-w-0 flex-1">
+              <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br ou https://exemplo.com" inputMode="url" />
+              {site && extractDomain(site) && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Salvaremos como <span className="font-medium text-foreground">{extractDomain(site)}</span> para buscar o logo automaticamente.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </Card>
 
