@@ -187,21 +187,33 @@ function MercadoPagoIntegrationPage() {
 
   async function handleSync() {
     if (syncing) return;
+    if (selectedMonths.length === 0) {
+      toast.error("Selecione pelo menos um mês para sincronizar.");
+      return;
+    }
     setSyncing(true);
     setLastSyncMsg(null);
+    setLastFailedMonths([]);
     try {
       const res = await apiFetch("/api/integrations/mercadopago/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ period: syncPeriod }),
+        body: JSON.stringify({ months: selectedMonths }),
       });
       const json = (await res.json()) as SyncResponse;
       if (json.ok) {
-        const msg = `${json.summary.imported} importadas, ${json.summary.updated} atualizadas, ${json.summary.ignored} já existentes (${json.summary.fetched} verificadas).`;
-        setLastSyncMsg(msg);
-        toast.success(`Sincronização concluída: ${msg}`);
+        const { imported, updated, ignored, failedMonths } = json.summary;
+        const base = `${imported} novas, ${updated} atualizadas e ${ignored} já existentes.`;
+        setLastSyncMsg(base);
+        const failed = failedMonths ?? [];
+        setLastFailedMonths(failed);
+        if (failed.length > 0) {
+          toast.warning("Sincronização concluída com alertas. Alguns meses não puderam ser importados.");
+        } else {
+          toast.success(`Sincronização concluída: ${base}`);
+        }
       } else {
-        toast.error(`Falha na sincronização: ${json.error}`);
+        toast.error(json.message ?? `Falha na sincronização: ${json.error}`);
       }
       await loadStatus();
     } catch {
