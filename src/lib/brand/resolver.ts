@@ -320,6 +320,11 @@ export function logoUrlsForDomain(domain: string, trusted = true): string[] {
     // Logo.dev em alta resolução — a melhor opção quando a marca existe.
     `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=256&format=png&retina=true`,
   ];
+  if (!trusted) {
+    urls.push(`https://favicon.im/${domain}?larger=true`);
+    urls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
+    return urls;
+  }
   if (trusted) {
     // Rede de segurança para domínios explícitos ou mapeados no SEED.
     urls.push(`https://favicon.im/${domain}?larger=true`);
