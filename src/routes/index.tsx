@@ -702,15 +702,17 @@ function Index() {
         </>
       )}
 
-      <DashboardCartoesInsights
-        mes={ym.mes}
-        ano={ym.ano}
-        gastosMes={doMes}
-        totalMes={total}
-        totalMesAnterior={totalMesAnterior}
-        maiorCategoria={maior ?? null}
-        onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
-      />
+      <div className="mt-6 lg:mt-4">
+        <DashboardCartoesInsights
+          mes={ym.mes}
+          ano={ym.ano}
+          gastosMes={doMes}
+          totalMes={total}
+          totalMesAnterior={totalMesAnterior}
+          maiorCategoria={maior ?? null}
+          onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+        />
+      </div>
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
