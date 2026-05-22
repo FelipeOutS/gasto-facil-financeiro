@@ -49,6 +49,7 @@ function BrandLogoBase({
   rounded = "xl",
   className,
   fallbackIcon,
+  fallback,
   variant = "square",
 }: BrandLogoProps) {
   const cleanDomain = extractDomain(domain ?? "") ?? domain ?? null;
