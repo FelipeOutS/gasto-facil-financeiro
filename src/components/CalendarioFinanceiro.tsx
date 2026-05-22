@@ -129,17 +129,17 @@ export function CalendarioFinanceiro({
 
   function statusInfo(status: string, tipo: EventoTipo) {
     if (status === "pago" || status === "recebido") {
-      return { dot: "bg-emerald-500", label: tipo === "pagar" ? "Paga" : "Recebida", tone: "text-emerald-400" };
+      return { dot: "bg-emerald-500", label: tipo === "pagar" ? t("calendario.paga") : t("calendario.recebida"), tone: "text-emerald-400" };
     }
     if (status === "atrasado") {
-      return { dot: "bg-rose-500", label: "Atrasada", tone: "text-rose-400" };
+      return { dot: "bg-rose-500", label: t("calendario.atrasada"), tone: "text-rose-400" };
     }
     if (status === "parcial") {
-      return { dot: "bg-amber-500", label: "Parcial", tone: "text-amber-400" };
+      return { dot: "bg-amber-500", label: t("calendario.parcial"), tone: "text-amber-400" };
     }
     return tipo === "pagar"
-      ? { dot: "bg-amber-400", label: "A pagar", tone: "text-amber-300" }
-      : { dot: "bg-sky-400", label: "A receber", tone: "text-sky-300" };
+      ? { dot: "bg-amber-400", label: t("calendario.aPagar"), tone: "text-amber-300" }
+      : { dot: "bg-sky-400", label: t("calendario.aReceber"), tone: "text-sky-300" };
   }
 
   function resumoDia(eventos: EventoDia[]) {
