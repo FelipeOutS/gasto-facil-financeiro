@@ -2166,6 +2166,90 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_entries: {
+        Row: {
+          category: string
+          cipher_iv: string
+          created_at: string
+          favorite: boolean
+          id: string
+          name: string
+          notes_cipher: string | null
+          password_cipher: string | null
+          password_strength: string
+          password_updated_at: string | null
+          site: string | null
+          updated_at: string
+          user_id: string
+          username_cipher: string | null
+        }
+        Insert: {
+          category?: string
+          cipher_iv: string
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          name: string
+          notes_cipher?: string | null
+          password_cipher?: string | null
+          password_strength?: string
+          password_updated_at?: string | null
+          site?: string | null
+          updated_at?: string
+          user_id: string
+          username_cipher?: string | null
+        }
+        Update: {
+          category?: string
+          cipher_iv?: string
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          name?: string
+          notes_cipher?: string | null
+          password_cipher?: string | null
+          password_strength?: string
+          password_updated_at?: string | null
+          site?: string | null
+          updated_at?: string
+          user_id?: string
+          username_cipher?: string | null
+        }
+        Relationships: []
+      }
+      vault_settings: {
+        Row: {
+          created_at: string
+          hint: string | null
+          iterations: number
+          salt: string
+          updated_at: string
+          user_id: string
+          verifier: string
+          verifier_iv: string
+        }
+        Insert: {
+          created_at?: string
+          hint?: string | null
+          iterations?: number
+          salt: string
+          updated_at?: string
+          user_id: string
+          verifier: string
+          verifier_iv: string
+        }
+        Update: {
+          created_at?: string
+          hint?: string | null
+          iterations?: number
+          salt?: string
+          updated_at?: string
+          user_id?: string
+          verifier?: string
+          verifier_iv?: string
+        }
+        Relationships: []
+      }
       whatsapp_links: {
         Row: {
           ativo: boolean
