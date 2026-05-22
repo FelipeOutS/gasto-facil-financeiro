@@ -6,7 +6,8 @@ import { createClient } from "@supabase/supabase-js";
  */
 export async function getUserFromRequest(request: Request) {
   const auth = request.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : getTokenFromCookies(request);
+  const bearerMatch = auth.match(/^Bearer\s+(.+)$/i);
+  const token = bearerMatch?.[1]?.trim() || getTokenFromCookies(request);
   if (!token) return null;
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const anon =
