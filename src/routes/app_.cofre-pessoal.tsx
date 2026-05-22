@@ -1197,20 +1197,41 @@ function EntryForm({
         </button>
       </Card>
 
-      {/* Ações */}
-      <div className="sticky bottom-2 z-10 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button variant="ghost" onClick={onCancel} disabled={busy} className="sm:w-auto">
-          Cancelar
-        </Button>
-        <Button
-          onClick={submit}
-          disabled={busy || !name.trim()}
-          size="lg"
-          className="h-12 w-full bg-gradient-to-r from-brand to-brand/80 text-base font-semibold shadow-lg shadow-brand/20 hover:from-brand hover:to-brand/90 sm:w-auto sm:px-8"
-        >
-          <Check className="h-4 w-4" /> {busy ? "Salvando…" : "Salvar acesso"}
-        </Button>
+      {/* Ações — barra sólida sempre visível, com safe area para mobile/WebView */}
+      <div
+        className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:-mx-8 lg:px-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+      >
+        <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={busy}
+            className="h-11 sm:h-10 sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={busy || !name.trim()}
+            className="bg-brand-grad h-12 w-full text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 transition-transform active:scale-[0.98] disabled:opacity-60 sm:h-11 sm:w-auto sm:px-8"
+          >
+            {busy ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                Salvando…
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" /> {submitLabel ?? "Salvar acesso"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
     </div>
   );
 }
