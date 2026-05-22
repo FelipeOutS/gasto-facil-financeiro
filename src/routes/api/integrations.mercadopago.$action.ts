@@ -30,7 +30,37 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
         if (!isAdminMasterUser(user)) return forbiddenResponse();
 
         if (params.action === "sync") {
-          const result = await syncMercadoPagoTransactions(user.id);
+          let body: { period?: string; beginDate?: string; endDate?: string } = {};
+          try {
+            const text = await request.text();
+            if (text) body = JSON.parse(text);
+          } catch {
+            body = {};
+          }
+          const allowed = new Set([
+            "last30",
+            "current_month",
+            "last_month",
+            "last3",
+            "last6",
+            "last12",
+            "custom",
+          ]);
+          const period = body.period && allowed.has(body.period)
+            ? (body.period as
+                | "last30"
+                | "current_month"
+                | "last_month"
+                | "last3"
+                | "last6"
+                | "last12"
+                | "custom")
+            : "last30";
+          const result = await syncMercadoPagoTransactions(user.id, {
+            period,
+            beginDate: body.beginDate,
+            endDate: body.endDate,
+          });
           return Response.json(result, { status: result.ok ? 200 : 400 });
         }
         if (params.action === "disconnect") {
