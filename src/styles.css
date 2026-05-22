@@ -285,6 +285,8 @@ body {
   /* ===== Brand / Accent tokens (set dynamically by AccentProvider) ===== */
   .bg-brand { background-color: var(--brand); }
   .text-brand { color: var(--brand); }
+  .text-brand-foreground { color: var(--brand-foreground); }
+  .hover\:bg-brand\/90:hover { background-color: color-mix(in oklab, var(--brand) 90%, transparent); }
   .text-brand-on-soft { color: var(--brand-fg-on-soft, var(--foreground)); }
   .bg-brand-soft { background-color: var(--brand-soft); }
   .bg-brand-tint { background-color: var(--brand-tint); }
