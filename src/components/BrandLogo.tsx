@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, memo } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import { Building2, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBankLogo, getMerchantLogo, type BrandResolved } from "@/lib/logos";
@@ -15,87 +15,52 @@ type Props = {
 };
 
 /**
- * Renders a brand logo.
+ * Cache de módulo: URLs que falharam ao carregar (404/erro de rede). Evita
+ * reexecutar a cascata e mostrar flicker em montagens subsequentes do mesmo
+ * banco/merchant. Persiste durante a sessão.
+ */
+const failedUrls = new Set<string>();
+
+/**
+ * Cascata de logo (mesma ordem para bank e merchant):
+ *  1. SVG estático local (bundle Vite — disponível imediatamente, sem flicker).
+ *  2. Candidatos dinâmicos do Logo.dev (+ favicon fallbacks p/ merchants).
+ *  3. Inicial colorida.
  *
- * Cascade:
- *  1. Static SVG bundled locally (BANK_URL / MERCHANT_URL).
- *  2. Dynamic candidates from the global resolver (Logo.dev → favicon.im →
- *     Google s2 → DuckDuckGo). This lets any bank/merchant the user types
- *     show a real logo even when we don't ship a local SVG for it.
- *  3. Elegant colored initial fallback.
+ * Bancos conhecidos (Nubank, Mercado Pago, Itaú, Santander, Inter, C6, Bradesco,
+ * Banco do Brasil, Caixa, PicPay, Will Bank, Neon) carregam instantaneamente
+ * via SVG local — não há requisição externa.
  */
 function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props) {
   const resolved: BrandResolved =
     variant === "bank" ? getBankLogo(name) : getMerchantLogo(name);
 
-  // Static logo display: keep the previously displayed url visible while a
-  // new one decodes — prevents flicker when switching cards.
-  const [displayedUrl, setDisplayedUrl] = useState<string | null>(resolved.logoUrl);
-  const [staticErrored, setStaticErrored] = useState(false);
-  const lastLoadedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const next = resolved.logoUrl;
-    if (!next) {
-      setDisplayedUrl(null);
-      setStaticErrored(false);
-      return;
-    }
-    if (next === lastLoadedRef.current) {
-      setDisplayedUrl(next);
-      setStaticErrored(false);
-      return;
-    }
-    let cancelled = false;
-    const img = new Image();
-    img.src = next;
-    const apply = () => {
-      if (cancelled) return;
-      lastLoadedRef.current = next;
-      setDisplayedUrl(next);
-      setStaticErrored(false);
-    };
-    if (img.complete && img.naturalWidth > 0) {
-      apply();
-    } else {
-      img.onload = apply;
-      img.onerror = () => {
-        if (cancelled) return;
-        setStaticErrored(true);
-      };
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [resolved.logoUrl]);
-
-  // Dynamic candidates (Logo.dev → favicon.im → Google s2 → DuckDuckGo).
-  // Para bancos, sempre usamos os logos do Logo.dev (substituindo os SVGs
-  // locais), com trustedOnly para evitar palpites por TLD e flicker.
-  // Para merchants, mantemos o fallback dinâmico só quando não há SVG local.
+  // Logo.dev como fallback p/ qualquer nome sem SVG local.
+  // Para bancos usamos trustedOnly p/ não cair em favicons genéricos.
   const dynamicCandidates = useMemo(() => {
-    if (!name) return [];
-    if (variant === "bank") return getLogoCandidates(null, name, { trustedOnly: true });
-    if (resolved.logoUrl) return [];
-    return getLogoCandidates(null, name);
+    if (!name || resolved.logoUrl) return [];
+    return getLogoCandidates(null, name, { trustedOnly: variant === "bank" });
   }, [resolved.logoUrl, name, variant]);
-  const [dynIdx, setDynIdx] = useState(0);
+
+  const [dynIdx, setDynIdx] = useState(() =>
+    skipFailed(dynamicCandidates, 0),
+  );
   useEffect(() => {
-    setDynIdx(0);
+    setDynIdx(skipFailed(dynamicCandidates, 0));
   }, [dynamicCandidates]);
+
+  const staticUrl = resolved.logoUrl;
   const dynamicUrl =
     dynamicCandidates.length && dynIdx < dynamicCandidates.length
       ? dynamicCandidates[dynIdx]
       : null;
 
-  // Bancos: nunca renderiza o SVG estático — sempre cascata Logo.dev.
-  const showStatic = variant !== "bank" && !!displayedUrl && !staticErrored;
   const bg = resolved.brandColor || (variant === "bank" ? "#3b82f6" : "#64748b");
   const FallbackIcon = variant === "bank" ? Building2 : Store;
 
-  // ---------- variant: bank + onDark (credit card surfaces) ----------
+  // ---------- variant: bank + onDark (superfícies de cartão de crédito) ----------
   if (variant === "bank" && onDark) {
-    if (showStatic) {
+    if (staticUrl) {
       const WIDE_BANK_SLUGS = new Set([
         "mercadopago-branco",
         "logo-santander",
@@ -116,20 +81,18 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
           aria-hidden
         >
           <img
-            src={displayedUrl!}
+            src={staticUrl}
             alt=""
             className={cn(
               "block h-auto w-auto max-h-full max-w-full object-contain object-left",
               imgClassName,
             )}
-            onError={() => setStaticErrored(true)}
             decoding="async"
           />
         </span>
       );
     }
-    // Dynamic fallback (Logo.dev) — render inside a soft white pill so the
-    // colored bank wordmark stays legible on top of the dark card.
+    // Fallback dinâmico (Logo.dev) — pílula branca para legibilidade no dark.
     if (dynamicUrl) {
       return (
         <span
@@ -144,12 +107,9 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
               src={dynamicUrl}
               alt=""
               className="h-full w-full object-contain"
-              onError={() => setDynIdx((i) => i + 1)}
-              onLoad={(e) => {
-                const img = e.currentTarget;
-                if (img.naturalWidth > 0 && img.naturalWidth < 32) {
-                  setDynIdx((i) => i + 1);
-                }
+              onError={() => {
+                failedUrls.add(dynamicUrl);
+                setDynIdx((i) => skipFailed(dynamicCandidates, i + 1));
               }}
               decoding="async"
             />
@@ -157,7 +117,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
         </span>
       );
     }
-    // Final fallback — colored initial pill.
+    // Fallback final — pílula com inicial colorida do banco.
     return (
       <span
         className={cn(
@@ -167,7 +127,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
         aria-hidden
       >
         <span
-          className="grid h-10 w-10 place-items-center rounded-lg text-sm font-bold text-white"
+          className="grid h-10 w-10 place-items-center rounded-lg text-sm font-bold text-white shadow-sm ring-1 ring-white/10"
           style={{ background: bg }}
         >
           {resolved.initial && resolved.initial !== "?" ? (
@@ -180,8 +140,8 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
     );
   }
 
-  // ---------- variant: merchant / non-onDark bank ----------
-  if (showStatic) {
+  // ---------- variant: merchant / bank sem onDark ----------
+  if (staticUrl) {
     return (
       <span
         className={cn(
@@ -192,10 +152,9 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
         aria-hidden
       >
         <img
-          src={displayedUrl!}
+          src={staticUrl}
           alt=""
           className={cn("h-full w-full object-contain", imgClassName)}
-          onError={() => setStaticErrored(true)}
           decoding="async"
         />
       </span>
@@ -216,12 +175,9 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
           src={dynamicUrl}
           alt=""
           className={cn("h-full w-full object-contain p-1", imgClassName)}
-          onError={() => setDynIdx((i) => i + 1)}
-          onLoad={(e) => {
-            const img = e.currentTarget;
-            if (img.naturalWidth > 0 && img.naturalWidth < 32) {
-              setDynIdx((i) => i + 1);
-            }
+          onError={() => {
+            failedUrls.add(dynamicUrl);
+            setDynIdx((i) => skipFailed(dynamicCandidates, i + 1));
           }}
           decoding="async"
         />
@@ -248,6 +204,12 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       )}
     </span>
   );
+}
+
+function skipFailed(candidates: string[], start: number): number {
+  let i = start;
+  while (i < candidates.length && failedUrls.has(candidates[i])) i++;
+  return i;
 }
 
 export const BrandLogo = memo(BrandLogoBase);
