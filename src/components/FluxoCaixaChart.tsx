@@ -97,11 +97,11 @@ export function FluxoCaixaChart({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Visão financeira
+            {t("fluxo.eyebrow")}
           </p>
-          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">Fluxo de caixa</h2>
+          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("fluxo.title")}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Últimos 6 meses · entradas vs. gastos
+            {t("fluxo.subtitle")}
           </p>
         </div>
         {!semHistoricoSuficiente && (
