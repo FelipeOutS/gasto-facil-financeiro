@@ -60,7 +60,6 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
-import { Route as AppIntegracoesRouteImport } from './routes/app_.integracoes'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
@@ -71,6 +70,7 @@ import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
+import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppIntegracoesMercadoPagoRouteImport } from './routes/app_.integracoes.mercado-pago'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
@@ -342,11 +342,6 @@ const AppMaisRoute = AppMaisRouteImport.update({
   path: '/app/mais',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIntegracoesRoute = AppIntegracoesRouteImport.update({
-  id: '/app_/integracoes',
-  path: '/app/integracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppIdiomaRoute = AppIdiomaRouteImport.update({
   id: '/app_/idioma',
   path: '/app/idioma',
@@ -395,6 +390,11 @@ const ApiEconomicRadarRoute = ApiEconomicRadarRouteImport.update({
 const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   id: '/aceitar-convite/$token',
   path: '/aceitar-convite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
+  id: '/app_/integracoes/',
+  path: '/app/integracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
@@ -536,7 +536,6 @@ export interface FileRoutesByFullPath {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/idioma': typeof AppIdiomaRoute
-  '/app/integracoes': typeof AppIntegracoesRouteWithChildren
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -550,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -615,7 +615,6 @@ export interface FileRoutesByTo {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/idioma': typeof AppIdiomaRoute
-  '/app/integracoes': typeof AppIntegracoesRouteWithChildren
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -629,6 +628,7 @@ export interface FileRoutesByTo {
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -695,7 +695,6 @@ export interface FileRoutesById {
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app_/idioma': typeof AppIdiomaRoute
-  '/app_/integracoes': typeof AppIntegracoesRouteWithChildren
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
@@ -709,6 +708,7 @@ export interface FileRoutesById {
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/app_/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -776,7 +776,6 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app/idioma'
-    | '/app/integracoes'
     | '/app/mais'
     | '/app/perfil'
     | '/clientes/relatorio'
@@ -790,6 +789,7 @@ export interface FileRouteTypes {
     | '/api/checkout/verify'
     | '/app/integracoes/mercado-pago'
     | '/lovable/email/suppression'
+    | '/app/integracoes/'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -855,7 +855,6 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app/idioma'
-    | '/app/integracoes'
     | '/app/mais'
     | '/app/perfil'
     | '/clientes/relatorio'
@@ -869,6 +868,7 @@ export interface FileRouteTypes {
     | '/api/checkout/verify'
     | '/app/integracoes/mercado-pago'
     | '/lovable/email/suppression'
+    | '/app/integracoes'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -934,7 +934,6 @@ export interface FileRouteTypes {
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
     | '/app_/idioma'
-    | '/app_/integracoes'
     | '/app_/mais'
     | '/app_/perfil'
     | '/clientes_/relatorio'
@@ -948,6 +947,7 @@ export interface FileRouteTypes {
     | '/api/checkout/verify'
     | '/app_/integracoes/mercado-pago'
     | '/lovable/email/suppression'
+    | '/app_/integracoes/'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -1014,7 +1014,6 @@ export interface RootRouteChildren {
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
-  AppIntegracoesRoute: typeof AppIntegracoesRouteWithChildren
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
@@ -1027,6 +1026,7 @@ export interface RootRouteChildren {
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
   ApiIntegrationsMercadopagoCallbackRoute: typeof ApiIntegrationsMercadopagoCallbackRoute
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
@@ -1398,13 +1398,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMaisRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app_/integracoes': {
-      id: '/app_/integracoes'
-      path: '/app/integracoes'
-      fullPath: '/app/integracoes'
-      preLoaderRoute: typeof AppIntegracoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app_/idioma': {
       id: '/app_/idioma'
       path: '/app/idioma'
@@ -1473,6 +1466,13 @@ declare module '@tanstack/react-router' {
       path: '/aceitar-convite/$token'
       fullPath: '/aceitar-convite/$token'
       preLoaderRoute: typeof AceitarConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app_/integracoes/': {
+      id: '/app_/integracoes/'
+      path: '/app/integracoes'
+      fullPath: '/app/integracoes/'
+      preLoaderRoute: typeof AppIntegracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -1583,33 +1583,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AppIntegracoesMercadoPagoRouteChildren {
-  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
-}
-
-const AppIntegracoesMercadoPagoRouteChildren: AppIntegracoesMercadoPagoRouteChildren =
-  {
-    AppIntegracoesMercadoPagoMovimentacoesRoute:
-      AppIntegracoesMercadoPagoMovimentacoesRoute,
-  }
-
-const AppIntegracoesMercadoPagoRouteWithChildren =
-  AppIntegracoesMercadoPagoRoute._addFileChildren(
-    AppIntegracoesMercadoPagoRouteChildren,
-  )
-
-interface AppIntegracoesRouteChildren {
-  AppIntegracoesMercadoPagoRoute: typeof AppIntegracoesMercadoPagoRouteWithChildren
-}
-
-const AppIntegracoesRouteChildren: AppIntegracoesRouteChildren = {
-  AppIntegracoesMercadoPagoRoute: AppIntegracoesMercadoPagoRouteWithChildren,
-}
-
-const AppIntegracoesRouteWithChildren = AppIntegracoesRoute._addFileChildren(
-  AppIntegracoesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1663,7 +1636,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   AppIdiomaRoute: AppIdiomaRoute,
-  AppIntegracoesRoute: AppIntegracoesRouteWithChildren,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
@@ -1676,6 +1648,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,
   ApiIntegrationsMercadopagoCallbackRoute:
     ApiIntegrationsMercadopagoCallbackRoute,
@@ -1692,3 +1665,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
