@@ -439,6 +439,7 @@ function ContaCard({
               <> · {t("card.receivedOn", { date: formatDateBR(conta.data_recebimento) })}</>
             )}
           </p>
+          </div>
         </div>
         <div className="text-right">
           <Money value={Number(conta.valor_total)} className="num text-sm font-bold" />
