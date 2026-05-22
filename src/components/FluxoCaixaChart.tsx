@@ -80,8 +80,8 @@ export function FluxoCaixaChart({
 
   // Donut data
   const donutData = [
-    { name: "Entradas", value: totalEntradas },
-    { name: "Gastos", value: totalGastos },
+    { name: t("fluxo.entradas"), value: totalEntradas },
+    { name: t("fluxo.gastos"), value: totalGastos },
   ];
 
   const tooltipStyle = {
@@ -97,11 +97,11 @@ export function FluxoCaixaChart({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Visão financeira
+            {t("fluxo.eyebrow")}
           </p>
-          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">Fluxo de caixa</h2>
+          <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("fluxo.title")}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Últimos 6 meses · entradas vs. gastos
+            {t("fluxo.subtitle")}
           </p>
         </div>
         {!semHistoricoSuficiente && (
@@ -133,19 +133,19 @@ export function FluxoCaixaChart({
 
       <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-[11px]">
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Entradas</p>
+          <p className="text-muted-foreground">{t("fluxo.entradas")}</p>
           <p className="num mt-0.5 truncate font-semibold text-success">
             {formatBRLCompact(totalEntradas)}
           </p>
         </div>
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Gastos</p>
+          <p className="text-muted-foreground">{t("fluxo.gastos")}</p>
           <p className="num mt-0.5 truncate font-semibold text-destructive">
             {formatBRLCompact(totalGastos)}
           </p>
         </div>
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Saldo</p>
+          <p className="text-muted-foreground">{t("fluxo.saldo")}</p>
           <p
             className={cn(
               "num mt-0.5 truncate font-semibold",
@@ -160,9 +160,9 @@ export function FluxoCaixaChart({
       {semHistoricoSuficiente ? (
         <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 py-6 text-center">
           <TrendingUp className="h-6 w-6 text-muted-foreground" />
-          <p className="mt-2 text-sm font-medium">Ainda não há histórico suficiente</p>
+          <p className="mt-2 text-sm font-medium">{t("fluxo.emptyTitle")}</p>
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            Continue lançando seus gastos e receitas — o gráfico aparece quando você tiver pelo menos dois meses com dados.
+            {t("fluxo.emptyDesc")}
           </p>
         </div>
       ) : (

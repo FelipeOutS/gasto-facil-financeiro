@@ -506,5 +506,33 @@
     },
     "obs": "Estimated purchase in {{moeda}} {{valor}} · rate {{cotacao}} per 1 {{moeda}}. Final amount may vary with IOF, spread and the card's rate.",
     "defaultDesc": "Purchase in {{moeda}} {{valor}}"
+  },
+  "planCard": {
+    "checking": "Checking subscription…",
+    "fullAccess": "Full access",
+    "fullAccessDesc": "Master Admin — every feature unlocked.",
+    "trialActive": "Free trial active",
+    "trialDesc_one": "{{plan}} unlocked — {{count}} day left.",
+    "trialDesc_other": "{{plan}} unlocked — {{count}} days left.",
+    "viewPlans": "View plans",
+    "active": "Your plan is active",
+    "activeDesc": "You're on the {{plan}} plan.",
+    "manage": "Manage",
+    "pending": "Payment pending",
+    "pendingDesc": "Finish the {{plan}} payment to activate.",
+    "continue": "Continue",
+    "unlock": "Unlock advanced features",
+    "unlockDesc": "Pick a plan to unlock imports, reports and more."
+  },
+  "metaProximaTitle": "Closest goal",
+  "porCategoriaTitle": "By category",
+  "porCategoriaShort": "By category",
+  "porCategoriaSub": "Set and track",
+  "bootError": {
+    "title": "We couldn't open the app",
+    "subtitle": "Check your connection and try again.",
+    "retry": "Try again",
+    "goLogin": "Go to login",
+    "loading": "Just a moment..."
   }
 }

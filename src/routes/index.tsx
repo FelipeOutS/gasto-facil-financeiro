@@ -558,10 +558,10 @@ function Index() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
-                    <h2 className="text-sm font-semibold">Meta mais próxima</h2>
+                    <h2 className="text-sm font-semibold">{t("metaProxima.title")}</h2>
                   </div>
                   <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                    Ver todas →
+                    {t("metaProxima.verTodas")}
                   </Link>
                 </div>
                 <div className="mt-3 flex items-baseline justify-between gap-3">
@@ -629,13 +629,13 @@ function Index() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                <h2 className="text-sm font-semibold">Por categoria</h2>
+                <h2 className="text-sm font-semibold">{t("porCategoria.title")}</h2>
               </div>
               <Link
                 to="/resumo"
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                Ver tudo →
+                {t("porCategoria.verTudo")}
               </Link>
             </div>
             <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-[140px_1fr]">
@@ -778,12 +778,12 @@ function Index() {
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Orçamento
+              {t("atalhos.orcamentoEyebrow")}
             </p>
             <PieChartIcon className="h-3.5 w-3.5 text-brand" />
           </div>
-          <p className="mt-1.5 text-sm font-bold">Por categoria</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
+          <p className="mt-1.5 text-sm font-bold">{t("atalhos.orcamentoTitle")}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{t("atalhos.orcamentoSub")}</p>
         </Link>
         <Link
           to="/guardado"
@@ -791,7 +791,7 @@ function Index() {
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Total guardado
+              {t("atalhos.guardadoEyebrow")}
             </p>
             <Wallet className="h-3.5 w-3.5 text-brand" />
           </div>

@@ -506,5 +506,33 @@
     },
     "obs": "Estimativa de compra em {{moeda}} {{valor}} · cotação {{cotacao}} por 1 {{moeda}}. Valor final pode variar com IOF, spread e cotação do cartão.",
     "defaultDesc": "Compra em {{moeda}} {{valor}}"
+  },
+  "planCard": {
+    "checking": "Verificando assinatura…",
+    "fullAccess": "Acesso total",
+    "fullAccessDesc": "Admin Master — todos os recursos liberados.",
+    "trialActive": "Teste grátis ativo",
+    "trialDesc_one": "{{plan}} liberado — falta {{count}} dia.",
+    "trialDesc_other": "{{plan}} liberado — faltam {{count}} dias.",
+    "viewPlans": "Ver planos",
+    "active": "Seu plano está ativo",
+    "activeDesc": "Você está usando o plano {{plan}}.",
+    "manage": "Gerenciar",
+    "pending": "Pagamento pendente",
+    "pendingDesc": "Finalize o pagamento do {{plan}} para ativar.",
+    "continue": "Continuar",
+    "unlock": "Desbloqueie recursos avançados",
+    "unlockDesc": "Escolha um plano para liberar importações, relatórios e mais."
+  },
+  "metaProximaTitle": "Meta mais próxima",
+  "porCategoriaTitle": "Por categoria",
+  "porCategoriaShort": "Por categoria",
+  "porCategoriaSub": "Definir e acompanhar",
+  "bootError": {
+    "title": "Não conseguimos abrir o app",
+    "subtitle": "Verifique sua conexão e tente novamente.",
+    "retry": "Tentar novamente",
+    "goLogin": "Ir para login",
+    "loading": "Só um instante..."
   }
 }

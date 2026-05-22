@@ -23,7 +23,7 @@ export const Route = createFileRoute("/app")({
 function AppEntry() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("dashboard");
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -70,9 +70,9 @@ function AppEntry() {
         <div className="flex max-w-sm flex-col items-center gap-5 text-center">
           <BrandMark className="h-12 w-auto sm:h-14" />
           <div className="space-y-2">
-            <h1 className="text-lg font-semibold">Não conseguimos abrir o app</h1>
+            <h1 className="text-lg font-semibold">{t("bootError.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              Verifique sua conexão e tente novamente.
+              {t("bootError.subtitle")}
             </p>
           </div>
           <div className="flex w-full flex-col gap-2">
@@ -82,10 +82,10 @@ function AppEntry() {
               }}
               className="w-full"
             >
-              Tentar novamente
+              {t("bootError.retry")}
             </Button>
             <Button asChild variant="outline" className="w-full">
-              <Link to="/login">Ir para login</Link>
+              <Link to="/login">{t("bootError.goLogin")}</Link>
             </Button>
           </div>
         </div>
@@ -93,5 +93,5 @@ function AppEntry() {
     );
   }
 
-  return <BrandLoader message="Só um instante..." />;
+  return <BrandLoader message={t("bootError.loading")} />;
 }
