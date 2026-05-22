@@ -104,7 +104,7 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "xbox": "xbox.com",
   "playstation": "playstation.com",
   "steam": "steampowered.com",
-  "guppy": "guppy.io",
+  "guppy": "gupy.io",
   "gupy": "gupy.io",
   "lovable": "lovable.dev",
   "chat gpt": "openai.com",
