@@ -61,6 +61,7 @@ import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relato
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
+import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
@@ -347,6 +348,11 @@ const AppIdiomaRoute = AppIdiomaRouteImport.update({
   path: '/app/idioma',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCofrePessoalRoute = AppCofrePessoalRouteImport.update({
+  id: '/app_/cofre-pessoal',
+  path: '/app/cofre-pessoal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   id: '/api/ocr-gasto',
   path: '/api/ocr-gasto',
@@ -535,6 +541,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
@@ -614,6 +621,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
@@ -694,6 +702,7 @@ export interface FileRoutesById {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
@@ -854,6 +864,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
@@ -933,6 +944,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/ocr-gasto'
+    | '/app_/cofre-pessoal'
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
@@ -1013,6 +1025,7 @@ export interface RootRouteChildren {
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
@@ -1407,6 +1420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIdiomaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/cofre-pessoal': {
+      id: '/app_/cofre-pessoal'
+      path: '/app/cofre-pessoal'
+      fullPath: '/app/cofre-pessoal'
+      preLoaderRoute: typeof AppCofrePessoalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ocr-gasto': {
       id: '/api/ocr-gasto'
       path: '/api/ocr-gasto'
@@ -1637,6 +1657,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
