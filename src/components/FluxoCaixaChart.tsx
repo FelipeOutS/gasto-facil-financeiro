@@ -133,19 +133,19 @@ export function FluxoCaixaChart({
 
       <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-[11px]">
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Entradas</p>
+          <p className="text-muted-foreground">{t("fluxo.entradas")}</p>
           <p className="num mt-0.5 truncate font-semibold text-success">
             {formatBRLCompact(totalEntradas)}
           </p>
         </div>
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Gastos</p>
+          <p className="text-muted-foreground">{t("fluxo.gastos")}</p>
           <p className="num mt-0.5 truncate font-semibold text-destructive">
             {formatBRLCompact(totalGastos)}
           </p>
         </div>
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
-          <p className="text-muted-foreground">Saldo</p>
+          <p className="text-muted-foreground">{t("fluxo.saldo")}</p>
           <p
             className={cn(
               "num mt-0.5 truncate font-semibold",
