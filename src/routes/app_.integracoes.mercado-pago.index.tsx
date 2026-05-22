@@ -11,6 +11,14 @@ import {
   CheckCircle2,
   Info,
   ListChecks,
+  ShieldCheck,
+  Loader2,
+  Zap,
+  CreditCard,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Coins,
+  Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
@@ -68,6 +76,16 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago/")({
   component: MercadoPagoIntegrationPage,
 });
 
+const BENEFITS: { icon: React.ReactNode; label: string }[] = [
+  { icon: <Zap className="h-3.5 w-3.5" />, label: "Pix" },
+  { icon: <ArrowDownLeft className="h-3.5 w-3.5" />, label: "Pagamentos" },
+  { icon: <ArrowUpRight className="h-3.5 w-3.5" />, label: "Recebimentos" },
+  { icon: <Wallet className="h-3.5 w-3.5" />, label: "Saldo em conta" },
+  { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Cartão" },
+  { icon: <Receipt className="h-3.5 w-3.5" />, label: "Taxas" },
+  { icon: <Coins className="h-3.5 w-3.5" />, label: "Cashback" },
+];
+
 function MercadoPagoIntegrationPage() {
   const search = useSearch({ from: "/app_/integracoes/mercado-pago/" });
   const navigate = useNavigate();
@@ -100,7 +118,6 @@ function MercadoPagoIntegrationPage() {
     void loadStatus();
   }, [loadStatus]);
 
-  // Feedback do retorno do OAuth (callback)
   useEffect(() => {
     if (search.connected === "1") {
       toast.success("Conta Mercado Pago conectada!");
@@ -198,144 +215,221 @@ function MercadoPagoIntegrationPage() {
   const isError = status?.integration?.status === "error";
   const isConfigured = !!status?.configured;
   const lastSync = status?.integration?.last_sync_at
-    ? new Date(status.integration.last_sync_at).toLocaleString("pt-BR")
+    ? new Date(status.integration.last_sync_at).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   return (
     <MobileShell>
+      {/* Header */}
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/app/integracoes"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
+          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
           aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Integração</p>
-          <h1 className="truncate text-2xl font-bold tracking-tight">Mercado Pago</h1>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Integração
+          </p>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+            Mercado Pago
+          </h1>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Conecte sua conta Mercado Pago para importar movimentações
+            automaticamente e acompanhar seus dados com mais praticidade.
+          </p>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="mt-5 rounded-3xl border border-border bg-card p-5 shadow-card">
-        <div className="flex items-start gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[hsl(45_100%_50%/0.15)] text-[hsl(45_100%_45%)]">
-            <Wallet className="h-7 w-7" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold">Mercado Pago</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Importa pagamentos, recebimentos, Pix, cartão e taxas disponíveis na sua conta
-              Mercado Pago.
-            </p>
-            <div className="mt-3">
-              <StatusBadge
-                loading={loading}
-                configured={isConfigured}
-                connected={isConnected}
-                error={isError}
-              />
+      {/* Card principal */}
+      <section className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+        {/* Banda superior com identidade visual */}
+        <div className="relative bg-gradient-to-br from-[hsl(45_100%_50%/0.18)] via-[hsl(45_100%_50%/0.08)] to-transparent p-5">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[hsl(45_100%_50%/0.18)] blur-2xl" />
+          <div className="relative flex items-start gap-4">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[hsl(45_100%_50%/0.2)] text-[hsl(45_100%_45%)] ring-1 ring-[hsl(45_100%_50%/0.3)] shadow-sm">
+              <Wallet className="h-7 w-7" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-semibold leading-tight">
+                Mercado Pago
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Pagamentos, recebimentos, Pix, cartão e taxas — tudo
+                sincronizado automaticamente.
+              </p>
+              <div className="mt-3">
+                <StatusBadge
+                  loading={loading}
+                  configured={isConfigured}
+                  connected={isConnected}
+                  error={isError}
+                  syncing={syncing}
+                  connecting={connecting}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Métricas */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Metric
-            label="Última sincronização"
-            value={lastSync ?? "—"}
-          />
-          <Metric
-            label="Movimentações importadas"
-            value={String(status?.importedCount ?? 0)}
-          />
-        </div>
-
-        {/* Ações */}
-        <div className="mt-5 flex flex-col gap-2.5">
-          {!isConnected && (
-            <Button
-              onClick={handleConnect}
-              disabled={loading || connecting}
-              size="lg"
-              className="h-12 rounded-2xl text-base"
-            >
-              <Plug className="mr-2 h-5 w-5" />
-              {connecting ? "Conectando..." : "Conectar Mercado Pago"}
-            </Button>
-          )}
+        {/* Corpo */}
+        <div className="space-y-5 p-5">
+          {/* Métricas (apenas se conectado) */}
           {isConnected && (
-            <>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric
+                label="Última sincronização"
+                value={lastSync ?? "Nunca"}
+                hint={lastSync ? undefined : "Sincronize para começar"}
+              />
+              <Metric
+                label="Movimentações importadas"
+                value={String(status?.importedCount ?? 0)}
+                hint="registros"
+                highlight
+              />
+            </div>
+          )}
+
+          {/* Estado desconectado: benefícios */}
+          {!isConnected && !loading && (
+            <div className="rounded-2xl border border-border/60 bg-card-elevated/40 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                O que será importado
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {BENEFITS.map((b) => (
+                  <span
+                    key={b.label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px] font-medium text-foreground/80"
+                  >
+                    <span className="text-[hsl(45_100%_45%)]">{b.icon}</span>
+                    {b.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ações */}
+          <div className="flex flex-col gap-2.5">
+            {!isConnected && (
               <Button
-                onClick={handleSync}
-                disabled={syncing}
+                onClick={handleConnect}
+                disabled={loading || connecting}
                 size="lg"
-                className="h-12 rounded-2xl text-base"
+                className="h-12 rounded-2xl text-base font-semibold"
               >
-                <RefreshCw className={cn("mr-2 h-5 w-5", syncing && "animate-spin")} />
-                {syncing ? "Sincronizando..." : "Sincronizar agora"}
+                {connecting ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <Plug className="mr-2 h-5 w-5" />
+                )}
+                {connecting ? "Conectando..." : "Conectar conta"}
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-12 rounded-2xl text-base"
-              >
-                <Link to="/app/integracoes/mercado-pago/movimentacoes">
-                  <ListChecks className="mr-2 h-5 w-5" />
-                  Ver movimentações importadas
-                </Link>
-              </Button>
-              <Button
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                variant="ghost"
-                size="lg"
-                className="h-12 rounded-2xl text-base text-destructive hover:text-destructive"
-              >
-                <Unplug className="mr-2 h-5 w-5" />
-                {disconnecting ? "Desconectando..." : "Desconectar"}
-              </Button>
-            </>
+            )}
+            {isConnected && (
+              <>
+                <Button
+                  onClick={handleSync}
+                  disabled={syncing}
+                  size="lg"
+                  className="h-12 rounded-2xl text-base font-semibold"
+                >
+                  <RefreshCw className={cn("mr-2 h-5 w-5", syncing && "animate-spin")} />
+                  {syncing ? "Sincronizando..." : "Sincronizar agora"}
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-12 rounded-2xl text-base"
+                >
+                  <Link to="/app/integracoes/mercado-pago/movimentacoes">
+                    <ListChecks className="mr-2 h-5 w-5" />
+                    Ver movimentações importadas
+                  </Link>
+                </Button>
+                <button
+                  onClick={handleDisconnect}
+                  disabled={disconnecting}
+                  className="mt-1 inline-flex h-10 items-center justify-center gap-1.5 self-center rounded-full px-4 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
+                >
+                  <Unplug className="h-3.5 w-3.5" />
+                  {disconnecting ? "Desconectando..." : "Desconectar conta"}
+                </button>
+              </>
+            )}
+          </div>
+
+          {isError && status?.integration?.last_error && (
+            <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="break-words">
+                Último erro: {status.integration.last_error}
+              </span>
+            </div>
           )}
         </div>
-
-        {isError && status?.integration?.last_error && (
-          <div className="mt-4 flex items-start gap-2 rounded-xl bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span className="break-words">Último erro: {status.integration.last_error}</span>
-          </div>
-        )}
       </section>
 
       {/* Aviso quando não configurado */}
       {!loading && !isConfigured && (
-        <section className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-xs text-warning-foreground">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <div>
-            <p className="font-semibold text-foreground">Integração preparada</p>
-            <p className="mt-1 text-muted-foreground">
-              Integração preparada, aguardando configuração das credenciais.
+        <section className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-warning/20 text-warning">
+            <Info className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Integração preparada
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Aguardando configuração das credenciais no servidor. Assim que
+              estiverem disponíveis, você poderá conectar normalmente.
             </p>
           </div>
         </section>
       )}
 
-      {/* Explicação */}
-      <section className="mt-4 flex items-start gap-3 rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>
-          Esta integração importa apenas dados disponíveis na sua conta Mercado Pago. Não traz
-          dados de outros bancos. Para Nubank, Itaú, Bradesco e outros, será necessário Open
-          Finance no futuro.
+      {/* Bloco informativo */}
+      <section className="mt-4 flex items-start gap-3 rounded-2xl border border-border/60 bg-card/40 p-4">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-muted/60 text-muted-foreground">
+          <Info className="h-4 w-4" />
+        </span>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Esta integração importa apenas dados disponíveis na sua conta{" "}
+          <span className="font-medium text-foreground">Mercado Pago</span>.
+          Para outros bancos como Nubank, Itaú ou Bradesco, será necessário
+          Open Finance — em breve.
         </p>
       </section>
 
-      <p className="mt-6 px-1 text-[11px] leading-relaxed text-muted-foreground">
-        A autorização é feita por OAuth oficial do Mercado Pago. Nunca pedimos sua senha. Seus
-        tokens ficam armazenados de forma segura no servidor e nunca aparecem aqui.
-      </p>
+      {/* Bloco de segurança */}
+      <section className="mt-4 overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4">
+        <div className="flex items-start gap-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20">
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Segurança e transparência
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              A autorização é feita por OAuth oficial do Mercado Pago. Nunca
+              pedimos sua senha. Seus tokens ficam armazenados de forma segura
+              no servidor e nunca são exibidos no aplicativo.
+            </p>
+          </div>
+        </div>
+      </section>
     </MobileShell>
   );
 }
@@ -345,16 +439,34 @@ function StatusBadge({
   configured,
   connected,
   error,
+  syncing,
+  connecting,
 }: {
   loading: boolean;
   configured: boolean;
   connected: boolean;
   error: boolean;
+  syncing?: boolean;
+  connecting?: boolean;
 }) {
   if (loading) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-card-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground">
-        Carregando status…
+        <Loader2 className="h-3 w-3 animate-spin" /> Carregando…
+      </span>
+    );
+  }
+  if (connecting) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary">
+        <Loader2 className="h-3 w-3 animate-spin" /> Conectando
+      </span>
+    );
+  }
+  if (syncing) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary">
+        <RefreshCw className="h-3 w-3 animate-spin" /> Sincronizando
       </span>
     );
   }
@@ -386,11 +498,40 @@ function StatusBadge({
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  hint,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card-elevated/40 p-3">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+    <div
+      className={cn(
+        "rounded-2xl border p-3.5 transition-colors",
+        highlight
+          ? "border-primary/20 bg-primary/5"
+          : "border-border/60 bg-card-elevated/40",
+      )}
+    >
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1.5 truncate text-base font-bold tracking-tight",
+          highlight && "text-primary",
+        )}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }
