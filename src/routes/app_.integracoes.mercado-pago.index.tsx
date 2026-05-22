@@ -188,13 +188,18 @@ function MercadoPagoIntegrationPage() {
   async function handleSync() {
     if (syncing) return;
     setSyncing(true);
+    setLastSyncMsg(null);
     try {
-      const res = await apiFetch("/api/integrations/mercadopago/sync", { method: "POST" });
+      const res = await apiFetch("/api/integrations/mercadopago/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: syncPeriod }),
+      });
       const json = (await res.json()) as SyncResponse;
       if (json.ok) {
-        toast.success(
-          `Sincronizado: ${json.summary.imported} novas, ${json.summary.updated} atualizadas, ${json.summary.ignored} já existentes.`,
-        );
+        const msg = `${json.summary.imported} importadas, ${json.summary.updated} atualizadas, ${json.summary.ignored} já existentes (${json.summary.fetched} verificadas).`;
+        setLastSyncMsg(msg);
+        toast.success(`Sincronização concluída: ${msg}`);
       } else {
         toast.error(`Falha na sincronização: ${json.error}`);
       }
