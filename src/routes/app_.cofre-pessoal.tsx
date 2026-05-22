@@ -1149,15 +1149,20 @@ function EntryCard({
           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onToggleFav(); }} title="Favoritar" className="h-8 w-8" type="button">
             {row.favorite ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> : <StarOff className="h-4 w-4" />}
           </Button>
-          <CopyButton
-            value=""
-            label="Usuário"
+          <Button
             size="icon"
             variant="ghost"
             className="h-8 w-8"
+            type="button"
+            title="Copiar usuário"
+            onClick={async (e) => {
+              e.stopPropagation();
+              const sec = await getSecret();
+              await copyWithToast(sec.username ?? "", "Usuário");
+            }}
           >
-            {/* override: usa getSecret on click */}
-          </CopyButton>
+            <Copy className="h-4 w-4" />
+          </Button>
           <Button
             size="icon"
             variant="ghost"
