@@ -778,12 +778,12 @@ function Index() {
         >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Orçamento
+              {t("atalhos.orcamentoEyebrow")}
             </p>
             <PieChartIcon className="h-3.5 w-3.5 text-brand" />
           </div>
-          <p className="mt-1.5 text-sm font-bold">Por categoria</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">Definir e acompanhar</p>
+          <p className="mt-1.5 text-sm font-bold">{t("atalhos.orcamentoTitle")}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{t("atalhos.orcamentoSub")}</p>
         </Link>
         <Link
           to="/guardado"
