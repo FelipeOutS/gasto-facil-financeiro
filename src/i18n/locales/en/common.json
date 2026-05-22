@@ -44,5 +44,18 @@
     "lgpd": "LGPD",
     "rights": "© {{year}} Gasto Inteligente. All rights reserved.",
     "madeWith": "Built with care for your financial life."
+  },
+  "subscription": {
+    "required": "Subscription required",
+    "defaultMessage": "To add expenses, pick an active plan.",
+    "viewPlans": "View plans",
+    "notNow": "Not now",
+    "needActive": "You need an active subscription to use this feature.",
+    "needLogin": "You need to be signed in.",
+    "shared": {
+      "viewOnly": "This account was shared with you for viewing only.",
+      "viewCreate": "You can view and add entries on this account, but not edit/delete existing records.",
+      "noPermission": "You don't have enough permission for this action."
+    }
   }
 }
