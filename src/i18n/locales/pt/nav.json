@@ -55,7 +55,11 @@
     "signOut": "Sair da conta"
   },
   "descriptions": {
+    "gastos": "Lançamentos e categorias",
     "alertas": "Avisos importantes do seu financeiro",
+    "cartoes": "Faturas e limites",
+    "metas": "Acompanhe seus objetivos",
+    "whatsapp": "Lance gastos pelo WhatsApp",
     "renda": "Receitas e fontes de renda",
     "contasPagar": "Despesas e vencimentos",
     "contasReceber": "Valores que você tem para receber",
@@ -78,5 +82,14 @@
     "perfilMobile": "Dados da conta, perfil e atalhos pessoais",
     "idioma": "Troque entre Português e English",
     "integracoes": "Conecte Mercado Pago e outros serviços"
+  },
+  "groups": {
+    "financeiro": "Financeiro",
+    "planejamento": "Planejamento",
+    "empresa": "Empresa",
+    "insights": "Insights",
+    "conexoes": "Conexões",
+    "conta": "Conta",
+    "adminMaster": "Admin Master"
   }
 }

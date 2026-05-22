@@ -55,7 +55,11 @@
     "signOut": "Sign out"
   },
   "descriptions": {
+    "gastos": "Transactions and categories",
     "alertas": "Important alerts about your finances",
+    "cartoes": "Invoices and limits",
+    "metas": "Track your goals",
+    "whatsapp": "Log expenses via WhatsApp",
     "renda": "Income and revenue sources",
     "contasPagar": "Expenses and due dates",
     "contasReceber": "Amounts you have to receive",
@@ -78,5 +82,14 @@
     "perfilMobile": "Account data, profile and personal shortcuts",
     "idioma": "Switch between Português and English",
     "integracoes": "Connect Mercado Pago and other services"
+  },
+  "groups": {
+    "financeiro": "Finance",
+    "planejamento": "Planning",
+    "empresa": "Business",
+    "insights": "Insights",
+    "conexoes": "Connections",
+    "conta": "Account",
+    "adminMaster": "Admin Master"
   }
 }
