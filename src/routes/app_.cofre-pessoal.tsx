@@ -677,7 +677,8 @@ type View =
   | { kind: "detail"; entry: DecryptedEntry }
   | { kind: "change_master" }
   | { kind: "backup" }
-  | { kind: "quick_unlock" };
+  | { kind: "quick_unlock" }
+  | { kind: "health" };
 
 function VaultMain({
   userId,
