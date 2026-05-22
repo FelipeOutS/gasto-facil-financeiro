@@ -307,18 +307,22 @@ export function guessDomainsFromName(name: string | null | undefined): DomainGue
 export const LOGO_DEV_PUBLIC_TOKEN =
   (import.meta as any).env?.VITE_LOGO_DEV_KEY || "pk_X-1ZO13ESQOXMI5MlVUVQQ";
 
+/**
+ * Gera URLs candidatas para um domínio em ordem de qualidade.
+ * Priorizamos Logo.dev em alta resolução (vetorial / 256px retina), depois
+ * o favicon de 256px do DuckDuckGo. NÃO usamos Google s2 (sempre devolve
+ * 16/32px borrado) nem favicon "ico" pequeno como primeira opção.
+ */
 export function logoUrlsForDomain(domain: string, trusted = true): string[] {
   const urls = [
-    `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=128&format=png`,
+    // Logo.dev em alta resolução — a melhor opção quando a marca existe.
+    `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=256&format=png&retina=true`,
   ];
-  // Só usamos fallbacks "favicon" para domínios em que confiamos — caso
-  // contrário, eles devolvem um placeholder genérico e a cascata fica
-  // travada nele, escondendo o ícone de categoria.
   if (trusted) {
-    urls.push(
-      `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-    );
+    // Só usamos favicon como rede de segurança para domínios confiáveis,
+    // e mesmo assim em 256px (ip3 entrega webp decente para a maioria
+    // dos sites grandes).
+    urls.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
   }
   return urls;
 }
@@ -336,6 +340,9 @@ export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
   "chatgpt": "/logos/empresas/chatgpt.svg",
   "openai": "/logos/empresas/chatgpt.svg",
   "open ai": "/logos/empresas/chatgpt.svg",
+  "magazine luiza": "/logos/empresas/magalu.svg",
+  "magazineluiza": "/logos/empresas/magalu.svg",
+  "magalu": "/logos/empresas/magalu.svg",
 };
 
 export function getLogoCandidates(
