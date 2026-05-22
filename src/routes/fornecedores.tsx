@@ -831,6 +831,7 @@ function FornecedorItem({
               {f.email}
             </p>
           )}
+          </div>
         </div>
         <div className="flex gap-1">
           <Button
