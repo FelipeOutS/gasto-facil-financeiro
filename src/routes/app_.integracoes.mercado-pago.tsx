@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api-fetch";
 import { cn } from "@/lib/utils";
 
@@ -69,8 +70,10 @@ export const Route = createFileRoute("/app_/integracoes/mercado-pago")({
 
 function MercadoPagoIntegrationPage() {
   const search = useSearch({ from: "/app_/integracoes/mercado-pago" });
+  const navigate = useNavigate();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -80,6 +83,9 @@ function MercadoPagoIntegrationPage() {
       if (res.ok) {
         const json = (await res.json()) as StatusResponse;
         setStatus(json);
+      } else if (res.status === 401) {
+        toast.error("Você precisa estar logado para conectar o Mercado Pago.");
+        void navigate({ to: "/login" });
       } else {
         setStatus({ configured: false, integration: null, importedCount: 0 });
       }
@@ -88,7 +94,7 @@ function MercadoPagoIntegrationPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     void loadStatus();
@@ -100,7 +106,7 @@ function MercadoPagoIntegrationPage() {
       toast.success("Conta Mercado Pago conectada!");
     } else if (search.error) {
       const errMap: Record<string, string> = {
-        not_configured: "Integração ainda não configurada pelo administrador.",
+        not_configured: "Integração preparada, aguardando configuração das credenciais.",
         invalid_state: "Sessão de autorização expirada. Tente novamente.",
         oauth_exchange_failed: "Não foi possível concluir a autorização.",
         missing_params: "Resposta do Mercado Pago incompleta.",
@@ -110,23 +116,47 @@ function MercadoPagoIntegrationPage() {
   }, [search.connected, search.error]);
 
   async function handleConnect() {
+    if (connecting) return;
     if (!status?.configured) {
-      toast.error("A integração ainda não está configurada. Avise o administrador.");
+      toast.info("Integração preparada, aguardando configuração das credenciais.");
       return;
     }
-    // Página inteira — sem modal. Vai pelo backend para gerar a URL assinada.
-    // Usamos apiFetch para anexar o token e seguir o redirect na mão.
-    const res = await apiFetch("/api/integrations/mercadopago/connect", { redirect: "manual" });
-    // O servidor responde 302; com fetch+manual o "type" vira "opaqueredirect".
-    if (res.type === "opaqueredirect" || res.status === 0 || res.status === 302) {
-      // Não temos a URL final — fazemos a navegação direta via GET sem header.
-      // Solução: backend gera URL e seguimos. Como o fetch já fez a 302, abrimos
-      // a URL direta:
-      window.location.href = "/api/integrations/mercadopago/connect";
-      return;
+    setConnecting(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        toast.error("Você precisa estar logado para conectar o Mercado Pago.");
+        void navigate({ to: "/login" });
+        return;
+      }
+
+      const res = await fetch("/api/integrations/mercadopago/connect", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+      const json = (await res.json().catch(() => ({}))) as { url?: string; message?: string };
+
+      if (res.status === 401) {
+        toast.error(json.message ?? "Você precisa estar logado para conectar o Mercado Pago.");
+        void navigate({ to: "/login" });
+        return;
+      }
+      if (!res.ok) {
+        toast.error(json.message ?? "Não foi possível iniciar a conexão com o Mercado Pago.");
+        return;
+      }
+      if (!json.url) {
+        toast.error("Não foi possível obter a URL de autorização do Mercado Pago.");
+        return;
+      }
+      window.location.href = json.url;
+    } catch {
+      toast.error("Erro inesperado ao conectar o Mercado Pago.");
+    } finally {
+      setConnecting(false);
     }
-    // Fallback
-    window.location.href = "/api/integrations/mercadopago/connect";
   }
 
   async function handleSync() {
@@ -227,12 +257,12 @@ function MercadoPagoIntegrationPage() {
           {!isConnected && (
             <Button
               onClick={handleConnect}
-              disabled={loading || !isConfigured}
+              disabled={loading || connecting}
               size="lg"
               className="h-12 rounded-2xl text-base"
             >
               <Plug className="mr-2 h-5 w-5" />
-              Conectar Mercado Pago
+              {connecting ? "Conectando..." : "Conectar Mercado Pago"}
             </Button>
           )}
           {isConnected && (
@@ -286,8 +316,7 @@ function MercadoPagoIntegrationPage() {
           <div>
             <p className="font-semibold text-foreground">Integração preparada</p>
             <p className="mt-1 text-muted-foreground">
-              Configure as credenciais do Mercado Pago (Client ID, Client Secret e Redirect URI)
-              para ativar a conexão real.
+              Integração preparada, aguardando configuração das credenciais.
             </p>
           </div>
         </section>

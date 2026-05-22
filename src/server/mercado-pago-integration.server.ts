@@ -43,7 +43,8 @@ export function isMercadoPagoConfigured(): boolean {
 // Geramos um state opaco assinado com SUPABASE_SERVICE_ROLE_KEY para
 // vincular ao userId sem persistir no banco.
 function signState(payload: { uid: string; nonce: string; ts: number }): string {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "fallback-state-secret";
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.MERCADO_PAGO_CLIENT_SECRET;
+  if (!secret) throw new Error("missing_oauth_state_secret");
   const json = JSON.stringify(payload);
   const b64 = Buffer.from(json).toString("base64url");
   const sig = crypto.createHmac("sha256", secret).update(b64).digest("base64url");
@@ -54,7 +55,8 @@ function verifyState(state: string): { uid: string } | null {
   try {
     const [b64, sig] = state.split(".");
     if (!b64 || !sig) return null;
-    const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "fallback-state-secret";
+    const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.MERCADO_PAGO_CLIENT_SECRET;
+    if (!secret) return null;
     const expected = crypto.createHmac("sha256", secret).update(b64).digest("base64url");
     if (
       sig.length !== expected.length ||

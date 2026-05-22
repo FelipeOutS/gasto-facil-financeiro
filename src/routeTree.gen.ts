@@ -404,9 +404,9 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
 } as any)
 const AppIntegracoesMercadoPagoRoute =
   AppIntegracoesMercadoPagoRouteImport.update({
-    id: '/mercado-pago',
-    path: '/mercado-pago',
-    getParentRoute: () => AppIntegracoesRoute,
+    id: '/app_/integracoes/mercado-pago',
+    path: '/app/integracoes/mercado-pago',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -1025,6 +1025,7 @@ export interface RootRouteChildren {
   PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  AppIntegracoesMercadoPagoRoute: typeof AppIntegracoesMercadoPagoRouteWithChildren
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
@@ -1484,10 +1485,10 @@ declare module '@tanstack/react-router' {
     }
     '/app_/integracoes/mercado-pago': {
       id: '/app_/integracoes/mercado-pago'
-      path: '/mercado-pago'
+      path: '/app/integracoes/mercado-pago'
       fullPath: '/app/integracoes/mercado-pago'
       preLoaderRoute: typeof AppIntegracoesMercadoPagoRouteImport
-      parentRoute: typeof AppIntegracoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -1583,6 +1584,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppIntegracoesMercadoPagoRouteChildren {
+  AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+}
+
+const AppIntegracoesMercadoPagoRouteChildren: AppIntegracoesMercadoPagoRouteChildren =
+  {
+    AppIntegracoesMercadoPagoMovimentacoesRoute:
+      AppIntegracoesMercadoPagoMovimentacoesRoute,
+  }
+
+const AppIntegracoesMercadoPagoRouteWithChildren =
+  AppIntegracoesMercadoPagoRoute._addFileChildren(
+    AppIntegracoesMercadoPagoRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1647,6 +1663,7 @@ const rootRouteChildren: RootRouteChildren = {
   PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  AppIntegracoesMercadoPagoRoute: AppIntegracoesMercadoPagoRouteWithChildren,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,
@@ -1665,12 +1682,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
