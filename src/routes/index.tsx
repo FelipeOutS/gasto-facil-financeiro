@@ -539,7 +539,7 @@ function Index() {
       </section>
 
       {/* ===== 4. Atividade + Meta mais próxima ===== */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
         <div className="flex min-w-0">
           <div className="flex w-full">
             <RecentTransactionsCard ultimos={ultimos} />
