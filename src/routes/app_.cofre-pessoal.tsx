@@ -873,26 +873,25 @@ function DetailView({
   const [showPwd, setShowPwd] = useState(false);
   return (
     <>
-      <header className="mb-6 flex items-start gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-2xl font-bold tracking-tight">{entry.name}</h1>
-            {entry.favorite && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
-            {strengthBadge(entry.password_strength)}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={entry.name}
+        crumbs={[
+          { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+          { label: "Detalhes do acesso" },
+        ]}
+        onBack={onBack}
+        subtitle="Visualize, copie ou edite as informações deste acesso com segurança."
+      />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
+        {strengthBadge(entry.password_strength)}
+        {entry.favorite && (
+          <Badge className="border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/10">
+            <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" /> Favorito
+          </Badge>
+        )}
+      </div>
+
 
       <Card className="space-y-5 p-5">
         <Field label="Usuário ou e-mail" value={entry.secret.username ?? ""} copyLabel="Usuário" />
