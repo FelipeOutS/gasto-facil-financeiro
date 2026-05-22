@@ -24,8 +24,8 @@ type Props = {
  * Sends only the public domain to logo providers (never credentials).
  */
 function CompanyLogoBase({ site, name, className, rounded = "xl" }: Props) {
-  const domain = extractDomain(site ?? name);
-  const candidates = getCompanyLogoCandidates(domain);
+  const domain = extractDomain(site ?? "");
+  const candidates = getCompanyLogoCandidates(domain, name);
   const [idx, setIdx] = useState(0);
 
   // Reset cascade when the source changes.
