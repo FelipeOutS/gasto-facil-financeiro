@@ -539,7 +539,7 @@ function Index() {
       </section>
 
       {/* ===== 4. Atividade + Meta mais próxima ===== */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
         <div className="flex min-w-0">
           <div className="flex w-full">
             <RecentTransactionsCard ultimos={ultimos} />
@@ -622,7 +622,7 @@ function Index() {
       </section>
 
       {/* Contas a receber */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4">
         <ContasAReceberCard />
       </section>
 
@@ -702,15 +702,17 @@ function Index() {
         </>
       )}
 
-      <DashboardCartoesInsights
-        mes={ym.mes}
-        ano={ym.ano}
-        gastosMes={doMes}
-        totalMes={total}
-        totalMesAnterior={totalMesAnterior}
-        maiorCategoria={maior ?? null}
-        onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
-      />
+      <div className="mt-6 lg:mt-4">
+        <DashboardCartoesInsights
+          mes={ym.mes}
+          ano={ym.ano}
+          gastosMes={doMes}
+          totalMes={total}
+          totalMesAnterior={totalMesAnterior}
+          maiorCategoria={maior ?? null}
+          onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+        />
+      </div>
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
@@ -746,7 +748,7 @@ function Index() {
       </section>
 
       {/* Alertas, limite mensal e renda */}
-      <section className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
+      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
         {temAlertasDashboard && (
           <div className="flex min-w-0 xl:col-span-8">
             <div className="flex w-full">
