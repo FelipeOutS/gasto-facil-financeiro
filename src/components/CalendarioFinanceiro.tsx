@@ -482,8 +482,8 @@ export function CalendarioFinanceiro({
             <DialogTitle className="capitalize">{dataSelecionadaLabel}</DialogTitle>
             <DialogDescription>
               {eventosDoDia.length === 0
-                ? "Nenhum lançamento financeiro neste dia."
-                : `${eventosDoDia.length} ${eventosDoDia.length === 1 ? "lançamento" : "lançamentos"}`}
+                ? t("calendario.semLancamentos")
+                : (eventosDoDia.length === 1 ? t("calendario.lancamentoSing", { count: 1 }) : t("calendario.lancamentoPlur", { count: eventosDoDia.length }))}
             </DialogDescription>
           </DialogHeader>
 
