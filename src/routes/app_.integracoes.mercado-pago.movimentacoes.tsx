@@ -156,7 +156,7 @@ function MovimentacoesPage() {
           .order("occurred_at", { ascending: false })
           .limit(500),
         supabase
-          .from("integrations")
+          .from("user_integrations_safe")
           .select("last_sync_at")
           .eq("provider", "mercado_pago")
           .maybeSingle(),
