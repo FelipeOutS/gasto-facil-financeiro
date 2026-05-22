@@ -140,6 +140,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error ?? null };
     },
     async signOut() {
+      // Limpa a master key do Cofre Pessoal antes de derrubar a sessão
+      // para garantir que outro usuário no mesmo navegador não herde
+      // dados decifrados em memória.
+      try {
+        const mod = await import("@/lib/vault/use-vault");
+        mod.setMasterKey(null);
+      } catch {
+        // ignore — módulo opcional
+      }
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
