@@ -259,31 +259,43 @@ export const SEED_BRAND_DOMAINS: Record<string, string> = {
   "duolingo": "duolingo.com",
 };
 
-export function guessDomainsFromName(name: string | null | undefined): string[] {
+/**
+ * Resultado da geração de palpites: o domínio + se ele veio do mapa
+ * SEED (confiável) ou é apenas um chute por TLD.
+ */
+type DomainGuess = { domain: string; trusted: boolean };
+
+export function guessDomainsFromName(name: string | null | undefined): DomainGuess[] {
   const norm = normalizeMerchantName(name);
   if (!norm) return [];
 
-  const out: string[] = [];
-  const push = (d: string) => { if (d && !out.includes(d)) out.push(d); };
+  const out: DomainGuess[] = [];
+  const seen = new Set<string>();
+  const push = (d: string, trusted: boolean) => {
+    if (!d || seen.has(d)) return;
+    seen.add(d);
+    out.push({ domain: d, trusted });
+  };
 
-  if (SEED_BRAND_DOMAINS[norm]) push(SEED_BRAND_DOMAINS[norm]);
+  if (SEED_BRAND_DOMAINS[norm]) push(SEED_BRAND_DOMAINS[norm], true);
 
-  // Tenta primeira palavra também (ex.: "mercado pago compra 2x" → "mercado")
   const firstWord = norm.split(" ")[0];
   if (firstWord && firstWord !== norm && SEED_BRAND_DOMAINS[firstWord]) {
-    push(SEED_BRAND_DOMAINS[firstWord]);
+    push(SEED_BRAND_DOMAINS[firstWord], true);
   }
-  // Duas primeiras palavras (ex.: "mercado pago foo bar")
   const firstTwo = norm.split(" ").slice(0, 2).join(" ");
   if (firstTwo && firstTwo !== norm && SEED_BRAND_DOMAINS[firstTwo]) {
-    push(SEED_BRAND_DOMAINS[firstTwo]);
+    push(SEED_BRAND_DOMAINS[firstTwo], true);
   }
 
+  // Palpites por TLD — não confiáveis, só passamos por Logo.dev (que dá 404
+  // honesto para domínios inexistentes, diferente de Google s2/DuckDuckGo
+  // que devolvem um favicon genérico cinza).
   const slug = slugifyMerchantName(name);
   for (const base of [slug, firstWord]) {
-    if (!base || base.length < 2) continue;
-    for (const tld of [".com.br", ".com", ".com.br", ".io", ".dev", ".app", ".co", ".net"]) {
-      push(`${base}${tld}`);
+    if (!base || base.length < 3) continue;
+    for (const tld of [".com.br", ".com", ".io", ".dev", ".app", ".co", ".net"]) {
+      push(`${base}${tld}`, false);
     }
   }
   return out;
@@ -292,18 +304,25 @@ export function guessDomainsFromName(name: string | null | undefined): string[] 
 export const LOGO_DEV_PUBLIC_TOKEN =
   (import.meta as any).env?.VITE_LOGO_DEV_KEY || "pk_X-1ZO13ESQOXMI5MlVUVQQ";
 
-export function logoUrlsForDomain(domain: string): string[] {
-  return [
+export function logoUrlsForDomain(domain: string, trusted = true): string[] {
+  const urls = [
     `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_TOKEN}&size=128&format=png`,
-    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
   ];
+  // Só usamos fallbacks "favicon" para domínios em que confiamos — caso
+  // contrário, eles devolvem um placeholder genérico e a cascata fica
+  // travada nele, escondendo o ícone de categoria.
+  if (trusted) {
+    urls.push(
+      `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+    );
+  }
+  return urls;
 }
 
 /**
  * Overrides locais para marcas que Logo.dev / DuckDuckGo / Google não
  * conseguem entregar com qualidade. Aplicados ANTES da cascata externa.
- * Chave: nome normalizado (ver `normalizeMerchantName`).
  */
 export const LOCAL_LOGO_OVERRIDES: Record<string, string> = {
   "oxxo": "/logos/empresas/oxxo.webp",
@@ -323,10 +342,10 @@ export function getLogoCandidates(
     seen.add(u);
     urls.push(u);
   };
-  const pushFor = (d: string) => {
+  const pushFor = (d: string, trusted: boolean) => {
     const norm = extractDomain(d) ?? d;
     if (!norm) return;
-    for (const u of logoUrlsForDomain(norm)) pushUrl(u);
+    for (const u of logoUrlsForDomain(norm, trusted)) pushUrl(u);
   };
 
   // 1) Override local (asset estático no /public).
@@ -339,9 +358,14 @@ export function getLogoCandidates(
     pushUrl(LOCAL_LOGO_OVERRIDES[firstWord]);
   }
 
-  // 2) Cascata externa por domínio.
-  if (domain) pushFor(domain);
-  for (const guess of guessDomainsFromName(name)) pushFor(guess);
+  // 2) Domínio explicitamente fornecido pelo dado (ex.: campo website do
+  //    fornecedor) — confiável.
+  if (domain) pushFor(domain, true);
+
+  // 3) Palpites a partir do nome — trusted=true só para hits do SEED.
+  for (const guess of guessDomainsFromName(name)) {
+    pushFor(guess.domain, guess.trusted);
+  }
   return urls;
 }
 
