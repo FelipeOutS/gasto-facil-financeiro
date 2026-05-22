@@ -140,6 +140,8 @@ function CofrePessoalPage() {
         )}
         {bootstrapState === "needs_unlock" && settings && (
           <UnlockView
+            userId={user.id}
+            userLabel={user.email ?? user.id}
             settings={settings}
             onUnlocked={() => setBootstrapState("ready")}
           />
