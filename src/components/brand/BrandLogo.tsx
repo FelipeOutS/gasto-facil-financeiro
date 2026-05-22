@@ -69,6 +69,9 @@ function BrandLogoBase({
     rounded === "lg"  ? "rounded-lg" : "rounded-xl";
 
   if (failed || !candidates.length) {
+    if (fallback !== undefined && fallback !== null) {
+      return <>{fallback}</>;
+    }
     if (fallbackIcon) {
       return (
         <span
