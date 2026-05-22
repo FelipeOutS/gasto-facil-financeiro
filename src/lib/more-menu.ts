@@ -18,6 +18,7 @@ import {
   Store,
   Contact,
   ClipboardList,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 import type { FeatureKey } from "@/lib/plans";
