@@ -2371,3 +2371,295 @@ function QuickUnlockSettingsView({
     </>
   );
 }
+
+// =====================================================================
+// Saúde do cofre (HIBP + reutilizadas + antigas + fracas)
+// =====================================================================
+function HealthView({
+  entries,
+  masterKey,
+  onBack,
+  onOpenEntry,
+}: {
+  entries: VaultEntryRow[];
+  masterKey: CryptoKey;
+  onBack: () => void;
+  onOpenEntry: (entry: DecryptedEntry) => void;
+}) {
+  const [report, setReport] = useState<import("@/lib/vault/health").HealthReport | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const runScan = useCallback(async () => {
+    setScanning(true);
+    setProgress(null);
+    try {
+      const { analyzeVault } = await import("@/lib/vault/health");
+      // Garante secrets descifrados
+      const enriched: import("@/lib/vault/health").EntryForHealth[] = [];
+      for (const r of entries) {
+        try {
+          let sec = getCachedSecret(r.id);
+          if (!sec) {
+            const dec = await decryptOne(masterKey, r);
+            setCachedSecret(r.id, dec.secret);
+            sec = dec.secret;
+          }
+          enriched.push({
+            id: r.id,
+            name: r.name,
+            category: r.category,
+            site: r.site,
+            updated_at: r.updated_at,
+            password_strength: r.password_strength,
+            password: sec?.password ?? "",
+          });
+        } catch {
+          // skip
+        }
+      }
+      const rep = await analyzeVault(enriched, (done, total) =>
+        setProgress({ done, total }),
+      );
+      setReport(rep);
+    } catch (e) {
+      toast.error("Falha na análise", { description: (e as Error).message });
+    } finally {
+      setScanning(false);
+      setProgress(null);
+    }
+  }, [entries, masterKey]);
+
+  async function openEntry(id: string) {
+    const row = entries.find((e) => e.id === id);
+    if (!row) return;
+    try {
+      const dec = await decryptOne(masterKey, row);
+      onOpenEntry(dec);
+    } catch (e) {
+      toast.error("Não foi possível abrir o acesso", { description: (e as Error).message });
+    }
+  }
+
+  const score = useMemo(() => {
+    if (!report) return null;
+    const total = Math.max(1, report.total);
+    const problems =
+      report.weak.length +
+      report.pwned.length +
+      report.reused.reduce((a, g) => a + g.entries.length, 0) +
+      report.old.length;
+    const ratio = Math.max(0, 1 - problems / (total * 2));
+    return Math.round(ratio * 100);
+  }, [report]);
+
+  return (
+    <>
+      <PageHeader
+        title="Saúde do cofre"
+        subtitle="Detecta senhas vazadas em vazamentos públicos (via HIBP), repetidas em mais de um acesso, antigas e fracas."
+        crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Saúde do cofre" }]}
+        onBack={onBack}
+        actions={
+          <Button
+            onClick={runScan}
+            disabled={scanning || entries.length === 0}
+            className="bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+          >
+            {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {report ? "Analisar novamente" : "Iniciar análise"}
+          </Button>
+        }
+      />
+
+      <Card className="mb-5 flex items-start gap-3 border-brand/30 bg-brand-soft/30 p-4 text-xs leading-relaxed">
+        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-on-soft" />
+        <div>
+          <p className="text-sm font-semibold text-foreground">Verificação privada</p>
+          <p className="mt-1 text-muted-foreground">
+            A checagem usa o protocolo k-anonymity do Have I Been Pwned: somente os primeiros 5 caracteres do hash SHA-1 da senha saem do seu dispositivo — a senha em si <strong>nunca é enviada</strong>.
+          </p>
+        </div>
+      </Card>
+
+      {entries.length === 0 && (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Adicione acessos ao cofre para analisar a saúde das senhas.
+        </Card>
+      )}
+
+      {scanning && (
+        <Card className="mb-4 flex items-center gap-3 p-4 text-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-brand" />
+          <span>
+            Analisando senhas{progress ? ` (${progress.done}/${progress.total})` : "…"}
+          </span>
+        </Card>
+      )}
+
+      {report && !scanning && (
+        <>
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <ScoreCard score={score ?? 0} />
+            <StatCard label="Senhas vazadas" value={report.pwned.length} tone={report.pwned.length ? "warning" : "success"} />
+            <StatCard
+              label="Repetidas"
+              value={report.reused.reduce((a, g) => a + g.entries.length, 0)}
+              tone={report.reused.length ? "warning" : "success"}
+            />
+            <StatCard label="Antigas (1+ ano)" value={report.old.length} tone={report.old.length ? "warning" : "success"} />
+          </div>
+
+          {report.pwnedFailed > 0 && (
+            <Card className="mb-4 flex items-start gap-3 border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <p className="text-foreground/90">
+                Não foi possível verificar {report.pwnedFailed} {report.pwnedFailed === 1 ? "senha" : "senhas"} contra a base de vazamentos (problema de rede). Tente novamente em instantes.
+              </p>
+            </Card>
+          )}
+
+          <HealthSection
+            icon={<ShieldAlert className="h-4 w-4" />}
+            tone="danger"
+            title="Senhas vazadas em violações públicas"
+            empty="Nenhuma senha do cofre apareceu em vazamentos conhecidos."
+            items={report.pwned.map((p) => ({
+              id: p.entry.id,
+              name: p.entry.name,
+              site: p.entry.site ?? undefined,
+              meta: `Encontrada em ${p.count.toLocaleString("pt-BR")} ${p.count === 1 ? "vazamento" : "vazamentos"}`,
+            }))}
+            onOpen={openEntry}
+          />
+
+          <HealthSection
+            icon={<Repeat className="h-4 w-4" />}
+            tone="warning"
+            title="Senhas reutilizadas em mais de um acesso"
+            empty="Cada acesso tem uma senha única — ótimo!"
+            items={report.reused.flatMap((g) =>
+              g.entries.map((e) => ({
+                id: e.id,
+                name: e.name,
+                site: e.site ?? undefined,
+                meta: `Compartilhada com ${g.entries.length - 1} outro${g.entries.length - 1 === 1 ? "" : "s"} acesso${g.entries.length - 1 === 1 ? "" : "s"}`,
+              })),
+            )}
+            onOpen={openEntry}
+          />
+
+          <HealthSection
+            icon={<AlertTriangle className="h-4 w-4" />}
+            tone="warning"
+            title="Senhas fracas"
+            empty="Nenhuma senha fraca identificada."
+            items={report.weak.map((e) => ({
+              id: e.id,
+              name: e.name,
+              site: e.site ?? undefined,
+              meta: "Considere gerar uma senha mais forte",
+            }))}
+            onOpen={openEntry}
+          />
+
+          <HealthSection
+            icon={<Clock className="h-4 w-4" />}
+            tone="muted"
+            title="Senhas antigas (sem alteração há mais de 1 ano)"
+            empty="Todas as senhas foram atualizadas no último ano."
+            items={report.old.map((e) => ({
+              id: e.id,
+              name: e.name,
+              site: e.site ?? undefined,
+              meta: `Atualizada em ${new Date(e.updated_at).toLocaleDateString("pt-BR")}`,
+            }))}
+            onOpen={openEntry}
+          />
+        </>
+      )}
+
+      {!report && !scanning && entries.length > 0 && (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Toque em <strong className="text-foreground">Iniciar análise</strong> para verificar a saúde das suas senhas.
+        </Card>
+      )}
+    </>
+  );
+}
+
+function ScoreCard({ score }: { score: number }) {
+  const tone =
+    score >= 85 ? "success" : score >= 60 ? "warning" : "danger";
+  const color =
+    tone === "success"
+      ? "text-emerald-400"
+      : tone === "warning"
+      ? "text-amber-400"
+      : "text-rose-400";
+  return (
+    <Card className="p-3">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Pontuação</p>
+      <p className={cn("mt-1 text-2xl font-bold tabular-nums", color)}>{score}<span className="text-sm text-muted-foreground">/100</span></p>
+    </Card>
+  );
+}
+
+function HealthSection({
+  icon,
+  title,
+  empty,
+  items,
+  tone,
+  onOpen,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  empty: string;
+  tone: "danger" | "warning" | "muted";
+  items: { id: string; name: string; site?: string; meta: string }[];
+  onOpen: (id: string) => void;
+}) {
+  const accent =
+    tone === "danger"
+      ? "text-rose-400 bg-rose-500/10 ring-rose-500/30"
+      : tone === "warning"
+      ? "text-amber-400 bg-amber-500/10 ring-amber-500/30"
+      : "text-muted-foreground bg-muted/30 ring-border";
+  return (
+    <Card className="mb-4 overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <span className={cn("grid h-7 w-7 place-items-center rounded-lg ring-1", accent)}>
+          {icon}
+        </span>
+        <p className="text-sm font-semibold">{title}</p>
+        <span className="ml-auto rounded-full bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums">
+          {items.length}
+        </span>
+      </div>
+      {items.length === 0 ? (
+        <p className="px-4 py-4 text-xs text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {items.map((it) => (
+            <li key={`${title}-${it.id}-${it.meta}`}>
+              <button
+                type="button"
+                onClick={() => onOpen(it.id)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{it.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {it.site ? `${it.site} · ` : ""}{it.meta}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
