@@ -89,7 +89,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "conexoes",
     labelKey: "groups.conexoes",
     items: [
-      { to: "/whatsapp", labelKey: "whatsapp", descKey: "whatsapp" ?? "whatsapp", icon: Bell, feature: "whatsapp" },
+      { to: "/whatsapp", labelKey: "whatsapp", descKey: "whatsapp", icon: Bell, feature: "whatsapp" },
       { to: "/contas-conectadas", labelKey: "contasConectadas", descKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
     ],
   },
