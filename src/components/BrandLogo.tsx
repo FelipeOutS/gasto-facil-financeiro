@@ -69,11 +69,16 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
     };
   }, [resolved.logoUrl]);
 
-  // Dynamic candidates (Logo.dev etc.) — only used if no static logo.
+  // Dynamic candidates (Logo.dev → favicon.im → Google s2 → DuckDuckGo).
+  // Para bancos, sempre usamos os logos do Logo.dev (substituindo os SVGs
+  // locais), com trustedOnly para evitar palpites por TLD e flicker.
+  // Para merchants, mantemos o fallback dinâmico só quando não há SVG local.
   const dynamicCandidates = useMemo(() => {
-    if (resolved.logoUrl || !name) return [];
+    if (!name) return [];
+    if (variant === "bank") return getLogoCandidates(null, name, { trustedOnly: true });
+    if (resolved.logoUrl) return [];
     return getLogoCandidates(null, name);
-  }, [resolved.logoUrl, name]);
+  }, [resolved.logoUrl, name, variant]);
   const [dynIdx, setDynIdx] = useState(0);
   useEffect(() => {
     setDynIdx(0);
@@ -83,7 +88,8 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       ? dynamicCandidates[dynIdx]
       : null;
 
-  const showStatic = !!displayedUrl && !staticErrored;
+  // Bancos: nunca renderiza o SVG estático — sempre cascata Logo.dev.
+  const showStatic = variant !== "bank" && !!displayedUrl && !staticErrored;
   const bg = resolved.brandColor || (variant === "bank" ? "#3b82f6" : "#64748b");
   const FallbackIcon = variant === "bank" ? Building2 : Store;
 
