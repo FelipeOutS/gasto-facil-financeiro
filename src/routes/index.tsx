@@ -581,16 +581,21 @@ function Index() {
                     {Math.round(pct)}%
                   </span>
                   <span className="num text-muted-foreground">
-                    Falta {formatBRL(restante)}
+                    {t("metaProxima.falta", { valor: formatBRL(restante) })}
                   </span>
                 </div>
                 {bd.guardado > 0 && (
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    Inclui <span className="num font-semibold text-foreground">{formatBRL(bd.guardado)}</span> do Guardado vinculado
+                    <Trans
+                      i18nKey="metaProxima.incluiGuardado"
+                      t={t}
+                      values={{ valor: formatBRL(bd.guardado) }}
+                      components={{ strong: <span className="num font-semibold text-foreground" /> }}
+                    />
                   </p>
                 )}
                 <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                  {metasAndamento.length} {metasAndamento.length === 1 ? "meta ativa" : "metas ativas"}
+                  {metasAndamento.length} {metasAndamento.length === 1 ? t("metaProxima.ativaSing") : t("metaProxima.ativaPlur")}
                 </div>
               </section>
             </div>
