@@ -412,7 +412,12 @@ function ContaCard({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <BrandLogo
+            name={clienteNome || conta.pagador_nome || conta.titulo || "?"}
+            size="sm"
+          />
+          <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <StatusBadge status={eff} cancelado={isCancelado} />
             <p className="text-[11px] text-muted-foreground">{tipoLabel}</p>
