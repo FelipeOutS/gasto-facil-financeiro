@@ -437,14 +437,14 @@ export function CalendarioFinanceiro({
 
         {/* Próximos vencimentos */}
         <div className="mt-4">
-          <p className="text-xs font-semibold text-muted-foreground">Próximos vencimentos</p>
+          <p className="text-xs font-semibold text-muted-foreground">{t("calendario.proximosVencimentos")}</p>
           {proximos.length === 0 ? (
-            <p className="mt-2 text-xs text-muted-foreground">Nenhum vencimento próximo. 🎉</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("calendario.nenhumProximo")}</p>
           ) : (
             <ul className="mt-2 space-y-1.5">
               {proximos.map((ev) => {
                 const info = statusInfo(ev.status, ev.tipo);
-                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString("pt-BR", {
+                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString(localeBcp, {
                   day: "2-digit",
                   month: "short",
                 });
