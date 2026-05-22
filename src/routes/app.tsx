@@ -23,7 +23,7 @@ export const Route = createFileRoute("/app")({
 function AppEntry() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("dashboard");
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
