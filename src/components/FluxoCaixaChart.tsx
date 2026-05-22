@@ -80,8 +80,8 @@ export function FluxoCaixaChart({
 
   // Donut data
   const donutData = [
-    { name: "Entradas", value: totalEntradas },
-    { name: "Gastos", value: totalGastos },
+    { name: t("fluxo.entradas"), value: totalEntradas },
+    { name: t("fluxo.gastos"), value: totalGastos },
   ];
 
   const tooltipStyle = {
