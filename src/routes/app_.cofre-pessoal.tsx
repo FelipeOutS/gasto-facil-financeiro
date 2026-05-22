@@ -843,7 +843,7 @@ function VaultMain({
           <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
         )
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((e) => (
             <EntryCard
               key={e.id}
