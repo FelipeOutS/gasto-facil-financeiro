@@ -702,7 +702,11 @@ function AdminPage() {
           </CardContent>
         </Card>
 
+        {/* Diagnóstico de Pagamento (Mercado Pago) */}
+        <MpDiagnosticSection />
+
         {/* Detalhes */}
+
         <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Detalhes do usuário</DialogTitle></DialogHeader>
