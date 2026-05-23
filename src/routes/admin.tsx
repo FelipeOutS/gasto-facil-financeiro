@@ -996,3 +996,279 @@ function EditStatusDialog({
     </Dialog>
   );
 }
+
+// ============ Diagnóstico de Pagamento (Mercado Pago) ============
+
+type DiagnosisData = {
+  mercado_pago_status: string;
+  mp_raw_status: string | null;
+  local_payment_status: string | null;
+  local_subscription_status: string | null;
+  user_id: string | null;
+  user_email: string | null;
+  plan: string | null;
+  amount: number | null;
+  external_payment_id: string;
+  inconsistencies: string[];
+  recommended_action: string;
+};
+
+type PaymentEventRow = {
+  id: string;
+  created_at: string;
+  provider: string;
+  external_payment_id: string;
+  status: string;
+  raw_status: string | null;
+  event_type: string | null;
+  user_id: string | null;
+  user_email: string | null;
+};
+
+function MpStatusBadge({ status }: { status: string }) {
+  const s = (status ?? "").toLowerCase();
+  let cls = "bg-muted text-muted-foreground border-border";
+  if (s === "approved" || s === "paid" || s === "authorized") cls = "bg-emerald-500/15 text-emerald-600 border-emerald-500/30";
+  else if (s === "rejected" || s === "cancelled" || s === "canceled" || s === "refunded" || s === "charged_back") cls = "bg-red-500/15 text-red-600 border-red-500/30";
+  else if (s === "pending" || s === "in_process" || s === "in_mediation") cls = "bg-amber-500/15 text-amber-600 border-amber-500/30";
+  return <Badge variant="outline" className={cls}>{status || "—"}</Badge>;
+}
+
+function MpDiagnosticSection() {
+  const [paymentId, setPaymentId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
+  const [confirmRec, setConfirmRec] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<DiagnosisData | null>(null);
+  const [resultMsg, setResultMsg] = useState<{ kind: "success" | "info" | "error"; text: string } | null>(null);
+  const [events, setEvents] = useState<PaymentEventRow[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  async function loadEvents() {
+    setEventsLoading(true);
+    try {
+      const r = await listRecentPaymentEvents({ data: { limit: 20 } });
+      setEvents(r.events as PaymentEventRow[]);
+    } catch (e: any) {
+      // silencioso — não bloqueia diagnóstico
+      console.error(e);
+    } finally {
+      setEventsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadEvents();
+  }, []);
+
+  async function runDiagnose() {
+    const id = paymentId.trim();
+    if (!id) { toast.error("Informe o ID do pagamento"); return; }
+    setLoading(true);
+    setResultMsg(null);
+    setConfirmRec(false);
+    try {
+      const r = await diagnoseMpPayment({ data: { paymentId: id } });
+      setDiagnosis(r.diagnosis as DiagnosisData);
+    } catch (e: any) {
+      const msg = e?.message ?? "Erro ao diagnosticar";
+      setDiagnosis(null);
+      if (msg.toLowerCase().includes("admin") || msg.toLowerCase().includes("permission")) {
+        toast.error("Sem permissão para esta ação");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runReconcile() {
+    const id = paymentId.trim();
+    if (!id) return;
+    setReconciling(true);
+    setResultMsg(null);
+    try {
+      const r = await reconcileMpPaymentById({ data: { paymentId: id } });
+      setDiagnosis(r.diagnosis as DiagnosisData);
+      let kind: "success" | "info" | "error" = "info";
+      let text = r.message;
+      if (r.message === "reconciled" && r.applied) { kind = "success"; text = "Pagamento reconciliado e assinatura ativada."; }
+      else if (r.message === "already_consistent") { kind = "info"; text = "Nada a fazer — pagamento e assinatura já estão consistentes."; }
+      else if (r.message === "payment_not_found") { kind = "error"; text = "Pagamento não encontrado no Mercado Pago."; }
+      else if (r.message?.startsWith("mp_status_is_")) { kind = "info"; text = `Pagamento não aprovado (status: ${r.message.replace("mp_status_is_", "")}).`; }
+      setResultMsg({ kind, text });
+      setConfirmRec(false);
+      void loadEvents();
+    } catch (e: any) {
+      const msg = e?.message ?? "Erro ao reconciliar";
+      if (msg.toLowerCase().includes("admin") || msg.toLowerCase().includes("permission")) {
+        setResultMsg({ kind: "error", text: "Sem permissão para esta ação." });
+      } else {
+        setResultMsg({ kind: "error", text: msg });
+      }
+    } finally {
+      setReconciling(false);
+    }
+  }
+
+  const recColor = diagnosis?.inconsistencies?.length
+    ? "border-amber-500/40 bg-amber-500/5"
+    : diagnosis?.mercado_pago_status === "approved"
+      ? "border-emerald-500/40 bg-emerald-500/5"
+      : diagnosis?.mercado_pago_status && ["rejected","cancelled","refunded","charged_back"].includes(diagnosis.mercado_pago_status)
+        ? "border-red-500/40 bg-red-500/5"
+        : "border-border";
+
+  return (
+    <Card className="mt-4 sm:mt-6">
+      <CardHeader className="p-3 sm:p-6 sm:pb-2">
+        <CardTitle className="text-sm">Diagnóstico de Pagamento (Mercado Pago)</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 sm:p-6 sm:pt-3 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            placeholder="Digite o ID do pagamento do Mercado Pago"
+            value={paymentId}
+            onChange={(e) => setPaymentId(e.target.value)}
+            className="flex-1"
+            inputMode="numeric"
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => void runDiagnose()} disabled={loading || reconciling}>
+              {loading ? "Diagnosticando…" : "Diagnosticar pagamento"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmRec(true)}
+              disabled={loading || reconciling || !paymentId.trim()}
+            >
+              Reconciliar pagamento
+            </Button>
+          </div>
+        </div>
+
+        {confirmRec && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+            <p className="font-medium">Tem certeza que deseja reconciliar este pagamento?</p>
+            <p className="text-xs text-muted-foreground mt-1">Se o Mercado Pago indicar pagamento aprovado, a assinatura será ativada.</p>
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" onClick={() => void runReconcile()} disabled={reconciling}>
+                {reconciling ? "Reconciliando…" : "Confirmar reconciliação"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setConfirmRec(false)} disabled={reconciling}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {resultMsg && (
+          <div className={`rounded-md border p-3 text-sm ${
+            resultMsg.kind === "success" ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
+              : resultMsg.kind === "error" ? "border-red-500/40 bg-red-500/5 text-red-700 dark:text-red-400"
+                : "border-border bg-muted/30"
+          }`}>
+            {resultMsg.text}
+          </div>
+        )}
+
+        {diagnosis && (
+          <div className={`rounded-md border p-3 sm:p-4 space-y-3 ${recColor}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Status no Mercado Pago</p>
+                <div className="mt-1"><MpStatusBadge status={diagnosis.mercado_pago_status} /></div>
+                {diagnosis.mp_raw_status && diagnosis.mp_raw_status !== diagnosis.mercado_pago_status && (
+                  <p className="text-[10px] text-muted-foreground mt-1">raw: {diagnosis.mp_raw_status}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Status local (pagamento)</p>
+                <div className="mt-1"><MpStatusBadge status={diagnosis.local_payment_status ?? "—"} /></div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Status local (assinatura)</p>
+                <div className="mt-1">
+                  <Badge variant="outline" className={diagnosis.local_subscription_status === "ativo"
+                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    : "bg-muted text-muted-foreground"}>
+                    {diagnosis.local_subscription_status ?? "—"}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">E-mail do usuário</p>
+                <p className="font-medium text-xs break-all">{diagnosis.user_email ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Plano</p>
+                <p className="font-medium text-xs">{diagnosis.plan ? (PLAN_LABEL[diagnosis.plan as keyof typeof PLAN_LABEL] ?? diagnosis.plan) : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Valor</p>
+                <p className="font-medium text-xs">{diagnosis.amount != null ? `R$ ${diagnosis.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</p>
+              </div>
+              <div className="col-span-2 sm:col-span-3">
+                <p className="text-xs text-muted-foreground">ID do pagamento</p>
+                <p className="font-mono text-xs break-all">{diagnosis.external_payment_id}</p>
+              </div>
+            </div>
+
+            {diagnosis.inconsistencies.length > 0 && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs">
+                <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">Inconsistências encontradas:</p>
+                <ul className="list-disc pl-4 space-y-0.5 text-amber-700 dark:text-amber-400">
+                  {diagnosis.inconsistencies.map((i) => <li key={i}>{i}</li>)}
+                </ul>
+              </div>
+            )}
+
+            <div className="text-xs">
+              <span className="text-muted-foreground">Ação recomendada: </span>
+              <span className="font-semibold">{diagnosis.recommended_action}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Últimos eventos de pagamento */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold">Últimos eventos de pagamento</p>
+            <Button size="sm" variant="ghost" onClick={() => void loadEvents()} disabled={eventsLoading}>
+              {eventsLoading ? "Atualizando…" : "Atualizar"}
+            </Button>
+          </div>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Data</TableHead>
+                  <TableHead className="text-xs">ID</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
+                  <TableHead className="text-xs">Evento</TableHead>
+                  <TableHead className="text-xs">Usuário</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {events.map((ev) => (
+                  <TableRow key={ev.id}>
+                    <TableCell className="text-xs whitespace-nowrap">{new Date(ev.created_at).toLocaleString("pt-BR")}</TableCell>
+                    <TableCell className="text-xs font-mono break-all max-w-[120px] truncate">{ev.external_payment_id}</TableCell>
+                    <TableCell><MpStatusBadge status={ev.status} /></TableCell>
+                    <TableCell className="text-xs">{ev.event_type ?? "—"}</TableCell>
+                    <TableCell className="text-xs break-all">{ev.user_email ?? ev.user_id ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+                {events.length === 0 && !eventsLoading && (
+                  <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-3">Nenhum evento registrado ainda.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
