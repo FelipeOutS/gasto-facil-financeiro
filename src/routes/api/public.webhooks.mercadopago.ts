@@ -142,10 +142,16 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           // tipo desconhecido — tenta como payment
           paymentId = dataId;
         }
-        if (!paymentId) return json({ ok: true, ignored: true });
+        if (!paymentId) {
+          if (logId) await updateWebhookLog(logId, { status: "ignored", http_status: 200, processing_time_ms: Date.now() - startedAt });
+          return json({ ok: true, ignored: true });
+        }
 
         const payment = await fetchPayment(accessToken, paymentId);
-        if (!payment) return json({ error: "mp_fetch_failed" }, 502);
+        if (!payment) {
+          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 502, error_message: "mp_fetch_failed", processing_time_ms: Date.now() - startedAt });
+          return json({ error: "mp_fetch_failed" }, 502);
+        }
 
         const status = (payment.status ?? "pending").toLowerCase();
         let userId = payment.metadata?.user_id ?? null;
