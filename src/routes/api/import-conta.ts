@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
+import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
 
 /**
  * Importação de conta a pagar (boleto / Pix copia e cola / fatura solta)
@@ -98,6 +98,8 @@ export const Route = createFileRoute("/api/import-conta")({
       POST: async ({ request }) => {
         const __user = await getUserFromRequest(request);
         if (!__user) return unauthorizedResponse();
+        const __gate = await ensurePremiumFeatureAccess(__user, "importar_conta");
+        if (__gate) return __gate;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
@@ -318,7 +320,7 @@ export const Route = createFileRoute("/api/import-conta")({
         } catch (err) {
           console.error("[import-conta] erro", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Erro desconhecido" },
+            { error: "Ocorreu um erro interno. Tente novamente." },
             { status: 500 },
           );
         }

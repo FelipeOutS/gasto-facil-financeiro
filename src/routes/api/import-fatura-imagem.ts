@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
+import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
 
 /**
  * Importação de fatura por imagem/print via Lovable AI Gateway (Gemini Vision).
@@ -93,11 +93,13 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
       POST: async ({ request }) => {
         const __user = await getUserFromRequest(request);
         if (!__user) return unauthorizedResponse();
+        const __gate = await ensurePremiumFeatureAccess(__user, "importar_fatura");
+        if (__gate) return __gate;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
             return Response.json(
-              { error: "LOVABLE_API_KEY não configurada." },
+              { error: "Serviço de IA indisponível." },
               { status: 500 },
             );
           }
@@ -113,6 +115,13 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
             return Response.json(
               { error: "Envie ao menos uma imagem em base64." },
               { status: 400 },
+            );
+          }
+          const totalSize = valid.reduce((s, img) => s + img.length, 0);
+          if (totalSize > 30 * 1024 * 1024) {
+            return Response.json(
+              { error: "Imagens muito grandes. Reduza o tamanho ou envie menos imagens." },
+              { status: 413 },
             );
           }
 
@@ -317,7 +326,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
         } catch (err) {
           console.error("[import-fatura-imagem] erro", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Erro desconhecido" },
+            { error: "Ocorreu um erro interno. Tente novamente." },
             { status: 500 },
           );
         }

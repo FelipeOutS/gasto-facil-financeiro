@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
+import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
 import { extractText, getDocumentProxy } from "unpdf";
 
 /**
@@ -372,6 +372,8 @@ export const Route = createFileRoute("/api/import-investimentos")({
       POST: async ({ request }) => {
         const __user = await getUserFromRequest(request);
         if (!__user) return unauthorizedResponse();
+        const __gate = await ensurePremiumFeatureAccess(__user, "investimentos");
+        if (__gate) return __gate;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
@@ -473,12 +475,7 @@ export const Route = createFileRoute("/api/import-investimentos")({
         } catch (err) {
           console.error("[import-investimentos] erro", err);
           return Response.json(
-            {
-              error:
-                err instanceof Error
-                  ? err.message
-                  : "Não foi possível processar o arquivo.",
-            },
+            { error: "Não foi possível processar o arquivo. Tente novamente." },
             { status: 500 },
           );
         }
