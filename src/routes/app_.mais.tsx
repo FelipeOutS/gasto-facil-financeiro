@@ -53,7 +53,36 @@ function AppMaisPage() {
   const [signingOut, setSigningOut] = useState(false);
   const appLock = useAppLock();
   const [togglingLock, setTogglingLock] = useState(false);
+  const [loginBioAvailable, setLoginBioAvailable] = useState(false);
+  const [loginBioEnabled, setLoginBioEnabled] = useState(false);
+  const [togglingLoginBio, setTogglingLoginBio] = useState(false);
+  const [signOutDialog, setSignOutDialog] = useState(false);
   const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  useEffect(() => {
+    setLoginBioAvailable(isLoginBioBridgeAvailable());
+    setLoginBioEnabled(isLoginBioEnabled());
+  }, []);
+
+  async function handleToggleLoginBio() {
+    if (togglingLoginBio) return;
+    setTogglingLoginBio(true);
+    try {
+      if (loginBioEnabled) {
+        clearLoginBio();
+        setLoginBioEnabled(false);
+        toast.success("Entrada por biometria desativada neste dispositivo.");
+      } else {
+        await enableLoginBio(user?.email ?? "");
+        setLoginBioEnabled(true);
+        toast.success("Entrada por biometria ativada neste dispositivo.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar a biometria.");
+    } finally {
+      setTogglingLoginBio(false);
+    }
+  }
 
   async function handleToggleAppLock() {
     if (togglingLock) return;
