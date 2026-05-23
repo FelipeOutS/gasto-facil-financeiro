@@ -81,3 +81,36 @@ export function forbiddenResponse(message = "Acesso restrito ao administrador ma
     headers: { "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Server-side feature gate for premium import/OCR endpoints.
+ * Returns null when access is allowed, otherwise a 403 Response.
+ *
+ * Centralizes the check so we never trust client-side plan checks alone.
+ */
+export async function ensurePremiumFeatureAccess(
+  user: { id: string; email?: string | null } | null | undefined,
+  feature: "importacoes" | "importar_extrato" | "importar_fatura" | "importar_conta",
+): Promise<Response | null> {
+  if (!user) return unauthorizedResponse("Você precisa estar logado.");
+  if (isAdminMasterUser(user)) return null;
+  try {
+    const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
+    const { planAllowsFeature } = await import("@/lib/plans");
+    const sub = await getSubscriptionForUserIdentity({
+      userId: user.id,
+      email: user.email ?? null,
+      repairLink: false,
+    });
+    if (!sub.active) {
+      return forbiddenResponse("Sua assinatura não está ativa. Acesse Meu plano para liberar este recurso.");
+    }
+    if (!planAllowsFeature(sub.plan, feature)) {
+      return forbiddenResponse("Este recurso está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.");
+    }
+    return null;
+  } catch (err) {
+    console.error("[ensurePremiumFeatureAccess] erro ao verificar plano", err);
+    return forbiddenResponse("Não foi possível validar seu plano. Tente novamente.");
+  }
+}
