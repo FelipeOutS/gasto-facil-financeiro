@@ -270,7 +270,7 @@ export const Route = createFileRoute("/api/ocr-gasto")({
         } catch (err) {
           console.error("[ocr-gasto] erro", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Erro desconhecido" },
+            { error: "Ocorreu um erro interno. Tente novamente." },
             { status: 500 },
           );
         }
