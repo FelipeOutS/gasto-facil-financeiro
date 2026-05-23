@@ -573,6 +573,11 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
       metadata: { force_activate: !!data.forceActivate, clear_plan: !!data.clearPlan },
     });
 
+    return { ok: true as const };
+  });
+
+
+
 /**
  * Diagnóstico de um pagamento do Mercado Pago. Admin only.
  * NÃO altera estado — apenas reporta.
