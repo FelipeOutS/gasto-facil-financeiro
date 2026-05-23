@@ -328,7 +328,7 @@ function AppMaisPage() {
           }}
           className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-3xl border border-border bg-card p-4 text-sm font-semibold active:scale-[0.99]"
         >
-          <LockIcon className="h-4 w-4" />
+          <Lock className="h-4 w-4" />
           Bloquear aplicativo
           <span className="ml-2 text-[10px] font-normal text-muted-foreground">
             (volta com biometria)
