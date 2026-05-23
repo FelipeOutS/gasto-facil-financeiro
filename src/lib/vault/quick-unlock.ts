@@ -44,6 +44,8 @@ function storageKey(userId: string) {
   return `vault:quick:${userId}`;
 }
 
+const ANDROID_BIOMETRIC_ENABLED_KEY = "vault_android_biometric_enabled";
+
 /** Retorna o registro local de biometria (ignora registros antigos de PIN). */
 export function getQuickUnlock(userId: string): QuickUnlockRecord | null {
   try {
@@ -62,6 +64,7 @@ export function getQuickUnlock(userId: string): QuickUnlockRecord | null {
 export function disableQuickUnlock(userId: string) {
   try {
     localStorage.removeItem(storageKey(userId));
+    localStorage.removeItem(ANDROID_BIOMETRIC_ENABLED_KEY);
   } catch {}
 }
 
@@ -98,7 +101,9 @@ declare global {
 export function getAndroidBridge(): AndroidBridge | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  if (!b || typeof b.authenticate !== "function") return null;
+  const found = !!b && typeof b.authenticate === "function";
+  console.log("[VaultBiometric] Android bridge found:", found);
+  if (!found) return null;
   return b;
 }
 
@@ -122,6 +127,7 @@ async function androidStatus(): Promise<string> {
   try {
     if (typeof b.isAvailable === "function") {
       const v = await b.isAvailable();
+      console.log("[VaultBiometric] window.AndroidBiometric.isAvailable() result:", v);
       if (truthyBridgeValue(v)) return "available";
       if (v === false) return "none_enrolled";
       const s = String(v ?? "").toLowerCase();
@@ -149,44 +155,43 @@ async function androidStatus(): Promise<string> {
  * `AndroidBiometricResult`. Registramos o listener ANTES de chamar
  * `authenticate()` para não perder o evento.
  */
-function androidAuthenticate(reason: string, timeoutMs = 60_000): Promise<boolean> {
+function androidResultMessage(detail: AndroidBiometricResultDetail, fallback: string): string {
+  if (typeof detail.error === "string" && detail.error.trim()) return detail.error;
+  if (detail.errorCode) return `Erro biométrico: ${detail.errorCode}`;
+  return fallback;
+}
+
+function androidAuthenticate(_reason: string, timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
   return new Promise((resolve) => {
     const b = getAndroidBridge();
     if (!b?.authenticate) {
-      resolve(false);
+      resolve({ success: false, error: "Bridge biométrica Android não encontrada." });
       return;
     }
 
     let settled = false;
-    const finish = (ok: boolean) => {
+    const finish = (detail: AndroidBiometricResultDetail) => {
       if (settled) return;
       settled = true;
       window.removeEventListener("AndroidBiometricResult", onResult as EventListener);
       clearTimeout(timer);
-      resolve(ok);
+      resolve(detail);
     };
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
-      finish(detail.success === true);
+      console.log("[VaultBiometric] AndroidBiometricResult event received:", detail);
+      finish(detail);
     };
 
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
-    const timer = setTimeout(() => finish(false), timeoutMs);
+    const timer = setTimeout(() => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }), timeoutMs);
 
     try {
-      const r = b.authenticate(reason);
-      // Compat com bridges antigas que retornavam Promise / valor síncrono.
-      if (r && typeof (r as Promise<unknown>).then === "function") {
-        (r as Promise<string | boolean>).then(
-          (val) => finish(val === true || String(val).toLowerCase() === "success"),
-          () => finish(false),
-        );
-      } else if (typeof r === "boolean" || typeof r === "string") {
-        finish(r === true || String(r).toLowerCase() === "success");
-      }
-      // Caso normal (void): aguardamos o evento AndroidBiometricResult.
-    } catch {
-      finish(false);
+      b.authenticate();
+      // Bridge Android nativa: não aguarde retorno direto; o resultado vem pelo evento.
+    } catch (error) {
+      console.log("[VaultBiometric] Error calling AndroidBiometric.authenticate():", error);
+      finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
     }
   });
 }
@@ -263,24 +268,33 @@ export async function enableBiometricUnlock(
       throw new Error(reason ?? "Biometria indisponível neste aparelho.");
     }
     // Confirma a biometria agora para validar a configuração
-    const ok = await androidAuthenticate("Confirme para ativar a biometria no Cofre");
-    if (!ok) throw new Error("Cadastro de biometria cancelado.");
+    const result = await androidAuthenticate("Confirme para ativar a biometria no Cofre");
+    if (result.success !== true) {
+      throw new Error(androidResultMessage(result, "Cadastro de biometria cancelado."));
+    }
     // Armazena a chave-mestra cifrada localmente. A bridge é o portão.
-    const localKey = vaultRandomBytes(32);
-    const aesKey = await importRawAesKey(toBuf(localKey));
-    const iv = vaultRandomBytes(12);
-    const raw = await exportMasterKeyRaw(masterKey);
-    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, raw);
-    const rec: AndroidBioRecord = {
-      v: 1,
-      kind: "android-bio",
-      createdAt: Date.now(),
-      attempts: 0,
-      iv: vaultB64encode(iv),
-      wrapped: vaultB64encode(new Uint8Array(ct)),
-      localKey: vaultB64encode(localKey),
-    };
-    persist(userId, rec);
+    try {
+      localStorage.setItem(ANDROID_BIOMETRIC_ENABLED_KEY, "true");
+      const localKey = vaultRandomBytes(32);
+      const aesKey = await importRawAesKey(toBuf(localKey));
+      const iv = vaultRandomBytes(12);
+      const raw = await exportMasterKeyRaw(masterKey);
+      const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, raw);
+      const rec: AndroidBioRecord = {
+        v: 1,
+        kind: "android-bio",
+        createdAt: Date.now(),
+        attempts: 0,
+        iv: vaultB64encode(iv),
+        wrapped: vaultB64encode(new Uint8Array(ct)),
+        localKey: vaultB64encode(localKey),
+      };
+      persist(userId, rec);
+      console.log("[VaultBiometric] Local biometric flag saved successfully.");
+    } catch (error) {
+      console.log("[VaultBiometric] Error saving local biometric flag:", error);
+      throw new Error("Falha ao salvar a configuração local da biometria.");
+    }
     return;
   }
 
@@ -362,8 +376,10 @@ export async function unlockWithBiometric(userId: string): Promise<CryptoKey> {
   if (!rec) throw new Error("Biometria não configurada neste dispositivo.");
 
   if (rec.kind === "android-bio") {
-    const ok = await androidAuthenticate("Use a biometria para abrir o Cofre");
-    if (!ok) throw new Error("Autenticação biométrica cancelada.");
+    const result = await androidAuthenticate("Use a biometria para abrir o Cofre");
+    if (result.success !== true) {
+      throw new Error(androidResultMessage(result, "Autenticação biométrica cancelada."));
+    }
     const aesKey = await importRawAesKey(toBuf(vaultB64decode(rec.localKey)));
     const plain = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: vaultB64decode(rec.iv) },
