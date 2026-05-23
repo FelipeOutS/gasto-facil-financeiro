@@ -77,13 +77,19 @@ import { extractDomain } from "@/lib/brand/resolver";
 import {
   getQuickUnlock,
   disableQuickUnlock,
-  enablePinUnlock,
-  unlockWithPin,
   enableBiometricUnlock,
   unlockWithBiometric,
   isPlatformAuthenticatorAvailable,
+  biometricUnavailableReason,
   type QuickUnlockRecord,
 } from "@/lib/vault/quick-unlock";
+import {
+  getServerPinStatus,
+  enableServerPin,
+  disableServerPin,
+  unlockWithServerPin,
+  type ServerPinStatus,
+} from "@/lib/vault/server-pin";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
@@ -387,8 +393,9 @@ function UnlockView({
   settings: VaultSettingsRow;
   onUnlocked: () => void;
 }) {
-  const [quick, setQuick] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
-  const [mode, setMode] = useState<"quick" | "master">(quick ? "quick" : "master");
+  const [bio, setBio] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [serverPin, setServerPin] = useState<ServerPinStatus | null>(null);
+  const [mode, setMode] = useState<"pin" | "bio" | "master">("master");
   const [pwd, setPwd] = useState("");
   const [pin, setPin] = useState("");
   const [show, setShow] = useState(false);
@@ -396,6 +403,25 @@ function UnlockView({
   const [fails, setFails] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
   const [now, setNow] = useState(Date.now());
+
+  // Carrega status do PIN global da conta e define modo inicial preferido
+  useEffect(() => {
+    let alive = true;
+    getServerPinStatus(userId)
+      .then((s) => {
+        if (!alive) return;
+        setServerPin(s);
+        if (s.configured && !s.lockedUntil) setMode("pin");
+        else if (bio) setMode("bio");
+      })
+      .catch(() => {
+        if (alive && bio) setMode("bio");
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     if (cooldownUntil <= now) return;
@@ -438,17 +464,19 @@ function UnlockView({
     if (busy) return;
     setBusy(true);
     try {
-      const key = await unlockWithPin(userId, value);
+      const key = await unlockWithServerPin(userId, value);
       setMasterKey(key);
       setPin("");
       onUnlocked();
     } catch (e) {
       setPin("");
       toast.error((e as Error).message);
-      // Atualiza estado: se PIN foi invalidado (limite), cai para senha mestra
-      const refreshed = getQuickUnlock(userId);
-      setQuick(refreshed);
-      if (!refreshed) setMode("master");
+      // Recarrega status para refletir bloqueio
+      try {
+        const s = await getServerPinStatus(userId);
+        setServerPin(s);
+        if (s.lockedUntil) setMode("master");
+      } catch {}
     } finally {
       setBusy(false);
     }
@@ -468,18 +496,17 @@ function UnlockView({
     }
   }
 
-  // PIN: dispara ao completar 6 dígitos (ou 4-8 — ao pressionar Enter / botão)
+  // PIN: dispara ao completar 6 dígitos
   useEffect(() => {
-    if (mode !== "quick") return;
-    if (!quick || quick.kind !== "pin") return;
+    if (mode !== "pin") return;
     if (pin.length === 6) handlePinUnlock(pin);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin, mode, quick]);
+  }, [pin, mode]);
 
-  // Subtítulo dinâmico
-  const subtitle = mode === "quick" && quick?.kind === "pin"
-    ? "Digite seu PIN de acesso rápido para abrir o cofre."
-    : mode === "quick" && quick?.kind === "webauthn"
+  const hasServerPin = !!serverPin?.configured && !serverPin?.lockedUntil;
+  const subtitle = mode === "pin"
+    ? "Use o PIN cadastrado na sua conta para abrir o Cofre."
+    : mode === "bio"
     ? "Use sua biometria para abrir o cofre."
     : "Digite sua senha mestra para acessar seus logins e dados sensíveis.";
 
@@ -489,7 +516,7 @@ function UnlockView({
       <Card className="mx-auto max-w-md p-6">
         <div className="mb-5 grid place-items-center">
           <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
-            {mode === "quick" && quick?.kind === "webauthn" ? (
+            {mode === "bio" ? (
               <Fingerprint className="h-7 w-7" />
             ) : (
               <Lock className="h-7 w-7" />
@@ -497,10 +524,10 @@ function UnlockView({
           </span>
         </div>
 
-        {mode === "quick" && quick?.kind === "pin" && (
+        {mode === "pin" && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-center block">PIN de acesso</Label>
+              <Label className="text-center block">PIN da sua conta</Label>
               <PinDots length={6} value={pin} />
             </div>
             <PinPad
@@ -508,17 +535,28 @@ function UnlockView({
               onDigit={(d) => setPin((p) => (p.length >= 6 ? p : p + d))}
               onBackspace={() => setPin((p) => p.slice(0, -1))}
             />
-            <button
-              type="button"
-              onClick={() => { setMode("master"); setPin(""); }}
-              className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-            >
-              Usar senha mestra
-            </button>
+            <div className="flex flex-col gap-1">
+              {bio && (
+                <button
+                  type="button"
+                  onClick={() => { setMode("bio"); setPin(""); }}
+                  className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  Usar biometria
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setMode("master"); setPin(""); }}
+                className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Usar senha mestra
+              </button>
+            </div>
           </div>
         )}
 
-        {mode === "quick" && quick?.kind === "webauthn" && (
+        {mode === "bio" && (
           <div className="space-y-4">
             <Button
               type="button"
@@ -529,13 +567,24 @@ function UnlockView({
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
               {busy ? "Autenticando…" : "Desbloquear com biometria"}
             </Button>
-            <button
-              type="button"
-              onClick={() => setMode("master")}
-              className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-            >
-              Usar senha mestra
-            </button>
+            <div className="flex flex-col gap-1">
+              {hasServerPin && (
+                <button
+                  type="button"
+                  onClick={() => setMode("pin")}
+                  className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  Usar PIN da conta
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setMode("master")}
+                className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Usar senha mestra
+              </button>
+            </div>
           </div>
         )}
 
@@ -584,19 +633,31 @@ function UnlockView({
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
               {busy ? "Desbloqueando…" : isCoolingDown ? `Aguarde ${cooldownLeft}s` : "Desbloquear cofre"}
             </Button>
-            {quick && (
-              <button
-                type="button"
-                onClick={() => setMode("quick")}
-                className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-              >
-                {quick.kind === "pin" ? "Voltar para PIN rápido" : "Voltar para biometria"}
-              </button>
+            {(hasServerPin || bio) && (
+              <div className="flex flex-col gap-1">
+                {hasServerPin && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("pin")}
+                    className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    Usar PIN da conta
+                  </button>
+                )}
+                {bio && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("bio")}
+                    className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    Usar biometria
+                  </button>
+                )}
+              </div>
             )}
           </form>
         )}
       </Card>
-      {/* userLabel é só para criar credenciais novas em outros pontos */}
       <span className="sr-only">{userLabel}</span>
     </>
   );
@@ -1124,9 +1185,7 @@ function VaultMain({
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Desbloqueio rápido</p>
             <p className="truncate text-[11px] text-muted-foreground">
-              {getQuickUnlock(userId)?.kind === "pin"
-                ? "PIN ativo neste dispositivo"
-                : getQuickUnlock(userId)?.kind === "webauthn"
+              {getQuickUnlock(userId)
                 ? "Biometria ativa neste dispositivo"
                 : "Configure PIN ou biometria"}
             </p>

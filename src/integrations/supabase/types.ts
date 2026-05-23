@@ -2298,6 +2298,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_pin_settings: {
+        Row: {
+          created_at: string
+          failed_attempts: number
+          iterations: number
+          locked_until: string | null
+          salt: string
+          updated_at: string
+          user_id: string
+          wrap_iv: string
+          wrapped_key: string
+        }
+        Insert: {
+          created_at?: string
+          failed_attempts?: number
+          iterations?: number
+          locked_until?: string | null
+          salt: string
+          updated_at?: string
+          user_id: string
+          wrap_iv: string
+          wrapped_key: string
+        }
+        Update: {
+          created_at?: string
+          failed_attempts?: number
+          iterations?: number
+          locked_until?: string | null
+          salt?: string
+          updated_at?: string
+          user_id?: string
+          wrap_iv?: string
+          wrapped_key?: string
+        }
+        Relationships: []
+      }
       vault_settings: {
         Row: {
           created_at: string
@@ -2511,6 +2547,23 @@ export type Database = {
       subscription_status_is_failed: {
         Args: { _status: string }
         Returns: boolean
+      }
+      vault_pin_delete: { Args: never; Returns: undefined }
+      vault_pin_record_attempt: {
+        Args: { p_success: boolean }
+        Returns: {
+          failed_attempts: number
+          locked_until: string
+        }[]
+      }
+      vault_pin_set: {
+        Args: {
+          p_iterations: number
+          p_salt: string
+          p_wrap_iv: string
+          p_wrapped_key: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
