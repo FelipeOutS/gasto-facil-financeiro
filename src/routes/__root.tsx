@@ -160,9 +160,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AccentProvider>
             <AuthProvider>
-              <ActiveAccountProvider>
-                <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
-              </ActiveAccountProvider>
+              <AppLockProvider>
+                <ActiveAccountProvider>
+                  <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+                </ActiveAccountProvider>
+              </AppLockProvider>
             </AuthProvider>
           </AccentProvider>
         </ThemeProvider>
