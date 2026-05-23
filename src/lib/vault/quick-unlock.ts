@@ -72,20 +72,47 @@ function persist(userId: string, rec: QuickUnlockRecord) {
 /* ----------------------------- Android Bridge ----------------------------- */
 
 type AndroidBridge = {
+  isAvailable?: () => boolean | string | Promise<boolean | string>;
   isBiometricAvailable?: () => boolean | string | Promise<boolean | string>;
   getBiometricStatus?: () => string | Promise<string>;
-  authenticate?: (reason?: string) => string | boolean | Promise<string | boolean>;
+  authenticate?: (reason?: string) => void | string | boolean | Promise<string | boolean>;
+  requestAuthentication?: (reason?: string) => void;
+  unlock?: () => void;
+};
+
+type AndroidBiometricResultDetail = {
+  success?: boolean;
+  error?: string;
+  errorCode?: string | number;
 };
 
 declare global {
   interface Window {
     AndroidBiometric?: AndroidBridge;
   }
+  interface WindowEventMap {
+    AndroidBiometricResult: CustomEvent<AndroidBiometricResultDetail>;
+  }
 }
 
 export function getAndroidBridge(): AndroidBridge | null {
   if (typeof window === "undefined") return null;
-  return window.AndroidBiometric ?? null;
+  const b = window.AndroidBiometric;
+  if (!b || typeof b.authenticate !== "function") return null;
+  return b;
+}
+
+export function hasAndroidBiometric(): boolean {
+  return getAndroidBridge() !== null;
+}
+
+function truthyBridgeValue(v: unknown): boolean {
+  if (v === true) return true;
+  if (typeof v === "string") {
+    const s = v.toLowerCase();
+    return s === "true" || s === "available" || s === "success" || s === "ok";
+  }
+  return false;
 }
 
 /** Normaliza o retorno do bridge para um status legível. */
@@ -93,13 +120,20 @@ async function androidStatus(): Promise<string> {
   const b = getAndroidBridge();
   if (!b) return "unsupported";
   try {
+    if (typeof b.isAvailable === "function") {
+      const v = await b.isAvailable();
+      if (truthyBridgeValue(v)) return "available";
+      if (v === false) return "none_enrolled";
+      const s = String(v ?? "").toLowerCase();
+      if (s) return s;
+    }
     if (typeof b.getBiometricStatus === "function") {
       const s = await b.getBiometricStatus();
       return String(s ?? "").toLowerCase() || "unsupported";
     }
     if (typeof b.isBiometricAvailable === "function") {
       const v = await b.isBiometricAvailable();
-      if (v === true) return "available";
+      if (truthyBridgeValue(v)) return "available";
       if (v === false) return "none_enrolled";
       return String(v ?? "").toLowerCase() || "unsupported";
     }
@@ -109,17 +143,54 @@ async function androidStatus(): Promise<string> {
   return "unsupported";
 }
 
-async function androidAuthenticate(reason: string): Promise<boolean> {
-  const b = getAndroidBridge();
-  if (!b?.authenticate) return false;
-  try {
-    const r = await b.authenticate(reason);
-    if (typeof r === "boolean") return r;
-    return String(r).toLowerCase() === "success";
-  } catch {
-    return false;
-  }
+/**
+ * Aciona a biometria nativa do Android via bridge.
+ * A bridge NÃO retorna Promise: o resultado vem pelo evento
+ * `AndroidBiometricResult`. Registramos o listener ANTES de chamar
+ * `authenticate()` para não perder o evento.
+ */
+function androidAuthenticate(reason: string, timeoutMs = 60_000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const b = getAndroidBridge();
+    if (!b?.authenticate) {
+      resolve(false);
+      return;
+    }
+
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener("AndroidBiometricResult", onResult as EventListener);
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const onResult = (event: Event) => {
+      const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
+      finish(detail.success === true);
+    };
+
+    window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
+    const timer = setTimeout(() => finish(false), timeoutMs);
+
+    try {
+      const r = b.authenticate(reason);
+      // Compat com bridges antigas que retornavam Promise / valor síncrono.
+      if (r && typeof (r as Promise<unknown>).then === "function") {
+        (r as Promise<string | boolean>).then(
+          (val) => finish(val === true || String(val).toLowerCase() === "success"),
+          () => finish(false),
+        );
+      } else if (typeof r === "boolean" || typeof r === "string") {
+        finish(r === true || String(r).toLowerCase() === "success");
+      }
+      // Caso normal (void): aguardamos o evento AndroidBiometricResult.
+    } catch {
+      finish(false);
+    }
+  });
 }
+
 
 /* ----------------------------- WebAuthn ----------------------------- */
 
@@ -160,7 +231,7 @@ export async function biometricUnavailableReason(): Promise<string | null> {
     const s = await androidStatus();
     if (s === "available" || s === "success") return null;
     if (s === "no_hardware") return "Este aparelho não tem leitor biométrico.";
-    if (s === "none_enrolled") return "Cadastre uma digital ou Face ID nas configurações do Android primeiro.";
+    if (s === "none_enrolled") return "Biometria indisponível ou não cadastrada neste aparelho. Cadastre a digital nas configurações do celular ou use o PIN.";
     if (s === "hardware_unavailable") return "Biometria temporariamente indisponível neste aparelho.";
     return "Biometria indisponível neste aparelho.";
   }
