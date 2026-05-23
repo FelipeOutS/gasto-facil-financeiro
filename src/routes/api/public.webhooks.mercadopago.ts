@@ -313,12 +313,23 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           }
         }
 
+        // Marca como processado (idempotência futura).
+        await recordPaymentEventIdempotent({
+          external_payment_id: externalPaymentId,
+          event_type: topic,
+          status: canonicalMpStatus(status),
+          raw_status: status,
+          user_id: userId ?? null,
+          metadata: { source: "webhook" },
+        });
+
         if (logId) {
           await updateWebhookLog(logId, {
             status: "processed",
             http_status: 200,
-            external_id: String(payment.id ?? paymentId),
+            external_id: externalPaymentId,
             user_id: userId ?? null,
+            idempotency_key: idempotencyKey,
             processing_time_ms: Date.now() - startedAt,
             response_body: { ok: true, payment_status: status },
           });
