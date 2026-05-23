@@ -2221,6 +2221,7 @@ function QuickUnlockSettingsView({
   onBack: () => void;
 }) {
   const [rec, setRec] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [pinStatus, setPinStatus] = useState<ServerPinStatus | null>(null);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -2236,10 +2237,12 @@ function QuickUnlockSettingsView({
 
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setBioAvailable);
-  }, []);
+    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
+  }, [userId]);
 
   function refresh() {
     setRec(getQuickUnlock(userId));
+    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
   }
 
   function resetPanel() {
@@ -2298,11 +2301,7 @@ function QuickUnlockSettingsView({
     }
     setBusy(true);
     try {
-      // Alterar/esqueci: garante que registros antigos sejam invalidados
-      if (panel === "change" || panel === "forgot") {
-        disableQuickUnlock(userId);
-      }
-      await enablePinUnlock(userId, pin, masterKey);
+      await enableServerPin(pin, masterKey);
       toast.success(panel === "setup" ? "PIN configurado" : "PIN alterado com sucesso");
       resetPanel();
       refresh();
@@ -2326,12 +2325,19 @@ function QuickUnlockSettingsView({
     }
   }
 
-  function handleRemovePin() {
-    if (!window.confirm("Remover o PIN deste dispositivo? Você precisará da senha mestra para entrar.")) return;
-    disableQuickUnlock(userId);
-    resetPanel();
-    refresh();
-    toast.success("PIN removido deste dispositivo");
+  async function handleRemovePin() {
+    if (!window.confirm("Remover o PIN da sua conta? Você precisará da senha mestra para entrar em todos os dispositivos.")) return;
+    setBusy(true);
+    try {
+      await disableServerPin();
+      resetPanel();
+      refresh();
+      toast.success("PIN removido da conta");
+    } catch (e) {
+      toast.error("Falha ao remover PIN", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleRemoveBio() {
@@ -2341,8 +2347,8 @@ function QuickUnlockSettingsView({
     toast.success("Biometria removida deste dispositivo");
   }
 
-  const hasPin = rec?.kind === "pin";
-  const hasBio = rec?.kind === "webauthn";
+  const hasPin = pinStatus?.configured ?? false;
+  const hasBio = rec?.kind === "webauthn" || rec?.kind === "android-bio";
 
   return (
     <>
@@ -2378,7 +2384,7 @@ function QuickUnlockSettingsView({
             <p className="text-sm font-semibold">PIN rápido</p>
             <p className="truncate text-[11px] text-muted-foreground">
               {hasPin
-                ? `Ativo neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
+                ? `Ativo na sua conta${pinStatus?.updatedAt ? ` desde ${new Date(pinStatus.updatedAt).toLocaleDateString("pt-BR")}` : ""}`
                 : "4 a 8 dígitos numéricos. Recomendado: 6."}
             </p>
           </div>
