@@ -90,7 +90,7 @@ export function forbiddenResponse(message = "Acesso restrito ao administrador ma
  */
 export async function ensurePremiumFeatureAccess(
   user: { id: string; email?: string | null } | null | undefined,
-  feature: "importacoes" | "importar_extrato" | "importar_fatura" | "importar_conta",
+  feature: "importacoes" | "importar_extrato" | "importar_fatura" | "importar_conta" | "investimentos",
 ): Promise<Response | null> {
   if (!user) return unauthorizedResponse("Você precisa estar logado.");
   if (isAdminMasterUser(user)) return null;
