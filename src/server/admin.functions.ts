@@ -499,16 +499,15 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    await ensureAdmin(context.supabase, userId);
+    const actorEmail = await ensureAdmin(context.supabase, userId);
 
     const now = new Date();
     const { data: existing } = await supabaseAdmin
       .from("user_plans")
-      .select("user_id, plano, current_period_start, current_period_end")
+      .select("user_id, plano, status, current_period_start, current_period_end")
       .eq("user_id", data.targetUserId)
       .maybeSingle();
 
-    // Para "ativo", exige pagamento aprovado, salvo se forceActivate=true.
     if (data.status === "ativo" && !data.forceActivate) {
       const { data: paid } = await supabaseAdmin
         .from("subscription_payments")
@@ -555,6 +554,21 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("user_plans").insert({ user_id: data.targetUserId, plano: "sem_assinatura", ...update } as any);
     }
+
+    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: actorEmail,
+      action: "admin_set_status",
+      target_user_id: data.targetUserId,
+      target_email: targetUser?.user?.email ?? null,
+      entity_type: "subscription",
+      entity_id: data.targetUserId,
+      old_data: existing ?? null,
+      new_data: update,
+      metadata: { force_activate: !!data.forceActivate, clear_plan: !!data.clearPlan },
+    });
+
     return { ok: true as const };
   });
 
