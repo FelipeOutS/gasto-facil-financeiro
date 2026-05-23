@@ -475,12 +475,7 @@ export const Route = createFileRoute("/api/import-investimentos")({
         } catch (err) {
           console.error("[import-investimentos] erro", err);
           return Response.json(
-            {
-              error:
-                err instanceof Error
-                  ? err.message
-                  : "Não foi possível processar o arquivo.",
-            },
+            { error: "Não foi possível processar o arquivo. Tente novamente." },
             { status: 500 },
           );
         }
