@@ -13,16 +13,6 @@ import {
   isLoginBioBridgeAvailable,
   isLoginBioEnabled,
 } from "@/lib/biometric-login";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -56,7 +46,7 @@ function AppMaisPage() {
   const [loginBioAvailable, setLoginBioAvailable] = useState(false);
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
-  const [signOutDialog, setSignOutDialog] = useState(false);
+  
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
   useEffect(() => {
@@ -135,22 +125,35 @@ function AppMaisPage() {
     return rule ? !can(rule.feature) : false;
   }
 
-  async function performSignOut(keepBio: boolean) {
+  async function performDirectSignOut() {
     if (signingOut) return;
     setSigningOut(true);
-    if (!keepBio) clearLoginBio();
-    await signOut();
-    void navigate({ to: "/login", replace: true });
+    try {
+      try {
+        clearLoginBio();
+      } catch {
+        /* ignore */
+      }
+      try {
+        await signOut();
+      } catch {
+        /* segue para login mesmo em erro */
+      }
+    } finally {
+      void navigate({ to: "/login", replace: true });
+    }
   }
 
   function handleSignOut() {
-    // Se a entrada por biometria está ativa, pergunta antes.
+    // Se a entrada por biometria está ativa, ir para tela de confirmação
+    // (sem modal — Android WebView trava com Dialog/Portal).
     if (loginBioAvailable && loginBioEnabled) {
-      setSignOutDialog(true);
+      void navigate({ to: "/confirmar-saida" });
       return;
     }
-    void performSignOut(false);
+    void performDirectSignOut();
   }
+
 
   function renderCard(item: NavLeaf) {
     const Icon = item.icon;
@@ -336,34 +339,6 @@ function AppMaisPage() {
         {t("more.signOut")}
       </button>
 
-      <AlertDialog open={signOutDialog} onOpenChange={setSignOutDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Manter entrada por biometria?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você ativou a biometria neste dispositivo. Deseja mantê-la para os próximos logins ou removê-la agora?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setSignOutDialog(false);
-                void performSignOut(false);
-              }}
-            >
-              Remover biometria
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setSignOutDialog(false);
-                void performSignOut(true);
-              }}
-            >
-              Manter biometria
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MobileShell>
   );
 }
