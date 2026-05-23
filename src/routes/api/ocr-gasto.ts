@@ -80,6 +80,8 @@ export const Route = createFileRoute("/api/ocr-gasto")({
       POST: async ({ request }) => {
         const __user = await getUserFromRequest(request);
         if (!__user) return unauthorizedResponse();
+        const __gate = await ensurePremiumFeatureAccess(__user, "importacoes");
+        if (__gate) return __gate;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
