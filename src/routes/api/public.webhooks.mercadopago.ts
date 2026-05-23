@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
+import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 
 /**
  * POST /api/public/webhooks/mercadopago
@@ -70,6 +71,35 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
         if (!accessToken || !webhookSecret) {
           return json({ error: "webhook_not_configured" }, 503);
+        }
+
+        // Rate limit por IP+rota antes de qualquer trabalho pesado.
+        const ip = getClientIp(request);
+        const ua = request.headers.get("user-agent");
+        const rl = await checkRateLimit({
+          key: `mp_webhook:${ip ?? "unknown"}`,
+          route: "/api/public/webhooks/mercadopago",
+          ip_address: ip,
+          user_agent: ua,
+          method: "POST",
+          ...RATE_LIMIT_PRESETS.mpWebhook,
+        });
+        if (rl.blocked) {
+          await logWebhookEvent({
+            provider: "mercado_pago",
+            status: "ignored",
+            http_status: 429,
+            request_headers: request.headers,
+            error_message: "rate_limited",
+            processing_time_ms: Date.now() - startedAt,
+          });
+          return new Response(JSON.stringify({ error: "rate_limited" }), {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(rl.retryAfterSeconds),
+            },
+          });
         }
 
         const rawBody = await request.text();

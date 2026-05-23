@@ -1714,6 +1714,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_events: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          id: string
+          ip_address: string | null
+          key: string
+          method: string | null
+          route: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          key: string
+          method?: string | null
+          route: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          key?: string
+          method?: string | null
+          route?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       receitas: {
         Row: {
           ano: number
