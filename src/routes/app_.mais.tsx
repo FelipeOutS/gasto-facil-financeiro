@@ -125,22 +125,35 @@ function AppMaisPage() {
     return rule ? !can(rule.feature) : false;
   }
 
-  async function performSignOut(keepBio: boolean) {
+  async function performDirectSignOut() {
     if (signingOut) return;
     setSigningOut(true);
-    if (!keepBio) clearLoginBio();
-    await signOut();
-    void navigate({ to: "/login", replace: true });
+    try {
+      try {
+        clearLoginBio();
+      } catch {
+        /* ignore */
+      }
+      try {
+        await signOut();
+      } catch {
+        /* segue para login mesmo em erro */
+      }
+    } finally {
+      void navigate({ to: "/login", replace: true });
+    }
   }
 
   function handleSignOut() {
-    // Se a entrada por biometria está ativa, pergunta antes.
+    // Se a entrada por biometria está ativa, ir para tela de confirmação
+    // (sem modal — Android WebView trava com Dialog/Portal).
     if (loginBioAvailable && loginBioEnabled) {
-      setSignOutDialog(true);
+      void navigate({ to: "/confirmar-saida" });
       return;
     }
-    void performSignOut(false);
+    void performDirectSignOut();
   }
+
 
   function renderCard(item: NavLeaf) {
     const Icon = item.icon;
