@@ -35,6 +35,29 @@ function AppMaisPage() {
   const { user, profile, signOut } = useAuth();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const [signingOut, setSigningOut] = useState(false);
+  const appLock = useAppLock();
+  const [togglingLock, setTogglingLock] = useState(false);
+  const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  async function handleToggleAppLock() {
+    if (togglingLock) return;
+    setTogglingLock(true);
+    try {
+      if (appLock.enabled) {
+        disableAppLock();
+        appLock.refreshEnabled();
+        toast.success("Biometria do app desativada neste dispositivo.");
+      } else {
+        await enableAppLock();
+        appLock.refreshEnabled();
+        toast.success("Biometria do app ativada neste dispositivo.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar a biometria.");
+    } finally {
+      setTogglingLock(false);
+    }
+  }
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
   const groups = useMemo(
