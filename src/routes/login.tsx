@@ -119,12 +119,19 @@ function LoginForm() {
       if (session) {
         console.log("[LoginBio] Sessão encontrada — redirecionando para dashboard");
         toast.success(t("login.welcomeBack"));
-        // Pequeno atraso para o onAuthStateChange propagar ao GuestOnly.
-        setTimeout(() => {
-          void navigate({ to: "/", replace: true });
-        }, 0);
+        // Hard navigate garante que o AuthProvider re-hidrate com o token
+        // recém-restaurado antes do AuthGate decidir. Evita loop de voltar
+        // para /login porque o onAuthStateChange ainda não propagou.
+        try {
+          window.location.assign("/");
+        } catch {
+          setTimeout(() => {
+            void navigate({ to: "/", replace: true });
+          }, 0);
+        }
         return;
       }
+
 
       console.log("[LoginBio] Falha: precisa login com senha");
       setBioError("Por segurança, faça login com sua senha novamente para reativar a entrada por biometria.");
