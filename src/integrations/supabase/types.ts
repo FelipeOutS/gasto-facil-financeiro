@@ -1669,6 +1669,51 @@ export type Database = {
           },
         ]
       }
+      payment_events: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          external_payment_id: string
+          id: string
+          metadata: Json | null
+          payment_id: string | null
+          processed_at: string
+          provider: string
+          raw_status: string | null
+          status: string
+          subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          external_payment_id: string
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          processed_at?: string
+          provider?: string
+          raw_status?: string | null
+          status: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          external_payment_id?: string
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          processed_at?: string
+          provider?: string
+          raw_status?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
