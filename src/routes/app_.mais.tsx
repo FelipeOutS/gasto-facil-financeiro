@@ -1,12 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Fingerprint, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   disableAppLock,
   enableAppLock,
   useAppLock,
 } from "@/lib/app-lock";
+import {
+  clearLoginBio,
+  enableLoginBio,
+  isLoginBioBridgeAvailable,
+  isLoginBioEnabled,
+} from "@/lib/biometric-login";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
