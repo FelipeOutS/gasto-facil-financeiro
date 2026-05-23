@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { planAllowsFeature, isAdminMasterEmail, type PlanTier } from "@/lib/plans";
@@ -601,6 +602,10 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       throw new Response(access.reason, { status: 403 });
     }
 
+    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "sendChatMessage" });
+    if (rl) throw rl;
+
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       throw new Response("Serviço de IA indisponível.", { status: 500 });
@@ -938,6 +943,9 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
     if (!access.ok) {
       throw new Response(access.reason, { status: 403 });
     }
+
+    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthlySmartSummary" });
+    if (rl) throw rl;
 
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
@@ -1285,6 +1293,9 @@ export const getMonthForecast = createServerFn({ method: "POST" })
     if (!access.ok) {
       throw new Response(access.reason, { status: 403 });
     }
+
+    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthForecast" });
+    if (rl) throw rl;
 
     const now = new Date();
     const mes = data.mes ?? now.getMonth() + 1;

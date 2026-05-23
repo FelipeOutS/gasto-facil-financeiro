@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { extractText, extractTextItems, getDocumentProxy } from "unpdf";
 
 /**
@@ -578,6 +579,8 @@ export const Route = createFileRoute("/api/import-extrato")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_extrato");
         if (__gate) return __gate;
+        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-extrato", request });
+        if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {

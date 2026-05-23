@@ -126,3 +126,72 @@ export function rateLimitedResponse(retryAfterSeconds: number): Response {
     },
   );
 }
+
+/**
+ * Resposta amigável para rate-limit por usuário (rotas autenticadas).
+ */
+export function userRateLimitedResponse(retryAfterSeconds: number): Response {
+  return new Response(
+    JSON.stringify({
+      error: "rate_limited",
+      message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente.",
+    }),
+    {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": String(retryAfterSeconds),
+      },
+    },
+  );
+}
+
+/**
+ * Aplica rate-limit por usuário em handlers já autenticados (IA, OCR, importações).
+ * Registra audit log quando bloqueia. Nunca quebra fluxo em caso de erro interno.
+ *
+ * Uso: const blocked = await enforceUserRateLimit({ scope: "ai", userId, route });
+ *      if (blocked) throw blocked;   // (em createServerFn)
+ *      if (blocked) return blocked;  // (em server route)
+ */
+export async function enforceUserRateLimit(params: {
+  scope: "ai" | "import";
+  userId: string;
+  route: string;
+  request?: Request;
+}): Promise<Response | null> {
+  const preset =
+    params.scope === "ai" ? RATE_LIMIT_PRESETS.aiPerUser : RATE_LIMIT_PRESETS.importPerUser;
+  const ip = params.request ? getClientIp(params.request) : null;
+  const ua = params.request?.headers.get("user-agent") ?? null;
+
+  const result = await checkRateLimit({
+    key: `${params.scope}:${params.userId}`,
+    route: params.route,
+    user_id: params.userId,
+    ip_address: ip,
+    user_agent: ua,
+    method: params.request?.method ?? "POST",
+    limit: preset.limit,
+    windowSeconds: preset.windowSeconds,
+  });
+
+  if (!result.blocked) return null;
+
+  // Audit log opcional (não quebra fluxo se falhar).
+  try {
+    const { logAuditEvent } = await import("./logs.server");
+    await logAuditEvent({
+      actor_user_id: params.userId,
+      target_user_id: params.userId,
+      action: params.scope === "ai" ? "rate_limit_blocked_ai" : "rate_limit_blocked_import",
+      entity_type: "rate_limit",
+      metadata: { route: params.route, limit: preset.limit, window_seconds: preset.windowSeconds },
+    });
+  } catch (err) {
+    console.error("[rate-limit] audit log failed", err);
+  }
+
+  return userRateLimitedResponse(result.retryAfterSeconds);
+}
+
