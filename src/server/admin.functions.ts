@@ -614,6 +614,4 @@ export const reconcileMpPaymentById = createServerFn({ method: "POST" })
     return { ok: result.ok, applied: result.applied, message: result.message, diagnosis: result.diagnosis };
   });
 
-    return { ok: true as const };
-  });
 
