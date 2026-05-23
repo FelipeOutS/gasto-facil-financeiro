@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse } from "@/server/api-auth";
+import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
 
 /**
  * OCR de comprovante via Lovable AI Gateway (Gemini Vision).
