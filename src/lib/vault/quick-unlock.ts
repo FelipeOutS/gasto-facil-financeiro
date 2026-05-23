@@ -155,37 +155,43 @@ async function androidStatus(): Promise<string> {
  * `AndroidBiometricResult`. Registramos o listener ANTES de chamar
  * `authenticate()` para não perder o evento.
  */
-function androidAuthenticate(reason: string, timeoutMs = 60_000): Promise<boolean> {
+function androidResultMessage(detail: AndroidBiometricResultDetail, fallback: string): string {
+  if (typeof detail.error === "string" && detail.error.trim()) return detail.error;
+  if (detail.errorCode) return `Erro biométrico: ${detail.errorCode}`;
+  return fallback;
+}
+
+function androidAuthenticate(_reason: string, timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
   return new Promise((resolve) => {
     const b = getAndroidBridge();
     if (!b?.authenticate) {
-      resolve(false);
+      resolve({ success: false, error: "Bridge biométrica Android não encontrada." });
       return;
     }
 
     let settled = false;
-    const finish = (ok: boolean) => {
+    const finish = (detail: AndroidBiometricResultDetail) => {
       if (settled) return;
       settled = true;
       window.removeEventListener("AndroidBiometricResult", onResult as EventListener);
       clearTimeout(timer);
-      resolve(ok);
+      resolve(detail);
     };
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
       console.log("[VaultBiometric] AndroidBiometricResult event received:", detail);
-      finish(detail.success === true);
+      finish(detail);
     };
 
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
-    const timer = setTimeout(() => finish(false), timeoutMs);
+    const timer = setTimeout(() => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }), timeoutMs);
 
     try {
-      b.authenticate(reason);
+      b.authenticate();
       // Bridge Android nativa: não aguarde retorno direto; o resultado vem pelo evento.
     } catch (error) {
       console.log("[VaultBiometric] Error calling AndroidBiometric.authenticate():", error);
-      finish(false);
+      finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
     }
   });
 }
