@@ -1294,6 +1294,9 @@ export const getMonthForecast = createServerFn({ method: "POST" })
       throw new Response(access.reason, { status: 403 });
     }
 
+    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthForecast" });
+    if (rl) throw rl;
+
     const now = new Date();
     const mes = data.mes ?? now.getMonth() + 1;
     const ano = data.ano ?? now.getFullYear();
