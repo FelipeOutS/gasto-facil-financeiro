@@ -74,7 +74,16 @@ export function isAppLockBridgeAvailable(): boolean {
 export function isAppLockEnabled(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(APP_LOCK_STORAGE_KEY) === "true";
+    // Unifica os dois cadeados biométricos locais: tanto o "bloquear app"
+    // (APP_LOCK_STORAGE_KEY) quanto a "entrada por biometria"
+    // (app_android_biometric_login_enabled) ativam a tela de desbloqueio
+    // automaticamente quando o app abre com sessão persistida. Isso evita
+    // que o usuário caia em /login quando já tinha uma sessão válida.
+    const ls = window.localStorage;
+    return (
+      ls.getItem(APP_LOCK_STORAGE_KEY) === "true" ||
+      ls.getItem("app_android_biometric_login_enabled") === "true"
+    );
   } catch {
     return false;
   }
