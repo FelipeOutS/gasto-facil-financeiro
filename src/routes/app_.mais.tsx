@@ -46,7 +46,7 @@ function AppMaisPage() {
   const [loginBioAvailable, setLoginBioAvailable] = useState(false);
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
-  const [signOutDialog, setSignOutDialog] = useState(false);
+  
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
   useEffect(() => {
