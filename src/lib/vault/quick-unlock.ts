@@ -231,7 +231,7 @@ export async function biometricUnavailableReason(): Promise<string | null> {
     const s = await androidStatus();
     if (s === "available" || s === "success") return null;
     if (s === "no_hardware") return "Este aparelho não tem leitor biométrico.";
-    if (s === "none_enrolled") return "Cadastre uma digital ou Face ID nas configurações do Android primeiro.";
+    if (s === "none_enrolled") return "Biometria indisponível ou não cadastrada neste aparelho. Cadastre a digital nas configurações do celular ou use o PIN.";
     if (s === "hardware_unavailable") return "Biometria temporariamente indisponível neste aparelho.";
     return "Biometria indisponível neste aparelho.";
   }
