@@ -5,6 +5,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
 import { logAuditEvent } from "./logs.server";
+import {
+  diagnoseMercadoPagoPayment,
+  reconcileMercadoPagoPaymentById,
+} from "./mercadopago-diagnostics.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
