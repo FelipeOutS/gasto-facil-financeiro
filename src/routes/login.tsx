@@ -72,35 +72,68 @@ function LoginForm() {
 
   async function handleBiometric() {
     if (bioRunning) return;
+    console.log("[LoginBio] Botão biometria clicado");
+    if (!isLoginBioBridgeAvailable()) {
+      console.log("[LoginBio] Bridge AndroidBiometric NÃO encontrada");
+      setBioError("Biometria nativa indisponível neste aparelho.");
+      return;
+    }
+    console.log("[LoginBio] Bridge AndroidBiometric encontrada");
     setBioError(null);
     setBioRunning(true);
     const result = await runLoginBiometric();
     setBioRunning(false);
     if (result.success !== true) {
+      console.log("[LoginBio] Biometria recusada/erro:", result.error);
       setBioError(result.error || "Não foi possível validar a biometria.");
       return;
     }
-    // Biometria aprovada. Tenta usar a sessão Supabase já persistida
-    // (refresh token gerenciado pelo SDK).
+    console.log("[LoginBio] Biometria aprovada");
+    console.log("[LoginBio] Verificando sessão atual");
     try {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
+      // 1) Sessão já persistida pelo SDK?
+      const { data: sessionData } = await supabase.auth.getSession();
+      let session = sessionData.session ?? null;
+
+      // 2) Sem sessão em memória — tenta renovar via refresh token.
+      if (!session) {
+        console.log("[LoginBio] Sessão não encontrada, tentando refresh");
+        try {
+          const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+          if (refreshErr) console.log("[LoginBio] refreshSession erro:", refreshErr.message);
+          session = refreshed.session ?? null;
+        } catch (e) {
+          console.log("[LoginBio] refreshSession exceção:", e);
+        }
+      }
+
+      // 3) Confirma com o backend que o token ainda vale.
+      if (session) {
+        const { data: userData, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !userData.user) {
+          console.log("[LoginBio] getUser falhou:", userErr?.message);
+          session = null;
+        }
+      }
+
+      if (session) {
+        console.log("[LoginBio] Sessão encontrada — redirecionando para dashboard");
         toast.success(t("login.welcomeBack"));
-        void navigate({ to: "/" });
+        // Pequeno atraso para o onAuthStateChange propagar ao GuestOnly.
+        setTimeout(() => {
+          void navigate({ to: "/", replace: true });
+        }, 0);
         return;
       }
-      const { data: refreshed } = await supabase.auth.refreshSession();
-      if (refreshed.session) {
-        toast.success(t("login.welcomeBack"));
-        void navigate({ to: "/" });
-        return;
-      }
+
+      console.log("[LoginBio] Falha: precisa login com senha");
+      setBioError("Por segurança, faça login com sua senha novamente para reativar a entrada por biometria.");
+      setBioMode(false);
     } catch (e) {
-      console.log("[LoginBio] falha ao recuperar sessão:", e);
+      console.log("[LoginBio] Erro inesperado ao validar sessão:", e);
+      setBioError("Por segurança, faça login com sua senha novamente para reativar a entrada por biometria.");
+      setBioMode(false);
     }
-    // Sem sessão recuperável — pede senha.
-    setBioError("Sua sessão expirou. Entre com sua senha desta vez para reativar a biometria.");
-    setBioMode(false);
   }
 
   async function handleSubmit(e: FormEvent) {
