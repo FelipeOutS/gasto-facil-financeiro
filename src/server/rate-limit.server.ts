@@ -185,7 +185,7 @@ export async function enforceUserRateLimit(params: {
       actor_user_id: params.userId,
       target_user_id: params.userId,
       action: params.scope === "ai" ? "rate_limit_blocked_ai" : "rate_limit_blocked_import",
-      entity: "rate_limit",
+      entity_type: "rate_limit",
       metadata: { route: params.route, limit: preset.limit, window_seconds: preset.windowSeconds },
     });
   } catch (err) {
