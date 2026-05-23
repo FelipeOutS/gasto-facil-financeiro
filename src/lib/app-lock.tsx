@@ -31,6 +31,26 @@ import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 
 export const APP_LOCK_STORAGE_KEY = "app_android_biometric_enabled";
+export const APP_LOCKED_FLAG_KEY = "app_locked_by_biometric";
+
+export function markAppLockedNow(): void {
+  try {
+    window.localStorage.setItem(APP_LOCKED_FLAG_KEY, "true");
+  } catch {}
+}
+export function clearAppLockedFlag(): void {
+  try {
+    window.localStorage.removeItem(APP_LOCKED_FLAG_KEY);
+  } catch {}
+}
+export function isAppLockedFlagSet(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(APP_LOCKED_FLAG_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 type AndroidBiometricResultDetail = {
   success?: boolean;
@@ -122,6 +142,7 @@ type AppLockContextValue = {
   enabled: boolean;
   locked: boolean;
   refreshEnabled: () => void;
+  lockNow: () => void;
 };
 
 const AppLockContext = createContext<AppLockContextValue>({
@@ -129,6 +150,7 @@ const AppLockContext = createContext<AppLockContextValue>({
   enabled: false,
   locked: false,
   refreshEnabled: () => {},
+  lockNow: () => {},
 });
 
 export function useAppLock() {
@@ -154,21 +176,38 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     setEnabled(isAppLockEnabled());
   }, []);
 
-  // Bloqueia quando: bridge + flag + sessão válida + ainda não desbloqueado nesta sessão.
+  // Bloqueia quando: bridge + sessão válida + (flag enabled OU flag "locked now").
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      // Sem sessão: nada a bloquear; reseta o estado.
+      // Sem sessão real: nada a desbloquear. Limpa flag para evitar
+      // tela de bloqueio sem sessão (que cairia em loop).
       setLocked(false);
       triggeredRef.current = false;
+      clearAppLockedFlag();
       return;
     }
-    if (bridgeAvailable && enabled && !triggeredRef.current) {
+    if (!bridgeAvailable) return;
+    const lockedNow = isAppLockedFlagSet();
+    if ((enabled || lockedNow) && !triggeredRef.current) {
+      console.log("[AppLock] travando app (enabled=%s, lockedNow=%s)", enabled, lockedNow);
       setLocked(true);
     }
   }, [loading, session, bridgeAvailable, enabled]);
 
-  // Re-bloqueia ao retomar do background.
+  const lockNow = useCallback(() => {
+    if (!bridgeAvailable) {
+      console.log("[AppLock] lockNow ignorado: bridge indisponível");
+      return;
+    }
+    markAppLockedNow();
+    triggeredRef.current = false;
+    setErrorMsg(null);
+    setLocked(true);
+  }, [bridgeAvailable]);
+
+  // Re-bloqueia ao retomar do background (apenas quando o usuário deixou
+  // o bloqueio automático ativo nas configurações).
   useEffect(() => {
     if (!bridgeAvailable || !enabled) return;
     function onVisibility() {
@@ -189,6 +228,7 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     setAuthenticating(false);
     if (result.success === true) {
       triggeredRef.current = true;
+      clearAppLockedFlag();
       setLocked(false);
     } else {
       setErrorMsg(result.error || "Não foi possível validar a biometria.");
@@ -204,14 +244,23 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   }, [locked]);
 
   const handleSignOut = useCallback(async () => {
+    // "Entrar com senha" no overlay = sair de verdade e cair em /login.
     triggeredRef.current = true;
+    clearAppLockedFlag();
     setLocked(false);
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      /* ignore */
+    }
+    try {
+      window.location.assign("/login");
+    } catch {}
   }, [signOut]);
 
   const value = useMemo<AppLockContextValue>(
-    () => ({ bridgeAvailable, enabled, locked, refreshEnabled }),
-    [bridgeAvailable, enabled, locked, refreshEnabled],
+    () => ({ bridgeAvailable, enabled, locked, refreshEnabled, lockNow }),
+    [bridgeAvailable, enabled, locked, refreshEnabled, lockNow],
   );
 
   return (
