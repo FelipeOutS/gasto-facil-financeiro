@@ -319,14 +319,34 @@ function AppMaisPage() {
         </section>
       ))}
 
+      {appLock.bridgeAvailable && (
+        <button
+          type="button"
+          onClick={() => {
+            appLock.lockNow();
+            void navigate({ to: "/" });
+          }}
+          className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-3xl border border-border bg-card p-4 text-sm font-semibold active:scale-[0.99]"
+        >
+          <LockIcon className="h-4 w-4" />
+          Bloquear aplicativo
+          <span className="ml-2 text-[10px] font-normal text-muted-foreground">
+            (volta com biometria)
+          </span>
+        </button>
+      )}
+
       <button
         type="button"
         onClick={handleSignOut}
         disabled={signingOut}
-        className="mt-6 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-3xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive active:scale-[0.99] disabled:opacity-60"
+        className="mt-3 flex min-h-[58px] w-full items-center justify-center gap-2 rounded-3xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive active:scale-[0.99] disabled:opacity-60"
       >
         <LogOut className="h-4 w-4" />
         {t("more.signOut")}
+        <span className="ml-2 text-[10px] font-normal text-destructive/70">
+          (encerra a sessão)
+        </span>
       </button>
 
     </MobileShell>
