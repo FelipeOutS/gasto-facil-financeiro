@@ -125,15 +125,12 @@ function AppMaisPage() {
     return rule ? !can(rule.feature) : false;
   }
 
-  async function performDirectSignOut() {
+  async function handleSignOut() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      try {
-        clearLoginBio();
-      } catch {
-        /* ignore */
-      }
+      // Importante: NÃO remover a biometria local aqui. A biometria só é
+      // removida manualmente em Configurações.
       try {
         await signOut();
       } catch {
@@ -144,15 +141,7 @@ function AppMaisPage() {
     }
   }
 
-  function handleSignOut() {
-    // Se a entrada por biometria está ativa, ir para tela de confirmação
-    // (sem modal — Android WebView trava com Dialog/Portal).
-    if (loginBioAvailable && loginBioEnabled) {
-      void navigate({ to: "/confirmar-saida" });
-      return;
-    }
-    void performDirectSignOut();
-  }
+
 
 
   function renderCard(item: NavLeaf) {
