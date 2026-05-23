@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent } from "./logs.server";
+import { recordPaymentEventIdempotent } from "./mercadopago-diagnostics.server";
 
 /**
  * Reconciliação de pagamentos por cartão pendentes.
@@ -54,6 +55,18 @@ export async function reconcilePendingCardPaymentsForUser(userId: string): Promi
       const status = (payment.status ?? "").toLowerCase();
       if (status !== "approved" && status !== "authorized" && status !== "paid") continue;
 
+      // Idempotência: já processamos esse pagamento?
+      const evt = await recordPaymentEventIdempotent({
+        external_payment_id: String(payment.id ?? approved.id),
+        event_type: "auto_reconcile",
+        status: "approved",
+        raw_status: status,
+        user_id: userId,
+        payment_id: row.id,
+        metadata: { source: "reconcile_pending_card_payments" },
+      });
+      if (!evt.firstTime) continue; // já reconciliado anteriormente
+
       await supabaseAdmin
         .from("subscription_payments")
         .update({
@@ -67,7 +80,7 @@ export async function reconcilePendingCardPaymentsForUser(userId: string): Promi
       updated += 1;
       await logAuditEvent({
         actor_user_id: null,
-        action: "payment_marked_paid",
+        action: "payment_reconciled_approved",
         target_user_id: userId,
         entity_type: "payment",
         entity_id: row.id,

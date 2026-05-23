@@ -3,6 +3,11 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import {
+  paymentEventAlreadyProcessed,
+  recordPaymentEventIdempotent,
+  canonicalMpStatus,
+} from "@/server/mercadopago-diagnostics.server";
 
 /**
  * POST /api/public/webhooks/mercadopago
@@ -183,6 +188,24 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "mp_fetch_failed" }, 502);
         }
 
+        // Idempotência: já processamos esse evento?
+        const externalPaymentId = String(payment.id ?? paymentId);
+        const idempotencyKey = `mercado_pago:${topic}:${externalPaymentId}`;
+        const already = await paymentEventAlreadyProcessed(externalPaymentId, topic);
+        if (already) {
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "ignored",
+              http_status: 200,
+              external_id: externalPaymentId,
+              idempotency_key: idempotencyKey,
+              error_message: "duplicate_event",
+              processing_time_ms: Date.now() - startedAt,
+            });
+          }
+          return json({ ok: true, duplicate: true });
+        }
+
         const status = (payment.status ?? "pending").toLowerCase();
         let userId = payment.metadata?.user_id ?? null;
         let plano = payment.metadata?.plano ?? null;
@@ -290,12 +313,23 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           }
         }
 
+        // Marca como processado (idempotência futura).
+        await recordPaymentEventIdempotent({
+          external_payment_id: externalPaymentId,
+          event_type: topic,
+          status: canonicalMpStatus(status),
+          raw_status: status,
+          user_id: userId ?? null,
+          metadata: { source: "webhook" },
+        });
+
         if (logId) {
           await updateWebhookLog(logId, {
             status: "processed",
             http_status: 200,
-            external_id: String(payment.id ?? paymentId),
+            external_id: externalPaymentId,
             user_id: userId ?? null,
+            idempotency_key: idempotencyKey,
             processing_time_ms: Date.now() - startedAt,
             response_body: { ok: true, payment_status: status },
           });
