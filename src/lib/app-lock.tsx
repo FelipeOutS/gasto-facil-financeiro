@@ -32,28 +32,16 @@ import { Button } from "@/components/ui/button";
 
 export const APP_LOCK_STORAGE_KEY = "app_android_biometric_enabled";
 
-type AndroidAppBridge = {
-  authenticate?: (reason?: string) => unknown;
-  isAvailable?: () => unknown;
-  isBiometricAvailable?: () => unknown;
-};
-
 type AndroidBiometricResultDetail = {
   success?: boolean;
   error?: string;
   errorCode?: string | number;
 };
 
-declare global {
-  interface Window {
-    AndroidBiometric?: AndroidAppBridge;
-  }
-  interface WindowEventMap {
-    AndroidBiometricResult: CustomEvent<AndroidBiometricResultDetail>;
-  }
-}
+// Os tipos globais para window.AndroidBiometric / AndroidBiometricResult já
+// são declarados em `src/lib/vault/quick-unlock.ts` (reutilizamos aqui).
 
-function getBridge(): AndroidAppBridge | null {
+function getBridge(): NonNullable<Window["AndroidBiometric"]> | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
   return b && typeof b.authenticate === "function" ? b : null;
