@@ -380,7 +380,7 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
         } catch (err) {
           console.error("[import-conta-pdf] erro", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Erro desconhecido" },
+            { error: "Ocorreu um erro interno. Tente novamente." },
             { status: 500 },
           );
         }
