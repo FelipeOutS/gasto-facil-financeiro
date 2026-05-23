@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { planAllowsFeature, isAdminMasterEmail, type PlanTier } from "@/lib/plans";
