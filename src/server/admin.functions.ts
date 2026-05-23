@@ -614,4 +614,42 @@ export const reconcileMpPaymentById = createServerFn({ method: "POST" })
     return { ok: result.ok, applied: result.applied, message: result.message, diagnosis: result.diagnosis };
   });
 
+/**
+ * Lista os últimos eventos de pagamento (payment_events). Admin only.
+ */
+export const listRecentPaymentEvents = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ limit: z.number().int().min(1).max(100).optional() }).parse(input ?? {}),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await ensureAdmin(context.supabase, userId);
+    const limit = data.limit ?? 20;
+    const { data: rows, error } = await supabaseAdmin
+      .from("payment_events")
+      .select("id, created_at, provider, external_payment_id, status, raw_status, event_type, user_id")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]));
+    const emailById = new Map<string, string>();
+    for (const uid of userIds) {
+      try {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (u?.user?.email) emailById.set(uid, u.user.email);
+      } catch {
+        // ignore
+      }
+    }
+    return {
+      events: (rows ?? []).map((r) => ({
+        ...r,
+        user_email: r.user_id ? emailById.get(r.user_id) ?? null : null,
+      })),
+    };
+  });
+
+
 
