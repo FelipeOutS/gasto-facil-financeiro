@@ -188,6 +188,24 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "mp_fetch_failed" }, 502);
         }
 
+        // Idempotência: já processamos esse evento?
+        const externalPaymentId = String(payment.id ?? paymentId);
+        const idempotencyKey = `mercado_pago:${topic}:${externalPaymentId}`;
+        const already = await paymentEventAlreadyProcessed(externalPaymentId, topic);
+        if (already) {
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "ignored",
+              http_status: 200,
+              external_id: externalPaymentId,
+              idempotency_key: idempotencyKey,
+              error_message: "duplicate_event",
+              processing_time_ms: Date.now() - startedAt,
+            });
+          }
+          return json({ ok: true, duplicate: true });
+        }
+
         const status = (payment.status ?? "pending").toLowerCase();
         let userId = payment.metadata?.user_id ?? null;
         let plano = payment.metadata?.plano ?? null;
