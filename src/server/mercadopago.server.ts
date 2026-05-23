@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent } from "./logs.server";
+import { recordPaymentEventIdempotent } from "./mercadopago-diagnostics.server";
 
 /**
  * Reconciliação de pagamentos por cartão pendentes.
