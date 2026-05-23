@@ -335,6 +335,35 @@ function AppMaisPage() {
         <LogOut className="h-4 w-4" />
         {t("more.signOut")}
       </button>
+
+      <AlertDialog open={signOutDialog} onOpenChange={setSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Manter entrada por biometria?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você ativou a biometria neste dispositivo. Deseja mantê-la para os próximos logins ou removê-la agora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setSignOutDialog(false);
+                void performSignOut(false);
+              }}
+            >
+              Remover biometria
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setSignOutDialog(false);
+                void performSignOut(true);
+              }}
+            >
+              Manter biometria
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
