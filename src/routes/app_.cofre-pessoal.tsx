@@ -2301,11 +2301,7 @@ function QuickUnlockSettingsView({
     }
     setBusy(true);
     try {
-      // Alterar/esqueci: garante que registros antigos sejam invalidados
-      if (panel === "change" || panel === "forgot") {
-        disableQuickUnlock(userId);
-      }
-      await enablePinUnlock(userId, pin, masterKey);
+      await enableServerPin(pin, masterKey);
       toast.success(panel === "setup" ? "PIN configurado" : "PIN alterado com sucesso");
       resetPanel();
       refresh();
