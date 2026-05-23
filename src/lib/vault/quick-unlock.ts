@@ -127,6 +127,7 @@ async function androidStatus(): Promise<string> {
   try {
     if (typeof b.isAvailable === "function") {
       const v = await b.isAvailable();
+      console.log("[VaultBiometric] window.AndroidBiometric.isAvailable() result:", v);
       if (truthyBridgeValue(v)) return "available";
       if (v === false) return "none_enrolled";
       const s = String(v ?? "").toLowerCase();
@@ -172,6 +173,7 @@ function androidAuthenticate(reason: string, timeoutMs = 60_000): Promise<boolea
     };
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
+      console.log("[VaultBiometric] AndroidBiometricResult event received:", detail);
       finish(detail.success === true);
     };
 
@@ -179,18 +181,10 @@ function androidAuthenticate(reason: string, timeoutMs = 60_000): Promise<boolea
     const timer = setTimeout(() => finish(false), timeoutMs);
 
     try {
-      const r = b.authenticate(reason);
-      // Compat com bridges antigas que retornavam Promise / valor síncrono.
-      if (r && typeof (r as Promise<unknown>).then === "function") {
-        (r as Promise<string | boolean>).then(
-          (val) => finish(val === true || String(val).toLowerCase() === "success"),
-          () => finish(false),
-        );
-      } else if (typeof r === "boolean" || typeof r === "string") {
-        finish(r === true || String(r).toLowerCase() === "success");
-      }
-      // Caso normal (void): aguardamos o evento AndroidBiometricResult.
-    } catch {
+      b.authenticate(reason);
+      // Bridge Android nativa: não aguarde retorno direto; o resultado vem pelo evento.
+    } catch (error) {
+      console.log("[VaultBiometric] Error calling AndroidBiometric.authenticate():", error);
       finish(false);
     }
   });
