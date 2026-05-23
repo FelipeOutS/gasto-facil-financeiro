@@ -1,6 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, Fingerprint, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  disableAppLock,
+  enableAppLock,
+  useAppLock,
+} from "@/lib/app-lock";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
