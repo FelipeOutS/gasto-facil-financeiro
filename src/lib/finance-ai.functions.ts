@@ -602,6 +602,10 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       throw new Response(access.reason, { status: 403 });
     }
 
+    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "sendChatMessage" });
+    if (rl) throw rl;
+
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       throw new Response("Serviço de IA indisponível.", { status: 500 });
