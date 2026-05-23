@@ -699,7 +699,7 @@ export const Route = createFileRoute("/api/import-extrato")({
         } catch (err) {
           console.error("[import-extrato] erro", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Erro desconhecido" },
+            { error: "Ocorreu um erro interno. Tente novamente." },
             { status: 500 },
           );
         }
