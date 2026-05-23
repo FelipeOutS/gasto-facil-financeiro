@@ -437,7 +437,7 @@ export const grantPlanManually = createServerFn({ method: "POST" })
     } as const;
     const { data: existing } = await supabaseAdmin
       .from("user_plans")
-      .select("user_id")
+      .select("user_id, plano, status, periodicidade, current_period_start, current_period_end")
       .eq("user_id", data.targetUserId)
       .maybeSingle();
     if (existing) {
@@ -452,6 +452,20 @@ export const grantPlanManually = createServerFn({ method: "POST" })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({ user_id: data.targetUserId, ...update } as any);
     }
+
+    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: callerEmail,
+      action: "admin_grant_plan",
+      target_user_id: data.targetUserId,
+      target_email: targetUser?.user?.email ?? null,
+      entity_type: "plan",
+      entity_id: data.targetUserId,
+      old_data: existing ?? null,
+      new_data: update,
+      metadata: { observacao: data.observacao ?? null, amount_cents: data.amountCents ?? 0 },
+    });
 
     return { ok: true as const };
   });
