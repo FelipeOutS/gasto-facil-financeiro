@@ -2592,17 +2592,12 @@ function QuickUnlockSettingsView({
           <Button
             type="button"
             onClick={handleEnableBiometric}
-            disabled={busy || !bioAvailable || hasPin}
+            disabled={busy || !bioAvailable}
             className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
             Configurar biometria
           </Button>
-        )}
-        {hasPin && !hasBio && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Remova o PIN primeiro para configurar a biometria (apenas um método de desbloqueio rápido por dispositivo).
-          </p>
         )}
       </Card>
 
