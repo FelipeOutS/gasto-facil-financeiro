@@ -31,6 +31,26 @@ import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 
 export const APP_LOCK_STORAGE_KEY = "app_android_biometric_enabled";
+export const APP_LOCKED_FLAG_KEY = "app_locked_by_biometric";
+
+export function markAppLockedNow(): void {
+  try {
+    window.localStorage.setItem(APP_LOCKED_FLAG_KEY, "true");
+  } catch {}
+}
+export function clearAppLockedFlag(): void {
+  try {
+    window.localStorage.removeItem(APP_LOCKED_FLAG_KEY);
+  } catch {}
+}
+export function isAppLockedFlagSet(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(APP_LOCKED_FLAG_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 type AndroidBiometricResultDetail = {
   success?: boolean;
