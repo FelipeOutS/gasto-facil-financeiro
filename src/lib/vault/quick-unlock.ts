@@ -44,6 +44,8 @@ function storageKey(userId: string) {
   return `vault:quick:${userId}`;
 }
 
+const ANDROID_BIOMETRIC_ENABLED_KEY = "vault_android_biometric_enabled";
+
 /** Retorna o registro local de biometria (ignora registros antigos de PIN). */
 export function getQuickUnlock(userId: string): QuickUnlockRecord | null {
   try {
@@ -62,6 +64,7 @@ export function getQuickUnlock(userId: string): QuickUnlockRecord | null {
 export function disableQuickUnlock(userId: string) {
   try {
     localStorage.removeItem(storageKey(userId));
+    localStorage.removeItem(ANDROID_BIOMETRIC_ENABLED_KEY);
   } catch {}
 }
 
@@ -98,7 +101,9 @@ declare global {
 export function getAndroidBridge(): AndroidBridge | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  if (!b || typeof b.authenticate !== "function") return null;
+  const found = !!b && typeof b.authenticate === "function";
+  console.log("[VaultBiometric] Android bridge found:", found);
+  if (!found) return null;
   return b;
 }
 
