@@ -2221,6 +2221,7 @@ function QuickUnlockSettingsView({
   onBack: () => void;
 }) {
   const [rec, setRec] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [pinStatus, setPinStatus] = useState<ServerPinStatus | null>(null);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -2236,10 +2237,12 @@ function QuickUnlockSettingsView({
 
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setBioAvailable);
-  }, []);
+    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
+  }, [userId]);
 
   function refresh() {
     setRec(getQuickUnlock(userId));
+    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
   }
 
   function resetPanel() {
