@@ -268,8 +268,10 @@ export async function enableBiometricUnlock(
       throw new Error(reason ?? "Biometria indisponível neste aparelho.");
     }
     // Confirma a biometria agora para validar a configuração
-    const ok = await androidAuthenticate("Confirme para ativar a biometria no Cofre");
-    if (!ok) throw new Error("Cadastro de biometria cancelado.");
+    const result = await androidAuthenticate("Confirme para ativar a biometria no Cofre");
+    if (result.success !== true) {
+      throw new Error(androidResultMessage(result, "Cadastro de biometria cancelado."));
+    }
     // Armazena a chave-mestra cifrada localmente. A bridge é o portão.
     try {
       localStorage.setItem(ANDROID_BIOMETRIC_ENABLED_KEY, "true");
@@ -374,8 +376,10 @@ export async function unlockWithBiometric(userId: string): Promise<CryptoKey> {
   if (!rec) throw new Error("Biometria não configurada neste dispositivo.");
 
   if (rec.kind === "android-bio") {
-    const ok = await androidAuthenticate("Use a biometria para abrir o Cofre");
-    if (!ok) throw new Error("Autenticação biométrica cancelada.");
+    const result = await androidAuthenticate("Use a biometria para abrir o Cofre");
+    if (result.success !== true) {
+      throw new Error(androidResultMessage(result, "Autenticação biométrica cancelada."));
+    }
     const aesKey = await importRawAesKey(toBuf(vaultB64decode(rec.localKey)));
     const plain = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: vaultB64decode(rec.iv) },
