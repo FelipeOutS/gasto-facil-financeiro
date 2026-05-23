@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
+import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 
 /**
  * Verifies Meta's X-Hub-Signature-256 header against the raw request body
