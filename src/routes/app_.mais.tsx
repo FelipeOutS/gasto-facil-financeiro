@@ -1,6 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, Fingerprint, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  disableAppLock,
+  enableAppLock,
+  useAppLock,
+} from "@/lib/app-lock";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -29,7 +35,29 @@ function AppMaisPage() {
   const { user, profile, signOut } = useAuth();
   const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
   const [signingOut, setSigningOut] = useState(false);
+  const appLock = useAppLock();
+  const [togglingLock, setTogglingLock] = useState(false);
   const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  async function handleToggleAppLock() {
+    if (togglingLock) return;
+    setTogglingLock(true);
+    try {
+      if (appLock.enabled) {
+        disableAppLock();
+        appLock.refreshEnabled();
+        toast.success("Biometria do app desativada neste dispositivo.");
+      } else {
+        await enableAppLock();
+        appLock.refreshEnabled();
+        toast.success("Biometria do app ativada neste dispositivo.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar a biometria.");
+    } finally {
+      setTogglingLock(false);
+    }
+  }
 
   const groups = useMemo(
     () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
@@ -147,6 +175,37 @@ function AppMaisPage() {
           )}
         </div>
       </section>
+
+      {appLock.bridgeAvailable && (
+        <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+              <Fingerprint className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Bloqueio por biometria</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                {appLock.enabled
+                  ? "Ativada neste dispositivo. Pediremos sua biometria ao abrir o app."
+                  : "Use a biometria do aparelho para desbloquear o app sem digitar a senha."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAppLock}
+              disabled={togglingLock}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors active:scale-95 disabled:opacity-60",
+                appLock.enabled
+                  ? "border border-destructive/30 bg-destructive/10 text-destructive"
+                  : "bg-primary text-primary-foreground",
+              )}
+            >
+              {togglingLock ? "Aguarde…" : appLock.enabled ? "Desativar" : "Ativar"}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Dashboard + pessoal */}
       <section className="mt-5 space-y-2">

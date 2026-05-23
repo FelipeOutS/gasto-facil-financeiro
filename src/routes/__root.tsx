@@ -12,6 +12,7 @@ import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
+import { AppLockProvider } from "@/lib/app-lock";
 import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
@@ -159,9 +160,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AccentProvider>
             <AuthProvider>
-              <ActiveAccountProvider>
-                <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
-              </ActiveAccountProvider>
+              <AppLockProvider>
+                <ActiveAccountProvider>
+                  <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+                </ActiveAccountProvider>
+              </AppLockProvider>
             </AuthProvider>
           </AccentProvider>
         </ThemeProvider>
