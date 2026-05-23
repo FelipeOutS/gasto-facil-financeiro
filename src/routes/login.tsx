@@ -61,14 +61,23 @@ function LoginForm() {
   useEffect(() => {
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
+    console.log(
+      "[LoginBio] Auth hydration iniciada — bridge=%s, bioEnabled=%s",
+      av,
+      en,
+    );
     setBioAvailable(av);
     setBioEnabled(en);
     if (av && en) {
+      console.log("[LoginBio] Tela biométrica exibida");
       setBioMode(true);
       const savedEmail = getLoginBioEmail();
       if (savedEmail) setEmail(savedEmail);
+    } else {
+      console.log("[LoginBio] Sem biometria — exibindo login por senha");
     }
   }, []);
+
 
   async function handleBiometric() {
     if (bioRunning) return;
