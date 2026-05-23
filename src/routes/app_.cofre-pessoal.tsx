@@ -2316,7 +2316,7 @@ function QuickUnlockSettingsView({
     setBusy(true);
     try {
       await enableBiometricUnlock(userId, userLabel, masterKey);
-      toast.success("Biometria configurada");
+      toast.success("Biometria ativada com sucesso neste dispositivo.");
       refresh();
     } catch (e) {
       toast.error("Falha ao configurar biometria", { description: (e as Error).message });
@@ -2569,7 +2569,7 @@ function QuickUnlockSettingsView({
               {hasBio
                 ? `Ativa neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
                 : bioAvailable
-                ? "Usa o autenticador do seu dispositivo. Requer suporte à extensão PRF do navegador."
+                ? "Usa a biometria nativa deste aparelho quando disponível."
                 : "Indisponível neste dispositivo ou navegador."}
             </p>
           </div>
