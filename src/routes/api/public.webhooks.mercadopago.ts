@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 
 /**
  * POST /api/public/webhooks/mercadopago
@@ -64,6 +65,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const startedAt = Date.now();
         const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
         const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
         if (!accessToken || !webhookSecret) {
@@ -81,11 +83,28 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         try {
           body = JSON.parse(rawBody) as typeof body;
         } catch {
+          await logWebhookEvent({
+            provider: "mercado_pago",
+            status: "failed",
+            http_status: 400,
+            request_headers: request.headers,
+            error_message: "invalid_body",
+          });
           return json({ error: "invalid_body" }, 400);
         }
 
         const topic = (body.type ?? body.topic ?? "").toLowerCase();
         const dataId = body.data?.id ? String(body.data.id) : null;
+
+        // Log inicial "received"
+        const logId = await logWebhookEvent({
+          provider: "mercado_pago",
+          event_type: topic || null,
+          external_id: dataId,
+          status: "received",
+          request_headers: request.headers,
+          request_body: body,
+        });
 
         // Validação de assinatura
         const signatureHeader = request.headers.get("x-signature") ?? "";
@@ -99,6 +118,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const ts = parts.ts;
         const v1 = parts.v1;
         if (!ts || !v1 || !dataId) {
+          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "missing_signature", processing_time_ms: Date.now() - startedAt });
           return json({ error: "missing_signature" }, 401);
         }
         const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
@@ -106,8 +126,10 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const a = Buffer.from(expected, "hex");
         const b = Buffer.from(v1, "hex");
         if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "invalid_signature", processing_time_ms: Date.now() - startedAt });
           return json({ error: "invalid_signature" }, 401);
         }
+
 
         // Resolve paymentId (pode vir direto ou via merchant_order)
         let paymentId: string | null = null;
@@ -120,10 +142,16 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           // tipo desconhecido — tenta como payment
           paymentId = dataId;
         }
-        if (!paymentId) return json({ ok: true, ignored: true });
+        if (!paymentId) {
+          if (logId) await updateWebhookLog(logId, { status: "ignored", http_status: 200, processing_time_ms: Date.now() - startedAt });
+          return json({ ok: true, ignored: true });
+        }
 
         const payment = await fetchPayment(accessToken, paymentId);
-        if (!payment) return json({ error: "mp_fetch_failed" }, 502);
+        if (!payment) {
+          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 502, error_message: "mp_fetch_failed", processing_time_ms: Date.now() - startedAt });
+          return json({ error: "mp_fetch_failed" }, 502);
+        }
 
         const status = (payment.status ?? "pending").toLowerCase();
         let userId = payment.metadata?.user_id ?? null;
@@ -232,6 +260,16 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           }
         }
 
+        if (logId) {
+          await updateWebhookLog(logId, {
+            status: "processed",
+            http_status: 200,
+            external_id: String(payment.id ?? paymentId),
+            user_id: userId ?? null,
+            processing_time_ms: Date.now() - startedAt,
+            response_body: { ok: true, payment_status: status },
+          });
+        }
         return json({ ok: true });
       },
     },

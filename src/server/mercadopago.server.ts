@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logAuditEvent } from "./logs.server";
 
 /**
  * Reconciliação de pagamentos por cartão pendentes.
@@ -64,6 +65,15 @@ export async function reconcilePendingCardPaymentsForUser(userId: string): Promi
         })
         .eq("id", row.id);
       updated += 1;
+      await logAuditEvent({
+        actor_user_id: null,
+        action: "payment_marked_paid",
+        target_user_id: userId,
+        entity_type: "payment",
+        entity_id: row.id,
+        new_data: { status: "approved", provider_payment_id: String(payment.id ?? approved.id) },
+        metadata: { source: "reconcile_pending_card_payments" },
+      });
     } catch (err) {
       console.warn("[reconcilePendingCardPaymentsForUser] erro", err);
     }

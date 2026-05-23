@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
+import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 
 /**
  * Verifies Meta's X-Hub-Signature-256 header against the raw request body
@@ -87,17 +88,29 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
 
       // ---- Receiving messages ----
       POST: async ({ request }) => {
+        const startedAt = Date.now();
         const rawBody = await request.text();
 
-        // Require Meta's HMAC signature on every POST. Without
-        // WHATSAPP_APP_SECRET configured the endpoint refuses traffic so
-        // attackers cannot inject fake expense messages by guessing phones.
         if (!process.env.WHATSAPP_APP_SECRET) {
           console.error("[whatsapp] WHATSAPP_APP_SECRET not configured");
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 503,
+            request_headers: request.headers,
+            error_message: "webhook_not_configured",
+          });
           return jsonResponse({ error: "webhook_not_configured" }, 503);
         }
         const sig = request.headers.get("x-hub-signature-256");
         if (!verifyMetaSignature(rawBody, sig)) {
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 403,
+            request_headers: request.headers,
+            error_message: "invalid_signature",
+          });
           return jsonResponse({ error: "invalid_signature" }, 403);
         }
 
@@ -105,21 +118,33 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         try {
           payload = JSON.parse(rawBody);
         } catch {
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 400,
+            request_headers: request.headers,
+            error_message: "invalid_json",
+          });
           return jsonResponse({ error: "invalid_json" }, 400);
         }
 
-        // Modo "teste manual" ou clientes que não usam o formato Meta.
-        // Aceita também { telefone, texto, external_id } direto.
         const flatMessages = extractMessages(payload);
+        const logId = await logWebhookEvent({
+          provider: "whatsapp",
+          event_type: "messages",
+          status: "received",
+          request_headers: request.headers,
+          request_body: payload,
+        });
+
         if (flatMessages.length === 0) {
-          // Sempre 200 para o Meta não retentar. Apenas logamos.
+          if (logId) await updateWebhookLog(logId, { status: "ignored", http_status: 200, processing_time_ms: Date.now() - startedAt, error_message: "no_messages" });
           return jsonResponse({ ok: true, processed: 0, skipped: "no_messages" });
         }
 
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           if (!msg.texto?.trim()) continue;
-          // Limites de segurança: descarta payloads enormes / suspeitos.
           if (msg.texto.length > 1000) {
             results.push({ status: "ignorada_grande" });
             continue;
@@ -127,7 +152,6 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           try {
             const out = await processarMensagemWhatsApp(msg);
             results.push({ status: out.status, gasto_id: out.gastoId });
-            // Envia a resposta de volta pelo WhatsApp (confirmação, perguntas, etc.)
             if (out.resposta && msg.telefone) {
               try {
                 await sendWhatsAppReply(msg.telefone, out.resposta);
@@ -139,6 +163,15 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             console.error("[whatsapp] processar erro", e);
             results.push({ status: "erro" });
           }
+        }
+        if (logId) {
+          await updateWebhookLog(logId, {
+            status: "processed",
+            http_status: 200,
+            external_id: flatMessages[0]?.external_id ?? null,
+            processing_time_ms: Date.now() - startedAt,
+            response_body: { processed: results.length, results },
+          });
         }
         return jsonResponse({ ok: true, processed: results.length, results });
       },

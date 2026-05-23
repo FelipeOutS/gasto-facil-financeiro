@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
+import { logAuditEvent } from "./logs.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
@@ -44,13 +45,12 @@ export const deleteUserById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    await ensureAdmin(context.supabase, userId);
+    const actorEmail = await ensureAdmin(context.supabase, userId);
 
     if (data.targetUserId === userId) {
       throw new Error("Você não pode excluir a própria conta de administrador.");
     }
 
-    // Verifica se alvo é admin (allowlist ou owner) — bloqueia
     const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
     const targetEmail = (targetUser?.user?.email ?? "").toLowerCase();
     if (ADMIN_EMAILS.includes(targetEmail)) {
@@ -64,10 +64,8 @@ export const deleteUserById = createServerFn({ method: "POST" })
       throw new Error("Não é permitido excluir um usuário com papel de owner.");
     }
 
-    // Limpa profile
     await supabaseAdmin.from("profiles").delete().eq("id", data.targetUserId);
 
-    // Limpa tabelas user-scoped
     for (const table of USER_DATA_TABLES) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabaseAdmin as any).from(table).delete().eq("user_id", data.targetUserId);
@@ -77,8 +75,29 @@ export const deleteUserById = createServerFn({ method: "POST" })
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
     if (authError) {
       console.error("[deleteUserById] auth.admin.deleteUser", authError);
+      await logAuditEvent({
+        actor_user_id: userId,
+        actor_email: actorEmail,
+        action: "admin_delete_user",
+        target_user_id: data.targetUserId,
+        target_email: targetEmail,
+        entity_type: "user",
+        entity_id: data.targetUserId,
+        metadata: { ok: false, error: authError.message },
+      });
       throw new Error("Não foi possível excluir o usuário no provedor de autenticação.");
     }
+
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: actorEmail,
+      action: "admin_delete_user",
+      target_user_id: data.targetUserId,
+      target_email: targetEmail,
+      entity_type: "user",
+      entity_id: data.targetUserId,
+      metadata: { ok: true, tables_cleared: USER_DATA_TABLES.length },
+    });
 
     return { ok: true };
   });
@@ -418,7 +437,7 @@ export const grantPlanManually = createServerFn({ method: "POST" })
     } as const;
     const { data: existing } = await supabaseAdmin
       .from("user_plans")
-      .select("user_id")
+      .select("user_id, plano, status, periodicidade, current_period_start, current_period_end")
       .eq("user_id", data.targetUserId)
       .maybeSingle();
     if (existing) {
@@ -433,6 +452,20 @@ export const grantPlanManually = createServerFn({ method: "POST" })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert({ user_id: data.targetUserId, ...update } as any);
     }
+
+    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: callerEmail,
+      action: "admin_grant_plan",
+      target_user_id: data.targetUserId,
+      target_email: targetUser?.user?.email ?? null,
+      entity_type: "plan",
+      entity_id: data.targetUserId,
+      old_data: existing ?? null,
+      new_data: update,
+      metadata: { observacao: data.observacao ?? null, amount_cents: data.amountCents ?? 0 },
+    });
 
     return { ok: true as const };
   });
@@ -466,16 +499,15 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    await ensureAdmin(context.supabase, userId);
+    const actorEmail = await ensureAdmin(context.supabase, userId);
 
     const now = new Date();
     const { data: existing } = await supabaseAdmin
       .from("user_plans")
-      .select("user_id, plano, current_period_start, current_period_end")
+      .select("user_id, plano, status, current_period_start, current_period_end")
       .eq("user_id", data.targetUserId)
       .maybeSingle();
 
-    // Para "ativo", exige pagamento aprovado, salvo se forceActivate=true.
     if (data.status === "ativo" && !data.forceActivate) {
       const { data: paid } = await supabaseAdmin
         .from("subscription_payments")
@@ -522,6 +554,21 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("user_plans").insert({ user_id: data.targetUserId, plano: "sem_assinatura", ...update } as any);
     }
+
+    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: actorEmail,
+      action: "admin_set_status",
+      target_user_id: data.targetUserId,
+      target_email: targetUser?.user?.email ?? null,
+      entity_type: "subscription",
+      entity_id: data.targetUserId,
+      old_data: existing ?? null,
+      new_data: update,
+      metadata: { force_activate: !!data.forceActivate, clear_plan: !!data.clearPlan },
+    });
+
     return { ok: true as const };
   });
 
