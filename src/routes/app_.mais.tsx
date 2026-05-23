@@ -176,6 +176,37 @@ function AppMaisPage() {
         </div>
       </section>
 
+      {appLock.bridgeAvailable && (
+        <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+              <Fingerprint className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Bloqueio por biometria</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                {appLock.enabled
+                  ? "Ativada neste dispositivo. Pediremos sua biometria ao abrir o app."
+                  : "Use a biometria do aparelho para desbloquear o app sem digitar a senha."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAppLock}
+              disabled={togglingLock}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors active:scale-95 disabled:opacity-60",
+                appLock.enabled
+                  ? "border border-destructive/30 bg-destructive/10 text-destructive"
+                  : "bg-primary text-primary-foreground",
+              )}
+            >
+              {togglingLock ? "Aguarde…" : appLock.enabled ? "Desativar" : "Ativar"}
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Dashboard + pessoal */}
       <section className="mt-5 space-y-2">
         <Link
