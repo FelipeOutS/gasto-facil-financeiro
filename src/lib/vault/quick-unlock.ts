@@ -265,21 +265,28 @@ export async function enableBiometricUnlock(
     const ok = await androidAuthenticate("Confirme para ativar a biometria no Cofre");
     if (!ok) throw new Error("Cadastro de biometria cancelado.");
     // Armazena a chave-mestra cifrada localmente. A bridge é o portão.
-    const localKey = vaultRandomBytes(32);
-    const aesKey = await importRawAesKey(toBuf(localKey));
-    const iv = vaultRandomBytes(12);
-    const raw = await exportMasterKeyRaw(masterKey);
-    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, raw);
-    const rec: AndroidBioRecord = {
-      v: 1,
-      kind: "android-bio",
-      createdAt: Date.now(),
-      attempts: 0,
-      iv: vaultB64encode(iv),
-      wrapped: vaultB64encode(new Uint8Array(ct)),
-      localKey: vaultB64encode(localKey),
-    };
-    persist(userId, rec);
+    try {
+      localStorage.setItem(ANDROID_BIOMETRIC_ENABLED_KEY, "true");
+      const localKey = vaultRandomBytes(32);
+      const aesKey = await importRawAesKey(toBuf(localKey));
+      const iv = vaultRandomBytes(12);
+      const raw = await exportMasterKeyRaw(masterKey);
+      const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, raw);
+      const rec: AndroidBioRecord = {
+        v: 1,
+        kind: "android-bio",
+        createdAt: Date.now(),
+        attempts: 0,
+        iv: vaultB64encode(iv),
+        wrapped: vaultB64encode(new Uint8Array(ct)),
+        localKey: vaultB64encode(localKey),
+      };
+      persist(userId, rec);
+      console.log("[VaultBiometric] Local biometric flag saved successfully.");
+    } catch (error) {
+      console.log("[VaultBiometric] Error saving local biometric flag:", error);
+      throw new Error("Falha ao salvar a configuração local da biometria.");
+    }
     return;
   }
 
