@@ -573,6 +573,42 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
       metadata: { force_activate: !!data.forceActivate, clear_plan: !!data.clearPlan },
     });
 
+/**
+ * Diagnóstico de um pagamento do Mercado Pago. Admin only.
+ * NÃO altera estado — apenas reporta.
+ */
+export const diagnoseMpPayment = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await ensureAdmin(context.supabase, userId);
+    const diagnosis = await diagnoseMercadoPagoPayment(data.paymentId);
+    return { ok: true as const, diagnosis };
+  });
+
+/**
+ * Reconciliação manual de um pagamento do Mercado Pago. Admin only.
+ * Se MP estiver approved e o estado local divergir, corrige e ativa assinatura.
+ * Idempotente: chamadas repetidas não duplicam ativação.
+ */
+export const reconcileMpPaymentById = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const actorEmail = await ensureAdmin(context.supabase, userId);
+    const result = await reconcileMercadoPagoPaymentById(data.paymentId, {
+      user_id: userId,
+      email: actorEmail,
+    });
+    return { ok: result.ok, applied: result.applied, message: result.message, diagnosis: result.diagnosis };
+  });
+
     return { ok: true as const };
   });
 
