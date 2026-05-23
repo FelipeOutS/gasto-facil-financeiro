@@ -197,7 +197,18 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/40 px-4 py-8 sm:px-6 sm:py-12 dark:from-slate-950 dark:via-background dark:to-slate-900">
+    <div
+      className="relative w-full overflow-x-hidden bg-background bg-gradient-to-br from-slate-50 via-white to-blue-50/40 px-4 py-8 sm:px-6 sm:py-12 dark:from-slate-950 dark:via-background dark:to-slate-900"
+      style={{
+        minHeight: "100vh",
+        // eslint-disable-next-line
+        ...(typeof CSS !== "undefined" && CSS.supports?.("min-height: 100dvh")
+          ? { minHeight: "100dvh" }
+          : {}),
+        paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
+        paddingTop: "max(2rem, env(safe-area-inset-top))",
+      }}
+    >
       <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
       <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
 
