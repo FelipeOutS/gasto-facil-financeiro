@@ -219,11 +219,19 @@ function MetasPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
-            <AlertDialogDescription
-              dangerouslySetInnerHTML={{
-                __html: t("delete.description", { name: confirmDelete?.nome ?? "" }),
-              }}
-            />
+            <AlertDialogDescription>
+              {(() => {
+                const tpl = t("delete.description", { name: "\u0000NAME\u0000" });
+                const parts = tpl.split("\u0000NAME\u0000");
+                return (
+                  <>
+                    {parts[0]?.replace(/<\/?strong>/g, "")}
+                    <strong>{confirmDelete?.nome ?? ""}</strong>
+                    {parts[1]?.replace(/<\/?strong>/g, "")}
+                  </>
+                );
+              })()}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
