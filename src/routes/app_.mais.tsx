@@ -7,6 +7,7 @@ import {
   enableAppLock,
   useAppLock,
 } from "@/lib/app-lock";
+import { Lock as LockIcon } from "lucide-react";
 import {
   clearLoginBio,
   enableLoginBio,
