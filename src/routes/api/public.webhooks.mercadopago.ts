@@ -260,6 +260,16 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           }
         }
 
+        if (logId) {
+          await updateWebhookLog(logId, {
+            status: "processed",
+            http_status: 200,
+            external_id: String(payment.id ?? paymentId),
+            user_id: userId ?? null,
+            processing_time_ms: Date.now() - startedAt,
+            response_body: { ok: true, payment_status: status },
+          });
+        }
         return json({ ok: true });
       },
     },
