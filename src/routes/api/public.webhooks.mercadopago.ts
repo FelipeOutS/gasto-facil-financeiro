@@ -3,6 +3,11 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import {
+  paymentEventAlreadyProcessed,
+  recordPaymentEventIdempotent,
+  canonicalMpStatus,
+} from "@/server/mercadopago-diagnostics.server";
 
 /**
  * POST /api/public/webhooks/mercadopago
