@@ -1,12 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Fingerprint, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   disableAppLock,
   enableAppLock,
   useAppLock,
 } from "@/lib/app-lock";
+import {
+  clearLoginBio,
+  enableLoginBio,
+  isLoginBioBridgeAvailable,
+  isLoginBioEnabled,
+} from "@/lib/biometric-login";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -37,7 +53,36 @@ function AppMaisPage() {
   const [signingOut, setSigningOut] = useState(false);
   const appLock = useAppLock();
   const [togglingLock, setTogglingLock] = useState(false);
+  const [loginBioAvailable, setLoginBioAvailable] = useState(false);
+  const [loginBioEnabled, setLoginBioEnabled] = useState(false);
+  const [togglingLoginBio, setTogglingLoginBio] = useState(false);
+  const [signOutDialog, setSignOutDialog] = useState(false);
   const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  useEffect(() => {
+    setLoginBioAvailable(isLoginBioBridgeAvailable());
+    setLoginBioEnabled(isLoginBioEnabled());
+  }, []);
+
+  async function handleToggleLoginBio() {
+    if (togglingLoginBio) return;
+    setTogglingLoginBio(true);
+    try {
+      if (loginBioEnabled) {
+        clearLoginBio();
+        setLoginBioEnabled(false);
+        toast.success("Entrada por biometria desativada neste dispositivo.");
+      } else {
+        await enableLoginBio(user?.email ?? "");
+        setLoginBioEnabled(true);
+        toast.success("Entrada por biometria ativada neste dispositivo.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar a biometria.");
+    } finally {
+      setTogglingLoginBio(false);
+    }
+  }
 
   async function handleToggleAppLock() {
     if (togglingLock) return;
@@ -90,11 +135,21 @@ function AppMaisPage() {
     return rule ? !can(rule.feature) : false;
   }
 
-  async function handleSignOut() {
+  async function performSignOut(keepBio: boolean) {
     if (signingOut) return;
     setSigningOut(true);
+    if (!keepBio) clearLoginBio();
     await signOut();
     void navigate({ to: "/login", replace: true });
+  }
+
+  function handleSignOut() {
+    // Se a entrada por biometria está ativa, pergunta antes.
+    if (loginBioAvailable && loginBioEnabled) {
+      setSignOutDialog(true);
+      return;
+    }
+    void performSignOut(false);
   }
 
   function renderCard(item: NavLeaf) {
@@ -207,6 +262,38 @@ function AppMaisPage() {
         </section>
       )}
 
+      {loginBioAvailable && (
+        <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+              <Fingerprint className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Entrada por biometria</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                {loginBioEnabled
+                  ? "Ativada. Você poderá entrar com a digital sem digitar a senha."
+                  : "Entre no app com a digital deste aparelho, sem precisar digitar a senha."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleLoginBio}
+              disabled={togglingLoginBio}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors active:scale-95 disabled:opacity-60",
+                loginBioEnabled
+                  ? "border border-destructive/30 bg-destructive/10 text-destructive"
+                  : "bg-primary text-primary-foreground",
+              )}
+            >
+              {togglingLoginBio ? "Aguarde…" : loginBioEnabled ? "Desativar" : "Ativar"}
+            </button>
+          </div>
+        </section>
+      )}
+
+
       {/* Dashboard + pessoal */}
       <section className="mt-5 space-y-2">
         <Link
@@ -248,6 +335,35 @@ function AppMaisPage() {
         <LogOut className="h-4 w-4" />
         {t("more.signOut")}
       </button>
+
+      <AlertDialog open={signOutDialog} onOpenChange={setSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Manter entrada por biometria?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você ativou a biometria neste dispositivo. Deseja mantê-la para os próximos logins ou removê-la agora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setSignOutDialog(false);
+                void performSignOut(false);
+              }}
+            >
+              Remover biometria
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setSignOutDialog(false);
+                void performSignOut(true);
+              }}
+            >
+              Manter biometria
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 }
