@@ -45,13 +45,12 @@ export const deleteUserById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    await ensureAdmin(context.supabase, userId);
+    const actorEmail = await ensureAdmin(context.supabase, userId);
 
     if (data.targetUserId === userId) {
       throw new Error("Você não pode excluir a própria conta de administrador.");
     }
 
-    // Verifica se alvo é admin (allowlist ou owner) — bloqueia
     const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
     const targetEmail = (targetUser?.user?.email ?? "").toLowerCase();
     if (ADMIN_EMAILS.includes(targetEmail)) {
@@ -65,10 +64,8 @@ export const deleteUserById = createServerFn({ method: "POST" })
       throw new Error("Não é permitido excluir um usuário com papel de owner.");
     }
 
-    // Limpa profile
     await supabaseAdmin.from("profiles").delete().eq("id", data.targetUserId);
 
-    // Limpa tabelas user-scoped
     for (const table of USER_DATA_TABLES) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabaseAdmin as any).from(table).delete().eq("user_id", data.targetUserId);
@@ -78,8 +75,29 @@ export const deleteUserById = createServerFn({ method: "POST" })
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
     if (authError) {
       console.error("[deleteUserById] auth.admin.deleteUser", authError);
+      await logAuditEvent({
+        actor_user_id: userId,
+        actor_email: actorEmail,
+        action: "admin_delete_user",
+        target_user_id: data.targetUserId,
+        target_email: targetEmail,
+        entity_type: "user",
+        entity_id: data.targetUserId,
+        metadata: { ok: false, error: authError.message },
+      });
       throw new Error("Não foi possível excluir o usuário no provedor de autenticação.");
     }
+
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: actorEmail,
+      action: "admin_delete_user",
+      target_user_id: data.targetUserId,
+      target_email: targetEmail,
+      entity_type: "user",
+      entity_id: data.targetUserId,
+      metadata: { ok: true, tables_cleared: USER_DATA_TABLES.length },
+    });
 
     return { ok: true };
   });
