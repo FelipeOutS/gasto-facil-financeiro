@@ -2384,7 +2384,7 @@ function QuickUnlockSettingsView({
             <p className="text-sm font-semibold">PIN rápido</p>
             <p className="truncate text-[11px] text-muted-foreground">
               {hasPin
-                ? `Ativo neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
+                ? `Ativo na sua conta${pinStatus?.updatedAt ? ` desde ${new Date(pinStatus.updatedAt).toLocaleDateString("pt-BR")}` : ""}`
                 : "4 a 8 dígitos numéricos. Recomendado: 6."}
             </p>
           </div>
