@@ -58,7 +58,6 @@ function AppMaisPage() {
       setTogglingLock(false);
     }
   }
-  const isAdminMaster = isAdminMasterEmail(user?.email);
 
   const groups = useMemo(
     () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
