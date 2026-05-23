@@ -2325,12 +2325,19 @@ function QuickUnlockSettingsView({
     }
   }
 
-  function handleRemovePin() {
-    if (!window.confirm("Remover o PIN deste dispositivo? Você precisará da senha mestra para entrar.")) return;
-    disableQuickUnlock(userId);
-    resetPanel();
-    refresh();
-    toast.success("PIN removido deste dispositivo");
+  async function handleRemovePin() {
+    if (!window.confirm("Remover o PIN da sua conta? Você precisará da senha mestra para entrar em todos os dispositivos.")) return;
+    setBusy(true);
+    try {
+      await disableServerPin();
+      resetPanel();
+      refresh();
+      toast.success("PIN removido da conta");
+    } catch (e) {
+      toast.error("Falha ao remover PIN", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleRemoveBio() {
@@ -2340,8 +2347,8 @@ function QuickUnlockSettingsView({
     toast.success("Biometria removida deste dispositivo");
   }
 
-  const hasPin = rec?.kind === "pin";
-  const hasBio = rec?.kind === "webauthn";
+  const hasPin = pinStatus?.configured ?? false;
+  const hasBio = rec?.kind === "webauthn" || rec?.kind === "android-bio";
 
   return (
     <>
