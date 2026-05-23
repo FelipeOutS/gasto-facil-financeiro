@@ -135,11 +135,21 @@ function AppMaisPage() {
     return rule ? !can(rule.feature) : false;
   }
 
-  async function handleSignOut() {
+  async function performSignOut(keepBio: boolean) {
     if (signingOut) return;
     setSigningOut(true);
+    if (!keepBio) clearLoginBio();
     await signOut();
     void navigate({ to: "/login", replace: true });
+  }
+
+  function handleSignOut() {
+    // Se a entrada por biometria está ativa, pergunta antes.
+    if (loginBioAvailable && loginBioEnabled) {
+      setSignOutDialog(true);
+      return;
+    }
+    void performSignOut(false);
   }
 
   function renderCard(item: NavLeaf) {
