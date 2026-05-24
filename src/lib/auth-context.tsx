@@ -157,7 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     loading,
     async signIn(email, password) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error && data.session) {
+        console.log("[Biometria] login por senha funcionou, salvando preferência biométrica");
+        persistLoginBioSession(data.session);
+        setLoginBioUnlocked(true);
+      }
       return { error: error ?? null };
     },
     async signUp(nome, email, password) {
