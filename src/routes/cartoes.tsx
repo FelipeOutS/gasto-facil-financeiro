@@ -1825,12 +1825,13 @@ function CartaoFormDialog({
     diaVenc >= 1 &&
     diaVenc <= 31;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) {
       toast.error(t("toast.checkFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     const payload: NovoCartaoInput = {
       nome: nome.trim(),
       banco: banco.trim(),
