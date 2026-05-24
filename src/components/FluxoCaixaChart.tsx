@@ -166,7 +166,7 @@ export function FluxoCaixaChart({
           </p>
         </div>
       ) : (
-        <div className="mt-4 h-[220px] w-full sm:h-[260px]">
+        <div className="mt-4 h-[220px] w-full sm:h-[260px] lg:h-[300px] xl:h-[340px]">
         <ResponsiveContainer width="100%" height="100%">
           {tipo === "area" ? (
             <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
