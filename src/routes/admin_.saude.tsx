@@ -29,13 +29,27 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
   getSystemHealthDashboard,
   getLogRetentionPreview,
+  runLogRetentionCleanup,
   type SystemHealthData,
   type LogRetentionPreview,
+  type LogRetentionCleanupResult,
 } from "@/server/system-health.functions";
 import { PaymentDiagnoseDialog } from "@/components/admin/PaymentDiagnoseDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2, Loader2 } from "lucide-react";
 
 function fmtMoneyCents(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -132,6 +146,11 @@ function SystemHealthPage() {
   const [diagPaymentId, setDiagPaymentId] = useState<string | null>(null);
   const [diagPeriodEnd, setDiagPeriodEnd] = useState<string | null>(null);
   const [diagOpen, setDiagOpen] = useState(false);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [cleanupRunning, setCleanupRunning] = useState(false);
+  const [cleanupLast, setCleanupLast] = useState<LogRetentionCleanupResult | null>(null);
+  const runCleanupFn = useServerFn(runLogRetentionCleanup);
+
 
   const openDiagnose = useCallback((paymentId: string, periodEnd?: string | null) => {
     setDiagPaymentId(paymentId);
@@ -164,6 +183,33 @@ function SystemHealthPage() {
       setRetentionLoading(false);
     }
   }, []);
+
+  const runCleanup = useCallback(async () => {
+    setCleanupRunning(true);
+    try {
+      const res = (await runCleanupFn()) as LogRetentionCleanupResult;
+      setCleanupLast(res);
+      const totalDeleted = res.results.reduce((a, r) => a + r.deleted, 0);
+      const anyFail = res.results.some((r) => !r.success);
+      if (anyFail) {
+        toast.warning(`Limpeza parcial: ${totalDeleted} registro(s) apagado(s)`, {
+          description: "Alguma(s) tabela(s) falharam — veja o resumo.",
+        });
+      } else {
+        toast.success(`Limpeza concluída: ${totalDeleted} registro(s) apagado(s)`);
+      }
+      // Atualiza prévia e dashboard
+      void loadRetention();
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error("Falha ao executar limpeza de logs", { description: msg });
+    } finally {
+      setCleanupRunning(false);
+      setCleanupOpen(false);
+    }
+  }, [runCleanupFn, loadRetention, load]);
+
 
   useEffect(() => {
     void load();
@@ -511,25 +557,41 @@ function SystemHealthPage() {
             {/* Retenção de logs */}
             <Card className="mt-4">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold">
                   <span className="flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    Retenção de logs (prévia)
+                    Retenção de logs
                   </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void loadRetention()}
-                    disabled={retentionLoading}
-                  >
-                    {retention ? "Recalcular" : "Calcular"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void loadRetention()}
+                      disabled={retentionLoading || cleanupRunning}
+                    >
+                      {retention ? "Recalcular prévia" : "Calcular prévia"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setCleanupOpen(true)}
+                      disabled={cleanupRunning}
+                    >
+                      {cleanupRunning ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-1 h-3 w-3" />
+                      )}
+                      Executar limpeza
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Recomendação: webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
-                  payment_events 180d. Nenhum registro é apagado nesta etapa.
+                  Política fixa: webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
+                  payment_events 180d. Usuários, pagamentos, planos, gastos e receitas
+                  <strong> nunca</strong> são afetados.
                 </p>
                 {!retention ? (
                   <div className="py-4 text-center text-xs text-muted-foreground">
@@ -563,8 +625,61 @@ function SystemHealthPage() {
                     </Table>
                   </div>
                 )}
+
+                {cleanupLast ? (
+                  <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs">
+                    <div className="mb-1 font-semibold">
+                      Última limpeza · {fmtDateTime(cleanupLast.executed_at)}
+                    </div>
+                    <ul className="space-y-0.5">
+                      {cleanupLast.results.map((r) => (
+                        <li key={r.table} className="flex justify-between">
+                          <span className="font-mono">{r.table}</span>
+                          <span className={r.success ? "text-emerald-600" : "text-red-600"}>
+                            {r.success
+                              ? `${r.deleted} apagado(s)`
+                              : `falhou: ${r.error ?? "erro"}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
+
+            <AlertDialog open={cleanupOpen} onOpenChange={setCleanupOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                    Confirmar limpeza de logs antigos
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação apagará logs antigos conforme a política de retenção
+                    (webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
+                    payment_events 180d). Ela <strong>não</strong> apagará usuários,
+                    pagamentos, planos, gastos ou receitas. Deseja continuar?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={cleanupRunning}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void runCleanup();
+                    }}
+                    disabled={cleanupRunning}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {cleanupRunning ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : null}
+                    Confirmar limpeza
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* Listas */}
             <SectionTable
