@@ -18,7 +18,6 @@ import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
-import { OfflineBanner } from "@/components/OfflineBanner";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
@@ -75,14 +74,14 @@ export const Route = createRootRoute({
           "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cbdbf992-e65f-4ef8-8f0f-d0847404378f/id-preview-8d7db3be--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1779115302264.png" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Gasto Inteligente — Controle de gastos do mês" },
       { name: "twitter:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
-      { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cbdbf992-e65f-4ef8-8f0f-d0847404378f/id-preview-8d7db3be--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1779115302264.png" },
       { name: "description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
       { property: "og:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
     ],
@@ -193,7 +192,6 @@ function RootComponent() {
   return (
     <>
       <HreflangTags path={cleanPath} />
-      <OfflineBanner />
       <ConnectedAccountBanner />
       <Outlet />
       <Toaster position="top-center" />
