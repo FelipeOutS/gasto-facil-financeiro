@@ -1,0 +1,249 @@
+// Card compacto do Diagnóstico Mensal no Dashboard.
+// Reusa dados que já estão no store. Não persiste, não notifica,
+// não duplica alertas/dicas — apenas resume o mês e orienta o usuário.
+import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  ClipboardList,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronRight,
+} from "lucide-react";
+import {
+  getCartoes,
+  getCategorias,
+  getContasAPagar,
+  getGastos,
+  getGuardado,
+  getLimite,
+  getMetas,
+  getReceitas,
+  mesEfetivoGasto,
+  resumoFaturaCartao,
+  useStore,
+} from "@/lib/store";
+import { useRecorrencias } from "@/lib/recorrencias";
+import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
+import { buildLinhasOrcamento } from "@/lib/orcamento";
+import {
+  generateMonthlyDiagnosis,
+  type MonthlyDiagnosisStatus,
+} from "@/lib/insights/monthly-diagnosis";
+import { PremiumCard } from "@/components/ui/premium-card";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+function statusTone(status: MonthlyDiagnosisStatus): {
+  badge: StatusTone;
+  ring: string;
+  iconBg: string;
+  iconFg: string;
+  label: string;
+} {
+  switch (status) {
+    case "critico":
+      return {
+        badge: "destructive",
+        ring: "border-destructive/40",
+        iconBg: "bg-destructive/15",
+        iconFg: "text-destructive",
+        label: "Crítico",
+      };
+    case "atencao":
+      return {
+        badge: "warning",
+        ring: "border-warning/40",
+        iconBg: "bg-warning/15",
+        iconFg: "text-warning",
+        label: "Atenção",
+      };
+    case "bom":
+      return {
+        badge: "info",
+        ring: "border-primary/30",
+        iconBg: "bg-primary/10",
+        iconFg: "text-primary",
+        label: "Bom",
+      };
+    case "excelente":
+      return {
+        badge: "success",
+        ring: "border-success/40",
+        iconBg: "bg-success/15",
+        iconFg: "text-success",
+        label: "Excelente",
+      };
+  }
+}
+
+export function DashboardDiagnosticoMensalCard({ className }: { className?: string }) {
+  const [ym] = useMesReferenciaRef() as unknown as [
+    { mes: number; ano: number },
+    (next: { mes: number; ano: number }) => void,
+  ];
+
+  const gastos = useStore(() => getGastos());
+  const receitas = useStore(() => getReceitas());
+  const categorias = useStore(() => getCategorias());
+  const cartoes = useStore(() => getCartoes());
+  const contasAPagar = useStore(() => getContasAPagar());
+  const metas = useStore(() => getMetas());
+  const guardado = useStore(() => getGuardado());
+  const recorrencias = useRecorrencias();
+
+  const gastosDoMes = useMemo(
+    () =>
+      gastos.filter((g) => {
+        if (g.confirmado === false) return false;
+        const eff = mesEfetivoGasto(g);
+        return eff.mes === ym.mes && eff.ano === ym.ano;
+      }),
+    [gastos, ym],
+  );
+
+  const receitasDoMes = useMemo(
+    () => receitas.filter((r) => r.mes === ym.mes && r.ano === ym.ano),
+    [receitas, ym],
+  );
+
+  const linhasOrcamento = useMemo(
+    () =>
+      buildLinhasOrcamento(
+        categorias,
+        gastos,
+        ym.mes,
+        ym.ano,
+        (catId) => getLimite(catId, ym.mes, ym.ano),
+        mesEfetivoGasto,
+      ),
+    [categorias, gastos, ym],
+  );
+
+  const usoCartaoPct = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of cartoes) {
+      const resumo = resumoFaturaCartao(c.id);
+      m.set(c.id, resumo.pct);
+    }
+    return m;
+  }, [cartoes, gastos]);
+
+  const diag = useMemo(
+    () =>
+      generateMonthlyDiagnosis({
+        gastosDoMes,
+        receitasDoMes,
+        contasAPagar,
+        cartoes,
+        usoCartaoPct,
+        recorrencias,
+        linhasOrcamento,
+        metas,
+        guardado,
+      }),
+    [
+      gastosDoMes,
+      receitasDoMes,
+      contasAPagar,
+      cartoes,
+      usoCartaoPct,
+      recorrencias,
+      linhasOrcamento,
+      metas,
+      guardado,
+    ],
+  );
+
+  if (!diag) {
+    return (
+      <PremiumCard
+        variant="subtle"
+        rounded="2xl"
+        padding="default"
+        className={cn("animate-rise", className)}
+      >
+        <div className="flex items-start gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold leading-tight">
+              Diagnóstico mensal
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.
+            </p>
+          </div>
+        </div>
+      </PremiumCard>
+    );
+  }
+
+  const tone = statusTone(diag.status);
+
+  return (
+    <PremiumCard
+      variant="default"
+      rounded="2xl"
+      padding="default"
+      className={cn("animate-rise border", tone.ring, className)}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone.iconBg)}>
+          <ClipboardList className={cn("h-5 w-5", tone.iconFg)} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold leading-tight">
+              Diagnóstico mensal
+            </h3>
+            <StatusBadge tone={tone.badge}>{tone.label}</StatusBadge>
+          </div>
+          <p className="mt-1 text-sm font-semibold leading-snug">
+            {diag.title}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {diag.summary}
+          </p>
+        </div>
+      </div>
+
+      {(diag.highlights.length > 0 || diag.risks.length > 0) && (
+        <ul className="mt-3 space-y-1.5">
+          {diag.risks.map((r, i) => (
+            <li key={`r-${i}`} className="flex items-start gap-2 text-xs">
+              <AlertTriangle className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", tone.iconFg)} />
+              <span className="text-muted-foreground">{r}</span>
+            </li>
+          ))}
+          {diag.highlights.map((h, i) => (
+            <li key={`h-${i}`} className="flex items-start gap-2 text-xs">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+              <span className="text-muted-foreground">{h}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {diag.nextActions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {diag.nextActions.map((a) => (
+            <Button
+              key={a.href}
+              asChild
+              size="sm"
+              variant="outline"
+              className="h-9 px-3 text-xs"
+            >
+              <Link to={a.href}>
+                {a.label}
+                <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          ))}
+        </div>
+      )}
+    </PremiumCard>
+  );
+}
