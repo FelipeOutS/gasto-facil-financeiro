@@ -38,6 +38,9 @@ import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MetricCard } from "@/components/ui/metric-card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -160,36 +163,39 @@ function OrcamentoPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
+      <header className="flex items-start gap-3 pt-2">
         <Link
           to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
           aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
             {vocab.orcamentoTitle}
           </p>
-          <h1 className="mt-0.5 text-2xl font-bold capitalize tracking-tight lg:text-[26px]">
-            {formatMonthYear(ym.ano, ym.mes)}
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight lg:text-[26px]">
+            {t("pageTitle")}
           </h1>
-          <p className="mt-1 hidden text-xs text-muted-foreground lg:block">
-            {vocab.orcamentoSubtitle}
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            {t("pageSubtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1">
           <button
             onClick={() => changeMonth(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
+          <span className="min-w-[7rem] px-2 text-center text-xs font-semibold capitalize sm:text-sm">
+            {formatMonthYear(ym.ano, ym.mes)}
+          </span>
           <button
             onClick={() => changeMonth(1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
@@ -199,109 +205,113 @@ function OrcamentoPage() {
 
       {/* Estado vazio: nenhum limite configurado neste mês */}
       {!temOrcamento && (limiteTotal ?? 0) <= 0 && (
-        <section className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center animate-rise">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-soft text-brand">
-            <PieChartIcon className="h-6 w-6" />
-          </div>
-          <h2 className="mt-4 text-lg font-bold">{t("empty.title")}</h2>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
-            {t("empty.subtitle")}
-          </p>
-          <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
-            <Button
-              onClick={() => openEdit("total", t("totalLimitName"))}
-              className="h-11 rounded-full px-5"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t("empty.create")}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={copiarMesAnterior}
-              className="h-11 rounded-full px-5"
-            >
-              <Copy className="mr-1 h-4 w-4" />
-              {t("empty.copyPrev")}
-            </Button>
-          </div>
-        </section>
+        <div className="mt-6">
+          <EmptyState
+            icon={<PieChartIcon className="h-6 w-6" />}
+            title={t("empty.title")}
+            description={t("empty.subtitle")}
+            cta={
+              <Button
+                onClick={() => openEdit("total", t("totalLimitName"))}
+                className="min-h-11 rounded-full px-5"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t("empty.create")}
+              </Button>
+            }
+            secondaryAction={
+              <Button
+                variant="outline"
+                onClick={copiarMesAnterior}
+                className="min-h-11 rounded-full px-5"
+              >
+                <Copy className="mr-1 h-4 w-4" />
+                {t("empty.copyPrev")}
+              </Button>
+            }
+          />
+        </div>
       )}
 
       {/* Resumo superior — só quando já existe algum orçamento ou limite total */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
         <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
-          <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("summary.planned")}
-            </p>
-            <Money
-              value={totalPlanejado}
-              className="num mt-1.5 block text-lg font-bold lg:text-xl"
-            />
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {t("summary.categoriesCount", { count: comLimite.length })}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("summary.spent")}
-            </p>
-            <Money
-              value={totalRealizado}
-              className="num mt-1.5 block text-lg font-bold lg:text-xl"
-            />
-            {totalPlanejado > 0 && (
-              <p className="num mt-0.5 text-[10px] text-muted-foreground">
-                {t("summary.pctOfPlan", { value: Math.round(pctGeral) })}
-              </p>
-            )}
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {diff >= 0 ? t("summary.remaining") : t("summary.excess")}
-            </p>
-            <Money
-              value={Math.abs(diff)}
-              className={cn(
-                "num mt-1.5 block text-lg font-bold lg:text-xl",
-                diff < 0 && "text-destructive",
-              )}
-            />
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {diff >= 0 ? t("summary.belowPlan") : t("summary.abovePlan")}
-            </p>
-          </div>
+          <MetricCard
+            label={t("summary.planned")}
+            value={<Money value={totalPlanejado} className="num" />}
+            hint={t("summary.categoriesCount", { count: comLimite.length })}
+          />
+          <MetricCard
+            label={t("summary.spent")}
+            value={<Money value={totalRealizado} className="num" />}
+            hint={
+              totalPlanejado > 0
+                ? t("summary.pctOfPlan", { value: Math.round(pctGeral) })
+                : undefined
+            }
+            tone={
+              qtdEstouro > 0
+                ? "negative"
+                : qtdAtencao > 0
+                  ? "warning"
+                  : "default"
+            }
+          />
+          <MetricCard
+            label={diff >= 0 ? t("summary.remaining") : t("summary.excess")}
+            value={
+              <Money
+                value={Math.abs(diff)}
+                className={cn("num", diff < 0 && "text-destructive")}
+              />
+            }
+            hint={diff >= 0 ? t("summary.belowPlan") : t("summary.abovePlan")}
+            tone={diff < 0 ? "negative" : "positive"}
+          />
           <div
             className={cn(
-              "rounded-2xl border p-3.5 hover-lift animate-rise",
+              "flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 shadow-card",
               qtdEstouro > 0
-                ? "border-destructive/40 bg-destructive/10"
+                ? "ring-1 ring-destructive/30"
                 : qtdAtencao > 0
-                  ? "border-warning/40 bg-warning/10"
-                  : "border-success/30 bg-success/10",
+                  ? "ring-1 ring-warning/30"
+                  : "ring-1 ring-success/30",
             )}
           >
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("summary.status")}
-            </p>
-            <div className="mt-1.5 flex items-center gap-1.5">
-              {qtdEstouro > 0 ? (
-                <AlertTriangle className="h-4 w-4 text-destructive animate-pulse-soft" />
-              ) : qtdAtencao > 0 ? (
-                <AlertTriangle className="h-4 w-4 text-warning" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 text-success" />
-              )}
-              <p className="text-sm font-semibold">
-                {qtdEstouro > 0
-                  ? t("summary.outOfPlan")
+            </span>
+            <StatusBadge
+              tone={
+                qtdEstouro > 0
+                  ? "destructive"
                   : qtdAtencao > 0
-                    ? t("summary.attention")
-                    : t("summary.allGood")}
-              </p>
-            </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {t("summary.statusBreakdown", { ok: qtdOk, attention: qtdAtencao, exceeded: qtdEstouro })}
+                    ? "warning"
+                    : "success"
+              }
+              dot
+              size="md"
+              className="self-start"
+            >
+              {qtdEstouro > 0 ? (
+                <AlertTriangle className="h-3.5 w-3.5" />
+              ) : qtdAtencao > 0 ? (
+                <AlertTriangle className="h-3.5 w-3.5" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              {qtdEstouro > 0
+                ? t("summary.outOfPlan")
+                : qtdAtencao > 0
+                  ? t("summary.attention")
+                  : t("summary.allGood")}
+            </StatusBadge>
+            <p className="text-[11px] text-muted-foreground">
+              {t("summary.statusBreakdown", {
+                ok: qtdOk,
+                attention: qtdAtencao,
+                exceeded: qtdEstouro,
+              })}
             </p>
           </div>
         </section>
