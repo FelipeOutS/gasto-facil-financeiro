@@ -466,7 +466,8 @@ function CartoesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
+                if (!(await requireOnline())) return;
                 if (confirmDelete) {
                   deleteCartao(confirmDelete.id);
                   toast.success(t("remove.success"));
