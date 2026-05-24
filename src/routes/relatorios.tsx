@@ -649,6 +649,24 @@ function RelatoriosPage() {
         </ChartCard>
       </div>
 
+      {/* ===== Evolução do orçamento (planejado x realizado, 6m) ===== */}
+      <EvolucaoOrcamentoCard
+        meses={evolucaoOrcamento}
+        labels={{
+          title: t("budgetEvolution.title"),
+          description: t("budgetEvolution.description"),
+          planned: t("budgetEvolution.planned"),
+          realized: t("budgetEvolution.realized"),
+          adherence: t("budgetEvolution.adherence"),
+          averageAdherence: t("budgetEvolution.averageAdherence"),
+          bestMonth: t("budgetEvolution.bestMonth"),
+          biggestOverrun: t("budgetEvolution.biggestOverrun"),
+          empty: t("budgetEvolution.empty"),
+          overBudget: t("budgetEvolution.overBudget"),
+          underBudget: t("budgetEvolution.underBudget"),
+        }}
+      />
+
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
         <>
