@@ -78,6 +78,18 @@ function LoginForm() {
   }
 
   useEffect(() => {
+    const secureBridge = hasSecureSessionBridge();
+    const secureHas = secureBridge && hasSavedSecureSession();
+    console.log("[SecureSession] bridge existe:", secureBridge);
+    console.log("[SecureSession] tem sessão segura:", secureHas);
+    if (secureBridge && secureHas) {
+      const savedEmail = getSavedSecureEmail();
+      setBioAvailable(true);
+      setBioEnabled(true);
+      setBioMode(true);
+      if (savedEmail) setEmail(savedEmail);
+      return;
+    }
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
     if (av) console.log("[AndroidBiometricLogin] bridge AndroidBiometric disponível");
