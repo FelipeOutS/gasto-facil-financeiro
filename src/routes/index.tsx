@@ -865,9 +865,108 @@ function Index() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-2.5 mt-6 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground sm:mt-7 lg:mb-3 lg:mt-8">
-      {children}
-    </h2>
+    <div className="mb-3 mt-6 flex items-center gap-2.5 px-1 sm:mt-7 lg:mb-3.5 lg:mt-8">
+      <span aria-hidden className="h-4 w-1 rounded-full bg-brand" />
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {children}
+      </h2>
+    </div>
+  );
+}
+
+function HeroGreeting({
+  nome,
+  eyebrow,
+  mesAno,
+  subtitle,
+  monthSwitcher,
+}: {
+  nome: string | null;
+  eyebrow: string;
+  mesAno: string;
+  subtitle: string;
+  monthSwitcher: React.ReactNode;
+}) {
+  const { t } = useTranslation("dashboard");
+  const hour = new Date().getHours();
+  const greet =
+    hour < 12
+      ? t("hero.greetingMorning")
+      : hour < 18
+        ? t("hero.greetingAfternoon")
+        : t("hero.greetingEvening");
+  const firstName = (nome ?? "").trim().split(/\s+/)[0] ?? "";
+  return (
+    <header className="relative overflow-hidden rounded-3xl border border-border bg-card p-4 pt-5 shadow-card animate-rise sm:p-5 lg:p-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/15 blur-3xl"
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {eyebrow}
+          </p>
+          <h1 className="mt-1 text-[22px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-3xl">
+            {greet}
+            {firstName ? `, ${firstName}` : ""}.
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2.5 py-1 text-[11px] font-medium capitalize text-muted-foreground">
+            <CalendarClock className="h-3 w-3" />
+            {mesAno}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="lg:hidden">{monthSwitcher}</div>
+          <div className="hidden lg:block">
+            <NotificationBell />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function QuickActionsBar() {
+  const { t } = useTranslation("dashboard");
+  const items: Array<{
+    to: string;
+    label: string;
+    icon: React.ReactNode;
+    tone: "primary" | "success" | "warning" | "brand";
+  }> = [
+    { to: "/adicionar", label: t("quickActions.novoGasto"), icon: <Plus className="h-5 w-5" />, tone: "primary" },
+    { to: "/renda", label: t("quickActions.novaReceita"), icon: <ArrowUp className="h-5 w-5" />, tone: "success" },
+    { to: "/gasto-ai", label: t("quickActions.ia"), icon: <Sparkles className="h-5 w-5" />, tone: "brand" },
+    { to: "/cartoes", label: t("quickActions.importar"), icon: <ReceiptIcon className="h-5 w-5" />, tone: "warning" },
+  ];
+  const toneRing: Record<string, string> = {
+    primary: "bg-primary/15 text-primary",
+    success: "bg-success/15 text-success",
+    warning: "bg-warning/15 text-warning",
+    brand: "bg-brand-soft text-brand-on-soft",
+  };
+  return (
+    <nav
+      aria-label={t("quickActions.title")}
+      className="mt-4 grid grid-cols-4 gap-2 sm:gap-3"
+    >
+      {items.map((it) => (
+        <Link
+          key={it.to}
+          to={it.to}
+          className="card-press group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card p-2 text-center shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
+        >
+          <span className={cn("grid h-10 w-10 place-items-center rounded-xl", toneRing[it.tone])}>
+            {it.icon}
+          </span>
+          <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">
+            {it.label}
+          </span>
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -890,26 +989,38 @@ function KpiCard({
     destructive: "bg-destructive/15 text-destructive",
     warning: "bg-warning/15 text-warning",
   }[tone];
+  const toneAccent = {
+    brand: "ring-brand/20",
+    success: "ring-success/25",
+    destructive: "ring-destructive/25",
+    warning: "ring-warning/25",
+  }[tone];
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5 shadow-card transition-all hover-lift hover:border-brand/60 lg:p-4 animate-rise">
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card transition-all hover-lift hover:border-brand/50 lg:p-5 animate-rise ring-1",
+        toneAccent,
+      )}
+    >
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <span className={cn("grid h-7 w-7 place-items-center rounded-full transition-colors", toneRing)}>
+        <span className={cn("grid h-8 w-8 place-items-center rounded-xl transition-colors", toneRing)}>
           {icon}
         </span>
       </div>
       <Money
         value={valueNum}
-        className="num mt-2 block text-xl font-bold leading-tight lg:text-2xl"
+        className="num mt-3 block text-[22px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[28px]"
       />
       {hint && (
-        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
+        <p className="mt-1 truncate text-[11px] text-muted-foreground">{hint}</p>
       )}
     </div>
   );
 }
+
 
 function LimiteMensalCard({
   total,
