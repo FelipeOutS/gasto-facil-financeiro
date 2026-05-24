@@ -83,7 +83,8 @@ export function isLoginBioEnabledForEmail(email: string | null | undefined): boo
     return (
       window.localStorage.getItem(userEnabledKey(normalized)) === "true" ||
       (window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true" &&
-        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() === normalized)
+        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() ===
+          normalized)
     );
   } catch {
     return false;
@@ -119,7 +120,12 @@ export function isLoginBioInProgress(): boolean {
 }
 
 export function isLoginBioUnlockRequired(): boolean {
-  return isLoginBioBridgeAvailable() && isLoginBioEnabled() && !isLoginBioUnlocked() && !isLoginBioInProgress();
+  return (
+    isLoginBioBridgeAvailable() &&
+    isLoginBioEnabled() &&
+    !isLoginBioUnlocked() &&
+    !isLoginBioInProgress()
+  );
 }
 
 export function setLoginBioInProgress(value: boolean): void {
@@ -135,14 +141,18 @@ export function setLoginBioInProgress(value: boolean): void {
 export function getLoginBioEmail(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ?? window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY);
+    return (
+      window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ??
+      window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)
+    );
   } catch {
     return null;
   }
 }
 
 export function persistLoginBioSession(session: Session | null | undefined): boolean {
-  if (typeof window === "undefined" || !session?.access_token || !session.refresh_token) return false;
+  if (typeof window === "undefined" || !session?.access_token || !session.refresh_token)
+    return false;
   try {
     const email = session.user?.email?.trim().toLowerCase() ?? "";
     const payload: PersistedLoginBioSession = {
@@ -279,7 +289,12 @@ export function runLoginBiometric(
       resolve(detail);
     };
     const timer = setTimeout(
-      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente.", method: usedMethod }),
+      () =>
+        finish({
+          success: false,
+          error: "A biometria não respondeu. Tente novamente.",
+          method: usedMethod,
+        }),
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
@@ -457,14 +472,21 @@ export async function enableLoginBio(email: string): Promise<void> {
   console.log("[EnableBiometric] biometric success:", r.success);
 
   if (r.success !== true) {
-    const msg = r.error && r.error.trim().length > 0 ? r.error : "Autenticação biométrica cancelada.";
+    const msg =
+      r.error && r.error.trim().length > 0 ? r.error : "Autenticação biométrica cancelada.";
     console.log("[EnableBiometric] error:", msg);
     throw new Error(msg);
   }
 
   try {
-    console.log("[EnableBiometric] getSession exists:", typeof supabase.auth.getSession === "function");
-    console.log("[EnableBiometric] refreshSession exists:", typeof supabase.auth.refreshSession === "function");
+    console.log(
+      "[EnableBiometric] getSession exists:",
+      typeof supabase.auth.getSession === "function",
+    );
+    console.log(
+      "[EnableBiometric] refreshSession exists:",
+      typeof supabase.auth.refreshSession === "function",
+    );
 
     const { data: sessionData } = await supabase.auth.getSession();
     let session = sessionData.session ?? null;
@@ -474,7 +496,13 @@ export async function enableLoginBio(email: string): Promise<void> {
       session = refreshed.session ?? null;
     }
 
-    if (!session || !session.access_token || !session.refresh_token || !session.user?.id || !session.user?.email) {
+    if (
+      !session ||
+      !session.access_token ||
+      !session.refresh_token ||
+      !session.user?.id ||
+      !session.user?.email
+    ) {
       console.log("[EnableBiometric] access token exists:", !!session?.access_token);
       console.log("[EnableBiometric] refresh token exists:", !!session?.refresh_token);
       console.log("[EnableBiometric] user id:", session?.user?.id ?? null);
@@ -509,4 +537,3 @@ export async function enableLoginBio(email: string): Promise<void> {
     throw e instanceof Error ? e : new Error(msg);
   }
 }
-

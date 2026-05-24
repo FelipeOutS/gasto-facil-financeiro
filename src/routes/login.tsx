@@ -140,13 +140,17 @@ function LoginForm() {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
       console.log("[Biometria] sessão após biometria:", false);
-      setBioError("Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.");
+      setBioError(
+        "Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.",
+      );
       setBioMode(false);
     } catch {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
       console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
-      setBioError("Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.");
+      setBioError(
+        "Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.",
+      );
       setBioMode(false);
     } finally {
       setBioRunning(false);
@@ -331,7 +335,10 @@ function LoginForm() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {t("login.email")}
           </Label>
           <Input
@@ -347,7 +354,10 @@ function LoginForm() {
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label
+              htmlFor="password"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               {t("login.password")}
             </Label>
             <Link
@@ -369,10 +379,7 @@ function LoginForm() {
           />
         </div>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground select-none">
-          <Checkbox
-            checked={remember}
-            onCheckedChange={(v) => setRemember(v === true)}
-          />
+          <Checkbox checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
           {t("login.remember")}
         </label>
         <Button
