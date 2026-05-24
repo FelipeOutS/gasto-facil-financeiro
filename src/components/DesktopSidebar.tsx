@@ -188,8 +188,42 @@ export function DesktopSidebar() {
       )}
       aria-label={t("aria.side")}
     >
-      <div className={cn("pt-6 pb-4", collapsed ? "px-3 flex justify-center" : "px-5")}>
-        <BrandMark className={cn("w-auto", collapsed ? "h-8" : "h-10")} />
+      <div className={cn("pt-5 pb-4", collapsed ? "px-2 flex flex-col items-center gap-3" : "px-5")}>
+        {collapsed ? (
+          <>
+            <BrandMark symbolOnly className="h-9 w-9" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(false)}
+                  aria-label="Expandir menu"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expandir menu</TooltipContent>
+            </Tooltip>
+          </>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <BrandMark className="h-10 w-auto" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(true)}
+                  aria-label="Recolher menu"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Recolher menu</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
         {!collapsed && (
           <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">{t("header.tagline")}</h2>
         )}
