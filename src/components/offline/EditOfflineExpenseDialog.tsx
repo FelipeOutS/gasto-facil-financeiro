@@ -11,6 +11,7 @@ import {
   updateExpense,
   type OfflineExpense,
 } from "@/lib/offline/offline-expense-queue";
+import { recordHistoryEvent } from "@/lib/offline/offline-sync-history";
 import type { NovoGastoInput } from "@/lib/store";
 
 type Props = {
