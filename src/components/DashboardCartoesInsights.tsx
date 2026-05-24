@@ -54,6 +54,13 @@ type Props = {
   /** Abre o detalhe da fatura no Drawer existente em /cartoes. */
   onAbrirFatura?: (cartaoId: string, mes: number, ano: number) => void;
   className?: string;
+  /**
+   * Permite renderizar somente um subconjunto dos cards, para que o dashboard
+   * monte uma grade de 12 colunas distribuindo Insight + Cartões em uma
+   * coluna lateral e Próximos vencimentos + Maiores gastos em uma linha
+   * inferior. `undefined` = comportamento legado (renderiza tudo).
+   */
+  slot?: "insights" | "lists";
 };
 
 const STATUS_TONE: Record<StatusFatura, string> = {
@@ -78,6 +85,7 @@ export function DashboardCartoesInsights({
   maiorCategoria,
   onAbrirFatura,
   className,
+  slot,
 }: Props) {
   const { t, i18n } = useTranslation("dashboard");
   const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "pt-BR";
@@ -235,11 +243,29 @@ export function DashboardCartoesInsights({
 
   if (!temAlgumaSecao && !comparacao) return null;
 
+  const showInsight = slot !== "lists";
+  const showCartoes = slot !== "lists";
+  const showVenc = slot !== "insights";
+  const showMaiores = slot !== "insights";
+
+  // Quando o dashboard pede só um slot, evita renderizar um wrapper vazio.
+  if (slot === "lists" && proximosVencimentos.length === 0 && maioresGastos.length === 0) return null;
+  if (slot === "insights" && usoCartoes.length === 0 && !comparacao) return null;
+
+  const containerCls =
+    slot === "insights"
+      ? "flex flex-col gap-3.5 sm:gap-4"
+      : slot === "lists"
+        ? "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:gap-4"
+        : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4";
+
   return (
-    <div className={cn("grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4", className)}>
+    <div className={cn(containerCls, className)}>
 
       {/* Insight + comparação */}
+      {showInsight && (
       <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
+
 
         <div className="flex items-start gap-3">
           <span
@@ -269,10 +295,12 @@ export function DashboardCartoesInsights({
           </div>
         </div>
       </section>
+      )}
 
       {/* Cartões com maior uso */}
-      {usoCartoes.length > 0 && (
+      {showCartoes && usoCartoes.length > 0 && (
         <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
+
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -360,8 +388,9 @@ export function DashboardCartoesInsights({
       )}
 
       {/* Próximos vencimentos de fatura */}
-      {proximosVencimentos.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 sm:col-span-2">
+      {showVenc && proximosVencimentos.length > 0 && (
+        <section className={cn("rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4", slot !== "lists" && "sm:col-span-2")}>
+
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -448,8 +477,9 @@ export function DashboardCartoesInsights({
       )}
 
       {/* Maiores gastos do mês */}
-      {maioresGastos.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 sm:col-span-2">
+      {showMaiores && maioresGastos.length > 0 && (
+        <section className={cn("rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4", slot !== "lists" && "sm:col-span-2")}>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
