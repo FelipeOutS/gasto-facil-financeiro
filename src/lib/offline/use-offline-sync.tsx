@@ -34,8 +34,12 @@ export async function syncAllForUser(userId: string): Promise<{
       const claimed = await claimForSync(item.local_id);
       if (!claimed) continue;
       try {
-        const res = await addGastoAwait(item.input, userId);
+        const res = await addGastoAwait(item.input, userId, item.local_id);
         if (res.ok) {
+          // Remove tanto em sucesso quanto em duplicate (idempotente).
+          await removeExpense(item.local_id);
+          synced += 1;
+        } else {
           await removeExpense(item.local_id);
           synced += 1;
         } else {
