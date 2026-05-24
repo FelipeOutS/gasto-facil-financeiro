@@ -101,6 +101,15 @@ function priorityTone(p: AlertPriority): { ring: string; bg: string; fg: string;
 
 function iconForType(type: string): LucideIcon {
   const cat = categoryOf(type);
+  // Tipos específicos têm prioridade sobre a categoria
+  if (type === "cartao_cobranca_suspeita") return ShieldAlert;
+  if (
+    type === "gasto_acima_media_estabelecimento" ||
+    type === "gasto_fora_padrao_categoria" ||
+    type === "gastos_aumento" ||
+    type === "assinatura_aumento"
+  ) return TrendingUp;
+  if (type === "assinatura_esquecida") return Clock;
   if (type.includes("vencida") || type.includes("estouro")) return AlertTriangle;
   if (type.includes("hoje")) return Clock;
   if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5")) return CalendarClock;
