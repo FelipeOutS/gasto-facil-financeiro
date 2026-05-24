@@ -128,6 +128,7 @@ function GastoAIPage() {
 
   async function handleClear() {
     if (!confirm(t("ai.confirmClear"))) return;
+    if (!(await requireOnline())) return;
     try {
       await clearFn();
       setMessages([]);
