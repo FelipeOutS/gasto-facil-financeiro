@@ -63,6 +63,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { DashboardDicasBloco } from "@/components/DashboardDicasBloco";
 import { DashboardSaudeFinanceiraCard } from "@/components/DashboardSaudeFinanceiraCard";
+import { DashboardDiagnosticoMensalCard } from "@/components/DashboardDiagnosticoMensalCard";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
@@ -483,6 +484,11 @@ function Index() {
       <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-start [&>*:only-child]:md:col-span-2">
         <DashboardSaudeFinanceiraCard />
         <DashboardDicasBloco />
+      </section>
+
+      {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
+      <section className="mt-4">
+        <DashboardDiagnosticoMensalCard />
       </section>
 
 
