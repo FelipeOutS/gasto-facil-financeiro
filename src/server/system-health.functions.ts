@@ -116,7 +116,32 @@ export type SystemHealthData = {
     pending_24h: number;
     rejected_24h: number;
     inconsistencies_count: number;
+    pending_older_than_30min: number;
   };
+  pending_payments_to_check: Array<{
+    id: string;
+    created_at: string;
+    user_id_short: string | null;
+    user_email: string | null;
+    provider_payment_id: string | null;
+    amount_cents: number;
+    status: string;
+    age_minutes: number;
+  }>;
+  payment_plan_inconsistencies: Array<{
+    type:
+      | "approved_no_active_plan"
+      | "approved_period_expired"
+      | "active_plan_failed_payment";
+    user_id_short: string | null;
+    user_email: string | null;
+    payment_id: string | null;
+    provider_payment_id: string | null;
+    payment_status: string | null;
+    plan_status: string | null;
+    current_period_end: string | null;
+    recommended_action: string;
+  }>;
   recent_failed_webhooks: Array<{
     id: string;
     created_at: string;
@@ -161,6 +186,27 @@ export type SystemHealthData = {
     messages: string[];
   };
 };
+
+function shortId(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return id.slice(0, 8) + "…";
+}
+
+async function emailsForUserIds(userIds: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const unique = Array.from(new Set(userIds.filter(Boolean)));
+  await Promise.all(
+    unique.map(async (uid) => {
+      try {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (data?.user?.email) map.set(uid, data.user.email);
+      } catch {
+        // ignore
+      }
+    }),
+  );
+  return map;
+}
 
 export const getSystemHealthDashboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
