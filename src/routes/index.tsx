@@ -1195,7 +1195,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
   const { t, i18n } = useTranslation("dashboard");
   const dateLocale = i18n.language === "en" ? "en-US" : "pt-BR";
   return (
-    <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
