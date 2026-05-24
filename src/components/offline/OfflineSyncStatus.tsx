@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CloudOff, RefreshCw, Trash2, AlertCircle } from "lucide-react";
+import { CloudOff, RefreshCw, Trash2, AlertCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,8 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
-import { removeExpense } from "@/lib/offline/offline-expense-queue";
+import {
+  removeExpense,
+  type OfflineExpense,
+} from "@/lib/offline/offline-expense-queue";
 import { formatBRL } from "@/lib/format";
+import { EditOfflineExpenseDialog } from "./EditOfflineExpenseDialog";
 
 export function OfflineSyncStatus({ className }: { className?: string }) {
   const { user } = useAuth();
@@ -21,6 +25,7 @@ export function OfflineSyncStatus({ className }: { className?: string }) {
   const { items, pending, syncNow } = useOfflineExpenseQueue(userId);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<OfflineExpense | null>(null);
 
   if (!userId || pending === 0) return null;
 
@@ -45,6 +50,14 @@ export function OfflineSyncStatus({ className }: { className?: string }) {
   async function handleRemove(localId: string) {
     await removeExpense(localId);
     toast.success("Pendência removida.");
+  }
+
+  function handleEdit(it: OfflineExpense) {
+    if (it.status === "syncing") {
+      toast.error("Este gasto está sincronizando. Aguarde finalizar.");
+      return;
+    }
+    setEditing(it);
   }
 
   return (
@@ -97,42 +110,68 @@ export function OfflineSyncStatus({ className }: { className?: string }) {
                 Nenhuma pendência.
               </p>
             ) : (
-              items.map((it) => (
-                <div
-                  key={it.local_id}
-                  className="flex items-start justify-between gap-2 rounded-xl border border-border bg-card p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{it.descricao}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {it.data} · <span className="num">{formatBRL(it.valor)}</span>
-                    </p>
-                    <p className="mt-1 text-[11px] uppercase tracking-wide">
-                      {it.status === "failed" ? (
-                        <span className="inline-flex items-center gap-1 text-destructive">
-                          <AlertCircle className="h-3 w-3" /> falhou
-                        </span>
-                      ) : it.status === "syncing" ? (
-                        <span className="text-muted-foreground">enviando…</span>
-                      ) : (
-                        <span className="text-muted-foreground">pendente</span>
-                      )}
-                    </p>
-                    {it.error_message && (
-                      <p className="mt-1 text-[11px] text-destructive">{it.error_message}</p>
-                    )}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleRemove(it.local_id)}
-                    aria-label="Remover pendência"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              items.map((it) => {
+                const isSyncing = it.status === "syncing";
+                const canEdit = it.status === "pending" || it.status === "failed";
+                return (
+                  <div
+                    key={it.local_id}
+                    className="rounded-xl border border-border bg-card p-3"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{it.descricao}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {it.data} · <span className="num">{formatBRL(it.valor)}</span>
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide">
+                        {it.status === "failed" ? (
+                          <span className="inline-flex items-center gap-1 text-destructive">
+                            <AlertCircle className="h-3 w-3" /> falhou
+                          </span>
+                        ) : isSyncing ? (
+                          <span className="text-muted-foreground">enviando…</span>
+                        ) : (
+                          <span className="text-muted-foreground">pendente</span>
+                        )}
+                      </p>
+                      {it.error_message && (
+                        <p className="mt-1 text-[11px] text-destructive">{it.error_message}</p>
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={!canEdit}
+                        onClick={() => handleEdit(it)}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <Pencil className="mr-1 h-3 w-3" /> Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isSyncing || busy}
+                        onClick={handleSync}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <RefreshCw className={"mr-1 h-3 w-3 " + (busy ? "animate-spin" : "")} />
+                        Sincronizar agora
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isSyncing}
+                        onClick={() => handleRemove(it.local_id)}
+                        aria-label="Remover pendência"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="mr-1 h-3 w-3" /> Remover
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
           <DialogFooter>
@@ -146,6 +185,12 @@ export function OfflineSyncStatus({ className }: { className?: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditOfflineExpenseDialog
+        item={editing}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
     </>
   );
 }
