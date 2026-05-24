@@ -94,15 +94,7 @@ function LoginForm() {
     console.log("Redirecting to dashboard");
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
-    try {
-      void navigate({ to: target, replace: true });
-    } catch {
-      try {
-        window.location.assign(target);
-      } catch {
-        /* ignore */
-      }
-    }
+    void navigate({ to: target, replace: true });
   }
 
   async function handleBiometric() {
