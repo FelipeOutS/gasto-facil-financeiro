@@ -2492,6 +2492,71 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
   return created;
 }
 
+/**
+ * Versão aguardável de `addReceita` para a fila offline.
+ *
+ * Quando `offlineClientId` é informado, ele vai como `offline_client_id`
+ * no insert. Há um índice único parcial em `(user_id, offline_client_id)`
+ * — se já existir, o Postgres retorna 23505 e tratamos como
+ * `ok: true, duplicate: true` (idempotente).
+ *
+ * Não aplica recorrência: a fila offline cobre apenas receita única.
+ */
+export async function addReceitaAwait(
+  input: NovaReceitaInput,
+  userId: string,
+  offlineClientId?: string,
+): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
+  if (!userId) return { ok: false, error: "no_user" };
+  const baseDate = new Date(input.data + "T00:00:00");
+  const id = crypto.randomUUID();
+  const clienteId = input.clienteId ?? null;
+  const row: ReceitaInsert & { offline_client_id?: string | null } = {
+    id,
+    user_id: userId,
+    descricao: input.descricao,
+    valor: input.valor,
+    data: input.data,
+    tipo: input.tipo,
+    recorrente: false,
+    mes: baseDate.getMonth() + 1,
+    ano: baseDate.getFullYear(),
+    ...(clienteId ? { cliente_id: clienteId } : {}),
+  } as ReceitaInsert & { offline_client_id?: string | null };
+  if (offlineClientId) row.offline_client_id = offlineClientId;
+
+  const { error } = await supabase.from("receitas").insert(row);
+  if (error) {
+    const code = (error as { code?: string }).code;
+    const msg = error.message ?? "";
+    if (code === "23505" || /duplicate key|unique/i.test(msg)) {
+      return { ok: true, duplicate: true };
+    }
+    return { ok: false, error: error.message };
+  }
+  if (activeUserId === userId) {
+    const now = new Date().toISOString();
+    memReceitas = [
+      ...memReceitas,
+      {
+        id,
+        descricao: input.descricao,
+        valor: input.valor,
+        data: input.data,
+        tipo: input.tipo,
+        recorrente: false,
+        mes: baseDate.getMonth() + 1,
+        ano: baseDate.getFullYear(),
+        clienteId,
+        criadoEm: now,
+        atualizadoEm: now,
+      },
+    ];
+    emit();
+  }
+  return { ok: true };
+}
+
 export function deleteReceita(id: string) {
   memReceitas = memReceitas.filter((r) => r.id !== id);
   emit();
