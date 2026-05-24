@@ -963,13 +963,9 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
       return { reply: "", error: { status: 403, message: access.reason || "Recurso indisponível no seu plano." } };
     }
 
-    try {
-      const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthlySmartSummary" });
-      if (rl) {
-        return { reply: "", error: { status: 429, message: "Muitas requisições. Aguarde alguns instantes." } };
-      }
-    } catch {
-      // ignore rate-limit failures
+    const rateLimitMessage = await checkAiServerFnRateLimit(userId, "getMonthlySmartSummary");
+    if (rateLimitMessage) {
+      return { reply: "", error: { status: 429, message: rateLimitMessage } };
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
