@@ -192,20 +192,25 @@ export function clearLoginBio(): void {
  * `AndroidBiometricResult` chegar. A bridge é event-driven e não
  * retorna Promise.
  */
-export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
+export function runLoginBiometric(
+  timeoutMs = 60_000,
+): Promise<AndroidBiometricResultDetail & { method?: string }> {
   return new Promise((resolve) => {
-    const b = getBridge();
-    if (!b || (typeof b.requestAuthentication !== "function" && typeof b.authenticate !== "function")) {
-      resolve({ success: false, error: "Biometria nativa indisponível neste aparelho." });
+    const b = getBridge() as
+      | (NonNullable<Window["AndroidBiometric"]> & { unlock?: (reason?: string) => void })
+      | null;
+    if (!b) {
+      resolve({ success: false, error: "Biometria indisponível neste dispositivo." });
       return;
     }
     let settled = false;
+    let usedMethod = "";
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
       console.log("[LoginBio] AndroidBiometricResult:", detail);
-      finish(detail);
+      finish({ ...detail, method: usedMethod });
     };
-    const finish = (detail: AndroidBiometricResultDetail) => {
+    const finish = (detail: AndroidBiometricResultDetail & { method?: string }) => {
       if (settled) return;
       settled = true;
       window.removeEventListener("AndroidBiometricResult", onResult as EventListener);
@@ -213,17 +218,26 @@ export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricR
       resolve(detail);
     };
     const timer = setTimeout(
-      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }),
+      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente.", method: usedMethod }),
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
     try {
-      if (typeof b.requestAuthentication === "function") b.requestAuthentication("Entrar com biometria");
-      else if (typeof b.authenticate === "function") b.authenticate("Entrar com biometria");
-      else finish({ success: false, error: "Biometria nativa indisponível neste aparelho." });
+      if (typeof b.requestAuthentication === "function") {
+        usedMethod = "requestAuthentication";
+        b.requestAuthentication("Entrar com biometria");
+      } else if (typeof b.authenticate === "function") {
+        usedMethod = "authenticate";
+        b.authenticate("Entrar com biometria");
+      } else if (typeof b.unlock === "function") {
+        usedMethod = "unlock";
+        b.unlock("Entrar com biometria");
+      } else {
+        finish({ success: false, error: "Biometria indisponível neste dispositivo." });
+      }
     } catch (e) {
-      console.log("[LoginBio] erro ao chamar authenticate:", e);
-      finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
+      console.log("[LoginBio] erro ao chamar bridge:", e);
+      finish({ success: false, error: "Falha ao iniciar a biometria nativa.", method: usedMethod });
     }
   });
 }
