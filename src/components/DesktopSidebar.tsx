@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
-import { Home, Plus, Lock, ChevronDown } from "lucide-react";
+import { Home, Plus, Lock, ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
@@ -15,6 +15,8 @@ import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useSidebarCollapsed, setSidebarCollapsed } from "@/lib/sidebar-collapsed";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ROUTE_FEATURE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
