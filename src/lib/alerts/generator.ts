@@ -346,6 +346,49 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     }
   }
 
+  // ---- Assinatura possivelmente esquecida / inativa ----
+  // Critério conservador: recorrência ATIVA ou SUSPEITA cuja última ocorrência
+  // real em `gastos` (via recorrenciaId) é > 60 dias OU `proximaCobranca`
+  // passou há mais de 60 dias. Evita falso positivo em recorrências recém
+  // criadas (precisa ter ultimoValor OU pelo menos 1 gasto vinculado).
+  {
+    const ultimoPorRec = new Map<string, string>(); // recId -> data ISO mais recente
+    for (const g of gastosConfirmados) {
+      if (!g.recorrenciaId) continue;
+      const atual = ultimoPorRec.get(g.recorrenciaId);
+      if (!atual || g.data > atual) ultimoPorRec.set(g.recorrenciaId, g.data);
+    }
+    for (const r of src.recorrencias) {
+      if (r.status !== "ativa" && r.status !== "suspeita") continue;
+      const ultima = ultimoPorRec.get(r.id);
+      const temHistorico = !!ultima || r.ultimoValor != null;
+      if (!temHistorico) continue; // sem base suficiente, não alerta
+
+      let diasSemCobranca: number | null = null;
+      if (ultima) {
+        diasSemCobranca = Math.abs(diffDaysLocal(ultima));
+      } else if (r.proximaCobranca) {
+        const d = diffDaysLocal(r.proximaCobranca);
+        if (d < 0) diasSemCobranca = Math.abs(d);
+      }
+      if (diasSemCobranca == null || diasSemCobranca < 60) continue;
+
+      drafts.push({
+        type: "assinatura_esquecida",
+        title: `${r.nome} pode estar esquecida`,
+        description: `Sem cobrança há ${diasSemCobranca} dias. Confira se ainda faz sentido mantê-la.`,
+        priority: diasSemCobranca >= 90 ? "media" : "baixa",
+        related_entity_type: "recorrencia",
+        related_entity_id: r.id,
+        action_label: "Ver assinaturas",
+        action_url: "/assinaturas",
+        dedupe_key: `assinatura_esquecida:${r.id}`,
+        period_key: period,
+        metadata: { diasSemCobranca, status: r.status, valor: r.valor },
+      });
+    }
+  }
+
   // ============= Orçamento =============
   const linhasOrc = buildLinhasOrcamento(
     src.categorias,
