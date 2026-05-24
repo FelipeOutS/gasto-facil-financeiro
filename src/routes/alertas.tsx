@@ -27,6 +27,9 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PremiumCard } from "@/components/ui/premium-card";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/lib/alerts/use-alerts";
 import {
@@ -64,44 +67,54 @@ const FILTER_KEYS: FilterKey[] = [
   "assinaturas", "gastos", "orcamento", "investimentos", "sistema",
 ];
 
+type PriorityTone = {
+  tone: StatusTone;
+  ring: string;
+  iconBg: string;
+  iconFg: string;
+  dot: string;
+};
 
-function priorityTone(p: AlertPriority): { ring: string; bg: string; fg: string; dot: string } {
+function priorityTone(p: AlertPriority): PriorityTone {
   switch (p) {
     case "critica":
       return {
-        ring: "border-destructive/40",
-        bg: "bg-destructive/10",
-        fg: "text-destructive",
+        tone: "destructive",
+        ring: "border-destructive/50",
+        iconBg: "bg-destructive/15",
+        iconFg: "text-destructive",
         dot: "bg-destructive",
       };
     case "alta":
       return {
-        ring: "border-orange-500/40",
-        bg: "bg-orange-500/10",
-        fg: "text-orange-600 dark:text-orange-400",
-        dot: "bg-orange-500",
+        tone: "warning",
+        ring: "border-warning/40",
+        iconBg: "bg-warning/15",
+        iconFg: "text-warning",
+        dot: "bg-warning",
       };
     case "media":
       return {
-        ring: "border-amber-500/40",
-        bg: "bg-amber-500/10",
-        fg: "text-amber-700 dark:text-amber-300",
-        dot: "bg-amber-500",
+        tone: "info",
+        ring: "border-primary/30",
+        iconBg: "bg-primary/10",
+        iconFg: "text-primary",
+        dot: "bg-primary",
       };
     case "baixa":
     default:
       return {
-        ring: "border-emerald-500/40",
-        bg: "bg-emerald-500/10",
-        fg: "text-emerald-700 dark:text-emerald-300",
-        dot: "bg-emerald-500",
+        tone: "muted",
+        ring: "border-border/60",
+        iconBg: "bg-muted/50",
+        iconFg: "text-muted-foreground",
+        dot: "bg-muted-foreground",
       };
   }
 }
 
 function iconForType(type: string): LucideIcon {
   const cat = categoryOf(type);
-  // Tipos específicos têm prioridade sobre a categoria
   if (type === "cartao_cobranca_suspeita") return ShieldAlert;
   if (
     type === "gasto_acima_media_estabelecimento" ||
@@ -149,7 +162,6 @@ function useFormatRelativo() {
   };
 }
 
-
 function AlertCard({
   alert,
   onMarkRead,
@@ -172,19 +184,19 @@ function AlertCard({
   return (
     <article
       className={cn(
-        "relative rounded-2xl border bg-card/60 p-4 transition-all",
+        "relative rounded-2xl border bg-card p-4 transition-all",
         tone.ring,
-        isUnread && "shadow-sm",
+        isUnread ? "shadow-card" : "opacity-90",
       )}
     >
       <div className="flex items-start gap-3">
-        <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone.bg)}>
-          <Icon className={cn("h-5 w-5", tone.fg)} />
+        <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone.iconBg)}>
+          <Icon className={cn("h-5 w-5", tone.iconFg)} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold leading-snug">
+              <h3 className="text-sm font-semibold leading-snug">
                 {alert.title}
                 {isUnread && (
                   <span
@@ -196,30 +208,24 @@ function AlertCard({
                   />
                 )}
               </h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {alert.description}
-              </p>
-            </div>
-            <span
-              className={cn(
-                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                tone.bg,
-                tone.fg,
+              {alert.description && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {alert.description}
+                </p>
               )}
-            >
+            </div>
+            <StatusBadge tone={tone.tone} className="shrink-0">
               {PRIORITY_LABEL[alert.priority]}
-            </span>
+            </StatusBadge>
           </div>
 
-          <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-            <span>
-              {CATEGORY_LABEL[categoryOf(alert.type)]} · {formatRelativo(alert.created_at)}
-            </span>
+          <div className="mt-2 text-[11px] text-muted-foreground">
+            {CATEGORY_LABEL[categoryOf(alert.type)]} · {formatRelativo(alert.created_at)}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {alert.action_url && (
-              <Button asChild size="sm" variant="default" className="h-8 px-3 text-xs">
+              <Button asChild size="sm" variant="default" className="min-h-11 px-3 text-xs">
                 <Link to={alert.action_url}>
                   {alert.action_label || t("alertas.see")}
                   <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
@@ -227,16 +233,16 @@ function AlertCard({
               </Button>
             )}
             {isUnread && (
-              <Button size="sm" variant="ghost" onClick={onMarkRead} className="h-8 px-2.5 text-xs">
+              <Button size="sm" variant="ghost" onClick={onMarkRead} className="min-h-11 px-2.5 text-xs">
                 <Eye className="mr-1 h-3.5 w-3.5" />
                 {t("alertas.markRead")}
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={onResolve} className="h-8 px-2.5 text-xs">
+            <Button size="sm" variant="ghost" onClick={onResolve} className="min-h-11 px-2.5 text-xs">
               <Check className="mr-1 h-3.5 w-3.5" />
               {t("alertas.resolve")}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onIgnore} className="h-8 px-2.5 text-xs text-muted-foreground">
+            <Button size="sm" variant="ghost" onClick={onIgnore} className="min-h-11 px-2.5 text-xs text-muted-foreground">
               <EyeOff className="mr-1 h-3.5 w-3.5" />
               {t("alertas.ignore")}
             </Button>
@@ -244,7 +250,7 @@ function AlertCard({
               size="sm"
               variant="ghost"
               onClick={onDelete}
-              className="ml-auto h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              className="ml-auto min-h-11 w-11 p-0 text-muted-foreground hover:text-destructive"
               aria-label={t("alertas.delete")}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -256,6 +262,14 @@ function AlertCard({
   );
 }
 
+type Tier = "critica" | "atencao" | "informativos";
+
+function tierOf(p: AlertPriority): Tier {
+  if (p === "critica") return "critica";
+  if (p === "alta" || p === "media") return "atencao";
+  return "informativos";
+}
+
 function AlertasPage() {
   const { t } = useTranslation("misc");
   const { visible, loading, syncing, setStatus, markAllRead, remove, unreadCount } = useAlerts();
@@ -263,11 +277,33 @@ function AlertasPage() {
 
   const filtered = useMemo(() => filterByCategory(visible, filter), [visible, filter]);
 
+  const stats = useMemo(() => {
+    const total = visible.length;
+    const critical = visible.filter((a) => a.priority === "critica").length;
+    const important = visible.filter((a) => a.priority === "alta").length;
+    const unread = unreadCount;
+    return { total, critical, important, unread };
+  }, [visible, unreadCount]);
+
+  // Agrupamento por tier apenas quando filtro é "todos" e há volume.
+  const grouped = useMemo(() => {
+    if (filter !== "todos" || filtered.length < 6) return null;
+    const groups: Record<Tier, UserAlert[]> = { critica: [], atencao: [], informativos: [] };
+    for (const a of filtered) groups[tierOf(a.priority)].push(a);
+    return groups;
+  }, [filter, filtered]);
+
+  const summaryHeadline = stats.total === 0
+    ? t("alertas.summary.allClearTitle")
+    : stats.total === 1
+      ? t("alertas.summary.oneToReview")
+      : t("alertas.summary.manyToReview", { n: stats.total });
+
   return (
     <MobileShell>
       <header className="pt-2 animate-rise">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
               {t("alertas.kicker")}
             </p>
@@ -278,7 +314,7 @@ function AlertasPage() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllRead} className="h-9 px-3 text-xs">
+              <Button variant="ghost" size="sm" onClick={markAllRead} className="min-h-11 px-3 text-xs">
                 <CheckCheck className="mr-1.5 h-4 w-4" />
                 {t("alertas.markAll")}
               </Button>
@@ -286,6 +322,49 @@ function AlertasPage() {
           </div>
         </div>
       </header>
+
+      {/* Resumo */}
+      {!loading && (
+        <PremiumCard
+          variant={stats.critical > 0 ? "highlight" : "default"}
+          rounded="2xl"
+          padding="default"
+          className="mt-4 animate-rise"
+        >
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <div
+                className={cn(
+                  "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+                  stats.total === 0
+                    ? "bg-success/15 text-success"
+                    : stats.critical > 0
+                      ? "bg-destructive/15 text-destructive"
+                      : "bg-primary/10 text-primary",
+                )}
+              >
+                {stats.total === 0 ? <Sparkles className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold leading-tight">{summaryHeadline}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {stats.total === 0
+                    ? t("alertas.summary.allClearDesc")
+                    : t("alertas.subtitle")}
+                </p>
+              </div>
+            </div>
+            {stats.total > 0 && (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <SummaryStat label={t("alertas.summary.total")} value={stats.total} tone="default" />
+                <SummaryStat label={t("alertas.summary.critical")} value={stats.critical} tone="destructive" />
+                <SummaryStat label={t("alertas.summary.important")} value={stats.important} tone="warning" />
+                <SummaryStat label={t("alertas.summary.unread")} value={stats.unread} tone="info" />
+              </div>
+            )}
+          </div>
+        </PremiumCard>
+      )}
 
       {/* Filtros */}
       <div className="mt-4 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 overflow-x-auto">
@@ -302,7 +381,7 @@ function AlertasPage() {
                   "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground",
+                    : "border-border/60 bg-card text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t(`alertas.filters.${k}`)}
@@ -321,15 +400,45 @@ function AlertasPage() {
             <Skeleton className="h-24 w-full rounded-2xl" />
           </>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-border/60 bg-card/60 px-6 py-14 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
-              <Sparkles className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h2 className="mt-4 text-base font-semibold">{t("alertas.emptyTitle")}</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("alertas.emptyDesc")}
-              {syncing && t("alertas.checking")}
-            </p>
+          <EmptyState
+            variant="default"
+            icon={<Sparkles className="h-6 w-6" />}
+            title={t("alertas.summary.allClearTitle")}
+            description={
+              <>
+                {t(`alertas.empty.${filter}`)}
+                {syncing && t("alertas.checking")}
+              </>
+            }
+          />
+        ) : grouped ? (
+          <div className="space-y-6">
+            {(["critica", "atencao", "informativos"] as Tier[]).map((tier) => {
+              const items = grouped[tier];
+              if (items.length === 0) return null;
+              return (
+                <div key={tier} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t(`alertas.groups.${tier}`)}
+                    </h2>
+                    <span className="text-xs text-muted-foreground">· {items.length}</span>
+                  </div>
+                  <div className="space-y-3">
+                    {items.map((a) => (
+                      <AlertCard
+                        key={a.id}
+                        alert={a}
+                        onMarkRead={() => setStatus(a.id, "read")}
+                        onResolve={() => setStatus(a.id, "resolved")}
+                        onIgnore={() => setStatus(a.id, "ignored")}
+                        onDelete={() => remove(a.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           filtered.map((a) => (
@@ -345,5 +454,34 @@ function AlertasPage() {
         )}
       </section>
     </MobileShell>
+  );
+}
+
+function SummaryStat({
+  label,
+  value,
+  tone,
+}: {
+  label: React.ReactNode;
+  value: number;
+  tone: "default" | "destructive" | "warning" | "info";
+}) {
+  const toneClass =
+    tone === "destructive"
+      ? "text-destructive"
+      : tone === "warning"
+        ? "text-warning"
+        : tone === "info"
+          ? "text-primary"
+          : "text-foreground";
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/60 px-3 py-2">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className={cn("mt-0.5 text-lg font-semibold tabular-nums", toneClass)}>
+        {value}
+      </div>
+    </div>
   );
 }
