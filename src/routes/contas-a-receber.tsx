@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { StatusBadge as PremiumStatusBadge } from "@/components/ui/status-badge";
 import {
   ArrowLeft,
   Plus,
