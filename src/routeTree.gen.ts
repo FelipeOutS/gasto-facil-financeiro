@@ -71,6 +71,7 @@ import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
+import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -399,6 +400,11 @@ const ApiEconomicRadarRoute = ApiEconomicRadarRouteImport.update({
   path: '/api/economic-radar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSaudeRoute = AdminSaudeRouteImport.update({
+  id: '/admin_/saude',
+  path: '/admin/saude',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   id: '/aceitar-convite/$token',
   path: '/aceitar-convite/$token',
@@ -539,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin/saude': typeof AdminSaudeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
@@ -620,6 +627,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin/saude': typeof AdminSaudeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
@@ -702,6 +710,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin_/saude': typeof AdminSaudeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
@@ -785,6 +794,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin/saude'
     | '/api/economic-radar'
     | '/api/health'
     | '/api/import-conta'
@@ -866,6 +876,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin/saude'
     | '/api/economic-radar'
     | '/api/health'
     | '/api/import-conta'
@@ -947,6 +958,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin_/saude'
     | '/api/economic-radar'
     | '/api/health'
     | '/api/import-conta'
@@ -1029,6 +1041,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
+  AdminSaudeRoute: typeof AdminSaudeRoute
   ApiEconomicRadarRoute: typeof ApiEconomicRadarRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
@@ -1503,6 +1516,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEconomicRadarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/saude': {
+      id: '/admin_/saude'
+      path: '/admin/saude'
+      fullPath: '/admin/saude'
+      preLoaderRoute: typeof AdminSaudeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aceitar-convite/$token': {
       id: '/aceitar-convite/$token'
       path: '/aceitar-convite/$token'
@@ -1669,6 +1689,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
+  AdminSaudeRoute: AdminSaudeRoute,
   ApiEconomicRadarRoute: ApiEconomicRadarRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiImportContaRoute: ApiImportContaRoute,
@@ -1712,12 +1733,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

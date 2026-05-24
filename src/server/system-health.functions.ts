@@ -53,7 +53,9 @@ function maskKey(key: string | null | undefined): string | null {
   return `${key.slice(0, 4)}…${key.slice(-2)}`;
 }
 
-function summarizeMetadata(md: unknown): Record<string, unknown> | null {
+type SafeMetaValue = string | number | boolean | null;
+
+function summarizeMetadata(md: unknown): Record<string, SafeMetaValue> | null {
   if (!md || typeof md !== "object") return null;
   const SENSITIVE = new Set([
     "authorization",
@@ -70,14 +72,14 @@ function summarizeMetadata(md: unknown): Record<string, unknown> | null {
     "response_body",
     "headers",
   ]);
-  const out: Record<string, unknown> = {};
+  const out: Record<string, SafeMetaValue> = {};
   let count = 0;
   for (const [k, v] of Object.entries(md as Record<string, unknown>)) {
     if (count >= 8) break;
     const lk = k.toLowerCase();
     if (SENSITIVE.has(lk)) continue;
     if (v == null) {
-      out[k] = v;
+      out[k] = null;
     } else if (typeof v === "string") {
       out[k] = v.length > 120 ? v.slice(0, 120) + "…" : v;
     } else if (typeof v === "number" || typeof v === "boolean") {
