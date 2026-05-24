@@ -6,12 +6,21 @@
 // aparelho pode usar a biometria para autorizar o uso da sessão Supabase
 // já persistida (refresh token gerenciado pelo próprio SDK).
 //
-// Chaves locais:
+// Chaves locais/sessão:
 //  - app_android_biometric_login_enabled = "true"
 //  - app_android_biometric_user_email    = "<email>"
+//  - app_android_biometric_user:<email>  = "true"
+//  - gi:biometric-unlocked               = "true" (sessionStorage)
+//  - gi:biometric-auth-in-progress       = "true" (sessionStorage)
 
 export const LOGIN_BIO_ENABLED_KEY = "app_android_biometric_login_enabled";
 export const LOGIN_BIO_EMAIL_KEY = "app_android_biometric_user_email";
+export const LOGIN_BIO_UNLOCKED_KEY = "gi:biometric-unlocked";
+export const LOGIN_BIO_IN_PROGRESS_KEY = "gi:biometric-auth-in-progress";
+
+function userEnabledKey(email: string) {
+  return `app_android_biometric_user:${email.trim().toLowerCase()}`;
+}
 
 type AndroidBiometricResultDetail = {
   success?: boolean;
@@ -22,7 +31,7 @@ type AndroidBiometricResultDetail = {
 function getBridge(): NonNullable<Window["AndroidBiometric"]> | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  return b && typeof b.authenticate === "function" ? b : null;
+  return b && (typeof b.requestAuthentication === "function" || typeof b.authenticate === "function") ? b : null;
 }
 
 export function isLoginBioBridgeAvailable(): boolean {
@@ -38,6 +47,53 @@ export function isLoginBioEnabled(): boolean {
   }
 }
 
+export function isLoginBioEnabledForEmail(email: string | null | undefined): boolean {
+  if (typeof window === "undefined" || !email) return false;
+  try {
+    return window.localStorage.getItem(userEnabledKey(email)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function isLoginBioUnlocked(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(LOGIN_BIO_UNLOCKED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setLoginBioUnlocked(value: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (value) window.sessionStorage.setItem(LOGIN_BIO_UNLOCKED_KEY, "true");
+    else window.sessionStorage.removeItem(LOGIN_BIO_UNLOCKED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isLoginBioInProgress(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(LOGIN_BIO_IN_PROGRESS_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setLoginBioInProgress(value: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (value) window.sessionStorage.setItem(LOGIN_BIO_IN_PROGRESS_KEY, "true");
+    else window.sessionStorage.removeItem(LOGIN_BIO_IN_PROGRESS_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getLoginBioEmail(): string | null {
   if (typeof window === "undefined") return null;
   try {
@@ -49,8 +105,12 @@ export function getLoginBioEmail(): string | null {
 
 export function clearLoginBio(): void {
   try {
+    const email = window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY);
+    if (email) window.localStorage.removeItem(userEnabledKey(email));
     window.localStorage.removeItem(LOGIN_BIO_ENABLED_KEY);
     window.localStorage.removeItem(LOGIN_BIO_EMAIL_KEY);
+    setLoginBioUnlocked(false);
+    setLoginBioInProgress(false);
   } catch {
     /* ignore */
   }
@@ -64,7 +124,7 @@ export function clearLoginBio(): void {
 export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
   return new Promise((resolve) => {
     const b = getBridge();
-    if (!b?.authenticate) {
+    if (!b || (typeof b.requestAuthentication !== "function" && typeof b.authenticate !== "function")) {
       resolve({ success: false, error: "Biometria nativa indisponível neste aparelho." });
       return;
     }
@@ -87,7 +147,8 @@ export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricR
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
     try {
-      b.authenticate();
+      if (typeof b.requestAuthentication === "function") b.requestAuthentication("Entrar com biometria");
+      else b.authenticate("Entrar com biometria");
     } catch (e) {
       console.log("[LoginBio] erro ao chamar authenticate:", e);
       finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
@@ -107,7 +168,11 @@ export async function enableLoginBio(email: string): Promise<void> {
   }
   try {
     window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
-    if (email) window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, email);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail) {
+      window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, normalizedEmail);
+      window.localStorage.setItem(userEnabledKey(normalizedEmail), "true");
+    }
   } catch {
     throw new Error("Falha ao salvar a configuração local.");
   }
