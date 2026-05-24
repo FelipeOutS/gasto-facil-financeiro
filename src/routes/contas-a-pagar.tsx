@@ -718,34 +718,22 @@ function ResumoCard({
   icon: React.ReactNode;
   hint?: string;
 }) {
-  const toneClass =
+  const metricTone =
     tone === "warning"
-      ? "bg-warning/15 text-warning"
+      ? "warning"
       : tone === "destructive"
-        ? "bg-destructive/15 text-destructive"
+        ? "negative"
         : tone === "success"
-          ? "bg-success/15 text-success"
-          : "bg-card-elevated text-muted-foreground";
+          ? "positive"
+          : "default";
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <span
-          className={cn(
-            "grid h-6 w-6 place-items-center rounded-full",
-            toneClass,
-          )}
-        >
-          {icon}
-        </span>
-      </div>
-      <Money value={valorNum} className="num mt-1.5 block text-base font-bold leading-tight" />
-      {hint && (
-        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
-      )}
-    </div>
+    <MetricCard
+      label={label}
+      icon={icon}
+      tone={metricTone}
+      value={<Money value={valorNum} className="num" />}
+      hint={hint}
+    />
   );
 }
 
