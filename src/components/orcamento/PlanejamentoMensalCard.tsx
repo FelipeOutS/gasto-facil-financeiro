@@ -152,7 +152,7 @@ export function PlanejamentoMensalCard({
               )}
               {wBill > 1 && (
                 <div
-                  className="h-full bg-info transition-all"
+                  className="h-full bg-warning transition-all"
                   style={{ width: `${wBill}%` }}
                   aria-label={labels.bills}
                 />
@@ -191,7 +191,7 @@ export function PlanejamentoMensalCard({
             )}
             {distribuidoContas > 1 && (
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-info" />
+                <span className="inline-block h-2 w-2 rounded-full bg-warning" />
                 {labels.bills}
               </span>
             )}
