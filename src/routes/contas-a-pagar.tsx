@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
