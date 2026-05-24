@@ -11,7 +11,7 @@ import {
   type OfflineExpense,
   claimForSync,
   listExpenses,
-  removeExpense,
+  deleteExpenseSilent,
   subscribe,
   updateExpense,
 } from "./offline-expense-queue";
