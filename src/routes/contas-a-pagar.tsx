@@ -84,6 +84,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/contas-a-pagar")({
