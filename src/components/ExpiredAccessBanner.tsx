@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, Clock, XCircle } from "lucide-react";
 import { usePlan } from "@/lib/use-plan";
+import { cn } from "@/lib/utils";
 
 /**
  * Banner persistente que aparece no topo das telas protegidas quando o
@@ -14,7 +15,6 @@ export function ExpiredAccessBanner() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (loading || isAdminMaster) return null;
-  // Não duplica dentro da própria tela de plano.
   if (pathname.startsWith("/meu-plano")) return null;
   if (pathname.startsWith("/login") || pathname.startsWith("/cadastro")) return null;
 
@@ -28,30 +28,35 @@ export function ExpiredAccessBanner() {
   else if (status === "cancelado" && cancelExpired) kind = "cancelled";
 
   if (!kind) return null;
-  // Teste ativo nunca mostra banner (já tem chip próprio nas telas).
   if (isTrialActive) return null;
 
   const config = {
     expired: {
       icon: XCircle,
-      tone: "border-destructive/40 bg-destructive/10 text-destructive",
+      container: "border-destructive/30 bg-destructive/5",
+      iconWrap: "bg-destructive/15 text-destructive",
       title: "Seu plano expirou",
       msg: "Renove sua assinatura para continuar usando os recursos pagos.",
       cta: "Renovar agora",
+      ctaCls: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
     },
     awaiting: {
       icon: Clock,
-      tone: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+      container: "border-warning/40 bg-warning/5",
+      iconWrap: "bg-warning/15 text-warning",
       title: "Aguardando confirmação de pagamento",
       msg: "Assim que o pagamento for confirmado, seu acesso premium é liberado.",
       cta: "Ver pagamento",
+      ctaCls: "bg-warning text-background hover:bg-warning/90",
     },
     cancelled: {
       icon: AlertTriangle,
-      tone: "border-muted-foreground/40 bg-muted/40 text-foreground",
+      container: "border-border bg-muted/40",
+      iconWrap: "bg-muted text-muted-foreground",
       title: "Acesso premium encerrado",
       msg: "Sua assinatura foi cancelada e o período pago acabou. Renove para continuar.",
       cta: "Renovar plano",
+      ctaCls: "bg-foreground text-background hover:bg-foreground/90",
     },
   }[kind];
 
@@ -59,21 +64,38 @@ export function ExpiredAccessBanner() {
 
   return (
     <div
-      className={`mb-3 rounded-2xl border ${config.tone} px-3 py-2.5 text-sm`}
+      className={cn(
+        "mb-3 rounded-2xl border px-3 py-2.5 text-sm shadow-card",
+        config.container,
+      )}
       role="status"
     >
-      <div className="flex items-start gap-2.5">
-        <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
+            config.iconWrap,
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="font-semibold leading-tight">{config.title}</div>
-          <div className="mt-0.5 text-xs opacity-90">{config.msg}</div>
+          <div className="text-sm font-semibold leading-tight text-foreground">
+            {config.title}
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            {config.msg}
+          </div>
         </div>
         <Link
           to="/meu-plano"
-          className="ml-1 inline-flex shrink-0 items-center gap-1 self-center rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm hover:bg-background"
+          className={cn(
+            "inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors",
+            config.ctaCls,
+          )}
         >
-          {config.cta}
-          <ArrowRight className="h-3 w-3" />
+          <span className="hidden sm:inline">{config.cta}</span>
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>

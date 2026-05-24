@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan, startTrial } from "@/lib/use-plan";
 import {
@@ -111,31 +112,45 @@ export function PremiumLockModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/20 to-primary/20 ring-1 ring-primary/20">
-            <Lock className="h-6 w-6 text-primary" />
+          <div className="relative mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/25 via-primary/15 to-primary/25 ring-1 ring-primary/30 shadow-elevated">
+            <Lock className="h-7 w-7 text-primary" />
+            <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-amber-400 text-amber-950 shadow-md">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <DialogTitle className="text-center">{title}</DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogTitle className="text-center text-lg font-bold tracking-tight">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-center text-sm">
             {description ??
               "Este recurso está disponível apenas em planos elegíveis. Escolha um plano para liberar esse recurso."}
           </DialogDescription>
         </DialogHeader>
 
         {(planLabel || bullets.length > 0) && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm">
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-4 text-sm shadow-card">
             {planLabel && (
-              <div className="mb-3 flex items-center gap-2 text-foreground">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Crown className="h-4 w-4 text-primary" />
-                <span className="font-medium">Liberado a partir do plano</span>
-                <span className="font-semibold text-primary">{planLabel}</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Liberado a partir do plano
+                </span>
+                <StatusBadge tone="info" dot className="font-semibold">
+                  {planLabel}
+                </StatusBadge>
               </div>
             )}
             {bullets.length > 0 && (
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {bullets.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                    <span>{b}</span>
+                  <li
+                    key={i}
+                    className="flex items-start gap-2.5 text-foreground/90"
+                  >
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    </span>
+                    <span className="text-sm leading-relaxed">{b}</span>
                   </li>
                 ))}
               </ul>

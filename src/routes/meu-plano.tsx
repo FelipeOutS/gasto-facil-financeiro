@@ -37,6 +37,8 @@ import {
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import {
   criarCheckout,
@@ -52,15 +54,13 @@ export const Route = createFileRoute("/meu-plano")({
   component: MeuPlanoPage,
 });
 
-const STATUS_TONE: Record<string, string> = {
-  ativo: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
-  teste: "border-primary/30 bg-primary/10 text-primary",
-  aguardando_pagamento:
-    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  expirado: "border-destructive/30 bg-destructive/10 text-destructive",
-  cancelado: "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
-  sem_assinatura:
-    "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
+const STATUS_BADGE_TONE: Record<string, StatusTone> = {
+  ativo: "success",
+  teste: "info",
+  aguardando_pagamento: "warning",
+  expirado: "destructive",
+  cancelado: "muted",
+  sem_assinatura: "muted",
 };
 
 function MeuPlanoPage() {
@@ -384,14 +384,14 @@ function MeuPlanoPage() {
             )}
           </div>
           {!loading && (
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
-              )}
+            <StatusBadge
+              tone={STATUS_BADGE_TONE[status] ?? "muted"}
+              dot
+              size="md"
+              className="shrink-0 uppercase tracking-wide"
             >
               {isAdminMaster ? tp("status.ativo") : tp(`status.${status}`, { defaultValue: status })}
-            </span>
+            </StatusBadge>
           )}
         </div>
 
@@ -784,22 +784,25 @@ function MeuPlanoPage() {
             {tp("sections.history")}
           </h3>
           {historico.length === 0 ? (
-            <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
-              {tp("history.empty")}
+            <div className="mt-3">
+              <PremiumEmptyState
+                icon={<Receipt className="h-6 w-6" />}
+                title={tp("history.empty")}
+              />
             </div>
           ) : (
             <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
               <ul className="divide-y divide-border">
                 {historico.map((h) => {
                   const s = statusLabelMP(h.status);
-                  const tone =
+                  const badgeTone: StatusTone =
                     s.tone === "ok"
-                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                      ? "success"
                       : s.tone === "warn"
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                        ? "warning"
                         : s.tone === "danger"
-                          ? "bg-destructive/10 text-destructive border-destructive/30"
-                          : "bg-muted text-muted-foreground border-border";
+                          ? "destructive"
+                          : "muted";
                   const label = planName(h.plano as PlanTier) ?? h.plano;
                   const dt = h.paid_at ?? h.created_at;
                   return (
@@ -819,14 +822,9 @@ function MeuPlanoPage() {
                           {h.periodicidade ? tp("card.perFreq", { value: periodLabel(h.periodicidade as Periodicidade) }) : ""}
                         </p>
                       </div>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          tone,
-                        )}
-                      >
+                      <StatusBadge tone={badgeTone} dot className="uppercase tracking-wide">
                         {s.label}
-                      </span>
+                      </StatusBadge>
                     </li>
                   );
                 })}
