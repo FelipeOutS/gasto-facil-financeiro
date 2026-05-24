@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
@@ -808,21 +809,21 @@ function StatusPill({
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("contas-a-pagar");
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center animate-rise">
-      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-card text-muted-foreground animate-pop">
-        <Receipt className="h-6 w-6" />
-      </span>
-      <p className="text-sm font-semibold">{t("empty.title")}</p>
-      <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-        {t("empty.subtitle")}
-      </p>
-      <Button size="sm" className="card-press rounded-full mt-4" onClick={onAdd}>
-        <Plus className="mr-1 h-4 w-4" />
-        {t("empty.addFirst")}
-      </Button>
-    </div>
+    <PremiumEmptyState
+      variant="premium"
+      icon={<Receipt className="h-6 w-6" />}
+      title={t("empty.title")}
+      description={t("empty.subtitle")}
+      cta={
+        <Button className="card-press min-h-11 rounded-full font-semibold" onClick={onAdd}>
+          <Plus className="mr-1 h-4 w-4" />
+          {t("empty.addFirst")}
+        </Button>
+      }
+    />
   );
 }
+
 
 function nomeExibicaoFornecedor(f: { apelido?: string | null; nome_fantasia?: string | null; razao_social?: string | null; nome?: string | null } | undefined): string | null {
   if (!f) return null;

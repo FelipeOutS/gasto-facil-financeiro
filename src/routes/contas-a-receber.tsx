@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import {
   ArrowLeft,
   Plus,
@@ -221,25 +222,26 @@ function ContasAReceberPage() {
       {/* Lista */}
       <section className="mt-4 space-y-2.5">
         {listaFiltrada.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
-            <HandCoins className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {lista.length === 0 ? t("empty.none") : t("empty.noResults")}
-            </p>
-            {lista.length === 0 && (
-              <Button
-                size="sm"
-                className="mt-3 rounded-xl"
-                onClick={() => {
-                  setEditing(null);
-                  setOpenForm(true);
-                }}
-              >
-                <Plus className="mr-1 h-4 w-4" />
-                {t("empty.addFirst")}
-              </Button>
-            )}
-          </div>
+          <PremiumEmptyState
+            variant={lista.length === 0 ? "premium" : "default"}
+            icon={<HandCoins className="h-6 w-6" />}
+            title={lista.length === 0 ? t("empty.none") : t("empty.noResults")}
+            cta={
+              lista.length === 0 ? (
+                <Button
+                  className="min-h-11 rounded-full font-semibold"
+                  onClick={() => {
+                    setEditing(null);
+                    setOpenForm(true);
+                  }}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t("empty.addFirst")}
+                </Button>
+              ) : undefined
+            }
+          />
+
         ) : (
           listaFiltrada.map((c) => (
             <ContaCard

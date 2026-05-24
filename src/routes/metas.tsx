@@ -85,6 +85,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 
 const META_COLORS = [
   "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#fb923c",
@@ -174,25 +175,22 @@ function MetasPage() {
 
       <section className="mt-5 space-y-3">
         {ordenadas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center animate-rise">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand-on-soft animate-pop">
-              <Target className="h-6 w-6" />
-            </span>
-            <p className="mt-3 text-sm font-semibold text-foreground">
-              {t("empty.title")}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("empty.subtitle")}
-            </p>
-            <Button
-              size="sm"
-              className="card-press rounded-full mt-4"
-              onClick={() => setDialog({ kind: "create" })}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t("empty.cta")}
-            </Button>
-          </div>
+          <PremiumEmptyState
+            variant="premium"
+            icon={<Target className="h-6 w-6" />}
+            title={t("empty.title")}
+            description={t("empty.subtitle")}
+            cta={
+              <Button
+                className="card-press min-h-11 rounded-full font-semibold"
+                onClick={() => setDialog({ kind: "create" })}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t("empty.cta")}
+              </Button>
+            }
+          />
+
         ) : (
           <div className="grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-3">
             {ordenadas.map((m) => (

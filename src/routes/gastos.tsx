@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditGastoDialog } from "@/components/EditGastoDialog";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
@@ -1141,36 +1142,46 @@ function GastosPage() {
 
       {/* Lista */}
       {filtered.length === 0 ? (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card/50 p-10 text-center animate-fade-in">
+        <div className="mt-6">
           {hasAnyFilter ? (
-            <>
-              <p className="font-medium text-foreground">{t("empty.filteredTitle")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("empty.filteredSub")}</p>
-              <Button onClick={clearAll} variant="outline" size="sm" className="mt-4 rounded-full">
-                {t("empty.clearFilters")}
-              </Button>
-            </>
+            <PremiumEmptyState
+              icon={<Search className="h-6 w-6" />}
+              title={t("empty.filteredTitle")}
+              description={t("empty.filteredSub")}
+              cta={
+                <Button onClick={clearAll} variant="outline" className="min-h-11 rounded-full">
+                  {t("empty.clearFilters")}
+                </Button>
+              }
+            />
           ) : mesRef !== "todos" ? (
-            <>
-              <p className="font-medium text-foreground">{t("empty.monthTitle")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("empty.monthSub", { month: ymToLabel(mesRef) })}
-              </p>
-              <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
-              </Button>
-            </>
+            <PremiumEmptyState
+              variant="premium"
+              icon={<Wallet className="h-6 w-6" />}
+              title={t("empty.monthTitle")}
+              description={t("empty.monthSub", { month: ymToLabel(mesRef) })}
+              cta={
+                <Button asChild className="min-h-11 rounded-full font-semibold">
+                  <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
+                </Button>
+              }
+            />
           ) : (
-            <>
-              <p className="font-medium text-foreground">{t("empty.noneTitle")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("empty.noneSub")}</p>
-              <Button asChild size="sm" className="mt-4 rounded-full">
-                <Link to="/adicionar">{t("empty.noneCta")}</Link>
-              </Button>
-            </>
+            <PremiumEmptyState
+              variant="premium"
+              icon={<Sparkles className="h-6 w-6" />}
+              title={t("empty.noneTitle")}
+              description={t("empty.noneSub")}
+              cta={
+                <Button asChild className="min-h-11 rounded-full font-semibold">
+                  <Link to="/adicionar">{t("empty.noneCta")}</Link>
+                </Button>
+              }
+            />
           )}
         </div>
       ) : (
+
 
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
