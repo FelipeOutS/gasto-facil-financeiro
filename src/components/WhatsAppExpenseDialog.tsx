@@ -25,6 +25,7 @@ import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
 import { CategoryIcon } from "./CategoryIcon";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
+import { requireOnline } from "@/lib/use-online-status";
 
 const EXEMPLOS = [
   "Gastei R$ 26,00 na H Nunes Lanchonete hoje no Mercado Pago",
