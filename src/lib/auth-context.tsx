@@ -3,7 +3,13 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
-import { setLoginBioInProgress, setLoginBioUnlocked } from "./biometric-login";
+import {
+  clearLoginBio,
+  isLoginBioEnabledForEmail,
+  persistLoginBioSession,
+  setLoginBioInProgress,
+  setLoginBioUnlocked,
+} from "./biometric-login";
 
 export type Profile = {
   id: string;
@@ -69,6 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = sess?.user.id ?? null;
       setActiveUserId(uid);
       if (uid) {
+        if (isLoginBioEnabledForEmail(sess?.user.email)) {
+          persistLoginBioSession(sess);
+        }
         // Defer cloud work to avoid blocking the auth callback
         setTimeout(() => {
           void (async () => {
@@ -91,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const uid = data.session?.user.id ?? null;
         setActiveUserId(uid);
         if (uid) {
+          if (isLoginBioEnabledForEmail(data.session?.user.email)) {
+            persistLoginBioSession(data.session);
+          }
           void (async () => {
             await migrateLegacyDataToUser(uid);
             await hydrateUser(uid);
@@ -152,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
+      clearLoginBio();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);

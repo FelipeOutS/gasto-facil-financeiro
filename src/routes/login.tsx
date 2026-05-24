@@ -21,6 +21,8 @@ import {
   isLoginBioEnabledForEmail,
   isLoginBioBridgeAvailable,
   isLoginBioEnabled,
+  persistLoginBioSession,
+  restoreLoginBioSessionAfterBiometric,
   runLoginBiometric,
   setLoginBioInProgress,
   setLoginBioUnlocked,
@@ -70,8 +72,8 @@ function LoginForm() {
   useEffect(() => {
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
-    if (av) console.log("Android biometric available");
-    console.log("[BioLogin] biometric enabled:", en);
+    if (av) console.log("[AndroidBiometricLogin] bridge AndroidBiometric disponível");
+    console.log("[AndroidBiometricLogin] biometria habilitada:", en);
     setBioAvailable(av);
     setBioEnabled(en);
     if (av && en) {
@@ -90,8 +92,7 @@ function LoginForm() {
     } catch {
       /* ignore */
     }
-    console.log("[BioLogin] redirect target:", target);
-    console.log("Redirecting to dashboard");
+    console.log("[AndroidBiometricLogin] rota destino:", target);
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
     void navigate({ to: target, replace: true });
@@ -108,73 +109,37 @@ function LoginForm() {
     setLoginBioInProgress(true);
     let navigatedWithSession = false;
     try {
+      console.log("[AndroidBiometricLogin] início do fluxo");
       const result = await runLoginBiometric();
       if (result.success !== true) {
         setBioError(result.error || "Não foi possível validar a biometria.");
         return;
       }
-      console.log("Biometric success");
-      console.log("[BioLogin] biometric success:", true);
-      setBiometricUnlocked(true);
-      setLoginBioUnlocked(true);
+      console.log("[AndroidBiometricLogin] biometria aprovada");
 
-      // 1) Sessão já persistida pelo SDK?
-      const { data: sessionData } = await supabase.auth.getSession();
-      let session = sessionData.session ?? null;
-      console.log("[BioLogin] session exists before refresh:", session ? "yes" : "no");
-
-      // 2) Sem sessão em memória — tenta renovar via refresh token.
-      if (!session) {
-        try {
-          const { data: refreshed } = await supabase.auth.refreshSession();
-          session = refreshed.session ?? null;
-        } catch {
-          /* ignore */
-        }
-      }
-      console.log("[BioLogin] session exists after refresh:", session ? "yes" : "no");
-
-      // 3) Confirma com o backend que o token ainda vale.
-      if (session) {
-        const { data: userData, error: userErr } = await supabase.auth.getUser();
-        if (userErr || !userData.user) {
-          session = null;
-        }
-      }
+      const { session } = await restoreLoginBioSessionAfterBiometric();
 
       if (session) {
         setHasSupabaseSession(true);
-        console.log("Supabase session found");
-        // Reaplica a sessão no client para disparar onAuthStateChange e
-        // garantir que o AuthProvider esteja hidratado antes do AuthGate
-        // avaliar a rota destino.
-        try {
-          await supabase.auth.setSession({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-          });
-        } catch {
-          /* ignore */
-        }
+        setBiometricUnlocked(true);
+        setLoginBioUnlocked(true);
         toast.success(t("login.welcomeBack"));
         navigatedWithSession = true;
         finishBioProgressSoon();
+        console.log("[AndroidBiometricLogin] navegando para dashboard");
         redirectToProtected();
         return;
       }
 
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
-      console.log("Supabase session missing");
-      console.log("Redirecting to login because session expired");
-      setBioError("Sua sessão expirou. Entre uma vez com sua senha para reativar a biometria.");
+      setBioError("Por segurança, entre novamente com sua senha.");
       setBioMode(false);
     } catch {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
-      console.log("Supabase session missing");
-      console.log("Redirecting to login because session expired");
-      setBioError("Sua sessão expirou. Entre uma vez com sua senha para reativar a biometria.");
+      console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
+      setBioError("Por segurança, entre novamente com sua senha.");
       setBioMode(false);
     } finally {
       setBioRunning(false);
@@ -193,6 +158,8 @@ function LoginForm() {
     }
     if (email.trim() && isLoginBioEnabledForEmail(email.trim())) {
       setBioEnabled(true);
+      const { data } = await supabase.auth.getSession();
+      persistLoginBioSession(data.session);
     }
     // Se bridge disponível e ainda não ativada, oferece ativar.
     if (bioAvailable && !bioEnabled) {
