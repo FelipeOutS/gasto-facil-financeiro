@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { requireOnline } from "@/lib/use-online-status";
 import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
 import { useAuth } from "@/lib/auth-context";
