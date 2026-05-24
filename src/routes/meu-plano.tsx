@@ -642,35 +642,46 @@ function MeuPlanoPage() {
           const translatedName = planName(p.tier);
           const translatedDescription = planDescription(p.tier, p.tagline);
           const translatedHighlights = planHighlights(p.tier, p.highlights);
+          const badgeTone: StatusTone | null = isCurrent
+            ? "success"
+            : isPending
+              ? "warning"
+              : isRecommended
+                ? "info"
+                : null;
+          const badgeLabel = isCurrent
+            ? t("billing.currentPlan")
+            : isPending
+              ? t("billing.pendingPayment")
+              : isRecommended
+                ? t("billing.mostChosen")
+                : null;
           return (
             <div
               key={p.tier}
               className={cn(
-                "relative flex flex-col rounded-3xl border p-6 shadow-card transition-all duration-200",
-                "bg-gradient-to-b from-card to-card/60 backdrop-blur-sm",
+                "relative flex flex-col rounded-3xl border bg-card p-6 shadow-card transition-all duration-200",
                 isCurrent
-                  ? "border-primary/60 ring-2 ring-primary/30 shadow-lg shadow-primary/10"
+                  ? "border-success/50 ring-1 ring-success/25 bg-gradient-to-b from-success/5 via-card to-card"
                   : isPending
-                    ? "border-amber-500/50 ring-1 ring-amber-500/20"
+                    ? "border-warning/40 ring-1 ring-warning/20 bg-gradient-to-b from-warning/5 via-card to-card"
                     : isRecommended
-                      ? "border-primary/40 hover:border-primary/60 hover:-translate-y-0.5"
-                      : "border-border/80 hover:border-primary/40 hover:-translate-y-0.5",
+                      ? "border-primary/40 ring-1 ring-primary/20 bg-gradient-to-b from-primary/5 via-card to-card hover:-translate-y-0.5 hover:border-primary/60"
+                      : "border-border hover:-translate-y-0.5 hover:border-primary/40",
               )}
             >
               {/* Tag superior */}
-              {(isCurrent || isPending || isRecommended) && (
-                <span
-                  className={cn(
-                    "absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-md",
-                    isCurrent
-                      ? "bg-primary text-primary-foreground"
-                      : isPending
-                        ? "bg-amber-500 text-white"
-                        : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                  )}
-                >
-                  {isCurrent ? t("billing.currentPlan") : isPending ? t("billing.pendingPayment") : t("billing.mostChosen")}
-                </span>
+              {badgeTone && badgeLabel && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <StatusBadge
+                    tone={badgeTone}
+                    dot
+                    size="md"
+                    className="shadow-md uppercase tracking-wider"
+                  >
+                    {badgeLabel}
+                  </StatusBadge>
+                </div>
               )}
 
               {/* Cabeçalho */}
@@ -684,7 +695,7 @@ function MeuPlanoPage() {
               {/* Preço */}
               <div className="mt-4 border-t border-border/60 pt-4">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold tracking-tight text-foreground">
+                  <span className="num text-3xl font-extrabold tracking-tight text-foreground">
                     {formatBRL(pr.totalCents)}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
@@ -692,7 +703,7 @@ function MeuPlanoPage() {
                   </span>
                 </div>
                 {pr.discountCents > 0 ? (
-                  <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  <p className="mt-1 text-[11px] font-semibold text-success">
                     {t("billing.save", { value: formatBRL(pr.discountCents), percent: pr.discountPercent })}
                   </p>
                 ) : (
@@ -707,7 +718,7 @@ function MeuPlanoPage() {
                     key={h}
                     className="flex items-start gap-2 text-xs leading-relaxed text-foreground/85"
                   >
-                    <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-500">
+                    <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-success/15 text-success">
                       <Check className="h-2.5 w-2.5" strokeWidth={3} />
                     </span>
                     <span className="break-words">{h}</span>
@@ -718,14 +729,14 @@ function MeuPlanoPage() {
               {/* Botões */}
               <div className="mt-6 space-y-2">
                 {accessGranted ? (
-                  <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary">
+                  <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-success/40 bg-success/10 px-4 py-2.5 text-sm font-semibold text-success min-h-11">
                     <Check className="h-4 w-4" />
                     {isAdminMaster ? t("billing.totalAccess") : t("billing.currentPlan")}
                   </div>
                 ) : (
                   <Button
                     className={cn(
-                      "w-full rounded-xl font-semibold",
+                      "w-full rounded-xl font-semibold min-h-11",
                       isRecommended && "bg-gradient-to-r from-primary to-primary/85 hover:opacity-90 shadow-md shadow-primary/20",
                     )}
                     disabled={submitting !== null}
@@ -742,7 +753,7 @@ function MeuPlanoPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full rounded-xl border-primary/40 text-primary hover:bg-primary/5"
+                    className="w-full rounded-xl border-primary/40 text-primary hover:bg-primary/5 min-h-11"
                     disabled={submitting !== null}
                     onClick={() => iniciarTeste(p.tier)}
                   >
@@ -755,6 +766,7 @@ function MeuPlanoPage() {
           );
         })}
       </section>
+
 
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">
