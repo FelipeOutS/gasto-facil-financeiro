@@ -570,7 +570,7 @@ function Index() {
           const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
           return (
             <div className="flex min-w-0">
-              <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card">
+              <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
@@ -620,7 +620,7 @@ function Index() {
           <div className="flex min-w-0">
             <Link
               to="/metas"
-              className="flex h-full w-full items-center gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+              className="flex h-full w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
                 <Target className="h-4 w-4" />
@@ -646,7 +646,7 @@ function Index() {
       {porCategoria.length > 0 && (
         <>
           <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-          <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
+          <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -865,9 +865,9 @@ function Index() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 mt-6 flex items-center gap-2.5 px-1 sm:mt-7 lg:mb-3.5 lg:mt-8">
-      <span aria-hidden className="h-4 w-1 rounded-full bg-brand" />
-      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="mb-2.5 mt-5 flex items-center gap-2.5 px-1 sm:mt-5 lg:mb-3 lg:mt-6">
+      <span aria-hidden className="h-3.5 w-1 rounded-full bg-brand" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {children}
       </h2>
     </div>
@@ -897,25 +897,23 @@ function HeroGreeting({
         : t("hero.greetingEvening");
   const firstName = (nome ?? "").trim().split(/\s+/)[0] ?? "";
   return (
-    <header className="relative overflow-hidden rounded-3xl border border-border bg-card px-4 py-3.5 shadow-card animate-rise sm:px-5 sm:py-4">
-      {/* Fundo premium: gradiente radial + glow + linha brand sutil */}
+    <header className="relative overflow-hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-card animate-rise sm:px-5 sm:py-3.5">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,var(--brand-soft),transparent_55%),radial-gradient(80%_60%_at_0%_100%,var(--brand-tint,transparent),transparent_60%)]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-brand/15 blur-3xl"
+        className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand/15 blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute right-6 top-1/2 hidden h-24 w-24 -translate-y-1/2 opacity-[0.08] sm:block"
+        className="pointer-events-none absolute right-4 top-1/2 hidden h-16 w-16 -translate-y-1/2 opacity-[0.07] sm:block"
       >
         <svg viewBox="0 0 100 100" className="h-full w-full text-brand">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <circle cx="50" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.8" />
+          <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="0.8" />
+          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
       </div>
       <div className="relative flex items-center justify-between gap-3">
@@ -956,7 +954,7 @@ function SaldoHeroCard({
   const negativo = saldo < 0;
   const pctReceita = entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
   return (
-    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-elevated animate-rise sm:p-5">
+    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-elevated animate-rise sm:p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,var(--brand-soft),transparent_60%)]"
@@ -1039,18 +1037,18 @@ function QuickActionsBar() {
   return (
     <nav
       aria-label={t("quickActions.title")}
-      className="mt-3 grid grid-cols-4 gap-2 sm:gap-2.5"
+      className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5"
     >
       {items.map((it) => (
         <Link
           key={it.to}
           to={it.to}
-          className="card-press group flex min-h-[60px] items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated sm:px-3"
+          className="card-press hover-lift group flex min-h-[56px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
         >
           <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}>
             {it.icon}
           </span>
-          <span className="hidden text-[12px] font-semibold leading-tight text-foreground sm:inline">
+          <span className="truncate text-[12px] font-semibold leading-tight text-foreground">
             {it.label}
           </span>
         </Link>
@@ -1197,7 +1195,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
   const { t, i18n } = useTranslation("dashboard");
   const dateLocale = i18n.language === "en" ? "en-US" : "pt-BR";
   return (
-    <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -1327,7 +1325,7 @@ function ContasCard({
   return (
     <section
       className={cn(
-        "w-full rounded-3xl border bg-card p-4 transition-colors",
+        "w-full rounded-2xl border bg-card p-3.5 transition-colors",
         isSide ? "flex h-full flex-col shadow-elevated" : "mt-2.5",
         hasAtrasada ? "border-destructive/40" : "border-border",
       )}
