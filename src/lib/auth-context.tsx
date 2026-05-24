@@ -5,6 +5,7 @@ import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
   clearLoginBio,
+  clearLoginBioSessionOnly,
   isLoginBioBridgeAvailable,
   isLoginBioEnabledForEmail,
   LOGIN_BIO_SESSION_RESTORED_EVENT,
@@ -190,7 +191,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
-      clearLoginBio();
+      // Logout encerra a sessão real e remove tokens salvos, mas mantém a
+      // preferência local para a tela explicar que a senha é necessária.
+      clearLoginBioSessionOnly();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
