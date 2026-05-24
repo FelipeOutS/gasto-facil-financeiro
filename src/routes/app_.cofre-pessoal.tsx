@@ -123,6 +123,15 @@ function CofrePessoalPage() {
   const [bootstrapState, setBootstrapState] = useState<"loading" | "needs_setup" | "needs_unlock" | "ready">("loading");
   const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
 
+  // Ativa/Desativa bloqueio de print no Android WebView enquanto o usuário
+  // estiver dentro do Cofre Pessoal (inclui setup, unlock, lista e detalhes).
+  useEffect(() => {
+    enableSecureScreen();
+    return () => {
+      disableSecureScreen();
+    };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     fetchVaultSettings(user.id)
