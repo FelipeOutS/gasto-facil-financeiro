@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
+import { logAuditEvent, logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 import {
   paymentEventAlreadyProcessed,
@@ -309,7 +309,60 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                 .insert({ user_id: userId, ...update } as any);
             }
           } else if (FAILED.has(status)) {
-            // não bloqueia premium se ainda há período pago anterior válido
+            // Refund / chargeback / cancelamento posterior à aprovação:
+            // se o plano atual foi ativado por este pagamento, revogar acesso.
+            const externalId = String(payment.id ?? paymentId);
+            const { data: planRow } = await supabaseAdmin
+              .from("user_plans")
+              .select("user_id, plano, status, last_payment_id, current_period_end, access_until")
+              .eq("user_id", userId)
+              .maybeSingle();
+            if (planRow && planRow.last_payment_id && planRow.last_payment_id === externalId) {
+              const nowIso = new Date().toISOString();
+              const revoke =
+                status === "refunded" || status === "charged_back" || status === "cancelled";
+              if (revoke) {
+                await supabaseAdmin
+                  .from("user_plans")
+                  .update({
+                    status: "cancelado",
+                    cancelled_at: nowIso,
+                    access_until: nowIso,
+                    current_period_end: nowIso,
+                  })
+                  .eq("user_id", userId);
+                await logAuditEvent({
+                  actor_user_id: null,
+                  action:
+                    status === "refunded"
+                      ? "payment_refunded"
+                      : status === "charged_back"
+                        ? "payment_charged_back"
+                        : "payment_cancelled",
+                  target_user_id: userId,
+                  entity_type: "user_plan",
+                  entity_id: userId,
+                  new_data: { status: "cancelado", revoked: true, reason: status },
+                  metadata: {
+                    source: "mp_webhook",
+                    external_payment_id: externalId,
+                    previous_plan: planRow.plano,
+                  },
+                });
+                await logAuditEvent({
+                  actor_user_id: null,
+                  action: "payment_access_revoked",
+                  target_user_id: userId,
+                  entity_type: "user_plan",
+                  entity_id: userId,
+                  metadata: {
+                    source: "mp_webhook",
+                    reason: status,
+                    external_payment_id: externalId,
+                  },
+                });
+              }
+            }
           }
         }
 

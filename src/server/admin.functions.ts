@@ -314,11 +314,14 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       .filter((p) => (p.paid_at ?? p.created_at) >= monthStart)
       .reduce((s, p) => s + (p.amount_cents ?? 0), 0);
 
-    // MRR estimado: somatório do último pagamento aprovado de cada usuário ativo, normalizado para mês
+    // MRR estimado: somatório do último pagamento aprovado de cada usuário ativo,
+    // normalizado para mês. Admin Master e usuários sem pagamento real são excluídos.
     let mrrCents = 0;
     for (const u of users) {
       if (u.status !== "ativo") continue;
-      if (!u.last_payment_amount_cents || u.last_payment_status !== "approved" && u.last_payment_status !== "paid") continue;
+      if (u.plano === "admin_master") continue;
+      if (!u.last_payment_amount_cents) continue;
+      if (u.last_payment_status !== "approved" && u.last_payment_status !== "paid") continue;
       const months = u.months && u.months > 0 ? u.months : 1;
       mrrCents += Math.round((u.last_payment_amount_cents ?? 0) / months);
     }
@@ -336,9 +339,16 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       }
     }
 
-    const activeUsers = users.filter((u) => u.status === "ativo").length;
+    // Admin Master não conta como pagante real. Considera "ativo" apenas
+    // usuários com plano premium (não admin_master/free/sem_assinatura).
+    const activeUsers = users.filter(
+      (u) => u.status === "ativo" && u.plano !== "admin_master" && u.plano !== "free" && u.plano !== "sem_assinatura",
+    ).length;
     const noPlanUsers = users.filter((u) => u.status === "sem_assinatura" || u.plano === "free").length;
-    const cancelledOrExpiredUsers = users.filter((u) => u.status === "cancelado" || u.status === "vencido").length;
+    // 'expirado' é o status real devolvido por getSubscriptionForUserIdentity.
+    const cancelledOrExpiredUsers = users.filter(
+      (u) => u.status === "cancelado" || u.status === "expirado",
+    ).length;
 
     return {
       users,
