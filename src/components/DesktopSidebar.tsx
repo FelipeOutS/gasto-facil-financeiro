@@ -14,6 +14,7 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const ROUTE_FEATURE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
@@ -251,6 +252,10 @@ export function DesktopSidebar() {
           })}
         </div>
       </nav>
+
+      <div className="mx-3 mt-2">
+        <ThemeToggle />
+      </div>
 
       <Link
         to="/conta"
