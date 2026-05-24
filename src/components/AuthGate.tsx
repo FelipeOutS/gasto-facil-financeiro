@@ -10,6 +10,7 @@ import { fetchOnboarding } from "@/lib/onboarding/service";
 import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { isLoginBioBridgeAvailable, isLoginBioEnabled, isLoginBioInProgress } from "@/lib/biometric-login";
 
 const AUTH_REDIRECT_KEY_PREFIX = "gi:auth-redirect:";
 
@@ -95,6 +96,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
+      if (isLoginBioInProgress()) {
+        console.log("[BioLogin] auth gate blocked reason:", "Biometric auth in progress");
+        return;
+      }
+      if (isLoginBioBridgeAvailable() && isLoginBioEnabled()) {
+        console.log("[BioLogin] auth gate blocked reason:", "Biometric login enabled; allowing login screen first");
+      }
       setRedirecting(true);
       try {
         if (pathname !== "/login") {
