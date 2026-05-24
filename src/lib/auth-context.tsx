@@ -199,6 +199,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Logout encerra a sessão real e remove tokens salvos, mas mantém a
       // preferência local para a tela explicar que a senha é necessária.
       clearLoginBioSessionOnly();
+      // Limpa também a sessão segura do Android Keystore — após signOut,
+      // o usuário precisa logar com senha novamente antes de poder usar
+      // a biometria.
+      clearSecureSession();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
