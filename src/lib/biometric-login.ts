@@ -223,6 +223,53 @@ export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricR
   });
 }
 
+export async function restoreLoginBioSessionAfterBiometric(): Promise<{
+  session: Session | null;
+  userId: string | null;
+}> {
+  const { data: current } = await supabase.auth.getSession();
+  let session = current.session ?? null;
+  console.log(
+    session
+      ? "[AndroidBiometricLogin] getSession encontrou sessão"
+      : "[AndroidBiometricLogin] getSession não encontrou sessão",
+  );
+
+  if (!session) {
+    const persisted = getPersistedLoginBioSession();
+    if (persisted?.refresh_token) {
+      console.log("[AndroidBiometricLogin] tentando restaurar sessão com refresh_token");
+      try {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: persisted.access_token,
+          refresh_token: persisted.refresh_token,
+        });
+        if (!error && data.session) {
+          session = data.session;
+          persistLoginBioSession(data.session);
+          console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
+        }
+      } catch {
+        session = null;
+      }
+    }
+  }
+
+  if (!session) {
+    console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
+    return { session: null, userId: null };
+  }
+
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) {
+    console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
+    return { session: null, userId: null };
+  }
+  console.log("[AndroidBiometricLogin] getUser confirmado");
+  persistLoginBioSession(session);
+  return { session, userId: userData.user.id };
+}
+
 /**
  * Pede biometria e, se aprovada, marca este dispositivo como autorizado
  * a usar entrada rápida para o e-mail informado.
@@ -232,6 +279,10 @@ export async function enableLoginBio(email: string): Promise<void> {
   const r = await runLoginBiometric();
   if (r.success !== true) {
     throw new Error(r.error || "Não foi possível ativar a biometria.");
+  }
+  const { data } = await supabase.auth.getSession();
+  if (!persistLoginBioSession(data.session)) {
+    throw new Error("Não foi possível salvar a sessão para entrada por biometria.");
   }
   try {
     window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
