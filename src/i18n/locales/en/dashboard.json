@@ -553,5 +553,18 @@
     "retry": "Try again",
     "goLogin": "Go to login",
     "loading": "Just a moment..."
+  },
+  "hero": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "subtitle": "Here is the snapshot of your finances today."
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "novoGasto": "New expense",
+    "novaReceita": "New income",
+    "importar": "Import",
+    "ia": "Financial AI"
   }
 }
