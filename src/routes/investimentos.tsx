@@ -1995,7 +1995,7 @@ function MovimentacaoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar a movimentação.");
+      toastFromError(e, "Não foi possível salvar a movimentação.");
     } finally {
       setSalvando(false);
     }
