@@ -127,9 +127,12 @@ export function PlanejamentoMensalCard({
       {estado === "sem_renda" ? (
         <p className="mt-4 text-xs text-muted-foreground">{labels.noIncome}</p>
       ) : estado === "sem_limites" ? (
-        <p className="mt-4 text-xs text-muted-foreground">
-          {incluirContas && hasBillsReal ? labels.hasBillsNoLimits : labels.noLimits}
-        </p>
+        <>
+          <p className="mt-4 text-xs text-muted-foreground">
+            {incluirContas && hasBillsReal ? labels.hasBillsNoLimits : labels.noLimits}
+          </p>
+          {suggestionSlot}
+        </>
       ) : (
         <>
           <div className="mt-4 grid grid-cols-3 gap-2.5">
