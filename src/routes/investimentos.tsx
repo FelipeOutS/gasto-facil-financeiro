@@ -2192,7 +2192,7 @@ function RendimentoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar o rendimento.");
+      toastFromError(e, "Não foi possível salvar o rendimento.");
     } finally {
       setSalvando(false);
     }
