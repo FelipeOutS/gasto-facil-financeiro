@@ -81,6 +81,17 @@
     "overBudget": "Acima do planejado",
     "underBudget": "Dentro do planejado"
   },
+  "categoryTrends": {
+    "title": "Tendência por categoria",
+    "description": "Veja quais áreas estão crescendo ou diminuindo nos últimos meses.",
+    "rising": "Subindo",
+    "falling": "Caindo",
+    "stable": "Estável",
+    "new": "Nova",
+    "recentAverage": "Média recente",
+    "change": "Variação",
+    "empty": "Cadastre gastos por alguns meses para acompanhar tendências."
+  },
   "comparativo": {
     "anterior": "Anterior: {{valor}}",
     "noChange": "Sem variação",
