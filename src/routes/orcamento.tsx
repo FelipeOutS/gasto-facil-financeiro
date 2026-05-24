@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategoriaCard";
+import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimiteDiarioCard";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -103,6 +104,45 @@ function OrcamentoPage() {
     qtdOk,
     temOrcamento,
   } = resumo;
+
+  // Limite diário inteligente
+  const limiteDiarioInfo = useMemo(() => {
+    const mesAtual = today.getMonth() + 1;
+    const anoAtual = today.getFullYear();
+
+    // Sem orçamento configurado
+    if (!temOrcamento && (limiteTotal ?? 0) <= 1) {
+      return { tipo: "semOrcamento" as const, status: "muted" as const };
+    }
+
+    // Mês passado
+    if (ym.ano < anoAtual || (ym.ano === anoAtual && ym.mes < mesAtual)) {
+      return { tipo: "passado" as const, status: "muted" as const };
+    }
+
+    // Mês futuro
+    if (ym.ano > anoAtual || (ym.ano === anoAtual && ym.mes > mesAtual)) {
+      return { tipo: "futuro" as const, status: "muted" as const };
+    }
+
+    // Mês atual
+    if (diff <= 1) {
+      return { tipo: "estourado" as const, status: "destructive" as const };
+    }
+
+    const diasNoMes = new Date(ym.ano, ym.mes, 0).getDate();
+    const diasRestantes = Math.max(1, diasNoMes - today.getDate() + 1);
+    const limiteDiario = diff / diasRestantes;
+    const limiteDiarioOriginal = totalPlanejado > 0 ? totalPlanejado / diasNoMes : 0;
+    const isLow = limiteDiarioOriginal > 0 && limiteDiario < limiteDiarioOriginal * 0.2;
+
+    return {
+      tipo: "atual" as const,
+      valor: limiteDiario,
+      diasRestantes,
+      status: isLow ? ("warning" as const) : ("success" as const),
+    };
+  }, [ym, today, temOrcamento, limiteTotal, totalPlanejado, totalRealizado, diff]);
 
   // Edit limit dialog
   const [editing, setEditing] = useState<{ id: string; nome: string; valor: string } | null>(
@@ -315,6 +355,28 @@ function OrcamentoPage() {
               })}
             </p>
           </div>
+        </section>
+      )}
+
+      {/* Limite diário inteligente */}
+      {(temOrcamento || (limiteTotal ?? 0) > 0) && (
+        <section className="mt-4">
+          <OrcamentoLimiteDiarioCard
+            tipo={limiteDiarioInfo.tipo}
+            valor={limiteDiarioInfo.valor}
+            status={limiteDiarioInfo.status}
+            diasRestantes={limiteDiarioInfo.diasRestantes}
+            labels={{
+              title: t("dailyLimit.title"),
+              description: t("dailyLimit.description"),
+              perDay: t("dailyLimit.perDay"),
+              pastMonth: t("dailyLimit.pastMonth"),
+              futureMonth: t("dailyLimit.futureMonth"),
+              exceeded: t("dailyLimit.exceeded"),
+              noBudget: t("dailyLimit.noBudget"),
+              remainingDays: t("dailyLimit.remainingDays"),
+            }}
+          />
         </section>
       )}
 

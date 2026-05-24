@@ -29,6 +29,16 @@
     "allGood": "All good",
     "statusBreakdown": "{{ok}} ok · {{attention}} attention · {{exceeded}} over"
   },
+  "dailyLimit": {
+    "title": "Daily limit",
+    "description": "You can spend this amount per day on average until the end of the month.",
+    "perDay": "{{value}} per day",
+    "pastMonth": "This month has already ended.",
+    "futureMonth": "This planning starts soon.",
+    "exceeded": "Your budget has been exceeded.",
+    "noBudget": "Set a budget to see your daily limit.",
+    "remainingDays": "{{count}} day(s) remaining"
+  },
   "totalLimit": {
     "title": "Total monthly limit",
     "copyPrev": "Copy previous month",

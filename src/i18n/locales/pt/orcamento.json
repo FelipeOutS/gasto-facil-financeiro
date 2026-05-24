@@ -29,6 +29,16 @@
     "allGood": "Tudo certo",
     "statusBreakdown": "{{ok}} ok · {{attention}} atenção · {{exceeded}} estourada(s)"
   },
+  "dailyLimit": {
+    "title": "Limite diário",
+    "description": "Você pode gastar em média esse valor por dia até o fim do mês.",
+    "perDay": "{{value}} por dia",
+    "pastMonth": "Este mês já foi encerrado.",
+    "futureMonth": "Esse planejamento começa em breve.",
+    "exceeded": "O orçamento já foi ultrapassado.",
+    "noBudget": "Defina um orçamento para ver o limite diário.",
+    "remainingDays": "{{count}} dia(s) restante(s)"
+  },
   "totalLimit": {
     "title": "Limite mensal total",
     "copyPrev": "Copiar mês anterior",
