@@ -28,6 +28,7 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
+import { OfflineHistoryTrigger } from "@/components/offline/OfflineHistoryDialog";
 import { cn } from "@/lib/utils";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
@@ -305,6 +306,7 @@ function AppMaisPage() {
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Link>
         {PERSONAL_ITEMS.map(renderCard)}
+        <OfflineHistoryTrigger userId={user?.id ?? null} />
       </section>
 
       {/* Grupos */}
