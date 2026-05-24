@@ -307,6 +307,7 @@ export async function enableLoginBio(email: string): Promise<void> {
   if (!persistLoginBioSession(data.session)) {
     throw new Error("Não foi possível salvar a sessão para entrada por biometria.");
   }
+  setLoginBioUnlocked(true);
   try {
     window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
     const normalizedEmail = email.trim().toLowerCase();
