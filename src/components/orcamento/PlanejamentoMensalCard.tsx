@@ -1,5 +1,6 @@
 import { Wallet } from "lucide-react";
 import { Money } from "@/components/Money";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 export type PlanejamentoEstado =
@@ -27,14 +28,23 @@ export type PlanejamentoLabels = {
   withFree: string;
   withExcess: string;
   ofIncome: string;
+  includeBills: string;
+  includeBillsDescription: string;
+  billsExcludedNote: string;
+  billsDuplicateHint: string;
 };
 
 type Props = {
   renda: number;
   distribuidoCategorias: number;
+  /** Contas efetivamente consideradas (já zerado se toggle off). */
   distribuidoContas: number;
+  /** Contas reais do mês (independente do toggle), para decidir mostrar toggle/notas. */
+  distribuidoContasReal: number;
   distribuidoReserva: number;
   estado: PlanejamentoEstado;
+  incluirContas: boolean;
+  onIncluirContasChange: (v: boolean) => void;
   labels: PlanejamentoLabels;
 };
 
@@ -42,8 +52,11 @@ export function PlanejamentoMensalCard({
   renda,
   distribuidoCategorias,
   distribuidoContas,
+  distribuidoContasReal,
   distribuidoReserva,
   estado,
+  incluirContas,
+  onIncluirContasChange,
   labels,
 }: Props) {
   const distribuido = distribuidoCategorias + distribuidoContas + distribuidoReserva;
@@ -51,7 +64,6 @@ export function PlanejamentoMensalCard({
   const excesso = distribuido - renda;
   const pct = renda > 0 ? Math.min(100, Math.round((distribuido / renda) * 100)) : 0;
 
-  // segmentos para a barra (base = max(renda, distribuido) para casos de excesso)
   const base = Math.max(renda, distribuido, 1);
   const wCat = (distribuidoCategorias / base) * 100;
   const wBill = (distribuidoContas / base) * 100;
@@ -59,7 +71,8 @@ export function PlanejamentoMensalCard({
   const wLivre = renda > 0 && livre > 0 ? (livre / base) * 100 : 0;
   const wExc = excesso > 0 ? (excesso / base) * 100 : 0;
 
-  const hasBills = distribuidoContas > 1;
+  const hasBillsReal = distribuidoContasReal > 1;
+  const hasCats = distribuidoCategorias > 1;
 
   const tone =
     estado === "excesso"
@@ -91,16 +104,32 @@ export function PlanejamentoMensalCard({
         </div>
       </div>
 
-      {/* Estados sem dados úteis */}
+      {/* Toggle: incluir contas no planejamento */}
+      {hasBillsReal && (
+        <div className="mt-3 flex items-start gap-3 rounded-xl bg-card-elevated p-2.5">
+          <Switch
+            checked={incluirContas}
+            onCheckedChange={onIncluirContasChange}
+            aria-label={labels.includeBills}
+            className="mt-0.5"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium">{labels.includeBills}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {labels.includeBillsDescription}
+            </p>
+          </div>
+        </div>
+      )}
+
       {estado === "sem_renda" ? (
         <p className="mt-4 text-xs text-muted-foreground">{labels.noIncome}</p>
       ) : estado === "sem_limites" ? (
         <p className="mt-4 text-xs text-muted-foreground">
-          {hasBills ? labels.hasBillsNoLimits : labels.noLimits}
+          {incluirContas && hasBillsReal ? labels.hasBillsNoLimits : labels.noLimits}
         </p>
       ) : (
         <>
-          {/* Números principais */}
           <div className="mt-4 grid grid-cols-3 gap-2.5">
             <div className="rounded-xl bg-card-elevated p-2.5">
               <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -140,7 +169,6 @@ export function PlanejamentoMensalCard({
             </div>
           </div>
 
-          {/* Barra segmentada */}
           <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
             <div className="flex h-full w-full">
               {wCat > 1 && (
@@ -181,7 +209,6 @@ export function PlanejamentoMensalCard({
             </div>
           </div>
 
-          {/* Legenda */}
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
             {distribuidoCategorias > 1 && (
               <span className="inline-flex items-center gap-1">
@@ -215,7 +242,6 @@ export function PlanejamentoMensalCard({
             )}
           </div>
 
-          {/* Mensagem narrativa */}
           <p
             className={cn(
               "mt-3 text-xs",
@@ -240,6 +266,18 @@ export function PlanejamentoMensalCard({
               </>
             )}
           </p>
+
+          {/* Notas sobre duplicidade */}
+          {hasBillsReal && !incluirContas && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {labels.billsExcludedNote}
+            </p>
+          )}
+          {hasBillsReal && incluirContas && hasCats && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {labels.billsDuplicateHint}
+            </p>
+          )}
         </>
       )}
     </section>
