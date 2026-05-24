@@ -227,6 +227,26 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
   session: Session | null;
   userId: string | null;
 }> {
+  async function restoreFromSavedToken(): Promise<Session | null> {
+    const persisted = getPersistedLoginBioSession();
+    if (!persisted?.refresh_token) return null;
+    console.log("[AndroidBiometricLogin] tentando restaurar sessão com refresh_token");
+    try {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: persisted.access_token,
+        refresh_token: persisted.refresh_token,
+      });
+      if (!error && data.session) {
+        persistLoginBioSession(data.session);
+        console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
+        return data.session;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
   const { data: current } = await supabase.auth.getSession();
   let session = current.session ?? null;
   console.log(
@@ -236,23 +256,7 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
   );
 
   if (!session) {
-    const persisted = getPersistedLoginBioSession();
-    if (persisted?.refresh_token) {
-      console.log("[AndroidBiometricLogin] tentando restaurar sessão com refresh_token");
-      try {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: persisted.access_token,
-          refresh_token: persisted.refresh_token,
-        });
-        if (!error && data.session) {
-          session = data.session;
-          persistLoginBioSession(data.session);
-          console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
-        }
-      } catch {
-        session = null;
-      }
-    }
+    session = await restoreFromSavedToken();
   }
 
   if (!session) {
@@ -262,8 +266,19 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
 
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData.user) {
-    console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
-    return { session: null, userId: null };
+    session = await restoreFromSavedToken();
+    if (!session) {
+      console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
+      return { session: null, userId: null };
+    }
+    const { data: restoredUserData, error: restoredUserErr } = await supabase.auth.getUser();
+    if (restoredUserErr || !restoredUserData.user) {
+      console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
+      return { session: null, userId: null };
+    }
+    console.log("[AndroidBiometricLogin] getUser confirmado");
+    persistLoginBioSession(session);
+    return { session, userId: restoredUserData.user.id };
   }
   console.log("[AndroidBiometricLogin] getUser confirmado");
   persistLoginBioSession(session);
