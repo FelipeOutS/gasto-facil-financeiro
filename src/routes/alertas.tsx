@@ -462,7 +462,7 @@ function SummaryStat({
   value,
   tone,
 }: {
-  label: React.ReactNode;
+  label: ReactNode;
   value: number;
   tone: "default" | "destructive" | "warning" | "info";
 }) {
