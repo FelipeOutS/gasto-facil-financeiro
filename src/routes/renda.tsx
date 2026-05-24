@@ -177,7 +177,7 @@ function RendaPage() {
   }, [i18n.language]);
   const tipoLabel = (id: TipoReceita) => t(`tipo.${id}`);
   const ready = useBootstrap();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
