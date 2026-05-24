@@ -228,18 +228,28 @@ function OrcamentoPage() {
       0,
     );
 
+    // Contas do mês: soma de contas a pagar com vencimento no mês selecionado
+    const distribuidoContas = contasAPagar
+      .filter((c) => {
+        const parts = c.dataVencimento.split("-");
+        const ano = Number(parts[0]);
+        const mes = Number(parts[1]);
+        return mes === ym.mes && ano === ym.ano;
+      })
+      .reduce((acc, c) => acc + (c.valor || 0), 0);
+
     // Reserva/metas: soma de dinheiro_guardado atualizado no mês selecionado
     const ymPrefix = `${ym.ano}-${String(ym.mes).padStart(2, "0")}`;
     const distribuidoReserva = guardado
       .filter((g) => (g.dataAtualizacao || "").startsWith(ymPrefix))
       .reduce((acc, g) => acc + (g.valor || 0), 0);
 
-    const distribuido = distribuidoCategorias + distribuidoReserva;
+    const distribuido = distribuidoCategorias + distribuidoContas + distribuidoReserva;
 
     let estado: PlanejamentoEstado;
     if (renda <= 0) {
       estado = "sem_renda";
-    } else if (distribuidoCategorias <= 0 && distribuidoReserva <= 0) {
+    } else if (distribuidoCategorias <= 1 && distribuidoContas <= 0 && distribuidoReserva <= 0) {
       estado = "sem_limites";
     } else if (distribuido > renda + 0.5) {
       estado = "excesso";
@@ -249,8 +259,8 @@ function OrcamentoPage() {
       estado = "com_sobra";
     }
 
-    return { renda, distribuidoCategorias, distribuidoReserva, estado };
-  }, [receitas, guardado, comLimite, ym]);
+    return { renda, distribuidoCategorias, distribuidoContas, distribuidoReserva, estado };
+  }, [receitas, contasAPagar, guardado, comLimite, ym]);
 
 
 
