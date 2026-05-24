@@ -25,6 +25,7 @@ import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
 import { CategoryIcon } from "./CategoryIcon";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
+import { requireOnline } from "@/lib/use-online-status";
 
 const EXEMPLOS = [
   "Gastei R$ 26,00 na H Nunes Lanchonete hoje no Mercado Pago",
@@ -81,7 +82,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
     setMensagem(s);
   }
 
-  function salvar() {
+  async function salvar() {
     if (!parsed || parsed.valor <= 0) {
       toast.error(t("whatsapp.errValor"));
       return;
@@ -90,6 +91,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
       requireSubscription(t("whatsapp.errPlano"));
       return;
     }
+    if (!(await requireOnline())) return;
 
     addGasto({
       valor: parsed.valor,

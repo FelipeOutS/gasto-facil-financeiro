@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { requireOnline } from "@/lib/use-online-status";
 import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
 import { useAuth } from "@/lib/auth-context";
@@ -183,6 +184,7 @@ function MeuPlanoPage() {
       toast.error(tp("toasts.loginToSubscribe"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSubmitting(tier);
     try {
       const res = await criarCheckout(tier, { periodicidade, method: metodoPagamento });
@@ -223,6 +225,7 @@ function MeuPlanoPage() {
 
   async function checarPagamento() {
     if (!pixCharge?.paymentId || !user?.id) return;
+    if (!(await requireOnline())) return;
     setVerifying(true);
     try {
       const r = await verificarPagamento(pixCharge.paymentId);
@@ -255,6 +258,7 @@ function MeuPlanoPage() {
       toast.error(tp("toasts.trialUsed"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSubmitting(tier);
     try {
       const { startTrial } = await import("@/lib/use-plan");

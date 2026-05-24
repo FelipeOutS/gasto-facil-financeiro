@@ -54,6 +54,7 @@ import {
   useStore,
   type UpdateReceitaScope,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import {
   formatBRL,
@@ -438,13 +439,14 @@ function RendaPage() {
     setOpen(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     const dt = new Date(data + "T12:00:00");
     const mesNova = dt.getMonth() + 1;
     const anoNova = dt.getFullYear();
@@ -1481,13 +1483,14 @@ function EditReceitaDialog({
     }
   }, [receita]);
 
-  function handleSave() {
+  async function handleSave() {
     if (!receita) return;
     const valor = parseBRLInput(valorStr);
     if (!valor || !descricao.trim()) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     updateReceita(
       receita.id,
       { descricao: descricao.trim(), valor, data, tipo, clienteId },
@@ -1623,8 +1626,9 @@ function DeleteReceitaDialog({
     if (receita) setScope("single");
   }, [receita]);
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!receita) return;
+    if (!(await requireOnline())) return;
     if (receita.recorrente && receita.recorrenciaId && scope !== "single") {
       if (scope === "forward") {
         deleteReceitaRecorrencia(receita.recorrenciaId, receita.mes, receita.ano);

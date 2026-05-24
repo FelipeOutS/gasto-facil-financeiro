@@ -41,6 +41,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import type { Meta } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
@@ -236,7 +237,8 @@ function MetasPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
+                if (!(await requireOnline())) return;
                 if (confirmDelete) {
                   deleteMeta(confirmDelete.id);
                   toast.success(t("delete.toast"));
@@ -585,12 +587,13 @@ function MetaFormDialog({
     setImagemKey(getMetaCoverKey(nome, descricao));
   }, [nome, descricao, imagemManual, open, isCreate, isEdit]);
 
-  function handleCreateOrEdit() {
+  async function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
       toast.error(t("toasts.missing"));
       return;
     }
+    if (!(await requireOnline())) return;
     if (isCreate) {
       addMeta({
         nome: nome.trim(),
@@ -626,7 +629,7 @@ function MetaFormDialog({
     }
   }
 
-  function handleAddValor() {
+  async function handleAddValor() {
     if (!baseMeta) return;
     const trimmed = valorStr.trim();
     if (trimmed === "") {
@@ -638,6 +641,7 @@ function MetaFormDialog({
       toast.error(t("toasts.negative"));
       return;
     }
+    if (!(await requireOnline())) return;
     updateMeta(baseMeta.id, { valorAtual: v });
     if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
       toast.success(t("toasts.passedGoal"));
@@ -647,13 +651,14 @@ function MetaFormDialog({
     onClose();
   }
 
-  function handleRemoverValor() {
+  async function handleRemoverValor() {
     if (!baseMeta) return;
     const v = parseBRLInput(valorStr);
     if (!v) {
       toast.error(t("toasts.informAValue"));
       return;
     }
+    if (!(await requireOnline())) return;
     const novo = Math.max(0, baseMeta.valorAtual - v);
     updateMeta(baseMeta.id, { valorAtual: novo });
     toast.success(t("toasts.valueAdjusted"));

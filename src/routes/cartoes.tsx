@@ -63,6 +63,7 @@ import {
   type NovoCartaoInput,
   type NovoGastoInput,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
@@ -465,7 +466,8 @@ function CartoesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
+                if (!(await requireOnline())) return;
                 if (confirmDelete) {
                   deleteCartao(confirmDelete.id);
                   toast.success(t("remove.success"));
@@ -1261,15 +1263,17 @@ function FaturaSheet({
     }
   }
 
-  function handleAddCompra(data: NovoGastoInput) {
+  async function handleAddCompra(data: NovoGastoInput) {
+    if (!(await requireOnline())) return;
     const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
     addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
     toast.success(t("toast.purchaseAdded"));
     setOpenAdd(false);
   }
 
-  function handleDeleteCompra() {
+  async function handleDeleteCompra() {
     if (!confirmDelete) return;
+    if (!(await requireOnline())) return;
     deleteGasto(confirmDelete.id);
     toast.success(t("toast.purchaseRemoved"));
     setConfirmDelete(null);
@@ -1278,6 +1282,7 @@ function FaturaSheet({
   const lotes = lotesImportacaoFatura(cartao.id, ref.mes, ref.ano);
   async function handleDeleteLote() {
     if (!confirmLote) return;
+    if (!(await requireOnline())) return;
     const n = await deleteGastosDoLote(confirmLote);
     setConfirmLote(null);
     if (n > 0) toast.success(t("toast.batchRemoved", { count: n }));
@@ -1820,12 +1825,13 @@ function CartaoFormDialog({
     diaVenc >= 1 &&
     diaVenc <= 31;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) {
       toast.error(t("toast.checkFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     const payload: NovoCartaoInput = {
       nome: nome.trim(),
       banco: banco.trim(),

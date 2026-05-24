@@ -56,6 +56,7 @@ import {
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { mesAnoToLabel, mesReferenciaOpcoes, ymFromDate, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -521,6 +522,7 @@ function GastosPage() {
   }
   async function executarBulkDelete() {
     if (selected.size === 0) return;
+    if (!(await requireOnline())) return;
     setExcluindoBulk(true);
     try {
       const ids = Array.from(selected);
@@ -1273,7 +1275,8 @@ function GastosPage() {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => {
+                            onClick={async () => {
+                              if (!(await requireOnline())) return;
                               deleteGasto(g.id);
                               toast.success(t("item.deleted"));
                             }}

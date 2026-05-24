@@ -25,6 +25,7 @@ import {
   updateGasto,
   useStore,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/format";
@@ -86,8 +87,9 @@ export function EditGastoDialog({
 
   if (!snapshot) return null;
 
-  function handleSave() {
+  async function handleSave() {
     if (!snapshot) return;
+    if (!(await requireOnline())) return;
     const nome = (descricao || estabelecimento).trim();
     if (!nome) {
       toast.error(t("form.editar.errNome"));

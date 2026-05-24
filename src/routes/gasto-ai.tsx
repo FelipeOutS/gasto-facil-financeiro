@@ -18,6 +18,7 @@ import {
   getChatHistory,
   clearChatHistory,
 } from "@/lib/finance-ai.functions";
+import { requireOnline } from "@/lib/use-online-status";
 
 export const Route = createFileRoute("/gasto-ai")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -87,6 +88,7 @@ function GastoAIPage() {
       toast.error(t("ai.toastTooLong"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSending(true);
     const optimistic: ChatMessage = {
       id: `tmp-${Date.now()}`,
@@ -126,6 +128,7 @@ function GastoAIPage() {
 
   async function handleClear() {
     if (!confirm(t("ai.confirmClear"))) return;
+    if (!(await requireOnline())) return;
     try {
       await clearFn();
       setMessages([]);
