@@ -146,6 +146,33 @@ function SystemHealthPage() {
   const [diagPaymentId, setDiagPaymentId] = useState<string | null>(null);
   const [diagPeriodEnd, setDiagPeriodEnd] = useState<string | null>(null);
   const [diagOpen, setDiagOpen] = useState(false);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [cleanupRunning, setCleanupRunning] = useState(false);
+  const [cleanupLast, setCleanupLast] = useState<LogRetentionCleanupResult | null>(null);
+  const runCleanupFn = useServerFn(runLogRetentionCleanup);
+
+  const runCleanup = useCallback(async () => {
+    setCleanupRunning(true);
+    try {
+      const res = (await runCleanupFn()) as LogRetentionCleanupResult;
+      setCleanupLast(res);
+      const totalDeleted = res.results.reduce((a, r) => a + r.deleted, 0);
+      const anyFail = res.results.some((r) => !r.success);
+      if (anyFail) {
+        toast.warning(`Limpeza parcial: ${totalDeleted} registro(s) apagado(s)`, {
+          description: "Alguma(s) tabela(s) falharam — veja o resumo.",
+        });
+      } else {
+        toast.success(`Limpeza concluída: ${totalDeleted} registro(s) apagado(s)`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error("Falha ao executar limpeza de logs", { description: msg });
+    } finally {
+      setCleanupRunning(false);
+      setCleanupOpen(false);
+    }
+  }, [runCleanupFn]);
 
   const openDiagnose = useCallback((paymentId: string, periodEnd?: string | null) => {
     setDiagPaymentId(paymentId);
