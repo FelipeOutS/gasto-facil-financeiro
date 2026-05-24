@@ -67,7 +67,10 @@ export function isLoginBioBridgeAvailable(): boolean {
 export function isLoginBioEnabled(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_ENABLED_KEY) === "true";
+    return (
+      window.localStorage.getItem(LOGIN_BIO_ENABLED_KEY) === "true" ||
+      window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true"
+    );
   } catch {
     return false;
   }
@@ -76,7 +79,12 @@ export function isLoginBioEnabled(): boolean {
 export function isLoginBioEnabledForEmail(email: string | null | undefined): boolean {
   if (typeof window === "undefined" || !email) return false;
   try {
-    return window.localStorage.getItem(userEnabledKey(email)) === "true";
+    const normalized = email.trim().toLowerCase();
+    return (
+      window.localStorage.getItem(userEnabledKey(normalized)) === "true" ||
+      (window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true" &&
+        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() === normalized)
+    );
   } catch {
     return false;
   }
@@ -127,7 +135,7 @@ export function setLoginBioInProgress(value: boolean): void {
 export function getLoginBioEmail(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY);
+    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ?? window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY);
   } catch {
     return null;
   }
