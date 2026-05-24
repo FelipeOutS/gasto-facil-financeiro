@@ -72,6 +72,7 @@ import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
 import { preloadAllBankLogos } from "@/lib/logos";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
