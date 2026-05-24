@@ -54,6 +54,7 @@ import {
   useStore,
   type UpdateReceitaScope,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import {
   formatBRL,
