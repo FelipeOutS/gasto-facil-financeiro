@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 import { formatBRL, formatDateBR, parseBRLInput, todayISO } from "@/lib/format";
 import {
