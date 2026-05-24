@@ -570,7 +570,7 @@ function Index() {
           const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
           return (
             <div className="flex min-w-0">
-              <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card">
+              <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
