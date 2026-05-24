@@ -43,6 +43,7 @@ import {
   Line,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { EvolucaoOrcamentoCard, type EvolucaoMes } from "@/components/relatorios/EvolucaoOrcamentoCard";
 import { useAuth } from "@/lib/auth-context";
 import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
