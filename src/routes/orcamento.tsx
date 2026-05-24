@@ -19,6 +19,7 @@ import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimit
 import { OrcamentoPrevisaoCard } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import type { PrevisaoTipo } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import { PlanejamentoMensalCard, type PlanejamentoEstado } from "@/components/orcamento/PlanejamentoMensalCard";
+import { SugestaoDistribuicaoRenda } from "@/components/orcamento/SugestaoDistribuicaoRenda";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
