@@ -10,6 +10,7 @@
  */
 
 import type { NovoGastoInput } from "@/lib/store";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 const DB_NAME = "gf_offline";
 const DB_VERSION = 1;
