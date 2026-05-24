@@ -629,7 +629,7 @@ function MetaFormDialog({
     }
   }
 
-  function handleAddValor() {
+  async function handleAddValor() {
     if (!baseMeta) return;
     const trimmed = valorStr.trim();
     if (trimmed === "") {
@@ -641,6 +641,7 @@ function MetaFormDialog({
       toast.error(t("toasts.negative"));
       return;
     }
+    if (!(await requireOnline())) return;
     updateMeta(baseMeta.id, { valorAtual: v });
     if (baseMeta.valorObjetivo > 0 && v > baseMeta.valorObjetivo) {
       toast.success(t("toasts.passedGoal"));
