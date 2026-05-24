@@ -46,7 +46,12 @@ type AndroidBiometricResultDetail = {
 function getBridge(): NonNullable<Window["AndroidBiometric"]> | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  return b && (typeof b.requestAuthentication === "function" || typeof b.authenticate === "function") ? b : null;
+  if (!b) return null;
+  const hasAny =
+    typeof b.requestAuthentication === "function" ||
+    typeof b.authenticate === "function" ||
+    typeof (b as { unlock?: unknown }).unlock === "function";
+  return hasAny ? b : null;
 }
 
 export function isLoginBioBridgeAvailable(): boolean {
@@ -187,20 +192,25 @@ export function clearLoginBio(): void {
  * `AndroidBiometricResult` chegar. A bridge é event-driven e não
  * retorna Promise.
  */
-export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
+export function runLoginBiometric(
+  timeoutMs = 60_000,
+): Promise<AndroidBiometricResultDetail & { method?: string }> {
   return new Promise((resolve) => {
-    const b = getBridge();
-    if (!b || (typeof b.requestAuthentication !== "function" && typeof b.authenticate !== "function")) {
-      resolve({ success: false, error: "Biometria nativa indisponível neste aparelho." });
+    const b = getBridge() as
+      | (NonNullable<Window["AndroidBiometric"]> & { unlock?: (reason?: string) => void })
+      | null;
+    if (!b) {
+      resolve({ success: false, error: "Biometria indisponível neste dispositivo." });
       return;
     }
     let settled = false;
+    let usedMethod = "";
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
       console.log("[LoginBio] AndroidBiometricResult:", detail);
-      finish(detail);
+      finish({ ...detail, method: usedMethod });
     };
-    const finish = (detail: AndroidBiometricResultDetail) => {
+    const finish = (detail: AndroidBiometricResultDetail & { method?: string }) => {
       if (settled) return;
       settled = true;
       window.removeEventListener("AndroidBiometricResult", onResult as EventListener);
@@ -208,17 +218,26 @@ export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricR
       resolve(detail);
     };
     const timer = setTimeout(
-      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }),
+      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente.", method: usedMethod }),
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
     try {
-      if (typeof b.requestAuthentication === "function") b.requestAuthentication("Entrar com biometria");
-      else if (typeof b.authenticate === "function") b.authenticate("Entrar com biometria");
-      else finish({ success: false, error: "Biometria nativa indisponível neste aparelho." });
+      if (typeof b.requestAuthentication === "function") {
+        usedMethod = "requestAuthentication";
+        b.requestAuthentication("Entrar com biometria");
+      } else if (typeof b.authenticate === "function") {
+        usedMethod = "authenticate";
+        b.authenticate("Entrar com biometria");
+      } else if (typeof b.unlock === "function") {
+        usedMethod = "unlock";
+        b.unlock("Entrar com biometria");
+      } else {
+        finish({ success: false, error: "Biometria indisponível neste dispositivo." });
+      }
     } catch (e) {
-      console.log("[LoginBio] erro ao chamar authenticate:", e);
-      finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
+      console.log("[LoginBio] erro ao chamar bridge:", e);
+      finish({ success: false, error: "Falha ao iniciar a biometria nativa.", method: usedMethod });
     }
   });
 }
@@ -298,24 +317,78 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
  * a usar entrada rápida para o e-mail informado.
  */
 export async function enableLoginBio(email: string): Promise<void> {
-  if (!getBridge()) throw new Error("Biometria nativa indisponível neste aparelho.");
-  const r = await runLoginBiometric();
-  if (r.success !== true) {
-    throw new Error(r.error || "Não foi possível ativar a biometria.");
+  console.log("[EnableBiometric] started");
+  const bridge = getBridge() as
+    | (NonNullable<Window["AndroidBiometric"]> & { unlock?: (reason?: string) => void })
+    | null;
+  const bridgeExists = !!bridge;
+  console.log("[EnableBiometric] Android bridge exists:", bridgeExists);
+
+  if (typeof window === "undefined") {
+    throw new Error("Biometria disponível apenas no aplicativo Android.");
   }
-  const { data } = await supabase.auth.getSession();
-  if (!persistLoginBioSession(data.session)) {
-    throw new Error("Não foi possível salvar a sessão para entrada por biometria.");
-  }
-  setLoginBioUnlocked(true);
-  try {
-    window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
-    const normalizedEmail = email.trim().toLowerCase();
-    if (normalizedEmail) {
-      window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, normalizedEmail);
-      window.localStorage.setItem(userEnabledKey(normalizedEmail), "true");
+  if (!bridgeExists) {
+    if (!window.AndroidBiometric) {
+      throw new Error("Biometria disponível apenas no aplicativo Android.");
     }
-  } catch {
-    throw new Error("Falha ao salvar a configuração local.");
+    throw new Error("Biometria indisponível neste dispositivo.");
+  }
+
+  const r = await runLoginBiometric();
+  console.log("[EnableBiometric] method used:", r.method);
+  console.log("[EnableBiometric] biometric success:", r.success);
+
+  if (r.success !== true) {
+    const msg = r.error && r.error.trim().length > 0 ? r.error : "Autenticação biométrica cancelada.";
+    console.log("[EnableBiometric] error:", msg);
+    throw new Error(msg);
+  }
+
+  try {
+    console.log("[EnableBiometric] getSession exists:", typeof supabase.auth.getSession === "function");
+    console.log("[EnableBiometric] refreshSession exists:", typeof supabase.auth.refreshSession === "function");
+
+    let { data: sessionData } = await supabase.auth.getSession();
+    let session = sessionData.session ?? null;
+
+    if (!session) {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      session = refreshed.session ?? null;
+    }
+
+    if (!session || !session.access_token || !session.refresh_token || !session.user?.id || !session.user?.email) {
+      console.log("[EnableBiometric] access token exists:", !!session?.access_token);
+      console.log("[EnableBiometric] refresh token exists:", !!session?.refresh_token);
+      console.log("[EnableBiometric] user id:", session?.user?.id ?? null);
+      const msg = "Sua sessão expirou. Faça login novamente para ativar a biometria.";
+      console.log("[EnableBiometric] error:", msg);
+      throw new Error(msg);
+    }
+
+    console.log("[EnableBiometric] access token exists:", true);
+    console.log("[EnableBiometric] refresh token exists:", true);
+    console.log("[EnableBiometric] user id:", session.user.id);
+
+    const normalizedEmail = (session.user.email || email || "").trim().toLowerCase();
+    if (!persistLoginBioSession(session)) {
+      throw new Error("Não foi possível salvar a sessão para entrada por biometria.");
+    }
+    try {
+      window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
+      if (normalizedEmail) {
+        window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, normalizedEmail);
+        window.localStorage.setItem(userEnabledKey(normalizedEmail), "true");
+      }
+      window.localStorage.setItem("app_android_biometric_user_id", session.user.id);
+    } catch {
+      throw new Error("Falha ao salvar a configuração local.");
+    }
+    setLoginBioUnlocked(true);
+    console.log("[EnableBiometric] saved biometric flags");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Falha ao ativar biometria.";
+    console.log("[EnableBiometric] error:", msg);
+    throw e instanceof Error ? e : new Error(msg);
   }
 }
+
