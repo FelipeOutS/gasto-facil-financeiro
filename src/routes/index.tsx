@@ -620,7 +620,7 @@ function Index() {
           <div className="flex min-w-0">
             <Link
               to="/metas"
-              className="flex h-full w-full items-center gap-3 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+              className="flex h-full w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
                 <Target className="h-4 w-4" />
