@@ -59,16 +59,36 @@ function Manual() {
         </div>
       </header>
 
+      <OfflineSyncStatus className="mt-3" />
+
       <div className="mt-5">
         <GastoForm
           onSubmit={async (data) => {
-            if (!(await requireOnline())) return;
-            const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
-            const save = () => {
-              if (!canWrite) {
-                requireSubscription(t("requirePlan"));
+            if (!canWrite) {
+              requireSubscription(t("requirePlan"));
+              return;
+            }
+            // Offline: salva na fila local e sincroniza depois.
+            if (!isOnline()) {
+              if (!userId) {
+                toast.error("Faça login para salvar gastos offline.");
                 return;
               }
+              try {
+                await enqueueExpense(userId, data);
+                toast.success(
+                  "Gasto salvo offline. Ele será sincronizado quando a internet voltar.",
+                );
+                navigate({ to: "/" });
+              } catch (err) {
+                console.error("[offline] enqueue failed", err);
+                toast.error("Não foi possível salvar offline. Tente novamente.");
+              }
+              return;
+            }
+
+            const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
+            const save = () => {
               addGasto(data);
               toast.success(t("manual.toastSaved"));
               navigate({ to: "/" });
@@ -81,6 +101,7 @@ function Manual() {
           }}
         />
       </div>
+
 
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>
