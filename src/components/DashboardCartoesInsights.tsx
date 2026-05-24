@@ -53,6 +53,7 @@ type Props = {
   maiorCategoria?: { nome: string; valor: number; pct: number } | null;
   /** Abre o detalhe da fatura no Drawer existente em /cartoes. */
   onAbrirFatura?: (cartaoId: string, mes: number, ano: number) => void;
+  className?: string;
 };
 
 const STATUS_TONE: Record<StatusFatura, string> = {
