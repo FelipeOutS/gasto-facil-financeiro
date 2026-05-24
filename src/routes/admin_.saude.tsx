@@ -607,6 +607,23 @@ function SystemHealthPage() {
                 { label: "Status", render: (r) => r.status },
                 { label: "Raw", render: (r) => r.raw_status ?? "—" },
                 { label: "Usuário", render: (r) => r.user_id ? r.user_id.slice(0, 8) + "…" : "—" },
+                {
+                  label: "Ação",
+                  render: (r) =>
+                    r.external_payment_id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2"
+                        onClick={() => openDiagnose(r.external_payment_id)}
+                      >
+                        <Stethoscope className="mr-1 h-3 w-3" />
+                        Diagnosticar
+                      </Button>
+                    ) : (
+                      "—"
+                    ),
+                },
               ]}
             />
 
