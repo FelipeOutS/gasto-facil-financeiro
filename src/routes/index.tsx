@@ -1037,18 +1037,18 @@ function QuickActionsBar() {
   return (
     <nav
       aria-label={t("quickActions.title")}
-      className="mt-3 grid grid-cols-4 gap-2 sm:gap-2.5"
+      className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5"
     >
       {items.map((it) => (
         <Link
           key={it.to}
           to={it.to}
-          className="card-press group flex min-h-[60px] items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated sm:px-3"
+          className="card-press hover-lift group flex min-h-[56px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
         >
           <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}>
             {it.icon}
           </span>
-          <span className="hidden text-[12px] font-semibold leading-tight text-foreground sm:inline">
+          <span className="truncate text-[12px] font-semibold leading-tight text-foreground">
             {it.label}
           </span>
         </Link>
