@@ -54,6 +54,23 @@
     "gapPositive": "Folga prevista: {{value}}",
     "gapNegative": "Excesso previsto: {{value}}"
   },
+  "planning": {
+    "title": "Planejamento mensal",
+    "description": "Veja se sua renda do mês já tem destino definido.",
+    "income": "Renda",
+    "distributed": "Distribuído",
+    "unassigned": "Sem destino",
+    "excess": "Excesso",
+    "categories": "Categorias",
+    "reserveGoals": "Reserva e metas",
+    "free": "Livre",
+    "ofIncome": "da renda",
+    "noIncome": "Cadastre uma renda no mês para montar seu planejamento.",
+    "noLimits": "Defina limites por categoria para distribuir sua renda.",
+    "allAssigned": "Você distribuiu toda sua renda.",
+    "withFree": "Você ainda tem",
+    "withExcess": "Seu planejamento passou da renda em"
+  },
   "totalLimit": {
     "title": "Limite mensal total",
     "copyPrev": "Copiar mês anterior",
