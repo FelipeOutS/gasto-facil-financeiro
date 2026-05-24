@@ -571,7 +571,7 @@ function RelatoriosPage() {
 
       {/* ===== Comparativo ===== */}
       <SectionLabel>{t("sections.comparativo")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <ComparativoCard
           label={t("kpi.receitas")}
           atual={comparativo.receitas.atual}
