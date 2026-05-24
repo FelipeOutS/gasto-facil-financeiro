@@ -241,6 +241,14 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
         console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
         return data.session;
       }
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession({
+        refresh_token: persisted.refresh_token,
+      });
+      if (!refreshError && refreshed.session) {
+        persistLoginBioSession(refreshed.session);
+        console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
+        return refreshed.session;
+      }
     } catch {
       /* ignore */
     }
