@@ -895,7 +895,7 @@ function AddAtivoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar.");
+      toastFromError(e, "Não foi possível salvar.");
     } finally {
       setSaving(false);
     }
