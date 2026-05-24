@@ -74,7 +74,11 @@ import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { PublicLanding } from "@/components/landing/PublicLanding";
 import { BrandLoader } from "@/components/BrandLoader";
-import { isLoginBioUnlockRequired } from "@/lib/biometric-login";
+import {
+  isLoginBioBridgeAvailable,
+  isLoginBioEnabled,
+  isLoginBioUnlockRequired,
+} from "@/lib/biometric-login";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -100,15 +104,20 @@ function IndexGate() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const needsBiometricUnlock = !!session && isLoginBioUnlockRequired();
+  const shouldShowBiometricLogin = !session && isLoginBioBridgeAvailable() && isLoginBioEnabled();
 
   useEffect(() => {
     if (!loading && needsBiometricUnlock) {
       void navigate({ to: "/login", replace: true });
     }
-  }, [loading, needsBiometricUnlock, navigate]);
+    if (!loading && shouldShowBiometricLogin) {
+      void navigate({ to: "/login", replace: true });
+    }
+  }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
   if (needsBiometricUnlock) return <BrandLoader message="Validando biometria…" />;
+  if (shouldShowBiometricLogin) return <BrandLoader message="Abrindo entrada por biometria…" />;
   if (!session) return <PublicLanding />;
   return <Index />;
 }
