@@ -56,7 +56,7 @@
   },
   "planning": {
     "title": "Planejamento mensal",
-    "description": "Veja se sua renda do mês já tem destino definido.",
+    "description": "Sua renda já está distribuída entre categorias, contas e reserva.",
     "income": "Renda",
     "distributed": "Distribuído",
     "unassigned": "Sem destino",

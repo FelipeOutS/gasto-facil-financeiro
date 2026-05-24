@@ -56,7 +56,7 @@
   },
   "planning": {
     "title": "Monthly planning",
-    "description": "See whether your monthly income already has a destination.",
+    "description": "Your income is already allocated across categories, bills, and reserve.",
     "income": "Income",
     "distributed": "Allocated",
     "unassigned": "Unassigned",
