@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { toastFromError, friendlyError } from "@/lib/premium-error";
 import {
   Building2,
   Search,
