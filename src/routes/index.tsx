@@ -643,92 +643,97 @@ function Index() {
       </section>
 
       {/* ===== 7. Insights secundários: Categorias + Cartões ===== */}
-      {porCategoria.length > 0 && (
+      {(porCategoria.length > 0 || doMes.length > 0) && (
         <>
           <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-          <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                <h2 className="text-sm font-semibold">{t("porCategoria.title")}</h2>
-              </div>
-              <Link
-                to="/resumo"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t("porCategoria.verTudo")}
-              </Link>
-            </div>
-            <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-[140px_1fr]">
-              <div className="relative h-[140px] w-[140px]">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={porCategoria}
-                      dataKey="valor"
-                      nameKey="nome"
-                      innerRadius={44}
-                      outerRadius={66}
-                      paddingAngle={2}
-                      stroke="none"
-                    >
-                      {porCategoria.map((d) => (
-                        <Cell key={d.id} fill={d.color} />
-                      ))}
-                    </Pie>
-                    <RTooltip
-                      contentStyle={{
-                        background: "var(--card-elevated)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 12,
-                        color: "var(--foreground)",
-                        fontSize: 12,
-                      }}
-                      formatter={(v: number, n) => [formatBRL(v), n]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                  <div className="text-center">
-                    <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                      Total
-                    </p>
-                    <p className="num text-sm font-semibold">
-                      {formatBRLCompact(total)}
-                    </p>
+          <section className="grid min-w-0 grid-cols-1 gap-3.5 lg:grid-cols-12 lg:gap-4 lg:items-start">
+            {porCategoria.length > 0 && (
+              <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <h2 className="text-sm font-semibold">{t("porCategoria.title")}</h2>
                   </div>
+                  <Link
+                    to="/resumo"
+                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {t("porCategoria.verTudo")}
+                  </Link>
                 </div>
-              </div>
-              <ul className="min-w-0 space-y-2">
-                {porCategoria.slice(0, 5).map((c) => (
-                  <li key={c.id} className="flex items-center gap-2">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ background: c.color }}
-                    />
-                    <span className="flex-1 truncate text-[13px]">{c.nome}</span>
-                    <span className="num text-[11px] text-muted-foreground">
-                      {c.pct.toFixed(0)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                <div className="mt-3 grid min-w-0 grid-cols-[120px_1fr] items-center gap-3 sm:grid-cols-[130px_1fr]">
+                  <div className="relative h-[120px] w-[120px] sm:h-[130px] sm:w-[130px]">
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={porCategoria}
+                          dataKey="valor"
+                          nameKey="nome"
+                          innerRadius={38}
+                          outerRadius={58}
+                          paddingAngle={2}
+                          stroke="none"
+                        >
+                          {porCategoria.map((d) => (
+                            <Cell key={d.id} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <RTooltip
+                          contentStyle={{
+                            background: "var(--card-elevated)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 12,
+                            color: "var(--foreground)",
+                            fontSize: 12,
+                          }}
+                          formatter={(v: number, n) => [formatBRL(v), n]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                      <div className="text-center">
+                        <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                          Total
+                        </p>
+                        <p className="num text-sm font-semibold">
+                          {formatBRLCompact(total)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="min-w-0 space-y-1.5">
+                    {porCategoria.slice(0, 5).map((c) => (
+                      <li key={c.id} className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: c.color }}
+                        />
+                        <span className="flex-1 truncate text-[12.5px]">{c.nome}</span>
+                        <span className="num text-[11px] text-muted-foreground">
+                          {c.pct.toFixed(0)}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+
+            <div className={cn("min-w-0", porCategoria.length > 0 ? "lg:col-span-7" : "lg:col-span-12") }>
+              <DashboardCartoesInsights
+                mes={ym.mes}
+                ano={ym.ano}
+                gastosMes={doMes}
+                totalMes={total}
+                totalMesAnterior={totalMesAnterior}
+                maiorCategoria={maior ?? null}
+                onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+              />
             </div>
           </section>
         </>
       )}
 
-      <div className="mt-6 lg:mt-4">
-        <DashboardCartoesInsights
-          mes={ym.mes}
-          ano={ym.ano}
-          gastosMes={doMes}
-          totalMes={total}
-          totalMesAnterior={totalMesAnterior}
-          maiorCategoria={maior ?? null}
-          onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
-        />
-      </div>
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
