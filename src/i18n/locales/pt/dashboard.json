@@ -553,5 +553,18 @@
     "retry": "Tentar novamente",
     "goLogin": "Ir para login",
     "loading": "Só um instante..."
+  },
+  "hero": {
+    "greetingMorning": "Bom dia",
+    "greetingAfternoon": "Boa tarde",
+    "greetingEvening": "Boa noite",
+    "subtitle": "Aqui está o resumo da sua vida financeira hoje."
+  },
+  "quickActions": {
+    "title": "Ações rápidas",
+    "novoGasto": "Novo gasto",
+    "novaReceita": "Nova receita",
+    "importar": "Importar",
+    "ia": "IA financeira"
   }
 }
