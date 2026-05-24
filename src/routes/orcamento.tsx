@@ -553,8 +553,11 @@ function OrcamentoPage() {
           renda={planejamentoInfo.renda}
           distribuidoCategorias={planejamentoInfo.distribuidoCategorias}
           distribuidoContas={planejamentoInfo.distribuidoContas}
+          distribuidoContasReal={planejamentoInfo.distribuidoContasReal}
           distribuidoReserva={planejamentoInfo.distribuidoReserva}
           estado={planejamentoInfo.estado}
+          incluirContas={incluirContas}
+          onIncluirContasChange={setIncluirContas}
           labels={{
             title: t("planning.title"),
             description: t("planning.description"),
@@ -573,8 +576,13 @@ function OrcamentoPage() {
             withFree: t("planning.withFree"),
             withExcess: t("planning.withExcess"),
             ofIncome: t("planning.ofIncome"),
+            includeBills: t("planning.includeBills"),
+            includeBillsDescription: t("planning.includeBillsDescription"),
+            billsExcludedNote: t("planning.billsExcludedNote"),
+            billsDuplicateHint: t("planning.billsDuplicateHint"),
           }}
         />
+
       </section>
 
 
