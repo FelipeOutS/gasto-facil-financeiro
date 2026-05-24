@@ -358,6 +358,28 @@ function OrcamentoPage() {
         </section>
       )}
 
+      {/* Limite diário inteligente */}
+      {(temOrcamento || (limiteTotal ?? 0) > 0) && (
+        <section className="mt-4">
+          <OrcamentoLimiteDiarioCard
+            tipo={limiteDiarioInfo.tipo}
+            valor={limiteDiarioInfo.valor}
+            status={limiteDiarioInfo.status}
+            diasRestantes={limiteDiarioInfo.diasRestantes}
+            labels={{
+              title: t("dailyLimit.title"),
+              description: t("dailyLimit.description"),
+              perDay: t("dailyLimit.perDay"),
+              pastMonth: t("dailyLimit.pastMonth"),
+              futureMonth: t("dailyLimit.futureMonth"),
+              exceeded: t("dailyLimit.exceeded"),
+              noBudget: t("dailyLimit.noBudget"),
+              remainingDays: t("dailyLimit.remainingDays"),
+            }}
+          />
+        </section>
+      )}
+
       {/* Limite total + ações rápidas (só se já há algo configurado) */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
         <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
