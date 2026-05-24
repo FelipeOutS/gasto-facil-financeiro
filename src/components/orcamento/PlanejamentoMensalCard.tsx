@@ -283,6 +283,8 @@ export function PlanejamentoMensalCard({
               {labels.billsDuplicateHint}
             </p>
           )}
+
+          {suggestionSlot}
         </>
       )}
     </section>
