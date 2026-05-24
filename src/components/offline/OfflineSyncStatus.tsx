@@ -17,7 +17,9 @@ import {
   type OfflineExpense,
 } from "@/lib/offline/offline-expense-queue";
 import { formatBRL } from "@/lib/format";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditOfflineExpenseDialog } from "./EditOfflineExpenseDialog";
+import { OfflineSyncHistory } from "./OfflineSyncHistory";
 
 export function OfflineSyncStatus({ className }: { className?: string }) {
   const { user } = useAuth();
