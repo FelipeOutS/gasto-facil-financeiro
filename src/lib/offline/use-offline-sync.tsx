@@ -17,6 +17,7 @@ import {
 } from "./offline-expense-queue";
 import { addGastoAwait } from "@/lib/store";
 import { normalizeOfflineError } from "./offline-error-messages";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 let syncing = false;
 
