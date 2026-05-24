@@ -1031,6 +1031,10 @@ export const clearChatHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const access = await ensureFeatureAccess(userId);
+    if (!access.ok) {
+      throw new Response(access.reason, { status: 403 });
+    }
     const { error } = await supabase.from("ai_chat_messages").delete().eq("user_id", userId);
     if (error) {
       console.error("[finance-ai-chat] clearChatHistory", error);
