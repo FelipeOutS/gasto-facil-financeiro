@@ -217,6 +217,40 @@ function RelatoriosPage() {
     });
   }, [ym, periodo, customRange, gastos, receitas, contas, movMetas, categorias, guardado]);
 
+  // Evolução do orçamento — últimos 6 meses (planejado x realizado)
+  const evolucaoOrcamento = useMemo<EvolucaoMes[]>(() => {
+    const stack: Array<{ mes: number; ano: number }> = [];
+    let m = ym.mes, a = ym.ano;
+    for (let i = 0; i < 6; i++) {
+      stack.unshift({ mes: m, ano: a });
+      const p = mesAnterior(m, a);
+      m = p.mes;
+      a = p.ano;
+    }
+    return stack.map((s) => {
+      const linhasMes = buildLinhasOrcamento(
+        categorias,
+        gastos.filter((g) => g.confirmado !== false),
+        s.mes,
+        s.ano,
+        (catId) => getLimite(catId, s.mes, s.ano),
+        mesEfetivoGasto,
+      );
+      const res = resumirOrcamento(linhasMes);
+      const label =
+        new Date(s.ano, s.mes - 1, 1)
+          .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
+          .replace(".", "");
+      return {
+        label,
+        mes: s.mes,
+        ano: s.ano,
+        planejado: res.totalPlanejado,
+        realizado: res.totalRealizado,
+      };
+    });
+  }, [ym, categorias, gastos]);
+
   // Totais agregados do período (multi-mês)
   const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
   const totaisPeriodo = useMemo(() => {
