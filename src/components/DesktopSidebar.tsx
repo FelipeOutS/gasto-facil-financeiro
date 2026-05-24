@@ -331,7 +331,7 @@ export function DesktopSidebar() {
       <div
         className={cn(
           "mt-2 mb-2 flex items-center",
-          collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3",
+          collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3 justify-center",
         )}
       >
         <Tooltip>
