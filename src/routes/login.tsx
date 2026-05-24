@@ -85,18 +85,15 @@ function LoginForm() {
   }, []);
 
   function redirectToProtected() {
-    let target = "/";
     try {
-      const saved = window.sessionStorage.getItem("gi:auth-redirect:after-login");
-      if (saved && saved !== "/login") target = saved;
       window.sessionStorage.removeItem("gi:auth-redirect:after-login");
     } catch {
       /* ignore */
     }
-    console.log("[AndroidBiometricLogin] rota destino:", target);
+    console.log("[AndroidBiometricLogin] rota destino:", "/");
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
-    void navigate({ to: target, replace: true });
+    void navigate({ to: "/", replace: true });
   }
 
   async function handleBiometric() {
