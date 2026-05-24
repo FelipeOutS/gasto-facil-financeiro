@@ -526,6 +526,7 @@ function OrcamentoPage() {
         <PlanejamentoMensalCard
           renda={planejamentoInfo.renda}
           distribuidoCategorias={planejamentoInfo.distribuidoCategorias}
+          distribuidoContas={planejamentoInfo.distribuidoContas}
           distribuidoReserva={planejamentoInfo.distribuidoReserva}
           estado={planejamentoInfo.estado}
           labels={{
@@ -536,10 +537,12 @@ function OrcamentoPage() {
             unassigned: t("planning.unassigned"),
             excess: t("planning.excess"),
             categories: t("planning.categories"),
+            bills: t("planning.bills"),
             reserveGoals: t("planning.reserveGoals"),
             free: t("planning.free"),
             noIncome: t("planning.noIncome"),
             noLimits: t("planning.noLimits"),
+            hasBillsNoLimits: t("planning.hasBillsNoLimits"),
             allAssigned: t("planning.allAssigned"),
             withFree: t("planning.withFree"),
             withExcess: t("planning.withExcess"),
