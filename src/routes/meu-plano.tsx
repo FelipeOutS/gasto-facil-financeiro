@@ -54,15 +54,13 @@ export const Route = createFileRoute("/meu-plano")({
   component: MeuPlanoPage,
 });
 
-const STATUS_TONE: Record<string, string> = {
-  ativo: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
-  teste: "border-primary/30 bg-primary/10 text-primary",
-  aguardando_pagamento:
-    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  expirado: "border-destructive/30 bg-destructive/10 text-destructive",
-  cancelado: "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
-  sem_assinatura:
-    "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
+const STATUS_BADGE_TONE: Record<string, StatusTone> = {
+  ativo: "success",
+  teste: "info",
+  aguardando_pagamento: "warning",
+  expirado: "destructive",
+  cancelado: "muted",
+  sem_assinatura: "muted",
 };
 
 function MeuPlanoPage() {
