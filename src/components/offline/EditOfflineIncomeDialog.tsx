@@ -93,6 +93,14 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
         tipo,
         status: "pending",
         error_message: undefined,
+        technical_error: undefined,
+      });
+      void recordHistoryEvent({
+        user_id: item.user_id,
+        type: "income",
+        action: "edited",
+        title: desc,
+        amount: valor,
       });
       toast.success("Pendência atualizada.");
       handleClose(false);
