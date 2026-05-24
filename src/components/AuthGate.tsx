@@ -82,7 +82,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading || !requiresBioUnlock) return;
-    console.log("[BioLogin] auth gate blocked reason:", "Biometric unlock required before protected content");
+    console.log("[AndroidBiometricLogin] AuthGate aguardando desbloqueio biométrico antes da rota protegida");
     void navigate({ to: "/login", replace: true });
   }, [loading, requiresBioUnlock, navigate]);
 
@@ -109,11 +109,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading && !session && !redirecting) {
       if (isLoginBioInProgress()) {
-        console.log("[BioLogin] auth gate blocked reason:", "Biometric auth in progress");
+        console.log("[AndroidBiometricLogin] AuthGate aguardando restauração da sessão biométrica");
         return;
       }
       if (isLoginBioBridgeAvailable() && isLoginBioEnabled()) {
-        console.log("[BioLogin] auth gate blocked reason:", "Biometric login enabled; allowing login screen first");
+        console.log("[AndroidBiometricLogin] AuthGate liberando tela de biometria");
       }
       setRedirecting(true);
       try {
