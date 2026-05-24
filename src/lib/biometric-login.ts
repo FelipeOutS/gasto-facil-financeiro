@@ -84,6 +84,10 @@ export function isLoginBioInProgress(): boolean {
   }
 }
 
+export function isLoginBioUnlockRequired(): boolean {
+  return isLoginBioBridgeAvailable() && isLoginBioEnabled() && !isLoginBioUnlocked() && !isLoginBioInProgress();
+}
+
 export function setLoginBioInProgress(value: boolean): void {
   if (typeof window === "undefined") return;
   try {
