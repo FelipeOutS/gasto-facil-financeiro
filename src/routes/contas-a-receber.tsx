@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import {
   ArrowLeft,
   Plus,
