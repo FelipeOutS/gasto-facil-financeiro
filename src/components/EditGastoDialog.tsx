@@ -25,6 +25,7 @@ import {
   updateGasto,
   useStore,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/format";
