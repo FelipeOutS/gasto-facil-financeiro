@@ -163,6 +163,14 @@ export async function countPending(userId: string): Promise<number> {
   return all.filter((e) => e.status !== "synced").length;
 }
 
+/** Remove sem registrar evento no histórico (uso interno do sync). */
+export async function deleteExpenseSilent(localId: string): Promise<void> {
+  await tx("readwrite", (s) => {
+    s.delete(localId);
+  });
+  emit();
+}
+
 export async function removeExpense(localId: string): Promise<void> {
   let snapshot: OfflineExpense | undefined;
   await tx("readwrite", (s) => {
