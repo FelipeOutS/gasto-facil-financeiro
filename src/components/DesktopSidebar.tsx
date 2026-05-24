@@ -330,7 +330,7 @@ export function DesktopSidebar() {
       {/* System controls: theme + collapse */}
       <div
         className={cn(
-          "flex items-center",
+          "mt-2 mb-2 flex items-center",
           collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3",
         )}
       >
