@@ -256,7 +256,7 @@ export function DashboardCartoesInsights({
     slot === "insights"
       ? "flex flex-col gap-3.5 sm:gap-4"
       : slot === "lists"
-        ? "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:gap-4"
+        ? "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:gap-4 [&>*:only-child]:lg:col-span-2"
         : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4";
 
   return (
