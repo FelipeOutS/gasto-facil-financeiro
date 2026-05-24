@@ -63,6 +63,10 @@ function LoginForm() {
   const [askEnableBio, setAskEnableBio] = useState(false);
   const [enablingBio, setEnablingBio] = useState(false);
 
+  function finishBioProgressSoon() {
+    window.setTimeout(() => setLoginBioInProgress(false), 1500);
+  }
+
   useEffect(() => {
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
@@ -160,6 +164,7 @@ function LoginForm() {
           /* ignore */
         }
         toast.success(t("login.welcomeBack"));
+        finishBioProgressSoon();
         redirectToProtected();
         return;
       }
@@ -179,7 +184,7 @@ function LoginForm() {
       setBioMode(false);
     } finally {
       setBioRunning(false);
-      setLoginBioInProgress(false);
+      if (!hasSupabaseSession) setLoginBioInProgress(false);
     }
   }
 
