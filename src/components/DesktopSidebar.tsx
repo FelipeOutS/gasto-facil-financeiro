@@ -253,6 +253,10 @@ export function DesktopSidebar() {
         </div>
       </nav>
 
+      <div className="mx-3 mt-2">
+        <ThemeToggle />
+      </div>
+
       <Link
         to="/conta"
         className="mx-3 mb-2 mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-3 py-2 text-sm transition-colors hover:bg-accent/40"
