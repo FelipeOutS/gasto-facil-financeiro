@@ -352,39 +352,62 @@ function OrcamentoPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-start gap-3 pt-2">
-        <Link
-          to="/"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
-          aria-label={t("back")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            {vocab.orcamentoTitle}
-          </p>
-          <h1 className="mt-0.5 text-2xl font-bold tracking-tight lg:text-[26px]">
-            {t("pageTitle")}
-          </h1>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            {t("pageSubtitle")}
-          </p>
+      <header className="pt-2">
+        <div className="flex items-start gap-3">
+          <Link
+            to="/"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
+            aria-label={t("back")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+              {vocab.orcamentoTitle}
+            </p>
+            <h1 className="mt-0.5 text-2xl font-bold tracking-tight lg:text-[26px]">
+              {t("pageTitle")}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              {t("pageSubtitle")}
+            </p>
+          </div>
+          {/* Seletor de mês — desktop: ao lado do título */}
+          <div className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1 sm:flex">
+            <button
+              onClick={() => changeMonth(-1)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t("prevMonth")}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="min-w-[7rem] px-2 text-center text-xs font-semibold capitalize sm:text-sm">
+              {formatMonthYear(ym.ano, ym.mes)}
+            </span>
+            <button
+              onClick={() => changeMonth(1)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t("nextMonth")}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1">
+        {/* Seletor de mês — mobile: linha própria, largura total */}
+        <div className="mt-3 flex items-center justify-between rounded-full border border-border bg-card p-1 sm:hidden">
           <button
             onClick={() => changeMonth(-1)}
-            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="min-w-[7rem] px-2 text-center text-xs font-semibold capitalize sm:text-sm">
+          <span className="flex-1 truncate px-2 text-center text-sm font-semibold capitalize">
             {formatMonthYear(ym.ano, ym.mes)}
           </span>
           <button
             onClick={() => changeMonth(1)}
-            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
