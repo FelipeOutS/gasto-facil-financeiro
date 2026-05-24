@@ -6,17 +6,32 @@
 // aparelho pode usar a biometria para autorizar o uso da sessão Supabase
 // já persistida (refresh token gerenciado pelo próprio SDK).
 //
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+
 // Chaves locais/sessão:
 //  - app_android_biometric_login_enabled = "true"
 //  - app_android_biometric_user_email    = "<email>"
 //  - app_android_biometric_user:<email>  = "true"
+//  - app_android_biometric_session       = tokens da sessão atual
 //  - gi:biometric-unlocked               = "true" (sessionStorage)
 //  - gi:biometric-auth-in-progress       = "true" (sessionStorage)
 
 export const LOGIN_BIO_ENABLED_KEY = "app_android_biometric_login_enabled";
 export const LOGIN_BIO_EMAIL_KEY = "app_android_biometric_user_email";
+export const LOGIN_BIO_SESSION_KEY = "app_android_biometric_session";
 export const LOGIN_BIO_UNLOCKED_KEY = "gi:biometric-unlocked";
 export const LOGIN_BIO_IN_PROGRESS_KEY = "gi:biometric-auth-in-progress";
+
+type PersistedLoginBioSession = {
+  v: 1;
+  access_token: string;
+  refresh_token: string;
+  expires_at?: number;
+  user_id?: string;
+  email?: string;
+  saved_at: number;
+};
 
 function userEnabledKey(email: string) {
   return `app_android_biometric_user:${email.trim().toLowerCase()}`;
@@ -107,12 +122,59 @@ export function getLoginBioEmail(): string | null {
   }
 }
 
+export function persistLoginBioSession(session: Session | null | undefined): boolean {
+  if (typeof window === "undefined" || !session?.access_token || !session.refresh_token) return false;
+  try {
+    const email = session.user?.email?.trim().toLowerCase() ?? "";
+    const payload: PersistedLoginBioSession = {
+      v: 1,
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      expires_at: session.expires_at,
+      user_id: session.user?.id,
+      email,
+      saved_at: Date.now(),
+    };
+    window.localStorage.setItem(LOGIN_BIO_SESSION_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
+    if (email) {
+      window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, email);
+      window.localStorage.setItem(userEnabledKey(email), "true");
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getPersistedLoginBioSession(): PersistedLoginBioSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LOGIN_BIO_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PersistedLoginBioSession>;
+    if (parsed.v !== 1 || !parsed.access_token || !parsed.refresh_token) return null;
+    return parsed as PersistedLoginBioSession;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPersistedLoginBioSession(): void {
+  try {
+    window.localStorage.removeItem(LOGIN_BIO_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clearLoginBio(): void {
   try {
     const email = window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY);
     if (email) window.localStorage.removeItem(userEnabledKey(email));
     window.localStorage.removeItem(LOGIN_BIO_ENABLED_KEY);
     window.localStorage.removeItem(LOGIN_BIO_EMAIL_KEY);
+    clearPersistedLoginBioSession();
     setLoginBioUnlocked(false);
     setLoginBioInProgress(false);
   } catch {
