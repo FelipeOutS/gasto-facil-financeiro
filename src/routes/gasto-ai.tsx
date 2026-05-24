@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { Sparkles, Send, Trash2, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MobileShell } from "@/components/MobileShell";
