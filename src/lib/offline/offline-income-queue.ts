@@ -122,6 +122,13 @@ export async function enqueueIncome(
     s.add(item);
   });
   emit();
+  void recordHistoryEvent({
+    user_id: userId,
+    type: "income",
+    action: "created_offline",
+    title: item.descricao,
+    amount: item.valor,
+  });
   return item;
 }
 
