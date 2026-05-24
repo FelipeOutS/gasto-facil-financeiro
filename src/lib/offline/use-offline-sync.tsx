@@ -11,12 +11,13 @@ import {
   type OfflineExpense,
   claimForSync,
   listExpenses,
-  removeExpense,
+  deleteExpenseSilent,
   subscribe,
   updateExpense,
 } from "./offline-expense-queue";
 import { addGastoAwait } from "@/lib/store";
 import { normalizeOfflineError } from "./offline-error-messages";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 let syncing = false;
 
@@ -38,8 +39,15 @@ export async function syncAllForUser(userId: string): Promise<{
         const res = await addGastoAwait(item.input, userId, item.local_id);
         if (res.ok) {
           // Remove tanto em sucesso quanto em duplicate (idempotente).
-          await removeExpense(item.local_id);
+          await deleteExpenseSilent(item.local_id);
           synced += 1;
+          void recordHistoryEvent({
+            user_id: userId,
+            type: "expense",
+            action: "synced",
+            title: item.descricao,
+            amount: item.valor,
+          });
         } else {
           const norm = normalizeOfflineError(res.error ?? "Falha ao sincronizar");
           await updateExpense(item.local_id, {
@@ -49,6 +57,15 @@ export async function syncAllForUser(userId: string): Promise<{
             technical_error: norm.technical,
           });
           failed += 1;
+          void recordHistoryEvent({
+            user_id: userId,
+            type: "expense",
+            action: "failed",
+            title: item.descricao,
+            amount: item.valor,
+            error_message: norm.friendly,
+            technical_error: norm.technical,
+          });
         }
       } catch (err) {
         const norm = normalizeOfflineError(err);
@@ -59,6 +76,15 @@ export async function syncAllForUser(userId: string): Promise<{
           technical_error: norm.technical,
         });
         failed += 1;
+        void recordHistoryEvent({
+          user_id: userId,
+          type: "expense",
+          action: "failed",
+          title: item.descricao,
+          amount: item.valor,
+          error_message: norm.friendly,
+          technical_error: norm.technical,
+        });
       }
     }
   } finally {

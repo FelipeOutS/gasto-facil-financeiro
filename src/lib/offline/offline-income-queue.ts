@@ -10,6 +10,7 @@
  */
 
 import type { NovaReceitaInput } from "@/lib/store";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 const DB_NAME = "gf_offline_income";
 const DB_VERSION = 1;
@@ -121,6 +122,13 @@ export async function enqueueIncome(
     s.add(item);
   });
   emit();
+  void recordHistoryEvent({
+    user_id: userId,
+    type: "income",
+    action: "created_offline",
+    title: item.descricao,
+    amount: item.valor,
+  });
   return item;
 }
 
@@ -147,11 +155,37 @@ export async function listIncomes(userId: string): Promise<OfflineIncome[]> {
   });
 }
 
-export async function removeIncome(localId: string): Promise<void> {
+/** Remove sem registrar evento no histórico (uso interno do sync). */
+export async function deleteIncomeSilent(localId: string): Promise<void> {
   await tx("readwrite", (s) => {
     s.delete(localId);
   });
   emit();
+}
+
+export async function removeIncome(localId: string): Promise<void> {
+  let snapshot: OfflineIncome | undefined;
+  await tx("readwrite", (s) => {
+    return new Promise<void>((resolve, reject) => {
+      const g = s.get(localId);
+      g.onsuccess = () => {
+        snapshot = g.result as OfflineIncome | undefined;
+        s.delete(localId);
+        resolve();
+      };
+      g.onerror = () => reject(g.error);
+    });
+  });
+  emit();
+  if (snapshot) {
+    void recordHistoryEvent({
+      user_id: snapshot.user_id,
+      type: "income",
+      action: "removed",
+      title: snapshot.descricao,
+      amount: snapshot.valor,
+    });
+  }
 }
 
 export async function updateIncome(

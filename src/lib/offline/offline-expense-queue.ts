@@ -10,6 +10,7 @@
  */
 
 import type { NovoGastoInput } from "@/lib/store";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 const DB_NAME = "gf_offline";
 const DB_VERSION = 1;
@@ -124,6 +125,13 @@ export async function enqueueExpense(
     s.add(item);
   });
   emit();
+  void recordHistoryEvent({
+    user_id: userId,
+    type: "expense",
+    action: "created_offline",
+    title: item.descricao,
+    amount: item.valor,
+  });
   return item;
 }
 
@@ -155,11 +163,37 @@ export async function countPending(userId: string): Promise<number> {
   return all.filter((e) => e.status !== "synced").length;
 }
 
-export async function removeExpense(localId: string): Promise<void> {
+/** Remove sem registrar evento no histórico (uso interno do sync). */
+export async function deleteExpenseSilent(localId: string): Promise<void> {
   await tx("readwrite", (s) => {
     s.delete(localId);
   });
   emit();
+}
+
+export async function removeExpense(localId: string): Promise<void> {
+  let snapshot: OfflineExpense | undefined;
+  await tx("readwrite", (s) => {
+    return new Promise<void>((resolve, reject) => {
+      const g = s.get(localId);
+      g.onsuccess = () => {
+        snapshot = g.result as OfflineExpense | undefined;
+        s.delete(localId);
+        resolve();
+      };
+      g.onerror = () => reject(g.error);
+    });
+  });
+  emit();
+  if (snapshot) {
+    void recordHistoryEvent({
+      user_id: snapshot.user_id,
+      type: "expense",
+      action: "removed",
+      title: snapshot.descricao,
+      amount: snapshot.valor,
+    });
+  }
 }
 
 export async function updateExpense(

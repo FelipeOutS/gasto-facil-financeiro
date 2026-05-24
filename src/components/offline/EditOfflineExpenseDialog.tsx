@@ -11,6 +11,7 @@ import {
   updateExpense,
   type OfflineExpense,
 } from "@/lib/offline/offline-expense-queue";
+import { recordHistoryEvent } from "@/lib/offline/offline-sync-history";
 import type { NovoGastoInput } from "@/lib/store";
 
 type Props = {
@@ -45,6 +46,14 @@ export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
         observacao: data.observacao,
         status: "pending",
         error_message: undefined,
+        technical_error: undefined,
+      });
+      void recordHistoryEvent({
+        user_id: item.user_id,
+        type: "expense",
+        action: "edited",
+        title: (data.descricao || data.estabelecimento || "Gasto").trim(),
+        amount: data.valor,
       });
       toast.success("Pendência atualizada.");
       onOpenChange(false);
