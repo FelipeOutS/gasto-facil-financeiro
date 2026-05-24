@@ -470,7 +470,9 @@ function RendaPage() {
       toast.error(t("toast.fillFields"));
       return;
     }
-    if (!(await requireOnline())) return;
+    // Não bloqueia se offline: receita não recorrente cai na fila.
+    // Recorrência ainda precisa de internet.
+    if (recorrente && !(await requireOnline())) return;
     const dt = new Date(data + "T12:00:00");
     const mesNova = dt.getMonth() + 1;
     const anoNova = dt.getFullYear();
