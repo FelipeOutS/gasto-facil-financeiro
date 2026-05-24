@@ -193,6 +193,7 @@ function RootComponent() {
   return (
     <>
       <HreflangTags path={cleanPath} />
+      <OfflineBanner />
       <ConnectedAccountBanner />
       <Outlet />
       <Toaster position="top-center" />
