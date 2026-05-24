@@ -11,7 +11,7 @@ const variantClasses: Record<Variant, string> = {
     "bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-card",
 };
 
-export interface PremiumCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface PremiumCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title?: React.ReactNode;
   description?: React.ReactNode;
   icon?: React.ReactNode;
