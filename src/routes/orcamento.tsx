@@ -83,6 +83,8 @@ function OrcamentoPage() {
 
   const categorias = useStore(() => getCategorias());
   const gastos = useStore(() => getGastos());
+  const receitas = useStore(() => getReceitas());
+  const guardado = useStore(() => getGuardado());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
   // Re-render quando limites mudam (qualquer setLimite)
   useStore(() => getLimites().length);
