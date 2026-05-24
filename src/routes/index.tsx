@@ -61,6 +61,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
+import { DashboardDicasBloco } from "@/components/DashboardDicasBloco";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
@@ -475,6 +476,10 @@ function Index() {
         <DashboardAlertasBloco />
         <RadarEconomicoCard />
       </section>
+
+      {/* Dicas para economizar — não renderiza se não houver insights */}
+      <DashboardDicasBloco className="mt-4" />
+
 
 
 
