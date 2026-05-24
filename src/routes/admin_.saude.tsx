@@ -656,6 +656,21 @@ function SystemHealthPage() {
           </>
         ) : null}
       </div>
+      <PaymentDiagnoseDialog
+        paymentId={diagPaymentId}
+        open={diagOpen}
+        onOpenChange={(o) => {
+          setDiagOpen(o);
+          if (!o) {
+            setDiagPaymentId(null);
+            setDiagPeriodEnd(null);
+          }
+        }}
+        currentPeriodEnd={diagPeriodEnd}
+        onReconciled={() => {
+          void load();
+        }}
+      />
     </MobileShell>
   );
 }
