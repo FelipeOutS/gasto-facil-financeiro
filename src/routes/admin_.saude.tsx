@@ -26,6 +26,7 @@ import {
   Copy,
   Database,
   Clock,
+  Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,6 +35,7 @@ import {
   type SystemHealthData,
   type LogRetentionPreview,
 } from "@/server/system-health.functions";
+import { PaymentDiagnoseDialog } from "@/components/admin/PaymentDiagnoseDialog";
 
 function fmtMoneyCents(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
