@@ -133,7 +133,8 @@ export const testarWebhookWhatsApp = createServerFn({ method: "POST" })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const tel = normTel(data.telefone);
     const externalId = `test-${Date.now()}`;
     const out = await processarMensagemWhatsApp({
