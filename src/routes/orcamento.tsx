@@ -18,6 +18,7 @@ import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategori
 import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimiteDiarioCard";
 import { OrcamentoPrevisaoCard } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import type { PrevisaoTipo } from "@/components/orcamento/OrcamentoPrevisaoCard";
+import { PlanejamentoMensalCard, type PlanejamentoEstado } from "@/components/orcamento/PlanejamentoMensalCard";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -26,8 +27,10 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
   getGastos,
+  getGuardado,
   getLimite,
   getLimites,
+  getReceitas,
   mesEfetivoGasto,
   setLimite,
   useBootstrap,
@@ -80,6 +83,8 @@ function OrcamentoPage() {
 
   const categorias = useStore(() => getCategorias());
   const gastos = useStore(() => getGastos());
+  const receitas = useStore(() => getReceitas());
+  const guardado = useStore(() => getGuardado());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
   // Re-render quando limites mudam (qualquer setLimite)
   useStore(() => getLimites().length);
@@ -208,6 +213,44 @@ function OrcamentoPage() {
       diferenca: diferencaProj,
     };
   }, [ym, today, temOrcamento, limiteTotal, totalPlanejado, totalRealizado, diff]);
+
+  // Planejamento mensal (Orçamento Zero — MVP visual, sem banco)
+  const planejamentoInfo = useMemo(() => {
+    const renda = receitas
+      .filter((r) => r.mes === ym.mes && r.ano === ym.ano)
+      .reduce((acc, r) => acc + (r.valor || 0), 0);
+
+    // Soma de orçamento por categoria (evita duplicar com limite "total")
+    const distribuidoCategorias = comLimite.reduce(
+      (acc, l) => acc + (l.planejado || 0),
+      0,
+    );
+
+    // Reserva/metas: soma de dinheiro_guardado atualizado no mês selecionado
+    const ymPrefix = `${ym.ano}-${String(ym.mes).padStart(2, "0")}`;
+    const distribuidoReserva = guardado
+      .filter((g) => (g.dataAtualizacao || "").startsWith(ymPrefix))
+      .reduce((acc, g) => acc + (g.valor || 0), 0);
+
+    const distribuido = distribuidoCategorias + distribuidoReserva;
+
+    let estado: PlanejamentoEstado;
+    if (renda <= 0) {
+      estado = "sem_renda";
+    } else if (distribuidoCategorias <= 0 && distribuidoReserva <= 0) {
+      estado = "sem_limites";
+    } else if (distribuido > renda + 0.5) {
+      estado = "excesso";
+    } else if (renda - distribuido <= Math.max(1, renda * 0.01)) {
+      estado = "tudo_distribuido";
+    } else {
+      estado = "com_sobra";
+    }
+
+    return { renda, distribuidoCategorias, distribuidoReserva, estado };
+  }, [receitas, guardado, comLimite, ym]);
+
+
 
   // Edit limit dialog
   const [editing, setEditing] = useState<{ id: string; nome: string; valor: string } | null>(
@@ -465,6 +508,35 @@ function OrcamentoPage() {
           />
         </section>
       )}
+
+      {/* Planejamento mensal — Orçamento Zero (MVP visual, sem persistência) */}
+      <section className="mt-4">
+        <PlanejamentoMensalCard
+          renda={planejamentoInfo.renda}
+          distribuidoCategorias={planejamentoInfo.distribuidoCategorias}
+          distribuidoReserva={planejamentoInfo.distribuidoReserva}
+          estado={planejamentoInfo.estado}
+          labels={{
+            title: t("planning.title"),
+            description: t("planning.description"),
+            income: t("planning.income"),
+            distributed: t("planning.distributed"),
+            unassigned: t("planning.unassigned"),
+            excess: t("planning.excess"),
+            categories: t("planning.categories"),
+            reserveGoals: t("planning.reserveGoals"),
+            free: t("planning.free"),
+            noIncome: t("planning.noIncome"),
+            noLimits: t("planning.noLimits"),
+            allAssigned: t("planning.allAssigned"),
+            withFree: t("planning.withFree"),
+            withExcess: t("planning.withExcess"),
+            ofIncome: t("planning.ofIncome"),
+          }}
+        />
+      </section>
+
+
 
       {/* Limite total + ações rápidas (só se já há algo configurado) */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
