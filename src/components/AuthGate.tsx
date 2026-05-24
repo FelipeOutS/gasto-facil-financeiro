@@ -10,6 +10,12 @@ import { fetchOnboarding } from "@/lib/onboarding/service";
 import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
+import {
+  isLoginBioBridgeAvailable,
+  isLoginBioEnabled,
+  isLoginBioInProgress,
+  isLoginBioUnlockRequired,
+} from "@/lib/biometric-login";
 
 const AUTH_REDIRECT_KEY_PREFIX = "gi:auth-redirect:";
 
@@ -72,6 +78,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const featureAllowed = premiumRule
     ? isAdmin || (hasActiveAccess && planAllowsFeature(plan.plan, premiumRule.feature))
     : true;
+  const requiresBioUnlock = !!session && pathname !== "/login" && isLoginBioUnlockRequired();
+
+  useEffect(() => {
+    if (loading || !requiresBioUnlock) return;
+    console.log("[BioLogin] auth gate blocked reason:", "Biometric unlock required before protected content");
+    void navigate({ to: "/login", replace: true });
+  }, [loading, requiresBioUnlock, navigate]);
 
   // Bloqueio de acesso por assinatura: usuário logado, sem plano ativo,
   // tentando acessar rota fora da allowlist => manda para /meu-plano.
@@ -95,6 +108,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
+      if (isLoginBioInProgress()) {
+        console.log("[BioLogin] auth gate blocked reason:", "Biometric auth in progress");
+        return;
+      }
+      if (isLoginBioBridgeAvailable() && isLoginBioEnabled()) {
+        console.log("[BioLogin] auth gate blocked reason:", "Biometric login enabled; allowing login screen first");
+      }
       setRedirecting(true);
       try {
         if (pathname !== "/login") {
@@ -137,6 +157,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <BrandLoader />;
   }
 
+  if (requiresBioUnlock) {
+    return <BrandLoader message="Validando biometria…" />;
+  }
+
   // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
   const subscriptionAllowed = isSubscriptionAllowed(pathname);
   if (!subscriptionAllowed && !plan.loading && !rolesLoading && !hasActiveAccess) {
@@ -173,7 +197,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && session) {
+    if (!loading && session && !isLoginBioUnlockRequired() && !isLoginBioInProgress()) {
       void navigate({ to: "/" });
     }
   }, [loading, session, navigate]);

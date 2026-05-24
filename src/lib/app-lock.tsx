@@ -29,6 +29,7 @@ import { Fingerprint, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
+import { isLoginBioInProgress, isLoginBioUnlocked } from "@/lib/biometric-login";
 
 export const APP_LOCK_STORAGE_KEY = "app_android_biometric_enabled";
 export const APP_LOCKED_FLAG_KEY = "app_locked_by_biometric";
@@ -194,6 +195,12 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!bridgeAvailable) return;
+    if (isLoginBioInProgress() || isLoginBioUnlocked()) {
+      console.log("[AppLock] ignorado: entrada por biometria já validada nesta abertura");
+      triggeredRef.current = true;
+      setLocked(false);
+      return;
+    }
     const lockedNow = isAppLockedFlagSet();
     if ((enabled || lockedNow) && !triggeredRef.current) {
       console.log("[AppLock] travando app (enabled=%s, lockedNow=%s)", enabled, lockedNow);
