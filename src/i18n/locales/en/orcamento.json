@@ -39,6 +39,21 @@
     "noBudget": "Set a budget to see your daily limit.",
     "remainingDays": "{{count}} day(s) remaining"
   },
+  "forecast": {
+    "title": "Monthly forecast",
+    "pastWithin": "This month ended within budget.",
+    "pastOver": "This month ended over budget.",
+    "future": "Forecast will be available when the month starts.",
+    "noData": "Not enough data yet to predict the month-end.",
+    "onTrack": "If you keep this pace, you should stay within the {{value}} budget.",
+    "overRisk": "At this pace, you may go over budget by approximately {{value}}.",
+    "overValue": "Planned budget: {{value}}.",
+    "alreadyOver": "Your budget has already been exceeded.",
+    "projected": "Projected: {{value}}",
+    "planned": "Planned: {{value}}",
+    "gapPositive": "Projected headroom: {{value}}",
+    "gapNegative": "Projected excess: {{value}}"
+  },
   "totalLimit": {
     "title": "Total monthly limit",
     "copyPrev": "Copy previous month",
