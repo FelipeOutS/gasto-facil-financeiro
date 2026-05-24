@@ -40,9 +40,6 @@ export async function syncAllForUser(userId: string): Promise<{
           await removeExpense(item.local_id);
           synced += 1;
         } else {
-          await removeExpense(item.local_id);
-          synced += 1;
-        } else {
           await updateExpense(item.local_id, {
             status: "failed",
             attempts: item.attempts + 1,
