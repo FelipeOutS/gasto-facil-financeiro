@@ -213,10 +213,14 @@ function RootComponent() {
 function OfflineQueueMount() {
   const { user } = useAuth();
   useOfflineExpenseQueue(user?.id ?? null);
+  useOfflineIncomeQueue(user?.id ?? null);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
       <div className="pointer-events-auto w-full">
         <OfflineSyncStatus />
+      </div>
+      <div className="pointer-events-auto w-full">
+        <OfflineIncomeSyncStatus />
       </div>
     </div>
   );
