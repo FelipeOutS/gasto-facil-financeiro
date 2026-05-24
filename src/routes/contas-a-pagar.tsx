@@ -21,6 +21,8 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { useTranslation } from "react-i18next";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { StatusBadge as PremiumStatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
@@ -716,34 +718,22 @@ function ResumoCard({
   icon: React.ReactNode;
   hint?: string;
 }) {
-  const toneClass =
+  const metricTone =
     tone === "warning"
-      ? "bg-warning/15 text-warning"
+      ? "warning"
       : tone === "destructive"
-        ? "bg-destructive/15 text-destructive"
+        ? "negative"
         : tone === "success"
-          ? "bg-success/15 text-success"
-          : "bg-card-elevated text-muted-foreground";
+          ? "positive"
+          : "default";
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5 hover-lift card-press animate-rise">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <span
-          className={cn(
-            "grid h-6 w-6 place-items-center rounded-full",
-            toneClass,
-          )}
-        >
-          {icon}
-        </span>
-      </div>
-      <Money value={valorNum} className="num mt-1.5 block text-base font-bold leading-tight" />
-      {hint && (
-        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
-      )}
-    </div>
+    <MetricCard
+      label={label}
+      icon={icon}
+      tone={metricTone}
+      value={<Money value={valorNum} className="num" />}
+      hint={hint}
+    />
   );
 }
 
@@ -1013,48 +1003,48 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   const { t } = useTranslation("contas-a-pagar");
   if (status === "pago") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+      <PremiumStatusBadge tone="success" dot>
         <CheckCircle2 className="h-2.5 w-2.5" />
         {t("status.paid")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (status === "atrasado") {
     return (
-      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+      <PremiumStatusBadge tone="destructive" dot className="animate-pulse-soft">
         <AlertTriangle className="h-2.5 w-2.5" />
         {t("status.overdueDays", { days: Math.abs(dias) })}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (dias === 0) {
     return (
-      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <PremiumStatusBadge tone="warning" dot className="animate-pulse-soft">
         <Clock className="h-2.5 w-2.5" />
         {t("status.dueToday")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (dias === 1) {
     return (
-      <span className="inline-flex animate-pulse-soft items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <PremiumStatusBadge tone="warning" dot className="animate-pulse-soft">
         <Clock className="h-2.5 w-2.5" />
         {t("status.dueTomorrow")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (dias <= 3) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <PremiumStatusBadge tone="warning" dot>
         <Clock className="h-2.5 w-2.5" />
         {t("status.dueInDays", { days: dias })}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+    <PremiumStatusBadge tone="muted">
       {t("status.pendingDays", { days: dias })}
-    </span>
+    </PremiumStatusBadge>
   );
 }
 

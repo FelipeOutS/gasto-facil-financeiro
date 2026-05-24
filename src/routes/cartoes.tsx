@@ -73,6 +73,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { preloadAllBankLogos } from "@/lib/logos";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -528,30 +529,27 @@ function ResumoCard({
   icon: React.ReactNode;
   tone: "brand" | "warning" | "success" | "muted";
 }) {
-  const toneCls =
+  const metricTone =
     tone === "brand"
-      ? "bg-brand-soft text-brand-on-soft"
+      ? "primary"
       : tone === "warning"
-        ? "bg-warning/15 text-warning"
+        ? "warning"
         : tone === "success"
-          ? "bg-success/15 text-success"
-          : "bg-card-elevated text-muted-foreground";
+          ? "positive"
+          : "default";
   return (
-    <div className="hover-lift card-press rounded-2xl border border-border bg-card p-3.5 animate-rise">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <span className={cn("grid h-7 w-7 place-items-center rounded-full", toneCls)}>
-          {icon}
-        </span>
-      </div>
-      {valueNum !== undefined ? (
-        <Money value={valueNum} className="num mt-2 block truncate text-base font-bold" />
-      ) : (
-        <p className="num mt-2 truncate text-base font-bold">{valueText ?? "—"}</p>
-      )}
-    </div>
+    <MetricCard
+      label={label}
+      icon={icon}
+      tone={metricTone}
+      value={
+        valueNum !== undefined ? (
+          <Money value={valueNum} className="num truncate" />
+        ) : (
+          <span className="num truncate">{valueText ?? "—"}</span>
+        )
+      }
+    />
   );
 }
 

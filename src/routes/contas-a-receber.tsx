@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { StatusBadge as PremiumStatusBadge } from "@/components/ui/status-badge";
 import {
   ArrowLeft,
   Plus,
@@ -366,20 +368,21 @@ function ResumoCard({
   subtitle?: string;
   tone: "brand" | "destructive" | "success" | "muted";
 }) {
-  const toneClass =
+  const metricTone =
     tone === "destructive"
-      ? "text-destructive"
+      ? "negative"
       : tone === "success"
-        ? "text-success"
+        ? "positive"
         : tone === "brand"
-          ? "text-brand"
-          : "text-foreground";
+          ? "primary"
+          : "default";
   return (
-    <div className="rounded-2xl border border-border bg-card p-3.5 shadow-card">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={cn("num mt-1 text-base font-bold", toneClass)}>{formatBRL(valor)}</p>
-      {subtitle && <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p>}
-    </div>
+    <MetricCard
+      label={label}
+      value={<span className="num">{formatBRL(valor)}</span>}
+      hint={subtitle}
+      tone={metricTone}
+    />
   );
 }
 
@@ -499,36 +502,36 @@ function StatusBadge({ status, cancelado }: { status: StatusContaReceber; cancel
   const { t } = useTranslation("contas-a-receber");
   if (cancelado) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      <PremiumStatusBadge tone="muted" dot>
         <Ban className="h-3 w-3" /> {t("status.cancelado")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (status === "recebido") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+      <PremiumStatusBadge tone="success" dot>
         <CheckCircle2 className="h-3 w-3" /> {t("status.recebido")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (status === "atrasado") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+      <PremiumStatusBadge tone="destructive" dot>
         <AlertTriangle className="h-3 w-3" /> {t("status.atrasado")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   if (status === "parcial") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <PremiumStatusBadge tone="warning" dot>
         <Clock className="h-3 w-3" /> {t("status.parcial")}
-      </span>
+      </PremiumStatusBadge>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-medium text-brand">
+    <PremiumStatusBadge tone="info" dot>
       <Clock className="h-3 w-3" /> {t("status.pendente")}
-    </span>
+    </PremiumStatusBadge>
   );
 }
 
