@@ -478,8 +478,11 @@ function Index() {
         <RadarEconomicoCard />
       </section>
 
-      {/* Dicas para economizar — não renderiza se não houver insights */}
-      <DashboardDicasBloco className="mt-4" />
+      {/* Saúde financeira + Dicas — par responsivo */}
+      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-start">
+        <DashboardSaudeFinanceiraCard />
+        <DashboardDicasBloco />
+      </section>
 
 
 
