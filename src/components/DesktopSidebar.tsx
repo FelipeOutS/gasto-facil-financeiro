@@ -53,6 +53,7 @@ export function DesktopSidebar() {
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const { user, profile } = useAuth();
   const isAdminMaster = isAdminMasterEmail(user?.email);
+  const collapsed = useSidebarCollapsed();
 
   const groups = useMemo(
     () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
