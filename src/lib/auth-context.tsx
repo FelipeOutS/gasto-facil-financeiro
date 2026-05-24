@@ -3,7 +3,11 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
-import { setLoginBioInProgress, setLoginBioUnlocked } from "./biometric-login";
+import {
+  clearPersistedLoginBioSession,
+  setLoginBioInProgress,
+  setLoginBioUnlocked,
+} from "./biometric-login";
 
 export type Profile = {
   id: string;
@@ -152,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
+      clearPersistedLoginBioSession();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
