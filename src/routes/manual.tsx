@@ -58,7 +58,8 @@ function Manual() {
 
       <div className="mt-5">
         <GastoForm
-          onSubmit={(data) => {
+          onSubmit={async (data) => {
+            if (!(await requireOnline())) return;
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
             const save = () => {
               if (!canWrite) {
