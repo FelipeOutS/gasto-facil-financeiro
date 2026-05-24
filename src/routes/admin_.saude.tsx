@@ -23,12 +23,28 @@ import {
   Webhook,
   CreditCard,
   ArrowLeft,
+  Copy,
+  Database,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getSystemHealthDashboard,
+  getLogRetentionPreview,
   type SystemHealthData,
+  type LogRetentionPreview,
 } from "@/server/system-health.functions";
+
+function fmtMoneyCents(cents: number) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function copyText(text: string) {
+  void navigator.clipboard
+    .writeText(text)
+    .then(() => toast.success("Copiado"))
+    .catch(() => toast.error("Não foi possível copiar"));
+}
 
 export const Route = createFileRoute("/admin_/saude")({
   component: () => (
@@ -108,7 +124,9 @@ function MetricCard({
 
 function SystemHealthPage() {
   const [data, setData] = useState<SystemHealthData | null>(null);
+  const [retention, setRetention] = useState<LogRetentionPreview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retentionLoading, setRetentionLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,6 +138,19 @@ function SystemHealthPage() {
       toast.error("Não foi possível carregar a saúde do sistema", { description: msg });
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const loadRetention = useCallback(async () => {
+    setRetentionLoading(true);
+    try {
+      const res = (await getLogRetentionPreview()) as LogRetentionPreview;
+      setRetention(res);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error("Não foi possível calcular retenção de logs", { description: msg });
+    } finally {
+      setRetentionLoading(false);
     }
   }, []);
 
@@ -265,9 +296,242 @@ function SystemHealthPage() {
                 title="Inconsistências"
                 value={data.payments.inconsistencies_count}
                 tone={data.payments.inconsistencies_count > 0 ? "error" : "ok"}
-                hint="Aprovados sem plano ativo"
+                hint="Pagamento ↔ plano"
               />
             </div>
+
+            {/* Alerta: pendentes > 30 min */}
+            <Card
+              className={`mt-4 ${
+                data.payments.pending_older_than_30min > 0
+                  ? "border-amber-500/40 bg-amber-500/5"
+                  : ""
+              }`}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Pagamentos pendentes há mais de 30 min
+                  </span>
+                  <Badge variant="outline">
+                    {data.payments.pending_older_than_30min}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.pending_payments_to_check.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground">
+                    Nenhum pagamento pendente antigo
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Criado</TableHead>
+                          <TableHead className="text-xs">Em aberto</TableHead>
+                          <TableHead className="text-xs">Usuário</TableHead>
+                          <TableHead className="text-xs">E-mail</TableHead>
+                          <TableHead className="text-xs">MP ID</TableHead>
+                          <TableHead className="text-xs">Valor</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs text-right">Ação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.pending_payments_to_check.map((r) => (
+                          <TableRow key={r.id}>
+                            <TableCell className="whitespace-nowrap text-xs">
+                              {fmtDateTime(r.created_at)}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-xs">
+                              <span
+                                className={
+                                  r.age_minutes > 120
+                                    ? "text-red-600 font-medium"
+                                    : "text-amber-600"
+                                }
+                              >
+                                {r.age_minutes} min
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-xs">{r.user_id_short ?? "—"}</TableCell>
+                            <TableCell className="text-xs">{r.user_email ?? "—"}</TableCell>
+                            <TableCell className="text-xs font-mono">
+                              {r.provider_payment_id ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {fmtMoneyCents(r.amount_cents)}
+                            </TableCell>
+                            <TableCell className="text-xs">{r.status}</TableCell>
+                            <TableCell className="text-right">
+                              {r.provider_payment_id ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2"
+                                  onClick={() => copyText(r.provider_payment_id!)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              ) : null}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Inconsistências pagamento ↔ plano */}
+            <Card
+              className={`mt-4 ${
+                data.payment_plan_inconsistencies.length > 0
+                  ? "border-red-500/40 bg-red-500/5"
+                  : ""
+              }`}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Inconsistências pagamento ↔ plano
+                  </span>
+                  <Badge variant="outline">
+                    {data.payment_plan_inconsistencies.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.payment_plan_inconsistencies.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground">
+                    Nenhuma inconsistência detectada
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Tipo</TableHead>
+                          <TableHead className="text-xs">Usuário</TableHead>
+                          <TableHead className="text-xs">E-mail</TableHead>
+                          <TableHead className="text-xs">MP ID</TableHead>
+                          <TableHead className="text-xs">Pgto</TableHead>
+                          <TableHead className="text-xs">Plano</TableHead>
+                          <TableHead className="text-xs">Fim ciclo</TableHead>
+                          <TableHead className="text-xs">Ação</TableHead>
+                          <TableHead className="text-xs text-right">Copiar</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.payment_plan_inconsistencies.map((r, i) => (
+                          <TableRow key={`${r.payment_id}-${i}`}>
+                            <TableCell className="text-xs">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  r.type === "active_plan_failed_payment"
+                                    ? "border-red-500/30 text-red-600"
+                                    : r.type === "approved_period_expired"
+                                      ? "border-amber-500/30 text-amber-600"
+                                      : "border-orange-500/30 text-orange-600"
+                                }
+                              >
+                                {r.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{r.user_id_short ?? "—"}</TableCell>
+                            <TableCell className="text-xs">{r.user_email ?? "—"}</TableCell>
+                            <TableCell className="text-xs font-mono">
+                              {r.provider_payment_id ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-xs">{r.payment_status ?? "—"}</TableCell>
+                            <TableCell className="text-xs">{r.plan_status ?? "—"}</TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {fmtDateTime(r.current_period_end)}
+                            </TableCell>
+                            <TableCell className="text-xs">{r.recommended_action}</TableCell>
+                            <TableCell className="text-right">
+                              {r.provider_payment_id ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2"
+                                  onClick={() => copyText(r.provider_payment_id!)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              ) : null}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Retenção de logs */}
+            <Card className="mt-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    Retenção de logs (prévia)
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void loadRetention()}
+                    disabled={retentionLoading}
+                  >
+                    {retention ? "Recalcular" : "Calcular"}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Recomendação: webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
+                  payment_events 180d. Nenhum registro é apagado nesta etapa.
+                </p>
+                {!retention ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground">
+                    Clique em "Calcular" para visualizar a prévia.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Tabela</TableHead>
+                          <TableHead className="text-xs">Retenção</TableHead>
+                          <TableHead className="text-xs">Corte</TableHead>
+                          <TableHead className="text-xs text-right">Elegíveis</TableHead>
+                          <TableHead className="text-xs text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {retention.policies.map((p) => (
+                          <TableRow key={p.table}>
+                            <TableCell className="text-xs font-mono">{p.table}</TableCell>
+                            <TableCell className="text-xs">{p.retention_days}d</TableCell>
+                            <TableCell className="text-xs">{fmtDateTime(p.cutoff_at)}</TableCell>
+                            <TableCell className="text-xs text-right font-medium">
+                              {p.eligible_to_delete}
+                            </TableCell>
+                            <TableCell className="text-xs text-right">{p.total}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Listas */}
             <SectionTable
