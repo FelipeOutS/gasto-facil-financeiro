@@ -118,7 +118,7 @@ function IndexGate() {
   }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
-  if (bioLoginInProgress) return <BrandLoader message="Validando biometria…" />;
+  if (!session && bioLoginInProgress) return <BrandLoader message="Validando biometria…" />;
   if (needsBiometricUnlock) return <BrandLoader message="Validando biometria…" />;
   if (shouldShowBiometricLogin) return <BrandLoader message="Abrindo entrada por biometria…" />;
   if (!session) return <PublicLanding />;
