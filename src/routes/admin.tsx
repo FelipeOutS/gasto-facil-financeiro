@@ -52,6 +52,7 @@ import {
   Crown,
   Download,
   Search,
+  Activity,
 } from "lucide-react";
 import {
   ResponsiveContainer,
