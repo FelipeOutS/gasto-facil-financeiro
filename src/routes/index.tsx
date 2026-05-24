@@ -62,6 +62,7 @@ import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { DashboardDicasBloco } from "@/components/DashboardDicasBloco";
+import { DashboardSaudeFinanceiraCard } from "@/components/DashboardSaudeFinanceiraCard";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
@@ -477,8 +478,11 @@ function Index() {
         <RadarEconomicoCard />
       </section>
 
-      {/* Dicas para economizar — não renderiza se não houver insights */}
-      <DashboardDicasBloco className="mt-4" />
+      {/* Saúde financeira + Dicas — par responsivo */}
+      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-start">
+        <DashboardSaudeFinanceiraCard />
+        <DashboardDicasBloco />
+      </section>
 
 
 
