@@ -334,6 +334,8 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
 
   const { data: current } = await supabase.auth.getSession();
   let session = current.session ?? null;
+  console.log("[Biometria] session existe após digital:", !!session);
+  console.log("[Biometria] usuário da sessão:", session?.user?.email);
   console.log(
     session
       ? "[AndroidBiometricLogin] getSession encontrou sessão"
@@ -342,6 +344,8 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
 
   if (!session) {
     session = await restoreFromSavedToken();
+    console.log("[Biometria] session existe após digital:", !!session);
+    console.log("[Biometria] usuário da sessão:", session?.user?.email);
   }
 
   if (!session) {
