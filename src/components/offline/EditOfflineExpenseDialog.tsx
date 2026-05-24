@@ -46,6 +46,14 @@ export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
         observacao: data.observacao,
         status: "pending",
         error_message: undefined,
+        technical_error: undefined,
+      });
+      void recordHistoryEvent({
+        user_id: item.user_id,
+        type: "expense",
+        action: "edited",
+        title: (data.descricao || data.estabelecimento || "Gasto").trim(),
+        amount: data.valor,
       });
       toast.success("Pendência atualizada.");
       onOpenChange(false);
