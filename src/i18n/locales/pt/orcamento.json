@@ -6,6 +6,8 @@
   "back": "Voltar",
   "prevMonth": "Mês anterior",
   "nextMonth": "Próximo mês",
+  "pageTitle": "Orçamento",
+  "pageSubtitle": "Planeje seus limites e acompanhe quanto já foi usado no mês.",
   "empty": {
     "title": "Crie seu primeiro orçamento",
     "subtitle": "Defina limites por categoria e acompanhe para onde seu dinheiro está indo.",
