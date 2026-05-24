@@ -46,6 +46,7 @@ type Props = {
   incluirContas: boolean;
   onIncluirContasChange: (v: boolean) => void;
   labels: PlanejamentoLabels;
+  suggestionSlot?: React.ReactNode;
 };
 
 export function PlanejamentoMensalCard({
