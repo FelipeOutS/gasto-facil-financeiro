@@ -19,6 +19,7 @@ import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimit
 import { OrcamentoPrevisaoCard } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import type { PrevisaoTipo } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import { PlanejamentoMensalCard, type PlanejamentoEstado } from "@/components/orcamento/PlanejamentoMensalCard";
+import { SugestaoDistribuicaoRenda } from "@/components/orcamento/SugestaoDistribuicaoRenda";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -581,6 +582,32 @@ function OrcamentoPage() {
             billsExcludedNote: t("planning.billsExcludedNote"),
             billsDuplicateHint: t("planning.billsDuplicateHint"),
           }}
+          suggestionSlot={(() => {
+            const { renda, estado, distribuidoCategorias, distribuidoContas, distribuidoReserva } =
+              planejamentoInfo;
+            const distribuido = distribuidoCategorias + distribuidoContas + distribuidoReserva;
+            const livre = renda - distribuido;
+            const sobraRelevante = renda > 0 && livre >= renda * 0.2;
+            const mostrar =
+              renda > 0 &&
+              (estado === "sem_limites" || (estado === "com_sobra" && sobraRelevante));
+            if (!mostrar) return null;
+            return (
+              <SugestaoDistribuicaoRenda
+                renda={renda}
+                labels={{
+                  title: t("planning.suggestion.title"),
+                  description: t("planning.suggestion.description"),
+                  essentials: t("planning.suggestion.essentials"),
+                  variables: t("planning.suggestion.variables"),
+                  reserve: t("planning.suggestion.reserve"),
+                  cta: t("planning.suggestion.cta"),
+                  note: t("planning.suggestion.note"),
+                }}
+                onCta={() => toast(t("planning.suggestion.ctaToast"))}
+              />
+            );
+          })()}
         />
 
       </section>

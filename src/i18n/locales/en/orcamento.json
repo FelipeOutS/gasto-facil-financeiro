@@ -70,6 +70,16 @@
     "includeBillsDescription": "Turn off if those bills are already planned within your categories.",
     "billsExcludedNote": "This month's bills are not being added to the plan.",
     "billsDuplicateHint": "If a bill is already covered by a category, you can turn this off.",
+    "suggestion": {
+      "title": "Suggestion for your income",
+      "description": "A simple split to kick off your planning.",
+      "essentials": "Essentials",
+      "variables": "Variable spending",
+      "reserve": "Savings and goals",
+      "cta": "Use as a starting point",
+      "note": "Use this as a starting point. Adjust to your reality.",
+      "ctaToast": "In a future step, you'll be able to apply this suggestion to your limits."
+    },
     "noIncome": "Add income for this month to build your plan.",
     "noLimits": "Set category limits to allocate your income.",
     "hasBillsNoLimits": "You already have bills planned this month. Set category limits to complete your plan.",
