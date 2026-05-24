@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -894,7 +895,7 @@ function AddAtivoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar.");
+      toastFromError(e, "Não foi possível salvar.");
     } finally {
       setSaving(false);
     }
@@ -1239,7 +1240,7 @@ function HistoricoImportacoesDialog({
       onChanged();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível excluir.");
+      toastFromError(e, "Não foi possível excluir.");
     } finally {
       setExcluindo(false);
     }
@@ -1593,7 +1594,7 @@ function AtualizarValorDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível atualizar o valor.");
+      toastFromError(e, "Não foi possível atualizar o valor.");
     } finally {
       setSalvando(false);
     }
@@ -1994,7 +1995,7 @@ function MovimentacaoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar a movimentação.");
+      toastFromError(e, "Não foi possível salvar a movimentação.");
     } finally {
       setSalvando(false);
     }
@@ -2191,7 +2192,7 @@ function RendimentoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível salvar o rendimento.");
+      toastFromError(e, "Não foi possível salvar o rendimento.");
     } finally {
       setSalvando(false);
     }

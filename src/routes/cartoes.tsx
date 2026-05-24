@@ -96,6 +96,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -626,7 +627,7 @@ const CartaoCard = memo(function CartaoCard({
       toast.success(t("toast.markedPaid"));
     } catch (err) {
       console.error(err);
-      toast.error(t("toast.updateError"));
+      toastFromError(err, t("toast.updateError"));
     }
   }
 
@@ -1259,7 +1260,7 @@ function FaturaSheet({
       }
     } catch (e) {
       console.error(e);
-      toast.error(t("toast.updateError"));
+      toastFromError(e, t("toast.updateError"));
     }
   }
 

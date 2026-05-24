@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { toastFromError, friendlyError } from "@/lib/premium-error";
 import {
   Building2,
   Search,
@@ -209,13 +210,13 @@ function ClientesPage() {
       const r = (await consultarFn({ data: { cnpj: limpo } })) as ConsultaResp;
       setResp(r);
       if (!r.success && r.message) {
-        toast.error(r.message);
+        toast.error(friendlyError(r.message, r.message));
       } else if (r.success && r.stale && r.message) {
         toast.warning(r.message);
       }
     } catch (err) {
       console.error("[clientes] erro na consulta:", err);
-      toast.error(t("toasts.cnpjError"));
+      toastFromError(err, t("toasts.cnpjError"));
     } finally {
       setConsultando(false);
     }
