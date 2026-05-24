@@ -1954,6 +1954,34 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
 }
 
 /**
+ * Versão assíncrona usada pela fila offline: insere no Supabase e aguarda
+ * confirmação. Só retorna `{ ok: true }` se o servidor aceitou — isso
+ * permite remover o item da fila offline com segurança.
+ */
+export async function addGastoAwait(
+  input: NovoGastoInput,
+  userId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!userId) return { ok: false, error: "no_user" };
+  const previousActive = activeUserId;
+  if (activeUserId !== userId) activeUserId = userId;
+  let built;
+  try {
+    built = buildGastosFromInput(input, userId);
+  } finally {
+    if (activeUserId !== previousActive) activeUserId = previousActive;
+  }
+  const { error } = await supabase.from("gastos").insert(built.map((b) => b.row));
+  if (error) return { ok: false, error: error.message };
+  if (activeUserId === userId) {
+    memGastos = [...memGastos, ...built.map((b) => b.client)];
+    emit();
+    if (input.estabelecimento) rememberCategoryFor(input.estabelecimento, input.categoriaId);
+  }
+  return { ok: true };
+}
+
+/**
  * Insere múltiplos gastos em uma única chamada (importação de fatura).
  * Faz update otimista e sincroniza com o Supabase em background.
  */

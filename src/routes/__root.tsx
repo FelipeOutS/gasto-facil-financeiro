@@ -18,6 +18,9 @@ import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
+import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
+import { useAuth } from "@/lib/auth-context";
+import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
@@ -193,9 +196,27 @@ function RootComponent() {
     <>
       <HreflangTags path={cleanPath} />
       <ConnectedAccountBanner />
+      <OfflineQueueMount />
       <Outlet />
       <Toaster position="top-center" />
     </>
+  );
+}
+
+/**
+ * Mantém a fila offline de gastos viva no app inteiro: ao logar, dispara
+ * a sincronização (caso já esteja online) e escuta o evento `online`.
+ * O badge só aparece quando há pendências.
+ */
+function OfflineQueueMount() {
+  const { user } = useAuth();
+  useOfflineExpenseQueue(user?.id ?? null);
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md justify-center px-3">
+      <div className="pointer-events-auto w-full">
+        <OfflineSyncStatus />
+      </div>
+    </div>
   );
 }
 
