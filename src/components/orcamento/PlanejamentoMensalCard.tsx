@@ -17,10 +17,12 @@ export type PlanejamentoLabels = {
   unassigned: string;
   excess: string;
   categories: string;
+  bills: string;
   reserveGoals: string;
   free: string;
   noIncome: string;
   noLimits: string;
+  hasBillsNoLimits: string;
   allAssigned: string;
   withFree: string;
   withExcess: string;
@@ -30,6 +32,7 @@ export type PlanejamentoLabels = {
 type Props = {
   renda: number;
   distribuidoCategorias: number;
+  distribuidoContas: number;
   distribuidoReserva: number;
   estado: PlanejamentoEstado;
   labels: PlanejamentoLabels;
@@ -38,6 +41,7 @@ type Props = {
 export function PlanejamentoMensalCard({
   renda,
   distribuidoCategorias,
+  distribuidoContas,
   distribuidoReserva,
   estado,
   labels,
