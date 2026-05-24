@@ -959,7 +959,7 @@ function SaldoHeroCard({
     <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-elevated animate-rise sm:p-5">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,hsl(var(--brand)/0.18),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,var(--brand-soft),transparent_60%)]"
       />
       <div
         aria-hidden
