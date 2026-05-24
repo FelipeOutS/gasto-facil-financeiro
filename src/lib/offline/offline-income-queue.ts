@@ -10,6 +10,7 @@
  */
 
 import type { NovaReceitaInput } from "@/lib/store";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 const DB_NAME = "gf_offline_income";
 const DB_VERSION = 1;
