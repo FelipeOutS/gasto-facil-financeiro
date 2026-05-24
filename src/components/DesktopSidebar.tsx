@@ -188,8 +188,42 @@ export function DesktopSidebar() {
       )}
       aria-label={t("aria.side")}
     >
-      <div className={cn("pt-6 pb-4", collapsed ? "px-3 flex justify-center" : "px-5")}>
-        <BrandMark className={cn("w-auto", collapsed ? "h-8" : "h-10")} />
+      <div className={cn("pt-5 pb-4", collapsed ? "px-2 flex flex-col items-center gap-3" : "px-5")}>
+        {collapsed ? (
+          <>
+            <BrandMark symbolOnly className="h-9 w-9" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(false)}
+                  aria-label="Expandir menu"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expandir menu</TooltipContent>
+            </Tooltip>
+          </>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <BrandMark className="h-10 w-auto" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(true)}
+                  aria-label="Recolher menu"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Recolher menu</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
         {!collapsed && (
           <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">{t("header.tagline")}</h2>
         )}
@@ -327,11 +361,11 @@ export function DesktopSidebar() {
         </div>
       </nav>
 
-      {/* System controls: theme + collapse */}
+      {/* Theme toggle */}
       <div
         className={cn(
           "mt-2 mb-2 flex items-center",
-          collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3 justify-center",
+          collapsed ? "justify-center px-2" : "px-3 justify-center",
         )}
       >
         <Tooltip>
@@ -342,24 +376,6 @@ export function DesktopSidebar() {
           </TooltipTrigger>
           <TooltipContent side="right">{t("aria.toggleTheme", { defaultValue: "Alternar tema" })}</TooltipContent>
         </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:border-border hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              {collapsed ? (
-                <PanelLeftOpen className="h-4 w-4 transition-transform duration-200" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4 transition-transform duration-200" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{collapsed ? "Expandir menu" : "Recolher menu"}</TooltipContent>
-        </Tooltip>
       </div>
 
       {collapsed ? (
@@ -368,13 +384,13 @@ export function DesktopSidebar() {
             <Link
               to="/conta"
               aria-label={profile?.nome || user?.email || t("header.fallbackUser")}
-              className="mx-2 mb-3 mt-2 flex items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-2 transition-colors hover:bg-accent/40"
+              className="mx-auto mb-3 mt-1 flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
             >
               <UserAvatar
                 url={profile?.avatar_url}
                 name={profile?.nome ?? profile?.responsavel_nome}
                 email={user?.email}
-                size={32}
+                size={36}
               />
             </Link>
           </TooltipTrigger>
