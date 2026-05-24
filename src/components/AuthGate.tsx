@@ -10,7 +10,12 @@ import { fetchOnboarding } from "@/lib/onboarding/service";
 import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
-import { isLoginBioBridgeAvailable, isLoginBioEnabled, isLoginBioInProgress } from "@/lib/biometric-login";
+import {
+  isLoginBioBridgeAvailable,
+  isLoginBioEnabled,
+  isLoginBioInProgress,
+  isLoginBioUnlockRequired,
+} from "@/lib/biometric-login";
 
 const AUTH_REDIRECT_KEY_PREFIX = "gi:auth-redirect:";
 
@@ -73,6 +78,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const featureAllowed = premiumRule
     ? isAdmin || (hasActiveAccess && planAllowsFeature(plan.plan, premiumRule.feature))
     : true;
+
+  useEffect(() => {
+    if (loading || !session || pathname === "/login") return;
+    if (!isLoginBioUnlockRequired()) return;
+    console.log("[BioLogin] auth gate blocked reason:", "Biometric unlock required before protected content");
+    void navigate({ to: "/login", replace: true });
+  }, [loading, session, pathname, navigate]);
 
   // Bloqueio de acesso por assinatura: usuário logado, sem plano ativo,
   // tentando acessar rota fora da allowlist => manda para /meu-plano.
@@ -181,7 +193,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && session) {
+    if (!loading && session && !isLoginBioUnlockRequired() && !isLoginBioInProgress()) {
       void navigate({ to: "/" });
     }
   }, [loading, session, navigate]);
