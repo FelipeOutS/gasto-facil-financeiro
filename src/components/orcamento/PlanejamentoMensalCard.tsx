@@ -59,6 +59,7 @@ export function PlanejamentoMensalCard({
   incluirContas,
   onIncluirContasChange,
   labels,
+  suggestionSlot,
 }: Props) {
   const distribuido = distribuidoCategorias + distribuidoContas + distribuidoReserva;
   const livre = renda - distribuido;
