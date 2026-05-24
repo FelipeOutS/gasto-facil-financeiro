@@ -926,6 +926,7 @@ function RecorrenciaDialog({
       toast.error(t("toasts.invalid"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSaving(true);
     const valorOriginalNum = moeda !== "BRL" ? parseBRLInput(valorOriginal) : null;
     try {
