@@ -87,8 +87,9 @@ export function EditGastoDialog({
 
   if (!snapshot) return null;
 
-  function handleSave() {
+  async function handleSave() {
     if (!snapshot) return;
+    if (!(await requireOnline())) return;
     const nome = (descricao || estabelecimento).trim();
     if (!nome) {
       toast.error(t("form.editar.errNome"));
