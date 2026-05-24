@@ -4,6 +4,7 @@ import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AuthGate } from "./AuthGate";
 import { ExpiredAccessBanner } from "./ExpiredAccessBanner";
+import { useSidebarCollapsed } from "@/lib/sidebar-collapsed";
 
 export function MobileShell({
   children,
@@ -19,12 +20,13 @@ export function MobileShell({
   wide?: boolean;
 }) {
   const showNav = !hideNav;
+  const collapsed = useSidebarCollapsed();
 
   const inner = (
     <div className="min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
       {showNav && <MobileTopBar />}
-      <div className={showNav ? "lg:pl-64" : ""}>
+      <div className={showNav ? (collapsed ? "lg:pl-20 transition-[padding] duration-300" : "lg:pl-64 transition-[padding] duration-300") : ""}>
         <main
           className={
             "mx-auto flex w-full flex-col px-4 pt-4 pb-[calc(112px+env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:min-h-screen lg:px-6 lg:pt-5 lg:pb-12 xl:px-7 2xl:px-8 page-enter " +
