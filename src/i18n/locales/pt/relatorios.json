@@ -68,6 +68,19 @@
     "emptyCategorias": "Sem categorias no mês.",
     "pctDoMes": "{{pct}}% do mês"
   },
+  "budgetEvolution": {
+    "title": "Evolução do orçamento",
+    "description": "Compare o que foi planejado com o que foi gasto nos últimos meses.",
+    "planned": "Planejado",
+    "realized": "Realizado",
+    "adherence": "Aderência",
+    "averageAdherence": "Aderência média",
+    "bestMonth": "Melhor mês",
+    "biggestOverrun": "Maior estouro",
+    "empty": "Crie orçamentos em mais meses para acompanhar a evolução.",
+    "overBudget": "Acima do planejado",
+    "underBudget": "Dentro do planejado"
+  },
   "comparativo": {
     "anterior": "Anterior: {{valor}}",
     "noChange": "Sem variação",
