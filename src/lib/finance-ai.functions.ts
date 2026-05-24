@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceUserRateLimit } from "@/server/rate-limit.server";
+import { checkRateLimit, RATE_LIMIT_PRESETS, enforceUserRateLimit } from "@/server/rate-limit.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { planAllowsFeature, isAdminMasterEmail, type PlanTier } from "@/lib/plans";
@@ -583,6 +583,25 @@ async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok:
     return { ok: false, reason: "Este recurso está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." };
   }
   return { ok: true };
+}
+
+async function checkAiServerFnRateLimit(userId: string, route: string): Promise<string | null> {
+  try {
+    const preset = RATE_LIMIT_PRESETS.aiPerUser;
+    const result = await checkRateLimit({
+      key: `ai:${userId}`,
+      route,
+      user_id: userId,
+      method: "POST",
+      limit: preset.limit,
+      windowSeconds: preset.windowSeconds,
+    });
+
+    return result.blocked ? "Muitas tentativas. Aguarde um pouco antes de tentar novamente." : null;
+  } catch (err) {
+    console.error("[finance-ai] rate limit check failed", err);
+    return null;
+  }
 }
 
 export const sendChatMessage = createServerFn({ method: "POST" })
