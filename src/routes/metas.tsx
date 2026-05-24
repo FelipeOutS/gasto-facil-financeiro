@@ -237,7 +237,8 @@ function MetasPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
+                if (!(await requireOnline())) return;
                 if (confirmDelete) {
                   deleteMeta(confirmDelete.id);
                   toast.success(t("delete.toast"));
