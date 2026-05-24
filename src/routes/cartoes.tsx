@@ -1260,7 +1260,7 @@ function FaturaSheet({
       }
     } catch (e) {
       console.error(e);
-      toast.error(t("toast.updateError"));
+      toastFromError(e, t("toast.updateError"));
     }
   }
 
