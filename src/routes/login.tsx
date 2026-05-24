@@ -114,6 +114,7 @@ function LoginForm() {
     setBioError(null);
     setBioRunning(true);
     setLoginBioInProgress(true);
+    let navigatedWithSession = false;
     try {
       const result = await runLoginBiometric();
       if (result.success !== true) {
@@ -164,6 +165,7 @@ function LoginForm() {
           /* ignore */
         }
         toast.success(t("login.welcomeBack"));
+        navigatedWithSession = true;
         finishBioProgressSoon();
         redirectToProtected();
         return;
@@ -184,7 +186,7 @@ function LoginForm() {
       setBioMode(false);
     } finally {
       setBioRunning(false);
-      if (!hasSupabaseSession) setLoginBioInProgress(false);
+      if (!navigatedWithSession) setLoginBioInProgress(false);
     }
   }
 
