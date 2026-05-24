@@ -17,7 +17,9 @@ import {
   type OfflineIncome,
 } from "@/lib/offline/offline-income-queue";
 import { formatBRL } from "@/lib/format";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditOfflineIncomeDialog } from "./EditOfflineIncomeDialog";
+import { OfflineSyncHistory } from "./OfflineSyncHistory";
 
 export function OfflineIncomeSyncStatus({ className }: { className?: string }) {
   const { user } = useAuth();
