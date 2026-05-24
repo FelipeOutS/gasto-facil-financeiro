@@ -156,6 +156,7 @@ export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { userId } = context;
