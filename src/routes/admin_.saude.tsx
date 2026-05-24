@@ -124,7 +124,9 @@ function MetricCard({
 
 function SystemHealthPage() {
   const [data, setData] = useState<SystemHealthData | null>(null);
+  const [retention, setRetention] = useState<LogRetentionPreview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retentionLoading, setRetentionLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,6 +138,19 @@ function SystemHealthPage() {
       toast.error("Não foi possível carregar a saúde do sistema", { description: msg });
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const loadRetention = useCallback(async () => {
+    setRetentionLoading(true);
+    try {
+      const res = (await getLogRetentionPreview()) as LogRetentionPreview;
+      setRetention(res);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error("Não foi possível calcular retenção de logs", { description: msg });
+    } finally {
+      setRetentionLoading(false);
     }
   }, []);
 
