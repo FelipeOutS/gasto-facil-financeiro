@@ -1263,15 +1263,17 @@ function FaturaSheet({
     }
   }
 
-  function handleAddCompra(data: NovoGastoInput) {
+  async function handleAddCompra(data: NovoGastoInput) {
+    if (!(await requireOnline())) return;
     const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
     addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
     toast.success(t("toast.purchaseAdded"));
     setOpenAdd(false);
   }
 
-  function handleDeleteCompra() {
+  async function handleDeleteCompra() {
     if (!confirmDelete) return;
+    if (!(await requireOnline())) return;
     deleteGasto(confirmDelete.id);
     toast.success(t("toast.purchaseRemoved"));
     setConfirmDelete(null);
@@ -1280,6 +1282,7 @@ function FaturaSheet({
   const lotes = lotesImportacaoFatura(cartao.id, ref.mes, ref.ano);
   async function handleDeleteLote() {
     if (!confirmLote) return;
+    if (!(await requireOnline())) return;
     const n = await deleteGastosDoLote(confirmLote);
     setConfirmLote(null);
     if (n > 0) toast.success(t("toast.batchRemoved", { count: n }));
