@@ -2642,6 +2642,114 @@ export type Database = {
       }
     }
     Views: {
+      contas_a_pagar_shared: {
+        Row: {
+          ano: number | null
+          banco_emissor: string | null
+          beneficiario: string | null
+          categoria_id: string | null
+          chave_pix: string | null
+          codigo_boleto: string | null
+          codigo_pix: string | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          frequencia_recorrencia: string | null
+          gasto_id: string | null
+          id: string | null
+          import_batch_id: string | null
+          mes: number | null
+          mes_referencia: string | null
+          nome: string | null
+          observacao: string | null
+          recorrencia_id: string | null
+          recorrente: boolean | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          ano?: number | null
+          banco_emissor?: string | null
+          beneficiario?: string | null
+          categoria_id?: string | null
+          chave_pix?: never
+          codigo_boleto?: never
+          codigo_pix?: never
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          frequencia_recorrencia?: string | null
+          gasto_id?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          mes?: number | null
+          mes_referencia?: string | null
+          nome?: string | null
+          observacao?: string | null
+          recorrencia_id?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          valor?: number | null
+        }
+        Update: {
+          ano?: number | null
+          banco_emissor?: string | null
+          beneficiario?: string | null
+          categoria_id?: string | null
+          chave_pix?: never
+          codigo_boleto?: never
+          codigo_pix?: never
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          frequencia_recorrencia?: string | null
+          gasto_id?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          mes?: number | null
+          mes_referencia?: string | null
+          nome?: string | null
+          observacao?: string | null
+          recorrencia_id?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_a_pagar_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_a_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_integrations_safe: {
         Row: {
           created_at: string | null
