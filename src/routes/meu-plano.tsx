@@ -784,8 +784,11 @@ function MeuPlanoPage() {
             {tp("sections.history")}
           </h3>
           {historico.length === 0 ? (
-            <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-xs text-muted-foreground">
-              {tp("history.empty")}
+            <div className="mt-3">
+              <PremiumEmptyState
+                icon={<Receipt className="h-6 w-6" />}
+                title={tp("history.empty")}
+              />
             </div>
           ) : (
             <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
