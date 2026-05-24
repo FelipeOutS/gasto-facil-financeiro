@@ -76,6 +76,15 @@ export async function syncAllForUser(userId: string): Promise<{
           technical_error: norm.technical,
         });
         failed += 1;
+        void recordHistoryEvent({
+          user_id: userId,
+          type: "expense",
+          action: "failed",
+          title: item.descricao,
+          amount: item.valor,
+          error_message: norm.friendly,
+          technical_error: norm.technical,
+        });
       }
     }
   } finally {
