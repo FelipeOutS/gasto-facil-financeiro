@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
-  clearPersistedLoginBioSession,
+  clearLoginBio,
   isLoginBioEnabledForEmail,
   persistLoginBioSession,
   setLoginBioInProgress,
@@ -164,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
-      clearPersistedLoginBioSession();
+      clearLoginBio();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
