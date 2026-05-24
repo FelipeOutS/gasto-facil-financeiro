@@ -423,9 +423,9 @@ function OrcamentoPage() {
         </section>
       )}
 
-      {/* Limite diário inteligente */}
+      {/* Limite diário + Previsão lado a lado em desktop */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
-        <section className="mt-4">
+        <section className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <OrcamentoLimiteDiarioCard
             tipo={limiteDiarioInfo.tipo}
             valor={limiteDiarioInfo.valor}
@@ -440,6 +440,27 @@ function OrcamentoPage() {
               exceeded: t("dailyLimit.exceeded"),
               noBudget: t("dailyLimit.noBudget"),
               remainingDays: t("dailyLimit.remainingDays"),
+            }}
+          />
+          <OrcamentoPrevisaoCard
+            tipo={previsaoInfo.tipo}
+            gastoProjetado={previsaoInfo.gastoProjetado}
+            planejado={previsaoInfo.planejado}
+            diferenca={previsaoInfo.diferenca}
+            labels={{
+              title: t("forecast.title"),
+              pastWithin: t("forecast.pastWithin"),
+              pastOver: t("forecast.pastOver"),
+              future: t("forecast.future"),
+              noData: t("forecast.noData"),
+              onTrack: t("forecast.onTrack"),
+              overRisk: t("forecast.overRisk"),
+              overValue: t("forecast.overValue"),
+              alreadyOver: t("forecast.alreadyOver"),
+              projected: t("forecast.projected"),
+              planned: t("forecast.planned"),
+              gapPositive: t("forecast.gapPositive"),
+              gapNegative: t("forecast.gapNegative"),
             }}
           />
         </section>
