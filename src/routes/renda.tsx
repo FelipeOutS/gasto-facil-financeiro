@@ -425,7 +425,30 @@ function RendaPage() {
     setNovaClienteId(null);
   }
 
-  function persistNova(payload: NovaPayload) {
+  async function persistNova(payload: NovaPayload) {
+    // Fluxo offline: apenas para receita não recorrente, com usuário logado.
+    if (!payload.recorrente && user?.id && !isOnline()) {
+      try {
+        await enqueueIncome(user.id, {
+          descricao: payload.descricao,
+          valor: payload.valor,
+          data: payload.data,
+          tipo: payload.tipo,
+          recorrente: false,
+          clienteId: payload.clienteId ?? null,
+        });
+        toast.success(
+          "Receita salva offline. Ela será sincronizada quando a internet voltar.",
+        );
+        setOpen(false);
+        reset();
+        return;
+      } catch (err) {
+        console.error("[offline-income] enqueue failed", err);
+        toast.error("Não foi possível salvar offline.");
+        return;
+      }
+    }
     addReceita(payload);
     toast.success(t("toast.added"));
     setOpen(false);
