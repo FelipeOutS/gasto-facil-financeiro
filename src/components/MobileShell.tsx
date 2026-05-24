@@ -3,6 +3,7 @@ import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AuthGate } from "./AuthGate";
+import { ExpiredAccessBanner } from "./ExpiredAccessBanner";
 
 export function MobileShell({
   children,
