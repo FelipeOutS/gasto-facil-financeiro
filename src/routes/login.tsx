@@ -77,9 +77,9 @@ function LoginForm() {
     console.log("[AndroidBiometricLogin] biometria habilitada:", en);
     setBioAvailable(av);
     setBioEnabled(en);
-    if (av && en) {
+    const savedEmail = getLoginBioEmail();
+    if (av && en && savedEmail) {
       setBioMode(true);
-      const savedEmail = getLoginBioEmail();
       if (savedEmail) setEmail(savedEmail);
     }
   }, []);
@@ -306,6 +306,11 @@ function LoginForm() {
       <div className="mb-5 flex justify-center sm:hidden">
         <LanguageSwitcher align="center" className="h-9 rounded-full px-4" />
       </div>
+      {bioError && (
+        <p className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">
+          {bioError}
+        </p>
+      )}
       {bioAvailable && bioEnabled && (
         <div className="mb-5">
           <Button
