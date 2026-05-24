@@ -473,8 +473,9 @@ export function DashboardCartoesInsights({
       )}
 
       {/* Maiores gastos do mês */}
-      {maioresGastos.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 sm:col-span-2">
+      {showMaiores && maioresGastos.length > 0 && (
+        <section className={cn("rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4", slot !== "lists" && "sm:col-span-2")}>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
