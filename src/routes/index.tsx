@@ -77,6 +77,7 @@ import { BrandLoader } from "@/components/BrandLoader";
 import {
   isLoginBioBridgeAvailable,
   isLoginBioEnabled,
+  isLoginBioInProgress,
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
 
@@ -104,7 +105,8 @@ function IndexGate() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const needsBiometricUnlock = !!session && isLoginBioUnlockRequired();
-  const shouldShowBiometricLogin = !session && isLoginBioBridgeAvailable() && isLoginBioEnabled();
+  const bioLoginInProgress = isLoginBioInProgress();
+  const shouldShowBiometricLogin = !session && !bioLoginInProgress && isLoginBioBridgeAvailable() && isLoginBioEnabled();
 
   useEffect(() => {
     if (!loading && needsBiometricUnlock) {
@@ -116,6 +118,7 @@ function IndexGate() {
   }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
+  if (!session && bioLoginInProgress) return <BrandLoader message="Validando biometria…" />;
   if (needsBiometricUnlock) return <BrandLoader message="Validando biometria…" />;
   if (shouldShowBiometricLogin) return <BrandLoader message="Abrindo entrada por biometria…" />;
   if (!session) return <PublicLanding />;

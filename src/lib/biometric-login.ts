@@ -22,6 +22,12 @@ export const LOGIN_BIO_EMAIL_KEY = "app_android_biometric_user_email";
 export const LOGIN_BIO_SESSION_KEY = "app_android_biometric_session";
 export const LOGIN_BIO_UNLOCKED_KEY = "gi:biometric-unlocked";
 export const LOGIN_BIO_IN_PROGRESS_KEY = "gi:biometric-auth-in-progress";
+export const LOGIN_BIO_SESSION_RESTORED_EVENT = "gi:login-bio-session-restored";
+
+const LEGACY_LOGIN_BIO_ENABLED_KEY = "biometric_enabled";
+const LEGACY_LOGIN_BIO_EMAIL_KEY = "biometric_user_email";
+const LEGACY_LOGIN_BIO_USER_ID_KEY = "biometric_user_id";
+const LOGIN_BIO_USER_ID_KEY = "app_android_biometric_user_id";
 
 type PersistedLoginBioSession = {
   v: 1;
@@ -61,7 +67,10 @@ export function isLoginBioBridgeAvailable(): boolean {
 export function isLoginBioEnabled(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_ENABLED_KEY) === "true";
+    return (
+      window.localStorage.getItem(LOGIN_BIO_ENABLED_KEY) === "true" ||
+      window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true"
+    );
   } catch {
     return false;
   }
@@ -70,7 +79,12 @@ export function isLoginBioEnabled(): boolean {
 export function isLoginBioEnabledForEmail(email: string | null | undefined): boolean {
   if (typeof window === "undefined" || !email) return false;
   try {
-    return window.localStorage.getItem(userEnabledKey(email)) === "true";
+    const normalized = email.trim().toLowerCase();
+    return (
+      window.localStorage.getItem(userEnabledKey(normalized)) === "true" ||
+      (window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true" &&
+        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() === normalized)
+    );
   } catch {
     return false;
   }
@@ -121,7 +135,7 @@ export function setLoginBioInProgress(value: boolean): void {
 export function getLoginBioEmail(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY);
+    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ?? window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY);
   } catch {
     return null;
   }
@@ -142,14 +156,25 @@ export function persistLoginBioSession(session: Session | null | undefined): boo
     };
     window.localStorage.setItem(LOGIN_BIO_SESSION_KEY, JSON.stringify(payload));
     window.localStorage.setItem(LOGIN_BIO_ENABLED_KEY, "true");
+    window.localStorage.setItem(LEGACY_LOGIN_BIO_ENABLED_KEY, "true");
     if (email) {
       window.localStorage.setItem(LOGIN_BIO_EMAIL_KEY, email);
+      window.localStorage.setItem(LEGACY_LOGIN_BIO_EMAIL_KEY, email);
       window.localStorage.setItem(userEnabledKey(email), "true");
+    }
+    if (session.user?.id) {
+      window.localStorage.setItem(LOGIN_BIO_USER_ID_KEY, session.user.id);
+      window.localStorage.setItem(LEGACY_LOGIN_BIO_USER_ID_KEY, session.user.id);
     }
     return true;
   } catch {
     return false;
   }
+}
+
+export function notifyLoginBioSessionRestored(session: Session): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(LOGIN_BIO_SESSION_RESTORED_EVENT, { detail: { session } }));
 }
 
 export function getPersistedLoginBioSession(): PersistedLoginBioSession | null {
@@ -179,6 +204,10 @@ export function clearLoginBio(): void {
     if (email) window.localStorage.removeItem(userEnabledKey(email));
     window.localStorage.removeItem(LOGIN_BIO_ENABLED_KEY);
     window.localStorage.removeItem(LOGIN_BIO_EMAIL_KEY);
+    window.localStorage.removeItem(LOGIN_BIO_USER_ID_KEY);
+    window.localStorage.removeItem(LEGACY_LOGIN_BIO_ENABLED_KEY);
+    window.localStorage.removeItem(LEGACY_LOGIN_BIO_EMAIL_KEY);
+    window.localStorage.removeItem(LEGACY_LOGIN_BIO_USER_ID_KEY);
     clearPersistedLoginBioSession();
     setLoginBioUnlocked(false);
     setLoginBioInProgress(false);
@@ -232,6 +261,7 @@ export function runLoginBiometric(
     let usedMethod = "";
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
+      console.log("[Biometria] bridge result:", detail);
       console.log("[AndroidBiometric] resultado:", detail);
       finish({ ...detail, method: usedMethod });
     };
@@ -313,6 +343,8 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
 
   const { data: current } = await supabase.auth.getSession();
   let session = current.session ?? null;
+  console.log("[Biometria] session existe após digital:", !!session);
+  console.log("[Biometria] usuário da sessão:", session?.user?.email);
   console.log(
     session
       ? "[AndroidBiometricLogin] getSession encontrou sessão"
@@ -321,6 +353,8 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
 
   if (!session) {
     session = await restoreFromSavedToken();
+    console.log("[Biometria] session existe após digital:", !!session);
+    console.log("[Biometria] usuário da sessão:", session?.user?.email);
   }
 
   if (!session) {
@@ -385,7 +419,7 @@ export async function enableLoginBio(email: string): Promise<void> {
     console.log("[EnableBiometric] getSession exists:", typeof supabase.auth.getSession === "function");
     console.log("[EnableBiometric] refreshSession exists:", typeof supabase.auth.refreshSession === "function");
 
-    let { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.getSession();
     let session = sessionData.session ?? null;
 
     if (!session) {
