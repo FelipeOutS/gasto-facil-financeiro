@@ -46,7 +46,12 @@ type AndroidBiometricResultDetail = {
 function getBridge(): NonNullable<Window["AndroidBiometric"]> | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  return b && (typeof b.requestAuthentication === "function" || typeof b.authenticate === "function") ? b : null;
+  if (!b) return null;
+  const hasAny =
+    typeof b.requestAuthentication === "function" ||
+    typeof b.authenticate === "function" ||
+    typeof (b as { unlock?: unknown }).unlock === "function";
+  return hasAny ? b : null;
 }
 
 export function isLoginBioBridgeAvailable(): boolean {
