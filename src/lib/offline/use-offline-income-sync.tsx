@@ -7,12 +7,13 @@ import {
   type OfflineIncome,
   claimForSync,
   listIncomes,
-  removeIncome,
+  deleteIncomeSilent,
   subscribe,
   updateIncome,
 } from "./offline-income-queue";
 import { addReceitaAwait } from "@/lib/store";
 import { normalizeOfflineError } from "./offline-error-messages";
+import { recordHistoryEvent } from "./offline-sync-history";
 
 let syncing = false;
 
