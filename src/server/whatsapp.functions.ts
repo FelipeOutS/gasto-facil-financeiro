@@ -55,6 +55,7 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const tel = normTel(data.telefone);
     if (tel.length < 8) throw new Error("Telefone inválido");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
