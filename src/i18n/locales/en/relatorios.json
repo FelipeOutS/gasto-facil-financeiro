@@ -79,7 +79,9 @@
     "biggestOverrun": "Biggest overrun",
     "empty": "Create budgets in more months to track the evolution.",
     "overBudget": "Above plan",
-    "underBudget": "Within plan"
+    "underBudget": "Within plan",
+    "adjustLimits": "Adjust limits",
+    "adjustLimitsDescription": "Go to the Budget screen to adjust your limits."
   },
   "categoryTrends": {
     "title": "Category trends",

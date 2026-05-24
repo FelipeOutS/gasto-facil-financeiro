@@ -79,7 +79,9 @@
     "biggestOverrun": "Maior estouro",
     "empty": "Crie orçamentos em mais meses para acompanhar a evolução.",
     "overBudget": "Acima do planejado",
-    "underBudget": "Dentro do planejado"
+    "underBudget": "Dentro do planejado",
+    "adjustLimits": "Ajustar limites",
+    "adjustLimitsDescription": "Vá para a tela de Orçamento para ajustar seus limites."
   },
   "categoryTrends": {
     "title": "Tendência por categoria",
