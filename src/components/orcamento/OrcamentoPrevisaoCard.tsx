@@ -1,4 +1,4 @@
-import { TrendingUp, CheckCircle2, AlertTriangle, XCircle, Clock, BarChart3 } from "lucide-react";
+import { TrendingUp, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 
