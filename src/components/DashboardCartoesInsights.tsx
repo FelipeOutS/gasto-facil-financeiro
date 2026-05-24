@@ -236,9 +236,10 @@ export function DashboardCartoesInsights({
   if (!temAlgumaSecao && !comparacao) return null;
 
   return (
-    <div className={cn("grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4", className)}>
+    <>
       {/* Insight + comparação */}
-      <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+      <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-3">
+
         <div className="flex items-start gap-3">
           <span
             className={cn(
@@ -270,7 +271,8 @@ export function DashboardCartoesInsights({
 
       {/* Cartões com maior uso */}
       {usoCartoes.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-3">
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
@@ -358,7 +360,8 @@ export function DashboardCartoesInsights({
 
       {/* Próximos vencimentos de fatura */}
       {proximosVencimentos.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-6">
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -445,7 +448,7 @@ export function DashboardCartoesInsights({
 
       {/* Maiores gastos do mês */}
       {maioresGastos.length > 0 && (
-        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
@@ -490,7 +493,7 @@ export function DashboardCartoesInsights({
           </ul>
         </section>
       )}
-    </div>
+    </>
   );
 }
 

@@ -646,9 +646,9 @@ function Index() {
       {(porCategoria.length > 0 || doMes.length > 0) && (
         <>
           <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-          <section className="grid min-w-0 grid-cols-1 gap-3.5 lg:grid-cols-12 lg:gap-4 lg:items-start">
+          <section className="grid min-w-0 grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 lg:grid-cols-12 lg:items-start">
             {porCategoria.length > 0 && (
-              <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-5">
+              <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 md:col-span-2 lg:col-span-6 xl:col-span-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -656,21 +656,21 @@ function Index() {
                   </div>
                   <Link
                     to="/resumo"
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    className="shrink-0 whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {t("porCategoria.verTudo")}
                   </Link>
                 </div>
-                <div className="mt-3 grid min-w-0 grid-cols-[120px_1fr] items-center gap-3 sm:grid-cols-[130px_1fr]">
-                  <div className="relative h-[120px] w-[120px] sm:h-[130px] sm:w-[130px]">
+                <div className="mt-3 grid min-w-0 grid-cols-[120px_1fr] items-center gap-3 sm:grid-cols-[140px_1fr]">
+                  <div className="relative h-[120px] w-[120px] sm:h-[140px] sm:w-[140px]">
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie
                           data={porCategoria}
                           dataKey="valor"
                           nameKey="nome"
-                          innerRadius={38}
-                          outerRadius={58}
+                          innerRadius={42}
+                          outerRadius={64}
                           paddingAngle={2}
                           stroke="none"
                         >
@@ -719,18 +719,17 @@ function Index() {
               </section>
             )}
 
-            <div className={cn("min-w-0", porCategoria.length > 0 ? "lg:col-span-7" : "lg:col-span-12") }>
-              <DashboardCartoesInsights
-                mes={ym.mes}
-                ano={ym.ano}
-                gastosMes={doMes}
-                totalMes={total}
-                totalMesAnterior={totalMesAnterior}
-                maiorCategoria={maior ?? null}
-                onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
-              />
-            </div>
+            <DashboardCartoesInsights
+              mes={ym.mes}
+              ano={ym.ano}
+              gastosMes={doMes}
+              totalMes={total}
+              totalMesAnterior={totalMesAnterior}
+              maiorCategoria={maior ?? null}
+              onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+            />
           </section>
+
         </>
       )}
 
