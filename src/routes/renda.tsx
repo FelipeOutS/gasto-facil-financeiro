@@ -54,7 +54,8 @@ import {
   useStore,
   type UpdateReceitaScope,
 } from "@/lib/store";
-import { requireOnline } from "@/lib/use-online-status";
+import { requireOnline, useOnlineStatus } from "@/lib/use-online-status";
+import { enqueueIncome } from "@/lib/offline/offline-income-queue";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import {
   formatBRL,
