@@ -1641,8 +1641,8 @@ function PagarDialog({
           : t("pay.toastOnly"),
       );
       onClose();
-    } catch {
-      toast.error(t("pay.toastError"));
+    } catch (e) {
+      toastFromError(e, t("pay.toastError"));
     }
   }
 
