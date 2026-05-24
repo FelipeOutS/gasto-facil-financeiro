@@ -23,12 +23,28 @@ import {
   Webhook,
   CreditCard,
   ArrowLeft,
+  Copy,
+  Database,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getSystemHealthDashboard,
+  getLogRetentionPreview,
   type SystemHealthData,
+  type LogRetentionPreview,
 } from "@/server/system-health.functions";
+
+function fmtMoneyCents(cents: number) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function copyText(text: string) {
+  void navigator.clipboard
+    .writeText(text)
+    .then(() => toast.success("Copiado"))
+    .catch(() => toast.error("Não foi possível copiar"));
+}
 
 export const Route = createFileRoute("/admin_/saude")({
   component: () => (
