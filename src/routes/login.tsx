@@ -161,16 +161,19 @@ function LoginForm() {
     }
     console.log("[Biometria] login por senha funcionou, salvando preferência biométrica");
     const { data } = await supabase.auth.getSession();
-    if (data.session) {
+    const bridgeNow = isLoginBioBridgeAvailable();
+    let savedBioAfterPassword = false;
+    if (data.session && bridgeNow) {
       persistLoginBioSession(data.session);
-      setBioEnabled(isLoginBioBridgeAvailable());
+      savedBioAfterPassword = true;
+      setBioEnabled(true);
       setLoginBioUnlocked(true);
     }
     if (email.trim() && isLoginBioEnabledForEmail(email.trim())) {
       setBioEnabled(true);
     }
     // Se bridge disponível e ainda não ativada, oferece ativar.
-    if (bioAvailable && !bioEnabled) {
+    if (!savedBioAfterPassword && bioAvailable && !bioEnabled) {
       setAskEnableBio(true);
       return;
     }
