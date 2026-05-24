@@ -392,9 +392,14 @@ function AdminPage() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Painel Admin</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">Visão geral de usuários, planos e arrecadação.</p>
           </div>
-          <Button variant="outline" onClick={exportCsv} className="gap-2 w-full sm:w-auto">
-            <Download className="h-4 w-4" /> Exportar CSV
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" asChild className="gap-2 flex-1 sm:flex-none">
+              <a href="/admin/saude"><Activity className="h-4 w-4" /> Saúde do Sistema</a>
+            </Button>
+            <Button variant="outline" onClick={exportCsv} className="gap-2 flex-1 sm:flex-none">
+              <Download className="h-4 w-4" /> Exportar CSV
+            </Button>
+          </div>
         </div>
 
         {err && (
