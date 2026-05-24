@@ -1365,12 +1365,6 @@ function ActiveChip({ label, onRemove, removeLabel }: { label: string; onRemove:
 
 type StatTone = "neutral" | "brand" | "info" | "success";
 
-const TONE_STYLES: Record<StatTone, { icon: string; ring: string }> = {
-  neutral: { icon: "bg-muted text-muted-foreground", ring: "" },
-  brand: { icon: "bg-brand-soft text-brand", ring: "ring-1 ring-brand/30" },
-  info: { icon: "bg-blue-500/15 text-blue-500 dark:text-blue-300", ring: "" },
-  success: { icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", ring: "" },
-};
 
 function SummaryStat({
   label,
