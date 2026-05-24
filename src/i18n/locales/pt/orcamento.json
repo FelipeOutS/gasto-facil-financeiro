@@ -39,6 +39,21 @@
     "noBudget": "Defina um orçamento para ver o limite diário.",
     "remainingDays": "{{count}} dia(s) restante(s)"
   },
+  "forecast": {
+    "title": "Previsão do mês",
+    "pastWithin": "Este mês terminou dentro do orçamento.",
+    "pastOver": "Este mês terminou fora do orçamento.",
+    "future": "A previsão ficará disponível quando o mês começar.",
+    "noData": "Ainda não há dados suficientes para prever o fechamento.",
+    "onTrack": "Mantendo esse ritmo, você deve ficar dentro do orçamento de {{value}}.",
+    "overRisk": "Nesse ritmo, você pode ultrapassar o orçamento em aproximadamente {{value}}.",
+    "overValue": "Orçamento planejado: {{value}}.",
+    "alreadyOver": "Seu orçamento já foi ultrapassado.",
+    "projected": "Previsão: {{value}}",
+    "planned": "Planejado: {{value}}",
+    "gapPositive": "Folga prevista: {{value}}",
+    "gapNegative": "Excesso previsto: {{value}}"
+  },
   "totalLimit": {
     "title": "Limite mensal total",
     "copyPrev": "Copiar mês anterior",
