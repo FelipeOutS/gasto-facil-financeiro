@@ -117,5 +117,5 @@ export function normalizeOfflineError(raw: unknown): OfflineFriendlyError {
     return { friendly: GENERIC, technical };
   }
 
-  return { friendly: technical && technical.length < 120 ? technical : GENERIC, technical };
+  return { friendly: GENERIC, technical };
 }
