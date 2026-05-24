@@ -126,16 +126,23 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
             {t("smartSummary.analyzing")}
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-            {error}
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-3">
+            <p className="text-sm font-medium text-foreground/90">
+              {t("smartSummary.unavailableTitle", { defaultValue: "Resumo temporariamente indisponível" })}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t("smartSummary.unavailableBody", { defaultValue: "Aguarde alguns instantes e tente novamente." })}
+            </p>
             <button
               type="button"
               onClick={() => void load()}
-              className="ml-2 underline underline-offset-2"
+              className="mt-2 inline-flex items-center gap-1 rounded-full border border-border bg-card/70 px-3 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
             >
+              <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
               {t("smartSummary.retry")}
             </button>
           </div>
+
         ) : reply ? (
           <div className="ai-markdown text-sm leading-relaxed text-foreground/90">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{reply}</ReactMarkdown>
