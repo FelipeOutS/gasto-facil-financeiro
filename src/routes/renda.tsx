@@ -1626,8 +1626,9 @@ function DeleteReceitaDialog({
     if (receita) setScope("single");
   }, [receita]);
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!receita) return;
+    if (!(await requireOnline())) return;
     if (receita.recorrente && receita.recorrenciaId && scope !== "single") {
       if (scope === "forward") {
         deleteReceitaRecorrencia(receita.recorrenciaId, receita.mes, receita.ano);
