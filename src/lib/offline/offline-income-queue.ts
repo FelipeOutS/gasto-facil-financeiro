@@ -155,6 +155,14 @@ export async function listIncomes(userId: string): Promise<OfflineIncome[]> {
   });
 }
 
+/** Remove sem registrar evento no histórico (uso interno do sync). */
+export async function deleteIncomeSilent(localId: string): Promise<void> {
+  await tx("readwrite", (s) => {
+    s.delete(localId);
+  });
+  emit();
+}
+
 export async function removeIncome(localId: string): Promise<void> {
   let snapshot: OfflineIncome | undefined;
   await tx("readwrite", (s) => {
