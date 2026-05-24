@@ -163,36 +163,39 @@ function OrcamentoPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
+      <header className="flex items-start gap-3 pt-2">
         <Link
           to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
           aria-label={t("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
             {vocab.orcamentoTitle}
           </p>
-          <h1 className="mt-0.5 text-2xl font-bold capitalize tracking-tight lg:text-[26px]">
-            {formatMonthYear(ym.ano, ym.mes)}
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight lg:text-[26px]">
+            {t("pageTitle")}
           </h1>
-          <p className="mt-1 hidden text-xs text-muted-foreground lg:block">
-            {vocab.orcamentoSubtitle}
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            {t("pageSubtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1">
           <button
             onClick={() => changeMonth(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
+          <span className="min-w-[7rem] px-2 text-center text-xs font-semibold capitalize sm:text-sm">
+            {formatMonthYear(ym.ano, ym.mes)}
+          </span>
           <button
             onClick={() => changeMonth(1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
