@@ -36,18 +36,22 @@ export async function syncAllIncomesForUser(userId: string): Promise<{
           await removeIncome(item.local_id);
           synced += 1;
         } else {
+          const norm = normalizeOfflineError(res.error ?? "Falha ao sincronizar");
           await updateIncome(item.local_id, {
             status: "failed",
             attempts: item.attempts + 1,
-            error_message: res.error ?? "Falha ao sincronizar",
+            error_message: norm.friendly,
+            technical_error: norm.technical,
           });
           failed += 1;
         }
       } catch (err) {
+        const norm = normalizeOfflineError(err);
         await updateIncome(item.local_id, {
           status: "failed",
           attempts: item.attempts + 1,
-          error_message: err instanceof Error ? err.message : String(err),
+          error_message: norm.friendly,
+          technical_error: norm.technical,
         });
         failed += 1;
       }
