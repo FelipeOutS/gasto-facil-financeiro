@@ -23,6 +23,7 @@ import {
   useStore,
   type NovoGastoInput,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { todayISO } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
