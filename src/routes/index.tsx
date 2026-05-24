@@ -63,6 +63,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { DashboardDicasBloco } from "@/components/DashboardDicasBloco";
 import { DashboardSaudeFinanceiraCard } from "@/components/DashboardSaudeFinanceiraCard";
+import { DashboardDiagnosticoMensalCard } from "@/components/DashboardDiagnosticoMensalCard";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
