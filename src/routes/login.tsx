@@ -18,9 +18,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   enableLoginBio,
   getLoginBioEmail,
+  isLoginBioEnabledForEmail,
   isLoginBioBridgeAvailable,
   isLoginBioEnabled,
   runLoginBiometric,
+  setLoginBioInProgress,
+  setLoginBioUnlocked,
 } from "@/lib/biometric-login";
 
 export const Route = createFileRoute("/login")({
@@ -54,6 +57,8 @@ function LoginForm() {
   const [bioMode, setBioMode] = useState(false); // exibe painel "Entrar com digital"
   const [bioRunning, setBioRunning] = useState(false);
   const [bioError, setBioError] = useState<string | null>(null);
+  const [biometricUnlocked, setBiometricUnlocked] = useState(false);
+  const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
   // Prompt para ativar biometria após login com sucesso.
   const [askEnableBio, setAskEnableBio] = useState(false);
   const [enablingBio, setEnablingBio] = useState(false);
@@ -62,6 +67,7 @@ function LoginForm() {
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
     if (av) console.log("Android biometric available");
+    console.log("[BioLogin] biometric enabled:", en);
     setBioAvailable(av);
     setBioEnabled(en);
     if (av && en) {
@@ -80,6 +86,7 @@ function LoginForm() {
     } catch {
       /* ignore */
     }
+    console.log("[BioLogin] redirect target:", target);
     console.log("Redirecting to dashboard");
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
@@ -102,17 +109,22 @@ function LoginForm() {
     }
     setBioError(null);
     setBioRunning(true);
-    const result = await runLoginBiometric();
-    setBioRunning(false);
-    if (result.success !== true) {
-      setBioError(result.error || "Não foi possível validar a biometria.");
-      return;
-    }
-    console.log("Biometric success");
+    setLoginBioInProgress(true);
     try {
+      const result = await runLoginBiometric();
+      if (result.success !== true) {
+        setBioError(result.error || "Não foi possível validar a biometria.");
+        return;
+      }
+      console.log("Biometric success");
+      console.log("[BioLogin] biometric success:", true);
+      setBiometricUnlocked(true);
+      setLoginBioUnlocked(true);
+
       // 1) Sessão já persistida pelo SDK?
       const { data: sessionData } = await supabase.auth.getSession();
       let session = sessionData.session ?? null;
+      console.log("[BioLogin] session exists before refresh:", session ? "yes" : "no");
 
       // 2) Sem sessão em memória — tenta renovar via refresh token.
       if (!session) {
@@ -123,6 +135,7 @@ function LoginForm() {
           /* ignore */
         }
       }
+      console.log("[BioLogin] session exists after refresh:", session ? "yes" : "no");
 
       // 3) Confirma com o backend que o token ainda vale.
       if (session) {
@@ -133,6 +146,7 @@ function LoginForm() {
       }
 
       if (session) {
+        setHasSupabaseSession(true);
         console.log("Supabase session found");
         // Reaplica a sessão no client para disparar onAuthStateChange e
         // garantir que o AuthProvider esteja hidratado antes do AuthGate
@@ -150,15 +164,22 @@ function LoginForm() {
         return;
       }
 
+      setHasSupabaseSession(false);
+      setLoginBioUnlocked(false);
       console.log("Supabase session missing");
       console.log("Redirecting to login because session expired");
-      setBioError("Por segurança, entre novamente com sua senha.");
+      setBioError("Sua sessão expirou. Entre uma vez com sua senha para reativar a biometria.");
       setBioMode(false);
     } catch {
+      setHasSupabaseSession(false);
+      setLoginBioUnlocked(false);
       console.log("Supabase session missing");
       console.log("Redirecting to login because session expired");
-      setBioError("Por segurança, entre novamente com sua senha.");
+      setBioError("Sua sessão expirou. Entre uma vez com sua senha para reativar a biometria.");
       setBioMode(false);
+    } finally {
+      setBioRunning(false);
+      setLoginBioInProgress(false);
     }
   }
 
@@ -170,6 +191,9 @@ function LoginForm() {
     if (error) {
       toast.error(traduzirErroAuth(error.message));
       return;
+    }
+    if (email.trim() && isLoginBioEnabledForEmail(email.trim())) {
+      setBioEnabled(true);
     }
     // Se bridge disponível e ainda não ativada, oferece ativar.
     if (bioAvailable && !bioEnabled) {
