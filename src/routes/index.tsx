@@ -897,25 +897,23 @@ function HeroGreeting({
         : t("hero.greetingEvening");
   const firstName = (nome ?? "").trim().split(/\s+/)[0] ?? "";
   return (
-    <header className="relative overflow-hidden rounded-3xl border border-border bg-card px-4 py-3.5 shadow-card animate-rise sm:px-5 sm:py-4">
-      {/* Fundo premium: gradiente radial + glow + linha brand sutil */}
+    <header className="relative overflow-hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-card animate-rise sm:px-5 sm:py-3.5">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,var(--brand-soft),transparent_55%),radial-gradient(80%_60%_at_0%_100%,var(--brand-tint,transparent),transparent_60%)]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-brand/15 blur-3xl"
+        className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand/15 blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute right-6 top-1/2 hidden h-24 w-24 -translate-y-1/2 opacity-[0.08] sm:block"
+        className="pointer-events-none absolute right-4 top-1/2 hidden h-16 w-16 -translate-y-1/2 opacity-[0.07] sm:block"
       >
         <svg viewBox="0 0 100 100" className="h-full w-full text-brand">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <circle cx="50" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.6" />
-          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.8" />
+          <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="0.8" />
+          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
       </div>
       <div className="relative flex items-center justify-between gap-3">
