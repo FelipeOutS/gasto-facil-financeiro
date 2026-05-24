@@ -263,7 +263,7 @@ function WhatsAppPage() {
       setLinks((linksRes.data ?? []) as Link[]);
       setMsgs((msgsRes.data ?? []) as Message[]);
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setLoading(false);
     }
@@ -309,7 +309,7 @@ function WhatsAppPage() {
       setNovoTel("");
       await refresh();
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setAdding(false);
     }
@@ -325,7 +325,7 @@ function WhatsAppPage() {
       toast.success("Vínculo removido");
       await refresh();
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     }
   }
 
@@ -357,7 +357,7 @@ function WhatsAppPage() {
       // Invalida cache de gastos para que /gastos e dashboard reflitam o novo registro.
       await Promise.all([refresh(), refreshGastos()]);
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setTestando(false);
     }
@@ -421,7 +421,7 @@ function WhatsAppPage() {
       toast.success(`${idsParaApagar.length} duplicado(s) removido(s).`);
       await Promise.all([refresh(), refreshGastos()]);
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setLimpando(false);
     }
@@ -820,7 +820,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
       toast.success("Gasto excluído. Tudo recalculado.");
       await Promise.all([onChanged(), refreshGastos()]);
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setBusy(null);
     }
@@ -844,7 +844,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
       toast.success(`Status: ${out.results?.[0]?.status ?? "ok"}`);
       await Promise.all([onChanged(), refreshGastos()]);
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setBusy(null);
     }
@@ -859,7 +859,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
       toast.success("Log removido.");
       await onChanged();
     } catch (e) {
-      toast.error((e as Error).message);
+      toastFromError(e);
     } finally {
       setBusy(null);
     }
