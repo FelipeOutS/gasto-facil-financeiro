@@ -646,7 +646,7 @@ function Index() {
       {porCategoria.length > 0 && (
         <>
           <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-          <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
+          <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
