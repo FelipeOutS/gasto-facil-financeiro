@@ -184,6 +184,33 @@ function SystemHealthPage() {
     }
   }, []);
 
+  const runCleanup = useCallback(async () => {
+    setCleanupRunning(true);
+    try {
+      const res = (await runCleanupFn()) as LogRetentionCleanupResult;
+      setCleanupLast(res);
+      const totalDeleted = res.results.reduce((a, r) => a + r.deleted, 0);
+      const anyFail = res.results.some((r) => !r.success);
+      if (anyFail) {
+        toast.warning(`Limpeza parcial: ${totalDeleted} registro(s) apagado(s)`, {
+          description: "Alguma(s) tabela(s) falharam — veja o resumo.",
+        });
+      } else {
+        toast.success(`Limpeza concluída: ${totalDeleted} registro(s) apagado(s)`);
+      }
+      // Atualiza prévia e dashboard
+      void loadRetention();
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error("Falha ao executar limpeza de logs", { description: msg });
+    } finally {
+      setCleanupRunning(false);
+      setCleanupOpen(false);
+    }
+  }, [runCleanupFn, loadRetention, load]);
+
+
   useEffect(() => {
     void load();
   }, [load]);
