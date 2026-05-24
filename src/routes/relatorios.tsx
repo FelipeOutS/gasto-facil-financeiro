@@ -755,6 +755,24 @@ function RelatoriosPage() {
         }}
       />
 
+      {/* ===== Tendência por categoria (Top 5, 6m) ===== */}
+      <TendenciaCategoriasCard
+        categorias={tendenciaCategorias}
+        labels={{
+          title: t("categoryTrends.title"),
+          description: t("categoryTrends.description"),
+          rising: t("categoryTrends.rising"),
+          falling: t("categoryTrends.falling"),
+          stable: t("categoryTrends.stable"),
+          newTrend: t("categoryTrends.new"),
+          recentAverage: t("categoryTrends.recentAverage"),
+          change: t("categoryTrends.change"),
+          empty: t("categoryTrends.empty"),
+        }}
+      />
+
+
+
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
         <>
