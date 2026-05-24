@@ -509,6 +509,35 @@ function OrcamentoPage() {
         </section>
       )}
 
+      {/* Planejamento mensal — Orçamento Zero (MVP visual, sem persistência) */}
+      <section className="mt-4">
+        <PlanejamentoMensalCard
+          renda={planejamentoInfo.renda}
+          distribuidoCategorias={planejamentoInfo.distribuidoCategorias}
+          distribuidoReserva={planejamentoInfo.distribuidoReserva}
+          estado={planejamentoInfo.estado}
+          labels={{
+            title: t("planning.title"),
+            description: t("planning.description"),
+            income: t("planning.income"),
+            distributed: t("planning.distributed"),
+            unassigned: t("planning.unassigned"),
+            excess: t("planning.excess"),
+            categories: t("planning.categories"),
+            reserveGoals: t("planning.reserveGoals"),
+            free: t("planning.free"),
+            noIncome: t("planning.noIncome"),
+            noLimits: t("planning.noLimits"),
+            allAssigned: t("planning.allAssigned"),
+            withFree: t("planning.withFree"),
+            withExcess: t("planning.withExcess"),
+            ofIncome: t("planning.ofIncome"),
+          }}
+        />
+      </section>
+
+
+
       {/* Limite total + ações rápidas (só se já há algo configurado) */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
         <section className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
