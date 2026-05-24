@@ -125,6 +125,13 @@ export async function enqueueExpense(
     s.add(item);
   });
   emit();
+  void recordHistoryEvent({
+    user_id: userId,
+    type: "expense",
+    action: "created_offline",
+    title: item.descricao,
+    amount: item.valor,
+  });
   return item;
 }
 
