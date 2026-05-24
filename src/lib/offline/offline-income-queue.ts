@@ -31,6 +31,7 @@ export type OfflineIncome = {
   status: OfflineIncomeStatus;
   attempts: number;
   error_message?: string;
+  technical_error?: string;
 };
 
 function isBrowser() {
