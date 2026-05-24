@@ -63,6 +63,7 @@ import {
   type NovoCartaoInput,
   type NovoGastoInput,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
 import { formatBRL, parseBRLInput } from "@/lib/format";
