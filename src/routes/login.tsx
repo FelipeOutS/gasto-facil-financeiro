@@ -77,30 +77,28 @@ function LoginForm() {
     console.log("[AndroidBiometricLogin] biometria habilitada:", en);
     setBioAvailable(av);
     setBioEnabled(en);
-    if (av && en) {
+    const savedEmail = getLoginBioEmail();
+    if (av && en && savedEmail) {
       setBioMode(true);
-      const savedEmail = getLoginBioEmail();
       if (savedEmail) setEmail(savedEmail);
     }
   }, []);
 
   function redirectToProtected() {
-    let target = "/";
     try {
-      const saved = window.sessionStorage.getItem("gi:auth-redirect:after-login");
-      if (saved && saved !== "/login") target = saved;
       window.sessionStorage.removeItem("gi:auth-redirect:after-login");
     } catch {
       /* ignore */
     }
-    console.log("[AndroidBiometricLogin] rota destino:", target);
+    console.log("[AndroidBiometricLogin] rota destino:", "/");
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
-    void navigate({ to: target, replace: true });
+    void navigate({ to: "/", replace: true });
   }
 
   async function handleBiometric() {
     if (bioRunning) return;
+    console.log("[Biometria] botão clicado");
     if (!isLoginBioBridgeAvailable()) {
       setBioError("Biometria nativa indisponível neste aparelho.");
       return;
@@ -111,7 +109,11 @@ function LoginForm() {
     let navigatedWithSession = false;
     try {
       console.log("[AndroidBiometricLogin] início do fluxo");
+      const { data: beforeData } = await supabase.auth.getSession();
+      const sessionBefore = beforeData.session ?? null;
+      console.log("[Biometria] sessão antes da biometria:", !!sessionBefore);
       const result = await runLoginBiometric();
+      console.log("[Biometria] resultado nativo:", result);
       if (result.success !== true) {
         setBioError(result.error || "Não foi possível validar a biometria.");
         return;
@@ -121,7 +123,7 @@ function LoginForm() {
       const { session } = await restoreLoginBioSessionAfterBiometric();
 
       if (session) {
-        console.log("[Biometria] navegando para dashboard após sucesso");
+        console.log("[Biometria] sessão após biometria:", true);
         setHasSupabaseSession(true);
         setBiometricUnlocked(true);
         setLoginBioUnlocked(true);
@@ -129,6 +131,7 @@ function LoginForm() {
         toast.success(t("login.welcomeBack"));
         navigatedWithSession = true;
         finishBioProgressSoon();
+        console.log("[Biometria] navegando para dashboard");
         console.log("[AndroidBiometricLogin] navegando para dashboard");
         redirectToProtected();
         return;
@@ -136,13 +139,18 @@ function LoginForm() {
 
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
-      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
+      console.log("[Biometria] sessão após biometria:", false);
+      setBioError(
+        "Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.",
+      );
       setBioMode(false);
     } catch {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
       console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
-      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
+      setBioError(
+        "Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.",
+      );
       setBioMode(false);
     } finally {
       setBioRunning(false);
@@ -302,6 +310,11 @@ function LoginForm() {
       <div className="mb-5 flex justify-center sm:hidden">
         <LanguageSwitcher align="center" className="h-9 rounded-full px-4" />
       </div>
+      {bioError && (
+        <p className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">
+          {bioError}
+        </p>
+      )}
       {bioAvailable && bioEnabled && (
         <div className="mb-5">
           <Button
@@ -322,7 +335,10 @@ function LoginForm() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {t("login.email")}
           </Label>
           <Input
@@ -338,7 +354,10 @@ function LoginForm() {
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label
+              htmlFor="password"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               {t("login.password")}
             </Label>
             <Link
@@ -360,10 +379,7 @@ function LoginForm() {
           />
         </div>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground select-none">
-          <Checkbox
-            checked={remember}
-            onCheckedChange={(v) => setRemember(v === true)}
-          />
+          <Checkbox checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
           {t("login.remember")}
         </label>
         <Button

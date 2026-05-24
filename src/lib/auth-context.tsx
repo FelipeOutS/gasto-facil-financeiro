@@ -5,6 +5,7 @@ import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
   clearLoginBio,
+  clearLoginBioSessionOnly,
   isLoginBioBridgeAvailable,
   isLoginBioEnabledForEmail,
   LOGIN_BIO_SESSION_RESTORED_EVENT,
@@ -34,11 +35,7 @@ type AuthContextValue = {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (
-    nome: string,
-    email: string,
-    password: string,
-  ) => Promise<{ error: Error | null }>;
+  signUp: (nome: string, email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
@@ -109,7 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })();
       }, 0);
     };
-    window.addEventListener(LOGIN_BIO_SESSION_RESTORED_EVENT, onBioSessionRestored as EventListener);
+    window.addEventListener(
+      LOGIN_BIO_SESSION_RESTORED_EVENT,
+      onBioSessionRestored as EventListener,
+    );
 
     // 2) then existing session
     withAuthTimeout(supabase.auth.getSession())
@@ -139,14 +139,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       window.clearTimeout(loadingFallback);
       sub.subscription.unsubscribe();
-      window.removeEventListener(LOGIN_BIO_SESSION_RESTORED_EVENT, onBioSessionRestored as EventListener);
+      window.removeEventListener(
+        LOGIN_BIO_SESSION_RESTORED_EVENT,
+        onBioSessionRestored as EventListener,
+      );
     };
   }, []);
 
   async function loadProfile(uid: string) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url")
+      .select(
+        "id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url",
+      )
       .eq("id", uid)
       .maybeSingle();
     if (data) setProfile(data as Profile);
@@ -190,7 +195,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
-      clearLoginBio();
+      // Logout encerra a sessão real e remove tokens salvos, mas mantém a
+      // preferência local para a tela explicar que a senha é necessária.
+      clearLoginBioSessionOnly();
       await supabase.auth.signOut();
       setActiveUserId(null);
       setProfile(null);
@@ -213,7 +220,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: saved, error } = await supabase
         .from("profiles")
         .upsert(payload, { onConflict: "id" })
-        .select("id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url")
+        .select(
+          "id, nome, tipo_cadastro, cpf, cnpj, razao_social, nome_fantasia, responsavel_nome, telefone, avatar_url",
+        )
         .maybeSingle();
       if (error) return { error };
       if (saved) setProfile(saved as Profile);

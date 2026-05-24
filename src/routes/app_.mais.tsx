@@ -1,12 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Fingerprint, Home, Languages, Lock, LogOut, Sparkles, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Fingerprint,
+  Home,
+  Languages,
+  Lock,
+  LogOut,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  disableAppLock,
-  enableAppLock,
-  useAppLock,
-} from "@/lib/app-lock";
+import { disableAppLock, enableAppLock, useAppLock } from "@/lib/app-lock";
 
 import {
   clearLoginBio,
@@ -47,7 +53,7 @@ function AppMaisPage() {
   const [loginBioAvailable, setLoginBioAvailable] = useState(false);
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
-  
+
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
   useEffect(() => {
@@ -130,7 +136,8 @@ function AppMaisPage() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      // Sair da conta encerra a sessão real e remove a entrada biométrica;
+      // Sair da conta encerra a sessão real. A preferência biométrica pode
+      // permanecer localmente, mas só volta a funcionar após novo login.
       // "Bloquear aplicativo" é a ação local que mantém a sessão aberta.
       try {
         await signOut();
@@ -141,9 +148,6 @@ function AppMaisPage() {
       void navigate({ to: "/login", replace: true });
     }
   }
-
-
-
 
   function renderCard(item: NavLeaf) {
     const Icon = item.icon;
@@ -197,12 +201,7 @@ function AppMaisPage() {
 
       <section className="mt-5 rounded-3xl border border-border bg-card p-4 shadow-card">
         <div className="flex items-center gap-3">
-          <UserAvatar
-            url={profile?.avatar_url}
-            name={displayName}
-            email={user?.email}
-            size={56}
-          />
+          <UserAvatar url={profile?.avatar_url} name={displayName} email={user?.email} size={56} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{displayName}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
@@ -286,7 +285,6 @@ function AppMaisPage() {
         </section>
       )}
 
-
       {/* Dashboard + pessoal */}
       <section className="mt-5 space-y-2">
         <Link
@@ -344,11 +342,8 @@ function AppMaisPage() {
       >
         <LogOut className="h-4 w-4" />
         {t("more.signOut")}
-        <span className="ml-2 text-[10px] font-normal text-destructive/70">
-          (encerra a sessão)
-        </span>
+        <span className="ml-2 text-[10px] font-normal text-destructive/70">(encerra a sessão)</span>
       </button>
-
     </MobileShell>
   );
 }

@@ -37,12 +37,16 @@ export const APP_LOCKED_FLAG_KEY = "app_locked_by_biometric";
 export function markAppLockedNow(): void {
   try {
     window.localStorage.setItem(APP_LOCKED_FLAG_KEY, "true");
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 export function clearAppLockedFlag(): void {
   try {
     window.localStorage.removeItem(APP_LOCKED_FLAG_KEY);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 export function isAppLockedFlagSet(): boolean {
   if (typeof window === "undefined") return false;
@@ -65,7 +69,12 @@ type AndroidBiometricResultDetail = {
 function getBridge(): NonNullable<Window["AndroidBiometric"]> | null {
   if (typeof window === "undefined") return null;
   const b = window.AndroidBiometric;
-  return b && typeof b.authenticate === "function" ? b : null;
+  if (!b) return null;
+  const hasAny =
+    typeof b.requestAuthentication === "function" ||
+    typeof b.authenticate === "function" ||
+    typeof (b as { unlock?: unknown }).unlock === "function";
+  return hasAny ? b : null;
 }
 
 export function isAppLockBridgeAvailable(): boolean {
@@ -94,10 +103,11 @@ export function isAppLockEnabled(): boolean {
 function runAndroidBiometric(timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
   return new Promise((resolve) => {
     const b = getBridge();
-    if (!b?.authenticate) {
+    if (!b) {
       resolve({ success: false, error: "Biometria nativa indisponível neste aparelho." });
       return;
     }
+    const bridge = b as NonNullable<Window["AndroidBiometric"]> & { unlock?: () => void };
     let settled = false;
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
@@ -116,10 +126,23 @@ function runAndroidBiometric(timeoutMs = 60_000): Promise<AndroidBiometricResult
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
-    try {
-      b.authenticate();
-    } catch (e) {
-      console.log("[AppLock] erro ao chamar authenticate:", e);
+    const attempts: Array<{ name: string; fn?: () => void }> = [
+      { name: "requestAuthentication", fn: bridge.requestAuthentication },
+      { name: "authenticate", fn: bridge.authenticate },
+      { name: "unlock", fn: bridge.unlock },
+    ];
+    let invoked = false;
+    for (const attempt of attempts) {
+      if (typeof attempt.fn !== "function") continue;
+      try {
+        attempt.fn.call(bridge);
+        invoked = true;
+        break;
+      } catch (e) {
+        console.log("[AppLock] erro ao chamar biometria:", attempt.name, e);
+      }
+    }
+    if (!invoked) {
       finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
     }
   });
@@ -141,7 +164,9 @@ export async function enableAppLock(): Promise<void> {
 export function disableAppLock(): void {
   try {
     window.localStorage.removeItem(APP_LOCK_STORAGE_KEY);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 
 type AppLockContextValue = {
@@ -268,7 +293,9 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     }
     try {
       window.location.assign("/login");
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   }, [signOut]);
 
   const value = useMemo<AppLockContextValue>(

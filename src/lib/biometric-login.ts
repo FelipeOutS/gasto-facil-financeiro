@@ -83,7 +83,8 @@ export function isLoginBioEnabledForEmail(email: string | null | undefined): boo
     return (
       window.localStorage.getItem(userEnabledKey(normalized)) === "true" ||
       (window.localStorage.getItem(LEGACY_LOGIN_BIO_ENABLED_KEY) === "true" &&
-        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() === normalized)
+        window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)?.trim().toLowerCase() ===
+          normalized)
     );
   } catch {
     return false;
@@ -119,7 +120,12 @@ export function isLoginBioInProgress(): boolean {
 }
 
 export function isLoginBioUnlockRequired(): boolean {
-  return isLoginBioBridgeAvailable() && isLoginBioEnabled() && !isLoginBioUnlocked() && !isLoginBioInProgress();
+  return (
+    isLoginBioBridgeAvailable() &&
+    isLoginBioEnabled() &&
+    !isLoginBioUnlocked() &&
+    !isLoginBioInProgress()
+  );
 }
 
 export function setLoginBioInProgress(value: boolean): void {
@@ -135,14 +141,18 @@ export function setLoginBioInProgress(value: boolean): void {
 export function getLoginBioEmail(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ?? window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY);
+    return (
+      window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY) ??
+      window.localStorage.getItem(LEGACY_LOGIN_BIO_EMAIL_KEY)
+    );
   } catch {
     return null;
   }
 }
 
 export function persistLoginBioSession(session: Session | null | undefined): boolean {
-  if (typeof window === "undefined" || !session?.access_token || !session.refresh_token) return false;
+  if (typeof window === "undefined" || !session?.access_token || !session.refresh_token)
+    return false;
   try {
     const email = session.user?.email?.trim().toLowerCase() ?? "";
     const payload: PersistedLoginBioSession = {
@@ -196,6 +206,12 @@ export function clearPersistedLoginBioSession(): void {
   } catch {
     /* ignore */
   }
+}
+
+export function clearLoginBioSessionOnly(): void {
+  clearPersistedLoginBioSession();
+  setLoginBioUnlocked(false);
+  setLoginBioInProgress(false);
 }
 
 export function clearLoginBio(): void {
@@ -273,7 +289,12 @@ export function runLoginBiometric(
       resolve(detail);
     };
     const timer = setTimeout(
-      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente.", method: usedMethod }),
+      () =>
+        finish({
+          success: false,
+          error: "A biometria não respondeu. Tente novamente.",
+          method: usedMethod,
+        }),
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
@@ -313,37 +334,74 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
   session: Session | null;
   userId: string | null;
 }> {
+  const hasValidSessionShape = (value: Session | null): value is Session =>
+    !!value?.access_token && !!value.refresh_token && !!value.user?.id;
+
+  async function refreshCurrentSession(): Promise<Session | null> {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      const refreshedSession = data.session ?? null;
+      const refreshResult = {
+        hasSession: !!refreshedSession,
+        userId: refreshedSession?.user?.id ?? null,
+        email: refreshedSession?.user?.email ?? null,
+        error: error?.message ?? null,
+      };
+      console.log("[Biometria] refreshSession resultado:", refreshResult);
+      if (!error && hasValidSessionShape(refreshedSession)) {
+        persistLoginBioSession(refreshedSession);
+        return refreshedSession;
+      }
+    } catch (error) {
+      console.log("[Biometria] refreshSession resultado:", {
+        hasSession: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return null;
+  }
+
   async function restoreFromSavedToken(): Promise<Session | null> {
     const persisted = getPersistedLoginBioSession();
     if (!persisted?.refresh_token) return null;
-    console.log("[AndroidBiometricLogin] tentando restaurar sessão com refresh_token");
+    console.log("[Biometria] tentando restaurar sessão com refresh_token");
     try {
       const { data, error } = await supabase.auth.setSession({
         access_token: persisted.access_token,
         refresh_token: persisted.refresh_token,
       });
-      if (!error && data.session) {
+      if (!error && hasValidSessionShape(data.session ?? null)) {
         persistLoginBioSession(data.session);
-        console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
+        console.log("[Biometria] sessão restaurada com sucesso");
         return data.session;
       }
       const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession({
         refresh_token: persisted.refresh_token,
       });
-      if (!refreshError && refreshed.session) {
+      const refreshResult = {
+        hasSession: !!refreshed.session,
+        userId: refreshed.session?.user?.id ?? null,
+        email: refreshed.session?.user?.email ?? null,
+        error: refreshError?.message ?? null,
+      };
+      console.log("[Biometria] refreshSession resultado:", refreshResult);
+      if (!refreshError && hasValidSessionShape(refreshed.session ?? null)) {
         persistLoginBioSession(refreshed.session);
-        console.log("[AndroidBiometricLogin] sessão restaurada com sucesso");
+        console.log("[Biometria] sessão restaurada com sucesso");
         return refreshed.session;
       }
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.log("[Biometria] refreshSession resultado:", {
+        hasSession: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
     return null;
   }
 
   const { data: current } = await supabase.auth.getSession();
   let session = current.session ?? null;
-  console.log("[Biometria] session existe após digital:", !!session);
+  console.log("[Biometria] sessão após biometria:", !!session);
   console.log("[Biometria] usuário da sessão:", session?.user?.email);
   console.log(
     session
@@ -351,21 +409,25 @@ export async function restoreLoginBioSessionAfterBiometric(): Promise<{
       : "[AndroidBiometricLogin] getSession não encontrou sessão",
   );
 
-  if (!session) {
+  if (!hasValidSessionShape(session)) {
+    session = await refreshCurrentSession();
+  }
+
+  if (!hasValidSessionShape(session)) {
     session = await restoreFromSavedToken();
-    console.log("[Biometria] session existe após digital:", !!session);
+    console.log("[Biometria] sessão após biometria:", !!session);
     console.log("[Biometria] usuário da sessão:", session?.user?.email);
   }
 
-  if (!session) {
+  if (!hasValidSessionShape(session)) {
     console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
     return { session: null, userId: null };
   }
 
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData.user) {
-    session = await restoreFromSavedToken();
-    if (!session) {
+    session = (await refreshCurrentSession()) ?? (await restoreFromSavedToken());
+    if (!hasValidSessionShape(session)) {
       console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
       return { session: null, userId: null };
     }
@@ -410,14 +472,21 @@ export async function enableLoginBio(email: string): Promise<void> {
   console.log("[EnableBiometric] biometric success:", r.success);
 
   if (r.success !== true) {
-    const msg = r.error && r.error.trim().length > 0 ? r.error : "Autenticação biométrica cancelada.";
+    const msg =
+      r.error && r.error.trim().length > 0 ? r.error : "Autenticação biométrica cancelada.";
     console.log("[EnableBiometric] error:", msg);
     throw new Error(msg);
   }
 
   try {
-    console.log("[EnableBiometric] getSession exists:", typeof supabase.auth.getSession === "function");
-    console.log("[EnableBiometric] refreshSession exists:", typeof supabase.auth.refreshSession === "function");
+    console.log(
+      "[EnableBiometric] getSession exists:",
+      typeof supabase.auth.getSession === "function",
+    );
+    console.log(
+      "[EnableBiometric] refreshSession exists:",
+      typeof supabase.auth.refreshSession === "function",
+    );
 
     const { data: sessionData } = await supabase.auth.getSession();
     let session = sessionData.session ?? null;
@@ -427,7 +496,13 @@ export async function enableLoginBio(email: string): Promise<void> {
       session = refreshed.session ?? null;
     }
 
-    if (!session || !session.access_token || !session.refresh_token || !session.user?.id || !session.user?.email) {
+    if (
+      !session ||
+      !session.access_token ||
+      !session.refresh_token ||
+      !session.user?.id ||
+      !session.user?.email
+    ) {
       console.log("[EnableBiometric] access token exists:", !!session?.access_token);
       console.log("[EnableBiometric] refresh token exists:", !!session?.refresh_token);
       console.log("[EnableBiometric] user id:", session?.user?.id ?? null);
@@ -462,4 +537,3 @@ export async function enableLoginBio(email: string): Promise<void> {
     throw e instanceof Error ? e : new Error(msg);
   }
 }
-
