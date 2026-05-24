@@ -28,6 +28,34 @@
       "orcamento": "Budget",
       "investimentos": "Investments",
       "sistema": "System"
+    },
+    "summary": {
+      "allClearTitle": "All clear here",
+      "allClearDesc": "No alerts need your attention right now.",
+      "oneToReview": "You have 1 alert to review",
+      "manyToReview": "You have {{n}} alerts to review",
+      "total": "Active",
+      "critical": "Critical",
+      "important": "Important",
+      "unread": "Unread"
+    },
+    "groups": {
+      "critica": "Critical",
+      "atencao": "Attention",
+      "informativos": "Informational"
+    },
+    "empty": {
+      "todos": "No alerts right now.",
+      "nao_lidos": "No unread alerts.",
+      "importantes": "No important alerts right now.",
+      "cartoes": "No card alerts right now.",
+      "contas": "No bills need your attention.",
+      "contas_receber": "No receivables in alert.",
+      "assinaturas": "No subscriptions need attention.",
+      "gastos": "No unusual spending right now.",
+      "orcamento": "No budget alerts right now.",
+      "investimentos": "No investment alerts right now.",
+      "sistema": "No system alerts right now."
     }
   },
   "radar": {
