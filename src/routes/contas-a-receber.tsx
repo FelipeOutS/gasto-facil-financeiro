@@ -621,7 +621,7 @@ function ContaReceberFormDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toast.error(t("form.toastError"));
+      toastFromError(e, t("form.toastError"));
     } finally {
       setSaving(false);
     }
