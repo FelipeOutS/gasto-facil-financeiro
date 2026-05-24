@@ -47,7 +47,7 @@ export function ExpiredAccessBanner() {
       title: "Aguardando confirmação de pagamento",
       msg: "Assim que o pagamento for confirmado, seu acesso premium é liberado.",
       cta: "Ver pagamento",
-      ctaCls: "bg-warning text-warning-foreground hover:bg-warning/90",
+      ctaCls: "bg-warning text-background hover:bg-warning/90",
     },
     cancelled: {
       icon: AlertTriangle,
