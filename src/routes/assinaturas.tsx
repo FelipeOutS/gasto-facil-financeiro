@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getEconomicRadar } from "@/server/radar.functions";
+import { requireOnline } from "@/lib/use-online-status";
 import {
   Plus,
   RefreshCw,
