@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan, startTrial } from "@/lib/use-plan";
 import {
