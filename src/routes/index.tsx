@@ -470,11 +470,12 @@ function Index() {
       {/* Card de assinatura/plano */}
       <PlanoCard className="mt-4" />
 
-      {/* Bloco da Central de Alertas */}
-      <DashboardAlertasBloco className="mt-4" />
+      {/* Alertas + Radar — lado a lado em desktop para não esticar full-width */}
+      <section className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-3 lg:gap-4">
+        <DashboardAlertasBloco className="lg:col-span-2" />
+        <RadarEconomicoCard className="" />
+      </section>
 
-      {/* Radar Econômico — dólar, euro e conversor */}
-      <RadarEconomicoCard className="mt-4" />
 
       {/* Aviso contextual: assinaturas em moeda estrangeira */}
       <AssinaturasMoedaEstrangeiraBanner />
