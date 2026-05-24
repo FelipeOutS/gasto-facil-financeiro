@@ -130,7 +130,8 @@ function AppMaisPage() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      // Sair da conta encerra a sessão real e remove a entrada biométrica;
+      // Sair da conta encerra a sessão real. A preferência biométrica pode
+      // permanecer localmente, mas só volta a funcionar após novo login.
       // "Bloquear aplicativo" é a ação local que mantém a sessão aberta.
       try {
         await signOut();
