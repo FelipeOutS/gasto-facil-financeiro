@@ -478,14 +478,25 @@ function SystemHealthPage() {
                             <TableCell className="text-xs">{r.recommended_action}</TableCell>
                             <TableCell className="text-right">
                               {r.provider_payment_id ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2"
-                                  onClick={() => copyText(r.provider_payment_id!)}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => openDiagnose(r.provider_payment_id!, r.current_period_end)}
+                                  >
+                                    <Stethoscope className="mr-1 h-3 w-3" />
+                                    Diagnosticar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2"
+                                    onClick={() => copyText(r.provider_payment_id!)}
+                                    title="Copiar ID"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               ) : null}
                             </TableCell>
                           </TableRow>
