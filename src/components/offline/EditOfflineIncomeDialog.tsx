@@ -22,6 +22,7 @@ import {
   updateIncome,
   type OfflineIncome,
 } from "@/lib/offline/offline-income-queue";
+import { recordHistoryEvent } from "@/lib/offline/offline-sync-history";
 import { TIPOS_RECEITA, type TipoReceita } from "@/lib/types";
 import { parseBRLInput } from "@/lib/format";
 
