@@ -130,8 +130,8 @@ function AppMaisPage() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      // Importante: NÃO remover a biometria local aqui. A biometria só é
-      // removida manualmente em Configurações.
+      // Sair da conta encerra a sessão real e remove a entrada biométrica;
+      // "Bloquear aplicativo" é a ação local que mantém a sessão aberta.
       try {
         await signOut();
       } catch {
