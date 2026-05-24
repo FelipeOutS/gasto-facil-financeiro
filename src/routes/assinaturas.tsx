@@ -315,16 +315,19 @@ function AssinaturasPage() {
   }
 
   async function handleConfirmarSuspeita(r: Recorrencia) {
+    if (!(await requireOnline())) return;
     await atualizarRecorrencia(r.id, { status: "ativa" });
     toast.success(t("toasts.confirmed", { name: r.nome }));
   }
 
   async function handleIgnorar(r: Recorrencia) {
+    if (!(await requireOnline())) return;
     await atualizarRecorrencia(r.id, { status: "cancelada" });
     toast(t("toasts.ignored", { name: r.nome }));
   }
 
   async function handleTogglePause(r: Recorrencia) {
+    if (!(await requireOnline())) return;
     const novo: StatusRecorrencia = r.status === "pausada" ? "ativa" : "pausada";
     await atualizarRecorrencia(r.id, { status: novo });
     toast.success(
@@ -336,6 +339,7 @@ function AssinaturasPage() {
 
   async function handleCancelar(r: Recorrencia) {
     if (!confirm(t("confirms.cancel", { name: r.nome }))) return;
+    if (!(await requireOnline())) return;
     await atualizarRecorrencia(r.id, { status: "cancelada" });
     toast.success(t("toasts.canceled"));
   }
