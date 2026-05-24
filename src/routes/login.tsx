@@ -101,6 +101,7 @@ function LoginForm() {
 
   async function handleBiometric() {
     if (bioRunning) return;
+    console.log("[Biometria] botão clicado");
     if (!isLoginBioBridgeAvailable()) {
       setBioError("Biometria nativa indisponível neste aparelho.");
       return;
@@ -111,7 +112,11 @@ function LoginForm() {
     let navigatedWithSession = false;
     try {
       console.log("[AndroidBiometricLogin] início do fluxo");
+      const { data: beforeData } = await supabase.auth.getSession();
+      const sessionBefore = beforeData.session ?? null;
+      console.log("[Biometria] sessão antes da biometria:", !!sessionBefore);
       const result = await runLoginBiometric();
+      console.log("[Biometria] resultado nativo:", result);
       if (result.success !== true) {
         setBioError(result.error || "Não foi possível validar a biometria.");
         return;
@@ -121,7 +126,7 @@ function LoginForm() {
       const { session } = await restoreLoginBioSessionAfterBiometric();
 
       if (session) {
-        console.log("[Biometria] navegando para dashboard após sucesso");
+        console.log("[Biometria] sessão após biometria:", true);
         setHasSupabaseSession(true);
         setBiometricUnlocked(true);
         setLoginBioUnlocked(true);
@@ -129,6 +134,7 @@ function LoginForm() {
         toast.success(t("login.welcomeBack"));
         navigatedWithSession = true;
         finishBioProgressSoon();
+        console.log("[Biometria] navegando para dashboard");
         console.log("[AndroidBiometricLogin] navegando para dashboard");
         redirectToProtected();
         return;
@@ -136,13 +142,14 @@ function LoginForm() {
 
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
-      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
+      console.log("[Biometria] sessão após biometria:", false);
+      setBioError("Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.");
       setBioMode(false);
     } catch {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
       console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
-      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
+      setBioError("Sessão expirada. Entre com sua senha uma vez para reativar o acesso por biometria neste aparelho.");
       setBioMode(false);
     } finally {
       setBioRunning(false);
