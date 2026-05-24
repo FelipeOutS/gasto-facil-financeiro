@@ -361,11 +361,11 @@ export function DesktopSidebar() {
         </div>
       </nav>
 
-      {/* System controls: theme + collapse */}
+      {/* Theme toggle */}
       <div
         className={cn(
           "mt-2 mb-2 flex items-center",
-          collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3 justify-center",
+          collapsed ? "justify-center px-2" : "px-3 justify-center",
         )}
       >
         <Tooltip>
@@ -376,27 +376,29 @@ export function DesktopSidebar() {
           </TooltipTrigger>
           <TooltipContent side="right">{t("aria.toggleTheme", { defaultValue: "Alternar tema" })}</TooltipContent>
         </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:border-border hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              {collapsed ? (
-                <PanelLeftOpen className="h-4 w-4 transition-transform duration-200" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4 transition-transform duration-200" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{collapsed ? "Expandir menu" : "Recolher menu"}</TooltipContent>
-        </Tooltip>
       </div>
 
       {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/conta"
+              aria-label={profile?.nome || user?.email || t("header.fallbackUser")}
+              className="mx-auto mb-3 mt-1 flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
+            >
+              <UserAvatar
+                url={profile?.avatar_url}
+                name={profile?.nome ?? profile?.responsavel_nome}
+                email={user?.email}
+                size={36}
+              />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {profile?.nome || profile?.responsavel_nome || user?.email || t("header.fallbackUser")}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
