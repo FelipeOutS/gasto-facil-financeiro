@@ -216,20 +216,38 @@ function OrcamentoPage() {
     };
   }, [ym, today, temOrcamento, limiteTotal, totalPlanejado, totalRealizado, diff]);
 
+  // Preferência local: incluir contas do mês no planejamento (por usuário/mês)
+  const incluirContasKey = `gi:orcamento:incluir-contas:${profile?.id ?? "anon"}:${ym.ano}-${String(ym.mes).padStart(2, "0")}`;
+  const [incluirContas, setIncluirContasState] = useState<boolean>(true);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(incluirContasKey);
+      setIncluirContasState(v === null ? true : v === "1");
+    } catch {
+      setIncluirContasState(true);
+    }
+  }, [incluirContasKey]);
+  const setIncluirContas = (v: boolean) => {
+    setIncluirContasState(v);
+    try {
+      localStorage.setItem(incluirContasKey, v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  };
+
   // Planejamento mensal (Orçamento Zero — MVP visual, sem banco)
   const planejamentoInfo = useMemo(() => {
     const renda = receitas
       .filter((r) => r.mes === ym.mes && r.ano === ym.ano)
       .reduce((acc, r) => acc + (r.valor || 0), 0);
 
-    // Soma de orçamento por categoria (evita duplicar com limite "total")
     const distribuidoCategorias = comLimite.reduce(
       (acc, l) => acc + (l.planejado || 0),
       0,
     );
 
-    // Contas do mês: soma de contas a pagar com vencimento no mês selecionado
-    const distribuidoContas = contasAPagar
+    const distribuidoContasReal = contasAPagar
       .filter((c) => {
         const parts = c.dataVencimento.split("-");
         const ano = Number(parts[0]);
@@ -238,7 +256,8 @@ function OrcamentoPage() {
       })
       .reduce((acc, c) => acc + (c.valor || 0), 0);
 
-    // Reserva/metas: soma de dinheiro_guardado atualizado no mês selecionado
+    const distribuidoContas = incluirContas ? distribuidoContasReal : 0;
+
     const ymPrefix = `${ym.ano}-${String(ym.mes).padStart(2, "0")}`;
     const distribuidoReserva = guardado
       .filter((g) => (g.dataAtualizacao || "").startsWith(ymPrefix))
@@ -259,8 +278,15 @@ function OrcamentoPage() {
       estado = "com_sobra";
     }
 
-    return { renda, distribuidoCategorias, distribuidoContas, distribuidoReserva, estado };
-  }, [receitas, contasAPagar, guardado, comLimite, ym]);
+    return {
+      renda,
+      distribuidoCategorias,
+      distribuidoContas,
+      distribuidoContasReal,
+      distribuidoReserva,
+      estado,
+    };
+  }, [receitas, contasAPagar, guardado, comLimite, ym, incluirContas]);
 
 
 
