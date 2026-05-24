@@ -21,6 +21,7 @@ import {
   isLoginBioEnabledForEmail,
   isLoginBioBridgeAvailable,
   isLoginBioEnabled,
+  notifyLoginBioSessionRestored,
   persistLoginBioSession,
   restoreLoginBioSessionAfterBiometric,
   runLoginBiometric,
@@ -120,9 +121,11 @@ function LoginForm() {
       const { session } = await restoreLoginBioSessionAfterBiometric();
 
       if (session) {
+        console.log("[Biometria] navegando para dashboard após sucesso");
         setHasSupabaseSession(true);
         setBiometricUnlocked(true);
         setLoginBioUnlocked(true);
+        notifyLoginBioSessionRestored(session);
         toast.success(t("login.welcomeBack"));
         navigatedWithSession = true;
         finishBioProgressSoon();
@@ -133,13 +136,13 @@ function LoginForm() {
 
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
-      setBioError("Por segurança, entre novamente com sua senha.");
+      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
       setBioMode(false);
     } catch {
       setHasSupabaseSession(false);
       setLoginBioUnlocked(false);
       console.log("[AndroidBiometricLogin] falha final: sessão ausente/expirada");
-      setBioError("Por segurança, entre novamente com sua senha.");
+      setBioError("Sessão expirada. Entre com sua senha uma vez para continuar.");
       setBioMode(false);
     } finally {
       setBioRunning(false);
@@ -156,10 +159,15 @@ function LoginForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
+    console.log("[Biometria] login por senha funcionou, salvando preferência biométrica");
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      persistLoginBioSession(data.session);
+      setBioEnabled(isLoginBioBridgeAvailable());
+      setLoginBioUnlocked(true);
+    }
     if (email.trim() && isLoginBioEnabledForEmail(email.trim())) {
       setBioEnabled(true);
-      const { data } = await supabase.auth.getSession();
-      persistLoginBioSession(data.session);
     }
     // Se bridge disponível e ainda não ativada, oferece ativar.
     if (bioAvailable && !bioEnabled) {
