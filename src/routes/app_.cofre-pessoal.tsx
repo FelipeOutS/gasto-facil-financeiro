@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
+  enableSecureScreen,
+  disableSecureScreen,
+} from "@/lib/android-security";
+import {
   Shield,
   LockKeyhole,
   Search,
@@ -118,6 +122,15 @@ function CofrePessoalPage() {
   const { isUnlocked, masterKey, lock } = useVaultKey();
   const [bootstrapState, setBootstrapState] = useState<"loading" | "needs_setup" | "needs_unlock" | "ready">("loading");
   const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
+
+  // Ativa/Desativa bloqueio de print no Android WebView enquanto o usuário
+  // estiver dentro do Cofre Pessoal (inclui setup, unlock, lista e detalhes).
+  useEffect(() => {
+    enableSecureScreen();
+    return () => {
+      disableSecureScreen();
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
