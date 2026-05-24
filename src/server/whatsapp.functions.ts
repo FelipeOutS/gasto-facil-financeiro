@@ -262,7 +262,8 @@ export const enviarMensagemTesteWhatsApp = createServerFn({ method: "POST" })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     if (!token) {
