@@ -5,6 +5,7 @@ import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
   clearLoginBio,
+  isLoginBioBridgeAvailable,
   isLoginBioEnabledForEmail,
   LOGIN_BIO_SESSION_RESTORED_EVENT,
   persistLoginBioSession,
@@ -158,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     async signIn(email, password) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error && data.session) {
+      if (!error && data.session && isLoginBioBridgeAvailable()) {
         console.log("[Biometria] login por senha funcionou, salvando preferência biométrica");
         persistLoginBioSession(data.session);
         setLoginBioUnlocked(true);
