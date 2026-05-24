@@ -196,9 +196,27 @@ function RootComponent() {
     <>
       <HreflangTags path={cleanPath} />
       <ConnectedAccountBanner />
+      <OfflineQueueMount />
       <Outlet />
       <Toaster position="top-center" />
     </>
+  );
+}
+
+/**
+ * Mantém a fila offline de gastos viva no app inteiro: ao logar, dispara
+ * a sincronização (caso já esteja online) e escuta o evento `online`.
+ * O badge só aparece quando há pendências.
+ */
+function OfflineQueueMount() {
+  const { user } = useAuth();
+  useOfflineExpenseQueue(user?.id ?? null);
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md justify-center px-3">
+      <div className="pointer-events-auto w-full">
+        <OfflineSyncStatus />
+      </div>
+    </div>
   );
 }
 
