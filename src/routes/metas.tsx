@@ -587,12 +587,13 @@ function MetaFormDialog({
     setImagemKey(getMetaCoverKey(nome, descricao));
   }, [nome, descricao, imagemManual, open, isCreate, isEdit]);
 
-  function handleCreateOrEdit() {
+  async function handleCreateOrEdit() {
     const objetivo = parseBRLInput(objetivoStr);
     if (!nome.trim() || !objetivo) {
       toast.error(t("toasts.missing"));
       return;
     }
+    if (!(await requireOnline())) return;
     if (isCreate) {
       addMeta({
         nome: nome.trim(),
