@@ -78,13 +78,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const featureAllowed = premiumRule
     ? isAdmin || (hasActiveAccess && planAllowsFeature(plan.plan, premiumRule.feature))
     : true;
+  const requiresBioUnlock = !!session && pathname !== "/login" && isLoginBioUnlockRequired();
 
   useEffect(() => {
-    if (loading || !session || pathname === "/login") return;
-    if (!isLoginBioUnlockRequired()) return;
+    if (loading || !requiresBioUnlock) return;
     console.log("[BioLogin] auth gate blocked reason:", "Biometric unlock required before protected content");
     void navigate({ to: "/login", replace: true });
-  }, [loading, session, pathname, navigate]);
+  }, [loading, requiresBioUnlock, navigate]);
 
   // Bloqueio de acesso por assinatura: usuário logado, sem plano ativo,
   // tentando acessar rota fora da allowlist => manda para /meu-plano.
@@ -155,6 +155,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (loading || !session) {
     return <BrandLoader />;
+  }
+
+  if (requiresBioUnlock) {
+    return <BrandLoader message="Validando biometria…" />;
   }
 
   // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
