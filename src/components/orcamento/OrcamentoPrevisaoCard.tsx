@@ -158,7 +158,7 @@ export function OrcamentoPrevisaoCard({
               {tipo === "dentro_previsto" && planejado !== undefined
                 ? labels.onTrack.replace("{{value}}", formatBRL(planejado))
                 : tipo === "risco_estouro" && diferenca !== undefined
-                  ? labels.overRisk.replace("{{value}}", formatBRL(diferenca))
+                  ? labels.overRisk.replace("{{value}}", formatBRL(Math.abs(diferenca)))
                   : tipo === "risco_estouro" && planejado !== undefined
                     ? labels.overValue.replace("{{value}}", formatBRL(planejado))
                     : null}
