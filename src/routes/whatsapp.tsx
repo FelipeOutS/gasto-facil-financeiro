@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
