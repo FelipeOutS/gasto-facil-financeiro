@@ -68,6 +68,19 @@
     "emptyCategorias": "No categories this month.",
     "pctDoMes": "{{pct}}% of month"
   },
+  "budgetEvolution": {
+    "title": "Budget evolution",
+    "description": "Compare what you planned with what you spent in recent months.",
+    "planned": "Planned",
+    "realized": "Spent",
+    "adherence": "Adherence",
+    "averageAdherence": "Average adherence",
+    "bestMonth": "Best month",
+    "biggestOverrun": "Biggest overrun",
+    "empty": "Create budgets in more months to track the evolution.",
+    "overBudget": "Above plan",
+    "underBudget": "Within plan"
+  },
   "comparativo": {
     "anterior": "Previous: {{valor}}",
     "noChange": "No change",
