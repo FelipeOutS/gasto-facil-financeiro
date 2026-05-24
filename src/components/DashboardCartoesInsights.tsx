@@ -236,7 +236,8 @@ export function DashboardCartoesInsights({
   if (!temAlgumaSecao && !comparacao) return null;
 
   return (
-    <>
+    <div className={cn("grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4", className)}>
+
       {/* Insight + comparação */}
       <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-3">
 
