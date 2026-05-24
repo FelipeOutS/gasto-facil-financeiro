@@ -625,8 +625,61 @@ function SystemHealthPage() {
                     </Table>
                   </div>
                 )}
+
+                {cleanupLast ? (
+                  <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs">
+                    <div className="mb-1 font-semibold">
+                      Última limpeza · {fmtDateTime(cleanupLast.executed_at)}
+                    </div>
+                    <ul className="space-y-0.5">
+                      {cleanupLast.results.map((r) => (
+                        <li key={r.table} className="flex justify-between">
+                          <span className="font-mono">{r.table}</span>
+                          <span className={r.success ? "text-emerald-600" : "text-red-600"}>
+                            {r.success
+                              ? `${r.deleted} apagado(s)`
+                              : `falhou: ${r.error ?? "erro"}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
+
+            <AlertDialog open={cleanupOpen} onOpenChange={setCleanupOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                    Confirmar limpeza de logs antigos
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação apagará logs antigos conforme a política de retenção
+                    (webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
+                    payment_events 180d). Ela <strong>não</strong> apagará usuários,
+                    pagamentos, planos, gastos ou receitas. Deseja continuar?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={cleanupRunning}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void runCleanup();
+                    }}
+                    disabled={cleanupRunning}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {cleanupRunning ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : null}
+                    Confirmar limpeza
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* Listas */}
             <SectionTable
