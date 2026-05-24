@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategoriaCard";
 import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimiteDiarioCard";
+import { OrcamentoPrevisaoCard } from "@/components/orcamento/OrcamentoPrevisaoCard";
+import type { PrevisaoTipo } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
