@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
+  enableSecureScreen,
+  disableSecureScreen,
+} from "@/lib/android-security";
+import {
   Shield,
   LockKeyhole,
   Search,
