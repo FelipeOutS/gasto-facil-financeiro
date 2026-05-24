@@ -159,7 +159,7 @@ function RelatoriosPage() {
         getLimite(catId, ym.mes, ym.ano),
         mesEfetivoGasto,
       ),
-    [categorias, gastos, ym],
+    [categorias, gastos, ym, limitesKey],
   );
   const resOrc = useMemo(() => resumirOrcamento(linhasOrc), [linhasOrc]);
 
