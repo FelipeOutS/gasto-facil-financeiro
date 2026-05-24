@@ -954,7 +954,7 @@ function SaldoHeroCard({
   const negativo = saldo < 0;
   const pctReceita = entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
   return (
-    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-elevated animate-rise sm:p-5">
+    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-elevated animate-rise sm:p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,var(--brand-soft),transparent_60%)]"
