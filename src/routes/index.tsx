@@ -901,7 +901,7 @@ function HeroGreeting({
       {/* Fundo premium: gradiente radial + glow + linha brand sutil */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,hsl(var(--brand)/0.12),transparent_55%),radial-gradient(80%_60%_at_0%_100%,hsl(var(--brand)/0.06),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,var(--brand-soft),transparent_55%),radial-gradient(80%_60%_at_0%_100%,var(--brand-tint,transparent),transparent_60%)]"
       />
       <div
         aria-hidden
