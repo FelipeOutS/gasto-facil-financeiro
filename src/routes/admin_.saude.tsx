@@ -26,6 +26,7 @@ import {
   Copy,
   Database,
   Clock,
+  Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,6 +35,7 @@ import {
   type SystemHealthData,
   type LogRetentionPreview,
 } from "@/server/system-health.functions";
+import { PaymentDiagnoseDialog } from "@/components/admin/PaymentDiagnoseDialog";
 
 function fmtMoneyCents(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -127,6 +129,15 @@ function SystemHealthPage() {
   const [retention, setRetention] = useState<LogRetentionPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [retentionLoading, setRetentionLoading] = useState(false);
+  const [diagPaymentId, setDiagPaymentId] = useState<string | null>(null);
+  const [diagPeriodEnd, setDiagPeriodEnd] = useState<string | null>(null);
+  const [diagOpen, setDiagOpen] = useState(false);
+
+  const openDiagnose = useCallback((paymentId: string, periodEnd?: string | null) => {
+    setDiagPaymentId(paymentId);
+    setDiagPeriodEnd(periodEnd ?? null);
+    setDiagOpen(true);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -367,14 +378,25 @@ function SystemHealthPage() {
                             <TableCell className="text-xs">{r.status}</TableCell>
                             <TableCell className="text-right">
                               {r.provider_payment_id ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2"
-                                  onClick={() => copyText(r.provider_payment_id!)}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => openDiagnose(r.provider_payment_id!)}
+                                  >
+                                    <Stethoscope className="mr-1 h-3 w-3" />
+                                    Diagnosticar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2"
+                                    onClick={() => copyText(r.provider_payment_id!)}
+                                    title="Copiar ID"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               ) : null}
                             </TableCell>
                           </TableRow>
@@ -456,14 +478,25 @@ function SystemHealthPage() {
                             <TableCell className="text-xs">{r.recommended_action}</TableCell>
                             <TableCell className="text-right">
                               {r.provider_payment_id ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2"
-                                  onClick={() => copyText(r.provider_payment_id!)}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => openDiagnose(r.provider_payment_id!, r.current_period_end)}
+                                  >
+                                    <Stethoscope className="mr-1 h-3 w-3" />
+                                    Diagnosticar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2"
+                                    onClick={() => copyText(r.provider_payment_id!)}
+                                    title="Copiar ID"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               ) : null}
                             </TableCell>
                           </TableRow>
@@ -574,6 +607,23 @@ function SystemHealthPage() {
                 { label: "Status", render: (r) => r.status },
                 { label: "Raw", render: (r) => r.raw_status ?? "—" },
                 { label: "Usuário", render: (r) => r.user_id ? r.user_id.slice(0, 8) + "…" : "—" },
+                {
+                  label: "Ação",
+                  render: (r) =>
+                    r.external_payment_id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2"
+                        onClick={() => openDiagnose(r.external_payment_id)}
+                      >
+                        <Stethoscope className="mr-1 h-3 w-3" />
+                        Diagnosticar
+                      </Button>
+                    ) : (
+                      "—"
+                    ),
+                },
               ]}
             />
 
@@ -606,6 +656,21 @@ function SystemHealthPage() {
           </>
         ) : null}
       </div>
+      <PaymentDiagnoseDialog
+        paymentId={diagPaymentId}
+        open={diagOpen}
+        onOpenChange={(o) => {
+          setDiagOpen(o);
+          if (!o) {
+            setDiagPaymentId(null);
+            setDiagPeriodEnd(null);
+          }
+        }}
+        currentPeriodEnd={diagPeriodEnd}
+        onReconciled={() => {
+          void load();
+        }}
+      />
     </MobileShell>
   );
 }
