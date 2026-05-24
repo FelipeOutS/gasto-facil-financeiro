@@ -41,6 +41,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import type { Meta } from "@/lib/types";
 import { formatBRL, formatDateBR, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
