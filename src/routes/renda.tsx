@@ -1483,13 +1483,14 @@ function EditReceitaDialog({
     }
   }, [receita]);
 
-  function handleSave() {
+  async function handleSave() {
     if (!receita) return;
     const valor = parseBRLInput(valorStr);
     if (!valor || !descricao.trim()) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     updateReceita(
       receita.id,
       { descricao: descricao.trim(), valor, data, tipo, clienteId },
