@@ -58,12 +58,6 @@ const statusConfig = {
     iconColor: "text-muted-foreground",
     Icon: Clock,
   },
-  info: {
-    ring: "ring-1 ring-info/30",
-    iconBg: "bg-info/15",
-    iconColor: "text-info",
-    Icon: BarChart3,
-  },
 };
 
 function resolveStatus(tipo: PrevisaoTipo): keyof typeof statusConfig {
@@ -78,9 +72,8 @@ function resolveStatus(tipo: PrevisaoTipo): keyof typeof statusConfig {
       return "destructive";
     case "futuro":
     case "sem_dados":
-      return "muted";
     default:
-      return "info";
+      return "muted";
   }
 }
 
