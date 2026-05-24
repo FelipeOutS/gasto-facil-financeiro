@@ -306,6 +306,7 @@ function AppMaisPage() {
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Link>
         {PERSONAL_ITEMS.map(renderCard)}
+        <OfflineHistoryTrigger userId={user?.id ?? null} />
       </section>
 
       {/* Grupos */}
