@@ -1387,41 +1387,30 @@ function SummaryStat({
   tone?: StatTone;
   highlight?: boolean;
 }) {
-  const t = TONE_STYLES[tone];
+  const metricTone =
+    tone === "brand"
+      ? "primary"
+      : tone === "success"
+        ? "positive"
+        : tone === "info"
+          ? "default"
+          : "default";
   return (
-    <div
+    <MetricCard
+      label={label}
+      icon={icon}
+      tone={metricTone}
+      value={
+        <span className={cn("num", highlight && "text-xl sm:text-2xl")}>
+          {value}
+        </span>
+      }
+      hint={hint}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border p-3 sm:p-4 transition-all hover-lift card-press",
-        highlight
-          ? "bg-gradient-to-br from-card-elevated via-card to-card shadow-card"
-          : "bg-card",
-        t.ring,
+        "hover-lift card-press animate-rise",
+        highlight && "bg-gradient-to-br from-card-elevated via-card to-card",
       )}
-    >
-      <div className="flex items-center gap-2">
-        {icon && (
-          <span className={cn("grid h-7 w-7 place-items-center rounded-lg shrink-0", t.icon)}>
-            {icon}
-          </span>
-        )}
-        <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-muted-foreground font-semibold truncate">
-          {label}
-        </p>
-      </div>
-      <p
-        className={cn(
-          "mt-1.5 num font-extrabold truncate",
-          highlight ? "text-xl sm:text-2xl" : "text-base sm:text-lg",
-        )}
-      >
-        {value}
-      </p>
-      {hint && (
-        <p className="mt-0.5 text-[10px] sm:text-[11px] text-muted-foreground/90 truncate">
-          {hint}
-        </p>
-      )}
-    </div>
+    />
   );
 }
 
