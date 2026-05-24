@@ -238,7 +238,8 @@ export function DashboardCartoesInsights({
   return (
     <>
       {/* Insight + comparação */}
-      <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+      <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-6 xl:col-span-3">
+
         <div className="flex items-start gap-3">
           <span
             className={cn(
