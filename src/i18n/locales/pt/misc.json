@@ -28,6 +28,34 @@
       "orcamento": "Orçamento",
       "investimentos": "Investimentos",
       "sistema": "Sistema"
+    },
+    "summary": {
+      "allClearTitle": "Tudo certo por aqui",
+      "allClearDesc": "Nenhum alerta exigindo sua atenção no momento.",
+      "oneToReview": "Você tem 1 alerta para revisar",
+      "manyToReview": "Você tem {{n}} alertas para revisar",
+      "total": "Ativos",
+      "critical": "Críticos",
+      "important": "Importantes",
+      "unread": "Não lidos"
+    },
+    "groups": {
+      "critica": "Críticos",
+      "atencao": "Atenção",
+      "informativos": "Informativos"
+    },
+    "empty": {
+      "todos": "Nenhum alerta no momento.",
+      "nao_lidos": "Nenhum alerta não lido.",
+      "importantes": "Nenhum alerta importante agora.",
+      "cartoes": "Nenhum alerta de cartões agora.",
+      "contas": "Nenhuma conta exigindo atenção.",
+      "contas_receber": "Nenhuma conta a receber em alerta.",
+      "assinaturas": "Nenhuma assinatura precisa de atenção.",
+      "gastos": "Nenhum gasto fora do padrão no momento.",
+      "orcamento": "Nenhum alerta de orçamento agora.",
+      "investimentos": "Nenhum alerta de investimentos agora.",
+      "sistema": "Nenhum alerta do sistema agora."
     }
   },
   "radar": {
