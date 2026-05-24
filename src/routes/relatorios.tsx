@@ -44,6 +44,11 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { EvolucaoOrcamentoCard, type EvolucaoMes } from "@/components/relatorios/EvolucaoOrcamentoCard";
+import {
+  TendenciaCategoriasCard,
+  type TendenciaCategoria,
+  type TendenciaEstado,
+} from "@/components/relatorios/TendenciaCategoriasCard";
 import { useAuth } from "@/lib/auth-context";
 import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
