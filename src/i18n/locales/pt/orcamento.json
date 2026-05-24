@@ -70,6 +70,16 @@
     "includeBillsDescription": "Desative se essas contas já estiverem previstas nas categorias.",
     "billsExcludedNote": "Contas do mês não estão sendo somadas ao planejamento.",
     "billsDuplicateHint": "Se alguma conta já estiver prevista em uma categoria, você pode desativar essa opção.",
+    "suggestion": {
+      "title": "Sugestão para sua renda",
+      "description": "Uma divisão simples para começar seu planejamento.",
+      "essentials": "Essenciais",
+      "variables": "Variáveis",
+      "reserve": "Reserva e metas",
+      "cta": "Usar como base",
+      "note": "Use isso como ponto de partida. Ajuste conforme sua realidade.",
+      "ctaToast": "Em uma próxima etapa, você poderá aplicar essa sugestão aos limites."
+    },
     "noIncome": "Cadastre uma renda no mês para montar seu planejamento.",
     "noLimits": "Defina limites por categoria para distribuir sua renda.",
     "hasBillsNoLimits": "Você já tem contas previstas no mês. Defina limites por categoria para completar o planejamento.",
