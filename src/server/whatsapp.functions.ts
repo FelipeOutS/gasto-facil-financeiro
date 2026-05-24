@@ -15,7 +15,11 @@ function normTel(raw: string): string {
  * "Configurado" / "Não configurado".
  */
 export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Admin Master only — gate via feature key reuso (qualquer feature serve
+    // pra exigir login + assinatura ativa; aqui usamos whatsapp).
+    await assertFeatureAccess(context.userId, "whatsapp");
     const has = (v: string | undefined | null) =>
       typeof v === "string" && v.trim().length > 0;
     return {
