@@ -618,7 +618,7 @@ function RelatoriosPage() {
 
       {/* ===== Gráficos ===== */}
       <SectionLabel>{t("sections.graficos")}</SectionLabel>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <ChartCard title={t("chart.gastosCategoria")} icon={<PieChartIcon className="h-4 w-4" />}>
           {resumo.porCategoria.length === 0 ? (
             <EmptyChart label={t("chart.emptyGastos")} />
