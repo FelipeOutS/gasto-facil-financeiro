@@ -28,14 +28,27 @@ import {
   Clock,
   Stethoscope,
 } from "lucide-react";
-import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
   getSystemHealthDashboard,
   getLogRetentionPreview,
+  runLogRetentionCleanup,
   type SystemHealthData,
   type LogRetentionPreview,
+  type LogRetentionCleanupResult,
 } from "@/server/system-health.functions";
 import { PaymentDiagnoseDialog } from "@/components/admin/PaymentDiagnoseDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2, Loader2 } from "lucide-react";
 
 function fmtMoneyCents(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
