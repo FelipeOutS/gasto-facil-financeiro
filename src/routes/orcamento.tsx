@@ -14,6 +14,7 @@ import {
   Trash2,
   Sparkles,
 } from "lucide-react";
+import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategoriaCard";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -390,91 +391,28 @@ function OrcamentoPage() {
             </span>
           </div>
 
-          <ul className="space-y-2 stagger">
-            {comLimite.map((l) => {
-              const pct = Math.min(150, l.pct);
-              const corBarra =
-                l.status === "estouro"
-                  ? "bg-destructive"
-                  : l.status === "atencao"
-                    ? "bg-warning"
-                    : "bg-brand";
-              return (
-                <li
-                  key={l.cat.id}
-                  className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/40 hover:bg-card-elevated"
-                >
-                  <div className="flex items-center gap-3">
-                    <CategoryIcon categoria={l.cat} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p className="truncate text-sm font-semibold">{l.cat.nome}</p>
-                        <p className="num shrink-0 text-sm font-semibold">
-                          {formatBRL(l.realizado)}
-                          <span className="ml-1 font-normal text-muted-foreground">
-                            / {formatBRL(l.planejado)}
-                          </span>
-                        </p>
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-elevated">
-                          <div
-                            className={cn(
-                              "h-full transition-all animate-fill",
-                              corBarra,
-                            )}
-                            style={{ width: `${Math.min(100, pct)}%` }}
-                          />
-                        </div>
-                        <span
-                          className={cn(
-                            "shrink-0 text-[10px] font-medium num",
-                            l.status === "estouro" && "text-destructive",
-                            l.status === "atencao" && "text-warning",
-                            l.status === "ok" && "text-brand",
-                          )}
-                        >
-                          {Math.round(pct)}%
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between gap-2">
-                        <span
-                          className={cn(
-                            "text-[10px]",
-                            l.status === "estouro" && "text-destructive",
-                            l.status === "atencao" && "text-warning",
-                            l.status === "ok" && "text-brand",
-                          )}
-                        >
-                          {l.status === "estouro"
-                            ? t("list.overBy", { value: formatBRL(Math.abs(l.restante)) })
-                            : t("list.remaining", { value: formatBRL(l.restante) })}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(l.cat.id, l.cat.nome)}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand transition-colors"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            {t("list.edit")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removerLimite(l.cat.id, l.cat.nome)}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                            aria-label={t("list.removeAria", { name: l.cat.nome })}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            {t("list.remove")}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+          <ul className="space-y-3 stagger">
+            {comLimite.map((l) => (
+              <OrcamentoCategoriaCard
+                key={l.cat.id}
+                linha={l}
+                labels={{
+                  planned: t("list.plannedMini"),
+                  spent: t("list.spentMini"),
+                  remaining: t("list.remainingMini"),
+                  excess: t("list.excessMini"),
+                  used: t("list.used"),
+                  ok: t("list.ok"),
+                  attention: t("list.attention"),
+                  outOfPlan: t("list.outOfPlan"),
+                  edit: t("list.edit"),
+                  remove: t("list.remove"),
+                  removeAria: t("list.removeAria", { name: l.cat.nome }),
+                }}
+                onEdit={openEdit}
+                onRemove={removerLimite}
+              />
+            ))}
           </ul>
         </section>
       )}
