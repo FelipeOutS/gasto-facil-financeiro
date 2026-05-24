@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { GastoForm } from "@/components/GastoForm";
 import { addGasto, findPossibleDuplicate } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
