@@ -18,6 +18,7 @@ import {
   getChatHistory,
   clearChatHistory,
 } from "@/lib/finance-ai.functions";
+import { requireOnline } from "@/lib/use-online-status";
 
 export const Route = createFileRoute("/gasto-ai")({
   validateSearch: (search: Record<string, unknown>) => ({
