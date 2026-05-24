@@ -258,6 +258,7 @@ function MeuPlanoPage() {
       toast.error(tp("toasts.trialUsed"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSubmitting(tier);
     try {
       const { startTrial } = await import("@/lib/use-plan");
