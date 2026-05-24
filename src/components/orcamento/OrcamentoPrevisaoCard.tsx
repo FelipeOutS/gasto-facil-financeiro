@@ -164,9 +164,9 @@ export function OrcamentoPrevisaoCard({
                     : null}
             </p>
 
-            {planejado !== undefined && diferenca !== undefined && tipo !== "ja_estourado" && (
+            {planejado !== undefined && diferenca !== undefined && tipo !== "ja_estourado" && tipo !== "risco_estouro" && (
               <p className="mt-1.5 text-[11px] font-medium">
-                {diferenca >= 0
+                {diferenca >= 1
                   ? labels.gapPositive.replace("{{value}}", formatBRL(diferenca))
                   : labels.gapNegative.replace("{{value}}", formatBRL(Math.abs(diferenca)))}
               </p>
