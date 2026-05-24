@@ -196,18 +196,43 @@ export function runLoginBiometric(
   timeoutMs = 60_000,
 ): Promise<AndroidBiometricResultDetail & { method?: string }> {
   return new Promise((resolve) => {
-    const b = getBridge() as
-      | (NonNullable<Window["AndroidBiometric"]> & { unlock?: (reason?: string) => void })
-      | null;
-    if (!b) {
+    if (typeof window === "undefined") {
+      resolve({ success: false, error: "Biometria indisponível neste ambiente." });
+      return;
+    }
+    const bridge = (window as Window & { AndroidBiometric?: Record<string, unknown> })
+      .AndroidBiometric;
+    console.log("[AndroidBiometric] bridge disponível:", !!bridge);
+    if (bridge) {
+      try {
+        console.log("[AndroidBiometric] métodos:", Object.keys(bridge));
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!bridge) {
+      resolve({ success: false, error: "Biometria disponível apenas no aplicativo Android." });
+      return;
+    }
+    const b = bridge as {
+      requestAuthentication?: (...a: unknown[]) => void;
+      authenticate?: (...a: unknown[]) => void;
+      unlock?: (...a: unknown[]) => void;
+    };
+    const hasAny =
+      typeof b.requestAuthentication === "function" ||
+      typeof b.authenticate === "function" ||
+      typeof b.unlock === "function";
+    if (!hasAny) {
       resolve({ success: false, error: "Biometria indisponível neste dispositivo." });
       return;
     }
+
     let settled = false;
     let usedMethod = "";
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
-      console.log("[LoginBio] AndroidBiometricResult:", detail);
+      console.log("[AndroidBiometric] resultado:", detail);
       finish({ ...detail, method: usedMethod });
     };
     const finish = (detail: AndroidBiometricResultDetail & { method?: string }) => {
@@ -222,21 +247,33 @@ export function runLoginBiometric(
       timeoutMs,
     );
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
-    try {
-      if (typeof b.requestAuthentication === "function") {
-        usedMethod = "requestAuthentication";
-        b.requestAuthentication("Entrar com biometria");
-      } else if (typeof b.authenticate === "function") {
-        usedMethod = "authenticate";
-        b.authenticate("Entrar com biometria");
-      } else if (typeof b.unlock === "function") {
-        usedMethod = "unlock";
-        b.unlock("Entrar com biometria");
-      } else {
-        finish({ success: false, error: "Biometria indisponível neste dispositivo." });
+
+    // Tenta chamar os métodos em ordem; se um lançar exceção sincrônica,
+    // continua para o próximo. Chama sem argumentos — a bridge nativa não
+    // aceita parâmetros e isso pode disparar erro do lado Android.
+    const attempts: Array<{ name: string; fn?: (...a: unknown[]) => void }> = [
+      { name: "requestAuthentication", fn: b.requestAuthentication },
+      { name: "authenticate", fn: b.authenticate },
+      { name: "unlock", fn: b.unlock },
+    ];
+
+    let invoked = false;
+    let lastError: unknown = null;
+    for (const a of attempts) {
+      if (typeof a.fn !== "function") continue;
+      try {
+        console.log("[AndroidBiometric] chamando método:", a.name);
+        usedMethod = a.name;
+        a.fn.call(bridge);
+        invoked = true;
+        break;
+      } catch (e) {
+        lastError = e;
+        console.log("[AndroidBiometric] método falhou:", a.name, e);
       }
-    } catch (e) {
-      console.log("[LoginBio] erro ao chamar bridge:", e);
+    }
+    if (!invoked) {
+      console.log("[AndroidBiometric] nenhum método pôde ser invocado:", lastError);
       finish({ success: false, error: "Falha ao iniciar a biometria nativa.", method: usedMethod });
     }
   });
