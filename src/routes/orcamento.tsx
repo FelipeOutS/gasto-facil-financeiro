@@ -27,8 +27,10 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
   getGastos,
+  getGuardado,
   getLimite,
   getLimites,
+  getReceitas,
   mesEfetivoGasto,
   setLimite,
   useBootstrap,
