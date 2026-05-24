@@ -268,25 +268,121 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
       ["rejected", "cancelled", "canceled", "refunded", "charged_back"].includes(p.status),
     ).length;
 
-    // Inconsistências simples: subscription_payments approved sem user_plans ativo
+    // Inconsistências detalhadas: lista tipada
+    const payment_plan_inconsistencies: SystemHealthData["payment_plan_inconsistencies"] = [];
+    let inconsistencies_count = 0;
+    // a) approved sub_payments (últimos 200) vs user_plans
     const { data: paidRows } = await supabaseAdmin
       .from("subscription_payments")
-      .select("user_id,status,plano")
+      .select("id,user_id,status,plano,provider_payment_id,created_at")
       .eq("status", "approved")
       .not("user_id", "is", null)
+      .order("created_at", { ascending: false })
       .limit(200);
-    let inconsistencies_count = 0;
-    if (paidRows && paidRows.length > 0) {
-      const userIds = Array.from(new Set(paidRows.map((p) => p.user_id).filter(Boolean) as string[]));
-      const { data: plans } = await supabaseAdmin
-        .from("user_plans")
-        .select("user_id,status")
-        .in("user_id", userIds);
-      const planMap = new Map((plans ?? []).map((p) => [p.user_id, p.status]));
-      for (const p of paidRows) {
-        if (p.user_id && planMap.get(p.user_id) !== "ativo") inconsistencies_count++;
+    const paidArr = paidRows ?? [];
+    // b) failed sub_payments com provider_payment_id (últimos 200)
+    const { data: failedRows } = await supabaseAdmin
+      .from("subscription_payments")
+      .select("id,user_id,status,provider_payment_id,created_at")
+      .in("status", ["rejected", "cancelled", "canceled", "refunded", "charged_back", "failed"])
+      .not("provider_payment_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const failedArr = failedRows ?? [];
+
+    const allUserIds = Array.from(
+      new Set([
+        ...paidArr.map((p) => p.user_id as string),
+        ...failedArr.map((p) => p.user_id as string).filter(Boolean),
+      ]),
+    );
+    const { data: plansForUsers } = allUserIds.length
+      ? await supabaseAdmin
+          .from("user_plans")
+          .select("user_id,status,current_period_end,last_payment_id")
+          .in("user_id", allUserIds)
+      : { data: [] as { user_id: string; status: string; current_period_end: string | null; last_payment_id: string | null }[] };
+    const planByUser = new Map((plansForUsers ?? []).map((p) => [p.user_id, p]));
+    const emailMap = await emailsForUserIds(allUserIds);
+    const nowMs = Date.now();
+    const seenA = new Set<string>();
+    for (const p of paidArr) {
+      if (!p.user_id || seenA.has(p.user_id)) continue;
+      seenA.add(p.user_id);
+      const plan = planByUser.get(p.user_id);
+      if (!plan || plan.status !== "ativo") {
+        payment_plan_inconsistencies.push({
+          type: "approved_no_active_plan",
+          user_id_short: shortId(p.user_id),
+          user_email: emailMap.get(p.user_id) ?? null,
+          payment_id: p.id,
+          provider_payment_id: p.provider_payment_id,
+          payment_status: p.status,
+          plan_status: plan?.status ?? null,
+          current_period_end: plan?.current_period_end ?? null,
+          recommended_action: "Reconciliar via diagnóstico Mercado Pago",
+        });
+      } else if (
+        !plan.current_period_end ||
+        new Date(plan.current_period_end).getTime() < nowMs
+      ) {
+        payment_plan_inconsistencies.push({
+          type: "approved_period_expired",
+          user_id_short: shortId(p.user_id),
+          user_email: emailMap.get(p.user_id) ?? null,
+          payment_id: p.id,
+          provider_payment_id: p.provider_payment_id,
+          payment_status: p.status,
+          plan_status: plan.status,
+          current_period_end: plan.current_period_end,
+          recommended_action: "Verificar renovação ou ciclo vencido",
+        });
       }
     }
+    for (const f of failedArr) {
+      if (!f.user_id) continue;
+      const plan = planByUser.get(f.user_id);
+      if (plan?.status === "ativo" && plan.last_payment_id && plan.last_payment_id === f.provider_payment_id) {
+        payment_plan_inconsistencies.push({
+          type: "active_plan_failed_payment",
+          user_id_short: shortId(f.user_id),
+          user_email: emailMap.get(f.user_id) ?? null,
+          payment_id: f.id,
+          provider_payment_id: f.provider_payment_id,
+          payment_status: f.status,
+          plan_status: plan.status,
+          current_period_end: plan.current_period_end,
+          recommended_action: "Investigar: plano ativo apesar de pagamento falho",
+        });
+      }
+    }
+    inconsistencies_count = payment_plan_inconsistencies.length;
+
+    // Pagamentos pendentes há mais de 30 minutos
+    const since30min = new Date(nowMs - 30 * 60 * 1000).toISOString();
+    const { data: oldPending } = await supabaseAdmin
+      .from("subscription_payments")
+      .select("id,created_at,user_id,provider_payment_id,amount_cents,status")
+      .eq("provider", "mercadopago")
+      .eq("status", "pending")
+      .not("provider_payment_id", "is", null)
+      .lt("created_at", since30min)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const pendingArr = oldPending ?? [];
+    const pendingUserIds = pendingArr.map((p) => p.user_id).filter(Boolean) as string[];
+    const pendingEmails = await emailsForUserIds(pendingUserIds);
+    const pending_payments_to_check = pendingArr.map((p) => ({
+      id: p.id,
+      created_at: p.created_at,
+      user_id_short: shortId(p.user_id),
+      user_email: p.user_id ? pendingEmails.get(p.user_id) ?? null : null,
+      provider_payment_id: p.provider_payment_id,
+      amount_cents: p.amount_cents,
+      status: p.status,
+      age_minutes: Math.round((nowMs - new Date(p.created_at).getTime()) / 60000),
+    }));
+    const pending_older_than_30min = pending_payments_to_check.length;
 
     // 4) Listas recentes
     const [failedWebhooksQ, rlBlocksQ, payEventsQ, auditsQ] = await Promise.all([
