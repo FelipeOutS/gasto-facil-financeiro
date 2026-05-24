@@ -202,14 +202,14 @@ export function PlanejamentoMensalCard({
           >
             {estado === "excesso" ? (
               <>
-                {labels.withExcess.replace("{{value}}", "")}
+                {labels.withExcess}{" "}
                 <Money value={excesso} className="num font-semibold" />
               </>
             ) : estado === "tudo_distribuido" ? (
               labels.allAssigned
             ) : (
               <>
-                {labels.withFree.replace("{{value}}", "")}
+                {labels.withFree}{" "}
                 <Money value={Math.max(0, livre)} className="num font-semibold" />
               </>
             )}
