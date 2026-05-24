@@ -5,6 +5,8 @@ import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
   clearPersistedLoginBioSession,
+  isLoginBioEnabledForEmail,
+  persistLoginBioSession,
   setLoginBioInProgress,
   setLoginBioUnlocked,
 } from "./biometric-login";
@@ -73,6 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = sess?.user.id ?? null;
       setActiveUserId(uid);
       if (uid) {
+        if (isLoginBioEnabledForEmail(sess?.user.email)) {
+          persistLoginBioSession(sess);
+        }
         // Defer cloud work to avoid blocking the auth callback
         setTimeout(() => {
           void (async () => {
@@ -95,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const uid = data.session?.user.id ?? null;
         setActiveUserId(uid);
         if (uid) {
+          if (isLoginBioEnabledForEmail(data.session?.user.email)) {
+            persistLoginBioSession(data.session);
+          }
           void (async () => {
             await migrateLegacyDataToUser(uid);
             await hydrateUser(uid);
