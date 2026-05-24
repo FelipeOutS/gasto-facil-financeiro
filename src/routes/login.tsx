@@ -72,8 +72,8 @@ function LoginForm() {
   useEffect(() => {
     const av = isLoginBioBridgeAvailable();
     const en = isLoginBioEnabled();
-    if (av) console.log("Android biometric available");
-    console.log("[BioLogin] biometric enabled:", en);
+    if (av) console.log("[AndroidBiometricLogin] bridge AndroidBiometric disponível");
+    console.log("[AndroidBiometricLogin] biometria habilitada:", en);
     setBioAvailable(av);
     setBioEnabled(en);
     if (av && en) {
@@ -92,8 +92,7 @@ function LoginForm() {
     } catch {
       /* ignore */
     }
-    console.log("[BioLogin] redirect target:", target);
-    console.log("Redirecting to dashboard");
+    console.log("[AndroidBiometricLogin] rota destino:", target);
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
     void navigate({ to: target, replace: true });
