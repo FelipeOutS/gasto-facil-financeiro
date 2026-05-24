@@ -81,6 +81,17 @@
     "overBudget": "Above plan",
     "underBudget": "Within plan"
   },
+  "categoryTrends": {
+    "title": "Category trends",
+    "description": "See which areas are growing or shrinking in recent months.",
+    "rising": "Rising",
+    "falling": "Falling",
+    "stable": "Stable",
+    "new": "New",
+    "recentAverage": "Recent average",
+    "change": "Change",
+    "empty": "Log expenses for a few months to track trends."
+  },
   "comparativo": {
     "anterior": "Previous: {{valor}}",
     "noChange": "No change",

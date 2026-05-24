@@ -44,6 +44,11 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { EvolucaoOrcamentoCard, type EvolucaoMes } from "@/components/relatorios/EvolucaoOrcamentoCard";
+import {
+  TendenciaCategoriasCard,
+  type TendenciaCategoria,
+  type TendenciaEstado,
+} from "@/components/relatorios/TendenciaCategoriasCard";
 import { useAuth } from "@/lib/auth-context";
 import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
@@ -255,6 +260,84 @@ function RelatoriosPage() {
       };
     });
   }, [ym, categorias, gastos, limitesKey]);
+
+  // Tendência por categoria — Top 5 acumulado nos últimos 6 meses
+  const tendenciaCategorias = useMemo<TendenciaCategoria[]>(() => {
+    const stack: Array<{ mes: number; ano: number; label: string }> = [];
+    let m = ym.mes, a = ym.ano;
+    for (let i = 0; i < 6; i++) {
+      const label = new Date(a, m - 1, 1)
+        .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
+        .replace(".", "");
+      stack.unshift({ mes: m, ano: a, label });
+      const p = mesAnterior(m, a);
+      m = p.mes;
+      a = p.ano;
+    }
+
+    // soma por categoria por mês (apenas gastos confirmados)
+    const confirmados = gastos.filter((g) => g.confirmado !== false);
+    const porCat = new Map<string, number[]>();
+    stack.forEach((_, idx) => {
+      confirmados
+        .filter((g) => g.mes === stack[idx].mes && g.ano === stack[idx].ano)
+        .forEach((g) => {
+          const arr = porCat.get(g.categoriaId) ?? new Array(6).fill(0);
+          arr[idx] += Number(g.valor) || 0;
+          porCat.set(g.categoriaId, arr);
+        });
+    });
+
+    // Não renderizar se < 2 meses tiveram qualquer gasto
+    const mesesComGasto = stack.filter((_, idx) =>
+      Array.from(porCat.values()).some((arr) => arr[idx] > 0),
+    ).length;
+    if (mesesComGasto < 2) return [];
+
+    // Top 5 por total acumulado
+    const ranked = Array.from(porCat.entries())
+      .map(([catId, serie]) => ({
+        catId,
+        serie,
+        total: serie.reduce((s, v) => s + v, 0),
+      }))
+      .filter((x) => x.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    return ranked.map(({ catId, serie }) => {
+      const recentes = serie.slice(3); // últimos 3
+      const anteriores = serie.slice(0, 3); // 3 anteriores
+      const mediaRecente = recentes.reduce((s, v) => s + v, 0) / 3;
+      const mediaAnterior = anteriores.reduce((s, v) => s + v, 0) / 3;
+      const diferenca = mediaRecente - mediaAnterior;
+      const variacaoPct =
+        mediaAnterior > 0 ? (diferenca / mediaAnterior) * 100 : null;
+
+      let estado: TendenciaEstado = "estavel";
+      if (mediaAnterior === 0 && mediaRecente > 0) {
+        estado = "nova";
+      } else if (variacaoPct != null && variacaoPct >= 15 && diferenca >= 30) {
+        estado = "subindo";
+      } else if (variacaoPct != null && variacaoPct <= -15 && diferenca <= -30) {
+        estado = "caindo";
+      }
+
+      const cat = getCategoriaById(catId);
+      return {
+        catId,
+        nome: cat?.nome ?? catId,
+        serie: serie.map((valor, idx) => ({ label: stack[idx].label, valor })),
+        mediaRecente,
+        mediaAnterior,
+        diferenca,
+        variacaoPct,
+        estado,
+      };
+    });
+  }, [ym, gastos, categorias, i18n.language]);
+
+
 
   // Totais agregados do período (multi-mês)
   const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
@@ -671,6 +754,24 @@ function RelatoriosPage() {
           underBudget: t("budgetEvolution.underBudget"),
         }}
       />
+
+      {/* ===== Tendência por categoria (Top 5, 6m) ===== */}
+      <TendenciaCategoriasCard
+        categorias={tendenciaCategorias}
+        labels={{
+          title: t("categoryTrends.title"),
+          description: t("categoryTrends.description"),
+          rising: t("categoryTrends.rising"),
+          falling: t("categoryTrends.falling"),
+          stable: t("categoryTrends.stable"),
+          newTrend: t("categoryTrends.new"),
+          recentAverage: t("categoryTrends.recentAverage"),
+          change: t("categoryTrends.change"),
+          empty: t("categoryTrends.empty"),
+        }}
+      />
+
+
 
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
