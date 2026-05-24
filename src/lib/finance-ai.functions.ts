@@ -941,15 +941,21 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
 
     const access = await ensureFeatureAccess(userId);
     if (!access.ok) {
-      throw new Response(access.reason, { status: 403 });
+      return { reply: "", error: { status: 403, message: access.reason || "Recurso indisponível no seu plano." } };
     }
 
-    const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthlySmartSummary" });
-    if (rl) throw rl;
+    try {
+      const rl = await enforceUserRateLimit({ scope: "ai", userId, route: "getMonthlySmartSummary" });
+      if (rl) {
+        return { reply: "", error: { status: 429, message: "Muitas requisições. Aguarde alguns instantes." } };
+      }
+    } catch {
+      // ignore rate-limit failures
+    }
 
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
-      throw new Response("Serviço de IA indisponível.", { status: 500 });
+      return { reply: "", error: { status: 500, message: "Serviço de IA indisponível." } };
     }
 
     const now = new Date();
@@ -990,16 +996,16 @@ export const getMonthlySmartSummary = createServerFn({ method: "POST" })
     if (!aiResp.ok) {
       const text = await aiResp.text().catch(() => "");
       console.error("[smart-summary] AI gateway error", aiResp.status, text);
-      if (aiResp.status === 429) throw new Response("Muitas requisições. Aguarde alguns instantes.", { status: 429 });
-      if (aiResp.status === 402) throw new Response("Sem créditos da IA no momento.", { status: 402 });
-      throw new Response("Não consegui gerar o resumo agora.", { status: 502 });
+      if (aiResp.status === 429) return { reply: "", error: { status: 429, message: "Muitas requisições. Aguarde alguns instantes." } };
+      if (aiResp.status === 402) return { reply: "", error: { status: 402, message: "Sem créditos da IA no momento." } };
+      return { reply: "", error: { status: 502, message: "Não consegui gerar o resumo agora." } };
     }
 
     const json: any = await aiResp.json();
     const reply: string = json?.choices?.[0]?.message?.content?.trim?.() ?? "";
-    if (!reply) throw new Response("Não consegui gerar o resumo agora.", { status: 502 });
+    if (!reply) return { reply: "", error: { status: 502, message: "Não consegui gerar o resumo agora." } };
 
-    return { reply, mes, ano, generatedAt: new Date().toISOString() };
+    return { reply, mes, ano, generatedAt: new Date().toISOString(), error: null };
   });
 
 export const clearChatHistory = createServerFn({ method: "POST" })
