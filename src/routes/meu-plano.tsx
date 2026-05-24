@@ -795,14 +795,14 @@ function MeuPlanoPage() {
               <ul className="divide-y divide-border">
                 {historico.map((h) => {
                   const s = statusLabelMP(h.status);
-                  const tone =
+                  const badgeTone: StatusTone =
                     s.tone === "ok"
-                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                      ? "success"
                       : s.tone === "warn"
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                        ? "warning"
                         : s.tone === "danger"
-                          ? "bg-destructive/10 text-destructive border-destructive/30"
-                          : "bg-muted text-muted-foreground border-border";
+                          ? "destructive"
+                          : "muted";
                   const label = planName(h.plano as PlanTier) ?? h.plano;
                   const dt = h.paid_at ?? h.created_at;
                   return (
@@ -822,14 +822,9 @@ function MeuPlanoPage() {
                           {h.periodicidade ? tp("card.perFreq", { value: periodLabel(h.periodicidade as Periodicidade) }) : ""}
                         </p>
                       </div>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          tone,
-                        )}
-                      >
+                      <StatusBadge tone={badgeTone} dot className="uppercase tracking-wide">
                         {s.label}
-                      </span>
+                      </StatusBadge>
                     </li>
                   );
                 })}
