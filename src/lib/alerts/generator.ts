@@ -507,6 +507,163 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     }
   }
 
+  // ============= Alertas inteligentes adicionais (Sprint 6) =============
+
+  // ---- (1) Assinatura possivelmente esquecida / inativa ----
+  // Recorrência ATIVA ou SUSPEITA cuja última ocorrência real em `gastos`
+  // (via recorrenciaId) é > 60 dias, OU `proximaCobranca` venceu há > 60 dias.
+  // Conservador: exige histórico (ultimoValor != null OU ao menos 1 gasto vinculado).
+  {
+    const ultimoPorRec = new Map<string, string>();
+    for (const g of gastosConfirmados) {
+      if (!g.recorrenciaId) continue;
+      const atual = ultimoPorRec.get(g.recorrenciaId);
+      if (!atual || g.data > atual) ultimoPorRec.set(g.recorrenciaId, g.data);
+    }
+    for (const r of src.recorrencias) {
+      if (r.status !== "ativa" && r.status !== "suspeita") continue;
+      const ultima = ultimoPorRec.get(r.id);
+      const temHistorico = !!ultima || r.ultimoValor != null;
+      if (!temHistorico) continue;
+
+      let diasSemCobranca: number | null = null;
+      if (ultima) {
+        diasSemCobranca = Math.abs(diffDaysLocal(ultima));
+      } else if (r.proximaCobranca) {
+        const d = diffDaysLocal(r.proximaCobranca);
+        if (d < 0) diasSemCobranca = Math.abs(d);
+      }
+      if (diasSemCobranca == null || diasSemCobranca < 60) continue;
+
+      drafts.push({
+        type: "assinatura_esquecida",
+        title: `${r.nome} pode estar esquecida`,
+        description: `Sem cobrança há ${diasSemCobranca} dias. Confira se ainda faz sentido mantê-la.`,
+        priority: diasSemCobranca >= 90 ? "media" : "baixa",
+        related_entity_type: "recorrencia",
+        related_entity_id: r.id,
+        action_label: "Ver assinaturas",
+        action_url: "/assinaturas",
+        dedupe_key: `assinatura_esquecida:${r.id}`,
+        period_key: period,
+        metadata: { diasSemCobranca, status: r.status, valor: r.valor },
+      });
+    }
+  }
+
+  // ---- (2) Gasto acima da média por ESTABELECIMENTO ----
+  // Compara um gasto recente (últimos 30 dias) com a média histórica do mesmo
+  // estabelecimento nos 90 dias anteriores. Conservador:
+  //   - precisa de >= 3 ocorrências históricas (excluindo o atual)
+  //   - razão >= 2x sobre a média histórica
+  //   - excesso absoluto >= R$ 50
+  //   - valor mínimo do gasto >= R$ 30 (evita ruído)
+  // Dedupe por id do gasto (1 alerta por lançamento).
+  {
+    const historico = new Map<string, number[]>(); // estab norm -> valores históricos (>30 dias)
+    const recentes: Gasto[] = [];
+    const norm = (s: string) => (s || "").toLowerCase().trim();
+    for (const g of gastosConfirmados) {
+      const dias = diffDaysLocal(g.data);
+      const estab = norm(g.estabelecimento);
+      if (!estab) continue;
+      if (dias <= 0 && dias >= -30) {
+        recentes.push(g);
+      } else if (dias < -30 && dias >= -120) {
+        const arr = historico.get(estab) ?? [];
+        arr.push(Number(g.valor || 0));
+        historico.set(estab, arr);
+      }
+    }
+    for (const g of recentes) {
+      if (Number(g.valor || 0) < 30) continue;
+      const estab = norm(g.estabelecimento);
+      const valores = historico.get(estab);
+      if (!valores || valores.length < 3) continue;
+      const media = valores.reduce((s, v) => s + v, 0) / valores.length;
+      if (media <= 0) continue;
+      const ratio = g.valor / media;
+      const excesso = g.valor - media;
+      if (ratio < 2 || excesso < 50) continue;
+      drafts.push({
+        type: "gasto_acima_media_estabelecimento",
+        title: `Gasto acima do padrão em ${g.estabelecimento}`,
+        description: `R$ ${g.valor.toFixed(2).replace(".", ",")} — cerca de ${ratio.toFixed(1).replace(".", ",")}x sua média recente (R$ ${media.toFixed(2).replace(".", ",")}). Vale revisar se foi algo pontual.`,
+        priority: ratio >= 3 ? "media" : "baixa",
+        related_entity_type: "gasto",
+        related_entity_id: g.id,
+        action_label: "Ver gastos",
+        action_url: "/gastos",
+        dedupe_key: `gasto_acima_media_estab:${g.id}`,
+        period_key: period,
+        metadata: { estabelecimento: g.estabelecimento, valor: g.valor, media, ratio, amostras: valores.length },
+      });
+    }
+  }
+
+  // ---- (3) Possível cobrança ruim no cartão ----
+  // Detecta no crédito:
+  //   (a) palavras-chave de tarifas/anuidade/IOF/juros na descrição ou estab;
+  //   (b) gasto isolado muito alto comparado à mediana do cartão (>= 3x e >= R$ 300),
+  //       sem `recorrenciaId` vinculado (não é assinatura conhecida).
+  // Considera apenas gastos dos últimos 45 dias. Dedupe por id do gasto.
+  {
+    const KEYWORDS = [
+      "anuidade",
+      "tarifa",
+      "iof",
+      "juros",
+      "encargo",
+      "multa",
+      "rotativo",
+      "atraso",
+    ];
+    const porCartao = new Map<string, number[]>();
+    const recentesCred: Gasto[] = [];
+    for (const g of gastosConfirmados) {
+      if (g.formaPagamento !== "credito" || !g.cartaoId) continue;
+      const dias = diffDaysLocal(g.data);
+      if (dias > 0 || dias < -45) continue;
+      recentesCred.push(g);
+      const arr = porCartao.get(g.cartaoId) ?? [];
+      arr.push(Number(g.valor || 0));
+      porCartao.set(g.cartaoId, arr);
+    }
+    const medianas = new Map<string, number>();
+    for (const [cid, arr] of porCartao) {
+      if (arr.length < 5) continue;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
+      medianas.set(cid, median);
+    }
+    for (const g of recentesCred) {
+      const texto = `${g.descricao || ""} ${g.estabelecimento || ""}`.toLowerCase();
+      const hitKeyword = KEYWORDS.some((k) => texto.includes(k));
+      const med = medianas.get(g.cartaoId!) ?? 0;
+      const valorAlto = !g.recorrenciaId && med > 0 && g.valor >= 300 && g.valor >= med * 3;
+      if (!hitKeyword && !valorAlto) continue;
+      const motivo = hitKeyword
+        ? "Pode ser tarifa, anuidade ou encargo."
+        : `Valor incomum: R$ ${g.valor.toFixed(2).replace(".", ",")} (mediana do cartão R$ ${med.toFixed(2).replace(".", ",")}).`;
+      drafts.push({
+        type: "cartao_cobranca_suspeita",
+        title: `Cobrança no cartão pode merecer revisão`,
+        description: `${g.estabelecimento || g.descricao}: ${motivo}`,
+        priority: hitKeyword ? "media" : "baixa",
+        related_entity_type: "gasto",
+        related_entity_id: g.id,
+        action_label: "Ver cartão",
+        action_url: "/cartoes",
+        dedupe_key: `cartao_cobranca_suspeita:${g.id}`,
+        period_key: period,
+        metadata: { valor: g.valor, cartaoId: g.cartaoId, motivo: hitKeyword ? "keyword" : "valor_alto", mediana: med },
+      });
+    }
+  }
+
+
+
   // ============= Investimentos =============
   if (src.investimentos) {
     for (const a of src.investimentos) {
