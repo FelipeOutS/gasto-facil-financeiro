@@ -8,12 +8,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   TrendingUp,
-  Pencil,
   Plus,
   Copy,
-  Trash2,
   Sparkles,
 } from "lucide-react";
+import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategoriaCard";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
