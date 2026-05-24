@@ -147,8 +147,8 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   {TIPOS_RECEITA.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
