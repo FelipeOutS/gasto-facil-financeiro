@@ -129,6 +129,15 @@ function SystemHealthPage() {
   const [retention, setRetention] = useState<LogRetentionPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [retentionLoading, setRetentionLoading] = useState(false);
+  const [diagPaymentId, setDiagPaymentId] = useState<string | null>(null);
+  const [diagPeriodEnd, setDiagPeriodEnd] = useState<string | null>(null);
+  const [diagOpen, setDiagOpen] = useState(false);
+
+  const openDiagnose = useCallback((paymentId: string, periodEnd?: string | null) => {
+    setDiagPaymentId(paymentId);
+    setDiagPeriodEnd(periodEnd ?? null);
+    setDiagOpen(true);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
