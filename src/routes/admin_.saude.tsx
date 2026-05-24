@@ -113,7 +113,7 @@ function SystemHealthPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getSystemHealthDashboard();
+      const res = (await getSystemHealthDashboard()) as SystemHealthData;
       setData(res);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro";
