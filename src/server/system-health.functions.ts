@@ -467,8 +467,12 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
       if (level === "ok") level = "warn";
     }
     if (inconsistencies_count > 0) {
-      messages.push(`${inconsistencies_count} pagamento(s) aprovado(s) sem plano ativo`);
+      messages.push(`${inconsistencies_count} inconsistência(s) pagamento ↔ plano`);
       level = "error";
+    }
+    if (pending_older_than_30min > 0) {
+      messages.push(`${pending_older_than_30min} pagamento(s) pendente(s) há +30 min`);
+      if (level !== "error") level = "warn";
     }
     if (messages.length === 0) messages.push("Tudo certo por aqui");
 
@@ -486,11 +490,65 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
         pending_24h,
         rejected_24h,
         inconsistencies_count,
+        pending_older_than_30min,
       },
+      pending_payments_to_check,
+      payment_plan_inconsistencies,
       recent_failed_webhooks,
       recent_rate_limit_blocks,
       recent_payment_events,
       recent_audit_logs,
       alerts: { level, messages },
     };
+  });
+
+// ============================================================
+// Log Retention Preview (apenas diagnóstico — NÃO apaga nada)
+// ============================================================
+
+export type LogRetentionPreview = {
+  generated_at: string;
+  policies: Array<{
+    table: "webhook_logs" | "audit_logs" | "rate_limit_events" | "payment_events";
+    retention_days: number;
+    cutoff_at: string;
+    eligible_to_delete: number;
+    total: number;
+  }>;
+};
+
+export const getLogRetentionPreview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<LogRetentionPreview> => {
+    const userId = (context as { userId: string }).userId;
+    await ensureAdmin(userId);
+
+    const policies = [
+      { table: "webhook_logs" as const, retention_days: 90 },
+      { table: "audit_logs" as const, retention_days: 180 },
+      { table: "rate_limit_events" as const, retention_days: 30 },
+      { table: "payment_events" as const, retention_days: 180 },
+    ];
+
+    const results = await Promise.all(
+      policies.map(async (pol) => {
+        const cutoff = new Date(Date.now() - pol.retention_days * 24 * 60 * 60 * 1000).toISOString();
+        const [{ count: total }, { count: eligible }] = await Promise.all([
+          supabaseAdmin.from(pol.table).select("id", { count: "exact", head: true }),
+          supabaseAdmin
+            .from(pol.table)
+            .select("id", { count: "exact", head: true })
+            .lt("created_at", cutoff),
+        ]);
+        return {
+          table: pol.table,
+          retention_days: pol.retention_days,
+          cutoff_at: cutoff,
+          eligible_to_delete: eligible ?? 0,
+          total: total ?? 0,
+        };
+      }),
+    );
+
+    return { generated_at: new Date().toISOString(), policies: results };
   });
