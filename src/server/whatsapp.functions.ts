@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { processarMensagemWhatsApp } from "./whatsapp.server";
+import { assertFeatureAccess } from "./feature-gate.server";
 
 /** Normaliza telefone: mantém apenas dígitos. */
 function normTel(raw: string): string {
