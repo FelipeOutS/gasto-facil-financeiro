@@ -34,8 +34,15 @@ export async function syncAllIncomesForUser(userId: string): Promise<{
       try {
         const res = await addReceitaAwait(item.input, userId, item.local_id);
         if (res.ok) {
-          await removeIncome(item.local_id);
+          await deleteIncomeSilent(item.local_id);
           synced += 1;
+          void recordHistoryEvent({
+            user_id: userId,
+            type: "income",
+            action: "synced",
+            title: item.descricao,
+            amount: item.valor,
+          });
         } else {
           const norm = normalizeOfflineError(res.error ?? "Falha ao sincronizar");
           await updateIncome(item.local_id, {
@@ -45,6 +52,15 @@ export async function syncAllIncomesForUser(userId: string): Promise<{
             technical_error: norm.technical,
           });
           failed += 1;
+          void recordHistoryEvent({
+            user_id: userId,
+            type: "income",
+            action: "failed",
+            title: item.descricao,
+            amount: item.valor,
+            error_message: norm.friendly,
+            technical_error: norm.technical,
+          });
         }
       } catch (err) {
         const norm = normalizeOfflineError(err);
@@ -55,6 +71,15 @@ export async function syncAllIncomesForUser(userId: string): Promise<{
           technical_error: norm.technical,
         });
         failed += 1;
+        void recordHistoryEvent({
+          user_id: userId,
+          type: "income",
+          action: "failed",
+          title: item.descricao,
+          amount: item.valor,
+          error_message: norm.friendly,
+          technical_error: norm.technical,
+        });
       }
     }
   } finally {
