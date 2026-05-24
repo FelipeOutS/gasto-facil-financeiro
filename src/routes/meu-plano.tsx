@@ -384,14 +384,14 @@ function MeuPlanoPage() {
             )}
           </div>
           {!loading && (
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                STATUS_TONE[status] ?? STATUS_TONE.sem_assinatura,
-              )}
+            <StatusBadge
+              tone={STATUS_BADGE_TONE[status] ?? "muted"}
+              dot
+              size="md"
+              className="shrink-0 uppercase tracking-wide"
             >
               {isAdminMaster ? tp("status.ativo") : tp(`status.${status}`, { defaultValue: status })}
-            </span>
+            </StatusBadge>
           )}
         </div>
 
