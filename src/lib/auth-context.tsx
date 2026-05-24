@@ -13,6 +13,7 @@ import {
   setLoginBioInProgress,
   setLoginBioUnlocked,
 } from "./biometric-login";
+import { clearSecureSession } from "./secure-session";
 
 export type Profile = {
   id: string;
