@@ -82,7 +82,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
     setMensagem(s);
   }
 
-  function salvar() {
+  async function salvar() {
     if (!parsed || parsed.valor <= 0) {
       toast.error(t("whatsapp.errValor"));
       return;
@@ -91,6 +91,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
       requireSubscription(t("whatsapp.errPlano"));
       return;
     }
+    if (!(await requireOnline())) return;
 
     addGasto({
       valor: parsed.valor,
