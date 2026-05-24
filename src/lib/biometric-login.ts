@@ -148,7 +148,8 @@ export function runLoginBiometric(timeoutMs = 60_000): Promise<AndroidBiometricR
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
     try {
       if (typeof b.requestAuthentication === "function") b.requestAuthentication("Entrar com biometria");
-      else b.authenticate("Entrar com biometria");
+      else if (typeof b.authenticate === "function") b.authenticate("Entrar com biometria");
+      else finish({ success: false, error: "Biometria nativa indisponível neste aparelho." });
     } catch (e) {
       console.log("[LoginBio] erro ao chamar authenticate:", e);
       finish({ success: false, error: "Falha ao iniciar a biometria nativa." });
