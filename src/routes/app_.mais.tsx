@@ -28,6 +28,7 @@ import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
+import { OfflineHistoryTrigger } from "@/components/offline/OfflineHistoryDialog";
 import { cn } from "@/lib/utils";
 
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
