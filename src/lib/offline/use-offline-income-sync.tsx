@@ -12,6 +12,7 @@ import {
   updateIncome,
 } from "./offline-income-queue";
 import { addReceitaAwait } from "@/lib/store";
+import { normalizeOfflineError } from "./offline-error-messages";
 
 let syncing = false;
 
