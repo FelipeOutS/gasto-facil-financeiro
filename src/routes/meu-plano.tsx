@@ -225,6 +225,7 @@ function MeuPlanoPage() {
 
   async function checarPagamento() {
     if (!pixCharge?.paymentId || !user?.id) return;
+    if (!(await requireOnline())) return;
     setVerifying(true);
     try {
       const r = await verificarPagamento(pixCharge.paymentId);
