@@ -243,11 +243,25 @@ export function DashboardCartoesInsights({
 
   if (!temAlgumaSecao && !comparacao) return null;
 
+  const showInsight = slot !== "lists";
+  const showCartoes = slot !== "lists";
+  const showVenc = slot !== "insights";
+  const showMaiores = slot !== "insights";
+
+  const containerCls =
+    slot === "insights"
+      ? "flex flex-col gap-3.5 sm:gap-4"
+      : slot === "lists"
+        ? "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:gap-4"
+        : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4";
+
   return (
-    <div className={cn("grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4", className)}>
+    <div className={cn(containerCls, className)}>
 
       {/* Insight + comparação */}
+      {showInsight && (
       <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
+
 
         <div className="flex items-start gap-3">
           <span
