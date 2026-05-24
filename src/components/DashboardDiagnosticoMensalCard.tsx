@@ -209,22 +209,10 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         </div>
       </div>
 
-      {(diag.highlights.length > 0 || diag.risks.length > 0) && (
-        <ul className="mt-3 space-y-1.5">
-          {diag.risks.map((r, i) => (
-            <li key={`r-${i}`} className="flex items-start gap-2 text-xs">
-              <AlertTriangle className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", tone.iconFg)} />
-              <span className="text-muted-foreground">{r}</span>
-            </li>
-          ))}
-          {diag.highlights.map((h, i) => (
-            <li key={`h-${i}`} className="flex items-start gap-2 text-xs">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
-              <span className="text-muted-foreground">{h}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Bullets de highlights/risks intencionalmente ocultos aqui para não
+          duplicar o card de Saúde Financeira (que já lista esses bullets).
+          O Diagnóstico fica com papel próprio: título orientativo + resumo
+          em prosa + próximas ações. */}
 
       {diag.nextActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
