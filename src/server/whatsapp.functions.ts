@@ -108,6 +108,7 @@ export const deleteWhatsAppLink = createServerFn({ method: "POST" })
 export const listWhatsAppMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data, error } = await sb
