@@ -37,12 +37,16 @@ export const APP_LOCKED_FLAG_KEY = "app_locked_by_biometric";
 export function markAppLockedNow(): void {
   try {
     window.localStorage.setItem(APP_LOCKED_FLAG_KEY, "true");
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 export function clearAppLockedFlag(): void {
   try {
     window.localStorage.removeItem(APP_LOCKED_FLAG_KEY);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 export function isAppLockedFlagSet(): boolean {
   if (typeof window === "undefined") return false;
@@ -160,7 +164,9 @@ export async function enableAppLock(): Promise<void> {
 export function disableAppLock(): void {
   try {
     window.localStorage.removeItem(APP_LOCK_STORAGE_KEY);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 
 type AppLockContextValue = {
@@ -287,7 +293,9 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     }
     try {
       window.location.assign("/login");
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   }, [signOut]);
 
   const value = useMemo<AppLockContextValue>(
