@@ -802,7 +802,7 @@ function ReceberDialog({
       onConfirmed();
     } catch (e) {
       console.error(e);
-      toast.error(t("receive.toastError"));
+      toastFromError(e, t("receive.toastError"));
     } finally {
       setSaving(false);
     }
