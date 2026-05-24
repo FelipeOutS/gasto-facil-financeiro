@@ -253,6 +253,7 @@ export function runLoginBiometric(
     let usedMethod = "";
     const onResult = (event: Event) => {
       const detail = (event as CustomEvent<AndroidBiometricResultDetail>).detail ?? {};
+      console.log("[Biometria] bridge result:", detail);
       console.log("[AndroidBiometric] resultado:", detail);
       finish({ ...detail, method: usedMethod });
     };
