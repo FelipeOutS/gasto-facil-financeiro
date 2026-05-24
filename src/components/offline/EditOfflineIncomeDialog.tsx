@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -37,13 +37,14 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
   const [data, setData] = useState("");
   const [tipo, setTipo] = useState<TipoReceita>("salario");
 
-  // Sync local state when item changes
-  if (item && open && data === "") {
-    setDescricao(item.input.descricao);
-    setValorStr(item.input.valor.toFixed(2).replace(".", ","));
-    setData(item.input.data);
-    setTipo(item.input.tipo);
-  }
+  useEffect(() => {
+    if (item && open) {
+      setDescricao(item.input.descricao);
+      setValorStr(item.input.valor.toFixed(2).replace(".", ","));
+      setData(item.input.data);
+      setTipo(item.input.tipo);
+    }
+  }, [item, open]);
 
   function handleClose(o: boolean) {
     if (!o) {
