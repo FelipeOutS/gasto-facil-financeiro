@@ -69,6 +69,7 @@ import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-f
 import { Route as ApiImportExtratoRouteImport } from './routes/api/import-extrato'
 import { Route as ApiImportContaPdfRouteImport } from './routes/api/import-conta-pdf'
 import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
@@ -388,6 +389,11 @@ const ApiImportContaRoute = ApiImportContaRouteImport.update({
   path: '/api/import-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiEconomicRadarRoute = ApiEconomicRadarRouteImport.update({
   id: '/api/economic-radar',
   path: '/api/economic-radar',
@@ -534,6 +540,7 @@ export interface FileRoutesByFullPath {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -614,6 +621,7 @@ export interface FileRoutesByTo {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -695,6 +703,7 @@ export interface FileRoutesById {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/import-conta': typeof ApiImportContaRoute
   '/api/import-conta-pdf': typeof ApiImportContaPdfRoute
   '/api/import-extrato': typeof ApiImportExtratoRoute
@@ -777,6 +786,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
+    | '/api/health'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -857,6 +867,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
+    | '/api/health'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -937,6 +948,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/api/economic-radar'
+    | '/api/health'
     | '/api/import-conta'
     | '/api/import-conta-pdf'
     | '/api/import-extrato'
@@ -1018,6 +1030,7 @@ export interface RootRouteChildren {
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   ApiEconomicRadarRoute: typeof ApiEconomicRadarRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiImportContaRoute: typeof ApiImportContaRoute
   ApiImportContaPdfRoute: typeof ApiImportContaPdfRoute
   ApiImportExtratoRoute: typeof ApiImportExtratoRoute
@@ -1476,6 +1489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImportContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/economic-radar': {
       id: '/api/economic-radar'
       path: '/api/economic-radar'
@@ -1650,6 +1670,7 @@ const rootRouteChildren: RootRouteChildren = {
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   ApiEconomicRadarRoute: ApiEconomicRadarRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiImportContaRoute: ApiImportContaRoute,
   ApiImportContaPdfRoute: ApiImportContaPdfRoute,
   ApiImportExtratoRoute: ApiImportExtratoRoute,
