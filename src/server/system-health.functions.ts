@@ -553,3 +553,101 @@ export const getLogRetentionPreview = createServerFn({ method: "POST" })
 
     return { generated_at: new Date().toISOString(), policies: results };
   });
+
+// ============================================================
+// Log Retention Cleanup (apaga apenas logs antigos — admin only)
+// Política FIXA no servidor — não aceita parâmetros do cliente.
+// ============================================================
+
+export type LogRetentionCleanupResult = {
+  executed_at: string;
+  actor_email: string | null;
+  results: Array<{
+    table: "webhook_logs" | "audit_logs" | "rate_limit_events" | "payment_events";
+    retention_days: number;
+    cutoff_at: string;
+    deleted: number;
+    success: boolean;
+    error?: string;
+  }>;
+};
+
+const RETENTION_POLICY = [
+  { table: "webhook_logs" as const, retention_days: 90 },
+  { table: "audit_logs" as const, retention_days: 180 },
+  { table: "rate_limit_events" as const, retention_days: 30 },
+  { table: "payment_events" as const, retention_days: 180 },
+];
+
+export const runLogRetentionCleanup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<LogRetentionCleanupResult> => {
+    const userId = (context as { userId: string }).userId;
+    const actorEmail = await ensureAdmin(userId);
+
+    const results: LogRetentionCleanupResult["results"] = [];
+
+    for (const pol of RETENTION_POLICY) {
+      const cutoff = new Date(
+        Date.now() - pol.retention_days * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      try {
+        // Pre-count elegíveis (mais confiável que `count: exact` no delete em alguns providers)
+        const { count: eligible, error: countErr } = await supabaseAdmin
+          .from(pol.table)
+          .select("id", { count: "exact", head: true })
+          .lt("created_at", cutoff);
+        if (countErr) throw new Error(countErr.message);
+
+        const { error: delErr } = await supabaseAdmin
+          .from(pol.table)
+          .delete()
+          .lt("created_at", cutoff);
+        if (delErr) throw new Error(delErr.message);
+
+        results.push({
+          table: pol.table,
+          retention_days: pol.retention_days,
+          cutoff_at: cutoff,
+          deleted: eligible ?? 0,
+          success: true,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "erro desconhecido";
+        results.push({
+          table: pol.table,
+          retention_days: pol.retention_days,
+          cutoff_at: cutoff,
+          deleted: 0,
+          success: false,
+          error: msg,
+        });
+      }
+    }
+
+    const executedAt = new Date().toISOString();
+
+    // Registra auditoria (depois da limpeza para não ser apagada por ela mesma)
+    await logAuditEvent({
+      actor_user_id: userId,
+      actor_email: actorEmail,
+      action: "log_retention_cleanup",
+      entity_type: "system",
+      metadata: {
+        executed_at: executedAt,
+        tables: results.map((r) => ({
+          table: r.table,
+          retention_days: r.retention_days,
+          cutoff_at: r.cutoff_at,
+          deleted: r.deleted,
+          success: r.success,
+        })),
+      },
+    });
+
+    return {
+      executed_at: executedAt,
+      actor_email: actorEmail ?? null,
+      results,
+    };
+  });
