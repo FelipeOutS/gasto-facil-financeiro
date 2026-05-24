@@ -32,6 +32,8 @@ function Manual() {
   const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [pending, setPending] = useState<null | (() => void)>(null);
 
   useEffect(() => {
