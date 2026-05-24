@@ -1325,7 +1325,7 @@ function ContasCard({
   return (
     <section
       className={cn(
-        "w-full rounded-3xl border bg-card p-4 transition-colors",
+        "w-full rounded-2xl border bg-card p-3.5 transition-colors",
         isSide ? "flex h-full flex-col shadow-elevated" : "mt-2.5",
         hasAtrasada ? "border-destructive/40" : "border-border",
       )}
