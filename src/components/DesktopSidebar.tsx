@@ -110,7 +110,8 @@ export function DesktopSidebar() {
     const locked = !isAdminMaster && !!routeRule && !can(routeRule.feature);
     const label = t(`items.${labelKey}`);
     const linkClasses = cn(
-      "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
+      "group relative flex items-center rounded-xl text-sm font-medium transition-all duration-200",
+      collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
       active
         ? "bg-brand-soft text-brand-on-soft shadow-card"
         : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
@@ -129,43 +130,51 @@ export function DesktopSidebar() {
         )}
       </span>
     );
-    const labelNode = (
+    const labelNode = collapsed ? null : (
       <>
         <span className="truncate">{label}</span>
         {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
       </>
     );
-    if (locked) {
+
+    const inner = locked ? (
+      <button
+        type="button"
+        onClick={() => setLockState({ open: true, title: routeRule!.title })}
+        className={cn(linkClasses, "w-full text-left")}
+        aria-label={label}
+      >
+        {iconNode}
+        {labelNode}
+      </button>
+    ) : (
+      <Link
+        to={to}
+        preload="intent"
+        preloadDelay={0}
+        onClick={(e) => handleNavClick(to, e)}
+        className={linkClasses}
+        aria-label={label}
+      >
+        {active && !collapsed && (
+          <span aria-hidden className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand" />
+        )}
+        {iconNode}
+        {labelNode}
+      </Link>
+    );
+
+    if (collapsed) {
       return (
         <li key={to}>
-          <button
-            type="button"
-            onClick={() => setLockState({ open: true, title: routeRule!.title })}
-            className={cn(linkClasses, "w-full text-left")}
-          >
-            {iconNode}
-            {labelNode}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>{inner}</TooltipTrigger>
+            <TooltipContent side="right">{label}</TooltipContent>
+          </Tooltip>
         </li>
       );
     }
-    return (
-      <li key={to}>
-        <Link
-          to={to}
-          preload="intent"
-          preloadDelay={0}
-          onClick={(e) => handleNavClick(to, e)}
-          className={linkClasses}
-        >
-          {active && (
-            <span aria-hidden className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand" />
-          )}
-          {iconNode}
-          {labelNode}
-        </Link>
-      </li>
-    );
+    return <li key={to}>{inner}</li>;
   }
 
   const dashboardActive = currentPath === "/";
