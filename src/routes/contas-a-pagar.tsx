@@ -21,6 +21,8 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { useTranslation } from "react-i18next";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { StatusBadge as PremiumStatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
