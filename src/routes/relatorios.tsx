@@ -756,6 +756,17 @@ function RelatoriosPage() {
         }}
       />
 
+      {/* Link contextual para ajustar limites */}
+      <div className="mt-2 flex justify-end">
+        <Link
+          to="/orcamento"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-brand/40 min-h-11 sm:min-h-1"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          {t("budgetEvolution.adjustLimits")}
+        </Link>
+      </div>
+
       {/* ===== Tendência por categoria (Top 5, 6m) ===== */}
       <TendenciaCategoriasCard
         categorias={tendenciaCategorias}

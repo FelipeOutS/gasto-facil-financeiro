@@ -611,9 +611,17 @@ function OrcamentoPage() {
           })()}
         />
 
+        {/* Link contextual para Relatórios */}
+        <div className="mt-2 flex justify-end">
+          <Link
+            to="/relatorios"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-brand/40 min-h-11 sm:min-h-1"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            {t("planning.viewReports")}
+          </Link>
+        </div>
       </section>
-
-
 
       {/* Limite total + ações rápidas (só se já há algo configurado) */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
