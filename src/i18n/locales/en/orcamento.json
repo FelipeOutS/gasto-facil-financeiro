@@ -6,6 +6,8 @@
   "back": "Back",
   "prevMonth": "Previous month",
   "nextMonth": "Next month",
+  "pageTitle": "Budget",
+  "pageSubtitle": "Plan your limits and track how much you've used this month.",
   "empty": {
     "title": "Create your first budget",
     "subtitle": "Set limits per category and track where your money is going.",
