@@ -522,6 +522,7 @@ function GastosPage() {
   }
   async function executarBulkDelete() {
     if (selected.size === 0) return;
+    if (!(await requireOnline())) return;
     setExcluindoBulk(true);
     try {
       const ids = Array.from(selected);
