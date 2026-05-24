@@ -96,6 +96,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
