@@ -9,6 +9,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { consultarCnpjInterno } from "./cnpj.server";
+import { assertFeatureAccess } from "./feature-gate.server";
 
 const inputSchema = z.object({
   cnpj: z.string().min(1).max(32),
@@ -17,14 +18,14 @@ const inputSchema = z.object({
 /**
  * Consulta dados públicos de uma empresa por CNPJ.
  *
- * - Sem auth: dados públicos da RFB; cache compartilhado entre usuários.
+ * - Requer auth + plano com feature `empresa_inteligente` (MEI/Empresa).
  * - Cache: 30 dias.
  * - Fontes: BrasilAPI (primária) → CNPJ.ws (fallback).
- * - CNPJ inválido nunca chama API externa.
  */
 export const consultarCnpj = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => inputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "empresa_inteligente");
     return consultarCnpjInterno(data.cnpj);
   });
