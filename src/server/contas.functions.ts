@@ -282,6 +282,7 @@ export const unmarkContaAPagarPaid = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
     const userId = context.userId;
+    await assertFeatureAccess(userId, "contas_a_pagar");
     const { data: conta, error: contaErr } = await sb
       .from("contas_a_pagar")
       .select("*")
