@@ -5,8 +5,6 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ClipboardList,
-  CheckCircle2,
-  AlertTriangle,
   ChevronRight,
 } from "lucide-react";
 import {
