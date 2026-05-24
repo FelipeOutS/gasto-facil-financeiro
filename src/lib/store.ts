@@ -1957,11 +1957,17 @@ export function addGasto(input: NovoGastoInput): Gasto[] {
  * Versão assíncrona usada pela fila offline: insere no Supabase e aguarda
  * confirmação. Só retorna `{ ok: true }` se o servidor aceitou — isso
  * permite remover o item da fila offline com segurança.
+ *
+ * Quando `offlineClientId` é informado, ele vai como `offline_client_id`
+ * no insert. Há um índice único parcial em `(user_id, offline_client_id)`
+ * — se já existir um gasto com esse par, o Postgres retorna 23505 e
+ * tratamos como `ok: true, duplicate: true` (idempotente).
  */
 export async function addGastoAwait(
   input: NovoGastoInput,
   userId: string,
-): Promise<{ ok: boolean; error?: string }> {
+  offlineClientId?: string,
+): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   if (!userId) return { ok: false, error: "no_user" };
   const previousActive = activeUserId;
   if (activeUserId !== userId) activeUserId = userId;
@@ -1971,8 +1977,23 @@ export async function addGastoAwait(
   } finally {
     if (activeUserId !== previousActive) activeUserId = previousActive;
   }
-  const { error } = await supabase.from("gastos").insert(built.map((b) => b.row));
-  if (error) return { ok: false, error: error.message };
+  const rows = built.map((b) => {
+    const row = b.row as GastoInsert & { offline_client_id?: string | null };
+    if (offlineClientId) row.offline_client_id = offlineClientId;
+    return row;
+  });
+  const { error } = await supabase.from("gastos").insert(rows);
+  if (error) {
+    // 23505 = unique_violation. Pelo índice parcial, isso só ocorre quando
+    // o mesmo (user_id, offline_client_id) já foi gravado em uma tentativa
+    // anterior. Idempotente: considera sucesso e deixa a fila remover.
+    const code = (error as { code?: string }).code;
+    const msg = error.message ?? "";
+    if (code === "23505" || /duplicate key|unique/i.test(msg)) {
+      return { ok: true, duplicate: true };
+    }
+    return { ok: false, error: error.message };
+  }
   if (activeUserId === userId) {
     memGastos = [...memGastos, ...built.map((b) => b.client)];
     emit();
