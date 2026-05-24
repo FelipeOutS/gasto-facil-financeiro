@@ -46,7 +46,7 @@ export function PlanejamentoMensalCard({
   estado,
   labels,
 }: Props) {
-  const distribuido = distribuidoCategorias + distribuidoReserva;
+  const distribuido = distribuidoCategorias + distribuidoContas + distribuidoReserva;
   const livre = renda - distribuido;
   const excesso = distribuido - renda;
   const pct = renda > 0 ? Math.min(100, Math.round((distribuido / renda) * 100)) : 0;
@@ -54,9 +54,12 @@ export function PlanejamentoMensalCard({
   // segmentos para a barra (base = max(renda, distribuido) para casos de excesso)
   const base = Math.max(renda, distribuido, 1);
   const wCat = (distribuidoCategorias / base) * 100;
+  const wBill = (distribuidoContas / base) * 100;
   const wRes = (distribuidoReserva / base) * 100;
   const wLivre = renda > 0 && livre > 0 ? (livre / base) * 100 : 0;
   const wExc = excesso > 0 ? (excesso / base) * 100 : 0;
+
+  const hasBills = distribuidoContas > 1;
 
   const tone =
     estado === "excesso"
@@ -92,7 +95,9 @@ export function PlanejamentoMensalCard({
       {estado === "sem_renda" ? (
         <p className="mt-4 text-xs text-muted-foreground">{labels.noIncome}</p>
       ) : estado === "sem_limites" ? (
-        <p className="mt-4 text-xs text-muted-foreground">{labels.noLimits}</p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          {hasBills ? labels.hasBillsNoLimits : labels.noLimits}
+        </p>
       ) : (
         <>
           {/* Números principais */}
@@ -138,28 +143,35 @@ export function PlanejamentoMensalCard({
           {/* Barra segmentada */}
           <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
             <div className="flex h-full w-full">
-              {wCat > 0 && (
+              {wCat > 1 && (
                 <div
                   className="h-full bg-brand transition-all"
                   style={{ width: `${wCat}%` }}
                   aria-label={labels.categories}
                 />
               )}
-              {wRes > 0 && (
+              {wBill > 1 && (
+                <div
+                  className="h-full bg-info transition-all"
+                  style={{ width: `${wBill}%` }}
+                  aria-label={labels.bills}
+                />
+              )}
+              {wRes > 1 && (
                 <div
                   className="h-full bg-success transition-all"
                   style={{ width: `${wRes}%` }}
                   aria-label={labels.reserveGoals}
                 />
               )}
-              {wLivre > 0 && (
+              {wLivre > 1 && (
                 <div
                   className="h-full bg-warning/70 transition-all"
                   style={{ width: `${wLivre}%` }}
                   aria-label={labels.free}
                 />
               )}
-              {wExc > 0 && (
+              {wExc > 1 && (
                 <div
                   className="h-full bg-destructive transition-all"
                   style={{ width: `${wExc}%` }}
@@ -171,21 +183,31 @@ export function PlanejamentoMensalCard({
 
           {/* Legenda */}
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-brand" />
-              {labels.categories}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-success" />
-              {labels.reserveGoals}
-            </span>
+            {distribuidoCategorias > 1 && (
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-brand" />
+                {labels.categories}
+              </span>
+            )}
+            {distribuidoContas > 1 && (
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-info" />
+                {labels.bills}
+              </span>
+            )}
+            {distribuidoReserva > 1 && (
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-success" />
+                {labels.reserveGoals}
+              </span>
+            )}
             {livre > 0 && (
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-warning/70" />
                 {labels.free}
               </span>
             )}
-            {excesso > 0 && (
+            {excesso > 1 && (
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-destructive" />
                 {labels.excess}
