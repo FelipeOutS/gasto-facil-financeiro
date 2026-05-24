@@ -22,6 +22,7 @@ import {
   Download,
   Printer,
   CalendarRange,
+  Pencil,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";

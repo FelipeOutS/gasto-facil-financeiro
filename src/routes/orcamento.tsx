@@ -13,6 +13,7 @@ import {
   Copy,
   Trash2,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategoriaCard";
 import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimiteDiarioCard";
