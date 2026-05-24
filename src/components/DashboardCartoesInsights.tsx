@@ -54,6 +54,13 @@ type Props = {
   /** Abre o detalhe da fatura no Drawer existente em /cartoes. */
   onAbrirFatura?: (cartaoId: string, mes: number, ano: number) => void;
   className?: string;
+  /**
+   * Permite renderizar somente um subconjunto dos cards, para que o dashboard
+   * monte uma grade de 12 colunas distribuindo Insight + Cartões em uma
+   * coluna lateral e Próximos vencimentos + Maiores gastos em uma linha
+   * inferior. `undefined` = comportamento legado (renderiza tudo).
+   */
+  slot?: "insights" | "lists";
 };
 
 const STATUS_TONE: Record<StatusFatura, string> = {
@@ -78,6 +85,7 @@ export function DashboardCartoesInsights({
   maiorCategoria,
   onAbrirFatura,
   className,
+  slot,
 }: Props) {
   const { t, i18n } = useTranslation("dashboard");
   const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "pt-BR";
