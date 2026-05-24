@@ -16,6 +16,7 @@ import {
   updateExpense,
 } from "./offline-expense-queue";
 import { addGastoAwait } from "@/lib/store";
+import { normalizeOfflineError } from "./offline-error-messages";
 
 let syncing = false;
 
@@ -40,18 +41,22 @@ export async function syncAllForUser(userId: string): Promise<{
           await removeExpense(item.local_id);
           synced += 1;
         } else {
+          const norm = normalizeOfflineError(res.error ?? "Falha ao sincronizar");
           await updateExpense(item.local_id, {
             status: "failed",
             attempts: item.attempts + 1,
-            error_message: res.error ?? "Falha ao sincronizar",
+            error_message: norm.friendly,
+            technical_error: norm.technical,
           });
           failed += 1;
         }
       } catch (err) {
+        const norm = normalizeOfflineError(err);
         await updateExpense(item.local_id, {
           status: "failed",
           attempts: item.attempts + 1,
-          error_message: err instanceof Error ? err.message : String(err),
+          error_message: norm.friendly,
+          technical_error: norm.technical,
         });
         failed += 1;
       }

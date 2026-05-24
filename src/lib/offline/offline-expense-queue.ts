@@ -33,6 +33,7 @@ export type OfflineExpense = {
   status: OfflineExpenseStatus;
   attempts: number;
   error_message?: string;
+  technical_error?: string;
 };
 
 function isBrowser() {
