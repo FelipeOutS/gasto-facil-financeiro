@@ -477,6 +477,10 @@ function Index() {
         <RadarEconomicoCard />
       </section>
 
+      {/* Dicas para economizar — não renderiza se não houver insights */}
+      <DashboardDicasBloco className="mt-4" />
+
+
 
 
       {/* Aviso contextual: assinaturas em moeda estrangeira */}
