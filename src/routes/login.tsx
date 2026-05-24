@@ -221,7 +221,17 @@ function LoginForm() {
     console.log("[Biometria] login por senha funcionou, salvando preferência biométrica");
     const { data } = await supabase.auth.getSession();
     const bridgeNow = isLoginBioBridgeAvailable();
+    const secureNow = hasSecureSessionBridge();
     let savedBioAfterPassword = false;
+    if (data.session && secureNow) {
+      const ok = saveSecureSession(data.session);
+      console.log("[SecureSession] saveSession após senha:", ok);
+      if (ok) {
+        savedBioAfterPassword = true;
+        setBioEnabled(true);
+        setLoginBioUnlocked(true);
+      }
+    }
     if (data.session && bridgeNow) {
       persistLoginBioSession(data.session);
       savedBioAfterPassword = true;
