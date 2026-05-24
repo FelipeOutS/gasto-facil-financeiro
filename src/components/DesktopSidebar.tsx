@@ -327,37 +327,35 @@ export function DesktopSidebar() {
         </div>
       </nav>
 
-      {/* Theme toggle */}
-      <div className={cn("mt-2", collapsed ? "px-2 flex justify-center" : "mx-3")}>
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <ThemeToggle variant="icon" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t("aria.toggleTheme", { defaultValue: "Alternar tema" })}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <ThemeToggle />
+      {/* System controls: theme + collapse */}
+      <div
+        className={cn(
+          "mt-2 mb-2 flex items-center",
+          collapsed ? "flex-col gap-2 px-2" : "gap-2 px-3 justify-center",
         )}
-      </div>
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <ThemeToggle />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t("aria.toggleTheme", { defaultValue: "Alternar tema" })}</TooltipContent>
+        </Tooltip>
 
-      {/* Collapse/expand button */}
-      <div className={cn("mt-2", collapsed ? "px-2 flex justify-center" : "mx-3")}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!collapsed)}
               aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-              className={cn(
-                "inline-flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground",
-                collapsed ? "h-10 w-10" : "h-9 w-full gap-2 px-3 text-xs font-medium",
-              )}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:border-border hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-              {!collapsed && <span>Recolher menu</span>}
+              {collapsed ? (
+                <PanelLeftOpen className="h-4 w-4 transition-transform duration-200" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4 transition-transform duration-200" />
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">{collapsed ? "Expandir menu" : "Recolher menu"}</TooltipContent>
