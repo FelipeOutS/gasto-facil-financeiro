@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditGastoDialog } from "@/components/EditGastoDialog";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
