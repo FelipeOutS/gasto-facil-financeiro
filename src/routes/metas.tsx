@@ -85,6 +85,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 
 const META_COLORS = [
   "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#fb923c",
