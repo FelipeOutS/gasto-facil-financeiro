@@ -88,6 +88,7 @@ function GastoAIPage() {
       toast.error(t("ai.toastTooLong"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSending(true);
     const optimistic: ChatMessage = {
       id: `tmp-${Date.now()}`,
