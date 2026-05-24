@@ -18,6 +18,7 @@ import { AccentProvider } from "@/lib/accent";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
