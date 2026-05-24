@@ -408,7 +408,7 @@ function Index() {
 
   return (
     <MobileShell wide>
-      {/* Hero — saudação + ações rápidas */}
+      {/* Hero — saudação compacta */}
       <HeroGreeting
         nome={profile?.nome ?? null}
         eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
@@ -417,9 +417,55 @@ function Index() {
         monthSwitcher={monthSwitcher}
       />
 
-      {/* Ações rápidas — destaque no mobile, atalhos no desktop */}
-      <QuickActionsBar />
+      {/* ===== Resumo financeiro — destaque principal ===== */}
+      <section className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+        <div className="lg:col-span-5">
+          <SaldoHeroCard
+            saldo={saldo}
+            entradas={totalEntradas}
+            despesas={total}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:col-span-7 lg:grid-cols-3">
+          <KpiCard
+            label={t("kpi.receitas")}
+            valueNum={totalEntradas}
+            icon={<ArrowUp className="h-3.5 w-3.5" />}
+            tone="success"
+            hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
+          />
+          <KpiCard
+            label={t("kpi.despesas")}
+            valueNum={total}
+            icon={<ArrowDown className="h-3.5 w-3.5" />}
+            tone="destructive"
+            hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
+          />
+          <KpiCard
+            label={t("kpi.aPagar")}
+            valueNum={contasResumo.pendente}
+            icon={<CalendarClock className="h-3.5 w-3.5" />}
+            tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
+            hint={
+              contasResumo.atrasadasCount > 0
+                ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
+                : contasResumo.pendentesCount > 0
+                  ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
+                  : t("kpi.tudoEmDia")
+            }
+          />
+        </div>
+      </section>
 
+      {saldo < 0 && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
+        </p>
+      )}
+
+      {/* Ações rápidas — tiles compactos */}
+      <QuickActionsBar />
 
       {/* Card de assinatura/plano */}
       <PlanoCard className="mt-4" />
@@ -449,52 +495,6 @@ function Index() {
             {t("completeProfile.cta")}
           </span>
         </Link>
-      )}
-
-      {/* ===== 1. KPIs — Tá tudo no radar ===== */}
-      <SectionLabel>{t("sections.radar")}</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:grid-cols-4">
-        <KpiCard
-          label={t("kpi.saldo")}
-          valueNum={saldo}
-          icon={<Wallet className="h-4 w-4" />}
-          tone={saldo < 0 ? "destructive" : "brand"}
-          hint={saldo < 0 ? t("kpi.saldoNegativoHint", { valor: formatBRL(-saldo) }) : t("kpi.saldoNoMes")}
-        />
-        <KpiCard
-          label={t("kpi.receitas")}
-          valueNum={totalEntradas}
-          icon={<ArrowUp className="h-4 w-4" />}
-          tone="success"
-          hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
-        />
-        <KpiCard
-          label={t("kpi.despesas")}
-          valueNum={total}
-          icon={<ArrowDown className="h-4 w-4" />}
-          tone="destructive"
-          hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
-        />
-        <KpiCard
-          label={t("kpi.aPagar")}
-          valueNum={contasResumo.pendente}
-          icon={<CalendarClock className="h-4 w-4" />}
-          tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
-          hint={
-            contasResumo.atrasadasCount > 0
-              ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
-              : contasResumo.pendentesCount > 0
-                ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
-                : t("kpi.tudoEmDia")
-          }
-        />
-      </section>
-
-      {saldo < 0 && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
-        </p>
       )}
 
       {/* CTA principal — apenas mobile (sidebar tem o seu) */}
