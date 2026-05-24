@@ -184,6 +184,7 @@ function MeuPlanoPage() {
       toast.error(tp("toasts.loginToSubscribe"));
       return;
     }
+    if (!(await requireOnline())) return;
     setSubmitting(tier);
     try {
       const res = await criarCheckout(tier, { periodicidade, method: metodoPagamento });
