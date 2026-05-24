@@ -486,6 +486,11 @@ function Index() {
         <DashboardDicasBloco />
       </section>
 
+      {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
+      <section className="mt-4">
+        <DashboardDiagnosticoMensalCard />
+      </section>
+
 
 
 
