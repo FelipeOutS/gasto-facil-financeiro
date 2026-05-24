@@ -1275,7 +1275,8 @@ function GastosPage() {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => {
+                            onClick={async () => {
+                              if (!(await requireOnline())) return;
                               deleteGasto(g.id);
                               toast.success(t("item.deleted"));
                             }}
