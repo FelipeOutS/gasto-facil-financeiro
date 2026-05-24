@@ -37,6 +37,8 @@ import {
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
+import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import {
   criarCheckout,
