@@ -28,6 +28,13 @@ import {
   setLoginBioInProgress,
   setLoginBioUnlocked,
 } from "@/lib/biometric-login";
+import {
+  getSavedSecureEmail,
+  hasSavedSecureSession,
+  hasSecureSessionBridge,
+  loginWithSecureSession,
+  saveSecureSession,
+} from "@/lib/secure-session";
 
 export const Route = createFileRoute("/login")({
   head: () => {
