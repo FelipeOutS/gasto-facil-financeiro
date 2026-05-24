@@ -156,10 +156,28 @@ export async function listIncomes(userId: string): Promise<OfflineIncome[]> {
 }
 
 export async function removeIncome(localId: string): Promise<void> {
+  let snapshot: OfflineIncome | undefined;
   await tx("readwrite", (s) => {
-    s.delete(localId);
+    return new Promise<void>((resolve, reject) => {
+      const g = s.get(localId);
+      g.onsuccess = () => {
+        snapshot = g.result as OfflineIncome | undefined;
+        s.delete(localId);
+        resolve();
+      };
+      g.onerror = () => reject(g.error);
+    });
   });
   emit();
+  if (snapshot) {
+    void recordHistoryEvent({
+      user_id: snapshot.user_id,
+      type: "income",
+      action: "removed",
+      title: snapshot.descricao,
+      amount: snapshot.valor,
+    });
+  }
 }
 
 export async function updateIncome(
