@@ -236,6 +236,7 @@ export const deleteWhatsAppMessageLog = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb
