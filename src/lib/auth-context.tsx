@@ -6,6 +6,7 @@ import type { TipoCadastro } from "./profile-utils";
 import {
   clearLoginBio,
   isLoginBioEnabledForEmail,
+  LOGIN_BIO_SESSION_RESTORED_EVENT,
   persistLoginBioSession,
   setLoginBioInProgress,
   setLoginBioUnlocked,
@@ -91,6 +92,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    const onBioSessionRestored = (event: Event) => {
+      const sess = (event as CustomEvent<{ session?: Session }>).detail?.session ?? null;
+      if (!sess) return;
+      setSession(sess);
+      setLoading(false);
+      const uid = sess.user.id;
+      setActiveUserId(uid);
+      persistLoginBioSession(sess);
+      setTimeout(() => {
+        void (async () => {
+          await migrateLegacyDataToUser(uid);
+          await hydrateUser(uid);
+          void loadProfile(uid);
+        })();
+      }, 0);
+    };
+    window.addEventListener(LOGIN_BIO_SESSION_RESTORED_EVENT, onBioSessionRestored as EventListener);
+
     // 2) then existing session
     withAuthTimeout(supabase.auth.getSession())
       .then((result) => {
@@ -119,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       window.clearTimeout(loadingFallback);
       sub.subscription.unsubscribe();
+      window.removeEventListener(LOGIN_BIO_SESSION_RESTORED_EVENT, onBioSessionRestored as EventListener);
     };
   }, []);
 
