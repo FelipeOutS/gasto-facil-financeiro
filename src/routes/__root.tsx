@@ -19,8 +19,10 @@ import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
+import { OfflineIncomeSyncStatus } from "@/components/offline/OfflineIncomeSyncStatus";
 import { useAuth } from "@/lib/auth-context";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
+import { useOfflineIncomeQueue } from "@/lib/offline/use-offline-income-sync";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
@@ -211,10 +213,14 @@ function RootComponent() {
 function OfflineQueueMount() {
   const { user } = useAuth();
   useOfflineExpenseQueue(user?.id ?? null);
+  useOfflineIncomeQueue(user?.id ?? null);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
       <div className="pointer-events-auto w-full">
         <OfflineSyncStatus />
+      </div>
+      <div className="pointer-events-auto w-full">
+        <OfflineIncomeSyncStatus />
       </div>
     </div>
   );

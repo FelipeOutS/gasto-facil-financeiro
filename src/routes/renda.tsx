@@ -54,7 +54,8 @@ import {
   useStore,
   type UpdateReceitaScope,
 } from "@/lib/store";
-import { requireOnline } from "@/lib/use-online-status";
+import { requireOnline, isOnline } from "@/lib/use-online-status";
+import { enqueueIncome } from "@/lib/offline/offline-income-queue";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import {
   formatBRL,
@@ -176,7 +177,7 @@ function RendaPage() {
   }, [i18n.language]);
   const tipoLabel = (id: TipoReceita) => t(`tipo.${id}`);
   const ready = useBootstrap();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
@@ -424,7 +425,30 @@ function RendaPage() {
     setNovaClienteId(null);
   }
 
-  function persistNova(payload: NovaPayload) {
+  async function persistNova(payload: NovaPayload) {
+    // Fluxo offline: apenas para receita não recorrente, com usuário logado.
+    if (!payload.recorrente && user?.id && !isOnline()) {
+      try {
+        await enqueueIncome(user.id, {
+          descricao: payload.descricao,
+          valor: payload.valor,
+          data: payload.data,
+          tipo: payload.tipo,
+          recorrente: false,
+          clienteId: payload.clienteId ?? null,
+        });
+        toast.success(
+          "Receita salva offline. Ela será sincronizada quando a internet voltar.",
+        );
+        setOpen(false);
+        reset();
+        return;
+      } catch (err) {
+        console.error("[offline-income] enqueue failed", err);
+        toast.error("Não foi possível salvar offline.");
+        return;
+      }
+    }
     addReceita(payload);
     toast.success(t("toast.added"));
     setOpen(false);
@@ -446,7 +470,9 @@ function RendaPage() {
       toast.error(t("toast.fillFields"));
       return;
     }
-    if (!(await requireOnline())) return;
+    // Não bloqueia se offline: receita não recorrente cai na fila.
+    // Recorrência ainda precisa de internet.
+    if (recorrente && !(await requireOnline())) return;
     const dt = new Date(data + "T12:00:00");
     const mesNova = dt.getMonth() + 1;
     const anoNova = dt.getFullYear();

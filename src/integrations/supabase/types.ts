@@ -1810,6 +1810,7 @@ export type Database = {
           id_operacao_banco: string | null
           import_batch_id: string | null
           mes: number
+          offline_client_id: string | null
           origem: string | null
           recorrencia_id: string | null
           recorrente: boolean
@@ -1829,6 +1830,7 @@ export type Database = {
           id_operacao_banco?: string | null
           import_batch_id?: string | null
           mes: number
+          offline_client_id?: string | null
           origem?: string | null
           recorrencia_id?: string | null
           recorrente?: boolean
@@ -1848,6 +1850,7 @@ export type Database = {
           id_operacao_banco?: string | null
           import_batch_id?: string | null
           mes?: number
+          offline_client_id?: string | null
           origem?: string | null
           recorrencia_id?: string | null
           recorrente?: boolean
