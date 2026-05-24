@@ -558,24 +558,25 @@ function ResumoCard({
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("cartoes");
   return (
-    <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-8 text-center animate-rise">
-      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft animate-pop">
-        <CreditCard className="h-6 w-6" />
-      </div>
-      <h3 className="mt-3 text-base font-semibold">{t("empty.title")}</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        {t("empty.subtitle")}
-      </p>
-      <Button
-        onClick={onAdd}
-        className="card-press mt-4 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
-      >
-        <Plus className="mr-1 h-4 w-4" />
-        {t("empty.addFirst")}
-      </Button>
-    </div>
+    <PremiumEmptyState
+      className="mt-4"
+      variant="premium"
+      icon={<CreditCard className="h-6 w-6" />}
+      title={t("empty.title")}
+      description={t("empty.subtitle")}
+      cta={
+        <Button
+          onClick={onAdd}
+          className="card-press min-h-11 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
+        >
+          <Plus className="mr-1 h-4 w-4" />
+          {t("empty.addFirst")}
+        </Button>
+      }
+    />
   );
 }
+
 
 const CartaoCard = memo(function CartaoCard({
   cartao,
