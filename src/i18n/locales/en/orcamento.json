@@ -85,7 +85,9 @@
     "hasBillsNoLimits": "You already have bills planned this month. Set category limits to complete your plan.",
     "allAssigned": "You allocated all of your income.",
     "withFree": "You still have",
-    "withExcess": "Your plan went over income by"
+    "withExcess": "Your plan went over income by",
+    "viewReports": "View evolution in Reports",
+    "viewReportsDescription": "Track how your budget has behaved over the months."
   },
   "totalLimit": {
     "title": "Total monthly limit",

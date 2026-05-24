@@ -85,7 +85,9 @@
     "hasBillsNoLimits": "Você já tem contas previstas no mês. Defina limites por categoria para completar o planejamento.",
     "allAssigned": "Você distribuiu toda sua renda.",
     "withFree": "Você ainda tem",
-    "withExcess": "Seu planejamento passou da renda em"
+    "withExcess": "Seu planejamento passou da renda em",
+    "viewReports": "Ver evolução em Relatórios",
+    "viewReportsDescription": "Acompanhe como seu orçamento tem se comportado ao longo dos meses."
   },
   "totalLimit": {
     "title": "Limite mensal total",
