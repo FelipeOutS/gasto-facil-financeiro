@@ -121,7 +121,12 @@ function RelatoriosPage() {
   const movMetas = useStore(() => getMovimentacoesMeta());
   const categorias = useStore(() => getCategorias());
   const guardado = useStore(() => getGuardado());
-  useStore(() => getLimites().length);
+  // Chave reativa: muda quando qualquer limite é criado, removido OU tem seu valor editado.
+  const limitesKey = useStore(() =>
+    getLimites()
+      .map((l) => `${l.tipo}:${l.mes}:${l.ano}:${l.valor}`)
+      .join("|"),
+  );
 
   // Aplicar período → ajusta ym efetivo (mes/anterior afetam o ym)
   useEffect(() => {
@@ -154,7 +159,7 @@ function RelatoriosPage() {
         getLimite(catId, ym.mes, ym.ano),
         mesEfetivoGasto,
       ),
-    [categorias, gastos, ym],
+    [categorias, gastos, ym, limitesKey],
   );
   const resOrc = useMemo(() => resumirOrcamento(linhasOrc), [linhasOrc]);
 
@@ -249,7 +254,7 @@ function RelatoriosPage() {
         realizado: res.totalRealizado,
       };
     });
-  }, [ym, categorias, gastos]);
+  }, [ym, categorias, gastos, limitesKey]);
 
   // Totais agregados do período (multi-mês)
   const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
