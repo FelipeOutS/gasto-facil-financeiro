@@ -627,7 +627,7 @@ const CartaoCard = memo(function CartaoCard({
       toast.success(t("toast.markedPaid"));
     } catch (err) {
       console.error(err);
-      toast.error(t("toast.updateError"));
+      toastFromError(err, t("toast.updateError"));
     }
   }
 
