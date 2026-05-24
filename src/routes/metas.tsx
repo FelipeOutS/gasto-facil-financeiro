@@ -651,13 +651,14 @@ function MetaFormDialog({
     onClose();
   }
 
-  function handleRemoverValor() {
+  async function handleRemoverValor() {
     if (!baseMeta) return;
     const v = parseBRLInput(valorStr);
     if (!v) {
       toast.error(t("toasts.informAValue"));
       return;
     }
+    if (!(await requireOnline())) return;
     const novo = Math.max(0, baseMeta.valorAtual - v);
     updateMeta(baseMeta.id, { valorAtual: novo });
     toast.success(t("toasts.valueAdjusted"));
