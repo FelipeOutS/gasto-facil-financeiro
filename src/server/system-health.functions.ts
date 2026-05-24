@@ -154,7 +154,7 @@ export type SystemHealthData = {
     target_email: string | null;
     entity_type: string | null;
     entity_id: string | null;
-    metadata: Record<string, unknown> | null;
+    metadata: Record<string, SafeMetaValue> | null;
   }>;
   alerts: {
     level: "ok" | "warn" | "error";
