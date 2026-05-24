@@ -56,6 +56,7 @@ import {
   useStore,
   bulkSetMesReferencia,
 } from "@/lib/store";
+import { requireOnline } from "@/lib/use-online-status";
 import { mesAnoToLabel, mesReferenciaOpcoes, ymFromDate, ymToLabel } from "@/lib/mes-referencia";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
