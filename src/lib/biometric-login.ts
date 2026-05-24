@@ -419,7 +419,7 @@ export async function enableLoginBio(email: string): Promise<void> {
     console.log("[EnableBiometric] getSession exists:", typeof supabase.auth.getSession === "function");
     console.log("[EnableBiometric] refreshSession exists:", typeof supabase.auth.refreshSession === "function");
 
-    let { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.getSession();
     let session = sessionData.session ?? null;
 
     if (!session) {
