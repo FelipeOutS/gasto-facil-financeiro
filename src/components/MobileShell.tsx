@@ -3,6 +3,7 @@ import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AuthGate } from "./AuthGate";
+import { ExpiredAccessBanner } from "./ExpiredAccessBanner";
 
 export function MobileShell({
   children,
@@ -37,6 +38,7 @@ export function MobileShell({
               : { minHeight: "100dvh" }
           }
         >
+          {!unprotected && <ExpiredAccessBanner />}
           {children}
         </main>
       </div>

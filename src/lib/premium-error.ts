@@ -147,13 +147,25 @@ export function friendlyError(err: unknown, fallback?: string): string {
 }
 
 /**
- * Atalho: mostra `toast.error` com mensagem amigável. Use em catch blocks
- * de operações premium (criar/editar/excluir).
+ * Atalho: mostra `toast.error` com mensagem amigável. Em erros premium,
+ * anexa uma ação "Ver planos" que leva o usuário para `/meu-plano`.
  */
 export function toastFromError(err: unknown, fallback?: string): PremiumErrorInfo | null {
   const info = parsePremiumError(err);
   if (info) {
-    toast.error(info.message);
+    toast.error(info.message, {
+      duration: 7000,
+      action: {
+        label: "Ver planos",
+        onClick: () => {
+          try {
+            window.location.assign("/meu-plano");
+          } catch {
+            /* ignore */
+          }
+        },
+      },
+    });
     return info;
   }
   toast.error(fallback || extractMessage(err) || "Algo deu errado. Tente novamente.");

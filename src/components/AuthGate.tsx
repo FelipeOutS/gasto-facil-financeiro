@@ -183,6 +183,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           }}
           title={premiumRule.title}
           description={premiumDescription(premiumRule)}
+          feature={premiumRule.feature}
           showContinue={false}
         />
       </>
