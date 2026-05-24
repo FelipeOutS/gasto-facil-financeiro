@@ -248,6 +248,10 @@ export function DashboardCartoesInsights({
   const showVenc = slot !== "insights";
   const showMaiores = slot !== "insights";
 
+  // Quando o dashboard pede só um slot, evita renderizar um wrapper vazio.
+  if (slot === "lists" && proximosVencimentos.length === 0 && maioresGastos.length === 0) return null;
+  if (slot === "insights" && usoCartoes.length === 0 && !comparacao) return null;
+
   const containerCls =
     slot === "insights"
       ? "flex flex-col gap-3.5 sm:gap-4"
