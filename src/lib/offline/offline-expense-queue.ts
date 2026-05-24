@@ -164,10 +164,28 @@ export async function countPending(userId: string): Promise<number> {
 }
 
 export async function removeExpense(localId: string): Promise<void> {
+  let snapshot: OfflineExpense | undefined;
   await tx("readwrite", (s) => {
-    s.delete(localId);
+    return new Promise<void>((resolve, reject) => {
+      const g = s.get(localId);
+      g.onsuccess = () => {
+        snapshot = g.result as OfflineExpense | undefined;
+        s.delete(localId);
+        resolve();
+      };
+      g.onerror = () => reject(g.error);
+    });
   });
   emit();
+  if (snapshot) {
+    void recordHistoryEvent({
+      user_id: snapshot.user_id,
+      type: "expense",
+      action: "removed",
+      title: snapshot.descricao,
+      amount: snapshot.valor,
+    });
+  }
 }
 
 export async function updateExpense(
