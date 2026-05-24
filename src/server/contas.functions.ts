@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertFeatureAccess } from "./feature-gate.server";
 
 const CONTA_GASTO_ORIGEM = "contas_a_pagar";
 
@@ -127,6 +128,7 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
     const userId = context.userId;
+    await assertFeatureAccess(userId, "contas_a_pagar");
     const { data: conta, error: contaErr } = await sb
       .from("contas_a_pagar")
       .select("*")
@@ -280,6 +282,7 @@ export const unmarkContaAPagarPaid = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
     const userId = context.userId;
+    await assertFeatureAccess(userId, "contas_a_pagar");
     const { data: conta, error: contaErr } = await sb
       .from("contas_a_pagar")
       .select("*")

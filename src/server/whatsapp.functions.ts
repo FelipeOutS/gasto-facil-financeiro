@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { processarMensagemWhatsApp } from "./whatsapp.server";
+import { assertFeatureAccess } from "./feature-gate.server";
 
 /** Normaliza telefone: mantém apenas dígitos. */
 function normTel(raw: string): string {
@@ -14,7 +15,11 @@ function normTel(raw: string): string {
  * "Configurado" / "Não configurado".
  */
 export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Admin Master only — gate via feature key reuso (qualquer feature serve
+    // pra exigir login + assinatura ativa; aqui usamos whatsapp).
+    await assertFeatureAccess(context.userId, "whatsapp");
     const has = (v: string | undefined | null) =>
       typeof v === "string" && v.trim().length > 0;
     return {
@@ -28,6 +33,7 @@ export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
 export const listWhatsAppLinks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data, error } = await sb
@@ -49,6 +55,7 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const tel = normTel(data.telefone);
     if (tel.length < 8) throw new Error("Telefone inválido");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,6 +94,7 @@ export const deleteWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb
@@ -100,6 +108,7 @@ export const deleteWhatsAppLink = createServerFn({ method: "POST" })
 export const listWhatsAppMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data, error } = await sb
@@ -124,7 +133,8 @@ export const testarWebhookWhatsApp = createServerFn({ method: "POST" })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const tel = normTel(data.telefone);
     const externalId = `test-${Date.now()}`;
     const out = await processarMensagemWhatsApp({
@@ -146,6 +156,7 @@ export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { userId } = context;
@@ -195,6 +206,7 @@ export const reprocessarMensagemWhatsApp = createServerFn({ method: "POST" })
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { userId } = context;
@@ -224,6 +236,7 @@ export const deleteWhatsAppMessageLog = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb
@@ -249,7 +262,8 @@ export const enviarMensagemTesteWhatsApp = createServerFn({ method: "POST" })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     if (!token) {
