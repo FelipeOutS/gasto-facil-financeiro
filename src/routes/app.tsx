@@ -6,6 +6,7 @@ import { BrandLoader } from "@/components/BrandLoader";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { LANG_STORAGE_KEY, isLocale } from "@/i18n";
+import { isLoginBioUnlockRequired } from "@/lib/biometric-login";
 
 const APP_BOOT_TIMEOUT_MS = 8000;
 
@@ -44,6 +45,10 @@ function AppEntry() {
   useEffect(() => {
     if (loading) return;
     if (user) {
+      if (isLoginBioUnlockRequired()) {
+        void navigate({ to: "/login", replace: true });
+        return;
+      }
       void navigate({ to: "/", replace: true });
     } else {
       void navigate({ to: "/login", replace: true });
