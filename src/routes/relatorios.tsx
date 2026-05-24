@@ -254,7 +254,7 @@ function RelatoriosPage() {
         realizado: res.totalRealizado,
       };
     });
-  }, [ym, categorias, gastos]);
+  }, [ym, categorias, gastos, limitesKey]);
 
   // Totais agregados do período (multi-mês)
   const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
