@@ -77,6 +77,7 @@ export function DashboardCartoesInsights({
   totalMesAnterior,
   maiorCategoria,
   onAbrirFatura,
+  className,
 }: Props) {
   const { t, i18n } = useTranslation("dashboard");
   const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "pt-BR";
