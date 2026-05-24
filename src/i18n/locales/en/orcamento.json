@@ -54,6 +54,23 @@
     "gapPositive": "Projected headroom: {{value}}",
     "gapNegative": "Projected excess: {{value}}"
   },
+  "planning": {
+    "title": "Monthly planning",
+    "description": "See whether your monthly income already has a destination.",
+    "income": "Income",
+    "distributed": "Allocated",
+    "unassigned": "Unassigned",
+    "excess": "Excess",
+    "categories": "Categories",
+    "reserveGoals": "Reserve & goals",
+    "free": "Free",
+    "ofIncome": "of income",
+    "noIncome": "Add income for this month to build your plan.",
+    "noLimits": "Set category limits to allocate your income.",
+    "allAssigned": "You allocated all of your income.",
+    "withFree": "You still have",
+    "withExcess": "Your plan went over income by"
+  },
   "totalLimit": {
     "title": "Total monthly limit",
     "copyPrev": "Copy previous month",
