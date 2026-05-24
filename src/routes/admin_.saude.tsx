@@ -557,25 +557,41 @@ function SystemHealthPage() {
             {/* Retenção de logs */}
             <Card className="mt-4">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold">
                   <span className="flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    Retenção de logs (prévia)
+                    Retenção de logs
                   </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void loadRetention()}
-                    disabled={retentionLoading}
-                  >
-                    {retention ? "Recalcular" : "Calcular"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void loadRetention()}
+                      disabled={retentionLoading || cleanupRunning}
+                    >
+                      {retention ? "Recalcular prévia" : "Calcular prévia"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setCleanupOpen(true)}
+                      disabled={cleanupRunning}
+                    >
+                      {cleanupRunning ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-1 h-3 w-3" />
+                      )}
+                      Executar limpeza
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Recomendação: webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
-                  payment_events 180d. Nenhum registro é apagado nesta etapa.
+                  Política fixa: webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
+                  payment_events 180d. Usuários, pagamentos, planos, gastos e receitas
+                  <strong> nunca</strong> são afetados.
                 </p>
                 {!retention ? (
                   <div className="py-4 text-center text-xs text-muted-foreground">
