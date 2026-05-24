@@ -291,10 +291,12 @@ export function DashboardCartoesInsights({
           </div>
         </div>
       </section>
+      )}
 
       {/* Cartões com maior uso */}
-      {usoCartoes.length > 0 && (
+      {showCartoes && usoCartoes.length > 0 && (
         <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
+
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
