@@ -110,11 +110,7 @@ function GastoAIPage() {
         },
       ]);
     } catch (e: any) {
-      const msg =
-        typeof e?.message === "string" && e.message
-          ? e.message
-          : t("ai.toastError");
-      toast.error(msg);
+      toastFromError(e, t("ai.toastError"));
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     } finally {
       setSending(false);
