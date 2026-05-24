@@ -897,22 +897,37 @@ function HeroGreeting({
         : t("hero.greetingEvening");
   const firstName = (nome ?? "").trim().split(/\s+/)[0] ?? "";
   return (
-    <header className="relative overflow-hidden rounded-3xl border border-border bg-card p-4 pt-5 shadow-card animate-rise sm:p-5 lg:p-6">
+    <header className="relative overflow-hidden rounded-3xl border border-border bg-card px-4 py-3.5 shadow-card animate-rise sm:px-5 sm:py-4">
+      {/* Fundo premium: gradiente radial + glow + linha brand sutil */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/15 blur-3xl"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,hsl(var(--brand)/0.12),transparent_55%),radial-gradient(80%_60%_at_0%_100%,hsl(var(--brand)/0.06),transparent_60%)]"
       />
-      <div className="relative flex items-start justify-between gap-3">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-brand/15 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-6 top-1/2 hidden h-24 w-24 -translate-y-1/2 opacity-[0.08] sm:block"
+      >
+        <svg viewBox="0 0 100 100" className="h-full w-full text-brand">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.6" />
+          <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="0.6" />
+          <circle cx="50" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.6" />
+          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        </svg>
+      </div>
+      <div className="relative flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {eyebrow}
           </p>
-          <h1 className="mt-1 text-[22px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-3xl">
+          <h1 className="mt-0.5 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
             {greet}
-            {firstName ? `, ${firstName}` : ""}.
+            {firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2.5 py-1 text-[11px] font-medium capitalize text-muted-foreground">
+          <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
             <CalendarClock className="h-3 w-3" />
             {mesAno}
           </p>
@@ -928,6 +943,80 @@ function HeroGreeting({
   );
 }
 
+function SaldoHeroCard({
+  saldo,
+  entradas,
+  despesas,
+}: {
+  saldo: number;
+  entradas: number;
+  despesas: number;
+}) {
+  const { t } = useTranslation("dashboard");
+  const negativo = saldo < 0;
+  const pctReceita = entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
+  return (
+    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-elevated animate-rise sm:p-5">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,hsl(var(--brand)/0.18),transparent_60%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-16 -right-10 h-40 w-40 rounded-full bg-brand/20 blur-3xl"
+      />
+      <div className="relative flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            {t("kpi.saldo")}
+          </p>
+          <Money
+            value={saldo}
+            className={cn(
+              "num mt-1.5 block text-[28px] font-bold leading-none tracking-tight sm:text-[32px]",
+              negativo ? "text-destructive" : "text-foreground",
+            )}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">{t("kpi.saldoNoMes")}</p>
+        </div>
+        <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
+          <Wallet className="h-5 w-5" />
+        </span>
+      </div>
+
+      {/* Mini-barra entradas vs saídas */}
+      <div className="relative mt-4">
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-card-elevated">
+          <div
+            className="h-full bg-success transition-all"
+            style={{ width: `${entradas + despesas === 0 ? 0 : (entradas / (entradas + despesas)) * 100}%` }}
+          />
+          <div
+            className="h-full bg-destructive/80 transition-all"
+            style={{ width: `${entradas + despesas === 0 ? 0 : (despesas / (entradas + despesas)) * 100}%` }}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-[11px]">
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-success" />
+            <span className="num font-semibold text-foreground">{formatBRLCompact(entradas)}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <span className="num font-semibold text-foreground">{formatBRLCompact(despesas)}</span>
+            <span className="h-2 w-2 rounded-full bg-destructive/80" />
+          </span>
+        </div>
+      </div>
+
+      {entradas > 0 && !negativo && (
+        <p className="num relative mt-3 text-[11px] text-muted-foreground">
+          {Math.round(pctReceita)}% da receita preservada
+        </p>
+      )}
+    </div>
+  );
+}
+
 function QuickActionsBar() {
   const { t } = useTranslation("dashboard");
   const items: Array<{
@@ -936,10 +1025,10 @@ function QuickActionsBar() {
     icon: React.ReactNode;
     tone: "primary" | "success" | "warning" | "brand";
   }> = [
-    { to: "/adicionar", label: t("quickActions.novoGasto"), icon: <Plus className="h-5 w-5" />, tone: "primary" },
-    { to: "/renda", label: t("quickActions.novaReceita"), icon: <ArrowUp className="h-5 w-5" />, tone: "success" },
-    { to: "/gasto-ai", label: t("quickActions.ia"), icon: <Sparkles className="h-5 w-5" />, tone: "brand" },
-    { to: "/cartoes", label: t("quickActions.importar"), icon: <ReceiptIcon className="h-5 w-5" />, tone: "warning" },
+    { to: "/adicionar", label: t("quickActions.novoGasto"), icon: <Plus className="h-4 w-4" />, tone: "primary" },
+    { to: "/renda", label: t("quickActions.novaReceita"), icon: <ArrowUp className="h-4 w-4" />, tone: "success" },
+    { to: "/gasto-ai", label: t("quickActions.ia"), icon: <Sparkles className="h-4 w-4" />, tone: "brand" },
+    { to: "/cartoes", label: t("quickActions.importar"), icon: <ReceiptIcon className="h-4 w-4" />, tone: "warning" },
   ];
   const toneRing: Record<string, string> = {
     primary: "bg-primary/15 text-primary",
@@ -950,18 +1039,18 @@ function QuickActionsBar() {
   return (
     <nav
       aria-label={t("quickActions.title")}
-      className="mt-4 grid grid-cols-4 gap-2 sm:gap-3"
+      className="mt-3 grid grid-cols-4 gap-2 sm:gap-2.5"
     >
       {items.map((it) => (
         <Link
           key={it.to}
           to={it.to}
-          className="card-press group flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card p-2 text-center shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
+          className="card-press group flex min-h-[60px] items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated sm:px-3"
         >
-          <span className={cn("grid h-10 w-10 place-items-center rounded-xl", toneRing[it.tone])}>
+          <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}>
             {it.icon}
           </span>
-          <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">
+          <span className="hidden text-[12px] font-semibold leading-tight text-foreground sm:inline">
             {it.label}
           </span>
         </Link>
@@ -989,37 +1078,34 @@ function KpiCard({
     destructive: "bg-destructive/15 text-destructive",
     warning: "bg-warning/15 text-warning",
   }[tone];
-  const toneAccent = {
-    brand: "ring-brand/20",
-    success: "ring-success/25",
-    destructive: "ring-destructive/25",
-    warning: "ring-warning/25",
+  const toneBar = {
+    brand: "bg-brand",
+    success: "bg-success",
+    destructive: "bg-destructive",
+    warning: "bg-warning",
   }[tone];
   return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card transition-all hover-lift hover:border-brand/50 lg:p-5 animate-rise ring-1",
-        toneAccent,
-      )}
-    >
-      <div className="flex items-center justify-between">
+    <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-card transition-all hover-lift hover:border-brand/40 animate-rise sm:p-3.5">
+      <span aria-hidden className={cn("absolute left-0 top-0 h-full w-[3px]", toneBar)} />
+      <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <span className={cn("grid h-8 w-8 place-items-center rounded-xl transition-colors", toneRing)}>
+        <span className={cn("grid h-7 w-7 place-items-center rounded-lg", toneRing)}>
           {icon}
         </span>
       </div>
       <Money
         value={valueNum}
-        className="num mt-3 block text-[22px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[28px]"
+        className="num mt-2 block text-[18px] font-bold leading-tight tracking-tight sm:text-[19px]"
       />
       {hint && (
-        <p className="mt-1 truncate text-[11px] text-muted-foreground">{hint}</p>
+        <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{hint}</p>
       )}
     </div>
   );
 }
+
 
 
 function LimiteMensalCard({
