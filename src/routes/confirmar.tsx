@@ -396,7 +396,8 @@ function Confirmar() {
             key={`${valorEscolhido ?? 0}-${result.data ?? ""}`}
             initial={initialForm}
             submitLabel={t("review.submit")}
-            onSubmit={(data) => {
+            onSubmit={async (data) => {
+              if (!(await requireOnline())) return;
               const dup = findPossibleDuplicate(
                 data.valor,
                 data.data,
