@@ -146,6 +146,69 @@ function OrcamentoPage() {
     };
   }, [ym, today, temOrcamento, limiteTotal, totalPlanejado, totalRealizado, diff]);
 
+  // Previsão de estouro do orçamento
+  const previsaoInfo = useMemo(() => {
+    const mesAtual = today.getMonth() + 1;
+    const anoAtual = today.getFullYear();
+    const diasNoMes = new Date(ym.ano, ym.mes, 0).getDate();
+
+    // Sem orçamento configurado
+    if (!temOrcamento && (limiteTotal ?? 0) <= 1) {
+      return { tipo: "sem_dados" as PrevisaoTipo };
+    }
+
+    // Mês passado
+    if (ym.ano < anoAtual || (ym.ano === anoAtual && ym.mes < mesAtual)) {
+      return {
+        tipo: (diff >= 0 ? "passado_dentro" : "passado_fora") as PrevisaoTipo,
+        planejado: totalPlanejado,
+        diferenca: diff,
+      };
+    }
+
+    // Mês futuro
+    if (ym.ano > anoAtual || (ym.ano === anoAtual && ym.mes > mesAtual)) {
+      return { tipo: "futuro" as PrevisaoTipo };
+    }
+
+    // Mês atual
+    const diaAtual = today.getDate();
+
+    // Poucos dados (primeiros 2 dias do mês)
+    if (diaAtual <= 2) {
+      return { tipo: "sem_dados" as PrevisaoTipo };
+    }
+
+    // Já estourado
+    if (diff < 1) {
+      return {
+        tipo: "ja_estourado" as PrevisaoTipo,
+        planejado: totalPlanejado,
+        diferenca: diff,
+      };
+    }
+
+    const mediaDiaria = totalRealizado / diaAtual;
+    const gastoProjetado = mediaDiaria * diasNoMes;
+    const diferencaProj = totalPlanejado - gastoProjetado;
+
+    if (gastoProjetado <= totalPlanejado) {
+      return {
+        tipo: "dentro_previsto" as PrevisaoTipo,
+        gastoProjetado,
+        planejado: totalPlanejado,
+        diferenca: diferencaProj,
+      };
+    }
+
+    return {
+      tipo: "risco_estouro" as PrevisaoTipo,
+      gastoProjetado,
+      planejado: totalPlanejado,
+      diferenca: diferencaProj,
+    };
+  }, [ym, today, temOrcamento, limiteTotal, totalPlanejado, totalRealizado, diff]);
+
   // Edit limit dialog
   const [editing, setEditing] = useState<{ id: string; nome: string; valor: string } | null>(
     null,
