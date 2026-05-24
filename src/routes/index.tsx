@@ -865,9 +865,9 @@ function Index() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 mt-6 flex items-center gap-2.5 px-1 sm:mt-7 lg:mb-3.5 lg:mt-8">
-      <span aria-hidden className="h-4 w-1 rounded-full bg-brand" />
-      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="mb-2.5 mt-5 flex items-center gap-2.5 px-1 sm:mt-5 lg:mb-3 lg:mt-6">
+      <span aria-hidden className="h-3.5 w-1 rounded-full bg-brand" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {children}
       </h2>
     </div>
