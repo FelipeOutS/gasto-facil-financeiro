@@ -494,7 +494,7 @@ export function DashboardCartoesInsights({
           </ul>
         </section>
       )}
-    </>
+    </div>
   );
 }
 
