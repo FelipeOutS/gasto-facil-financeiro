@@ -1240,7 +1240,7 @@ function HistoricoImportacoesDialog({
       onChanged();
     } catch (e) {
       console.error(e);
-      toast.error("Não foi possível excluir.");
+      toastFromError(e, "Não foi possível excluir.");
     } finally {
       setExcluindo(false);
     }
