@@ -1084,6 +1084,7 @@ export type Database = {
           invoice_month: string | null
           mes: number
           observacao: string | null
+          offline_client_id: string | null
           origem: string | null
           parcela_atual: number | null
           recorrencia_id: string | null
@@ -1115,6 +1116,7 @@ export type Database = {
           invoice_month?: string | null
           mes: number
           observacao?: string | null
+          offline_client_id?: string | null
           origem?: string | null
           parcela_atual?: number | null
           recorrencia_id?: string | null
@@ -1146,6 +1148,7 @@ export type Database = {
           invoice_month?: string | null
           mes?: number
           observacao?: string | null
+          offline_client_id?: string | null
           origem?: string | null
           parcela_atual?: number | null
           recorrencia_id?: string | null
