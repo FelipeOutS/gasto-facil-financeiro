@@ -118,6 +118,39 @@ function LoginForm() {
   async function handleBiometric() {
     if (bioRunning) return;
     console.log("[Biometria] botão clicado");
+
+    // Caminho preferencial: nova bridge AndroidSecureSession (Keystore).
+    if (hasSecureSessionBridge() && hasSavedSecureSession()) {
+      setBioError(null);
+      setBioRunning(true);
+      setLoginBioInProgress(true);
+      let navigatedWithSession = false;
+      try {
+        const { session, error } = await loginWithSecureSession();
+        if (session) {
+          setHasSupabaseSession(true);
+          setBiometricUnlocked(true);
+          setLoginBioUnlocked(true);
+          notifyLoginBioSessionRestored(session);
+          toast.success(t("login.welcomeBack"));
+          navigatedWithSession = true;
+          finishBioProgressSoon();
+          console.log("[SecureSession] navegando para dashboard");
+          redirectToProtected();
+          return;
+        }
+        setHasSupabaseSession(false);
+        setLoginBioUnlocked(false);
+        setBioError(error || "Não foi possível validar a biometria.");
+        setBioMode(false);
+      } finally {
+        setBioRunning(false);
+        if (!navigatedWithSession) setLoginBioInProgress(false);
+      }
+      return;
+    }
+
+    // Fallback: bridge antiga AndroidBiometric + sessão persistida no localStorage.
     if (!isLoginBioBridgeAvailable()) {
       setBioError("Biometria nativa indisponível neste aparelho.");
       return;
@@ -151,7 +184,6 @@ function LoginForm() {
         navigatedWithSession = true;
         finishBioProgressSoon();
         console.log("[Biometria] navegando para dashboard");
-        console.log("[AndroidBiometricLogin] navegando para dashboard");
         redirectToProtected();
         return;
       }
