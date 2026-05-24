@@ -62,11 +62,13 @@
     "unassigned": "Unassigned",
     "excess": "Excess",
     "categories": "Categories",
+    "bills": "Monthly bills",
     "reserveGoals": "Reserve & goals",
     "free": "Free",
     "ofIncome": "of income",
     "noIncome": "Add income for this month to build your plan.",
     "noLimits": "Set category limits to allocate your income.",
+    "hasBillsNoLimits": "You already have bills planned this month. Set category limits to complete your plan.",
     "allAssigned": "You allocated all of your income.",
     "withFree": "You still have",
     "withExcess": "Your plan went over income by"
