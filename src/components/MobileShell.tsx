@@ -38,6 +38,7 @@ export function MobileShell({
               : { minHeight: "100dvh" }
           }
         >
+          {!unprotected && <ExpiredAccessBanner />}
           {children}
         </main>
       </div>
