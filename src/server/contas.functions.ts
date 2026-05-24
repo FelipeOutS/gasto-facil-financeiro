@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertFeatureAccess } from "./feature-gate.server";
 
 const CONTA_GASTO_ORIGEM = "contas_a_pagar";
 
