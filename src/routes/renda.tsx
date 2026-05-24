@@ -439,13 +439,14 @@ function RendaPage() {
     setOpen(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    if (!(await requireOnline())) return;
     const dt = new Date(data + "T12:00:00");
     const mesNova = dt.getMonth() + 1;
     const anoNova = dt.getFullYear();
