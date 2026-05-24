@@ -26,6 +26,7 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import {
   getCategorias,
+  getContasAPagar,
   getGastos,
   getGuardado,
   getLimite,
@@ -85,6 +86,7 @@ function OrcamentoPage() {
   const gastos = useStore(() => getGastos());
   const receitas = useStore(() => getReceitas());
   const guardado = useStore(() => getGuardado());
+  const contasAPagar = useStore(() => getContasAPagar());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
   // Re-render quando limites mudam (qualquer setLimite)
   useStore(() => getLimites().length);
