@@ -399,26 +399,6 @@ export function DesktopSidebar() {
           </TooltipContent>
         </Tooltip>
       ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              to="/conta"
-              aria-label={profile?.nome || user?.email || t("header.fallbackUser")}
-              className="mx-2 mb-3 mt-2 flex items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-2 transition-colors hover:bg-accent/40"
-            >
-              <UserAvatar
-                url={profile?.avatar_url}
-                name={profile?.nome ?? profile?.responsavel_nome}
-                email={user?.email}
-                size={32}
-              />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {profile?.nome || profile?.responsavel_nome || user?.email || t("header.fallbackUser")}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
         <Link
           to="/conta"
           className="mx-3 mb-2 mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-3 py-2 text-sm transition-colors hover:bg-accent/40"
