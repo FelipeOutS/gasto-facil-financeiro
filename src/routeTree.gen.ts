@@ -339,9 +339,9 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesNovoRoute = CartoesNovoRouteImport.update({
-  id: '/novo',
-  path: '/novo',
-  getParentRoute: () => CartoesRoute,
+  id: '/cartoes/novo',
+  path: '/cartoes/novo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
@@ -434,9 +434,9 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
-  id: '/editar',
-  path: '/editar',
-  getParentRoute: () => CartoesIdRoute,
+  id: '/cartoes/$id/editar',
+  path: '/cartoes/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -1090,6 +1090,7 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
@@ -1100,6 +1101,7 @@ export interface RootRouteChildren {
   PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
@@ -1464,10 +1466,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/novo': {
       id: '/cartoes/novo'
-      path: '/novo'
+      path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
-      parentRoute: typeof CartoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/app_/perfil': {
       id: '/app_/perfil'
@@ -1597,10 +1599,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/$id/editar': {
       id: '/cartoes/$id/editar'
-      path: '/editar'
+      path: '/cartoes/$id/editar'
       fullPath: '/cartoes/$id/editar'
       preLoaderRoute: typeof CartoesIdEditarRouteImport
-      parentRoute: typeof CartoesIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -1760,6 +1762,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
@@ -1770,6 +1773,7 @@ const rootRouteChildren: RootRouteChildren = {
   PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  CartoesIdEditarRoute: CartoesIdEditarRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
