@@ -4441,7 +4441,301 @@ function LandingStyles() {
       .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       @media (max-width: 480px) {
         .gi-landing section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
-      }
+}
+
+/* ============================== PLANEJAMENTO SECTION ============================== */
+
+function PlanejamentoSection() {
+  const { t } = useTranslation("landing");
+  const cards = [
+    {
+      icon: Target,
+      title: t("planningSection.cards.rule.title"),
+      text: t("planningSection.cards.rule.description"),
+      iconCls: "border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100/40 text-blue-700",
+    },
+    {
+      icon: Calculator,
+      title: t("planningSection.cards.daily.title"),
+      text: t("planningSection.cards.daily.description"),
+      iconCls: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
+    },
+    {
+      icon: TrendingDown,
+      title: t("planningSection.cards.forecast.title"),
+      text: t("planningSection.cards.forecast.description"),
+      iconCls: "border-amber-100 bg-gradient-to-br from-amber-50 to-amber-100/40 text-amber-700",
+    },
+    {
+      icon: Activity,
+      title: t("planningSection.cards.planned.title"),
+      text: t("planningSection.cards.planned.description"),
+      iconCls: "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
+    },
+  ];
+
+  return (
+    <section id="planejamento" className="relative overflow-hidden bg-slate-50/60 py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeader
+          center
+          eyebrow={t("planningSection.eyebrow")}
+          title={t("planningSection.title")}
+          subtitle={t("planningSection.description")}
+        />
+
+        <div className="mt-10 grid items-start gap-8 lg:grid-cols-2">
+          {/* Mock visual */}
+          <Reveal>
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] sm:p-7">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                  <Target className="h-3.5 w-3.5" />
+                  <span>{t("planningSection.mock.title")}</span>
+                </div>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+                  {t("planningSection.mock.forecast")}
+                </span>
+              </div>
+
+              {/* 50/30/20 bar */}
+              <div className="mt-5">
+                <div className="flex h-3 w-full overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                  <div className="h-full w-1/2 bg-gradient-to-r from-blue-400 to-blue-600" />
+                  <div className="h-full w-[30%] bg-gradient-to-r from-emerald-400 to-emerald-600" />
+                  <div className="h-full w-[20%] bg-gradient-to-r from-violet-400 to-violet-600" />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />{t("planningSection.mock.essentials")} · 50%</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />{t("planningSection.mock.variables")} · 30%</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" />{t("planningSection.mock.reserve")} · 20%</span>
+                </div>
+              </div>
+
+              {/* Mini cards */}
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-emerald-100 bg-white p-4">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                    <Calculator className="h-3.5 w-3.5" />
+                    <span className="truncate">{t("planningSection.mock.dailyLimit")}</span>
+                  </div>
+                  <div className="mt-2 flex items-end justify-between gap-2">
+                    <span className="num text-2xl font-extrabold tracking-tight text-slate-900">{t("planningSection.mock.dailyValue")}</span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{t("planningSection.mock.dailyStatus")}</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+                    <TrendingDown className="h-3.5 w-3.5" />
+                    <span>{t("planningSection.mock.forecast")}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-slate-800">{t("planningSection.mock.forecastText")}</p>
+                </div>
+              </div>
+
+              {/* Termômetro */}
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                  <span>{t("planningSection.mock.usedLabel")}</span>
+                  <span className="num text-slate-900">68%</span>
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-blue-400 via-emerald-400 to-amber-400" />
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Cards/benefícios */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cards.map((c, i) => (
+              <Reveal key={c.title} delay={i * 0.05}>
+                <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
+                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-2xl border", c.iconCls)}>
+                    <c.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 text-base font-bold text-slate-900">{c.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <LandingAnchorLink
+            section="planos"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
+          >
+            {t("planningSection.cta")}
+            <ArrowRight className="h-4 w-4" />
+          </LandingAnchorLink>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================== CONTAS SECTION ============================== */
+
+function ContasSection() {
+  const { t } = useTranslation("landing");
+  const cards = [
+    {
+      icon: Wallet,
+      title: t("billsSection.cards.payable.title"),
+      text: t("billsSection.cards.payable.description"),
+      iconCls: "border-rose-100 bg-gradient-to-br from-rose-50 to-rose-100/40 text-rose-700",
+    },
+    {
+      icon: ArrowDownRight,
+      title: t("billsSection.cards.receivable.title"),
+      text: t("billsSection.cards.receivable.description"),
+      iconCls: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
+    },
+    {
+      icon: Repeat,
+      title: t("billsSection.cards.subscriptions.title"),
+      text: t("billsSection.cards.subscriptions.description"),
+      iconCls: "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
+    },
+    {
+      icon: Bell,
+      title: t("billsSection.cards.alerts.title"),
+      text: t("billsSection.cards.alerts.description"),
+      iconCls: "border-amber-100 bg-gradient-to-br from-amber-50 to-amber-100/40 text-amber-700",
+    },
+  ];
+
+  // Mini calendário ilustrativo (1..30); destaques: 5, 12, 18, 24
+  const highlights: Record<number, string> = { 5: "bg-rose-500", 12: "bg-emerald-500", 18: "bg-violet-500", 24: "bg-amber-500" };
+  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+
+  return (
+    <section id="contas" className="relative overflow-hidden bg-white py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeader
+          center
+          eyebrow={t("billsSection.eyebrow")}
+          title={t("billsSection.title")}
+          subtitle={t("billsSection.description")}
+        />
+
+        <div className="mt-10 grid items-start gap-8 lg:grid-cols-2">
+          {/* Mock visual: calendário + lista */}
+          <Reveal>
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] sm:p-7">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>{t("billsSection.mock.title")}</span>
+                </div>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+                  {t("billsSection.mock.subtitle")}
+                </span>
+              </div>
+
+              {/* Calendário compacto 7 colunas */}
+              <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-1.5">
+                {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
+                  <div key={i} className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    {d}
+                  </div>
+                ))}
+                {days.map((n) => {
+                  const hl = highlights[n];
+                  return (
+                    <div
+                      key={n}
+                      className={cn(
+                        "relative flex aspect-square items-center justify-center rounded-md border text-[11px] font-medium",
+                        hl ? "border-slate-200 bg-white text-slate-900" : "border-slate-100 bg-white text-slate-500"
+                      )}
+                    >
+                      <span className="num">{n}</span>
+                      {hl && <span className={cn("absolute bottom-1 h-1 w-1 rounded-full", hl)} />}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Lista de contas */}
+              <ul className="mt-5 space-y-2">
+                <li className="flex items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/40 p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                      <Wallet className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill1")}</p>
+                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill1Status")}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-rose-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                    {t("billsSection.mock.tagPending")}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                      <ArrowDownRight className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill2")}</p>
+                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill2Status")}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    {t("billsSection.mock.tagReceivable")}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50/40 p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <Repeat className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill3")}</p>
+                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill3Status")}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                    {t("billsSection.mock.tagRecurring")}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </Reveal>
+
+          {/* Cards/benefícios */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cards.map((c, i) => (
+              <Reveal key={c.title} delay={i * 0.05}>
+                <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
+                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-2xl border", c.iconCls)}>
+                    <c.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 text-base font-bold text-slate-900">{c.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <LandingAnchorLink
+            section="planos"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
+          >
+            {t("billsSection.cta")}
+            <ArrowRight className="h-4 w-4" />
+          </LandingAnchorLink>
+        </div>
+      </div>
+    </section>
+  );
+}
     `}</style>
   );
 }
