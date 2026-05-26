@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { InvestimentoForm } from "@/components/investimentos/InvestimentoForm";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { usePlan } from "@/lib/use-plan";
