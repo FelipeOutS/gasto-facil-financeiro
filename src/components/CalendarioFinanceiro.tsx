@@ -246,7 +246,7 @@ export function CalendarioFinanceiro({
       </div>
 
       {/* KPIs do mês */}
-      <div className="relative mt-3 grid grid-cols-3 gap-2 text-xs">
+      <div className="relative mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aPagar")}</p>
           <p className="mt-0.5 truncate text-sm font-bold text-amber-300">
