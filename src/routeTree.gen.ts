@@ -77,6 +77,7 @@ import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
@@ -432,6 +433,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
+  id: '/editar',
+  path: '/editar',
+  getParentRoute: () => CartoesIdRoute,
+} as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -571,7 +577,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRoute
+  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -582,6 +588,7 @@ export interface FileRoutesByFullPath {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -655,7 +662,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRoute
+  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -666,6 +673,7 @@ export interface FileRoutesByTo {
   '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -740,7 +748,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRoute
+  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -751,6 +759,7 @@ export interface FileRoutesById {
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -837,6 +846,7 @@ export interface FileRouteTypes {
     | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes/'
     | '/api/integrations/mercadopago/$action'
@@ -921,6 +931,7 @@ export interface FileRouteTypes {
     | '/pt'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes'
     | '/api/integrations/mercadopago/$action'
@@ -1005,6 +1016,7 @@ export interface FileRouteTypes {
     | '/pt/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app_/integracoes/'
     | '/api/integrations/mercadopago/$action'
@@ -1582,6 +1594,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes/$id/editar': {
+      id: '/cartoes/$id/editar'
+      path: '/editar'
+      fullPath: '/cartoes/$id/editar'
+      preLoaderRoute: typeof CartoesIdEditarRouteImport
+      parentRoute: typeof CartoesIdRoute
+    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -1683,13 +1702,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CartoesIdRouteChildren {
+  CartoesIdEditarRoute: typeof CartoesIdEditarRoute
+}
+
+const CartoesIdRouteChildren: CartoesIdRouteChildren = {
+  CartoesIdEditarRoute: CartoesIdEditarRoute,
+}
+
+const CartoesIdRouteWithChildren = CartoesIdRoute._addFileChildren(
+  CartoesIdRouteChildren,
+)
+
 interface CartoesRouteChildren {
-  CartoesIdRoute: typeof CartoesIdRoute
+  CartoesIdRoute: typeof CartoesIdRouteWithChildren
   CartoesNovoRoute: typeof CartoesNovoRoute
 }
 
 const CartoesRouteChildren: CartoesRouteChildren = {
-  CartoesIdRoute: CartoesIdRoute,
+  CartoesIdRoute: CartoesIdRouteWithChildren,
   CartoesNovoRoute: CartoesNovoRoute,
 }
 
