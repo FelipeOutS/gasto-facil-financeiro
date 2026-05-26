@@ -317,9 +317,9 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => RendaRoute,
+  id: '/renda/nova',
+  path: '/renda/nova',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
@@ -437,9 +437,9 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
-  id: '/$id/editar',
-  path: '/$id/editar',
-  getParentRoute: () => RendaRoute,
+  id: '/renda/$id/editar',
+  path: '/renda/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
@@ -1130,6 +1130,7 @@ export interface RootRouteChildren {
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
+  RendaNovaRoute: typeof RendaNovaRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   EnIndexRoute: typeof EnIndexRoute
@@ -1139,6 +1140,7 @@ export interface RootRouteChildren {
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
@@ -1467,10 +1469,10 @@ declare module '@tanstack/react-router' {
     }
     '/renda/nova': {
       id: '/renda/nova'
-      path: '/nova'
+      path: '/renda/nova'
       fullPath: '/renda/nova'
       preLoaderRoute: typeof RendaNovaRouteImport
-      parentRoute: typeof RendaRoute
+      parentRoute: typeof rootRouteImport
     }
     '/pt/$': {
       id: '/pt/$'
@@ -1635,10 +1637,10 @@ declare module '@tanstack/react-router' {
     }
     '/renda/$id/editar': {
       id: '/renda/$id/editar'
-      path: '/$id/editar'
+      path: '/renda/$id/editar'
       fullPath: '/renda/$id/editar'
       preLoaderRoute: typeof RendaIdEditarRouteImport
-      parentRoute: typeof RendaRoute
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -1834,6 +1836,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
+  RendaNovaRoute: RendaNovaRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   EnIndexRoute: EnIndexRoute,
@@ -1843,6 +1846,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,
