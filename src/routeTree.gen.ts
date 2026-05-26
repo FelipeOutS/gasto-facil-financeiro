@@ -41,7 +41,6 @@ import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -88,6 +87,7 @@ import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-r
 import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-receber.$id.editar'
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
+import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
@@ -263,11 +263,6 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssinaturasRoute = AssinaturasRouteImport.update({
-  id: '/assinaturas',
-  path: '/assinaturas',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -354,9 +349,9 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberNovaRoute = ContasAReceberNovaRouteImport.update({
-  id: '/contas-a-receber/nova',
-  path: '/contas-a-receber/nova',
-  getParentRoute: () => rootRouteImport,
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => ContasAReceberRoute,
 } as any)
 const ContasAPagarNovaRoute = ContasAPagarNovaRouteImport.update({
   id: '/contas-a-pagar/nova',
@@ -484,9 +479,9 @@ const ContasAReceberIdReceberRoute = ContasAReceberIdReceberRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberIdEditarRoute = ContasAReceberIdEditarRouteImport.update({
-  id: '/contas-a-receber/$id/editar',
-  path: '/contas-a-receber/$id/editar',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => ContasAReceberRoute,
 } as any)
 const ContasAPagarIdEditarRoute = ContasAPagarIdEditarRouteImport.update({
   id: '/contas-a-pagar/$id/editar',
@@ -497,6 +492,11 @@ const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   id: '/cartoes/$id/editar',
   path: '/cartoes/$id/editar',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => AssinaturasRoute,
 } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -585,7 +585,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -652,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -746,6 +746,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -775,7 +776,6 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -842,6 +842,7 @@ export interface FileRoutesById {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -872,7 +873,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -939,6 +939,7 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1033,6 +1034,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1061,7 +1063,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -1128,6 +1129,7 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1157,7 +1159,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
   AppRoute: typeof AppRoute
-  AssinaturasRoute: typeof AssinaturasRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
@@ -1208,7 +1209,6 @@ export interface RootRouteChildren {
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
-  ContasAReceberNovaRoute: typeof ContasAReceberNovaRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
@@ -1224,7 +1224,6 @@ export interface RootRouteChildren {
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
-  ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
   ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   RendaIdEditarRoute: typeof RendaIdEditarRoute
@@ -1470,13 +1469,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/assinaturas': {
-      id: '/assinaturas'
-      path: '/assinaturas'
-      fullPath: '/assinaturas'
-      preLoaderRoute: typeof AssinaturasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -1598,10 +1590,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/nova': {
       id: '/contas-a-receber/nova'
-      path: '/contas-a-receber/nova'
+      path: '/nova'
       fullPath: '/contas-a-receber/nova'
       preLoaderRoute: typeof ContasAReceberNovaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ContasAReceberRoute
     }
     '/contas-a-pagar/nova': {
       id: '/contas-a-pagar/nova'
@@ -1780,10 +1772,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/$id/editar': {
       id: '/contas-a-receber/$id/editar'
-      path: '/contas-a-receber/$id/editar'
+      path: '/$id/editar'
       fullPath: '/contas-a-receber/$id/editar'
       preLoaderRoute: typeof ContasAReceberIdEditarRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ContasAReceberRoute
     }
     '/contas-a-pagar/$id/editar': {
       id: '/contas-a-pagar/$id/editar'
@@ -1798,6 +1790,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cartoes/$id/editar'
       preLoaderRoute: typeof CartoesIdEditarRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/assinaturas/$id/editar': {
+      id: '/assinaturas/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/assinaturas/$id/editar'
+      preLoaderRoute: typeof AssinaturasIdEditarRouteImport
+      parentRoute: typeof AssinaturasRoute
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -1900,20 +1899,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AssinaturasRouteChildren {
-  AssinaturasNovaRoute: typeof AssinaturasNovaRoute
-  AssinaturasIndexRoute: typeof AssinaturasIndexRoute
-}
-
-const AssinaturasRouteChildren: AssinaturasRouteChildren = {
-  AssinaturasNovaRoute: AssinaturasNovaRoute,
-  AssinaturasIndexRoute: AssinaturasIndexRoute,
-}
-
-const AssinaturasRouteWithChildren = AssinaturasRoute._addFileChildren(
-  AssinaturasRouteChildren,
-)
-
 interface GastosRouteChildren {
   GastosIdEditarRoute: typeof GastosIdEditarRoute
 }
@@ -1931,7 +1916,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
   AppRoute: AppRoute,
-  AssinaturasRoute: AssinaturasRouteWithChildren,
   CadastroRoute: CadastroRoute,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
@@ -1982,7 +1966,6 @@ const rootRouteChildren: RootRouteChildren = {
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
-  ContasAReceberNovaRoute: ContasAReceberNovaRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
@@ -1998,7 +1981,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
-  ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,
   ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   RendaIdEditarRoute: RendaIdEditarRoute,
