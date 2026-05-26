@@ -246,10 +246,7 @@ function ContasAReceberPage() {
               lista.length === 0 ? (
                 <Button
                   className="min-h-11 rounded-full font-semibold"
-                  onClick={() => {
-                    setEditing(null);
-                    setOpenForm(true);
-                  }}
+                  onClick={openCreate}
                 >
                   <Plus className="mr-1 h-4 w-4" />
                   {t("empty.addFirst")}
