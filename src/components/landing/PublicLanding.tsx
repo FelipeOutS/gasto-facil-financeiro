@@ -4190,8 +4190,7 @@ function IntelligenceSection() {
 
         <div className="mt-10 flex justify-center">
           <LandingAnchorLink
-            href="#planos"
-            sectionId="planos"
+            section="planos"
             className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
           >
             {t("intelligence.cta")}
