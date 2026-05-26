@@ -1605,7 +1605,8 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
         </Link>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
+
         <AlertaPill
           label={t("alertasContas.pillAtrasadas")}
           count={totalAtrasadas}
@@ -1679,7 +1680,7 @@ function AlertaPill({
         ? "bg-warning/15 text-warning"
         : "bg-[hsl(var(--brand))]/15 text-[hsl(var(--brand))]";
   return (
-    <div className="rounded-xl border border-border bg-background/40 p-2 text-center">
+    <div className="min-w-0 rounded-xl border border-border bg-background/40 p-2 text-center">
       <span
         className={cn(
           "mx-auto mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full",
@@ -1689,7 +1690,7 @@ function AlertaPill({
         {icon}
       </span>
       <p className="num text-base font-bold leading-none">{count}</p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground break-words">{label}</p>
     </div>
   );
 }
@@ -1786,7 +1787,7 @@ function OrcamentoCard({
         {t("orcamentoCard.usado", { pct: Math.round(pctGeral) })}
       </p>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
         <AlertaPill
           label={t("orcamentoCard.pillDentro")}
           count={qtdOk}

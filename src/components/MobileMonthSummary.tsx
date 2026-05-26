@@ -99,7 +99,7 @@ export function MobileMonthSummary({
       </div>
 
       {/* Grid 2x2 de KPIs principais */}
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-2.5">
         <KpiTile
           label={t("kpi.receitas")}
           value={hidden ? "••••" : formatBRLCompact(receitas)}
