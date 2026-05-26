@@ -87,6 +87,7 @@ import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
 import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
 import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as InvestimentosIdMovimentacaoRouteImport } from './routes/investimentos.$id.movimentacao'
 import { Route as InvestimentosIdEditarRouteImport } from './routes/investimentos.$id.editar'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
 import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-receber.$id.receber'
@@ -325,9 +326,9 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
-  id: '/assinaturas/',
-  path: '/assinaturas/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AssinaturasRoute,
 } as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
   id: '/renda/nova',
@@ -365,9 +366,9 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberNovaRoute = ContasAReceberNovaRouteImport.update({
-  id: '/contas-a-receber/nova',
-  path: '/contas-a-receber/nova',
-  getParentRoute: () => rootRouteImport,
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => ContasAReceberRoute,
 } as any)
 const ContasAPagarNovaRoute = ContasAPagarNovaRouteImport.update({
   id: '/contas-a-pagar/nova',
@@ -385,9 +386,9 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
-  id: '/assinaturas/nova',
-  path: '/assinaturas/nova',
-  getParentRoute: () => rootRouteImport,
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AssinaturasRoute,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
@@ -499,6 +500,12 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestimentosIdMovimentacaoRoute =
+  InvestimentosIdMovimentacaoRouteImport.update({
+    id: '/investimentos/$id/movimentacao',
+    path: '/investimentos/$id/movimentacao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const InvestimentosIdEditarRoute = InvestimentosIdEditarRouteImport.update({
   id: '/investimentos/$id/editar',
   path: '/investimentos/$id/editar',
@@ -515,9 +522,9 @@ const ContasAReceberIdReceberRoute = ContasAReceberIdReceberRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberIdEditarRoute = ContasAReceberIdEditarRouteImport.update({
-  id: '/contas-a-receber/$id/editar',
-  path: '/contas-a-receber/$id/editar',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => ContasAReceberRoute,
 } as any)
 const ContasAPagarIdEditarRoute = ContasAPagarIdEditarRouteImport.update({
   id: '/contas-a-pagar/$id/editar',
@@ -530,9 +537,9 @@ const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
-  id: '/assinaturas/$id/editar',
-  path: '/assinaturas/$id/editar',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => AssinaturasRoute,
 } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -696,6 +703,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
+  '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -797,6 +805,7 @@ export interface FileRoutesByTo {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
+  '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -899,6 +908,7 @@ export interface FileRoutesById {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
+  '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -1002,6 +1012,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
+    | '/investimentos/$id/movimentacao'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1103,6 +1114,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
+    | '/investimentos/$id/movimentacao'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1204,6 +1216,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
+    | '/investimentos/$id/movimentacao'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1276,11 +1289,9 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
-  AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
-  ContasAReceberNovaRoute: typeof ContasAReceberNovaRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
@@ -1288,7 +1299,6 @@ export interface RootRouteChildren {
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
-  AssinaturasIndexRoute: typeof AssinaturasIndexRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
@@ -1299,12 +1309,11 @@ export interface RootRouteChildren {
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
-  AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
-  ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
   ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   InvestimentosIdEditarRoute: typeof InvestimentosIdEditarRoute
+  InvestimentosIdMovimentacaoRoute: typeof InvestimentosIdMovimentacaoRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   MetasIdAdicionarRoute: typeof MetasIdAdicionarRoute
   MetasIdEditarRoute: typeof MetasIdEditarRoute
@@ -1631,10 +1640,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/': {
       id: '/assinaturas/'
-      path: '/assinaturas'
+      path: '/'
       fullPath: '/assinaturas/'
       preLoaderRoute: typeof AssinaturasIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AssinaturasRoute
     }
     '/renda/nova': {
       id: '/renda/nova'
@@ -1687,10 +1696,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/nova': {
       id: '/contas-a-receber/nova'
-      path: '/contas-a-receber/nova'
+      path: '/nova'
       fullPath: '/contas-a-receber/nova'
       preLoaderRoute: typeof ContasAReceberNovaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ContasAReceberRoute
     }
     '/contas-a-pagar/nova': {
       id: '/contas-a-pagar/nova'
@@ -1715,10 +1724,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/nova': {
       id: '/assinaturas/nova'
-      path: '/assinaturas/nova'
+      path: '/nova'
       fullPath: '/assinaturas/nova'
       preLoaderRoute: typeof AssinaturasNovaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AssinaturasRoute
     }
     '/app_/perfil': {
       id: '/app_/perfil'
@@ -1874,6 +1883,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/investimentos/$id/movimentacao': {
+      id: '/investimentos/$id/movimentacao'
+      path: '/investimentos/$id/movimentacao'
+      fullPath: '/investimentos/$id/movimentacao'
+      preLoaderRoute: typeof InvestimentosIdMovimentacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investimentos/$id/editar': {
       id: '/investimentos/$id/editar'
       path: '/investimentos/$id/editar'
@@ -1897,10 +1913,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/$id/editar': {
       id: '/contas-a-receber/$id/editar'
-      path: '/contas-a-receber/$id/editar'
+      path: '/$id/editar'
       fullPath: '/contas-a-receber/$id/editar'
       preLoaderRoute: typeof ContasAReceberIdEditarRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ContasAReceberRoute
     }
     '/contas-a-pagar/$id/editar': {
       id: '/contas-a-pagar/$id/editar'
@@ -1918,10 +1934,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/$id/editar': {
       id: '/assinaturas/$id/editar'
-      path: '/assinaturas/$id/editar'
+      path: '/$id/editar'
       fullPath: '/assinaturas/$id/editar'
       preLoaderRoute: typeof AssinaturasIdEditarRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AssinaturasRoute
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -2086,11 +2102,9 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
-  AssinaturasNovaRoute: AssinaturasNovaRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
-  ContasAReceberNovaRoute: ContasAReceberNovaRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
@@ -2098,7 +2112,6 @@ const rootRouteChildren: RootRouteChildren = {
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
-  AssinaturasIndexRoute: AssinaturasIndexRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
@@ -2109,12 +2122,11 @@ const rootRouteChildren: RootRouteChildren = {
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
-  AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
-  ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,
   ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   InvestimentosIdEditarRoute: InvestimentosIdEditarRoute,
+  InvestimentosIdMovimentacaoRoute: InvestimentosIdMovimentacaoRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   MetasIdAdicionarRoute: MetasIdAdicionarRoute,
   MetasIdEditarRoute: MetasIdEditarRoute,
