@@ -219,6 +219,7 @@ export function PublicLanding() {
         <HowItWorks />
         <ScreensTabs />
         <DashboardShowcase />
+        <IntelligenceSection />
         <GastoAISection />
         <FeatureSplit
           eyebrow={t("gastosSplit.eyebrow")}
