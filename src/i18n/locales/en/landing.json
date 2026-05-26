@@ -727,5 +727,74 @@
       "toPayLabel": "To pay",
       "apartmentGoal": "Apartment · 11%"
     }
+  },
+  "intelligence": {
+    "eyebrow": "Financial intelligence",
+    "title": "Your money, explained simply.",
+    "subtitle": "Gasto Inteligente analyzes your expenses, income, cards, budget and alerts to show what deserves attention this month.",
+    "cards": {
+      "scoreTitle": "Financial Health Score",
+      "scoreText": "See a 0–100 score to know if your month is healthy, needs attention or critical.",
+      "diagnosisTitle": "Monthly diagnosis",
+      "diagnosisText": "Get a clear read of the month with strengths, risks and next actions.",
+      "alertsTitle": "Smart alerts",
+      "alertsText": "Spot overdue bills, invoices close to the due date, budgets near the limit and unusual spending.",
+      "tipsTitle": "Automatic tips",
+      "tipsText": "The app suggests small actions to save money, adjust spending and make the most of your balance.",
+      "aiTitle": "Gasto AI",
+      "aiText": "Ask about your spending in natural language, such as: 'how much did I spend on groceries this month?'"
+    },
+    "preview": {
+      "scoreLabel": "Financial health",
+      "scoreStatus": "Healthy month",
+      "diagnosisLabel": "Monthly diagnosis",
+      "diagnosisGood": "Income above the last 3-month average",
+      "diagnosisRisk": "Credit card invoice near the limit",
+      "alertTag": "Alert",
+      "alertSample": "Electricity bill due tomorrow — R$ 132.00",
+      "tipTag": "Tip",
+      "tipSample": "You could save about R$ 120 by reviewing rarely used subscriptions."
+    },
+    "cta": "Explore the app intelligence"
+  },
+  "appExperience": {
+    "eyebrow": "Mobile & app",
+    "title": "Built for everyday use, on your phone.",
+    "subtitle": "Use it like an app, with quick navigation, a central button to add entries and screens optimized for Android.",
+    "block1Title": "Use it like an app, with no friction",
+    "block1Text": "On mobile, Gasto Inteligente offers fast navigation, a central button to add entries, a bottom menu, light/dark mode and Android-optimized screens.",
+    "chips": {
+      "fab": "\"+\" button for quick entries",
+      "bottomNav": "Bottom menu with shortcuts",
+      "theme": "Light and dark mode",
+      "android": "Optimized for Android"
+    },
+    "whatsappTitle": "Add expenses via WhatsApp",
+    "whatsappText": "Record expenses through WhatsApp in a practical way — with confirmation before saving.",
+    "whatsappSample": {
+      "user": "spent 35 on uber",
+      "bot": "Confirm: <b>R$ 35.00</b> in Transport?"
+    },
+    "vaultTitle": "Personal Vault",
+    "vaultText": "Keep important information in a protected space, with privacy and security in mind.",
+    "radarTitle": "Economic Radar",
+    "radarText": "Track indicators like Selic, CDI, IPCA, dollar and euro to understand how the economy may impact your month.",
+    "radarMicro": "Clear reading, no jargon",
+    "radarDisclaimer": "illustrative values",
+    "cta": "Start on mobile",
+    "phone": {
+      "balance": "Month balance",
+      "income": "Income",
+      "expenses": "Expenses",
+      "smartLimit": "Smart limit",
+      "nextBills": "Upcoming bills",
+      "billLight": "Electricity",
+      "tomorrow": "tomorrow",
+      "inDays": "in {{n}} days",
+      "dashboard": "Home",
+      "list": "Expenses",
+      "cards": "Cards",
+      "more": "More"
+    }
   }
 }

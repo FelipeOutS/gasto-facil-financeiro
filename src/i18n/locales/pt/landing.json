@@ -727,5 +727,74 @@
       "toPayLabel": "A pagar",
       "apartmentGoal": "Apartamento · 11%"
     }
+  },
+  "intelligence": {
+    "eyebrow": "Inteligência financeira",
+    "title": "Seu dinheiro explicado de forma simples.",
+    "subtitle": "O Gasto Inteligente analisa seus gastos, receitas, cartões, orçamento e alertas para mostrar o que merece sua atenção no mês.",
+    "cards": {
+      "scoreTitle": "Saúde financeira com Score",
+      "scoreText": "Veja uma nota de 0 a 100 para entender se seu mês está saudável, em atenção ou crítico.",
+      "diagnosisTitle": "Diagnóstico mensal",
+      "diagnosisText": "Receba uma leitura clara do mês, com pontos positivos, riscos e próximas ações.",
+      "alertsTitle": "Alertas inteligentes",
+      "alertsText": "Identifique contas vencidas, faturas próximas do vencimento, orçamento no limite e gastos fora do padrão.",
+      "tipsTitle": "Dicas automáticas",
+      "tipsText": "O app sugere pequenas ações para economizar, ajustar gastos e aproveitar melhor o saldo.",
+      "aiTitle": "Gasto AI",
+      "aiText": "Pergunte sobre seus gastos em linguagem natural, como: 'quanto gastei com mercado este mês?'"
+    },
+    "preview": {
+      "scoreLabel": "Saúde financeira",
+      "scoreStatus": "Mês saudável",
+      "diagnosisLabel": "Diagnóstico do mês",
+      "diagnosisGood": "Receita acima da média dos últimos 3 meses",
+      "diagnosisRisk": "Fatura do cartão próxima do limite",
+      "alertTag": "Alerta",
+      "alertSample": "Conta de luz vence amanhã — R$ 132,00",
+      "tipTag": "Dica",
+      "tipSample": "Você pode economizar cerca de R$ 120 revisando assinaturas pouco usadas."
+    },
+    "cta": "Conhecer a inteligência do app"
+  },
+  "appExperience": {
+    "eyebrow": "Mobile e app",
+    "title": "Feito para usar no dia a dia, pelo celular.",
+    "subtitle": "Use como um app, com navegação rápida, botão central para lançar movimentações e telas otimizadas para o Android.",
+    "block1Title": "Use como um app, sem complicação",
+    "block1Text": "No celular, o Gasto Inteligente tem navegação rápida, botão central para lançar movimentações, menu inferior, modo claro/escuro e telas otimizadas para Android.",
+    "chips": {
+      "fab": "Botão \"+\" para lançar rápido",
+      "bottomNav": "Menu inferior com atalhos",
+      "theme": "Modo claro e escuro",
+      "android": "Otimizado para Android"
+    },
+    "whatsappTitle": "Lançamento pelo WhatsApp",
+    "whatsappText": "Registre gastos pelo WhatsApp de forma prática — com confirmação antes de salvar.",
+    "whatsappSample": {
+      "user": "gastei 35 no uber",
+      "bot": "Confirmar: <b>R$ 35,00</b> em Transporte?"
+    },
+    "vaultTitle": "Cofre Pessoal",
+    "vaultText": "Guarde informações importantes em um espaço protegido, com foco em privacidade e segurança.",
+    "radarTitle": "Radar Econômico",
+    "radarText": "Acompanhe indicadores como Selic, CDI, IPCA, dólar e euro para entender como o cenário pode impactar seu mês.",
+    "radarMicro": "Com leitura prática, sem economês",
+    "radarDisclaimer": "valores ilustrativos",
+    "cta": "Começar pelo celular",
+    "phone": {
+      "balance": "Saldo do mês",
+      "income": "Receitas",
+      "expenses": "Despesas",
+      "smartLimit": "Limite inteligente",
+      "nextBills": "Próximas contas",
+      "billLight": "Luz",
+      "tomorrow": "amanhã",
+      "inDays": "em {{n}} dias",
+      "dashboard": "Início",
+      "list": "Gastos",
+      "cards": "Cartões",
+      "more": "Mais"
+    }
   }
 }
