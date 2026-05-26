@@ -95,20 +95,20 @@ export function BottomNav() {
       <ul className="relative mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
         {LEFT_TABS.map(renderTab)}
 
-        {/* FAB central — abre ações rápidas */}
+        {/* FAB central — navega direto para a página de novo lançamento
+             (sem modal/sheet, para funcionar bem em Android WebView). */}
         <li className="flex w-16 shrink-0 items-start justify-center">
-          <MobileQuickActionsSheet
-            trigger={
-              <button
-                type="button"
-                aria-label="Ações rápidas"
-                className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform active:scale-95"
-              >
-                <Plus className="h-6 w-6" strokeWidth={2.6} />
-              </button>
-            }
-          />
+          <Link
+            to="/adicionar"
+            preload="intent"
+            preloadDelay={0}
+            aria-label={t("aria.addExpense", { defaultValue: "Novo lançamento" })}
+            className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform active:scale-95"
+          >
+            <Plus className="h-6 w-6" strokeWidth={2.6} />
+          </Link>
         </li>
+
 
         {RIGHT_TABS_WITH_REPORTS.map(renderTab)}
       </ul>
