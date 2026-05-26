@@ -76,7 +76,7 @@ import {
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
-export const Route = createFileRoute("/contas-a-receber/")({
+export const Route = createFileRoute("/contas-a-receber")({
   component: ContasAReceberPage,
 });
 
@@ -86,6 +86,8 @@ function ContasAReceberPage() {
   const { t } = useTranslation("contas-a-receber");
   const { user } = useAuth();
   const userId = user?.id;
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [lista, setLista] = useState<ContaReceber[]>([]);
   const [loading, setLoading] = useState(true);
   const [openForm, setOpenForm] = useState(false);
@@ -96,6 +98,24 @@ function ContasAReceberPage() {
   const [filtro, setFiltro] = useState<FilterStatus>("todas");
   const [busca, setBusca] = useState("");
   const { porId: clientesPorId } = useClientes();
+
+  const openCreate = () => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-receber/nova" });
+      return;
+    }
+    setEditing(null);
+    setOpenForm(true);
+  };
+
+  const openEdit = (c: ContaReceber) => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-receber/$id/editar", params: { id: c.id } });
+      return;
+    }
+    setEditing(c);
+    setOpenForm(true);
+  };
 
   async function recarregar() {
     if (!userId) return;
