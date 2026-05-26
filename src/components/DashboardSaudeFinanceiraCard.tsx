@@ -206,6 +206,32 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
 
   const tone = levelTone(health.level);
 
+  // Cenário econômico (BCB) — cache-first, falha em silêncio.
+  const [bcbIndicators, setBcbIndicators] = useState<BcbIndicator[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadBcbRadar()
+      .then((r) => {
+        if (alive && r.indicators.length > 0) setBcbIndicators(r.indicators);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const economicNote = useMemo(() => {
+    if (!bcbIndicators) return null;
+    const find = (k: "SELIC" | "CDI" | "IPCA") =>
+      bcbIndicators.find((i) => i.key === k)?.value ?? null;
+    return buildEconomicHealthNote({
+      level: health.level,
+      selic: find("SELIC"),
+      cdi: find("CDI"),
+      ipca: find("IPCA"),
+    });
+  }, [bcbIndicators, health.level]);
+
   return (
     <PremiumCard
       variant="default"
