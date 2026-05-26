@@ -413,17 +413,36 @@ function Index() {
 
   return (
     <MobileShell wide>
-      {/* Hero — saudação compacta */}
-      <HeroGreeting
-        nome={profile?.nome ?? null}
-        eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
-        mesAno={formatMonthYear(ym.ano, ym.mes)}
-        subtitle={t("hero.subtitle")}
-        monthSwitcher={monthSwitcher}
-      />
+      {/* ===== Mobile: resumo do mês estilo app financeiro (apenas <lg) ===== */}
+      <div className="lg:hidden">
+        <MobileMonthSummary
+          ano={ym.ano}
+          mes={ym.mes}
+          saldo={saldo}
+          receitas={totalEntradas}
+          despesas={total}
+          guardado={totalGuardado}
+          aPagar={contasResumo.pendente}
+          atrasadasCount={contasResumo.atrasadasCount}
+          pendentesCount={contasResumo.pendentesCount}
+          onPrev={() => changeMonth(-1)}
+          onNext={() => changeMonth(1)}
+        />
+      </div>
 
-      {/* ===== Resumo financeiro — destaque principal ===== */}
-      <section className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+      {/* Hero — saudação compacta (desktop/tablet apenas; mobile usa o MobileTopBar) */}
+      <div className="hidden lg:block">
+        <HeroGreeting
+          nome={profile?.nome ?? null}
+          eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
+          mesAno={formatMonthYear(ym.ano, ym.mes)}
+          subtitle={t("hero.subtitle")}
+          monthSwitcher={monthSwitcher}
+        />
+      </div>
+
+      {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
+      <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">
         <div className="lg:col-span-5">
           <SaldoHeroCard
             saldo={saldo}
