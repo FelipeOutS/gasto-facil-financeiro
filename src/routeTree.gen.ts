@@ -58,6 +58,7 @@ import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
+import { Route as InvestimentosImportacoesRouteImport } from './routes/investimentos.importacoes'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -360,6 +361,12 @@ const InvestimentosImportarRoute = InvestimentosImportarRouteImport.update({
   path: '/investimentos/importar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestimentosImportacoesRoute =
+  InvestimentosImportacoesRouteImport.update({
+    id: '/investimentos/importacoes',
+    path: '/investimentos/importacoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
   id: '/fornecedores_/relatorio',
   path: '/fornecedores/relatorio',
@@ -715,6 +722,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
@@ -822,6 +830,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
@@ -930,6 +939,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
@@ -1039,6 +1049,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/metas/nova'
@@ -1146,6 +1157,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/metas/nova'
@@ -1253,6 +1265,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores_/relatorio'
+    | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/metas/nova'
@@ -1361,6 +1374,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+  InvestimentosImportacoesRoute: typeof InvestimentosImportacoesRoute
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
   MetasNovaRoute: typeof MetasNovaRoute
@@ -1752,6 +1766,13 @@ declare module '@tanstack/react-router' {
       path: '/investimentos/importar'
       fullPath: '/investimentos/importar'
       preLoaderRoute: typeof InvestimentosImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investimentos/importacoes': {
+      id: '/investimentos/importacoes'
+      path: '/investimentos/importacoes'
+      fullPath: '/investimentos/importacoes'
+      preLoaderRoute: typeof InvestimentosImportacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fornecedores_/relatorio': {
@@ -2219,6 +2240,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+  InvestimentosImportacoesRoute: InvestimentosImportacoesRoute,
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
   MetasNovaRoute: MetasNovaRoute,
