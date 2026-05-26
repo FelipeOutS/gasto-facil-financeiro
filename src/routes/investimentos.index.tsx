@@ -232,7 +232,7 @@ function InvestimentosPage() {
     if (isMobile) navigate({ to: "/investimentos/importacoes" });
     else setOpenHistorico(true);
   };
-  const openAtualizarLote = () => {
+  const openAtualizarLoteAction = () => {
     if (isMobile) navigate({ to: "/investimentos/atualizar-lote" });
     else setOpenAtualizarLote(true);
   };
