@@ -272,7 +272,7 @@ function InvestimentosPage() {
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
-            <Button size="sm" onClick={() => { setEditing(null); setOpenAdd(true); }}>
+            <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
             </Button>
           </div>
@@ -322,7 +322,7 @@ function InvestimentosPage() {
               title={t("investimentos.wallet.emptyTitle")}
               description={t("investimentos.wallet.emptyDesc")}
               cta={
-                <Button size="sm" onClick={() => setOpenAdd(true)}>
+                <Button size="sm" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
                 </Button>
               }
@@ -396,7 +396,7 @@ function InvestimentosPage() {
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => { setEditing(a); setOpenAdd(true); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => openEdit(a)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
