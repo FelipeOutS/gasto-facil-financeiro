@@ -63,6 +63,7 @@ import { Route as ContasAReceberNovaRouteImport } from './routes/contas-a-recebe
 import { Route as ContasAPagarNovaRouteImport } from './routes/contas-a-pagar.nova'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
+import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -372,6 +373,11 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   path: '/cartoes/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AssinaturasRoute,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
   path: '/app/perfil',
@@ -627,6 +633,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -720,6 +727,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -815,6 +823,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -911,6 +920,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/contas-a-pagar/nova'
@@ -1004,6 +1014,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/contas-a-pagar/nova'
@@ -1098,6 +1109,7 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/contas-a-pagar/nova'
@@ -1612,6 +1624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assinaturas/nova': {
+      id: '/assinaturas/nova'
+      path: '/nova'
+      fullPath: '/assinaturas/nova'
+      preLoaderRoute: typeof AssinaturasNovaRouteImport
+      parentRoute: typeof AssinaturasRoute
+    }
     '/app_/perfil': {
       id: '/app_/perfil'
       path: '/app/perfil'
@@ -1882,10 +1901,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AssinaturasRouteChildren {
+  AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   AssinaturasIndexRoute: typeof AssinaturasIndexRoute
 }
 
 const AssinaturasRouteChildren: AssinaturasRouteChildren = {
+  AssinaturasNovaRoute: AssinaturasNovaRoute,
   AssinaturasIndexRoute: AssinaturasIndexRoute,
 }
 
