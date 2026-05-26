@@ -157,6 +157,50 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
     ],
   );
 
+  // Carrega indicadores do BCB respeitando o cache (TTL 6h/24h). Se o Radar
+  // já tiver buscado, este load é apenas leitura do localStorage. Em caso de
+  // erro, o bloco macro simplesmente não aparece — o Diagnóstico segue ok.
+  const [macro, setMacro] = useState<MacroSnapshot | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    void loadBcbRadar()
+      .then((r) => {
+        if (cancel || r.failed) return;
+        const find = (k: "SELIC" | "CDI" | "IPCA") =>
+          r.indicators.find((i) => i.key === k)?.value;
+        setMacro({ selic: find("SELIC"), cdi: find("CDI"), ipca: find("IPCA") });
+      })
+      .catch(() => {
+        /* silencioso — bloco macro não aparece */
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const renda = useMemo(
+    () => receitasDoMes.reduce((s, r) => s + (r.valor || 0), 0),
+    [receitasDoMes],
+  );
+  const gastosTotal = useMemo(
+    () => gastosDoMes.reduce((s, g) => s + (g.valor || 0), 0),
+    [gastosDoMes],
+  );
+  const saldoMes = renda - gastosTotal;
+
+  const macroContexto = useMemo(
+    () =>
+      macro
+        ? buildMacroContext({
+            macro,
+            saldo: saldoMes,
+            renda,
+            gastos: gastosTotal,
+          })
+        : null,
+    [macro, saldoMes, renda, gastosTotal],
+  );
+
   if (!diag) {
     return (
       <PremiumCard
