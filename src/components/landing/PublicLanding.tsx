@@ -58,6 +58,7 @@ import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
+import mobileGastoInteligente from "@/assets/mobile-gasto-inteligente.png";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -4239,9 +4240,15 @@ function AppExperienceSection() {
         <div className="mt-12 grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
             <div className="flex justify-center lg:justify-start">
-              <PhoneAppMock />
+              <img
+                src={mobileGastoInteligente}
+                alt={t("appExperience.title")}
+                loading="lazy"
+                className="w-[260px] sm:w-[300px] lg:w-[340px] h-auto drop-shadow-[0_30px_60px_rgba(15,23,42,0.25)]"
+              />
             </div>
           </Reveal>
+
 
           <Reveal delay={0.05}>
             <div>
