@@ -23,7 +23,6 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
-import { Route as MetasRouteImport } from './routes/metas'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LgpdRouteImport } from './routes/lgpd'
@@ -48,6 +47,7 @@ import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
+import { Route as MetasIndexRouteImport } from './routes/metas.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
@@ -55,6 +55,7 @@ import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
 import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
+import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -81,6 +82,9 @@ import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convit
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
+import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
+import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
+import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
 import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-receber.$id.receber'
@@ -171,11 +175,6 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const MeuPlanoRoute = MeuPlanoRouteImport.update({
   id: '/meu-plano',
   path: '/meu-plano',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MetasRoute = MetasRouteImport.update({
-  id: '/metas',
-  path: '/metas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManualRoute = ManualRouteImport.update({
@@ -298,6 +297,11 @@ const PtIndexRoute = PtIndexRouteImport.update({
   path: '/pt/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MetasIndexRoute = MetasIndexRouteImport.update({
+  id: '/metas/',
+  path: '/metas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnIndexRoute = EnIndexRouteImport.update({
   id: '/en/',
   path: '/en/',
@@ -331,6 +335,11 @@ const RendaNovaRoute = RendaNovaRouteImport.update({
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
   path: '/pt/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetasNovaRoute = MetasNovaRouteImport.update({
+  id: '/metas/nova',
+  path: '/metas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
@@ -461,6 +470,21 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
 const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
   id: '/renda/$id/editar',
   path: '/renda/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetasIdRemoverRoute = MetasIdRemoverRouteImport.update({
+  id: '/metas/$id/remover',
+  path: '/metas/$id/remover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetasIdEditarRoute = MetasIdEditarRouteImport.update({
+  id: '/metas/$id/editar',
+  path: '/metas/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetasIdAdicionarRoute = MetasIdAdicionarRouteImport.update({
+  id: '/metas/$id/adicionar',
+  path: '/metas/$id/adicionar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
@@ -602,7 +626,6 @@ export interface FileRoutesByFullPath {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
-  '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -640,6 +663,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
@@ -647,6 +671,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
+  '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -658,6 +683,9 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
+  '/metas/$id/editar': typeof MetasIdEditarRoute
+  '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -697,7 +725,6 @@ export interface FileRoutesByTo {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
-  '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -735,6 +762,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas': typeof AssinaturasIndexRoute
@@ -742,6 +770,7 @@ export interface FileRoutesByTo {
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
   '/en': typeof EnIndexRoute
+  '/metas': typeof MetasIndexRoute
   '/pt': typeof PtIndexRoute
   '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -753,6 +782,9 @@ export interface FileRoutesByTo {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
+  '/metas/$id/editar': typeof MetasIdEditarRoute
+  '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
@@ -793,7 +825,6 @@ export interface FileRoutesById {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
-  '/metas': typeof MetasRoute
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -831,6 +862,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
+  '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
@@ -838,6 +870,7 @@ export interface FileRoutesById {
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
+  '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -849,6 +882,9 @@ export interface FileRoutesById {
   '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
+  '/metas/$id/editar': typeof MetasIdEditarRoute
+  '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -890,7 +926,6 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
-    | '/metas'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -928,6 +963,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
@@ -935,6 +971,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
     | '/en/'
+    | '/metas/'
     | '/pt/'
     | '/renda/'
     | '/api/checkout/create'
@@ -946,6 +983,9 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/metas/$id/adicionar'
+    | '/metas/$id/editar'
+    | '/metas/$id/remover'
     | '/renda/$id/editar'
     | '/app/integracoes/'
     | '/cartoes/$id/'
@@ -985,7 +1025,6 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
-    | '/metas'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -1023,6 +1062,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas'
@@ -1030,6 +1070,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/en'
+    | '/metas'
     | '/pt'
     | '/renda'
     | '/api/checkout/create'
@@ -1041,6 +1082,9 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/metas/$id/adicionar'
+    | '/metas/$id/editar'
+    | '/metas/$id/remover'
     | '/renda/$id/editar'
     | '/app/integracoes'
     | '/cartoes/$id'
@@ -1080,7 +1124,6 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
-    | '/metas'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -1118,6 +1161,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores_/relatorio'
+    | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
@@ -1125,6 +1169,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
     | '/en/'
+    | '/metas/'
     | '/pt/'
     | '/renda/'
     | '/api/checkout/create'
@@ -1136,6 +1181,9 @@ export interface FileRouteTypes {
     | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/metas/$id/adicionar'
+    | '/metas/$id/editar'
+    | '/metas/$id/remover'
     | '/renda/$id/editar'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
@@ -1176,7 +1224,6 @@ export interface RootRouteChildren {
   LgpdRoute: typeof LgpdRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
-  MetasRoute: typeof MetasRoute
   MeuPlanoRoute: typeof MeuPlanoRoute
   OnboardingRoute: typeof OnboardingRoute
   OrcamentoRoute: typeof OrcamentoRoute
@@ -1214,6 +1261,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+  MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
   AssinaturasIndexRoute: typeof AssinaturasIndexRoute
@@ -1221,6 +1269,7 @@ export interface RootRouteChildren {
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
   EnIndexRoute: typeof EnIndexRoute
+  MetasIndexRoute: typeof MetasIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
@@ -1231,6 +1280,9 @@ export interface RootRouteChildren {
   ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
   ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  MetasIdAdicionarRoute: typeof MetasIdAdicionarRoute
+  MetasIdEditarRoute: typeof MetasIdEditarRoute
+  MetasIdRemoverRoute: typeof MetasIdRemoverRoute
   RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
@@ -1346,13 +1398,6 @@ declare module '@tanstack/react-router' {
       path: '/meu-plano'
       fullPath: '/meu-plano'
       preLoaderRoute: typeof MeuPlanoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/metas': {
-      id: '/metas'
-      path: '/metas'
-      fullPath: '/metas'
-      preLoaderRoute: typeof MetasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manual': {
@@ -1523,6 +1568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PtIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/metas/': {
+      id: '/metas/'
+      path: '/metas'
+      fullPath: '/metas/'
+      preLoaderRoute: typeof MetasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/en/': {
       id: '/en/'
       path: '/en'
@@ -1570,6 +1622,13 @@ declare module '@tanstack/react-router' {
       path: '/pt/$'
       fullPath: '/pt/$'
       preLoaderRoute: typeof PtSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metas/nova': {
+      id: '/metas/nova'
+      path: '/metas/nova'
+      fullPath: '/metas/nova'
+      preLoaderRoute: typeof MetasNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fornecedores_/relatorio': {
@@ -1752,6 +1811,27 @@ declare module '@tanstack/react-router' {
       path: '/renda/$id/editar'
       fullPath: '/renda/$id/editar'
       preLoaderRoute: typeof RendaIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metas/$id/remover': {
+      id: '/metas/$id/remover'
+      path: '/metas/$id/remover'
+      fullPath: '/metas/$id/remover'
+      preLoaderRoute: typeof MetasIdRemoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metas/$id/editar': {
+      id: '/metas/$id/editar'
+      path: '/metas/$id/editar'
+      fullPath: '/metas/$id/editar'
+      preLoaderRoute: typeof MetasIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metas/$id/adicionar': {
+      id: '/metas/$id/adicionar'
+      path: '/metas/$id/adicionar'
+      fullPath: '/metas/$id/adicionar'
+      preLoaderRoute: typeof MetasIdAdicionarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -1938,7 +2018,6 @@ const rootRouteChildren: RootRouteChildren = {
   LgpdRoute: LgpdRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
-  MetasRoute: MetasRoute,
   MeuPlanoRoute: MeuPlanoRoute,
   OnboardingRoute: OnboardingRoute,
   OrcamentoRoute: OrcamentoRoute,
@@ -1976,6 +2055,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+  MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
   AssinaturasIndexRoute: AssinaturasIndexRoute,
@@ -1983,6 +2063,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
   EnIndexRoute: EnIndexRoute,
+  MetasIndexRoute: MetasIndexRoute,
   PtIndexRoute: PtIndexRoute,
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
@@ -1993,6 +2074,9 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,
   ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  MetasIdAdicionarRoute: MetasIdAdicionarRoute,
+  MetasIdEditarRoute: MetasIdEditarRoute,
+  MetasIdRemoverRoute: MetasIdRemoverRoute,
   RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
