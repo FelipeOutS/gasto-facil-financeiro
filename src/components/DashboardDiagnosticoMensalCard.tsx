@@ -1,11 +1,12 @@
 // Card compacto do Diagnóstico Mensal no Dashboard.
 // Reusa dados que já estão no store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas resume o mês e orienta o usuário.
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ClipboardList,
   ChevronRight,
+  Landmark,
 } from "lucide-react";
 import {
   getCartoes,
@@ -24,9 +25,12 @@ import { useRecorrencias } from "@/lib/recorrencias";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { buildLinhasOrcamento } from "@/lib/orcamento";
 import {
+  buildMacroContext,
   generateMonthlyDiagnosis,
+  type MacroSnapshot,
   type MonthlyDiagnosisStatus,
 } from "@/lib/insights/monthly-diagnosis";
+import { loadBcbRadar } from "@/lib/economy/bcb";
 import { PremiumCard } from "@/components/ui/premium-card";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
@@ -153,6 +157,50 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
     ],
   );
 
+  // Carrega indicadores do BCB respeitando o cache (TTL 6h/24h). Se o Radar
+  // já tiver buscado, este load é apenas leitura do localStorage. Em caso de
+  // erro, o bloco macro simplesmente não aparece — o Diagnóstico segue ok.
+  const [macro, setMacro] = useState<MacroSnapshot | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    void loadBcbRadar()
+      .then((r) => {
+        if (cancel || r.failed) return;
+        const find = (k: "SELIC" | "CDI" | "IPCA") =>
+          r.indicators.find((i) => i.key === k)?.value;
+        setMacro({ selic: find("SELIC"), cdi: find("CDI"), ipca: find("IPCA") });
+      })
+      .catch(() => {
+        /* silencioso — bloco macro não aparece */
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const renda = useMemo(
+    () => receitasDoMes.reduce((s, r) => s + (r.valor || 0), 0),
+    [receitasDoMes],
+  );
+  const gastosTotal = useMemo(
+    () => gastosDoMes.reduce((s, g) => s + (g.valor || 0), 0),
+    [gastosDoMes],
+  );
+  const saldoMes = renda - gastosTotal;
+
+  const macroContexto = useMemo(
+    () =>
+      macro
+        ? buildMacroContext({
+            macro,
+            saldo: saldoMes,
+            renda,
+            gastos: gastosTotal,
+          })
+        : null,
+    [macro, saldoMes, renda, gastosTotal],
+  );
+
   if (!diag) {
     return (
       <PremiumCard
@@ -211,6 +259,16 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
           duplicar o card de Saúde Financeira (que já lista esses bullets).
           O Diagnóstico fica com papel próprio: título orientativo + resumo
           em prosa + próximas ações. */}
+
+      {macroContexto && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
+          <Landmark className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <span className="mr-1 font-medium text-foreground">Cenário econômico:</span>
+            <span>{macroContexto}</span>
+          </div>
+        </div>
+      )}
 
       {diag.nextActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">

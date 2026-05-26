@@ -21,6 +21,83 @@ import {
 
 export type MonthlyDiagnosisStatus = FinancialHealthLevel;
 
+// ─────────────────────────────────────────────────────────────────────────
+// Contexto macroeconômico (Selic/CDI/IPCA → frase leiga curta).
+// Função pura, sem efeitos colaterais, sem chamadas externas.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type MacroSnapshot = {
+  /** Selic em % a.a. (meta Copom). */
+  selic?: number;
+  /** CDI em % a.a. */
+  cdi?: number;
+  /** IPCA do mês em %. */
+  ipca?: number;
+};
+
+export type MacroContextInput = {
+  macro: MacroSnapshot;
+  /** Saldo do mês (receitas - despesas). Opcional. */
+  saldo?: number;
+  /** Renda do mês, usada para detectar gastos altos. Opcional. */
+  renda?: number;
+  /** Total gasto no mês. Opcional. */
+  gastos?: number;
+};
+
+/**
+ * Gera uma frase curta com o cenário econômico contextualizado ao usuário.
+ * Retorna null quando não há dados macro suficientes — assim o Diagnóstico
+ * Mensal simplesmente oculta o bloco em vez de quebrar.
+ */
+export function buildMacroContext(input: MacroContextInput): string | null {
+  const { macro, saldo, renda, gastos } = input;
+  const selic = macro.selic;
+  const cdi = macro.cdi;
+  const ipca = macro.ipca;
+
+  // Sem nenhum indicador → nada a dizer.
+  if (selic == null && cdi == null && ipca == null) return null;
+
+  const jurosRef = Math.max(selic ?? 0, cdi ?? 0);
+  const jurosAltos = jurosRef >= 12;
+  const jurosModerados = !jurosAltos && jurosRef >= 8;
+  const inflacaoAlta = (ipca ?? 0) >= 0.6;
+  const inflacaoModerada = !inflacaoAlta && (ipca ?? 0) >= 0.2;
+
+  const saldoPositivo = typeof saldo === "number" && saldo > 0;
+  const saldoNegativo = typeof saldo === "number" && saldo < 0;
+  const gastosAltos =
+    typeof renda === "number" &&
+    renda > 0 &&
+    typeof gastos === "number" &&
+    gastos / renda >= 0.9;
+
+  // Combinações priorizadas (usuário + macro).
+  if (jurosAltos && saldoNegativo) {
+    return "Juros altos no cenário atual: evite parcelamentos longos e priorize quitar dívidas caras.";
+  }
+  if (jurosAltos && saldoPositivo) {
+    return "Juros altos e saldo positivo: pode ser um bom momento para reforçar sua reserva.";
+  }
+  if (inflacaoAlta && gastosAltos) {
+    return "Inflação mais pressionada e gastos altos: acompanhe gastos variáveis e revise contas recorrentes.";
+  }
+  if (inflacaoAlta) {
+    return "Inflação mais pressionada: acompanhe gastos de mercado, serviços e contas recorrentes.";
+  }
+  if (jurosAltos) {
+    return "Juros altos pedem cuidado com parcelamentos e dívidas caras.";
+  }
+  if (jurosModerados && inflacaoModerada) {
+    return "Cenário equilibrado: mantenha o orçamento em dia e siga acompanhando gastos recorrentes.";
+  }
+  if (inflacaoModerada) {
+    return "Inflação moderada: continue acompanhando gastos recorrentes para manter o orçamento previsível.";
+  }
+  return "Inflação controlada: seu orçamento tende a ficar mais previsível, mas continue acompanhando gastos recorrentes.";
+}
+
 export type MonthlyDiagnosisAction = {
   label: string;
   href: string;
