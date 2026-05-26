@@ -338,11 +338,11 @@ export function InvestimentoForm({
       {!hideFooter && (
         <div className="flex justify-end gap-2 pt-2">
           {onCancel && (
-            <Button variant="outline" onClick={onCancel} disabled={saving}>
+            <Button variant="outline" onClick={onCancel} disabled={saving} className="h-11 sm:h-10">
               Cancelar
             </Button>
           )}
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="h-11 sm:h-10">
             {saving ? "Salvando…" : submitLabel ?? (editing ? "Salvar" : "Cadastrar")}
           </Button>
         </div>
