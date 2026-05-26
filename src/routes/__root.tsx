@@ -75,7 +75,10 @@ export const Route = createRootRoute({
         content:
           "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
       },
-      { name: "theme-color", content: "#0B1F3A" },
+      // Status bar / overscroll: cor por preferência do SO; o ThemeProvider
+      // também sobrescreve em runtime quando o usuário força light/dark.
+      { name: "theme-color", media: "(prefers-color-scheme: light)", content: THEME_COLOR_LIGHT },
+      { name: "theme-color", media: "(prefers-color-scheme: dark)", content: THEME_COLOR_DARK },
       { property: "og:site_name", content: "Gasto Inteligente" },
       { property: "og:title", content: "Gasto Inteligente — Controle de gastos do mês" },
       {
