@@ -1274,7 +1274,7 @@ function GastosPage() {
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setEditing(g)}
+                        onClick={() => openEdit(g)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
                         aria-label={t("item.edit")}
                       >
@@ -1290,7 +1290,7 @@ function GastosPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditing(g)}>
+                          <DropdownMenuItem onClick={() => openEdit(g)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             {t("item.edit")}
                           </DropdownMenuItem>
