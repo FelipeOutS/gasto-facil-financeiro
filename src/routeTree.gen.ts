@@ -41,7 +41,6 @@ import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -53,6 +52,7 @@ import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
@@ -62,6 +62,7 @@ import { Route as ContasAReceberNovaRouteImport } from './routes/contas-a-recebe
 import { Route as ContasAPagarNovaRouteImport } from './routes/contas-a-pagar.nova'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
+import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -86,6 +87,7 @@ import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-r
 import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-receber.$id.editar'
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
+import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
@@ -261,11 +263,6 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssinaturasRoute = AssinaturasRouteImport.update({
-  id: '/assinaturas',
-  path: '/assinaturas',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -321,6 +318,11 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   path: '/cartoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
+  id: '/assinaturas/',
+  path: '/assinaturas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
   id: '/renda/nova',
   path: '/renda/nova',
@@ -364,6 +366,11 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
 const CartoesNovoRoute = CartoesNovoRouteImport.update({
   id: '/cartoes/novo',
   path: '/cartoes/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
+  id: '/assinaturas/nova',
+  path: '/assinaturas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
@@ -486,6 +493,11 @@ const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   path: '/cartoes/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
+  id: '/assinaturas/$id/editar',
+  path: '/assinaturas/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -573,7 +585,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -621,6 +632,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -630,6 +642,7 @@ export interface FileRoutesByFullPath {
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas/': typeof AssinaturasIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -638,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -666,7 +680,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -714,6 +727,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -723,6 +737,7 @@ export interface FileRoutesByTo {
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas': typeof AssinaturasIndexRoute
   '/cartoes': typeof CartoesIndexRoute
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
@@ -731,6 +746,7 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -760,7 +776,6 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -808,6 +823,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
+  '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
@@ -817,6 +833,7 @@ export interface FileRoutesById {
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas/': typeof AssinaturasIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -825,6 +842,7 @@ export interface FileRoutesById {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -855,7 +873,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -903,6 +920,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/contas-a-pagar/nova'
@@ -912,6 +930,7 @@ export interface FileRouteTypes {
     | '/fornecedores/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -920,6 +939,7 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -948,7 +968,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -996,6 +1015,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/contas-a-pagar/nova'
@@ -1005,6 +1025,7 @@ export interface FileRouteTypes {
     | '/fornecedores/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas'
     | '/cartoes'
     | '/contas-a-pagar'
     | '/contas-a-receber'
@@ -1013,6 +1034,7 @@ export interface FileRouteTypes {
     | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1041,7 +1063,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -1089,6 +1110,7 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
+    | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/contas-a-pagar/nova'
@@ -1098,6 +1120,7 @@ export interface FileRouteTypes {
     | '/fornecedores_/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1106,6 +1129,7 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1135,7 +1159,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
   AppRoute: typeof AppRoute
-  AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
@@ -1183,6 +1206,7 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
@@ -1192,6 +1216,7 @@ export interface RootRouteChildren {
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
+  AssinaturasIndexRoute: typeof AssinaturasIndexRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
@@ -1200,6 +1225,7 @@ export interface RootRouteChildren {
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
   ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
@@ -1448,13 +1474,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/assinaturas': {
-      id: '/assinaturas'
-      path: '/assinaturas'
-      fullPath: '/assinaturas'
-      preLoaderRoute: typeof AssinaturasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -1532,6 +1551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assinaturas/': {
+      id: '/assinaturas/'
+      path: '/assinaturas'
+      fullPath: '/assinaturas/'
+      preLoaderRoute: typeof AssinaturasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/renda/nova': {
       id: '/renda/nova'
       path: '/renda/nova'
@@ -1593,6 +1619,13 @@ declare module '@tanstack/react-router' {
       path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assinaturas/nova': {
+      id: '/assinaturas/nova'
+      path: '/assinaturas/nova'
+      fullPath: '/assinaturas/nova'
+      preLoaderRoute: typeof AssinaturasNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app_/perfil': {
@@ -1763,6 +1796,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assinaturas/$id/editar': {
+      id: '/assinaturas/$id/editar'
+      path: '/assinaturas/$id/editar'
+      fullPath: '/assinaturas/$id/editar'
+      preLoaderRoute: typeof AssinaturasIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -1881,7 +1921,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
   AppRoute: AppRoute,
-  AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
@@ -1929,6 +1968,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AssinaturasNovaRoute: AssinaturasNovaRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
@@ -1938,6 +1978,7 @@ const rootRouteChildren: RootRouteChildren = {
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
+  AssinaturasIndexRoute: AssinaturasIndexRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
@@ -1946,6 +1987,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
   ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,

@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { getEconomicRadar } from "@/server/radar.functions";
-import { requireOnline } from "@/lib/use-online-status";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Plus,
   RefreshCw,
@@ -23,8 +20,6 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -32,18 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
+import { RecorrenciaDialog } from "@/components/assinaturas/RecorrenciaForm";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/format";
+import { formatBRL, parseDateLocal } from "@/lib/format";
+import { requireOnline } from "@/lib/use-online-status";
 import { useAuth } from "@/lib/auth-context";
 import {
   useStore,
@@ -61,7 +51,6 @@ import {
   useRecorrencias,
   sincronizarDeteccoes,
   totaisRecorrencias,
-  criarRecorrencia,
   atualizarRecorrencia,
   excluirRecorrencia,
   gerarGastoDoMes,
@@ -71,9 +60,9 @@ import {
   type StatusRecorrencia,
   type TipoRecorrencia,
 } from "@/lib/recorrencias";
-import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import { FORMAS_PAGAMENTO } from "@/lib/types";
 
-export const Route = createFileRoute("/assinaturas")({
+export const Route = createFileRoute("/assinaturas/")({
   head: () => ({
     meta: [
       { title: "Assinaturas e recorrências — Gasto Inteligente" },
@@ -86,14 +75,6 @@ export const Route = createFileRoute("/assinaturas")({
   }),
   component: AssinaturasPage,
 });
-
-const FREQ_KEYS: FrequenciaRecorrencia[] = [
-  "mensal",
-  "semanal",
-  "quinzenal",
-  "anual",
-  "personalizada",
-];
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
@@ -141,6 +122,8 @@ function AssinaturasPage() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const ready = useBootstrap();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const recs = useRecorrencias();
   const gastos = useStore(getGastos);
@@ -170,7 +153,24 @@ function AssinaturasPage() {
     return (id: string | null | undefined) => (id ? map.get(id) ?? null : null);
   }, [categorias]);
 
-  // Hidrata + sincroniza detecções na entrada da página.
+  function openCreate() {
+    if (isMobile) {
+      void navigate({ to: "/assinaturas/nova" });
+      return;
+    }
+    setEditing(null);
+    setDialogOpen(true);
+  }
+
+  function openEdit(r: Recorrencia) {
+    if (isMobile) {
+      void navigate({ to: "/assinaturas/$id/editar", params: { id: r.id } });
+      return;
+    }
+    setEditing(r);
+    setDialogOpen(true);
+  }
+
   useEffect(() => {
     if (!userId || !ready) return;
     let cancelado = false;
@@ -209,18 +209,6 @@ function AssinaturasPage() {
 
   const totais = useMemo(() => totaisRecorrencias(recs), [recs]);
 
-  const proxima = useMemo(() => {
-    const ativas = recs.filter(
-      (r) => r.status === "ativa" && r.proximaCobranca,
-    );
-    if (!ativas.length) return null;
-    return ativas
-      .slice()
-      .sort((a, b) =>
-        (a.proximaCobranca ?? "") < (b.proximaCobranca ?? "") ? -1 : 1,
-      )[0];
-  }, [recs]);
-
   const recsFiltradas = useMemo(() => {
     if (filtroStatus === "todas") return recs;
     return recs.filter((r) => r.status === filtroStatus);
@@ -228,7 +216,6 @@ function AssinaturasPage() {
 
   const suspeitas = recs.filter((r) => r.status === "suspeita");
 
-  // Insights
   const insights = useMemo(() => {
     const out: string[] = [];
     const ativas = recs.filter((r) => r.status === "ativa");
@@ -265,7 +252,6 @@ function AssinaturasPage() {
     return out;
   }, [recs, totais, t]);
 
-  // Integração com orçamento por categoria (apenas leitura/análise)
   const orcamentoAssinaturas = useMemo(() => {
     const cat = categorias.find(
       (c) => c.nome.toLowerCase() === "assinaturas",
@@ -290,12 +276,6 @@ function AssinaturasPage() {
         categoriaNomePorId,
       });
       const nomes = gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean);
-      console.info("Gastos analisados:", r.analisados);
-      console.info("Nomes dos gastos analisados:", nomes);
-      console.info("Categorias dos gastos analisados:", gastosAtuais.map((g) => categoriaNomePorId(g.categoriaId) ?? g.categoriaId));
-      console.info("Sugestões encontradas:", r.encontradas);
-      console.info("Recorrências criadas:", r.criadas);
-      console.info("Suspeitas criadas:", r.suspeitas);
       setDebugAnalise({
         gastos: gastosAtuais.length,
         analisados: r.analisados,
@@ -381,13 +361,7 @@ function AssinaturasPage() {
               <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">{t("actions.reanalyze")}</span>
             </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-            >
+            <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("actions.new")}</span>
             </Button>
@@ -395,7 +369,6 @@ function AssinaturasPage() {
         </div>
       </header>
 
-      {/* Cards do topo */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
           icon={<CalendarClock className="h-4 w-4" />}
@@ -419,7 +392,6 @@ function AssinaturasPage() {
         />
       </section>
 
-      {/* Suspeitas */}
       {suspeitas.length > 0 && (
         <section className="mt-5 rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4">
           <div className="flex items-center gap-2 text-sky-400">
@@ -458,10 +430,7 @@ function AssinaturasPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      setEditing(r);
-                      setDialogOpen(true);
-                    }}
+                    onClick={() => openEdit(r)}
                   >
                     {t("actions.edit")}
                   </Button>
@@ -485,7 +454,6 @@ function AssinaturasPage() {
         </section>
       )}
 
-      {/* Insights */}
       {insights.length > 0 && (
         <section className="mt-5 rounded-2xl border border-border/60 bg-card/40 p-4">
           <h2 className="text-sm font-semibold">{t("insights.title")}</h2>
@@ -520,7 +488,6 @@ function AssinaturasPage() {
         </section>
       )}
 
-      {/* Filtro */}
       <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-2">
         {(["todas", "ativa", "pausada", "suspeita", "cancelada"] as const).map(
           (s) => (
@@ -540,7 +507,6 @@ function AssinaturasPage() {
         )}
       </div>
 
-      {/* Lista */}
       <section className="mt-2 space-y-3">
         {recsFiltradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-8 text-center">
@@ -553,6 +519,9 @@ function AssinaturasPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               {t("empty.hint")}
             </p>
+            <Button className="mt-4 min-h-11" onClick={openCreate}>
+              <Plus className="h-4 w-4" /> {t("actions.new")}
+            </Button>
             {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
               <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
                 <p>{t("debug.found", { n: debugAnalise.gastos })}</p>
@@ -573,10 +542,7 @@ function AssinaturasPage() {
               rec={r}
               onConfirmar={() => handleConfirmarSuspeita(r)}
               onIgnorar={() => handleIgnorar(r)}
-              onEdit={() => {
-                setEditing(r);
-                setDialogOpen(true);
-              }}
+              onEdit={() => openEdit(r)}
               onTogglePause={() => handleTogglePause(r)}
               onCancelar={() => handleCancelar(r)}
               onExcluir={() => handleExcluir(r)}
@@ -587,19 +553,20 @@ function AssinaturasPage() {
         )}
       </section>
 
-      {/* Dialog Nova/Editar */}
-      <RecorrenciaDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editing={editing}
-        userId={userId}
-        onSaved={() => {
-          setDialogOpen(false);
-          setEditing(null);
-        }}
-      />
+      {/* Desktop: Dialog Nova/Editar (mobile usa páginas dedicadas) */}
+      {!isMobile && (
+        <RecorrenciaDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          editing={editing}
+          userId={userId}
+          onSaved={() => {
+            setDialogOpen(false);
+            setEditing(null);
+          }}
+        />
+      )}
 
-      {/* Histórico */}
       <Dialog
         open={!!historicoOpen}
         onOpenChange={(o) => !o && setHistoricoOpen(null)}
@@ -827,356 +794,5 @@ function HistoricoLista({
         </div>
       )}
     </div>
-  );
-}
-
-function RecorrenciaDialog({
-  open,
-  onOpenChange,
-  editing,
-  userId,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  editing: Recorrencia | null;
-  userId: string | null;
-  onSaved: () => void;
-}) {
-  const { t, freqLabel, statusLabel } = useLabels();
-  const categorias = useStore(getCategorias);
-  const cartoes = useStore(getCartoes);
-  const [nome, setNome] = useState("");
-  const [valor, setValor] = useState("");
-  const [moeda, setMoeda] = useState<"BRL" | "USD" | "EUR">("BRL");
-  const [valorOriginal, setValorOriginal] = useState("");
-  const [cotacaoUSD, setCotacaoUSD] = useState<number | null>(null);
-  const [cotacaoEUR, setCotacaoEUR] = useState<number | null>(null);
-  const [categoriaId, setCategoriaId] = useState<string>("");
-  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>("mensal");
-  const [proximaCobranca, setProximaCobranca] = useState<string>("");
-  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("");
-  const [cartaoId, setCartaoId] = useState<string>("");
-  const [observacao, setObservacao] = useState("");
-  const [status, setStatus] = useState<StatusRecorrencia>("ativa");
-  const [saving, setSaving] = useState(false);
-
-  const fetchRadar = useServerFn(getEconomicRadar);
-  useEffect(() => {
-    if (!open) return;
-    fetchRadar()
-      .then((r: any) => {
-        const usd = r?.indicators?.find((i: any) => i.key === "USD_BRL");
-        const eur = r?.indicators?.find((i: any) => i.key === "EUR_BRL");
-        setCotacaoUSD(usd?.value ?? null);
-        setCotacaoEUR(eur?.value ?? null);
-      })
-      .catch(() => {});
-  }, [open, fetchRadar]);
-
-  // Recalcula estimativa BRL quando muda moeda/valor original
-  useEffect(() => {
-    if (moeda === "BRL") return;
-    const cot = moeda === "USD" ? cotacaoUSD : cotacaoEUR;
-    const n = parseBRLInput(valorOriginal);
-    if (cot && Number.isFinite(n) && n > 0) {
-      // estimativa com IOF + spread (~7,5%)
-      const brl = n * cot * 1.075;
-      setValor(brl.toFixed(2).replace(".", ","));
-    }
-  }, [moeda, valorOriginal, cotacaoUSD, cotacaoEUR]);
-
-  useEffect(() => {
-    if (editing) {
-      setNome(editing.nome);
-      setValor(editing.valor.toFixed(2).replace(".", ","));
-      setMoeda((editing.moeda ?? "BRL") as "BRL" | "USD" | "EUR");
-      setValorOriginal(
-        editing.valorOriginal != null
-          ? editing.valorOriginal.toFixed(2).replace(".", ",")
-          : "",
-      );
-      setCategoriaId(editing.categoriaId ?? "");
-      setFrequencia(editing.frequencia);
-      setProximaCobranca(editing.proximaCobranca ?? "");
-      setFormaPagamento((editing.formaPagamento ?? "") as FormaPagamento | "");
-      setCartaoId(editing.cartaoId ?? "");
-      setObservacao(editing.observacao ?? "");
-      setStatus(editing.status);
-    } else {
-      setNome("");
-      setValor("");
-      setMoeda("BRL");
-      setValorOriginal("");
-      setCategoriaId("");
-      setFrequencia("mensal");
-      setProximaCobranca(toLocalISODate(new Date()));
-      setFormaPagamento("");
-      setCartaoId("");
-      setObservacao("");
-      setStatus("ativa");
-    }
-  }, [editing, open]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userId) return;
-    const valorNum = parseBRLInput(valor);
-    if (!nome.trim() || valorNum <= 0) {
-      toast.error(t("toasts.invalid"));
-      return;
-    }
-    if (!(await requireOnline())) return;
-    setSaving(true);
-    const valorOriginalNum = moeda !== "BRL" ? parseBRLInput(valorOriginal) : null;
-    try {
-      if (editing) {
-        await atualizarRecorrencia(editing.id, {
-          nome: nome.trim(),
-          valor: valorNum,
-          categoriaId: categoriaId || null,
-          frequencia,
-          proximaCobranca: proximaCobranca || null,
-          formaPagamento: (formaPagamento || null) as FormaPagamento | null,
-          cartaoId: cartaoId || null,
-          observacao: observacao || null,
-          status,
-          moeda,
-          valorOriginal: valorOriginalNum,
-        });
-        toast.success(t("toasts.updated"));
-      } else {
-        await criarRecorrencia(userId, {
-          nome: nome.trim(),
-          valor: valorNum,
-          categoriaId: categoriaId || null,
-          frequencia,
-          proximaCobranca: proximaCobranca || null,
-          formaPagamento: (formaPagamento || null) as FormaPagamento | null,
-          cartaoId: cartaoId || null,
-          observacao: observacao || null,
-          status,
-          origem: "manual",
-          moeda,
-          valorOriginal: valorOriginalNum,
-        });
-        toast.success(t("toasts.created"));
-      }
-      onSaved();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t("dialog.titleEdit") : t("dialog.titleNew")}
-          </DialogTitle>
-          <DialogDescription>
-            {editing ? t("dialog.descEdit") : t("dialog.descNew")}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-xs font-medium">{t("dialog.name")}</label>
-            <Input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder={t("dialog.namePlaceholder")}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium">{t("dialog.currency")}</label>
-            <Select
-              value={moeda}
-              onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BRL">{t("dialog.currencyBRL")}</SelectItem>
-                <SelectItem value="USD">{t("dialog.currencyUSD")}</SelectItem>
-                <SelectItem value="EUR">{t("dialog.currencyEUR")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {moeda !== "BRL" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium">
-                  {moeda === "USD" ? t("dialog.valueInUSD") : t("dialog.valueInEUR")}
-                </label>
-                <Input
-                  value={valorOriginal}
-                  onChange={(e) => setValorOriginal(e.target.value)}
-                  inputMode="decimal"
-                  placeholder={moeda === "USD" ? t("dialog.phUSD") : t("dialog.phEUR")}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium">{t("dialog.currentRate")}</label>
-                <Input
-                  readOnly
-                  value={
-                    (moeda === "USD" ? cotacaoUSD : cotacaoEUR)
-                      ? formatBRL(
-                          (moeda === "USD" ? cotacaoUSD : cotacaoEUR) as number,
-                        )
-                      : "—"
-                  }
-                  className="bg-muted/40"
-                />
-              </div>
-              <p className="col-span-2 rounded-md bg-muted/30 px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                {t("dialog.estimateHint")}
-              </p>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium">
-                {moeda === "BRL" ? t("dialog.valueBRL") : t("dialog.estimateBRL")}
-              </label>
-              <Input
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                inputMode="decimal"
-                placeholder="0,00"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium">{t("dialog.frequency")}</label>
-              <Select
-                value={frequencia}
-                onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FREQ_KEYS.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {freqLabel(f)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium">{t("dialog.next")}</label>
-            <Input
-              type="date"
-              value={proximaCobranca}
-              onChange={(e) => setProximaCobranca(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium">{t("dialog.category")}</label>
-            <Select
-              value={categoriaId || "__none__"}
-              onValueChange={(v) => setCategoriaId(v === "__none__" ? "" : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("dialog.categorySelect")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">{t("dialog.noCategory")}</SelectItem>
-                {categorias.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium">{t("dialog.payment")}</label>
-              <Select
-                value={formaPagamento || "__none__"}
-                onValueChange={(v) =>
-                  setFormaPagamento((v === "__none__" ? "" : v) as FormaPagamento | "")
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("dialog.categorySelect")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("dialog.paymentNone")}</SelectItem>
-                  {FORMAS_PAGAMENTO.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium">{t("dialog.card")}</label>
-              <Select
-                value={cartaoId || "__none__"}
-                onValueChange={(v) => setCartaoId(v === "__none__" ? "" : v)}
-                disabled={formaPagamento !== "credito"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("dialog.noCard")}</SelectItem>
-                  {cartoes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium">{t("dialog.status")}</label>
-            <Select
-              value={status}
-              onValueChange={(v) => setStatus(v as StatusRecorrencia)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(["ativa", "pausada", "cancelada"] as const).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {statusLabel(s)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium">{t("dialog.note")}</label>
-            <Textarea
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              {t("actions.cancel")}
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? t("actions.saving") : editing ? t("actions.save") : t("actions.create")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

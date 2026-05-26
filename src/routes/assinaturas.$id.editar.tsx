@@ -1,43 +1,41 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { CreditCard, ChevronLeft, Home } from "lucide-react";
+import { ChevronLeft, Home, Pencil } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-import { CartaoForm } from "@/components/CartaoForm";
-import { getCartoes, useBootstrap, useStore } from "@/lib/store";
+import { RecorrenciaForm } from "@/components/assinaturas/RecorrenciaForm";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import i18n from "@/i18n";
+import { useAuth } from "@/lib/auth-context";
+import { useBootstrap } from "@/lib/store";
+import { hydrateRecorrencias, useRecorrencias } from "@/lib/recorrencias";
 
-export const Route = createFileRoute("/cartoes/$id/editar")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("cartoes:form.editTitle") + " — Gasto Inteligente" },
-    ],
-  }),
-  component: EditarCartaoPage,
+export const Route = createFileRoute("/assinaturas/$id/editar")({
+  head: () => ({ meta: [{ title: "Editar assinatura — Gasto Inteligente" }] }),
+  component: EditarAssinaturaPage,
 });
 
-function EditarCartaoPage() {
+function EditarAssinaturaPage() {
   const { id } = Route.useParams();
-  const { t } = useTranslation("cartoes");
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const ready = useBootstrap();
-  const cartoes = useStore(() => getCartoes());
-  const cartao = cartoes.find((c) => c.id === id) ?? null;
+  const recs = useRecorrencias();
+  const rec = recs.find((r) => r.id === id) ?? null;
+
+  useEffect(() => {
+    if (userId && ready) {
+      void hydrateRecorrencias(userId);
+    }
+  }, [userId, ready]);
 
   const back = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       window.history.back();
     } else {
-      navigate({ to: "/cartoes/$id", params: { id } });
+      void navigate({ to: "/assinaturas" });
     }
   };
-
-  useEffect(() => {
-    if (ready && !cartao) {
-      navigate({ to: "/cartoes", replace: true });
-    }
-  }, [ready, cartao, navigate]);
 
   return (
     <MobileShell wide>
@@ -62,25 +60,37 @@ function EditarCartaoPage() {
         </div>
         <h1 className="flex items-center gap-2 text-[22px] font-bold leading-tight tracking-tight">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-            <CreditCard className="h-4 w-4" />
+            <Pencil className="h-4 w-4" />
           </span>
-          {t("form.editTitle")}
+          Editar assinatura
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("form.subtitle")}</p>
       </header>
 
-      <div className="mt-4 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-        {!ready || !cartao ? (
-          <div className="space-y-3 p-4">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card">
+        {!ready ? (
+          <div className="space-y-3">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-32 w-full" />
           </div>
+        ) : !rec ? (
+          <div className="py-8 text-center">
+            <p className="text-base font-semibold">Assinatura não encontrada</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Essa assinatura pode ter sido removida ou não está mais disponível.
+            </p>
+            <Button className="mt-4 min-h-11" onClick={() => navigate({ to: "/assinaturas" })}>
+              Voltar para assinaturas
+            </Button>
+          </div>
         ) : (
-          <CartaoForm
-            editing={cartao}
+          <RecorrenciaForm
+            key={rec.id}
+            editing={rec}
+            userId={userId}
+            fullWidthActions
+            onSaved={() => navigate({ to: "/assinaturas" })}
             onCancel={back}
-            onSaved={() => navigate({ to: "/cartoes/$id", params: { id } })}
           />
         )}
       </div>
