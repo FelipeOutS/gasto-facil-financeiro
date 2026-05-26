@@ -520,7 +520,7 @@ function RelatoriosPage() {
               <p className="text-sm font-medium">{t("totals.monthsCount", { period: periodoLabel, count: historicoMeses.length })}</p>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2.5">
+          <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <div className="rounded-xl bg-card/60 p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.receitas")}</p>
               <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>

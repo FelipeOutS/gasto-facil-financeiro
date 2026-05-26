@@ -67,7 +67,7 @@ export function OrcamentoCategoriaCard({
       </div>
 
       {/* Mini métricas */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="rounded-xl bg-card-elevated px-2 py-2 text-center">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             {labels.planned}

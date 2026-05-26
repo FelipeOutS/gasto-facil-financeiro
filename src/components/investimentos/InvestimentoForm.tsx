@@ -224,7 +224,7 @@ export function InvestimentoForm({
 
         {isRendaVariavel && (
           <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="Quantidade">
                 <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
               </Field>
@@ -298,7 +298,7 @@ export function InvestimentoForm({
                 <Field label="Ticker / código (opcional)">
                   <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="—" />
                 </Field>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <Field label="Quantidade">
                     <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
                   </Field>

@@ -135,7 +135,7 @@ export function PlanejamentoMensalCard({
         </>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-3 gap-2.5">
+          <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <div className="rounded-xl bg-card-elevated p-2.5">
               <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                 {labels.income}

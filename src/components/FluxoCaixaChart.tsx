@@ -131,7 +131,7 @@ export function FluxoCaixaChart({
         )}
       </div>
 
-      <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-[11px]">
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 text-[11px] sm:grid-cols-3">
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
           <p className="text-muted-foreground">{t("fluxo.entradas")}</p>
           <p className="num mt-0.5 truncate font-semibold text-success">

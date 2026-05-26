@@ -1594,7 +1594,7 @@ export function FaturaSheet({
             )}
           </div>
 
-          <div className="relative mt-4 grid grid-cols-3 gap-2">
+          <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <MiniStat label={t("sheet.limit")} value={formatBRL(resumo.limite)} />
             <MiniStat label={t("sheet.available")} value={formatBRL(resumo.disponivel)} />
             <MiniStat label={t("sheet.usage")} value={`${Math.round(resumo.pct)}%`} />

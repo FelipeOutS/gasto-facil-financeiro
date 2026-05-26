@@ -1027,7 +1027,7 @@ function AddAtivoDialog({
           {/* Renda variável: quantidade + preços com auto-cálculo */}
           {isRendaVariavel && (
             <>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Field label="Quantidade">
                   <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
                 </Field>
@@ -1103,7 +1103,7 @@ function AddAtivoDialog({
                   <Field label="Ticker / código (opcional)">
                     <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="—" />
                   </Field>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <Field label="Quantidade">
                       <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
                     </Field>
@@ -1412,7 +1412,7 @@ function HistoricoImportacoesDialog({
             <p className="text-sm text-muted-foreground py-6 text-center">Carregando…</p>
           ) : itensDetalhe ? (
             <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <MiniStat label="Ativos" value={String(itensDetalhe.ativos.length)} />
                 <MiniStat label="Movimentações" value={String(itensDetalhe.movimentacoes.length)} />
                 <MiniStat label="Rendimentos" value={String(itensDetalhe.rendimentos.length)} />
