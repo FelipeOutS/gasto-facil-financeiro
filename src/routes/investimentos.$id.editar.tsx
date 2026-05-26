@@ -21,7 +21,13 @@ function EditarInvestimentoPage() {
   const [ativo, setAtivo] = useState<Ativo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const back = () => navigate({ to: "/investimentos" });
+  const back = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/investimentos" });
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
