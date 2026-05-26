@@ -751,9 +751,9 @@ function InvestimentosPage() {
         rendimentos={rends}
         onClose={() => setDetalheAtivo(null)}
         onEditar={(a) => { setDetalheAtivo(null); openEdit(a); }}
-        onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
+        onAtualizarValor={(a) => { setDetalheAtivo(null); openAtualizarValor(a); }}
         onAddMovimentacao={(a) => openMovimentacao(a.id)}
-        onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
+        onAddRendimento={(a) => { setDetalheAtivo(null); openRendimento(a.id); }}
         onExcluirAtivo={async (a) => {
           if (!confirm(t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }))) return;
           try {
