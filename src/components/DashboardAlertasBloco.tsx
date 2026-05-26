@@ -27,22 +27,22 @@ function priorityMeta(p: AlertPriority) {
       return { bg: "bg-destructive/10", fg: "text-destructive", badge: "bg-destructive/15 text-destructive" };
     case "alta":
       return {
-        bg: "bg-orange-500/10",
-        fg: "text-orange-600 dark:text-orange-400",
-        badge: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+        bg: "bg-warning/10",
+        fg: "text-warning",
+        badge: "bg-warning/15 text-warning",
       };
     case "media":
       return {
-        bg: "bg-amber-500/10",
-        fg: "text-amber-700 dark:text-amber-300",
-        badge: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+        bg: "bg-warning/10",
+        fg: "text-warning",
+        badge: "bg-warning/15 text-warning",
       };
     case "baixa":
     default:
       return {
-        bg: "bg-emerald-500/10",
-        fg: "text-emerald-700 dark:text-emerald-300",
-        badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+        bg: "bg-success/10",
+        fg: "text-success",
+        badge: "bg-success/15 text-success",
       };
   }
 }
@@ -111,7 +111,7 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
       </div>
 
       {total === 0 ? (
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2.5 text-xs text-success">
           <Sparkles className="h-4 w-4" />
           {t("alertasBloco.nadaUrgente")}
         </div>
