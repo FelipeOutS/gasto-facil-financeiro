@@ -83,6 +83,7 @@ export function EconomicMonthImpactCard({
   cartaoUsoPercentual,
   recorrenciasTotal,
 }: Props) {
+  const navigate = useNavigate();
   const [indicators, setIndicators] = useState<BcbIndicator[]>([]);
 
   useEffect(() => {
