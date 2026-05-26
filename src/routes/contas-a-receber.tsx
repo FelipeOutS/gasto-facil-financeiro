@@ -272,10 +272,7 @@ function ContasAReceberPage() {
                   toast.error(t("unmark.toastError"));
                 }
               }}
-              onEdit={() => {
-                setEditing(c);
-                setOpenForm(true);
-              }}
+              onEdit={() => openEdit(c)}
               onDelete={() => setConfirmDelete(c)}
               onCancel={() => setConfirmCancel(c)}
             />
