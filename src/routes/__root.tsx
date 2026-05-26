@@ -33,7 +33,12 @@ const rootSearchSchema = z.object({
   lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),
 });
 
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('gf-theme')||'dark';var r=t;if(t==='system'){r=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(r==='light'){d.classList.add('light');d.classList.remove('dark');d.style.colorScheme='light';}else{d.classList.add('dark');d.classList.remove('light');d.style.colorScheme='dark';}}catch(e){}})();`;
+// Cores aproximadas de --background light/dark (oklch convertido p/ hex)
+// usadas pelo navegador/WebView para pintar a status bar e a área de
+// overscroll de forma integrada ao app.
+const THEME_COLOR_DARK = "#1E2126";
+const THEME_COLOR_LIGHT = "#FAFAFB";
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('gf-theme')||'dark';var r=t;if(t==='system'){r=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(r==='light'){d.classList.add('light');d.classList.remove('dark');d.style.colorScheme='light';}else{d.classList.add('dark');d.classList.remove('light');d.style.colorScheme='dark';}var c=r==='light'?'${THEME_COLOR_LIGHT}':'${THEME_COLOR_DARK}';var m=document.querySelector('meta[name=\"theme-color\"]:not([media])');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',c);}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (
