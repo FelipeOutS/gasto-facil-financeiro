@@ -76,7 +76,7 @@ import {
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
-export const Route = createFileRoute("/contas-a-receber")({
+export const Route = createFileRoute("/contas-a-receber/")({
   component: ContasAReceberPage,
 });
 
