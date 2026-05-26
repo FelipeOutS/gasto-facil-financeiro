@@ -76,7 +76,10 @@ export function RadarEconomicoInteligenteCard({
 
   return (
     <section
-      className={cn("rounded-2xl border bg-card p-4 shadow-sm", className)}
+      className={cn(
+        "flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm",
+        className,
+      )}
       aria-label="Indicadores econômicos do Banco Central"
     >
       <header className="flex items-start justify-between gap-3">
