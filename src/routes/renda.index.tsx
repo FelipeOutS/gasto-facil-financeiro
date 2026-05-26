@@ -155,7 +155,7 @@ const TIPO_COLORS: Record<TipoReceita, string> = {
 
 const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
 
-export const Route = createFileRoute("/renda")({
+export const Route = createFileRoute("/renda/")({
   head: () => ({ meta: [{ title: "Renda — Gasto Inteligente" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
     const ano = Number(search.ano);

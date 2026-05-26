@@ -15,7 +15,6 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RendaRouteImport } from './routes/renda'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RadarRouteImport } from './routes/radar'
@@ -50,6 +49,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
@@ -124,11 +124,6 @@ const ResumoRoute = ResumoRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RendaRoute = RendaRouteImport.update({
-  id: '/renda',
-  path: '/renda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -299,6 +294,11 @@ const AdicionarRoute = AdicionarRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RendaIndexRoute = RendaIndexRouteImport.update({
+  id: '/renda/',
+  path: '/renda/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PtIndexRoute = PtIndexRouteImport.update({
@@ -572,7 +572,6 @@ export interface FileRoutesByFullPath {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -604,6 +603,7 @@ export interface FileRoutesByFullPath {
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
+  '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -660,7 +660,6 @@ export interface FileRoutesByTo {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -692,6 +691,7 @@ export interface FileRoutesByTo {
   '/cartoes': typeof CartoesIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
+  '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -749,7 +749,6 @@ export interface FileRoutesById {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -781,6 +780,7 @@ export interface FileRoutesById {
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
+  '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -839,7 +839,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -871,6 +870,7 @@ export interface FileRouteTypes {
     | '/cartoes/'
     | '/en/'
     | '/pt/'
+    | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
@@ -927,7 +927,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -959,6 +958,7 @@ export interface FileRouteTypes {
     | '/cartoes'
     | '/en'
     | '/pt'
+    | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
@@ -1015,7 +1015,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -1047,6 +1046,7 @@ export interface FileRouteTypes {
     | '/cartoes/'
     | '/en/'
     | '/pt/'
+    | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
@@ -1104,7 +1104,6 @@ export interface RootRouteChildren {
   RadarRoute: typeof RadarRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
-  RendaRoute: typeof RendaRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1135,6 +1134,7 @@ export interface RootRouteChildren {
   CartoesIndexRoute: typeof CartoesIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   PtIndexRoute: typeof PtIndexRoute
+  RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
@@ -1197,13 +1197,6 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/renda': {
-      id: '/renda'
-      path: '/renda'
-      fullPath: '/renda'
-      preLoaderRoute: typeof RendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -1442,6 +1435,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renda/': {
+      id: '/renda/'
+      path: '/renda'
+      fullPath: '/renda/'
+      preLoaderRoute: typeof RendaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pt/': {
@@ -1773,18 +1773,6 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
-interface RendaRouteChildren {
-  RendaNovaRoute: typeof RendaNovaRoute
-  RendaIdEditarRoute: typeof RendaIdEditarRoute
-}
-
-const RendaRouteChildren: RendaRouteChildren = {
-  RendaNovaRoute: RendaNovaRoute,
-  RendaIdEditarRoute: RendaIdEditarRoute,
-}
-
-const RendaRouteWithChildren = RendaRoute._addFileChildren(RendaRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1820,7 +1808,6 @@ const rootRouteChildren: RootRouteChildren = {
   RadarRoute: RadarRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
-  RendaRoute: RendaRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -1851,6 +1838,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartoesIndexRoute: CartoesIndexRoute,
   EnIndexRoute: EnIndexRoute,
   PtIndexRoute: PtIndexRoute,
+  RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
