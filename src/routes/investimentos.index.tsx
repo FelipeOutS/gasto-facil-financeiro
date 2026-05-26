@@ -438,11 +438,11 @@ function InvestimentosPage() {
                         {rent >= 0 ? "+" : ""}{rent.toFixed(2)}%
                       </div>
                     </div>
-                    <div className="flex gap-1 ml-2">
+                    <div className="flex gap-0.5 sm:gap-1 ml-2 shrink-0">
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8"
+                        className="h-10 w-10 sm:h-8 sm:w-8 shrink-0"
                         title={t("investimentos.wallet.details")}
                         onClick={() => setDetalheAtivo(a)}
                       >
@@ -451,19 +451,19 @@ function InvestimentosPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-brand"
+                        className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 text-brand"
                         title={t("investimentos.wallet.refresh")}
                         onClick={() => openAtualizarValor(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => openEdit(a)}>
+                      <Button size="icon" variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 shrink-0" title={t("investimentos.wallet.edit")} onClick={() => openEdit(a)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-rose-500 hover:text-rose-500"
+                        className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
                           if (!confirm(t("investimentos.wallet.confirmDelete", { name: a.nome }))) return;
@@ -473,6 +473,7 @@ function InvestimentosPage() {
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
+
                       </Button>
                     </div>
                   </li>
