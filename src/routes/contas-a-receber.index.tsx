@@ -67,7 +67,7 @@ import {
   criarContaReceber,
   atualizarContaReceber,
   excluirContaReceber,
-  marcarRecebida as _marcarRecebida,
+  
   desmarcarRecebida,
   cancelarContaReceber,
   calcularResumo,
