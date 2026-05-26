@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { CreditCard } from "lucide-react";
+import { CreditCard, ChevronLeft, Home } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { CartaoForm } from "@/components/CartaoForm";
 import i18n from "@/i18n";
