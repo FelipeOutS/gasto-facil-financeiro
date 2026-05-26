@@ -757,6 +757,79 @@
     },
     "cta": "Conhecer a inteligência do app"
   },
+  "planningSection": {
+    "eyebrow": "Planejamento inteligente",
+    "title": "Saiba quanto pode gastar antes do mês apertar.",
+    "description": "Defina limites, acompanhe o quanto ainda pode usar por dia e veja sinais de alerta quando o orçamento começa a sair do plano.",
+    "cta": "Ver planos",
+    "mock": {
+      "title": "Orçamento do mês",
+      "dailyLimit": "Limite diário",
+      "dailyValue": "R$ 42,00",
+      "dailyStatus": "Dentro do plano",
+      "forecast": "Previsão",
+      "forecastText": "Você deve fechar o mês com folga.",
+      "usedLabel": "Usado",
+      "essentials": "Essenciais",
+      "variables": "Variáveis",
+      "reserve": "Reserva"
+    },
+    "cards": {
+      "rule": {
+        "title": "Orçamento 50/30/20",
+        "description": "Uma base simples para distribuir sua renda entre gastos essenciais, variáveis e reserva."
+      },
+      "daily": {
+        "title": "Limite diário",
+        "description": "Veja uma estimativa de quanto ainda pode gastar por dia sem comprometer o planejamento do mês."
+      },
+      "forecast": {
+        "title": "Previsão de estouro",
+        "description": "O app sinaliza quando o ritmo de gastos pode ultrapassar o orçamento antes do fim do mês."
+      },
+      "planned": {
+        "title": "Planejado x realizado",
+        "description": "Compare o valor planejado com o que já foi gasto e entenda onde ajustar."
+      }
+    }
+  },
+  "billsSection": {
+    "eyebrow": "Contas e vencimentos",
+    "title": "Organize o que precisa pagar, receber e acompanhar.",
+    "description": "Tenha uma visão clara das contas do mês, vencimentos próximos, recebimentos esperados e assinaturas que pesam no orçamento.",
+    "cta": "Começar organização",
+    "mock": {
+      "title": "Próximos 7 dias",
+      "subtitle": "3 contas importantes",
+      "bill1": "Luz",
+      "bill1Status": "vence amanhã",
+      "bill2": "Cliente João",
+      "bill2Status": "a receber",
+      "bill3": "Streaming",
+      "bill3Status": "recorrente",
+      "tagPending": "Pendente",
+      "tagReceivable": "Receber",
+      "tagRecurring": "Recorrente"
+    },
+    "cards": {
+      "payable": {
+        "title": "Contas a pagar",
+        "description": "Cadastre vencimentos e acompanhe o que está pendente, pago ou atrasado."
+      },
+      "receivable": {
+        "title": "Contas a receber",
+        "description": "Controle valores esperados, recebimentos parciais e cobranças em aberto."
+      },
+      "subscriptions": {
+        "title": "Assinaturas e recorrências",
+        "description": "Visualize gastos fixos como streaming, ferramentas, mensalidades e serviços recorrentes."
+      },
+      "alerts": {
+        "title": "Alertas de vencimento",
+        "description": "Receba sinais visuais para agir antes que uma conta atrase."
+      }
+    }
+  },
   "appExperience": {
     "eyebrow": "Mobile e app",
     "title": "Feito para usar no dia a dia, pelo celular.",
