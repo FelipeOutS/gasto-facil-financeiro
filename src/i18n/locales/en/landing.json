@@ -757,6 +757,79 @@
     },
     "cta": "Explore the app intelligence"
   },
+  "planningSection": {
+    "eyebrow": "Smart planning",
+    "title": "Know how much you can spend before the month gets tight.",
+    "description": "Set limits, track how much you can still use per day and see warning signs when your budget starts drifting off plan.",
+    "cta": "See plans",
+    "mock": {
+      "title": "Month budget",
+      "dailyLimit": "Daily limit",
+      "dailyValue": "R$ 42.00",
+      "dailyStatus": "On track",
+      "forecast": "Forecast",
+      "forecastText": "You should close the month with room to spare.",
+      "usedLabel": "Used",
+      "essentials": "Essentials",
+      "variables": "Variable",
+      "reserve": "Reserve"
+    },
+    "cards": {
+      "rule": {
+        "title": "50/30/20 budget",
+        "description": "A simple baseline to split your income between essentials, variable spending and savings."
+      },
+      "daily": {
+        "title": "Daily limit",
+        "description": "See an estimate of how much you can still spend per day without compromising your month."
+      },
+      "forecast": {
+        "title": "Overspend forecast",
+        "description": "The app flags when your spending pace may exceed the budget before the month ends."
+      },
+      "planned": {
+        "title": "Planned vs actual",
+        "description": "Compare the planned amount with what has already been spent and see where to adjust."
+      }
+    }
+  },
+  "billsSection": {
+    "eyebrow": "Bills & due dates",
+    "title": "Organize what you need to pay, receive and track.",
+    "description": "Get a clear view of the month's bills, upcoming due dates, expected income and subscriptions that weigh on your budget.",
+    "cta": "Start organizing",
+    "mock": {
+      "title": "Next 7 days",
+      "subtitle": "3 important bills",
+      "bill1": "Electricity",
+      "bill1Status": "due tomorrow",
+      "bill2": "Client João",
+      "bill2Status": "to receive",
+      "bill3": "Streaming",
+      "bill3Status": "recurring",
+      "tagPending": "Pending",
+      "tagReceivable": "Receivable",
+      "tagRecurring": "Recurring"
+    },
+    "cards": {
+      "payable": {
+        "title": "Bills to pay",
+        "description": "Register due dates and track what is pending, paid or overdue."
+      },
+      "receivable": {
+        "title": "Bills to receive",
+        "description": "Control expected amounts, partial payments and open invoices."
+      },
+      "subscriptions": {
+        "title": "Subscriptions & recurring",
+        "description": "Visualize fixed costs like streaming, tools, memberships and recurring services."
+      },
+      "alerts": {
+        "title": "Due date alerts",
+        "description": "Get visual signals to act before a bill becomes overdue."
+      }
+    }
+  },
   "appExperience": {
     "eyebrow": "Mobile & app",
     "title": "Built for everyday use, on your phone.",
