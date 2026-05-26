@@ -223,18 +223,19 @@ function interpretarSelic(v: number): string {
 
 function interpretarCdi(v: number): string {
   if (v >= 12)
-    return "CDI alto: reservas em CDB, LCI e fundos DI tendem a render bem.";
+    return "CDI alto: pode favorecer reserva em aplicações conservadoras.";
   if (v >= 8)
-    return "CDI moderado: bom retorno em pós-fixados conservadores.";
-  return "CDI baixo: rendimentos conservadores perdem força.";
+    return "CDI moderado: rendimento conservador segue atrativo.";
+  return "CDI baixo: rendimento conservador pode perder força.";
 }
 
 function interpretarIpca(v: number): string {
   if (v >= 0.6)
-    return "IPCA alto no mês: atenção a mercado, combustível, aluguel e mensalidades.";
+    return "IPCA alto no mês: atenção ao custo de vida e gastos variáveis.";
   if (v >= 0.2)
     return "IPCA moderado: acompanhe gastos recorrentes e categorias variáveis.";
-  if (v >= 0) return "IPCA baixo: inflação mais controlada, mas siga acompanhando.";
+  if (v >= 0)
+    return "Inflação mais controlada, mas ainda exige acompanhamento.";
   return "Deflação no mês: preços caíram em média.";
 }
 
@@ -254,7 +255,7 @@ function gerarLeituraPratica(args: {
   const jurosModerados =
     !jurosAltos && ((selic?.value ?? 0) >= 8 || (cdi?.value ?? 0) >= 8);
   const inflacaoAlta = (ipca?.value ?? 0) >= 0.6;
-  const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.3;
+  const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.2;
 
   const saldo = userContext?.saldo;
   const temSaldoPositivo = typeof saldo === "number" && saldo > 0;
