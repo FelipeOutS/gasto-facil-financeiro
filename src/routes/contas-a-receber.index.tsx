@@ -117,6 +117,14 @@ function ContasAReceberPage() {
     setOpenForm(true);
   };
 
+  const openReceive = (c: ContaReceber) => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-receber/$id/receber", params: { id: c.id } });
+      return;
+    }
+    setOpenReceber(c);
+  };
+
   async function recarregar() {
     if (!userId) return;
     try {
