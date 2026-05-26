@@ -50,6 +50,7 @@ import {
   Lightbulb,
   Smartphone,
   Lock,
+  Repeat,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
