@@ -1787,7 +1787,7 @@ function OrcamentoCard({
         {t("orcamentoCard.usado", { pct: Math.round(pctGeral) })}
       </p>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
         <AlertaPill
           label={t("orcamentoCard.pillDentro")}
           count={qtdOk}
