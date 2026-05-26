@@ -1,11 +1,12 @@
 // Card compacto de saúde financeira no Dashboard.
 // Roda 100% client-side em cima do store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas mostra um diagnóstico explicável.
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   HeartPulse,
   CheckCircle2,
   AlertTriangle,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import {
