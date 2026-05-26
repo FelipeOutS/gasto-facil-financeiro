@@ -77,6 +77,7 @@ import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convit
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
@@ -433,6 +434,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GastosIdEditarRoute = GastosIdEditarRouteImport.update({
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => GastosRoute,
+} as any)
 const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   id: '/cartoes/$id/editar',
   path: '/cartoes/$id/editar',
@@ -538,7 +544,7 @@ export interface FileRoutesByFullPath {
   '/empresa': typeof EmpresaRoute
   '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
-  '/gastos': typeof GastosRoute
+  '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
@@ -588,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
+  '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -623,7 +630,7 @@ export interface FileRoutesByTo {
   '/empresa': typeof EmpresaRoute
   '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
-  '/gastos': typeof GastosRoute
+  '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
@@ -673,6 +680,7 @@ export interface FileRoutesByTo {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
+  '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
@@ -709,7 +717,7 @@ export interface FileRoutesById {
   '/empresa': typeof EmpresaRoute
   '/fornecedores': typeof FornecedoresRoute
   '/gasto-ai': typeof GastoAiRoute
-  '/gastos': typeof GastosRoute
+  '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
   '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
@@ -759,6 +767,7 @@ export interface FileRoutesById {
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
+  '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -846,6 +855,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
+    | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes/'
     | '/cartoes/$id/'
@@ -931,6 +941,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
+    | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes'
     | '/cartoes/$id'
@@ -1016,6 +1027,7 @@ export interface FileRouteTypes {
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
+    | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
@@ -1052,7 +1064,7 @@ export interface RootRouteChildren {
   EmpresaRoute: typeof EmpresaRoute
   FornecedoresRoute: typeof FornecedoresRoute
   GastoAiRoute: typeof GastoAiRoute
-  GastosRoute: typeof GastosRoute
+  GastosRoute: typeof GastosRouteWithChildren
   GuardadoRoute: typeof GuardadoRoute
   InvestimentosRoute: typeof InvestimentosRoute
   LandingRoute: typeof LandingRoute
@@ -1597,6 +1609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gastos/$id/editar': {
+      id: '/gastos/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/gastos/$id/editar'
+      preLoaderRoute: typeof GastosIdEditarRouteImport
+      parentRoute: typeof GastosRoute
+    }
     '/cartoes/$id/editar': {
       id: '/cartoes/$id/editar'
       path: '/cartoes/$id/editar'
@@ -1705,6 +1724,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface GastosRouteChildren {
+  GastosIdEditarRoute: typeof GastosIdEditarRoute
+}
+
+const GastosRouteChildren: GastosRouteChildren = {
+  GastosIdEditarRoute: GastosIdEditarRoute,
+}
+
+const GastosRouteWithChildren =
+  GastosRoute._addFileChildren(GastosRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1724,7 +1754,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmpresaRoute: EmpresaRoute,
   FornecedoresRoute: FornecedoresRoute,
   GastoAiRoute: GastoAiRoute,
-  GastosRoute: GastosRoute,
+  GastosRoute: GastosRouteWithChildren,
   GuardadoRoute: GuardadoRoute,
   InvestimentosRoute: InvestimentosRoute,
   LandingRoute: LandingRoute,
