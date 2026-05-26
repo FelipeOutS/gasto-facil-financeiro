@@ -58,6 +58,7 @@ import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
+import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -335,6 +336,11 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   path: '/clientes/relatorio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesNovoRoute = CartoesNovoRouteImport.update({
+  id: '/novo',
+  path: '/novo',
+  getParentRoute: () => CartoesRoute,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
   path: '/app/perfil',
@@ -509,7 +515,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRoute
+  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -559,6 +565,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -591,7 +598,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRoute
+  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -641,6 +648,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -674,7 +682,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRoute
+  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -724,6 +732,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
+  '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
@@ -808,6 +817,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -890,6 +900,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -972,6 +983,7 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
+    | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
@@ -1005,7 +1017,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
-  CartoesRoute: typeof CartoesRoute
+  CartoesRoute: typeof CartoesRouteWithChildren
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
   ConfirmarRoute: typeof ConfirmarRoute
@@ -1425,6 +1437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientesRelatorioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes/novo': {
+      id: '/cartoes/novo'
+      path: '/novo'
+      fullPath: '/cartoes/novo'
+      preLoaderRoute: typeof CartoesNovoRouteImport
+      parentRoute: typeof CartoesRoute
+    }
     '/app_/perfil': {
       id: '/app_/perfil'
       path: '/app/perfil'
@@ -1645,6 +1664,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CartoesRouteChildren {
+  CartoesNovoRoute: typeof CartoesNovoRoute
+}
+
+const CartoesRouteChildren: CartoesRouteChildren = {
+  CartoesNovoRoute: CartoesNovoRoute,
+}
+
+const CartoesRouteWithChildren =
+  CartoesRoute._addFileChildren(CartoesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1653,7 +1683,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
-  CartoesRoute: CartoesRoute,
+  CartoesRoute: CartoesRouteWithChildren,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
   ConfirmarRoute: ConfirmarRoute,
