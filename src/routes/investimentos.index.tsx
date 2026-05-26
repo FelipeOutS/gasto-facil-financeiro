@@ -178,6 +178,26 @@ function InvestimentosPage() {
       setOpenAdd(true);
     }
   };
+  const openMovimentacao = (ativoId?: string | null) => {
+    if (isMobile) {
+      const id = ativoId ?? ativos[0]?.id;
+      if (!id) {
+        toast.error("Cadastre um investimento primeiro.");
+        return;
+      }
+      navigate({ to: "/investimentos/$id/movimentacao", params: { id } });
+    } else {
+      setMovDialog({ open: true, mov: null, ativoId: ativoId ?? null });
+    }
+  };
+  const openEditMovimentacao = (m: Movimentacao) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/movimentacao/$movId/editar", params: { movId: m.id } });
+    } else {
+      setMovDialog({ open: true, mov: m });
+    }
+  };
+
 
 
   async function reload() {
