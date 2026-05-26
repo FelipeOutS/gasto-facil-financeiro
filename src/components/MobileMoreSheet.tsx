@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Lock, LogOut, Sparkles, UserRound, Languages } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import {
   Sheet,
   SheetContent,
