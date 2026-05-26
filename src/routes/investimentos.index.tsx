@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { InvestimentoForm } from "@/components/investimentos/InvestimentoForm";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { usePlan } from "@/lib/use-plan";
@@ -91,7 +93,7 @@ import {
   classeAtivo,
 } from "@/lib/investimentos";
 
-export const Route = createFileRoute("/investimentos")({
+export const Route = createFileRoute("/investimentos/")({
   head: () => {
     const t = i18n.getFixedT(i18n.language, "misc");
     return { meta: [{ title: t("investimentos.title") + " — Gasto Inteligente" }] };
@@ -143,6 +145,8 @@ function InvestimentosPage() {
   const { t } = useTranslation("misc");
   const { user } = useAuth();
   const userId = user?.id;
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [rends, setRends] = useState<Rendimento[]>([]);
@@ -157,6 +161,24 @@ function InvestimentosPage() {
   const [movDialog, setMovDialog] = useState<{ open: boolean; mov: Movimentacao | null; ativoId?: string | null }>({ open: false, mov: null });
   const [rendDialog, setRendDialog] = useState<{ open: boolean; rend: Rendimento | null; ativoId?: string | null }>({ open: false, rend: null });
   const [detalheAtivo, setDetalheAtivo] = useState<Ativo | null>(null);
+
+  const openCreate = () => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/novo" });
+    } else {
+      setEditing(null);
+      setOpenAdd(true);
+    }
+  };
+  const openEdit = (a: Ativo) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/$id/editar", params: { id: a.id } });
+    } else {
+      setEditing(a);
+      setOpenAdd(true);
+    }
+  };
+
 
   async function reload() {
     if (!userId) return;
@@ -250,7 +272,7 @@ function InvestimentosPage() {
             <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
               <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
-            <Button size="sm" onClick={() => { setEditing(null); setOpenAdd(true); }}>
+            <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
             </Button>
           </div>
@@ -262,7 +284,6 @@ function InvestimentosPage() {
           </span>
         </div>
       </header>
-
       {/* Cards de topo */}
       <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-2">
         <KpiCard icon={<Wallet className="h-4 w-4" />} label={t("investimentos.kpi.patrimony")} value={formatBRL(totais.patrimonio)} />
@@ -285,8 +306,6 @@ function InvestimentosPage() {
           value={formatBRL(totais.rendimentosAno)}
         />
       </section>
-
-
       {/* Conteúdo principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         {/* Carteira */}
@@ -303,7 +322,7 @@ function InvestimentosPage() {
               title={t("investimentos.wallet.emptyTitle")}
               description={t("investimentos.wallet.emptyDesc")}
               cta={
-                <Button size="sm" onClick={() => setOpenAdd(true)}>
+                <Button size="sm" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.add")}
                 </Button>
               }
@@ -377,7 +396,7 @@ function InvestimentosPage() {
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => { setEditing(a); setOpenAdd(true); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" title={t("investimentos.wallet.edit")} onClick={() => openEdit(a)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
@@ -446,7 +465,6 @@ function InvestimentosPage() {
           )}
         </aside>
       </div>
-
       {/* Evolução patrimonial */}
       <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4 mt-4">
         <h2 className="font-semibold mb-3">{t("investimentos.evol.title")}</h2>
@@ -463,7 +481,6 @@ function InvestimentosPage() {
           </div>
         )}
       </section>
-
       {/* Movimentações + Rendimentos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
@@ -603,13 +620,12 @@ function InvestimentosPage() {
                       </Button>
                     </div>
                   </li>
-                );
+                )
               })}
             </ul>
           )}
         </section>
       </div>
-
       {/* Integração B3 */}
       <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4 mt-4">
         <div className="flex items-start gap-3">
@@ -635,7 +651,6 @@ function InvestimentosPage() {
           </div>
         </div>
       </section>
-
       <AddAtivoDialog
         open={openAdd}
         onOpenChange={setOpenAdd}
@@ -643,7 +658,6 @@ function InvestimentosPage() {
         userId={userId}
         onSaved={() => { setOpenAdd(false); setEditing(null); reload(); }}
       />
-
       <ImportDialog
         open={openImport}
         onOpenChange={setOpenImport}
@@ -651,7 +665,6 @@ function InvestimentosPage() {
         ativos={ativos}
         onImported={reload}
       />
-
       <HistoricoImportacoesDialog
         open={openHistorico}
         onOpenChange={setOpenHistorico}
@@ -659,14 +672,12 @@ function InvestimentosPage() {
         userId={userId}
         onChanged={reload}
       />
-
       <AtualizarValorDialog
         ativo={atualizandoAtivo}
         userId={userId}
         onClose={() => setAtualizandoAtivo(null)}
         onSaved={() => { setAtualizandoAtivo(null); reload(); }}
       />
-
       <AtualizarLoteDialog
         open={openAtualizarLote}
         onOpenChange={setOpenAtualizarLote}
@@ -674,7 +685,6 @@ function InvestimentosPage() {
         userId={userId}
         onSaved={() => { setOpenAtualizarLote(false); reload(); }}
       />
-
       <MovimentacaoDialog
         state={movDialog}
         ativos={ativos}
@@ -682,7 +692,6 @@ function InvestimentosPage() {
         onClose={() => setMovDialog({ open: false, mov: null })}
         onSaved={() => { setMovDialog({ open: false, mov: null }); reload(); }}
       />
-
       <RendimentoDialog
         state={rendDialog}
         ativos={ativos}
@@ -690,13 +699,12 @@ function InvestimentosPage() {
         onClose={() => setRendDialog({ open: false, rend: null })}
         onSaved={() => { setRendDialog({ open: false, rend: null }); reload(); }}
       />
-
       <DetalheAtivoDialog
         ativo={detalheAtivo}
         movimentacoes={movs}
         rendimentos={rends}
         onClose={() => setDetalheAtivo(null)}
-        onEditar={(a) => { setDetalheAtivo(null); setEditing(a); setOpenAdd(true); }}
+        onEditar={(a) => { setDetalheAtivo(null); openEdit(a); }}
         onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
         onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
         onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
@@ -714,7 +722,7 @@ function InvestimentosPage() {
         }}
       />
     </MobileShell>
-  );
+  )
 }
 
 // Helper local para formatar data ISO (yyyy-mm-dd) em pt-BR
@@ -2444,5 +2452,5 @@ function DetalheAtivoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
