@@ -334,104 +334,216 @@ function CartoesPage() {
         </p>
       </header>
 
-      {/* Resumo */}
-      <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <ResumoCard
-          label={t("summary.limitTotal")}
-          valueNum={resumo.limiteTotal}
-          icon={<CreditCard className="h-4 w-4" />}
-          tone="brand"
-        />
-        <ResumoCard
-          label={t("summary.usedMonth")}
-          valueNum={resumo.usado}
-          icon={<Wallet className="h-4 w-4" />}
-          tone="warning"
-        />
-        <ResumoCard
-          label={t("summary.available")}
-          valueNum={resumo.disponivel}
-          icon={<Sparkles className="h-4 w-4" />}
-          tone="success"
-        />
-        <ProximaFaturaCard
-          cartao={resumo.proxima}
-          dias={resumo.proximaDias}
-          data={resumo.proximaData}
-          valor={resumo.proximaValor}
-          temCartoes={cartoes.length > 0}
-        />
-      </section>
-
-      {/* CTA + lista */}
-      <div className="mt-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold tracking-tight">
-            {cartoes.length === 0
-              ? t("list.startHere")
-              : t("list.count", { count: cartoes.length })}
-          </h2>
-          {cartoes.length > 0 && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {t("list.tapHint")}
-            </p>
-          )}
+      {/* ============================================================ */}
+      {/* MOBILE (<lg) — cartão protagonista no topo, KPIs compactos    */}
+      {/* ============================================================ */}
+      {cartoes.length === 0 ? (
+        <div className="mt-5 lg:hidden">
+          <EmptyState onAdd={handleOpenNew} />
         </div>
-        {cartoes.length > 0 && (
-          <div className="flex flex-wrap justify-end gap-2">
+      ) : (
+        <div className="lg:hidden">
+          {/* Carrossel horizontal de cartões */}
+          <section className="-mx-4 mt-5 px-4 animate-rise">
+            <div
+              className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="list"
+            >
+              {cartoes.map((c) => (
+                <div
+                  key={c.id}
+                  role="listitem"
+                  className={cn(
+                    "snap-center shrink-0",
+                    cartoes.length === 1 ? "w-full" : "w-[88%]",
+                  )}
+                >
+                  <CartaoCard
+                    cartao={c}
+                    resumo={resumosPorCartao.get(c.id)}
+                    onOpen={() => setOpenDetail(c)}
+                    onEdit={() => handleEdit(c)}
+                    onImport={() => handleOpenImport(c.id)}
+                    onDelete={() => setConfirmDelete(c)}
+                  />
+                </div>
+              ))}
+            </div>
+            {cartoes.length > 1 && (
+              <p className="mt-1 text-center text-[10px] text-muted-foreground">
+                {t("list.count", { count: cartoes.length })} · {t("list.tapHint")}
+              </p>
+            )}
+          </section>
+
+          {/* KPIs compactos — peso visual reduzido */}
+          <section className="mt-4 grid grid-cols-2 gap-2">
+            <CompactKpi
+              label={t("summary.limitTotal")}
+              value={formatBRL(resumo.limiteTotal)}
+              tone="brand"
+            />
+            <CompactKpi
+              label={t("summary.usedMonth")}
+              value={formatBRL(resumo.usado)}
+              tone="warning"
+            />
+            <CompactKpi
+              label={t("summary.available")}
+              value={formatBRL(resumo.disponivel)}
+              tone="success"
+            />
+            <CompactKpi
+              label={t("summary.nextInvoice")}
+              value={
+                resumo.proxima && resumo.proximaData
+                  ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
+                  : "—"
+              }
+              hint={
+                resumo.proxima && resumo.proximaDias !== null
+                  ? resumo.proximaDias === 0
+                    ? t("summary.dueToday")
+                    : t("summary.dueDays", { count: resumo.proximaDias })
+                  : t("summary.noPending")
+              }
+              tone="default"
+            />
+          </section>
+
+          {/* Ações principais — pills */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
-              size="sm"
               variant="outline"
               onClick={() => handleOpenImport()}
-              className="card-press rounded-full text-sm font-semibold"
+              className="card-press h-11 rounded-full text-sm font-semibold"
             >
               <FileUp className="mr-1 h-4 w-4" />
               {t("list.importInvoice")}
             </Button>
             <Button
-              size="sm"
               onClick={handleOpenNew}
-              className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
+              className="card-press h-11 rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-4 w-4" />
               {t("list.newCard")}
             </Button>
           </div>
-        )}
-      </div>
 
-      {cartoes.length === 0 ? (
-        <EmptyState onAdd={handleOpenNew} />
-      ) : (
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] xl:gap-6">
-          <section
-            className={cn(
-                "grid min-w-0 grid-cols-1 gap-5",
-              cartoes.length > 1 && "xl:grid-cols-2",
-            )}
-          >
-            {cartoes.map((c) => (
-              <CartaoCard
-                key={c.id}
-                cartao={c}
-                resumo={resumosPorCartao.get(c.id)}
-                onOpen={() => setOpenDetail(c)}
-                onEdit={() => handleEdit(c)}
-                onImport={() => handleOpenImport(c.id)}
-                onDelete={() => setConfirmDelete(c)}
-              />
-            ))}
-          </section>
-          <aside className="min-w-0 space-y-4">
+          {/* Blocos complementares empilhados */}
+          <div className="mt-5 space-y-4">
             <ProximosVencimentos items={proximosVencimentos} />
             <UltimasCompras
               gastos={ultimasCompras}
               cartoes={cartoes}
               hasMore={ultimasComprasAll.length > ultimasCompras.length}
             />
-          </aside>
+          </div>
         </div>
       )}
+
+      {/* ============================================================ */}
+      {/* DESKTOP (lg+) — mantém o layout atual                         */}
+      {/* ============================================================ */}
+      <div className="hidden lg:block">
+        {/* Resumo */}
+        <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          <ResumoCard
+            label={t("summary.limitTotal")}
+            valueNum={resumo.limiteTotal}
+            icon={<CreditCard className="h-4 w-4" />}
+            tone="brand"
+          />
+          <ResumoCard
+            label={t("summary.usedMonth")}
+            valueNum={resumo.usado}
+            icon={<Wallet className="h-4 w-4" />}
+            tone="warning"
+          />
+          <ResumoCard
+            label={t("summary.available")}
+            valueNum={resumo.disponivel}
+            icon={<Sparkles className="h-4 w-4" />}
+            tone="success"
+          />
+          <ProximaFaturaCard
+            cartao={resumo.proxima}
+            dias={resumo.proximaDias}
+            data={resumo.proximaData}
+            valor={resumo.proximaValor}
+            temCartoes={cartoes.length > 0}
+          />
+        </section>
+
+        <div className="mt-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold tracking-tight">
+              {cartoes.length === 0
+                ? t("list.startHere")
+                : t("list.count", { count: cartoes.length })}
+            </h2>
+            {cartoes.length > 0 && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {t("list.tapHint")}
+              </p>
+            )}
+          </div>
+          {cartoes.length > 0 && (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleOpenImport()}
+                className="card-press rounded-full text-sm font-semibold"
+              >
+                <FileUp className="mr-1 h-4 w-4" />
+                {t("list.importInvoice")}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleOpenNew}
+                className="card-press rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t("list.newCard")}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {cartoes.length === 0 ? (
+          <EmptyState onAdd={handleOpenNew} />
+        ) : (
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] xl:gap-6">
+            <section
+              className={cn(
+                "grid min-w-0 grid-cols-1 gap-5",
+                cartoes.length > 1 && "xl:grid-cols-2",
+              )}
+            >
+              {cartoes.map((c) => (
+                <CartaoCard
+                  key={c.id}
+                  cartao={c}
+                  resumo={resumosPorCartao.get(c.id)}
+                  onOpen={() => setOpenDetail(c)}
+                  onEdit={() => handleEdit(c)}
+                  onImport={() => handleOpenImport(c.id)}
+                  onDelete={() => setConfirmDelete(c)}
+                />
+              ))}
+            </section>
+            <aside className="min-w-0 space-y-4">
+              <ProximosVencimentos items={proximosVencimentos} />
+              <UltimasCompras
+                gastos={ultimasCompras}
+                cartoes={cartoes}
+                hasMore={ultimasComprasAll.length > ultimasCompras.length}
+              />
+            </aside>
+          </div>
+        )}
+      </div>
 
       <section className="mt-6">
         <CompraInternacionalCard />
@@ -550,6 +662,41 @@ function ResumoCard({
         )
       }
     />
+  );
+}
+
+function CompactKpi({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "default" | "brand" | "warning" | "success";
+}) {
+  const dot =
+    tone === "brand"
+      ? "bg-brand-on-soft"
+      : tone === "warning"
+        ? "bg-warning"
+        : tone === "success"
+          ? "bg-success"
+          : "bg-muted-foreground/40";
+  return (
+    <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+      <div className="flex items-center gap-1.5">
+        <span className={cn("h-1.5 w-1.5 rounded-full", dot)} aria-hidden />
+        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+      </div>
+      <p className="num mt-1 truncate text-base font-bold leading-tight">{value}</p>
+      {hint && (
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
   );
 }
 
