@@ -501,7 +501,7 @@ function ContasAPagarPage() {
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
-          <EmptyState onAdd={() => setCreating(true)} />
+          <EmptyState onAdd={openCreate} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
             {busca
