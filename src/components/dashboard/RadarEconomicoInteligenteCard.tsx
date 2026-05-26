@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Percent, LineChart, Landmark, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Percent,
+  LineChart,
+  Landmark,
+  RefreshCw,
+  AlertCircle,
+  Lightbulb,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -10,23 +17,39 @@ import {
   type BcbRadarResult,
 } from "@/lib/economy/bcb";
 
+interface UserContext {
+  /** Saldo do mês (receitas - despesas). */
+  saldo?: number;
+  /** Receitas do mês. */
+  receitas?: number;
+  /** Despesas do mês. */
+  despesas?: number;
+}
+
 /**
  * Radar Econômico Inteligente — indicadores do Banco Central (SGS).
  *
- * Mostra Selic, CDI e IPCA com explicação curta e interpretação prática.
+ * Mostra Selic, CDI e IPCA com leitura prática contextualizada (usando,
+ * quando disponíveis, dados do mês do usuário — saldo/receitas/despesas).
  * Sem login, sem banco — dados puxados direto da API pública do BCB com
  * cache em localStorage (ver src/lib/economy/bcb.ts).
  */
-export function RadarEconomicoInteligenteCard({ className }: { className?: string }) {
+export function RadarEconomicoInteligenteCard({
+  className,
+  userContext,
+}: {
+  className?: string;
+  userContext?: UserContext;
+}) {
   const [data, setData] = useState<BcbRadarResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
 
-  const carregar = async () => {
+  const carregar = async (force = false) => {
     setLoading(true);
     setErrored(false);
     try {
-      const r = await loadBcbRadar();
+      const r = await loadBcbRadar({ force });
       setData(r);
       if (r.failed) setErrored(true);
     } catch {
@@ -37,7 +60,7 @@ export function RadarEconomicoInteligenteCard({ className }: { className?: strin
   };
 
   useEffect(() => {
-    void carregar();
+    void carregar(false);
   }, []);
 
   const get = (k: BcbIndicatorKey): BcbIndicator | undefined =>
@@ -47,13 +70,13 @@ export function RadarEconomicoInteligenteCard({ className }: { className?: strin
   const cdi = get("CDI");
   const ipca = get("IPCA");
   const stale = data?.partiallyStale ?? false;
+  const leituraPratica = !loading && data?.indicators.length
+    ? gerarLeituraPratica({ selic, cdi, ipca, userContext })
+    : null;
 
   return (
     <section
-      className={cn(
-        "rounded-2xl border bg-card p-4 shadow-sm",
-        className,
-      )}
+      className={cn("rounded-2xl border bg-card p-4 shadow-sm", className)}
       aria-label="Indicadores econômicos do Banco Central"
     >
       <header className="flex items-start justify-between gap-3">
@@ -72,10 +95,11 @@ export function RadarEconomicoInteligenteCard({ className }: { className?: strin
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => void carregar()}
+          onClick={() => void carregar(true)}
           disabled={loading}
-          className="h-7 px-2 text-xs"
-          aria-label="Atualizar indicadores"
+          className="h-7 shrink-0 px-2 text-xs"
+          aria-label="Atualizar indicadores (força nova busca)"
+          title="Forçar atualização ignorando o cache"
         >
           <RefreshCw className={cn("mr-1 h-3 w-3", loading && "animate-spin")} />
           Atualizar
@@ -128,6 +152,13 @@ export function RadarEconomicoInteligenteCard({ className }: { className?: strin
         />
       </div>
 
+      {leituraPratica && (
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs leading-relaxed text-foreground">
+          <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <p>{leituraPratica}</p>
+        </div>
+      )}
+
       <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
         Fonte: Banco Central do Brasil (SGS). Dados públicos atualizados a cada poucas horas.
       </p>
@@ -177,21 +208,87 @@ function IndicadorMini({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Regras de interpretação (puras, sem efeitos colaterais).
+// Valores em % a.a. para Selic/CDI, % no mês para IPCA.
+// ─────────────────────────────────────────────────────────────────────────
+
 function interpretarSelic(v: number): string {
-  if (v >= 12) return "Juros altos: crédito caro, renda fixa rende mais.";
-  if (v >= 8) return "Juros moderados: bom para renda fixa, atenção ao crédito.";
-  return "Juros baixos: crédito mais barato, renda fixa rende menos.";
+  if (v >= 12)
+    return "Selic alta: crédito e parcelamentos mais caros; renda fixa tende a render mais.";
+  if (v >= 8)
+    return "Selic moderada: equilíbrio entre crédito e investimentos conservadores.";
+  return "Selic baixa: crédito tende a ficar mais acessível, mas renda fixa rende menos.";
 }
 
 function interpretarCdi(v: number): string {
-  if (v >= 12) return "CDI alto: ótimo para CDB, LCI e fundos DI.";
-  if (v >= 8) return "CDI moderado: bom retorno em renda fixa pós-fixada.";
-  return "CDI baixo: rendimentos conservadores mais modestos.";
+  if (v >= 12)
+    return "CDI alto: reservas em CDB, LCI e fundos DI tendem a render bem.";
+  if (v >= 8)
+    return "CDI moderado: bom retorno em pós-fixados conservadores.";
+  return "CDI baixo: rendimentos conservadores perdem força.";
 }
 
 function interpretarIpca(v: number): string {
-  if (v >= 0.6) return "Inflação alta no mês: cuidado redobrado com o orçamento.";
-  if (v >= 0.2) return "Inflação moderada: revise gastos sensíveis a preço.";
-  if (v >= 0) return "Inflação baixa no mês: alívio leve no custo de vida.";
-  return "Deflação: preços caíram em média no mês.";
+  if (v >= 0.6)
+    return "IPCA alto no mês: atenção a mercado, combustível, aluguel e mensalidades.";
+  if (v >= 0.2)
+    return "IPCA moderado: acompanhe gastos recorrentes e categorias variáveis.";
+  if (v >= 0) return "IPCA baixo: inflação mais controlada, mas siga acompanhando.";
+  return "Deflação no mês: preços caíram em média.";
+}
+
+/**
+ * Gera uma frase única em linguagem leiga combinando o cenário macro
+ * com dados do mês do usuário (quando disponíveis). Conservadora — só
+ * sugere ação quando há sinais claros.
+ */
+function gerarLeituraPratica(args: {
+  selic?: BcbIndicator;
+  cdi?: BcbIndicator;
+  ipca?: BcbIndicator;
+  userContext?: UserContext;
+}): string {
+  const { selic, cdi, ipca, userContext } = args;
+  const jurosAltos = (selic?.value ?? 0) >= 12 || (cdi?.value ?? 0) >= 12;
+  const jurosModerados =
+    !jurosAltos && ((selic?.value ?? 0) >= 8 || (cdi?.value ?? 0) >= 8);
+  const inflacaoAlta = (ipca?.value ?? 0) >= 0.6;
+  const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.3;
+
+  const saldo = userContext?.saldo;
+  const temSaldoPositivo = typeof saldo === "number" && saldo > 0;
+  const temSaldoNegativo = typeof saldo === "number" && saldo < 0;
+
+  // Combinações priorizadas: situação do usuário + cenário macro.
+  if (temSaldoNegativo && jurosAltos) {
+    return "Com saldo negativo no mês e juros altos, priorize quitar dívidas caras e evite novos parcelamentos longos.";
+  }
+  if (temSaldoNegativo) {
+    return "Saldo negativo no mês: corte gastos não essenciais antes de assumir novas parcelas.";
+  }
+  if (temSaldoPositivo && jurosAltos) {
+    return "Saldo positivo com juros altos: bom momento para reforçar a reserva em renda fixa conservadora.";
+  }
+  if (temSaldoPositivo && inflacaoAlta) {
+    return "Sobra no mês, mas inflação alta: proteja o poder de compra evitando acumular dinheiro parado.";
+  }
+  if (temSaldoPositivo) {
+    return "Saldo positivo: ótimo momento para reforçar reserva de emergência ou metas.";
+  }
+
+  // Sem contexto do usuário — só macro.
+  if (jurosAltos && inflacaoAlta) {
+    return "Juros e inflação altos: cuidado com parcelamentos e acompanhe gastos do dia a dia.";
+  }
+  if (jurosAltos) {
+    return "Juros ainda altos: bom momento para quitar dívidas caras e evitar parcelamentos longos.";
+  }
+  if (inflacaoAlta) {
+    return "Inflação mais alta: acompanhe mercado, contas recorrentes e gastos variáveis.";
+  }
+  if (jurosModerados && inflacaoModerada) {
+    return "Cenário equilibrado: mantenha o orçamento em dia e revise gastos recorrentes.";
+  }
+  return "Cenário estável: bom momento para revisar metas e manter a reserva de emergência.";
 }

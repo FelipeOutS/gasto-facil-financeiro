@@ -482,8 +482,11 @@ function Index() {
 
       {/* Radar Econômico Inteligente — indicadores do Banco Central (Selic, CDI, IPCA) */}
       <section className="mt-4">
-        <RadarEconomicoInteligenteCard />
+        <RadarEconomicoInteligenteCard
+          userContext={{ saldo, receitas: totalEntradas, despesas: total }}
+        />
       </section>
+
 
 
       {/* Saúde financeira + Dicas — par responsivo.
