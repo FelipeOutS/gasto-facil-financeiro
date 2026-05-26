@@ -284,6 +284,20 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
           ))}
         </ul>
       )}
+
+      {economicNote && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-2">
+          <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Cenário
+            </span>
+            <span className="text-[11px] leading-snug text-foreground">
+              {economicNote}
+            </span>
+          </div>
+        </div>
+      )}
     </PremiumCard>
   );
 }
