@@ -47,6 +47,9 @@ import {
   Cloud,
   Landmark,
   TrendingDown,
+  Lightbulb,
+  Smartphone,
+  Lock,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
