@@ -4441,6 +4441,9 @@ function LandingStyles() {
       .gi-landing .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       @media (max-width: 480px) {
         .gi-landing section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+      }
+    `}</style>
+  );
 }
 
 /* ============================== PLANEJAMENTO SECTION ============================== */
