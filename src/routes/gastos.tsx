@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -232,6 +233,14 @@ function GastosPage() {
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
   const { porId: fornecedoresPorId } = useFornecedores();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  // No mobile, editar abre rota dedicada (evita Dialog no Android WebView).
+  // No desktop, abre o EditGastoDialog inline.
+  const openEdit = (g: Gasto) => {
+    if (isMobile) navigate({ to: "/gastos/$id/editar", params: { id: g.id } });
+    else setEditing(g);
+  };
 
   const tPag = (id: string, fallback: string) => t(`pagamento.${id}`, { defaultValue: fallback });
 
@@ -1265,7 +1274,7 @@ function GastosPage() {
                     <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setEditing(g)}
+                        onClick={() => openEdit(g)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
                         aria-label={t("item.edit")}
                       >
@@ -1281,7 +1290,7 @@ function GastosPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditing(g)}>
+                          <DropdownMenuItem onClick={() => openEdit(g)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             {t("item.edit")}
                           </DropdownMenuItem>
