@@ -224,6 +224,21 @@ function InvestimentosPage() {
     }
   };
 
+  const openImportar = () => {
+    if (isMobile) navigate({ to: "/investimentos/importar" });
+    else setOpenImport(true);
+  };
+  const openHistoricoImportacoes = () => {
+    if (isMobile) navigate({ to: "/investimentos/importacoes" });
+    else setOpenHistorico(true);
+  };
+  const openAtualizarLote = () => {
+    if (isMobile) navigate({ to: "/investimentos/atualizar-lote" });
+    else setOpenAtualizarLote(true);
+  };
+
+
+
 
 
   async function reload() {
