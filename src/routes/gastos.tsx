@@ -1097,21 +1097,21 @@ function GastosPage() {
             </span>
           </label>
           {selected.size > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="num text-xs text-muted-foreground">
                 {t("bulk.total", { value: formatBRL(valorSelecionado) })}
               </span>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 rounded-full px-3 text-xs"
+                className="h-10 sm:h-8 rounded-full px-3 text-xs"
                 onClick={clearSelection}
               >
                 {t("bulk.clear")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-xs">
+                  <Button size="sm" variant="outline" className="h-10 sm:h-8 rounded-full px-3 text-xs">
                     <CalendarIcon className="mr-1 h-3.5 w-3.5" />
                     {t("bulk.moveToMonth")}
                   </Button>
@@ -1139,7 +1139,7 @@ function GastosPage() {
               <Button
                 size="sm"
                 variant="destructive"
-                className="h-8 rounded-full px-3 text-xs"
+                className="h-10 sm:h-8 rounded-full px-3 text-xs"
                 onClick={() => setConfirmBulk(true)}
               >
                 <Trash2 className="mr-1 h-3.5 w-3.5" />
@@ -1147,6 +1147,7 @@ function GastosPage() {
               </Button>
             </div>
           )}
+
         </div>
       )}
 
