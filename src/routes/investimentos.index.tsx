@@ -310,7 +310,7 @@ function InvestimentosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setRendDialog({ open: true, rend: null })}
+              onClick={() => openRendimento()}
               disabled={ativos.length === 0}
             >
               <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
