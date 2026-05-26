@@ -158,8 +158,11 @@ export function EconomicMonthImpactCard({
             {impact.description}
           </p>
           {impact.actionLabel && impact.actionHref && (
-            <Link
-              to={impact.actionHref}
+            <button
+              type="button"
+              onClick={() =>
+                void navigate({ to: impact.actionHref as string })
+              }
               className={cn(
                 "mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1",
                 styles.bg,
@@ -169,7 +172,7 @@ export function EconomicMonthImpactCard({
             >
               {impact.actionLabel}
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </button>
           )}
         </div>
       </div>
