@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
