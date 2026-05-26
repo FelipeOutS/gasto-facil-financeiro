@@ -56,6 +56,7 @@ import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
+import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -340,6 +341,11 @@ const PtSplatRoute = PtSplatRouteImport.update({
 const MetasNovaRoute = MetasNovaRouteImport.update({
   id: '/metas/nova',
   path: '/metas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestimentosNovoRoute = InvestimentosNovoRouteImport.update({
+  id: '/investimentos/novo',
+  path: '/investimentos/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
@@ -662,6 +668,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -761,6 +768,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -861,6 +869,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/novo': typeof InvestimentosNovoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -962,6 +971,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/novo'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1061,6 +1071,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/novo'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1160,6 +1171,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores_/relatorio'
+    | '/investimentos/novo'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1260,6 +1272,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+  InvestimentosNovoRoute: typeof InvestimentosNovoRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1629,6 +1642,13 @@ declare module '@tanstack/react-router' {
       path: '/metas/nova'
       fullPath: '/metas/nova'
       preLoaderRoute: typeof MetasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investimentos/novo': {
+      id: '/investimentos/novo'
+      path: '/investimentos/novo'
+      fullPath: '/investimentos/novo'
+      preLoaderRoute: typeof InvestimentosNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fornecedores_/relatorio': {
@@ -2054,6 +2074,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+  InvestimentosNovoRoute: InvestimentosNovoRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
