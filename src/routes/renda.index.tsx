@@ -458,11 +458,30 @@ function RendaPage() {
   }
 
   function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
+    if (isMobile) {
+      void navigate({
+        to: "/renda/nova",
+        search: {
+          tipo: preset.tipo,
+          recorrente: preset.recorrente ? "1" : "0",
+          descricao: preset.descricao,
+        } as never,
+      });
+      return;
+    }
     reset();
     setTipo(preset.tipo);
     setRecorrente(preset.recorrente);
     if (preset.descricao) setDescricao(preset.descricao);
     setOpen(true);
+  }
+
+  function openEdit(r: Receita) {
+    if (isMobile) {
+      void navigate({ to: "/renda/$id/editar", params: { id: r.id } });
+      return;
+    }
+    setEditTarget(r);
   }
 
   async function handleSave() {
