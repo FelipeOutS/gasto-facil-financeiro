@@ -360,7 +360,11 @@ function CartoesPage() {
                   <CartaoCompactCard
                     cartao={c}
                     resumo={resumosPorCartao.get(c.id)}
-                    onOpen={() => setOpenDetail(c)}
+                    onOpen={() =>
+                      isMobile
+                        ? navigate({ to: "/cartoes/$id", params: { id: c.id } })
+                        : setOpenDetail(c)
+                    }
                     onEdit={() => handleEdit(c)}
                     onImport={() => handleOpenImport(c.id)}
                     onDelete={() => setConfirmDelete(c)}
@@ -1274,18 +1278,24 @@ function statusBadgeStyle(status: StatusFatura, t: TFn): { label: string; cls: s
   }
 }
 
-function FaturaSheet({
+export function FaturaSheet({
   cartao,
   gastos: _gastosAll,
   onOpenChange,
   onEdit,
   onImport,
+  inline = false,
+  onBack,
 }: {
   cartao: Cartao | null;
   gastos: Gasto[];
   onOpenChange: (open: boolean) => void;
   onEdit: (c: Cartao) => void;
   onImport: (c: Cartao) => void;
+  /** Quando true, renderiza inline (rota dedicada mobile) sem Sheet/modal. */
+  inline?: boolean;
+  /** Callback do botão Voltar (só usado quando inline). */
+  onBack?: () => void;
 }) {
   const { t } = useTranslation("cartoes");
 
@@ -1314,6 +1324,7 @@ function FaturaSheet({
   }, [cartao?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!cartao) {
+    if (inline) return null;
     return <Sheet open={false} onOpenChange={onOpenChange} />;
   }
 
@@ -1442,50 +1453,63 @@ function FaturaSheet({
     else toast.error(t("toast.batchRemoveError"));
   }
 
-  return (
-    <Sheet open={!!cartao} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto p-0 sm:max-w-[640px]"
-      >
-        {/* Hero — visual do cartão */}
-        <div
-          className="relative overflow-hidden p-6 text-white"
-          style={{ background: theme.background }}
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
-          />
-          <SheetHeader className="relative space-y-2 text-left">
-            <div className="flex items-start justify-between gap-3">
-              <BrandLogo name={cartao.banco} variant="bank" onDark />
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur",
-                  "border-white/30 bg-white/15 text-white",
-                )}
-              >
-                {badge.icon}
-                {badge.label}
-              </span>
-            </div>
-            <SheetTitle className="text-2xl font-bold tracking-tight text-white">
-              {cartao.nome}
-            </SheetTitle>
-            <SheetDescription className="text-white/80">
-              {t("sheet.invoiceOf", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
-              {status === "aberta" ? t("sheet.openSuffix") : ""}.
-            </SheetDescription>
-          </SheetHeader>
+  // Aliases — quando inline, evita usar primitives do Radix Dialog (Title/Desc)
+  // fora de uma Dialog.Root, o que dispararia erro.
+  const HeaderEl: React.ElementType = inline ? "div" : SheetHeader;
+  const TitleEl: React.ElementType = inline ? "h2" : SheetTitle;
+  const DescEl: React.ElementType = inline ? "p" : SheetDescription;
 
-          {/* Navegação de mês */}
-          <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
-            <button
+  const content = (
+    <>
+      {/* Hero — visual do cartão */}
+      <div
+        className="relative overflow-hidden p-6 text-white"
+        style={{ background: theme.background }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
+        />
+        {inline && onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Voltar"
+            className="relative mb-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-white/15 px-3 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/25"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Voltar
+          </button>
+        )}
+        <HeaderEl className={cn("relative flex flex-col gap-2 text-left", inline ? "" : "space-y-2")}>
+          <div className="flex items-start justify-between gap-3">
+            <BrandLogo name={cartao.banco} variant="bank" onDark />
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur",
+                "border-white/30 bg-white/15 text-white",
+              )}
+            >
+              {badge.icon}
+              {badge.label}
+            </span>
+          </div>
+          <TitleEl className="text-2xl font-bold tracking-tight text-white">
+            {cartao.nome}
+          </TitleEl>
+          <DescEl className="text-sm text-white/80">
+            {t("sheet.invoiceOf", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
+            {status === "aberta" ? t("sheet.openSuffix") : ""}.
+          </DescEl>
+        </HeaderEl>
+
+        {/* Navegação de mês */}
+        <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
+          <button
               type="button"
               onClick={() => navMes(-1)}
               className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
@@ -1879,6 +1903,20 @@ function FaturaSheet({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+    </>
+  );
+
+  if (inline) {
+    return <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">{content}</div>;
+  }
+
+  return (
+    <Sheet open={!!cartao} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto p-0 sm:max-w-[640px]"
+      >
+        {content}
       </SheetContent>
     </Sheet>
   );
