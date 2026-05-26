@@ -13,7 +13,13 @@ export const Route = createFileRoute("/investimentos/novo")({
 function NovoInvestimentoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const back = () => navigate({ to: "/investimentos" });
+  const back = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/investimentos" });
+    }
+  };
 
   return (
     <MobileShell wide>
