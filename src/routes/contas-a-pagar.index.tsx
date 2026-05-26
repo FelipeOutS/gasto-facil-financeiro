@@ -431,7 +431,7 @@ function ContasAPagarPage() {
         <Button
           size="lg"
           className="card-press h-14 rounded-2xl bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-          onClick={() => setCreating(true)}
+          onClick={openCreate}
         >
           <Plus className="mr-1 h-5 w-5" />
           {t("cta.new")}
