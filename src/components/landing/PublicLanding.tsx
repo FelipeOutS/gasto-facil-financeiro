@@ -4739,6 +4739,4 @@ function ContasSection() {
     </section>
   );
 }
-    `}</style>
-  );
-}
+
