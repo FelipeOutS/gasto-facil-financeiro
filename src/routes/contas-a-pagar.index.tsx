@@ -515,7 +515,7 @@ function ContasAPagarPage() {
                 key={conta.id}
                 conta={conta}
                 hojeISO={hojeISO}
-                onEdit={() => setEditing(conta)}
+                onEdit={() => openEdit(conta)}
                 onDelete={() => {
                   if (conta.recorrente && conta.recorrenciaId) {
                     setConfirmDeleteRec(conta);
