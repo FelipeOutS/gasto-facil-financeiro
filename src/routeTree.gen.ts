@@ -87,6 +87,7 @@ import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
 import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
 import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as InvestimentosIdRendimentoRouteImport } from './routes/investimentos.$id.rendimento'
 import { Route as InvestimentosIdMovimentacaoRouteImport } from './routes/investimentos.$id.movimentacao'
 import { Route as InvestimentosIdEditarRouteImport } from './routes/investimentos.$id.editar'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
@@ -501,6 +502,12 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestimentosIdRendimentoRoute =
+  InvestimentosIdRendimentoRouteImport.update({
+    id: '/investimentos/$id/rendimento',
+    path: '/investimentos/$id/rendimento',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const InvestimentosIdMovimentacaoRoute =
   InvestimentosIdMovimentacaoRouteImport.update({
     id: '/investimentos/$id/movimentacao',
@@ -711,6 +718,7 @@ export interface FileRoutesByFullPath {
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
+  '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -814,6 +822,7 @@ export interface FileRoutesByTo {
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
+  '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -918,6 +927,7 @@ export interface FileRoutesById {
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/investimentos/$id/editar': typeof InvestimentosIdEditarRoute
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
+  '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
@@ -1023,6 +1033,7 @@ export interface FileRouteTypes {
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
     | '/investimentos/$id/movimentacao'
+    | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1126,6 +1137,7 @@ export interface FileRouteTypes {
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
     | '/investimentos/$id/movimentacao'
+    | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1229,6 +1241,7 @@ export interface FileRouteTypes {
     | '/gastos/$id/editar'
     | '/investimentos/$id/editar'
     | '/investimentos/$id/movimentacao'
+    | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
@@ -1332,6 +1345,7 @@ export interface RootRouteChildren {
   ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   InvestimentosIdEditarRoute: typeof InvestimentosIdEditarRoute
   InvestimentosIdMovimentacaoRoute: typeof InvestimentosIdMovimentacaoRoute
+  InvestimentosIdRendimentoRoute: typeof InvestimentosIdRendimentoRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   MetasIdAdicionarRoute: typeof MetasIdAdicionarRoute
   MetasIdEditarRoute: typeof MetasIdEditarRoute
@@ -1902,6 +1916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/investimentos/$id/rendimento': {
+      id: '/investimentos/$id/rendimento'
+      path: '/investimentos/$id/rendimento'
+      fullPath: '/investimentos/$id/rendimento'
+      preLoaderRoute: typeof InvestimentosIdRendimentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investimentos/$id/movimentacao': {
       id: '/investimentos/$id/movimentacao'
       path: '/investimentos/$id/movimentacao'
@@ -2158,6 +2179,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   InvestimentosIdEditarRoute: InvestimentosIdEditarRoute,
   InvestimentosIdMovimentacaoRoute: InvestimentosIdMovimentacaoRoute,
+  InvestimentosIdRendimentoRoute: InvestimentosIdRendimentoRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   MetasIdAdicionarRoute: MetasIdAdicionarRoute,
   MetasIdEditarRoute: MetasIdEditarRoute,
