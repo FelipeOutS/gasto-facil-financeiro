@@ -641,7 +641,7 @@ function InvestimentosPage() {
                         variant="ghost"
                         className="h-7 w-7"
                         title={t("investimentos.wallet.edit")}
-                        onClick={() => setRendDialog({ open: true, rend: r })}
+                        onClick={() => openEditRendimento(r)}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
