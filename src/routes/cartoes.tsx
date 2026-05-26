@@ -361,12 +361,9 @@ function CartoesPage() {
                 <div
                   key={c.id}
                   role="listitem"
-                  className={cn(
-                    "snap-center shrink-0",
-                    cartoes.length === 1 ? "w-full" : "w-[88%]",
-                  )}
+                  className="snap-center shrink-0 w-[82%] max-w-[340px]"
                 >
-                  <CartaoCard
+                  <CartaoCompactCard
                     cartao={c}
                     resumo={resumosPorCartao.get(c.id)}
                     onOpen={() => setOpenDetail(c)}
@@ -376,8 +373,14 @@ function CartoesPage() {
                   />
                 </div>
               ))}
+              <div
+                role="listitem"
+                className="snap-center shrink-0 w-[82%] max-w-[340px]"
+              >
+                <CartaoAddTile onClick={handleOpenNew} />
+              </div>
             </div>
-            {cartoes.length > 1 && (
+            {cartoes.length > 0 && (
               <p className="mt-1 text-center text-[10px] text-muted-foreground">
                 {t("list.count", { count: cartoes.length })} · {t("list.tapHint")}
               </p>
