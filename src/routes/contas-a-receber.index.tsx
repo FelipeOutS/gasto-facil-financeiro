@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
@@ -75,7 +76,7 @@ import {
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
-export const Route = createFileRoute("/contas-a-receber")({
+export const Route = createFileRoute("/contas-a-receber/")({
   component: ContasAReceberPage,
 });
 
@@ -85,6 +86,8 @@ function ContasAReceberPage() {
   const { t } = useTranslation("contas-a-receber");
   const { user } = useAuth();
   const userId = user?.id;
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [lista, setLista] = useState<ContaReceber[]>([]);
   const [loading, setLoading] = useState(true);
   const [openForm, setOpenForm] = useState(false);
@@ -95,6 +98,24 @@ function ContasAReceberPage() {
   const [filtro, setFiltro] = useState<FilterStatus>("todas");
   const [busca, setBusca] = useState("");
   const { porId: clientesPorId } = useClientes();
+
+  const openCreate = () => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-receber/nova" });
+      return;
+    }
+    setEditing(null);
+    setOpenForm(true);
+  };
+
+  const openEdit = (c: ContaReceber) => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-receber/$id/editar", params: { id: c.id } });
+      return;
+    }
+    setEditing(c);
+    setOpenForm(true);
+  };
 
   async function recarregar() {
     if (!userId) return;
@@ -154,14 +175,7 @@ function ContasAReceberPage() {
             <h1 className="text-lg font-bold tracking-tight">{t("header.title")}</h1>
           </div>
         </div>
-        <Button
-          size="sm"
-          className="rounded-xl"
-          onClick={() => {
-            setEditing(null);
-            setOpenForm(true);
-          }}
-        >
+        <Button size="sm" className="rounded-xl" onClick={openCreate}>
           <Plus className="mr-1 h-4 w-4" />
           {t("header.new")}
         </Button>
@@ -232,10 +246,7 @@ function ContasAReceberPage() {
               lista.length === 0 ? (
                 <Button
                   className="min-h-11 rounded-full font-semibold"
-                  onClick={() => {
-                    setEditing(null);
-                    setOpenForm(true);
-                  }}
+                  onClick={openCreate}
                 >
                   <Plus className="mr-1 h-4 w-4" />
                   {t("empty.addFirst")}
@@ -261,10 +272,7 @@ function ContasAReceberPage() {
                   toast.error(t("unmark.toastError"));
                 }
               }}
-              onEdit={() => {
-                setEditing(c);
-                setOpenForm(true);
-              }}
+              onEdit={() => openEdit(c)}
               onDelete={() => setConfirmDelete(c)}
               onCancel={() => setConfirmCancel(c)}
             />
