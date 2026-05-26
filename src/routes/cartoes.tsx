@@ -1320,6 +1320,7 @@ function FaturaSheet({
   }, [cartao?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!cartao) {
+    if (inline) return null;
     return <Sheet open={false} onOpenChange={onOpenChange} />;
   }
 
