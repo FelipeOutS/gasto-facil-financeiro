@@ -1,7 +1,7 @@
 // Card compacto do Diagnóstico Mensal no Dashboard.
 // Reusa dados que já estão no store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas resume o mês e orienta o usuário.
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ClipboardList,
