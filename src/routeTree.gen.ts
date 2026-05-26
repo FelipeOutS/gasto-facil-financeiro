@@ -53,6 +53,7 @@ import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
@@ -321,6 +322,11 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   path: '/cartoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AssinaturasRoute,
+} as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
   id: '/renda/nova',
   path: '/renda/nova',
@@ -573,7 +579,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
+  '/assinaturas': typeof AssinaturasRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -630,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas/': typeof AssinaturasIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -666,7 +673,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -723,6 +729,7 @@ export interface FileRoutesByTo {
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas': typeof AssinaturasIndexRoute
   '/cartoes': typeof CartoesIndexRoute
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
@@ -760,7 +767,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
-  '/assinaturas': typeof AssinaturasRoute
+  '/assinaturas': typeof AssinaturasRouteWithChildren
   '/cadastro': typeof CadastroRoute
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
@@ -817,6 +824,7 @@ export interface FileRoutesById {
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
+  '/assinaturas/': typeof AssinaturasIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -912,6 +920,7 @@ export interface FileRouteTypes {
     | '/fornecedores/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -948,7 +957,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alertas'
     | '/app'
-    | '/assinaturas'
     | '/cadastro'
     | '/categorias'
     | '/clientes'
@@ -1005,6 +1013,7 @@ export interface FileRouteTypes {
     | '/fornecedores/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas'
     | '/cartoes'
     | '/contas-a-pagar'
     | '/contas-a-receber'
@@ -1098,6 +1107,7 @@ export interface FileRouteTypes {
     | '/fornecedores_/relatorio'
     | '/pt/$'
     | '/renda/nova'
+    | '/assinaturas/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1135,7 +1145,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
   AppRoute: typeof AppRoute
-  AssinaturasRoute: typeof AssinaturasRoute
+  AssinaturasRoute: typeof AssinaturasRouteWithChildren
   CadastroRoute: typeof CadastroRoute
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
@@ -1532,6 +1542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assinaturas/': {
+      id: '/assinaturas/'
+      path: '/'
+      fullPath: '/assinaturas/'
+      preLoaderRoute: typeof AssinaturasIndexRouteImport
+      parentRoute: typeof AssinaturasRoute
+    }
     '/renda/nova': {
       id: '/renda/nova'
       path: '/renda/nova'
@@ -1864,6 +1881,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AssinaturasRouteChildren {
+  AssinaturasIndexRoute: typeof AssinaturasIndexRoute
+}
+
+const AssinaturasRouteChildren: AssinaturasRouteChildren = {
+  AssinaturasIndexRoute: AssinaturasIndexRoute,
+}
+
+const AssinaturasRouteWithChildren = AssinaturasRoute._addFileChildren(
+  AssinaturasRouteChildren,
+)
+
 interface GastosRouteChildren {
   GastosIdEditarRoute: typeof GastosIdEditarRoute
 }
@@ -1881,7 +1910,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
   AppRoute: AppRoute,
-  AssinaturasRoute: AssinaturasRoute,
+  AssinaturasRoute: AssinaturasRouteWithChildren,
   CadastroRoute: CadastroRoute,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
