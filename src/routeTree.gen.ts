@@ -43,7 +43,6 @@ import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CategoriasRouteImport } from './routes/categorias'
-import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AppRouteImport } from './routes/app'
@@ -53,6 +52,7 @@ import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
+import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
@@ -263,11 +263,6 @@ const CategoriasRoute = CategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CartoesRoute = CartoesRouteImport.update({
-  id: '/cartoes',
-  path: '/cartoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -313,6 +308,11 @@ const EnIndexRoute = EnIndexRouteImport.update({
   path: '/en/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesIndexRoute = CartoesIndexRouteImport.update({
+  id: '/cartoes/',
+  path: '/cartoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
   path: '/pt/$',
@@ -344,9 +344,9 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   getParentRoute: () => CartoesRoute,
 } as any)
 const CartoesIdRoute = CartoesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CartoesRoute,
+  id: '/cartoes/$id',
+  path: '/cartoes/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
@@ -527,7 +527,6 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -584,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -612,7 +612,6 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -669,6 +668,7 @@ export interface FileRoutesByTo {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes': typeof CartoesIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -698,7 +698,6 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -755,6 +754,7 @@ export interface FileRoutesById {
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -785,7 +785,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -842,6 +841,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/cartoes/'
     | '/en/'
     | '/pt/'
     | '/api/checkout/create'
@@ -870,7 +870,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -927,6 +926,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/cartoes'
     | '/en'
     | '/pt'
     | '/api/checkout/create'
@@ -955,7 +955,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -1012,6 +1011,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores_/relatorio'
     | '/pt/$'
+    | '/cartoes/'
     | '/en/'
     | '/pt/'
     | '/api/checkout/create'
@@ -1041,7 +1041,6 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
-  CartoesRoute: typeof CartoesRouteWithChildren
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
   ConfirmarRoute: typeof ConfirmarRoute
@@ -1091,11 +1090,13 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  CartoesIdRoute: typeof CartoesIdRouteWithChildren
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
+  CartoesIndexRoute: typeof CartoesIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
@@ -1356,13 +1357,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cartoes': {
-      id: '/cartoes'
-      path: '/cartoes'
-      fullPath: '/cartoes'
-      preLoaderRoute: typeof CartoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cadastro': {
       id: '/cadastro'
       path: '/cadastro'
@@ -1426,6 +1420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes/': {
+      id: '/cartoes/'
+      path: '/cartoes'
+      fullPath: '/cartoes/'
+      preLoaderRoute: typeof CartoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pt/$': {
       id: '/pt/$'
       path: '/pt/$'
@@ -1470,10 +1471,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/$id': {
       id: '/cartoes/$id'
-      path: '/$id'
+      path: '/cartoes/$id'
       fullPath: '/cartoes/$id'
       preLoaderRoute: typeof CartoesIdRouteImport
-      parentRoute: typeof CartoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/app_/perfil': {
       id: '/app_/perfil'
@@ -1714,19 +1715,6 @@ const CartoesIdRouteWithChildren = CartoesIdRoute._addFileChildren(
   CartoesIdRouteChildren,
 )
 
-interface CartoesRouteChildren {
-  CartoesIdRoute: typeof CartoesIdRouteWithChildren
-  CartoesNovoRoute: typeof CartoesNovoRoute
-}
-
-const CartoesRouteChildren: CartoesRouteChildren = {
-  CartoesIdRoute: CartoesIdRouteWithChildren,
-  CartoesNovoRoute: CartoesNovoRoute,
-}
-
-const CartoesRouteWithChildren =
-  CartoesRoute._addFileChildren(CartoesRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1735,7 +1723,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
-  CartoesRoute: CartoesRouteWithChildren,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
   ConfirmarRoute: ConfirmarRoute,
@@ -1785,11 +1772,13 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  CartoesIdRoute: CartoesIdRouteWithChildren,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
+  CartoesIndexRoute: CartoesIndexRoute,
   EnIndexRoute: EnIndexRoute,
   PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
@@ -1815,3 +1804,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
