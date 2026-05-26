@@ -25,9 +25,12 @@ import { useRecorrencias } from "@/lib/recorrencias";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { buildLinhasOrcamento } from "@/lib/orcamento";
 import {
+  buildMacroContext,
   generateMonthlyDiagnosis,
+  type MacroSnapshot,
   type MonthlyDiagnosisStatus,
 } from "@/lib/insights/monthly-diagnosis";
+import { loadBcbRadar } from "@/lib/economy/bcb";
 import { PremiumCard } from "@/components/ui/premium-card";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
