@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // sem Sheet/modal (compatível com Android WebView).
 import { FaturaSheet } from "@/routes/cartoes.index";
 
-export const Route = createFileRoute("/cartoes/$id")({
+export const Route = createFileRoute("/cartoes/$id/")({
   component: CartaoDetalhePage,
 });
 

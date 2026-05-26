@@ -339,9 +339,9 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesNovoRoute = CartoesNovoRouteImport.update({
-  id: '/novo',
-  path: '/novo',
-  getParentRoute: () => CartoesRoute,
+  id: '/cartoes/novo',
+  path: '/cartoes/novo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesIdRoute = CartoesIdRouteImport.update({
   id: '/cartoes/$id',
@@ -1091,6 +1091,7 @@ export interface RootRouteChildren {
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
   CartoesIdRoute: typeof CartoesIdRouteWithChildren
+  CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
@@ -1464,10 +1465,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/novo': {
       id: '/cartoes/novo'
-      path: '/novo'
+      path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
-      parentRoute: typeof CartoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/cartoes/$id': {
       id: '/cartoes/$id'
@@ -1773,6 +1774,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
   CartoesIdRoute: CartoesIdRouteWithChildren,
+  CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
@@ -1804,12 +1806,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
