@@ -51,22 +51,18 @@ import { CompraInternacionalCard } from "@/components/CompraInternacionalCard";
 import { usePlan } from "@/lib/use-plan";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import {
-  addCartao,
   deleteCartao,
   getCartoes,
   getCategoriaById,
   getGastos,
   resumoFaturaCartao,
-  updateCartao,
   useBootstrap,
   useStore,
-  type NovoCartaoInput,
   type NovoGastoInput,
 } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
-import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
-import { formatBRL, parseBRLInput } from "@/lib/format";
+import { formatBRL } from "@/lib/format";
 import { getCardTheme } from "@/lib/card-theme";
 import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
