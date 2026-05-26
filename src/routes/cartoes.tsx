@@ -167,7 +167,7 @@ function CartoesPage() {
   const { t } = useTranslation("cartoes");
   const ready = useBootstrap();
   const cartoes = useStore(() => getCartoes());
-  const { abrir } = Route.useSearch();
+  const { abrir, importar } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   // Preload every bank logo on mount so card swaps are instant — no delay
@@ -191,9 +191,25 @@ function CartoesPage() {
     if (alvo) {
       setOpenDetail(alvo);
       // Limpa o param para não reabrir ao voltar.
-      navigate({ search: { abrir: undefined }, replace: true });
+      navigate({ search: { abrir: undefined, importar: undefined }, replace: true });
     }
   }, [ready, abrir, cartoes, navigate]);
+
+  // Deep-link: ?importar=<cartaoId> abre o diálogo de importação de fatura.
+  // Usado pela tela de detalhe mobile (que navega de volta com este param).
+  useEffect(() => {
+    if (!ready || !importar) return;
+    const alvo = cartoes.find((c) => c.id === importar);
+    if (!alvo) return;
+    if (!can("importar_fatura")) {
+      setUpgradeOpen(true);
+    } else {
+      setImportCartaoId(alvo.id);
+      setOpenImport(true);
+    }
+    navigate({ search: { abrir: undefined, importar: undefined }, replace: true });
+  }, [ready, importar, cartoes, navigate, can]);
+
 
 
   const gastos = useStore(() => getGastos());
