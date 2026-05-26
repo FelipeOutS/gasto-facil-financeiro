@@ -92,7 +92,7 @@ export function BottomNav() {
       style={{ position: "fixed", transform: "translate3d(0,0,0)" }}
       aria-label={t("aria.primary")}
     >
-      <ul className="relative mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
+      <ul className="relative mx-auto flex max-w-md items-stretch justify-around px-1 pt-2 md:max-w-2xl md:gap-2 md:px-6">
         {LEFT_TABS.map(renderTab)}
 
         {/* FAB central — navega direto para a página de novo lançamento

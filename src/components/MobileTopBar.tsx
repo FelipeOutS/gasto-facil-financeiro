@@ -31,7 +31,7 @@ export function MobileTopBar() {
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur safe-top lg:hidden">
-      <div className="mx-auto grid h-14 max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 px-3">
+      <div className="mx-auto grid h-14 max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 px-3 md:h-16 md:max-w-3xl md:gap-4 md:px-6">
         {/* Esquerda — Hambúrguer */}
         <MobileMoreSheet
           trigger={
@@ -51,7 +51,7 @@ export function MobileTopBar() {
           aria-label="Gasto Inteligente"
           className="flex items-center justify-center active:scale-[0.98]"
         >
-          <BrandMark className="h-6 w-auto" />
+          <BrandMark className="h-6 w-auto md:h-7" />
         </Link>
 
         {/* Direita — Sino + Avatar */}
