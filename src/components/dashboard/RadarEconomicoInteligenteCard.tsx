@@ -119,7 +119,7 @@ export function RadarEconomicoInteligenteCard({
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3">
         <IndicadorMini
           loading={loading}
           ind={selic}
