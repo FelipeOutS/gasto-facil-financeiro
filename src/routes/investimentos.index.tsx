@@ -162,6 +162,24 @@ function InvestimentosPage() {
   const [rendDialog, setRendDialog] = useState<{ open: boolean; rend: Rendimento | null; ativoId?: string | null }>({ open: false, rend: null });
   const [detalheAtivo, setDetalheAtivo] = useState<Ativo | null>(null);
 
+  const openCreate = () => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/novo" });
+    } else {
+      setEditing(null);
+      setOpenAdd(true);
+    }
+  };
+  const openEdit = (a: Ativo) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/$id/editar", params: { id: a.id } });
+    } else {
+      setEditing(a);
+      setOpenAdd(true);
+    }
+  };
+
+
   async function reload() {
     if (!userId) return;
     setLoading(true);
