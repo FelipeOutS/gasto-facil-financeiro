@@ -220,6 +220,8 @@ export function PublicLanding() {
         <HowItWorks />
         <ScreensTabs />
         <DashboardShowcase />
+        <PlanejamentoSection />
+        <ContasSection />
         <IntelligenceSection />
         <GastoAISection />
         <FeatureSplit
