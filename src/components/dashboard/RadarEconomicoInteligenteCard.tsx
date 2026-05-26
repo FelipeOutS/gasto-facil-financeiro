@@ -255,7 +255,7 @@ function gerarLeituraPratica(args: {
   const jurosModerados =
     !jurosAltos && ((selic?.value ?? 0) >= 8 || (cdi?.value ?? 0) >= 8);
   const inflacaoAlta = (ipca?.value ?? 0) >= 0.6;
-  const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.3;
+  const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.2;
 
   const saldo = userContext?.saldo;
   const temSaldoPositivo = typeof saldo === "number" && saldo > 0;
