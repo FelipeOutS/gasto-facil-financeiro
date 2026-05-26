@@ -58,6 +58,7 @@ import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
+import mobileGastoInteligente from "@/assets/mobile-gasto-inteligente.png";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
