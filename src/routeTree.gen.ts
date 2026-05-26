@@ -48,6 +48,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as MetasIndexRouteImport } from './routes/metas.index'
+import { Route as InvestimentosIndexRouteImport } from './routes/investimentos.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
@@ -301,6 +302,11 @@ const MetasIndexRoute = MetasIndexRouteImport.update({
   id: '/metas/',
   path: '/metas/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InvestimentosIndexRoute = InvestimentosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => InvestimentosRoute,
 } as any)
 const EnIndexRoute = EnIndexRouteImport.update({
   id: '/en/',
@@ -621,7 +627,7 @@ export interface FileRoutesByFullPath {
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
-  '/investimentos': typeof InvestimentosRoute
+  '/investimentos': typeof InvestimentosRouteWithChildren
   '/landing': typeof LandingRoute
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
@@ -671,6 +677,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
+  '/investimentos/': typeof InvestimentosIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -720,7 +727,6 @@ export interface FileRoutesByTo {
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
-  '/investimentos': typeof InvestimentosRoute
   '/landing': typeof LandingRoute
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
@@ -770,6 +776,7 @@ export interface FileRoutesByTo {
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
   '/en': typeof EnIndexRoute
+  '/investimentos': typeof InvestimentosIndexRoute
   '/metas': typeof MetasIndexRoute
   '/pt': typeof PtIndexRoute
   '/renda': typeof RendaIndexRoute
@@ -820,7 +827,7 @@ export interface FileRoutesById {
   '/gasto-ai': typeof GastoAiRoute
   '/gastos': typeof GastosRouteWithChildren
   '/guardado': typeof GuardadoRoute
-  '/investimentos': typeof InvestimentosRoute
+  '/investimentos': typeof InvestimentosRouteWithChildren
   '/landing': typeof LandingRoute
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
@@ -870,6 +877,7 @@ export interface FileRoutesById {
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
+  '/investimentos/': typeof InvestimentosIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -971,6 +979,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
     | '/en/'
+    | '/investimentos/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1020,7 +1029,6 @@ export interface FileRouteTypes {
     | '/gasto-ai'
     | '/gastos'
     | '/guardado'
-    | '/investimentos'
     | '/landing'
     | '/lgpd'
     | '/login'
@@ -1070,6 +1078,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/en'
+    | '/investimentos'
     | '/metas'
     | '/pt'
     | '/renda'
@@ -1169,6 +1178,7 @@ export interface FileRouteTypes {
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
     | '/en/'
+    | '/investimentos/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1219,7 +1229,7 @@ export interface RootRouteChildren {
   GastoAiRoute: typeof GastoAiRoute
   GastosRoute: typeof GastosRouteWithChildren
   GuardadoRoute: typeof GuardadoRoute
-  InvestimentosRoute: typeof InvestimentosRoute
+  InvestimentosRoute: typeof InvestimentosRouteWithChildren
   LandingRoute: typeof LandingRoute
   LgpdRoute: typeof LgpdRoute
   LoginRoute: typeof LoginRoute
@@ -1574,6 +1584,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/metas/'
       preLoaderRoute: typeof MetasIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/investimentos/': {
+      id: '/investimentos/'
+      path: '/'
+      fullPath: '/investimentos/'
+      preLoaderRoute: typeof InvestimentosIndexRouteImport
+      parentRoute: typeof InvestimentosRoute
     }
     '/en/': {
       id: '/en/'
@@ -1995,6 +2012,18 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface InvestimentosRouteChildren {
+  InvestimentosIndexRoute: typeof InvestimentosIndexRoute
+}
+
+const InvestimentosRouteChildren: InvestimentosRouteChildren = {
+  InvestimentosIndexRoute: InvestimentosIndexRoute,
+}
+
+const InvestimentosRouteWithChildren = InvestimentosRoute._addFileChildren(
+  InvestimentosRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -2013,7 +2042,7 @@ const rootRouteChildren: RootRouteChildren = {
   GastoAiRoute: GastoAiRoute,
   GastosRoute: GastosRouteWithChildren,
   GuardadoRoute: GuardadoRoute,
-  InvestimentosRoute: InvestimentosRoute,
+  InvestimentosRoute: InvestimentosRouteWithChildren,
   LandingRoute: LandingRoute,
   LgpdRoute: LgpdRoute,
   LoginRoute: LoginRoute,
