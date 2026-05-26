@@ -311,18 +311,19 @@ function ContasAPagarPage() {
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
           <button
             onClick={() => changeMonth(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-10 w-10 sm:h-8 sm:w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("header.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => changeMonth(1)}
-            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="grid h-10 w-10 sm:h-8 sm:w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={t("header.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+
         </div>
       </header>
 
