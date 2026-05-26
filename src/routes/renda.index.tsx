@@ -728,15 +728,26 @@ function RendaPage() {
       {/* CTA NOVA ENTRADA + ATALHOS */}
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-          <DialogTrigger asChild>
+          {isMobile ? (
             <Button
               size="lg"
+              onClick={() => navigate({ to: "/renda/nova" })}
               className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-5 w-5" />
               {t("cta.new")}
             </Button>
-          </DialogTrigger>
+          ) : (
+            <DialogTrigger asChild>
+              <Button
+                size="lg"
+                className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
+              >
+                <Plus className="mr-1 h-5 w-5" />
+                {t("cta.new")}
+              </Button>
+            </DialogTrigger>
+          )}
           <div className="flex flex-wrap gap-1.5">
             <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
             <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
