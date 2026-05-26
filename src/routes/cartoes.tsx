@@ -116,6 +116,7 @@ import {
 export const Route = createFileRoute("/cartoes")({
   validateSearch: (search: Record<string, unknown>) => ({
     abrir: typeof search.abrir === "string" ? search.abrir : undefined,
+    importar: typeof search.importar === "string" ? search.importar : undefined,
   }),
   head: () => ({
     meta: [
@@ -128,6 +129,7 @@ export const Route = createFileRoute("/cartoes")({
   }),
   component: CartoesPage,
 });
+
 
 function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
   const ano = hoje.getFullYear();
