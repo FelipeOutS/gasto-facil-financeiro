@@ -488,6 +488,16 @@ function Index() {
         />
       </section>
 
+      {/* Impacto prático do cenário econômico no mês do usuário */}
+      <section className="mt-3">
+        <EconomicMonthImpactCard
+          saldo={saldo}
+          receitas={totalEntradas}
+          despesas={total}
+          contasVencidas={contasResumo.atrasadasCount}
+        />
+      </section>
+
 
 
       {/* Saúde financeira + Dicas — par responsivo.
