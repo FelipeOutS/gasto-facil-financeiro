@@ -181,7 +181,8 @@ function RendaPage() {
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
-  const navigate = useNavigate({ from: "/renda" });
+  const navigate = useNavigate({ from: "/renda/" });
+  const isMobile = useIsMobile();
 
   const today = new Date();
   const [ym, setYm] = useState({
