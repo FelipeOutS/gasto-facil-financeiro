@@ -59,6 +59,7 @@ import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
 import { Route as InvestimentosImportacoesRouteImport } from './routes/investimentos.importacoes'
+import { Route as InvestimentosAtualizarLoteRouteImport } from './routes/investimentos.atualizar-lote'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -365,6 +366,12 @@ const InvestimentosImportacoesRoute =
   InvestimentosImportacoesRouteImport.update({
     id: '/investimentos/importacoes',
     path: '/investimentos/importacoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InvestimentosAtualizarLoteRoute =
+  InvestimentosAtualizarLoteRouteImport.update({
+    id: '/investimentos/atualizar-lote',
+    path: '/investimentos/atualizar-lote',
     getParentRoute: () => rootRouteImport,
   } as any)
 const FornecedoresRelatorioRoute = FornecedoresRelatorioRouteImport.update({
@@ -722,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/atualizar-lote': typeof InvestimentosAtualizarLoteRoute
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
@@ -830,6 +838,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/atualizar-lote': typeof InvestimentosAtualizarLoteRoute
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
@@ -939,6 +948,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
+  '/investimentos/atualizar-lote': typeof InvestimentosAtualizarLoteRoute
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
@@ -1049,6 +1059,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/atualizar-lote'
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
@@ -1157,6 +1168,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
+    | '/investimentos/atualizar-lote'
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
@@ -1265,6 +1277,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores_/relatorio'
+    | '/investimentos/atualizar-lote'
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
@@ -1374,6 +1387,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
+  InvestimentosAtualizarLoteRoute: typeof InvestimentosAtualizarLoteRoute
   InvestimentosImportacoesRoute: typeof InvestimentosImportacoesRoute
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
@@ -1773,6 +1787,13 @@ declare module '@tanstack/react-router' {
       path: '/investimentos/importacoes'
       fullPath: '/investimentos/importacoes'
       preLoaderRoute: typeof InvestimentosImportacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investimentos/atualizar-lote': {
+      id: '/investimentos/atualizar-lote'
+      path: '/investimentos/atualizar-lote'
+      fullPath: '/investimentos/atualizar-lote'
+      preLoaderRoute: typeof InvestimentosAtualizarLoteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fornecedores_/relatorio': {
@@ -2240,6 +2261,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
+  InvestimentosAtualizarLoteRoute: InvestimentosAtualizarLoteRoute,
   InvestimentosImportacoesRoute: InvestimentosImportacoesRoute,
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
