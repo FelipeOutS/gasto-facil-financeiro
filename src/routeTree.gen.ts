@@ -15,7 +15,6 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResumoRouteImport } from './routes/resumo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RendaRouteImport } from './routes/renda'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RadarRouteImport } from './routes/radar'
@@ -50,9 +49,11 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
@@ -76,6 +77,7 @@ import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
+import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
@@ -122,11 +124,6 @@ const ResumoRoute = ResumoRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RendaRoute = RendaRouteImport.update({
-  id: '/renda',
-  path: '/renda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -299,6 +296,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RendaIndexRoute = RendaIndexRouteImport.update({
+  id: '/renda/',
+  path: '/renda/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PtIndexRoute = PtIndexRouteImport.update({
   id: '/pt/',
   path: '/pt/',
@@ -312,6 +314,11 @@ const EnIndexRoute = EnIndexRouteImport.update({
 const CartoesIndexRoute = CartoesIndexRouteImport.update({
   id: '/cartoes/',
   path: '/cartoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RendaNovaRoute = RendaNovaRouteImport.update({
+  id: '/renda/nova',
+  path: '/renda/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PtSplatRoute = PtSplatRouteImport.update({
@@ -427,6 +434,11 @@ const CartoesIdIndexRoute = CartoesIdIndexRouteImport.update({
 const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   id: '/app_/integracoes/',
   path: '/app/integracoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
+  id: '/renda/$id/editar',
+  path: '/renda/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
@@ -560,7 +572,6 @@ export interface FileRoutesByFullPath {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -588,14 +599,17 @@ export interface FileRoutesByFullPath {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
+  '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -646,7 +660,6 @@ export interface FileRoutesByTo {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -674,14 +687,17 @@ export interface FileRoutesByTo {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes': typeof CartoesIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
+  '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -733,7 +749,6 @@ export interface FileRoutesById {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -761,14 +776,17 @@ export interface FileRoutesById {
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
+  '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -821,7 +839,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -849,14 +866,17 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes/'
     | '/en/'
     | '/pt/'
+    | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -907,7 +927,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -935,14 +954,17 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes'
     | '/en'
     | '/pt'
+    | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app/integracoes'
     | '/cartoes/$id'
     | '/api/integrations/mercadopago/$action'
@@ -993,7 +1015,6 @@ export interface FileRouteTypes {
     | '/radar'
     | '/recuperar-senha'
     | '/relatorios'
-    | '/renda'
     | '/reset-password'
     | '/resumo'
     | '/sitemap.xml'
@@ -1021,14 +1042,17 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores_/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes/'
     | '/en/'
     | '/pt/'
+    | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -1080,7 +1104,6 @@ export interface RootRouteChildren {
   RadarRoute: typeof RadarRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
-  RendaRoute: typeof RendaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1108,13 +1131,16 @@ export interface RootRouteChildren {
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
+  RendaNovaRoute: typeof RendaNovaRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   PtIndexRoute: typeof PtIndexRoute
+  RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
@@ -1173,13 +1199,6 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/renda': {
-      id: '/renda'
-      path: '/renda'
-      fullPath: '/renda'
-      preLoaderRoute: typeof RendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -1420,6 +1439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/renda/': {
+      id: '/renda/'
+      path: '/renda'
+      fullPath: '/renda/'
+      preLoaderRoute: typeof RendaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pt/': {
       id: '/pt/'
       path: '/pt'
@@ -1439,6 +1465,13 @@ declare module '@tanstack/react-router' {
       path: '/cartoes'
       fullPath: '/cartoes/'
       preLoaderRoute: typeof CartoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renda/nova': {
+      id: '/renda/nova'
+      path: '/renda/nova'
+      fullPath: '/renda/nova'
+      preLoaderRoute: typeof RendaNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pt/$': {
@@ -1600,6 +1633,13 @@ declare module '@tanstack/react-router' {
       path: '/app/integracoes'
       fullPath: '/app/integracoes/'
       preLoaderRoute: typeof AppIntegracoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renda/$id/editar': {
+      id: '/renda/$id/editar'
+      path: '/renda/$id/editar'
+      fullPath: '/renda/$id/editar'
+      preLoaderRoute: typeof RendaIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -1770,7 +1810,6 @@ const rootRouteChildren: RootRouteChildren = {
   RadarRoute: RadarRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
-  RendaRoute: RendaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -1798,13 +1837,16 @@ const rootRouteChildren: RootRouteChildren = {
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
+  RendaNovaRoute: RendaNovaRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   EnIndexRoute: EnIndexRoute,
   PtIndexRoute: PtIndexRoute,
+  RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,

@@ -102,6 +102,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type RendaSearch = { ano?: number; mes?: number };
 
@@ -155,7 +156,7 @@ const TIPO_COLORS: Record<TipoReceita, string> = {
 
 const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
 
-export const Route = createFileRoute("/renda")({
+export const Route = createFileRoute("/renda/")({
   head: () => ({ meta: [{ title: "Renda — Gasto Inteligente" }] }),
   validateSearch: (search: Record<string, unknown>): RendaSearch => {
     const ano = Number(search.ano);
@@ -181,7 +182,8 @@ function RendaPage() {
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
-  const navigate = useNavigate({ from: "/renda" });
+  const navigate = useNavigate({ from: "/renda/" });
+  const isMobile = useIsMobile();
 
   const today = new Date();
   const [ym, setYm] = useState({
@@ -456,11 +458,30 @@ function RendaPage() {
   }
 
   function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
+    if (isMobile) {
+      void navigate({
+        to: "/renda/nova",
+        search: {
+          tipo: preset.tipo,
+          recorrente: preset.recorrente ? "1" : "0",
+          descricao: preset.descricao,
+        } as never,
+      });
+      return;
+    }
     reset();
     setTipo(preset.tipo);
     setRecorrente(preset.recorrente);
     if (preset.descricao) setDescricao(preset.descricao);
     setOpen(true);
+  }
+
+  function openEdit(r: Receita) {
+    if (isMobile) {
+      void navigate({ to: "/renda/$id/editar", params: { id: r.id } });
+      return;
+    }
+    setEditTarget(r);
   }
 
   async function handleSave() {
@@ -707,15 +728,26 @@ function RendaPage() {
       {/* CTA NOVA ENTRADA + ATALHOS */}
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-          <DialogTrigger asChild>
+          {isMobile ? (
             <Button
               size="lg"
+              onClick={() => navigate({ to: "/renda/nova" })}
               className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
             >
               <Plus className="mr-1 h-5 w-5" />
               {t("cta.new")}
             </Button>
-          </DialogTrigger>
+          ) : (
+            <DialogTrigger asChild>
+              <Button
+                size="lg"
+                className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
+              >
+                <Plus className="mr-1 h-5 w-5" />
+                {t("cta.new")}
+              </Button>
+            </DialogTrigger>
+          )}
           <div className="flex flex-wrap gap-1.5">
             <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
             <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
@@ -1094,7 +1126,7 @@ function RendaPage() {
                   ? t("empty.monthSubtitle")
                   : t("empty.filterSubtitle")
               }
-              onAction={doMes.length === 0 ? () => setOpen(true) : undefined}
+              onAction={doMes.length === 0 ? () => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)) : undefined}
             />
           ) : (
             <ul className="space-y-2">
@@ -1109,7 +1141,7 @@ function RendaPage() {
                   >
                     <ReceitaItem
                       r={r}
-                      onEdit={() => setEditTarget(r)}
+                      onEdit={() => openEdit(r)}
                       onDelete={() => setDeleteTarget(r)}
                       clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                     />
@@ -1135,7 +1167,7 @@ function RendaPage() {
                 <ReceitaItem
                   key={r.id}
                   r={r}
-                  onEdit={() => setEditTarget(r)}
+                  onEdit={() => openEdit(r)}
                   onDelete={() => setDeleteTarget(r)}
                   clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                 />
@@ -1189,7 +1221,7 @@ function RendaPage() {
                               <ReceitaItem
                                 key={r.id}
                                 r={r}
-                                onEdit={() => setEditTarget(r)}
+                                onEdit={() => openEdit(r)}
                                 onDelete={() => setDeleteTarget(r)}
                                 clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                               />
