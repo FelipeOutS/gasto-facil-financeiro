@@ -1274,7 +1274,7 @@ function statusBadgeStyle(status: StatusFatura, t: TFn): { label: string; cls: s
   }
 }
 
-function FaturaSheet({
+export function FaturaSheet({
   cartao,
   gastos: _gastosAll,
   onOpenChange,

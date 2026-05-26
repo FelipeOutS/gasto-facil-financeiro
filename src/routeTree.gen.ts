@@ -59,6 +59,7 @@ import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
+import { Route as CartoesIdRouteImport } from './routes/cartoes.$id'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -341,6 +342,11 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   path: '/novo',
   getParentRoute: () => CartoesRoute,
 } as any)
+const CartoesIdRoute = CartoesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CartoesRoute,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
   path: '/app/perfil',
@@ -565,6 +571,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/cartoes/$id': typeof CartoesIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -648,6 +655,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/cartoes/$id': typeof CartoesIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -732,6 +740,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
+  '/cartoes/$id': typeof CartoesIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -817,6 +826,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
@@ -900,6 +910,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
@@ -983,6 +994,7 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
+    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/email/unsubscribe'
@@ -1444,6 +1456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesNovoRouteImport
       parentRoute: typeof CartoesRoute
     }
+    '/cartoes/$id': {
+      id: '/cartoes/$id'
+      path: '/$id'
+      fullPath: '/cartoes/$id'
+      preLoaderRoute: typeof CartoesIdRouteImport
+      parentRoute: typeof CartoesRoute
+    }
     '/app_/perfil': {
       id: '/app_/perfil'
       path: '/app/perfil'
@@ -1665,10 +1684,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface CartoesRouteChildren {
+  CartoesIdRoute: typeof CartoesIdRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
 }
 
 const CartoesRouteChildren: CartoesRouteChildren = {
+  CartoesIdRoute: CartoesIdRoute,
   CartoesNovoRoute: CartoesNovoRoute,
 }
 
