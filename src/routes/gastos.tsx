@@ -233,6 +233,14 @@ function GastosPage() {
   const gastos = useStore(() => getGastos());
   const categorias = useStore(() => getCategorias());
   const { porId: fornecedoresPorId } = useFornecedores();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  // No mobile, editar abre rota dedicada (evita Dialog no Android WebView).
+  // No desktop, abre o EditGastoDialog inline.
+  const openEdit = (g: Gasto) => {
+    if (isMobile) navigate({ to: "/gastos/$id/editar", params: { id: g.id } });
+    else setEditing(g);
+  };
 
   const tPag = (id: string, fallback: string) => t(`pagamento.${id}`, { defaultValue: fallback });
 
