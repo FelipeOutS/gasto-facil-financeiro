@@ -113,6 +113,8 @@ function ContasAPagarPage() {
   const { t } = useTranslation("contas-a-pagar");
   const ready = useBootstrap();
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useMesReferenciaRef() as unknown as [
