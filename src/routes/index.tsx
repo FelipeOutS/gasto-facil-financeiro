@@ -1679,7 +1679,7 @@ function AlertaPill({
         ? "bg-warning/15 text-warning"
         : "bg-[hsl(var(--brand))]/15 text-[hsl(var(--brand))]";
   return (
-    <div className="rounded-xl border border-border bg-background/40 p-2 text-center">
+    <div className="min-w-0 rounded-xl border border-border bg-background/40 p-2 text-center">
       <span
         className={cn(
           "mx-auto mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full",
@@ -1689,7 +1689,7 @@ function AlertaPill({
         {icon}
       </span>
       <p className="num text-base font-bold leading-none">{count}</p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground break-words">{label}</p>
     </div>
   );
 }
