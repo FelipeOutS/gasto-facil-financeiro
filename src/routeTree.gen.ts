@@ -53,6 +53,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
@@ -314,6 +315,11 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   path: '/cartoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RendaNovaRoute = RendaNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => RendaRoute,
+} as any)
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
   path: '/pt/$',
@@ -560,7 +566,7 @@ export interface FileRoutesByFullPath {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
+  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -588,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
@@ -646,7 +653,7 @@ export interface FileRoutesByTo {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
+  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -674,6 +681,7 @@ export interface FileRoutesByTo {
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes': typeof CartoesIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
@@ -733,7 +741,7 @@ export interface FileRoutesById {
   '/radar': typeof RadarRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
-  '/renda': typeof RendaRoute
+  '/renda': typeof RendaRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/resumo': typeof ResumoRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -761,6 +769,7 @@ export interface FileRoutesById {
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
@@ -849,6 +858,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes/'
     | '/en/'
     | '/pt/'
@@ -935,6 +945,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes'
     | '/en'
     | '/pt'
@@ -1021,6 +1032,7 @@ export interface FileRouteTypes {
     | '/en/$'
     | '/fornecedores_/relatorio'
     | '/pt/$'
+    | '/renda/nova'
     | '/cartoes/'
     | '/en/'
     | '/pt/'
@@ -1080,7 +1092,7 @@ export interface RootRouteChildren {
   RadarRoute: typeof RadarRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
-  RendaRoute: typeof RendaRoute
+  RendaRoute: typeof RendaRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ResumoRoute: typeof ResumoRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1441,6 +1453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/renda/nova': {
+      id: '/renda/nova'
+      path: '/nova'
+      fullPath: '/renda/nova'
+      preLoaderRoute: typeof RendaNovaRouteImport
+      parentRoute: typeof RendaRoute
+    }
     '/pt/$': {
       id: '/pt/$'
       path: '/pt/$'
@@ -1735,6 +1754,16 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface RendaRouteChildren {
+  RendaNovaRoute: typeof RendaNovaRoute
+}
+
+const RendaRouteChildren: RendaRouteChildren = {
+  RendaNovaRoute: RendaNovaRoute,
+}
+
+const RendaRouteWithChildren = RendaRoute._addFileChildren(RendaRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1770,7 +1799,7 @@ const rootRouteChildren: RootRouteChildren = {
   RadarRoute: RadarRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
-  RendaRoute: RendaRoute,
+  RendaRoute: RendaRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ResumoRoute: ResumoRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
