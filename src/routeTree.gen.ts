@@ -82,6 +82,7 @@ import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integraco
 import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
+import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-receber.$id.receber'
 import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-receber.$id.editar'
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
@@ -346,9 +347,9 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberNovaRoute = ContasAReceberNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => ContasAReceberRoute,
+  id: '/contas-a-receber/nova',
+  path: '/contas-a-receber/nova',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAPagarNovaRoute = ContasAPagarNovaRouteImport.update({
   id: '/contas-a-pagar/nova',
@@ -465,10 +466,15 @@ const GastosIdEditarRoute = GastosIdEditarRouteImport.update({
   path: '/$id/editar',
   getParentRoute: () => GastosRoute,
 } as any)
+const ContasAReceberIdReceberRoute = ContasAReceberIdReceberRouteImport.update({
+  id: '/contas-a-receber/$id/receber',
+  path: '/contas-a-receber/$id/receber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContasAReceberIdEditarRoute = ContasAReceberIdEditarRouteImport.update({
-  id: '/$id/editar',
-  path: '/$id/editar',
-  getParentRoute: () => ContasAReceberRoute,
+  id: '/contas-a-receber/$id/editar',
+  path: '/contas-a-receber/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAPagarIdEditarRoute = ContasAPagarIdEditarRouteImport.update({
   id: '/contas-a-pagar/$id/editar',
@@ -635,6 +641,7 @@ export interface FileRoutesByFullPath {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
+  '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
@@ -727,6 +734,7 @@ export interface FileRoutesByTo {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
+  '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
@@ -820,6 +828,7 @@ export interface FileRoutesById {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
+  '/contas-a-receber/$id/receber': typeof ContasAReceberIdReceberRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
@@ -914,6 +923,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
+    | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/renda/$id/editar'
@@ -1006,6 +1016,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
+    | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/renda/$id/editar'
@@ -1098,6 +1109,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
+    | '/contas-a-receber/$id/receber'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
     | '/renda/$id/editar'
@@ -1174,6 +1186,7 @@ export interface RootRouteChildren {
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
+  ContasAReceberNovaRoute: typeof ContasAReceberNovaRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
@@ -1189,6 +1202,8 @@ export interface RootRouteChildren {
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
+  ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
+  ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
@@ -1554,10 +1569,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/nova': {
       id: '/contas-a-receber/nova'
-      path: '/nova'
+      path: '/contas-a-receber/nova'
       fullPath: '/contas-a-receber/nova'
       preLoaderRoute: typeof ContasAReceberNovaRouteImport
-      parentRoute: typeof ContasAReceberRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contas-a-pagar/nova': {
       id: '/contas-a-pagar/nova'
@@ -1720,12 +1735,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GastosIdEditarRouteImport
       parentRoute: typeof GastosRoute
     }
+    '/contas-a-receber/$id/receber': {
+      id: '/contas-a-receber/$id/receber'
+      path: '/contas-a-receber/$id/receber'
+      fullPath: '/contas-a-receber/$id/receber'
+      preLoaderRoute: typeof ContasAReceberIdReceberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contas-a-receber/$id/editar': {
       id: '/contas-a-receber/$id/editar'
-      path: '/$id/editar'
+      path: '/contas-a-receber/$id/editar'
       fullPath: '/contas-a-receber/$id/editar'
       preLoaderRoute: typeof ContasAReceberIdEditarRouteImport
-      parentRoute: typeof ContasAReceberRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contas-a-pagar/$id/editar': {
       id: '/contas-a-pagar/$id/editar'
@@ -1910,6 +1932,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
+  ContasAReceberNovaRoute: ContasAReceberNovaRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
@@ -1925,6 +1948,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
+  ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,
+  ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
