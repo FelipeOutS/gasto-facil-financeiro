@@ -145,6 +145,8 @@ function InvestimentosPage() {
   const { t } = useTranslation("misc");
   const { user } = useAuth();
   const userId = user?.id;
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [rends, setRends] = useState<Rendimento[]>([]);
