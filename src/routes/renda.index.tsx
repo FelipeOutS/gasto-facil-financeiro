@@ -1130,7 +1130,7 @@ function RendaPage() {
                   >
                     <ReceitaItem
                       r={r}
-                      onEdit={() => setEditTarget(r)}
+                      onEdit={() => openEdit(r)}
                       onDelete={() => setDeleteTarget(r)}
                       clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                     />
@@ -1156,7 +1156,7 @@ function RendaPage() {
                 <ReceitaItem
                   key={r.id}
                   r={r}
-                  onEdit={() => setEditTarget(r)}
+                  onEdit={() => openEdit(r)}
                   onDelete={() => setDeleteTarget(r)}
                   clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                 />
@@ -1210,7 +1210,7 @@ function RendaPage() {
                               <ReceitaItem
                                 key={r.id}
                                 r={r}
-                                onEdit={() => setEditTarget(r)}
+                                onEdit={() => openEdit(r)}
                                 onDelete={() => setDeleteTarget(r)}
                                 clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
                               />
