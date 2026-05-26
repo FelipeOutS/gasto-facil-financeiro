@@ -260,6 +260,16 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
           O Diagnóstico fica com papel próprio: título orientativo + resumo
           em prosa + próximas ações. */}
 
+      {macroContexto && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
+          <Landmark className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <span className="mr-1 font-medium text-foreground">Cenário econômico:</span>
+            <span>{macroContexto}</span>
+          </div>
+        </div>
+      )}
+
       {diag.nextActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {diag.nextActions.map((a) => (
