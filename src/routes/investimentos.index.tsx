@@ -197,6 +197,32 @@ function InvestimentosPage() {
       setMovDialog({ open: true, mov: m });
     }
   };
+  const openRendimento = (ativoId?: string | null) => {
+    if (isMobile) {
+      const id = ativoId ?? ativos[0]?.id;
+      if (!id) {
+        toast.error("Cadastre um investimento primeiro.");
+        return;
+      }
+      navigate({ to: "/investimentos/$id/rendimento", params: { id } });
+    } else {
+      setRendDialog({ open: true, rend: null, ativoId: ativoId ?? null });
+    }
+  };
+  const openEditRendimento = (r: Rendimento) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/rendimento/$rendId/editar", params: { rendId: r.id } });
+    } else {
+      setRendDialog({ open: true, rend: r });
+    }
+  };
+  const openAtualizarValor = (a: Ativo) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/$id/atualizar", params: { id: a.id } });
+    } else {
+      setAtualizandoAtivo(a);
+    }
+  };
 
 
 
@@ -284,7 +310,7 @@ function InvestimentosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setRendDialog({ open: true, rend: null })}
+              onClick={() => openRendimento()}
               disabled={ativos.length === 0}
             >
               <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
@@ -412,7 +438,7 @@ function InvestimentosPage() {
                         variant="ghost"
                         className="h-8 w-8 text-brand"
                         title={t("investimentos.wallet.refresh")}
-                        onClick={() => setAtualizandoAtivo(a)}
+                        onClick={() => openAtualizarValor(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
@@ -585,7 +611,7 @@ function InvestimentosPage() {
               size="sm"
               variant="ghost"
               className="h-7 text-xs"
-              onClick={() => setRendDialog({ open: true, rend: null })}
+              onClick={() => openRendimento()}
               disabled={ativos.length === 0}
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> {t("investimentos.actions.newM")}
@@ -615,7 +641,7 @@ function InvestimentosPage() {
                         variant="ghost"
                         className="h-7 w-7"
                         title={t("investimentos.wallet.edit")}
-                        onClick={() => setRendDialog({ open: true, rend: r })}
+                        onClick={() => openEditRendimento(r)}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
