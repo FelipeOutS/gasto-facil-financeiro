@@ -59,9 +59,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
 import mobileGastoInteligente from "@/assets/mobile-gasto-inteligente.png";
-import landingDesktopMockup from "@/assets/landing-desktop-mockup.png";
-import landingTabletMockup from "@/assets/landing-tablet-mockup.png";
-import landingMobileMockup from "@/assets/landing-mobile-mockup.png";
+import landingDevicesMockup from "@/assets/landing-devices-mockup.png";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -618,7 +616,7 @@ function MultiDeviceShowcase() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-12 lg:max-w-4xl pb-10 sm:pb-16 md:pb-20">
+        <div className="relative mx-auto mt-10 max-w-3xl sm:mt-12 lg:max-w-5xl">
           <div
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[72%] z-0 h-28 w-[78%] -translate-x-1/2 rounded-full opacity-80 blur-3xl md:top-[76%] md:w-[88%]"
@@ -627,28 +625,11 @@ function MultiDeviceShowcase() {
                 "radial-gradient(ellipse at center, rgba(15,23,42,0.16) 0%, rgba(15,23,42,0.08) 38%, rgba(15,23,42,0.00) 74%)",
             }}
           />
-          {/* Desktop / notebook */}
           <img
-            src={landingDesktopMockup}
+            src={landingDevicesMockup}
             alt={t("multiDevice.title")}
             draggable={false}
-            className="relative z-0 mx-auto w-full max-w-3xl select-none object-contain drop-shadow-[0_40px_60px_rgba(15,23,42,0.18)]"
-          />
-
-          {/* Tablet — sobreposto à esquerda */}
-          <img
-            src={landingTabletMockup}
-            alt="Gasto Inteligente no tablet"
-            draggable={false}
-            className="absolute -bottom-2 left-0 z-10 w-[34%] max-w-[260px] select-none object-contain drop-shadow-[0_30px_45px_rgba(15,23,42,0.25)] sm:-bottom-4 md:-bottom-8 lg:-bottom-10"
-          />
-
-          {/* Celular — sobreposto à direita */}
-          <img
-            src={landingMobileMockup}
-            alt="Gasto Inteligente no celular"
-            draggable={false}
-            className="absolute -bottom-1 right-0 z-20 w-[22%] max-w-[180px] select-none object-contain drop-shadow-[0_25px_40px_rgba(15,23,42,0.28)] sm:-bottom-2 md:-bottom-6 lg:-bottom-8"
+            className="relative z-10 mx-auto w-full select-none object-contain"
           />
         </div>
       </div>
