@@ -77,6 +77,7 @@ import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
+import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as GastosIdEditarRouteImport } from './routes/gastos.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
@@ -435,6 +436,11 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   path: '/app/integracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => RendaRoute,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -603,6 +609,7 @@ export interface FileRoutesByFullPath {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -690,6 +697,7 @@ export interface FileRoutesByTo {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -778,6 +786,7 @@ export interface FileRoutesById {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/gastos/$id/editar': typeof GastosIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -867,6 +876,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -954,6 +964,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app/integracoes'
     | '/cartoes/$id'
     | '/api/integrations/mercadopago/$action'
@@ -1041,6 +1052,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/gastos/$id/editar'
     | '/lovable/email/suppression'
+    | '/renda/$id/editar'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -1621,6 +1633,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/renda/$id/editar': {
+      id: '/renda/$id/editar'
+      path: '/$id/editar'
+      fullPath: '/renda/$id/editar'
+      preLoaderRoute: typeof RendaIdEditarRouteImport
+      parentRoute: typeof RendaRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -1756,10 +1775,12 @@ const GastosRouteWithChildren =
 
 interface RendaRouteChildren {
   RendaNovaRoute: typeof RendaNovaRoute
+  RendaIdEditarRoute: typeof RendaIdEditarRoute
 }
 
 const RendaRouteChildren: RendaRouteChildren = {
   RendaNovaRoute: RendaNovaRoute,
+  RendaIdEditarRoute: RendaIdEditarRoute,
 }
 
 const RendaRouteWithChildren = RendaRoute._addFileChildren(RendaRouteChildren)
