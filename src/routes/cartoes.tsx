@@ -286,7 +286,12 @@ function CartoesPage() {
   }, [gastos]);
   const ultimasCompras = useMemo(() => ultimasComprasAll.slice(0, 4), [ultimasComprasAll]);
 
+  const isMobile = useIsMobile();
   function handleOpenNew() {
+    if (isMobile) {
+      navigate({ to: "/cartoes/novo" });
+      return;
+    }
     setEditing(null);
     setOpenForm(true);
   }
