@@ -15,8 +15,11 @@ function getInitials(name?: string | null, email?: string | null) {
 }
 
 /**
- * Header mobile estilo app financeiro:
- *   [☰]  [avatar] olá, Nome              [logo]  [🔔]
+ * Header mobile estilo app financeiro premium:
+ *   [☰]               [LOGO]               [🔔] [avatar]
+ *
+ * Layout limpo, sem textos longos no topo, com a marca em destaque
+ * centralizada — visual de aplicativo real (não dashboard web).
  * Visível apenas em <lg via `lg:hidden`.
  */
 export function MobileTopBar() {
@@ -24,37 +27,53 @@ export function MobileTopBar() {
   const { user, profile } = useAuth();
   const { unreadCount } = useAlerts();
 
-  const displayName =
-    profile?.nome?.trim() ||
-    profile?.responsavel_nome?.trim() ||
-    (user?.email ? user.email.split("@")[0] : "") ||
-    t("header.fallbackUser");
-  const firstName = displayName.split(/\s+/)[0] || displayName;
   const initials = getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email);
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur safe-top lg:hidden">
-      <div className="mx-auto flex h-14 max-w-md items-center gap-2 px-3">
-        {/* Hambúrguer */}
+      <div className="mx-auto grid h-14 max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 px-3">
+        {/* Esquerda — Hambúrguer */}
         <MobileMoreSheet
           trigger={
             <button
               type="button"
               aria-label={t("aria.openMore")}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-foreground active:scale-95"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-foreground transition active:scale-95 hover:bg-muted/60"
             >
               <Menu className="h-5 w-5" />
             </button>
           }
         />
 
-        {/* Avatar + saudação */}
+        {/* Centro — Logo da marca */}
         <Link
-          to="/app/perfil"
-          aria-label={t("aria.openProfile")}
-          className="flex min-w-0 flex-1 items-center gap-2 active:scale-[0.98]"
+          to="/"
+          aria-label="Gasto Inteligente"
+          className="flex items-center justify-center active:scale-[0.98]"
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-[11px] font-bold text-foreground">
+          <BrandMark className="h-6 w-auto" />
+        </Link>
+
+        {/* Direita — Sino + Avatar */}
+        <div className="flex items-center gap-1">
+          <Link
+            to="/alertas"
+            aria-label={t("aria.openAlerts")}
+            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground transition active:scale-95 hover:bg-muted/60 hover:text-foreground"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute right-1 top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground ring-2 ring-background">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            to="/app/perfil"
+            aria-label={t("aria.openProfile")}
+            className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-[11px] font-bold text-foreground transition active:scale-95"
+          >
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -65,35 +84,8 @@ export function MobileTopBar() {
             ) : (
               <span>{initials}</span>
             )}
-          </span>
-          <span className="min-w-0 leading-tight">
-            <span className="block text-[10px] font-medium text-muted-foreground">olá,</span>
-            <span className="block truncate text-sm font-bold tracking-tight">{firstName}</span>
-          </span>
-        </Link>
-
-        {/* Logo discreto */}
-        <Link
-          to="/"
-          aria-label="Gasto Inteligente"
-          className="hidden shrink-0 items-center opacity-60 xs:flex"
-        >
-          <BrandMark className="h-5" />
-        </Link>
-
-        {/* Sino */}
-        <Link
-          to="/alertas"
-          aria-label={t("aria.openAlerts")}
-          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground active:scale-95"
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground ring-2 ring-background">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </Link>
+          </Link>
+        </div>
       </div>
     </div>
   );
