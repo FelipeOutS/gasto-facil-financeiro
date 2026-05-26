@@ -197,6 +197,32 @@ function InvestimentosPage() {
       setMovDialog({ open: true, mov: m });
     }
   };
+  const openRendimento = (ativoId?: string | null) => {
+    if (isMobile) {
+      const id = ativoId ?? ativos[0]?.id;
+      if (!id) {
+        toast.error("Cadastre um investimento primeiro.");
+        return;
+      }
+      navigate({ to: "/investimentos/$id/rendimento", params: { id } });
+    } else {
+      setRendDialog({ open: true, rend: null, ativoId: ativoId ?? null });
+    }
+  };
+  const openEditRendimento = (r: Rendimento) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/rendimento/$rendId/editar", params: { rendId: r.id } });
+    } else {
+      setRendDialog({ open: true, rend: r });
+    }
+  };
+  const openAtualizarValor = (a: Ativo) => {
+    if (isMobile) {
+      navigate({ to: "/investimentos/$id/atualizar", params: { id: a.id } });
+    } else {
+      setAtualizandoAtivo(a);
+    }
+  };
 
 
 

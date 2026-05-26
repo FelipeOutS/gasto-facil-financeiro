@@ -330,9 +330,9 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AssinaturasRoute,
+  id: '/assinaturas/',
+  path: '/assinaturas/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
   id: '/renda/nova',
@@ -370,9 +370,9 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberNovaRoute = ContasAReceberNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => ContasAReceberRoute,
+  id: '/contas-a-receber/nova',
+  path: '/contas-a-receber/nova',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAPagarNovaRoute = ContasAPagarNovaRouteImport.update({
   id: '/contas-a-pagar/nova',
@@ -390,9 +390,9 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => AssinaturasRoute,
+  id: '/assinaturas/nova',
+  path: '/assinaturas/nova',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
@@ -538,9 +538,9 @@ const ContasAReceberIdReceberRoute = ContasAReceberIdReceberRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAReceberIdEditarRoute = ContasAReceberIdEditarRouteImport.update({
-  id: '/$id/editar',
-  path: '/$id/editar',
-  getParentRoute: () => ContasAReceberRoute,
+  id: '/contas-a-receber/$id/editar',
+  path: '/contas-a-receber/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContasAPagarIdEditarRoute = ContasAPagarIdEditarRouteImport.update({
   id: '/contas-a-pagar/$id/editar',
@@ -553,9 +553,9 @@ const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
-  id: '/$id/editar',
-  path: '/$id/editar',
-  getParentRoute: () => AssinaturasRoute,
+  id: '/assinaturas/$id/editar',
+  path: '/assinaturas/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -1341,9 +1341,11 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
+  ContasAReceberNovaRoute: typeof ContasAReceberNovaRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
@@ -1351,6 +1353,7 @@ export interface RootRouteChildren {
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
+  AssinaturasIndexRoute: typeof AssinaturasIndexRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
@@ -1361,8 +1364,10 @@ export interface RootRouteChildren {
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
+  ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
   ContasAReceberIdReceberRoute: typeof ContasAReceberIdReceberRoute
   InvestimentosIdAtualizarRoute: typeof InvestimentosIdAtualizarRoute
   InvestimentosIdEditarRoute: typeof InvestimentosIdEditarRoute
@@ -1696,10 +1701,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/': {
       id: '/assinaturas/'
-      path: '/'
+      path: '/assinaturas'
       fullPath: '/assinaturas/'
       preLoaderRoute: typeof AssinaturasIndexRouteImport
-      parentRoute: typeof AssinaturasRoute
+      parentRoute: typeof rootRouteImport
     }
     '/renda/nova': {
       id: '/renda/nova'
@@ -1752,10 +1757,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/nova': {
       id: '/contas-a-receber/nova'
-      path: '/nova'
+      path: '/contas-a-receber/nova'
       fullPath: '/contas-a-receber/nova'
       preLoaderRoute: typeof ContasAReceberNovaRouteImport
-      parentRoute: typeof ContasAReceberRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contas-a-pagar/nova': {
       id: '/contas-a-pagar/nova'
@@ -1780,10 +1785,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/nova': {
       id: '/assinaturas/nova'
-      path: '/nova'
+      path: '/assinaturas/nova'
       fullPath: '/assinaturas/nova'
       preLoaderRoute: typeof AssinaturasNovaRouteImport
-      parentRoute: typeof AssinaturasRoute
+      parentRoute: typeof rootRouteImport
     }
     '/app_/perfil': {
       id: '/app_/perfil'
@@ -1983,10 +1988,10 @@ declare module '@tanstack/react-router' {
     }
     '/contas-a-receber/$id/editar': {
       id: '/contas-a-receber/$id/editar'
-      path: '/$id/editar'
+      path: '/contas-a-receber/$id/editar'
       fullPath: '/contas-a-receber/$id/editar'
       preLoaderRoute: typeof ContasAReceberIdEditarRouteImport
-      parentRoute: typeof ContasAReceberRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contas-a-pagar/$id/editar': {
       id: '/contas-a-pagar/$id/editar'
@@ -2004,10 +2009,10 @@ declare module '@tanstack/react-router' {
     }
     '/assinaturas/$id/editar': {
       id: '/assinaturas/$id/editar'
-      path: '/$id/editar'
+      path: '/assinaturas/$id/editar'
       fullPath: '/assinaturas/$id/editar'
       preLoaderRoute: typeof AssinaturasIdEditarRouteImport
-      parentRoute: typeof AssinaturasRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -2186,9 +2191,11 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AssinaturasNovaRoute: AssinaturasNovaRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
+  ContasAReceberNovaRoute: ContasAReceberNovaRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
@@ -2196,6 +2203,7 @@ const rootRouteChildren: RootRouteChildren = {
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
+  AssinaturasIndexRoute: AssinaturasIndexRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
@@ -2206,8 +2214,10 @@ const rootRouteChildren: RootRouteChildren = {
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
+  ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,
   ContasAReceberIdReceberRoute: ContasAReceberIdReceberRoute,
   InvestimentosIdAtualizarRoute: InvestimentosIdAtualizarRoute,
   InvestimentosIdEditarRoute: InvestimentosIdEditarRoute,
