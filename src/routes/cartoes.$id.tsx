@@ -50,7 +50,7 @@ function CartaoDetalhePage() {
             gastos={gastos}
             inline
             onBack={back}
-            onOpenChange={(o) => {
+            onOpenChange={(o: boolean) => {
               if (!o) back();
             }}
             onEdit={() => navigate({ to: "/cartoes" })}
