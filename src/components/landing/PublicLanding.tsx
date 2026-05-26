@@ -4327,8 +4327,7 @@ function AppExperienceSection() {
 
         <div className="mt-12 flex justify-center">
           <LandingAnchorLink
-            href="#planos"
-            sectionId="planos"
+            section="planos"
             className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             {t("appExperience.cta")}
