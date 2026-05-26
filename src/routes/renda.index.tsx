@@ -1126,7 +1126,7 @@ function RendaPage() {
                   ? t("empty.monthSubtitle")
                   : t("empty.filterSubtitle")
               }
-              onAction={doMes.length === 0 ? () => setOpen(true) : undefined}
+              onAction={doMes.length === 0 ? () => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)) : undefined}
             />
           ) : (
             <ul className="space-y-2">
