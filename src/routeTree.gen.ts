@@ -36,7 +36,6 @@ import { Route as FornecedoresRouteImport } from './routes/fornecedores'
 import { Route as EmpresaRouteImport } from './routes/empresa'
 import { Route as ContasConectadasRouteImport } from './routes/contas-conectadas'
 import { Route as ContasAReceberRouteImport } from './routes/contas-a-receber'
-import { Route as ContasAPagarRouteImport } from './routes/contas-a-pagar'
 import { Route as ContadorRouteImport } from './routes/contador'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
@@ -52,6 +51,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
+import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
@@ -231,11 +231,6 @@ const ContasAReceberRoute = ContasAReceberRouteImport.update({
   path: '/contas-a-receber',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContasAPagarRoute = ContasAPagarRouteImport.update({
-  id: '/contas-a-pagar',
-  path: '/contas-a-pagar',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ContadorRoute = ContadorRouteImport.update({
   id: '/contador',
   path: '/contador',
@@ -311,15 +306,20 @@ const EnIndexRoute = EnIndexRouteImport.update({
   path: '/en/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContasAPagarIndexRoute = ContasAPagarIndexRouteImport.update({
+  id: '/contas-a-pagar/',
+  path: '/contas-a-pagar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartoesIndexRoute = CartoesIndexRouteImport.update({
   id: '/cartoes/',
   path: '/cartoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RendaNovaRoute = RendaNovaRouteImport.update({
-  id: '/renda/nova',
-  path: '/renda/nova',
-  getParentRoute: () => rootRouteImport,
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => RendaRoute,
 } as any)
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
@@ -437,9 +437,9 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
-  id: '/renda/$id/editar',
-  path: '/renda/$id/editar',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/editar',
+  path: '/$id/editar',
+  getParentRoute: () => RendaRoute,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
@@ -550,7 +550,6 @@ export interface FileRoutesByFullPath {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contador': typeof ContadorRoute
-  '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
@@ -601,6 +600,7 @@ export interface FileRoutesByFullPath {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
+  '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -638,7 +638,6 @@ export interface FileRoutesByTo {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contador': typeof ContadorRoute
-  '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
@@ -689,6 +688,7 @@ export interface FileRoutesByTo {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/cartoes': typeof CartoesIndexRoute
+  '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
   '/renda': typeof RendaIndexRoute
@@ -727,7 +727,6 @@ export interface FileRoutesById {
   '/confirmar': typeof ConfirmarRoute
   '/conta': typeof ContaRoute
   '/contador': typeof ContadorRoute
-  '/contas-a-pagar': typeof ContasAPagarRoute
   '/contas-a-receber': typeof ContasAReceberRoute
   '/contas-conectadas': typeof ContasConectadasRoute
   '/empresa': typeof EmpresaRoute
@@ -778,6 +777,7 @@ export interface FileRoutesById {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/cartoes/': typeof CartoesIndexRoute
+  '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -817,7 +817,6 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contador'
-    | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
@@ -868,6 +867,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/cartoes/'
+    | '/contas-a-pagar/'
     | '/en/'
     | '/pt/'
     | '/renda/'
@@ -905,7 +905,6 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contador'
-    | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
@@ -956,6 +955,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/cartoes'
+    | '/contas-a-pagar'
     | '/en'
     | '/pt'
     | '/renda'
@@ -993,7 +993,6 @@ export interface FileRouteTypes {
     | '/confirmar'
     | '/conta'
     | '/contador'
-    | '/contas-a-pagar'
     | '/contas-a-receber'
     | '/contas-conectadas'
     | '/empresa'
@@ -1044,6 +1043,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/cartoes/'
+    | '/contas-a-pagar/'
     | '/en/'
     | '/pt/'
     | '/renda/'
@@ -1082,7 +1082,6 @@ export interface RootRouteChildren {
   ConfirmarRoute: typeof ConfirmarRoute
   ContaRoute: typeof ContaRoute
   ContadorRoute: typeof ContadorRoute
-  ContasAPagarRoute: typeof ContasAPagarRoute
   ContasAReceberRoute: typeof ContasAReceberRoute
   ContasConectadasRoute: typeof ContasConectadasRoute
   EmpresaRoute: typeof EmpresaRoute
@@ -1131,8 +1130,8 @@ export interface RootRouteChildren {
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
-  RendaNovaRoute: typeof RendaNovaRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
+  ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   RendaIndexRoute: typeof RendaIndexRoute
@@ -1140,7 +1139,6 @@ export interface RootRouteChildren {
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
-  RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
@@ -1348,13 +1346,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContasAReceberRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contas-a-pagar': {
-      id: '/contas-a-pagar'
-      path: '/contas-a-pagar'
-      fullPath: '/contas-a-pagar'
-      preLoaderRoute: typeof ContasAPagarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/contador': {
       id: '/contador'
       path: '/contador'
@@ -1460,6 +1451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contas-a-pagar/': {
+      id: '/contas-a-pagar/'
+      path: '/contas-a-pagar'
+      fullPath: '/contas-a-pagar/'
+      preLoaderRoute: typeof ContasAPagarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cartoes/': {
       id: '/cartoes/'
       path: '/cartoes'
@@ -1469,10 +1467,10 @@ declare module '@tanstack/react-router' {
     }
     '/renda/nova': {
       id: '/renda/nova'
-      path: '/renda/nova'
+      path: '/nova'
       fullPath: '/renda/nova'
       preLoaderRoute: typeof RendaNovaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof RendaRoute
     }
     '/pt/$': {
       id: '/pt/$'
@@ -1637,10 +1635,10 @@ declare module '@tanstack/react-router' {
     }
     '/renda/$id/editar': {
       id: '/renda/$id/editar'
-      path: '/renda/$id/editar'
+      path: '/$id/editar'
       fullPath: '/renda/$id/editar'
       preLoaderRoute: typeof RendaIdEditarRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof RendaRoute
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -1788,7 +1786,6 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmarRoute: ConfirmarRoute,
   ContaRoute: ContaRoute,
   ContadorRoute: ContadorRoute,
-  ContasAPagarRoute: ContasAPagarRoute,
   ContasAReceberRoute: ContasAReceberRoute,
   ContasConectadasRoute: ContasConectadasRoute,
   EmpresaRoute: EmpresaRoute,
@@ -1837,8 +1834,8 @@ const rootRouteChildren: RootRouteChildren = {
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
-  RendaNovaRoute: RendaNovaRoute,
   CartoesIndexRoute: CartoesIndexRoute,
+  ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   EnIndexRoute: EnIndexRoute,
   PtIndexRoute: PtIndexRoute,
   RendaIndexRoute: RendaIndexRoute,
@@ -1846,7 +1843,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
-  RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,

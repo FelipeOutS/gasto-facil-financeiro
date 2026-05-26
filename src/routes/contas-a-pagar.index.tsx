@@ -1,5 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ContaPagarForm } from "@/components/contas/ContaPagarForm";
 import {
   ArrowLeft,
   Plus,
@@ -90,7 +92,7 @@ import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/contas-a-pagar")({
+export const Route = createFileRoute("/contas-a-pagar/")({
   head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),
   component: ContasAPagarPage,
 });
