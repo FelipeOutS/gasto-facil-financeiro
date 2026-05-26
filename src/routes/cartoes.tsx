@@ -360,7 +360,11 @@ function CartoesPage() {
                   <CartaoCompactCard
                     cartao={c}
                     resumo={resumosPorCartao.get(c.id)}
-                    onOpen={() => setOpenDetail(c)}
+                    onOpen={() =>
+                      isMobile
+                        ? navigate({ to: "/cartoes/$id", params: { id: c.id } })
+                        : setOpenDetail(c)
+                    }
                     onEdit={() => handleEdit(c)}
                     onImport={() => handleOpenImport(c.id)}
                     onDelete={() => setConfirmDelete(c)}
