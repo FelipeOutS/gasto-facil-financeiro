@@ -261,7 +261,7 @@ function ContasAReceberPage() {
               key={c.id}
               conta={c}
               clienteNome={c.cliente_id ? nomeExibicaoCliente(clientesPorId[c.cliente_id]) : undefined}
-              onMarcar={() => setOpenReceber(c)}
+              onMarcar={() => openReceive(c)}
               onDesmarcar={async () => {
                 try {
                   await desmarcarRecebida(c.id);
