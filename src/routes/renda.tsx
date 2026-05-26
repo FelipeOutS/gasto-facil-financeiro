@@ -103,7 +103,7 @@ import { cn } from "@/lib/utils";
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 
-type RendaSearch = { ano?: number; mes?: number; novo?: "1"; editar?: string };
+type RendaSearch = { ano?: number; mes?: number };
 
 const MONTH_NAMES_PT = [
   "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
