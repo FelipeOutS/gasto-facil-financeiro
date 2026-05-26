@@ -268,3 +268,68 @@ export function calculateFinancialHealthScore(
     warnings: warnings.slice(0, MAX_LISTED),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Cenário econômico — nota curta e leiga que complementa o score.
+// Função pura: sem fetch, sem localStorage, sem React, sem Supabase.
+// ---------------------------------------------------------------------------
+
+export type EconomicHealthInput = {
+  level: FinancialHealthLevel;
+  /** Selic anual em % (ex.: 12.25). Opcional. */
+  selic?: number | null;
+  /** CDI anual em % (ex.: 12.15). Opcional. */
+  cdi?: number | null;
+  /** IPCA mensal em % (ex.: 0.45). Opcional. */
+  ipca?: number | null;
+};
+
+/**
+ * Retorna uma frase curta que reforça/suaviza a leitura da nota de
+ * saúde financeira a partir do cenário macro (Selic/CDI/IPCA).
+ * Retorna `null` quando não há dados suficientes para gerar a nota.
+ */
+export function buildEconomicHealthNote(
+  input: EconomicHealthInput,
+): string | null {
+  const { level, selic, cdi, ipca } = input;
+
+  const jurosRef =
+    typeof selic === "number"
+      ? selic
+      : typeof cdi === "number"
+        ? cdi
+        : null;
+
+  // Sem nenhum indicador → não exibe bloco
+  if (jurosRef == null && (ipca == null || Number.isNaN(ipca))) {
+    return null;
+  }
+
+  const positiva = level === "bom" || level === "excelente";
+
+  // Deflação tem prioridade — mensagem neutra
+  if (typeof ipca === "number" && ipca < 0) {
+    return "Alguns preços podem aliviar no curto prazo, mas o ideal é manter o controle do orçamento.";
+  }
+
+  const jurosAltos = typeof jurosRef === "number" && jurosRef >= 12;
+  const ipcaAlto = typeof ipca === "number" && ipca >= 0.6;
+
+  if (jurosAltos) {
+    return positiva
+      ? "Com juros altos e sua saúde financeira positiva, manter uma reserva organizada pode ajudar bastante."
+      : "Com juros altos, vale redobrar o cuidado com dívidas, parcelamentos e atrasos.";
+  }
+
+  if (ipcaAlto) {
+    return positiva
+      ? "Mesmo com a saúde financeira em dia, a inflação pode apertar gastos do dia a dia."
+      : "Com inflação pressionada, gastos variáveis podem pesar mais no mês. Acompanhe de perto.";
+  }
+
+  // Cenário estável
+  return positiva
+    ? "O cenário está mais previsível, então manter o planejamento ajuda a preservar sua boa fase."
+    : "Mesmo com cenário mais estável, vale ajustar o orçamento antes que pequenas despesas se acumulem.";
+}
