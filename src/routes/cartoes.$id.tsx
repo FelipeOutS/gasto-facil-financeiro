@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // FaturaSheet é importado do arquivo de rota /cartoes para reaproveitar
 // 100% da lógica/UX existente. O componente aceita `inline` para renderizar
 // sem Sheet/modal (compatível com Android WebView).
-import { FaturaSheet } from "@/routes/cartoes";
+import { FaturaSheet } from "@/routes/cartoes.index";
 
 export const Route = createFileRoute("/cartoes/$id")({
   component: CartaoDetalhePage,
