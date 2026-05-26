@@ -1899,6 +1899,20 @@ function FaturaSheet({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+    </>
+  );
+
+  if (inline) {
+    return <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">{content}</div>;
+  }
+
+  return (
+    <Sheet open={!!cartao} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto p-0 sm:max-w-[640px]"
+      >
+        {content}
       </SheetContent>
     </Sheet>
   );
