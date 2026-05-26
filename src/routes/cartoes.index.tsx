@@ -113,7 +113,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/cartoes")({
+export const Route = createFileRoute("/cartoes/")({
   validateSearch: (search: Record<string, unknown>) => ({
     abrir: typeof search.abrir === "string" ? search.abrir : undefined,
     importar: typeof search.importar === "string" ? search.importar : undefined,

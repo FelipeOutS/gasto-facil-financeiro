@@ -43,7 +43,6 @@ import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ConfirmarRouteImport } from './routes/confirmar'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CategoriasRouteImport } from './routes/categorias'
-import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AppRouteImport } from './routes/app'
@@ -53,13 +52,13 @@ import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
+import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as FornecedoresRelatorioRouteImport } from './routes/fornecedores_.relatorio'
 import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
-import { Route as CartoesIdRouteImport } from './routes/cartoes.$id'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -75,6 +74,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
 import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
+import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
@@ -263,11 +263,6 @@ const CategoriasRoute = CategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CartoesRoute = CartoesRouteImport.update({
-  id: '/cartoes',
-  path: '/cartoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -313,6 +308,11 @@ const EnIndexRoute = EnIndexRouteImport.update({
   path: '/en/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesIndexRoute = CartoesIndexRouteImport.update({
+  id: '/cartoes/',
+  path: '/cartoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PtSplatRoute = PtSplatRouteImport.update({
   id: '/pt/$',
   path: '/pt/$',
@@ -339,14 +339,9 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesNovoRoute = CartoesNovoRouteImport.update({
-  id: '/novo',
-  path: '/novo',
-  getParentRoute: () => CartoesRoute,
-} as any)
-const CartoesIdRoute = CartoesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CartoesRoute,
+  id: '/cartoes/novo',
+  path: '/cartoes/novo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
@@ -423,6 +418,11 @@ const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   path: '/aceitar-convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesIdIndexRoute = CartoesIdIndexRouteImport.update({
+  id: '/cartoes/$id/',
+  path: '/cartoes/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   id: '/app_/integracoes/',
   path: '/app/integracoes/',
@@ -434,9 +434,9 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
-  id: '/editar',
-  path: '/editar',
-  getParentRoute: () => CartoesIdRoute,
+  id: '/cartoes/$id/editar',
+  path: '/cartoes/$id/editar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
@@ -527,7 +527,6 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -577,13 +576,13 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -591,6 +590,7 @@ export interface FileRoutesByFullPath {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
+  '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -612,7 +612,6 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -662,13 +661,13 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes': typeof CartoesIndexRoute
   '/en': typeof EnIndexRoute
   '/pt': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -676,6 +675,7 @@ export interface FileRoutesByTo {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
+  '/cartoes/$id': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -698,7 +698,6 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/assinaturas': typeof AssinaturasRoute
   '/cadastro': typeof CadastroRoute
-  '/cartoes': typeof CartoesRouteWithChildren
   '/categorias': typeof CategoriasRoute
   '/clientes': typeof ClientesRoute
   '/confirmar': typeof ConfirmarRoute
@@ -748,13 +747,13 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
-  '/cartoes/$id': typeof CartoesIdRouteWithChildren
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/en/$': typeof EnSplatRoute
   '/fornecedores_/relatorio': typeof FornecedoresRelatorioRoute
   '/pt/$': typeof PtSplatRoute
+  '/cartoes/': typeof CartoesIndexRoute
   '/en/': typeof EnIndexRoute
   '/pt/': typeof PtIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
@@ -762,6 +761,7 @@ export interface FileRoutesById {
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
+  '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
@@ -785,7 +785,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -835,13 +834,13 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
-    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/cartoes/'
     | '/en/'
     | '/pt/'
     | '/api/checkout/create'
@@ -849,6 +848,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes/'
+    | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -870,7 +870,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -920,13 +919,13 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
-    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores/relatorio'
     | '/pt/$'
+    | '/cartoes'
     | '/en'
     | '/pt'
     | '/api/checkout/create'
@@ -934,6 +933,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app/integracoes'
+    | '/cartoes/$id'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -955,7 +955,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/assinaturas'
     | '/cadastro'
-    | '/cartoes'
     | '/categorias'
     | '/clientes'
     | '/confirmar'
@@ -1005,13 +1004,13 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
-    | '/cartoes/$id'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/email/unsubscribe'
     | '/en/$'
     | '/fornecedores_/relatorio'
     | '/pt/$'
+    | '/cartoes/'
     | '/en/'
     | '/pt/'
     | '/api/checkout/create'
@@ -1019,6 +1018,7 @@ export interface FileRouteTypes {
     | '/cartoes/$id/editar'
     | '/lovable/email/suppression'
     | '/app_/integracoes/'
+    | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
@@ -1041,7 +1041,6 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   AssinaturasRoute: typeof AssinaturasRoute
   CadastroRoute: typeof CadastroRoute
-  CartoesRoute: typeof CartoesRouteWithChildren
   CategoriasRoute: typeof CategoriasRoute
   ClientesRoute: typeof ClientesRoute
   ConfirmarRoute: typeof ConfirmarRoute
@@ -1091,17 +1090,21 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EnSplatRoute: typeof EnSplatRoute
   FornecedoresRelatorioRoute: typeof FornecedoresRelatorioRoute
   PtSplatRoute: typeof PtSplatRoute
+  CartoesIndexRoute: typeof CartoesIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
+  CartoesIdIndexRoute: typeof CartoesIdIndexRoute
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
   ApiIntegrationsMercadopagoCallbackRoute: typeof ApiIntegrationsMercadopagoCallbackRoute
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
@@ -1356,13 +1359,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cartoes': {
-      id: '/cartoes'
-      path: '/cartoes'
-      fullPath: '/cartoes'
-      preLoaderRoute: typeof CartoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cadastro': {
       id: '/cadastro'
       path: '/cadastro'
@@ -1426,6 +1422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes/': {
+      id: '/cartoes/'
+      path: '/cartoes'
+      fullPath: '/cartoes/'
+      preLoaderRoute: typeof CartoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pt/$': {
       id: '/pt/$'
       path: '/pt/$'
@@ -1463,17 +1466,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/novo': {
       id: '/cartoes/novo'
-      path: '/novo'
+      path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
-      parentRoute: typeof CartoesRoute
-    }
-    '/cartoes/$id': {
-      id: '/cartoes/$id'
-      path: '/$id'
-      fullPath: '/cartoes/$id'
-      preLoaderRoute: typeof CartoesIdRouteImport
-      parentRoute: typeof CartoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/app_/perfil': {
       id: '/app_/perfil'
@@ -1580,6 +1576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AceitarConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes/$id/': {
+      id: '/cartoes/$id/'
+      path: '/cartoes/$id'
+      fullPath: '/cartoes/$id/'
+      preLoaderRoute: typeof CartoesIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app_/integracoes/': {
       id: '/app_/integracoes/'
       path: '/app/integracoes'
@@ -1596,10 +1599,10 @@ declare module '@tanstack/react-router' {
     }
     '/cartoes/$id/editar': {
       id: '/cartoes/$id/editar'
-      path: '/editar'
+      path: '/cartoes/$id/editar'
       fullPath: '/cartoes/$id/editar'
       preLoaderRoute: typeof CartoesIdEditarRouteImport
-      parentRoute: typeof CartoesIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
@@ -1702,31 +1705,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface CartoesIdRouteChildren {
-  CartoesIdEditarRoute: typeof CartoesIdEditarRoute
-}
-
-const CartoesIdRouteChildren: CartoesIdRouteChildren = {
-  CartoesIdEditarRoute: CartoesIdEditarRoute,
-}
-
-const CartoesIdRouteWithChildren = CartoesIdRoute._addFileChildren(
-  CartoesIdRouteChildren,
-)
-
-interface CartoesRouteChildren {
-  CartoesIdRoute: typeof CartoesIdRouteWithChildren
-  CartoesNovoRoute: typeof CartoesNovoRoute
-}
-
-const CartoesRouteChildren: CartoesRouteChildren = {
-  CartoesIdRoute: CartoesIdRouteWithChildren,
-  CartoesNovoRoute: CartoesNovoRoute,
-}
-
-const CartoesRouteWithChildren =
-  CartoesRoute._addFileChildren(CartoesRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -1735,7 +1713,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   AssinaturasRoute: AssinaturasRoute,
   CadastroRoute: CadastroRoute,
-  CartoesRoute: CartoesRouteWithChildren,
   CategoriasRoute: CategoriasRoute,
   ClientesRoute: ClientesRoute,
   ConfirmarRoute: ConfirmarRoute,
@@ -1785,17 +1762,21 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EnSplatRoute: EnSplatRoute,
   FornecedoresRelatorioRoute: FornecedoresRelatorioRoute,
   PtSplatRoute: PtSplatRoute,
+  CartoesIndexRoute: CartoesIndexRoute,
   EnIndexRoute: EnIndexRoute,
   PtIndexRoute: PtIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  CartoesIdEditarRoute: CartoesIdEditarRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
+  CartoesIdIndexRoute: CartoesIdIndexRoute,
   ApiIntegrationsMercadopagoActionRoute: ApiIntegrationsMercadopagoActionRoute,
   ApiIntegrationsMercadopagoCallbackRoute:
     ApiIntegrationsMercadopagoCallbackRoute,
@@ -1815,3 +1796,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
