@@ -150,7 +150,7 @@ function CofrePessoalPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
       <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
         {bootstrapState === "loading" && <BootLoading />}
         {bootstrapState === "needs_setup" && (
