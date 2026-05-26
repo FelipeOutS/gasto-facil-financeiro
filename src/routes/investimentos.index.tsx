@@ -704,7 +704,7 @@ function InvestimentosPage() {
         movimentacoes={movs}
         rendimentos={rends}
         onClose={() => setDetalheAtivo(null)}
-        onEditar={(a) => { setDetalheAtivo(null); setEditing(a); setOpenAdd(true); }}
+        onEditar={(a) => { setDetalheAtivo(null); openEdit(a); }}
         onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
         onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
         onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
