@@ -495,18 +495,14 @@ function Index() {
       {/* Card de assinatura/plano */}
       <PlanoCard className="mt-4" />
 
-      {/* Alertas + Radar — pareados em desktop para não esticar full-width */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-start">
-        <DashboardAlertasBloco />
-        <RadarEconomicoCard />
-      </section>
-
-      {/* Radar Econômico Inteligente — indicadores do Banco Central (Selic, CDI, IPCA) */}
-      <section className="mt-4">
+      {/* Indicadores do Banco Central + Radar Econômico — pareados em desktop */}
+      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch">
         <RadarEconomicoInteligenteCard
           userContext={{ saldo, receitas: totalEntradas, despesas: total }}
         />
+        <RadarEconomicoCard />
       </section>
+
 
       {/* Impacto prático do cenário econômico no mês do usuário */}
       <section className="mt-3">
