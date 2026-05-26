@@ -131,7 +131,7 @@ export function EconomicMonthImpactCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-card p-4 transition-colors",
+        "rounded-2xl border bg-card p-5 transition-colors",
         styles.border,
         className,
       )}

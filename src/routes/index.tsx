@@ -498,9 +498,10 @@ function Index() {
       {/* Indicadores do Banco Central + Radar Econômico — pareados em desktop */}
       <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch">
         <RadarEconomicoInteligenteCard
+          className="h-full"
           userContext={{ saldo, receitas: totalEntradas, despesas: total }}
         />
-        <RadarEconomicoCard />
+        <RadarEconomicoCard className="h-full" />
       </section>
 
 
