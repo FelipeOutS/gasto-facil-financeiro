@@ -1,5 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ContaPagarForm } from "@/components/contas/ContaPagarForm";
 import {
   ArrowLeft,
   Plus,
@@ -90,7 +92,7 @@ import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/contas-a-pagar")({
+export const Route = createFileRoute("/contas-a-pagar/")({
   head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),
   component: ContasAPagarPage,
 });
@@ -111,6 +113,8 @@ function ContasAPagarPage() {
   const { t } = useTranslation("contas-a-pagar");
   const ready = useBootstrap();
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const today = new Date();
   const [ym, setYm] = useMesReferenciaRef() as unknown as [
@@ -119,6 +123,21 @@ function ContasAPagarPage() {
   ];
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
   const [creating, setCreating] = useState(false);
+
+  const openCreate = () => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-pagar/nova" });
+    } else {
+      setCreating(true);
+    }
+  };
+  const openEdit = (conta: ContaAPagar) => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-pagar/$id/editar", params: { id: conta.id } });
+    } else {
+      setEditing(conta);
+    }
+  };
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
@@ -412,7 +431,7 @@ function ContasAPagarPage() {
         <Button
           size="lg"
           className="card-press h-14 rounded-2xl bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-          onClick={() => setCreating(true)}
+          onClick={openCreate}
         >
           <Plus className="mr-1 h-5 w-5" />
           {t("cta.new")}
@@ -482,7 +501,7 @@ function ContasAPagarPage() {
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
-          <EmptyState onAdd={() => setCreating(true)} />
+          <EmptyState onAdd={openCreate} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
             {busca
@@ -496,7 +515,7 @@ function ContasAPagarPage() {
                 key={conta.id}
                 conta={conta}
                 hojeISO={hojeISO}
-                onEdit={() => setEditing(conta)}
+                onEdit={() => openEdit(conta)}
                 onDelete={() => {
                   if (conta.recorrente && conta.recorrenciaId) {
                     setConfirmDeleteRec(conta);
@@ -1048,7 +1067,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
   );
 }
 
-// ---------- Form dialog ----------
+// ---------- Form dialog (desktop wrapper around ContaPagarForm) ----------
 
 function ContaFormDialog({
   open,
@@ -1065,157 +1084,6 @@ function ContaFormDialog({
 }) {
   const { t } = useTranslation("contas-a-pagar");
   const isEdit = !!conta;
-  const isPaga = conta?.status === "pago";
-  const categorias = useStore(() => getCategorias());
-
-  const [nome, setNome] = useState(conta?.nome ?? "");
-  const [valorStr, setValorStr] = useState(
-    conta ? String(conta.valor).replace(".", ",") : "",
-  );
-  const [dataVenc, setDataVenc] = useState(
-    conta?.dataVencimento ?? defaultDate ?? todayISO(),
-  );
-  const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
-  const [observacao, setObservacao] = useState(conta?.observacao ?? "");
-  const [mesReferencia, setMesReferencia] = useState<string>(() => {
-    if (conta?.mesReferencia && /^\d{4}-\d{2}$/.test(conta.mesReferencia)) {
-      return conta.mesReferencia;
-    }
-    const base = conta?.dataVencimento ?? defaultDate;
-    if (base && /^\d{4}-\d{2}-\d{2}/.test(base)) return base.slice(0, 7);
-    return ymFromDate();
-  });
-  const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
-  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
-    conta?.frequenciaRecorrencia ?? "mensal",
-  );
-  const [meses, setMeses] = useState("12");
-
-  // Campos extras
-  const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
-  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
-    conta?.formaPagamento ?? "",
-  );
-  const [bancoEmissor, setBancoEmissor] = useState(conta?.bancoEmissor ?? "");
-  const [codigoBoleto, setCodigoBoleto] = useState(conta?.codigoBoleto ?? "");
-  const [codigoPix, setCodigoPix] = useState(conta?.codigoPix ?? "");
-  const [chavePix, setChavePix] = useState(conta?.chavePix ?? "");
-  const [fornecedorId, setFornecedorId] = useState<string>(conta?.fornecedorId ?? "");
-  const { ativos: fornecedoresAtivos } = useFornecedores();
-  const [mostrarExtras, setMostrarExtras] = useState(
-    !!(conta?.beneficiario ||
-      conta?.formaPagamento ||
-      conta?.bancoEmissor ||
-      conta?.codigoBoleto ||
-      conta?.codigoPix ||
-      conta?.chavePix ||
-      conta?.fornecedorId),
-  );
-
-  // Sincronizar gasto vinculado (apenas conta já paga)
-  const [sincronizarGasto, setSincronizarGasto] = useState(true);
-
-  function handleSave() {
-    const valor = parseBRLInput(valorStr);
-    if (!nome.trim()) {
-      toast.error(t("form.errName"));
-      return;
-    }
-    if (!Number.isFinite(valor) || valor <= 0) {
-      toast.error(t("form.errValue"));
-      return;
-    }
-    if (!dataVenc) {
-      toast.error(t("form.errDate"));
-      return;
-    }
-
-    if (isEdit && conta) {
-      const fields = {
-        nome: nome.trim(),
-        valor,
-        dataVencimento: dataVenc,
-        categoriaId: (categoriaId || null) as string | null,
-        observacao: observacao.trim() || undefined,
-        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : null,
-        beneficiario: beneficiario.trim() || null,
-        formaPagamento: (formaPagamento || null) as FormaPagamento | null,
-        bancoEmissor: bancoEmissor.trim() || null,
-        codigoBoleto: codigoBoleto.trim() || null,
-        codigoPix: codigoPix.trim() || null,
-        chavePix: chavePix.trim() || null,
-        fornecedorId: fornecedorId || null,
-        atualizarGastoVinculado: isPaga ? sincronizarGasto : false,
-      };
-      // Se conta recorrente, sempre pergunta escopo da edição
-      if (conta.recorrente && conta.recorrenciaId) {
-        setEditScopeFields(fields);
-        return;
-      }
-      updateContaAPagar(conta.id, fields);
-      toast.success(
-        isPaga && sincronizarGasto
-          ? t("form.toastUpdatedSync")
-          : t("form.toastUpdated"),
-      );
-    } else {
-      addContaAPagar({
-        nome: nome.trim(),
-        valor,
-        dataVencimento: dataVenc,
-        categoriaId: categoriaId || undefined,
-        observacao: observacao.trim() || undefined,
-        mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : undefined,
-        recorrente,
-        frequenciaRecorrencia: recorrente ? frequencia : undefined,
-        recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
-        beneficiario: beneficiario.trim() || undefined,
-        formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
-        bancoEmissor: bancoEmissor.trim() || undefined,
-        codigoBoleto: codigoBoleto.trim() || undefined,
-        codigoPix: codigoPix.trim() || undefined,
-        chavePix: chavePix.trim() || undefined,
-        fornecedorId: fornecedorId || null,
-      });
-      toast.success(recorrente ? t("form.toastCreatedRec") : t("form.toastCreated"));
-    }
-    onSaved();
-  }
-
-  // Dialog de escopo para edição de conta recorrente
-  const [editScopeFields, setEditScopeFields] = useState<null | Parameters<
-    typeof updateContaAPagar
-  >[1]>(null);
-
-  function applyEditScope(scope: "single" | "future" | "all") {
-    if (!conta || !editScopeFields) return;
-    // Atualiza a ocorrência atual (com sync de gasto vinculado se for o caso)
-    updateContaAPagar(conta.id, editScopeFields);
-
-    // Para os demais escopos, propaga sem dataVencimento e sem mexer em gastos vinculados de outras ocorrências
-    if (scope !== "single" && conta.recorrenciaId) {
-      const propagatedFields = { ...editScopeFields };
-      delete propagatedFields.atualizarGastoVinculado;
-      updateContaRecorrencia(
-        conta.recorrenciaId,
-        propagatedFields,
-        scope,
-        conta.mes,
-        conta.ano,
-      );
-    }
-
-    toast.success(
-      scope === "all"
-        ? t("scope.toastAll")
-        : scope === "future"
-        ? t("scope.toastFuture")
-        : t("scope.toastSingle"),
-    );
-    setEditScopeFields(null);
-    onSaved();
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -1225,362 +1093,17 @@ function ContaFormDialog({
             {isEdit ? t("form.editDesc") : t("form.newDesc")}
           </DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="conta-nome">{t("form.name")}</Label>
-            <Input
-              id="conta-nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder={t("form.namePlaceholder")}
-              autoFocus={!isEdit}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="conta-valor">{t("form.value")}</Label>
-              <Input
-                id="conta-valor"
-                inputMode="decimal"
-                value={valorStr}
-                onChange={(e) => setValorStr(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="conta-data">{t("form.dueDate")}</Label>
-              <Input
-                id="conta-data"
-                type="date"
-                value={dataVenc}
-                onChange={(e) => setDataVenc(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t("form.category")}</Label>
-            <Select value={categoriaId || "_none"} onValueChange={(v) => setCategoriaId(v === "_none" ? "" : v)}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("form.select")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_none">{t("form.noCategory")}</SelectItem>
-                {categorias.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="conta-mes-ref">{t("form.monthRef")}</Label>
-            <Select value={mesReferencia} onValueChange={setMesReferencia}>
-              <SelectTrigger id="conta-mes-ref">
-                <SelectValue placeholder={t("form.monthRefPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {mesReferenciaOpcoes(undefined, 12, 6).map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground">
-              {t("form.monthRefHint")}
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="conta-obs">{t("form.obs")}</Label>
-            <Textarea
-              id="conta-obs"
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              rows={2}
-              placeholder={t("form.obsPlaceholder")}
-            />
-          </div>
-
-          {/* Campos extras (boleto/Pix/beneficiário) */}
-          <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
-            <button
-              type="button"
-              onClick={() => setMostrarExtras((v) => !v)}
-              className="flex w-full items-center justify-between text-left"
-            >
-              <div>
-                <p className="text-sm font-medium">{t("form.moreDetails")}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("form.moreDetailsHint")}
-                </p>
-              </div>
-              <ChevronRight
-                className={cn(
-                  "h-4 w-4 text-muted-foreground transition-transform",
-                  mostrarExtras && "rotate-90",
-                )}
-              />
-            </button>
-
-            {mostrarExtras && (
-              <div className="mt-3 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-benef">{t("form.beneficiary")}</Label>
-                  <Input
-                    id="conta-benef"
-                    value={beneficiario}
-                    onChange={(e) => setBeneficiario(e.target.value)}
-                    placeholder={t("form.beneficiaryPlaceholder")}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label>{t("form.supplier")}</Label>
-                  {fornecedoresAtivos.length > 0 ? (
-                    <Select
-                      value={fornecedorId || "_none"}
-                      onValueChange={(v) => setFornecedorId(v === "_none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("form.noSupplier")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">{t("form.noSupplier")}</SelectItem>
-                        {fornecedoresAtivos.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {f.apelido || f.nome_fantasia || f.razao_social || f.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-                      {t("form.noSuppliersTitle")}{" "}
-                      <Link
-                        to="/fornecedores"
-                        className="font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {t("form.registerSupplier")}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>{t("form.paymentMethod")}</Label>
-                    <Select
-                      value={formaPagamento || "_none"}
-                      onValueChange={(v) =>
-                        setFormaPagamento(v === "_none" ? "" : (v as FormaPagamento))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("form.select")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">—</SelectItem>
-                        {FORMAS_PAGAMENTO.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {f.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="conta-banco">{t("form.issuingBank")}</Label>
-                    <Input
-                      id="conta-banco"
-                      value={bancoEmissor}
-                      onChange={(e) => setBancoEmissor(e.target.value)}
-                      placeholder={t("form.issuingBankPlaceholder")}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-boleto">{t("form.boletoCode")}</Label>
-                  <Textarea
-                    id="conta-boleto"
-                    value={codigoBoleto}
-                    onChange={(e) => setCodigoBoleto(e.target.value)}
-                    rows={2}
-                    placeholder={t("form.boletoCodePlaceholder")}
-                    className="font-mono text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-pix-cc">{t("form.pixCopy")}</Label>
-                  <Textarea
-                    id="conta-pix-cc"
-                    value={codigoPix}
-                    onChange={(e) => setCodigoPix(e.target.value)}
-                    rows={2}
-                    placeholder={t("form.pixCopyPlaceholder")}
-                    className="font-mono text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-chave">{t("form.pixKey")}</Label>
-                  <Input
-                    id="conta-chave"
-                    value={chavePix}
-                    onChange={(e) => setChavePix(e.target.value)}
-                    placeholder={t("form.pixKeyPlaceholder")}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {!isEdit && (
-            <div className="rounded-xl border border-border bg-card-elevated/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">{t("form.recurring")}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("form.recurringHint")}
-                  </p>
-                </div>
-              <Switch checked={recorrente} onCheckedChange={setRecorrente} />
-            </div>
-            {recorrente && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-freq">{t("form.frequency")}</Label>
-                  <Select
-                    value={frequencia}
-                    onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
-                  >
-                    <SelectTrigger id="conta-freq">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FREQUENCIAS_RECORRENCIA.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {t(`frequency.${f.id}`, { defaultValue: f.label })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-meses">
-                    {frequencia === "anual"
-                      ? t("form.howManyYears")
-                      : frequencia === "semanal"
-                      ? t("form.howManyWeeks")
-                      : frequencia === "quinzenal"
-                      ? t("form.howManyFortnights")
-                      : t("form.howManyMonths")}
-                  </Label>
-                  <Input
-                    id="conta-meses"
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={meses}
-                    onChange={(e) => setMeses(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-            </div>
-          )}
-
-          {isEdit && isPaga && (
-            <div className="rounded-xl border border-warning/40 bg-warning/10 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{t("form.syncTitle")}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("form.syncHint")}
-                  </p>
-                </div>
-                <Switch
-                  checked={sincronizarGasto}
-                  onCheckedChange={setSincronizarGasto}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("form.cancel")}
-          </Button>
-          <Button onClick={handleSave}>{isEdit ? t("form.save") : t("form.create")}</Button>
-        </DialogFooter>
+        <ContaPagarForm
+          conta={conta}
+          defaultDate={defaultDate}
+          onSaved={onSaved}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
-
-      {/* Escopo da edição em conta recorrente */}
-      <AlertDialog
-        open={!!editScopeFields}
-        onOpenChange={(o) => !o && setEditScopeFields(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">
-              <Repeat className="h-3.5 w-3.5" />
-              {t("scope.badge")}
-            </div>
-            <AlertDialogTitle>{t("scope.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("scope.desc")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => applyEditScope("single")}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
-            >
-              <p className="text-sm font-semibold">{t("scope.single")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("scope.singleHint", { label: formatMonthYear(conta?.ano ?? 0, conta?.mes ?? 0) })}
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => applyEditScope("future")}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
-            >
-              <p className="text-sm font-semibold">{t("scope.future")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("scope.futureHint")}
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => applyEditScope("all")}
-              className="w-full rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10"
-            >
-              <p className="text-sm font-semibold">{t("scope.all")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("scope.allHint")}
-              </p>
-            </button>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("scope.cancel")}</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Dialog>
   );
 }
+
 
 // ---------- Pagar dialog ----------
 
