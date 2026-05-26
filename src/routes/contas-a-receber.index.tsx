@@ -481,23 +481,23 @@ function ContaCard({
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {!isCancelado && !isRecebido && (
-          <Button size="sm" variant="default" className="h-8 rounded-lg" onClick={onMarcar}>
+          <Button size="sm" variant="default" className="h-10 rounded-lg sm:h-8" onClick={onMarcar}>
             <Check className="mr-1 h-3.5 w-3.5" />
             {t("card.markReceived")}
           </Button>
         )}
         {!isCancelado && isRecebido && (
-          <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onDesmarcar}>
+          <Button size="sm" variant="outline" className="h-10 rounded-lg sm:h-8" onClick={onDesmarcar}>
             <Clock className="mr-1 h-3.5 w-3.5" />
             {t("card.unmark")}
           </Button>
         )}
-        <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onEdit}>
+        <Button size="sm" variant="outline" className="h-10 rounded-lg sm:h-8" onClick={onEdit}>
           <Pencil className="mr-1 h-3.5 w-3.5" />
           {t("card.edit")}
         </Button>
         {!isCancelado && (
-          <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={onCancel}>
+          <Button size="sm" variant="outline" className="h-10 rounded-lg sm:h-8" onClick={onCancel}>
             <Ban className="mr-1 h-3.5 w-3.5" />
             {t("card.cancel")}
           </Button>
@@ -505,7 +505,7 @@ function ContaCard({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="h-10 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-8"
           onClick={onDelete}
         >
           <Trash2 className="h-3.5 w-3.5" />
