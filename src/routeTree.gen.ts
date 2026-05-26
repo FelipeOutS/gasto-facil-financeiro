@@ -103,6 +103,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as InvestimentosMovimentacaoMovIdEditarRouteImport } from './routes/investimentos.movimentacao.$movId.editar'
 import { Route as AppIntegracoesMercadoPagoMovimentacoesRouteImport } from './routes/app_.integracoes.mercado-pago.movimentacoes'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
@@ -585,6 +586,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestimentosMovimentacaoMovIdEditarRoute =
+  InvestimentosMovimentacaoMovIdEditarRouteImport.update({
+    id: '/investimentos/movimentacao/$movId/editar',
+    path: '/investimentos/movimentacao/$movId/editar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppIntegracoesMercadoPagoMovimentacoesRoute =
   AppIntegracoesMercadoPagoMovimentacoesRouteImport.update({
     id: '/app_/integracoes/mercado-pago/movimentacoes',
@@ -717,6 +724,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+  '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -819,6 +827,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+  '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -922,6 +931,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app_/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+  '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -1026,6 +1036,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/integracoes/mercado-pago/movimentacoes'
+    | '/investimentos/movimentacao/$movId/editar'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1128,6 +1139,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/integracoes/mercado-pago/movimentacoes'
+    | '/investimentos/movimentacao/$movId/editar'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1230,6 +1242,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app_/integracoes/mercado-pago/movimentacoes'
+    | '/investimentos/movimentacao/$movId/editar'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1327,6 +1340,7 @@ export interface RootRouteChildren {
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
   AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
+  InvestimentosMovimentacaoMovIdEditarRoute: typeof InvestimentosMovimentacaoMovIdEditarRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1995,6 +2009,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/investimentos/movimentacao/$movId/editar': {
+      id: '/investimentos/movimentacao/$movId/editar'
+      path: '/investimentos/movimentacao/$movId/editar'
+      fullPath: '/investimentos/movimentacao/$movId/editar'
+      preLoaderRoute: typeof InvestimentosMovimentacaoMovIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app_/integracoes/mercado-pago/movimentacoes': {
       id: '/app_/integracoes/mercado-pago/movimentacoes'
       path: '/app/integracoes/mercado-pago/movimentacoes'
@@ -2143,6 +2164,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
   AppIntegracoesMercadoPagoMovimentacoesRoute:
     AppIntegracoesMercadoPagoMovimentacoesRoute,
+  InvestimentosMovimentacaoMovIdEditarRoute:
+    InvestimentosMovimentacaoMovIdEditarRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
