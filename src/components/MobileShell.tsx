@@ -36,7 +36,7 @@ export function MobileShell({
           }
           style={
             showNav
-              ? { minHeight: "calc(100dvh - 3rem - max(0.75rem, env(safe-area-inset-top, 0px)))" }
+              ? { minHeight: "calc(100dvh - 3.5rem - max(0.75rem, env(safe-area-inset-top, 0px)))" }
               : { minHeight: "100dvh" }
           }
         >
