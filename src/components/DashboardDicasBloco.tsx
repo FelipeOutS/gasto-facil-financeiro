@@ -154,8 +154,9 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
       variant="default"
       rounded="2xl"
       padding="default"
-      className={cn("animate-rise", className)}
+      className={cn("animate-rise flex flex-col", className)}
     >
+
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
           <Sparkles className="h-5 w-5" />
@@ -175,7 +176,7 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-3 flex-1">
         {visiveis.map((insight) => {
           const Icon = iconForInsight(insight.type);
           return (
