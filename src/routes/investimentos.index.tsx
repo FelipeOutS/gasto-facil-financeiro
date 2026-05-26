@@ -224,6 +224,21 @@ function InvestimentosPage() {
     }
   };
 
+  const openImportar = () => {
+    if (isMobile) navigate({ to: "/investimentos/importar" });
+    else setOpenImport(true);
+  };
+  const openHistoricoImportacoes = () => {
+    if (isMobile) navigate({ to: "/investimentos/importacoes" });
+    else setOpenHistorico(true);
+  };
+  const openAtualizarLoteAction = () => {
+    if (isMobile) navigate({ to: "/investimentos/atualizar-lote" });
+    else setOpenAtualizarLote(true);
+  };
+
+
+
 
 
   async function reload() {
@@ -283,7 +298,7 @@ function InvestimentosPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)}>
+            <Button variant="outline" size="sm" onClick={openHistoricoImportacoes}>
               <History className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.imports")}
               {importacoes.length > 0 && (
                 <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5">
@@ -294,7 +309,7 @@ function InvestimentosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setOpenAtualizarLote(true)}
+              onClick={openAtualizarLoteAction}
               disabled={ativos.length === 0}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.updateValues")}
@@ -315,7 +330,7 @@ function InvestimentosPage() {
             >
               <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
+            <Button variant="outline" size="sm" onClick={openImportar}>
               <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
             <Button size="sm" onClick={openCreate}>

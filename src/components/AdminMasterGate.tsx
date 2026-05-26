@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
  * Gate de tela: só renderiza children se o usuário logado for Admin Master.
  * - Enquanto carrega a sessão: mostra placeholder neutro.
  * - Não logado: redireciona para /login.
- * - Logado mas não admin: mostra "Acesso restrito" + redirect para /app/dashboard.
+ * - Logado mas não admin: mostra "Acesso restrito" + redirect para /app.
  */
 export function AdminMasterGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,7 +25,7 @@ export function AdminMasterGate({ children }: { children: React.ReactNode }) {
     }
     if (!isAdminMaster) {
       const timer = setTimeout(() => {
-        void navigate({ to: "/app/dashboard", replace: true });
+        void navigate({ to: "/app", replace: true });
       }, 1200);
       return () => clearTimeout(timer);
     }
@@ -48,7 +48,7 @@ export function AdminMasterGate({ children }: { children: React.ReactNode }) {
           <p className="mt-2 text-sm text-muted-foreground">
             Esta área é exclusiva do administrador master.
           </p>
-          <Button className="mt-4" onClick={() => navigate({ to: "/app/dashboard", replace: true })}>
+          <Button className="mt-4" onClick={() => navigate({ to: "/app", replace: true })}>
             Voltar ao Dashboard
           </Button>
         </div>
