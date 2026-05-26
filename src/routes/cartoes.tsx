@@ -1477,11 +1477,20 @@ export function FaturaSheet({
   const TitleEl: React.ElementType = inline ? "h2" : SheetTitle;
   const DescEl: React.ElementType = inline ? "p" : SheetDescription;
 
+  // Mostra o nome do cartão apenas se for distinto do banco (apelido real).
+  // Evita "Mercado Pago" aparecer 2x (logo + título).
+  const bancoNorm = (cartao.banco || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const nomeNorm = (cartao.nome || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const nomeDistinto = !!cartao.nome && nomeNorm !== bancoNorm && !nomeNorm.includes(bancoNorm) && !bancoNorm.includes(nomeNorm);
+
   const content = (
     <>
-      {/* Hero — visual do cartão */}
+      {/* Hero — visual do cartão (compacto em mobile/inline) */}
       <div
-        className="relative overflow-hidden p-6 text-white"
+        className={cn(
+          "relative overflow-hidden text-white",
+          inline ? "p-5" : "p-6",
+        )}
         style={{ background: theme.background }}
       >
         <div
@@ -1503,7 +1512,7 @@ export function FaturaSheet({
             Voltar
           </button>
         )}
-        <HeaderEl className={cn("relative flex flex-col gap-2 text-left", inline ? "" : "space-y-2")}>
+        <HeaderEl className={cn("relative flex flex-col gap-1.5 text-left", inline ? "" : "space-y-2")}>
           <div className="flex items-start justify-between gap-3">
             <BrandLogo name={cartao.banco} variant="bank" onDark />
             <span
@@ -1516,14 +1525,23 @@ export function FaturaSheet({
               {badge.label}
             </span>
           </div>
-          <TitleEl className="text-2xl font-bold tracking-tight text-white">
-            {cartao.nome}
-          </TitleEl>
-          <DescEl className="text-sm text-white/80">
+          {/* Em inline (mobile), só renderiza o título se for um apelido real */}
+          {(!inline || nomeDistinto) && (
+            <TitleEl
+              className={cn(
+                "font-bold tracking-tight text-white",
+                inline ? "text-lg" : "text-2xl",
+              )}
+            >
+              {inline && nomeDistinto ? cartao.nome : cartao.nome}
+            </TitleEl>
+          )}
+          <DescEl className={cn("text-white/80", inline ? "text-xs" : "text-sm")}>
             {t("sheet.invoiceOf", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
             {status === "aberta" ? t("sheet.openSuffix") : ""}.
           </DescEl>
         </HeaderEl>
+
 
         {/* Navegação de mês */}
         <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
