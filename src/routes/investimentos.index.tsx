@@ -611,7 +611,7 @@ function InvestimentosPage() {
               size="sm"
               variant="ghost"
               className="h-7 text-xs"
-              onClick={() => setRendDialog({ open: true, rend: null })}
+              onClick={() => openRendimento()}
               disabled={ativos.length === 0}
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> {t("investimentos.actions.newM")}
