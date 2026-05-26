@@ -145,7 +145,7 @@ export function EconomicMonthImpactCard({
           )}
           aria-hidden
         >
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
