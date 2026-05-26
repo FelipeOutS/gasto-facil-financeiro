@@ -62,6 +62,7 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
     <article
       role="button"
       tabIndex={0}
+      aria-label={cartao.nome}
       onClick={onOpen}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -69,8 +70,8 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
           onOpen();
         }
       }}
-      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-[26px] p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99]"
-      style={{ background: theme.background, aspectRatio: "1.72 / 1" }}
+      className="hover-lift card-press group relative flex cursor-pointer flex-col overflow-hidden rounded-[26px] p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99]"
+      style={{ background: theme.background, minHeight: 196, maxHeight: 220 }}
     >
       <div
         aria-hidden
@@ -84,7 +85,7 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
       {/* Top — logo + menu */}
       <div className="relative flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center">
-          <BrandLogo name={cartao.banco} variant="bank" onDark />
+          <BrandLogo name={cartao.banco || cartao.nome} variant="bank" onDark />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -121,53 +122,47 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
         </DropdownMenu>
       </div>
 
-      {/* Nome */}
-      <div className="relative mt-2">
-        <h3 className="truncate text-base font-bold leading-tight">
-          {cartao.nome}
-        </h3>
-        {bancoLabel && (
-          <p className="mt-0.5 truncate text-[10px] font-medium text-white/70">
-            {bancoLabel}
-          </p>
-        )}
-      </div>
-
-      {/* Bottom — usado / limite + progress */}
-      <div className="relative mt-auto pt-3">
-        <div className="flex items-baseline justify-between gap-2">
+      {/* Bottom — usado em destaque + limite discreto + barra + disponível */}
+      <div className="relative mt-auto">
+        <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[9px] uppercase tracking-widest text-white/65">
-              {t("card.usedMonth")}
+            <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/60">
+              USADO
             </p>
-            <p className="num mt-0.5 truncate text-lg font-bold leading-none">
+            <p className="num mt-1 truncate text-2xl font-bold leading-none">
               {formatBRL(r.usadoMes)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] uppercase tracking-widest text-white/65">
-              {t("card.limitTotal")}
+            <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/60">
+              LIMITE
             </p>
-            <p className="num mt-0.5 text-xs font-semibold leading-none text-white/90">
+            <p className="num mt-1 text-xs font-semibold leading-none text-white/85">
               {formatBRL(r.limite)}
             </p>
           </div>
         </div>
 
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+        <div className="mt-3 h-[3px] w-full overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_8px_rgba(255,255,255,0.35)] animate-fill"
+            className="h-full origin-left rounded-full bg-white/95 animate-fill"
             style={{ width: `${Math.max(r.pct, r.usadoMes > 0 ? 1 : 0)}%` }}
           />
         </div>
-        <div className="mt-1 flex items-center justify-between text-[10px] text-white/75">
-          <span className="num">{formatPctLimite(r.usadoMes, r.limite)}</span>
-          <span className="num">{t("card.availableValue", { value: formatBRL(r.disponivel) })}</span>
+        <div className="mt-1.5 flex items-center justify-between text-[10px] text-white/70">
+          <span className="num font-medium tracking-wide">
+            {formatPctLimite(r.usadoMes, r.limite)}
+          </span>
+          <span className="num">
+            <span className="text-white/55">DISPONÍVEL </span>
+            <span className="font-semibold text-white/90">{formatBRL(r.disponivel)}</span>
+          </span>
         </div>
       </div>
     </article>
   );
 });
+
 
 /** Tile "Adicionar cartão" — mesmo formato, fundo neutro, ícone +. */
 export function CartaoAddTile({ onClick }: { onClick: () => void }) {
