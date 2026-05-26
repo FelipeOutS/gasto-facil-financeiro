@@ -518,10 +518,11 @@ function Index() {
 
       {/* Saúde financeira + Dicas — par responsivo.
           Se Dicas retornar null (sem insights), o card de Saúde ocupa a linha inteira no desktop. */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-start [&>*:only-child]:md:col-span-2">
-        <DashboardSaudeFinanceiraCard />
-        <DashboardDicasBloco />
+      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch [&>*:only-child]:md:col-span-2">
+        <DashboardSaudeFinanceiraCard className="h-full" />
+        <DashboardDicasBloco className="h-full" />
       </section>
+
 
       {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
       <section className="mt-4">
