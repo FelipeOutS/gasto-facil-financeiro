@@ -88,7 +88,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur safe-bottom lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background safe-bottom lg:hidden"
       style={{ position: "fixed", transform: "translate3d(0,0,0)" }}
       aria-label={t("aria.primary")}
     >
