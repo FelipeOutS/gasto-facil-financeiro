@@ -175,14 +175,7 @@ function ContasAReceberPage() {
             <h1 className="text-lg font-bold tracking-tight">{t("header.title")}</h1>
           </div>
         </div>
-        <Button
-          size="sm"
-          className="rounded-xl"
-          onClick={() => {
-            setEditing(null);
-            setOpenForm(true);
-          }}
-        >
+        <Button size="sm" className="rounded-xl" onClick={openCreate}>
           <Plus className="mr-1 h-4 w-4" />
           {t("header.new")}
         </Button>
