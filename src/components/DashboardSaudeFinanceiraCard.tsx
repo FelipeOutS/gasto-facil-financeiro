@@ -1,11 +1,12 @@
 // Card compacto de saúde financeira no Dashboard.
 // Roda 100% client-side em cima do store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas mostra um diagnóstico explicável.
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   HeartPulse,
   CheckCircle2,
   AlertTriangle,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -25,9 +26,11 @@ import { useRecorrencias } from "@/lib/recorrencias";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { buildLinhasOrcamento } from "@/lib/orcamento";
 import {
+  buildEconomicHealthNote,
   calculateFinancialHealthScore,
   type FinancialHealthLevel,
 } from "@/lib/insights/financial-health-score";
+import { loadBcbRadar, type BcbIndicator } from "@/lib/economy/bcb";
 import { PremiumCard } from "@/components/ui/premium-card";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
@@ -203,6 +206,32 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
 
   const tone = levelTone(health.level);
 
+  // Cenário econômico (BCB) — cache-first, falha em silêncio.
+  const [bcbIndicators, setBcbIndicators] = useState<BcbIndicator[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadBcbRadar()
+      .then((r) => {
+        if (alive && r.indicators.length > 0) setBcbIndicators(r.indicators);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const economicNote = useMemo(() => {
+    if (!bcbIndicators) return null;
+    const find = (k: "SELIC" | "CDI" | "IPCA") =>
+      bcbIndicators.find((i) => i.key === k)?.value ?? null;
+    return buildEconomicHealthNote({
+      level: health.level,
+      selic: find("SELIC"),
+      cdi: find("CDI"),
+      ipca: find("IPCA"),
+    });
+  }, [bcbIndicators, health.level]);
+
   return (
     <PremiumCard
       variant="default"
@@ -254,6 +283,20 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
             />
           ))}
         </ul>
+      )}
+
+      {economicNote && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-2">
+          <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Cenário
+            </span>
+            <span className="text-[11px] leading-snug text-foreground">
+              {economicNote}
+            </span>
+          </div>
+        </div>
       )}
     </PremiumCard>
   );
