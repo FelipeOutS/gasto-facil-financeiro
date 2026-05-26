@@ -330,7 +330,7 @@ function InvestimentosPage() {
             >
               <HandCoins className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.income")}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setOpenImport(true)}>
+            <Button variant="outline" size="sm" onClick={openImportar}>
               <Upload className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.import")}
             </Button>
             <Button size="sm" onClick={openCreate}>
