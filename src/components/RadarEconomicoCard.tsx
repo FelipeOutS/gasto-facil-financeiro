@@ -216,7 +216,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
           )}
         </div>
 
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground sm:mt-auto sm:pt-3">
           {loading
             ? t("radarCard.loading")
             : stale
