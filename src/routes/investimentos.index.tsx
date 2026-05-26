@@ -438,7 +438,7 @@ function InvestimentosPage() {
                         variant="ghost"
                         className="h-8 w-8 text-brand"
                         title={t("investimentos.wallet.refresh")}
-                        onClick={() => setAtualizandoAtivo(a)}
+                        onClick={() => openAtualizarValor(a)}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
