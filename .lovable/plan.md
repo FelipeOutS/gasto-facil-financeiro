@@ -1,92 +1,64 @@
-# Logos automáticos globais (Logo.dev + cache)
+## Escopo
 
-## Objetivo
-Componente `BrandLogo` global que resolve logos por domínio via Logo.dev, com cache em banco, normalização de nomes e fallback elegante. Aplicar em todos os pontos do app onde aparece nome de empresa/banco/serviço — sem quebrar layout existente.
+Apenas o **modo mobile** (`<lg`, breakpoint 1024px). Desktop e tablet permanecem idênticos. Nenhuma mudança em Supabase, RLS, cálculos, planos, MP, WhatsApp, IA, offline sync, AuthGate, Android WebView ou rotas premium.
 
-## 1. Banco de dados (1 migration)
+## Mudanças propostas
 
-**Tabela `brand_assets`** (cache global por domínio)
-- `id`, `domain` (unique), `company_name`, `normalized_name`
-- `logo_url`, `primary_color`, `secondary_color`
-- `source` ('logo.dev' | 'manual'), `status` ('found' | 'not_found' | 'manual')
-- `last_checked_at`, `created_at`, `updated_at`
-- Índice em `domain` e `normalized_name`
-- RLS: leitura pública autenticada; escrita só via service role (server fn)
+### 1. `MobileTopBar.tsx` — redesenhar
+Hoje: logo à esquerda, sino + avatar à direita, altura `h-12`.
+Novo (mobile-only):
+- **Esquerda**: botão hambúrguer (abre Sheet de "Mais opções")
+- **Centro-esquerda**: avatar do usuário + saudação ("olá," em muted, **Nome** em destaque)
+- **Direita**: sino de notificações com badge (mantém comportamento atual)
+- Logo `BrandMark` discreta no canto direito acima do sino, OU removida do top bar (já aparece dentro do Sheet). Vou manter discreta no Sheet, fora do header — header fica respirado.
+- Altura `h-16`, mais respiro, `safe-top` mantido.
+- Bug colateral: `h-4.5 w-4.5` (classe Tailwind inválida) → corrigir para `h-5 w-5`.
 
-**Tabela `merchant_brand_aliases`** (nome digitado → domínio)
-- `id`, `user_id` (nullable), `merchant_name`, `normalized_merchant_name`
-- `domain`, `confidence`, `source` ('automatic' | 'user' | 'global')
-- timestamps + índice em `normalized_merchant_name`
-- RLS: usuário lê seus próprios + aliases globais (user_id IS NULL); só edita os próprios
+### 2. Novo componente `MobileMoreSheet.tsx`
+Sheet lateral (shadcn `Sheet` side="left") aberto pelo hambúrguer. Reaproveita `nav-groups.ts` (já existe) para listar:
+- **Financeiro**: Dashboard, Gastos, Minha renda, Contas a pagar, Contas a receber, Assinaturas, Cartões
+- **Planejamento**: Orçamento, Metas, Guardado, Investimentos
+- **Empresa**: Empresa Inteligente, Clientes, Fornecedores, Contador
+- **Conta**: Relatórios, Alertas, Meu Plano, Perfil, Ajustes
+Cada item respeita os locks premium/permissões já existentes (reusar componentes/lógica atuais — sem duplicar).
 
-Trigger `updated_at` reaproveitando função existente.
+### 3. `BottomNav.tsx` — botão central destacado
+Hoje: 5 tabs flat (Início, Gastos, Cartões, Metas, Mais).
+Novo: **5 tabs com o centro como FAB**:
+- Início · Gastos · **[+] FAB verde** · Relatórios · Mais
+- FAB central abre um popover/sheet com: Novo gasto, Nova receita, Importar, IA financeira (rotas já existentes: `/adicionar`, `/gastos`, etc.)
+- Mantém badges de alerta atuais.
 
-## 2. Normalização (`src/lib/brand/normalize.ts`)
-`normalizeMerchantName(input)`:
-- lowercase, remove acentos (NFD), remove caracteres não alfanuméricos
-- remove stop-words: `pagamento|compra|pix|boleto|transferencia|debito|credito|loja|ltda|sa|eireli|me|comercio|assinatura|mensalidade|plano|cartao|*compra|brl`
-- normaliza espaços; preserva núcleo do nome
+### 4. Novo `MobileMonthSummary.tsx` (mobile-only, `lg:hidden`)
+Bloco inserido **no topo do Dashboard** acima dos cards existentes:
+- Header: "resumo de {mês}" com seletor de mês já existente (`MesSwitcher`/`useMesReferencia`) reaproveitado
+- Card grande de **Saldo atual** (ícone + valor, botão olho para ocultar — opcional, fora de escopo se complexo)
+- Grid 2×2 com: Receitas · Despesas · Recebidas · Pagas
+- Usa valores **já calculados** em `index.tsx` — vou passar via props ou ler do mesmo lugar.
 
-## 3. Resolver (`src/lib/brand/resolver.ts`)
-Ordem:
-1. Cache em memória (Map) por nome normalizado
-2. `merchant_brand_aliases` (próprios + globais)
-3. `brand_assets` por domínio se já houver
-4. Heurística: mapa seed (nubank, mercado pago, hotmart, lovable, etc.) + `guessDomainsFromName` (`.com.br`, `.com`, `.io`, `.dev`, `.app`, `.co`)
-5. Se nada bater → fallback iniciais
+### 5. `routes/index.tsx` — pequena reorganização mobile
+- Esconder o KPI bar atual no mobile (`hidden lg:block`) e mostrar `<MobileMonthSummary />` no lugar (`lg:hidden`).
+- Manter todos os demais cards (Radar, Saúde, Diagnóstico, Impacto, Calendário, Atividade, Contas, Cartões etc.) intactos — eles já são responsivos.
+- Nenhuma remoção de funcionalidade.
 
-Server fn `resolveBrand({ name, domain? })`:
-- consulta DB, se vazio testa candidatos contra Logo.dev (HEAD/GET), salva resultado em `brand_assets` (status found/not_found) e alias se aplicável
+## O que NÃO vou alterar
 
-## 4. Componente `BrandLogo` (`src/components/brand/BrandLogo.tsx`)
-Props: `name`, `domain?`, `size` (sm/md/lg), `rounded`, `className`, `fallbackIcon?`, `variant?` ('square'|'circle')
+- Layout desktop/tablet (toda mudança guardada atrás de `lg:hidden` / `<useIsMobile>`).
+- `src/routes/index.tsx` lógica de dados — só rearranjo visual mobile.
+- Cálculos, hooks, queries, Supabase, RLS, planos, MP, WhatsApp, IA, offline, AuthGate, biometria, Android WebView.
+- `/orcamento`, `/relatorios`, `/alertas`, `/meu-plano`, `src/lib/alerts/*`.
+- BrandMark, tema, tokens semânticos.
 
-Cascata client-side:
-- Se `domain` conhecido → `https://img.logo.dev/${domain}?token=${VITE_LOGO_DEV_KEY}&size=128&format=png`
-- onError → fallback DuckDuckGo / Google s2 favicon (re-usa `company-logo.ts` existente)
-- onError final → círculo com inicial e cor estável (`colorFor`)
-- Lazy load, decoding async, sem flash (mantém último carregado)
+## Como testar
 
-Chave pública Logo.dev em `VITE_LOGO_DEV_KEY` (publishable token — ok no frontend).
+1. Mobile 360/390/430px: header novo, hambúrguer abre sheet com grupos, FAB central abre ações rápidas, Resumo do mês no topo com saldo + grid 2×2.
+2. Desktop ≥1024px: layout idêntico ao atual (sidebar, KPI bar tradicional).
+3. Dark/light: tokens semânticos, sem hardcoded.
+4. Sem scroll horizontal, sem overflow, FAB não sobrepõe conteúdo (padding inferior já existe).
 
-## 5. Aplicação global
-Refatora `TransactionAvatar` e `BrandLogo` legado para delegar ao novo componente quando não houver logo local em `/public/logos/*` (mantém logos locais com prioridade — já são SVGs otimizados).
+## Arquivos
 
-Pontos aplicados:
-- `TransactionAvatar` (gastos, lista, detalhe, recorrentes, importações)
-- Cards de cartões (`src/routes/cartoes.tsx`)
-- Bancos / `dinheiro_guardado` (`src/routes/guardado.tsx`)
-- Assinaturas (`src/routes/assinaturas.tsx`)
-- Clientes / Fornecedores (avatar com logo do CNPJ)
-- Contas a pagar / receber
-- Cofre Pessoal (já usa `CompanyLogo` — migra para `BrandLogo`)
-- Dashboard insights de cartões/empresas
+**Editados**: `src/components/MobileTopBar.tsx`, `src/components/BottomNav.tsx`, `src/routes/index.tsx` (inserir bloco mobile + esconder KPI bar atual no mobile).
+**Criados**: `src/components/MobileMoreSheet.tsx`, `src/components/MobileMonthSummary.tsx`, `src/components/MobileQuickActionsSheet.tsx` (popover do FAB).
 
-## 6. Segurança / chaves
-- Logo.dev publishable key (`pk_*`) usada direto no frontend via `VITE_LOGO_DEV_KEY`.
-- Se usuário quiser API privada (cores, search): adiciona secret `LOGO_DEV_SECRET` + server fn proxy. Não bloqueia esta entrega.
-- RLS conforme tabela 1.
-
-## 7. Correção manual
-Reutiliza painel já existente do Cofre Pessoal; adiciona menu "Corrigir logo" em `EntryDetail` que abre input de domínio e grava alias.
-
-## 8. Não-quebrar
-- Mantém todos os logos locais em `public/logos/*` com prioridade.
-- Não toca em rotas, auth, RLS de outras tabelas, planos.
-- Layouts atuais inalterados — só substitui o avatar interno.
-
-## Arquivos novos
-- `supabase/migrations/<ts>_brand_assets.sql`
-- `src/lib/brand/normalize.ts`
-- `src/lib/brand/resolver.ts`
-- `src/lib/brand/brand.functions.ts` (server fn `resolveBrand`)
-- `src/components/brand/BrandLogo.tsx`
-
-## Arquivos editados
-- `src/components/TransactionAvatar.tsx` (cascade fallback → BrandLogo)
-- `src/components/BrandLogo.tsx` legado → re-export do novo (mantém API)
-- `src/components/vault/CompanyLogo.tsx` → wrapper do novo BrandLogo
-- `.env` referência a `VITE_LOGO_DEV_KEY` (precisa do usuário adicionar)
-
-## Pergunta antes de prosseguir
-A chave Logo.dev `pk_X-1ZO13ESQOXMI5MlVUVQQ` (já usada no Cofre Pessoal) é a do usuário? Se sim, reutilizo. Se houver chave nova, peço via secret.
+Posso seguir?
