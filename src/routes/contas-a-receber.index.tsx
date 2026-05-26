@@ -783,118 +783,14 @@ function ReceberDialog({
   onConfirmed: () => void;
 }) {
   const { t } = useTranslation("contas-a-receber");
-  const [valorAgora, setValorAgora] = useState("");
-  const [data, setData] = useState(todayISO());
-  const [forma, setForma] = useState<string>("");
-  const [parcial, setParcial] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (conta) {
-      setValorAgora("");
-      setData(todayISO());
-      setForma((conta.forma_recebimento as string) ?? "");
-      setParcial(false);
-    }
-  }, [conta]);
-
   if (!conta) return null;
-  const restante = Math.max(0, Number(conta.valor_total) - Number(conta.valor_recebido));
-
-  async function handleConfirm() {
-    if (!conta) return;
-    setSaving(true);
-    try {
-      const opts: { valor_recebido_agora?: number; data_recebimento?: string; forma_recebimento?: string | null } = {
-        data_recebimento: data,
-        forma_recebimento: forma || null,
-      };
-      if (parcial) {
-        const v = parseBRLInput(valorAgora);
-        if (!v || v <= 0) {
-          toast.error(t("receive.errAmount"));
-          setSaving(false);
-          return;
-        }
-        opts.valor_recebido_agora = v;
-      }
-      await marcarRecebida(conta.id, opts);
-      toast.success(t("receive.toastSuccess"));
-      onConfirmed();
-    } catch (e) {
-      console.error(e);
-      toastFromError(e, t("receive.toastError"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <Dialog open={!!conta} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("receive.title")}</DialogTitle>
-          <DialogDescription>
-            {t("receive.desc", { name: conta.titulo, amount: formatBRL(restante) })}
-          </DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={parcial}
-              onChange={(e) => setParcial(e.target.checked)}
-              className="h-4 w-4"
-            />
-            {t("receive.partial")}
-          </label>
-
-          {parcial && (
-            <div className="space-y-1.5">
-              <Label>{t("receive.amountNow")}</Label>
-              <Input
-                inputMode="decimal"
-                value={valorAgora}
-                onChange={(e) => setValorAgora(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>{t("receive.date")}</Label>
-              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("receive.forma")}</Label>
-              <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("receive.none")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">{t("receive.none")}</SelectItem>
-                  {FORMAS_RECEBIMENTO.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {t(`formas.${f.id}` as const, { defaultValue: f.label })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {t("receive.cancel")}
-          </Button>
-          <Button onClick={handleConfirm} disabled={saving}>
-            <Check className="mr-1 h-4 w-4" />
-            {t("receive.confirm")}
-          </Button>
-        </DialogFooter>
+        <ReceberContaForm conta={conta} onConfirmed={onConfirmed} onCancel={onClose} />
       </DialogContent>
     </Dialog>
   );
