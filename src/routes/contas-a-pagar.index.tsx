@@ -123,6 +123,21 @@ function ContasAPagarPage() {
   ];
   const [editing, setEditing] = useState<ContaAPagar | null>(null);
   const [creating, setCreating] = useState(false);
+
+  const openCreate = () => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-pagar/nova" });
+    } else {
+      setCreating(true);
+    }
+  };
+  const openEdit = (conta: ContaAPagar) => {
+    if (isMobile) {
+      void navigate({ to: "/contas-a-pagar/$id/editar", params: { id: conta.id } });
+    } else {
+      setEditing(conta);
+    }
+  };
   const [confirmDelete, setConfirmDelete] = useState<ContaAPagar | null>(null);
   const [confirmDesmarcar, setConfirmDesmarcar] = useState<ContaAPagar | null>(null);
   const [pagar, setPagar] = useState<ContaAPagar | null>(null);
