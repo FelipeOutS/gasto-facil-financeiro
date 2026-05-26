@@ -1280,12 +1280,18 @@ function FaturaSheet({
   onOpenChange,
   onEdit,
   onImport,
+  inline = false,
+  onBack,
 }: {
   cartao: Cartao | null;
   gastos: Gasto[];
   onOpenChange: (open: boolean) => void;
   onEdit: (c: Cartao) => void;
   onImport: (c: Cartao) => void;
+  /** Quando true, renderiza inline (rota dedicada mobile) sem Sheet/modal. */
+  inline?: boolean;
+  /** Callback do botão Voltar (só usado quando inline). */
+  onBack?: () => void;
 }) {
   const { t } = useTranslation("cartoes");
 
