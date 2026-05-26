@@ -53,9 +53,12 @@ function CartaoDetalhePage() {
             onOpenChange={(o: boolean) => {
               if (!o) back();
             }}
-            onEdit={() => navigate({ to: "/cartoes" })}
-            onImport={() => navigate({ to: "/cartoes" })}
+            onEdit={(c) => navigate({ to: "/cartoes/$id/editar", params: { id: c.id } })}
+            onImport={(c) =>
+              navigate({ to: "/cartoes", search: { importar: c.id } })
+            }
           />
+
         </div>
       )}
     </MobileShell>
