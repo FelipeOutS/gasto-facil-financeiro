@@ -1,26 +1,20 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Home, List, CreditCard, Menu, Plus, BarChart3 } from "lucide-react";
+import { Home, List, CreditCard, Plus, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
-import { MobileQuickActionsSheet } from "@/components/MobileQuickActionsSheet";
 
 const LEFT_TABS = [
   { to: "/", labelKey: "dashboard", icon: Home },
   { to: "/gastos", labelKey: "gastos", icon: List },
 ] as const;
 
-const RIGHT_TABS = [
-  { to: "/cartoes", labelKey: "cartoes", icon: CreditCard },
-  { to: "/app/mais", labelKey: "more", icon: Menu },
-] as const;
-
-// Substituto opcional para Relatórios — usuário pediu "Metas ou Relatórios".
-// Mantemos Cartões (mais usado) à esquerda do FAB e Relatórios à direita.
+// Sem "Mais" na bottom nav: o hambúrguer no header já cumpre esse papel.
+// Relatórios + Cartões priorizam ações financeiras mais usadas no dia a dia.
 const RIGHT_TABS_WITH_REPORTS = [
   { to: "/relatorios", labelKey: "relatorios", icon: BarChart3 },
-  { to: "/app/mais", labelKey: "more", icon: Menu },
+  { to: "/cartoes", labelKey: "cartoes", icon: CreditCard },
 ] as const;
 
 export function BottomNav() {
@@ -101,20 +95,20 @@ export function BottomNav() {
       <ul className="relative mx-auto flex max-w-md items-stretch justify-around px-1 pt-2">
         {LEFT_TABS.map(renderTab)}
 
-        {/* FAB central — abre ações rápidas */}
+        {/* FAB central — navega direto para a página de novo lançamento
+             (sem modal/sheet, para funcionar bem em Android WebView). */}
         <li className="flex w-16 shrink-0 items-start justify-center">
-          <MobileQuickActionsSheet
-            trigger={
-              <button
-                type="button"
-                aria-label="Ações rápidas"
-                className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform active:scale-95"
-              >
-                <Plus className="h-6 w-6" strokeWidth={2.6} />
-              </button>
-            }
-          />
+          <Link
+            to="/adicionar"
+            preload="intent"
+            preloadDelay={0}
+            aria-label={t("aria.addExpense", { defaultValue: "Novo lançamento" })}
+            className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform active:scale-95"
+          >
+            <Plus className="h-6 w-6" strokeWidth={2.6} />
+          </Link>
         </li>
+
 
         {RIGHT_TABS_WITH_REPORTS.map(renderTab)}
       </ul>
