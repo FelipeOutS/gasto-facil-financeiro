@@ -309,7 +309,7 @@ function InvestimentosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setOpenAtualizarLote(true)}
+              onClick={openAtualizarLoteAction}
               disabled={ativos.length === 0}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.updateValues")}
