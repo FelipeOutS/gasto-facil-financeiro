@@ -246,6 +246,7 @@ export function PublicLanding() {
         />
         <EmpresaInteligenteSection />
         <MoreFeatures />
+        <AppExperienceSection />
         <MultiDeviceShowcase />
         <ForWho />
         <TrustPoints />
