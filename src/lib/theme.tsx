@@ -34,6 +34,9 @@ function resolve(theme: ThemeChoice): ResolvedTheme {
   return theme;
 }
 
+const THEME_COLOR_DARK = "#1E2126";
+const THEME_COLOR_LIGHT = "#FAFAFB";
+
 function applyTheme(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -45,6 +48,22 @@ function applyTheme(resolved: ResolvedTheme) {
     root.classList.add("dark");
     root.classList.remove("light");
     root.style.colorScheme = "dark";
+  }
+  // Sincroniza a meta theme-color para o WebView/Android pintar a status
+  // bar e o overscroll inferior com a cor real do fundo do app.
+  try {
+    const color = resolved === "light" ? THEME_COLOR_LIGHT : THEME_COLOR_DARK;
+    let meta = document.querySelector(
+      'meta[name="theme-color"]:not([media])',
+    ) as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", color);
+  } catch {
+    /* noop */
   }
 }
 
