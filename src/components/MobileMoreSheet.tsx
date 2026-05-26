@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Lock, LogOut, Sparkles, UserRound, Languages } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import {
   Sheet,
   SheetContent,
@@ -106,6 +107,14 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent side="left" className="w-[min(86vw,360px)] overflow-y-auto p-0">
+        {/* Bloco de marca */}
+        <div className="border-b border-border/60 bg-background px-4 pb-3 pt-5">
+          <BrandMark className="h-6" />
+          <p className="mt-1 text-[11px] font-medium text-muted-foreground">
+            Seu controle financeiro em um só lugar
+          </p>
+        </div>
+
         <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
           <SheetTitle className="sr-only">{t("more.title")}</SheetTitle>
           <SheetDescription className="sr-only">{t("more.description")}</SheetDescription>
