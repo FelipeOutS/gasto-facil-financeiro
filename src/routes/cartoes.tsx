@@ -665,6 +665,41 @@ function ResumoCard({
   );
 }
 
+function CompactKpi({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "default" | "brand" | "warning" | "success";
+}) {
+  const dot =
+    tone === "brand"
+      ? "bg-brand-on-soft"
+      : tone === "warning"
+        ? "bg-warning"
+        : tone === "success"
+          ? "bg-success"
+          : "bg-muted-foreground/40";
+  return (
+    <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+      <div className="flex items-center gap-1.5">
+        <span className={cn("h-1.5 w-1.5 rounded-full", dot)} aria-hidden />
+        <p className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+      </div>
+      <p className="num mt-1 truncate text-base font-bold leading-tight">{value}</p>
+      {hint && (
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("cartoes");
   return (
