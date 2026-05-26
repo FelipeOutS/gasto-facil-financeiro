@@ -298,7 +298,7 @@ function InvestimentosPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={() => setOpenHistorico(true)}>
+            <Button variant="outline" size="sm" onClick={openHistoricoImportacoes}>
               <History className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.imports")}
               {importacoes.length > 0 && (
                 <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5">
