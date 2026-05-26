@@ -21,12 +21,6 @@ import {
  * logo do banco, nome, limite/usado, barra de progresso e disponível.
  * Sem dados sensíveis (número, validade, CVV).
  */
-function formatBanco(banco?: string): string {
-  if (!banco) return "";
-  const s = banco.trim();
-  if (/mercado\s*pago|^mp$/i.test(s)) return "Mercado Pago";
-  return s;
-}
 
 function formatPctLimite(usado: number, limite: number): string {
   if (!limite || limite <= 0) return "—";
