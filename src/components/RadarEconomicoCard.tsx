@@ -101,8 +101,8 @@ function VariationBadge({ pct }: { pct: number | null }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
         positivo
-          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+          ? "bg-success/10 text-success"
+          : "bg-destructive/10 text-destructive",
       )}
       title={positivo ? t("radarCard.variation.up") : t("radarCard.variation.down")}
     >
@@ -193,12 +193,12 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
             </p>
           </div>
           {stale && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
-              title={t("radarCard.outdatedTitle")}
-            >
-              <AlertCircle className="h-3 w-3" /> {t("radarCard.outdated")}
-            </span>
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning"
+            title={t("radarCard.outdatedTitle")}
+          >
+            <AlertCircle className="h-3 w-3" /> {t("radarCard.outdated")}
+          </span>
           )}
         </div>
 
@@ -345,7 +345,7 @@ export function RadarDetalhesDialog({
         </DialogHeader>
 
         {stale && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-800 dark:text-amber-300">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
             {t("radarCard.dialog.outdated")}
           </div>
         )}

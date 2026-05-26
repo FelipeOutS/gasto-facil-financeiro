@@ -107,7 +107,7 @@ export function RadarEconomicoInteligenteCard({
       </header>
 
       {stale && !loading && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[11px] text-amber-800 dark:text-amber-300">
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 p-2 text-[11px] text-warning">
           <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
           <span>Mostrando últimos dados conhecidos — a fonte pode estar instável.</span>
         </div>
