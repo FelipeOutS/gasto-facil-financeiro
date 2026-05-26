@@ -26,9 +26,11 @@ import { useRecorrencias } from "@/lib/recorrencias";
 import { useMesReferenciaRef } from "@/lib/use-mes-referencia";
 import { buildLinhasOrcamento } from "@/lib/orcamento";
 import {
+  buildEconomicHealthNote,
   calculateFinancialHealthScore,
   type FinancialHealthLevel,
 } from "@/lib/insights/financial-health-score";
+import { loadBcbRadar, type BcbIndicator } from "@/lib/economy/bcb";
 import { PremiumCard } from "@/components/ui/premium-card";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
