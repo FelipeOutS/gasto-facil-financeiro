@@ -276,7 +276,7 @@ function InvestimentosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setMovDialog({ open: true, mov: null })}
+              onClick={() => openMovimentacao()}
               disabled={ativos.length === 0}
             >
               <ArrowRightLeft className="h-4 w-4 mr-1.5" /> {t("investimentos.actions.movement")}
@@ -510,7 +510,7 @@ function InvestimentosPage() {
               size="sm"
               variant="ghost"
               className="h-7 text-xs"
-              onClick={() => setMovDialog({ open: true, mov: null })}
+              onClick={() => openMovimentacao()}
               disabled={ativos.length === 0}
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> {t("investimentos.actions.new")}
@@ -545,7 +545,7 @@ function InvestimentosPage() {
                         variant="ghost"
                         className="h-7 w-7"
                         title={t("investimentos.wallet.edit")}
-                        onClick={() => setMovDialog({ open: true, mov: m })}
+                        onClick={() => openEditMovimentacao(m)}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
@@ -726,7 +726,7 @@ function InvestimentosPage() {
         onClose={() => setDetalheAtivo(null)}
         onEditar={(a) => { setDetalheAtivo(null); openEdit(a); }}
         onAtualizarValor={(a) => { setDetalheAtivo(null); setAtualizandoAtivo(a); }}
-        onAddMovimentacao={(a) => setMovDialog({ open: true, mov: null, ativoId: a.id })}
+        onAddMovimentacao={(a) => openMovimentacao(a.id)}
         onAddRendimento={(a) => setRendDialog({ open: true, rend: null, ativoId: a.id })}
         onExcluirAtivo={async (a) => {
           if (!confirm(t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }))) return;
