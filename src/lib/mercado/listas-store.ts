@@ -600,6 +600,14 @@ export function finalizarListaCompra(listaId: string): MercadoCompraHistorico | 
   safeWriteHistorico([entry, ...current]);
   emitHistorico();
 
+  // E13: registra preços no histórico local de preços por produto.
+  // Operação isolada, dedupada por historicoId. Falhas não afetam o fluxo.
+  try {
+    registrarPrecosDaCompra(entry);
+  } catch {
+    // ignore — store local não pode quebrar a finalização da compra
+  }
+
   // Mark the source list as done (snapshot already saved).
   mutate((all) =>
     all.map((l) =>
