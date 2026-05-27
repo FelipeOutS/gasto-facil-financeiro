@@ -46,7 +46,7 @@
     "back": "Back",
     "home": "Home",
     "newList": "New list",
-    "newListToast": "Creating lists will be enabled in the next stage.",
+    "openToast": "Editing list items will be enabled in the next stage.",
     "summary": {
       "active": "Active lists",
       "items": "Planned items",
@@ -59,19 +59,54 @@
     },
     "card": {
       "itemsCount": "{{count}} items",
+      "items": "Items",
       "estimate": "Estimate",
-      "progress": "Progress"
+      "progress": "Progress",
+      "open": "Open"
     },
     "empty": {
       "title": "No lists created yet",
       "description": "Create a list to organize your shopping and avoid unplanned spending.",
       "cta": "Create list"
+    }
+  },
+  "nova": {
+    "metaTitle": "New list — Smart Grocery",
+    "title": "New list",
+    "subtitle": "Give your list a name and, if you like, set an estimated budget.",
+    "back": "Back",
+    "home": "Home",
+    "cancel": "Cancel",
+    "submit": "Create list",
+    "success": "List created successfully.",
+    "errors": {
+      "nameRequired": "Please enter a name for the list.",
+      "generic": "Could not create the list. Please try again."
     },
-    "mock": {
-      "compraMes": "Monthly shopping",
-      "reposicaoSemana": "Weekly restock",
-      "churrascoSabado": "Saturday barbecue"
-    },
-    "previewBadge": "Preview"
+    "fields": {
+      "name": {
+        "label": "List name",
+        "placeholder": "e.g. Monthly shopping"
+      },
+      "tipo": {
+        "label": "List type",
+        "options": {
+          "compraMes": "Monthly shopping",
+          "reposicao": "Restock",
+          "churrasco": "Barbecue",
+          "farmacia": "Pharmacy",
+          "outros": "Other"
+        }
+      },
+      "estimate": {
+        "label": "Estimated budget (optional)",
+        "placeholder": "0.00",
+        "hint": "Reference value to track how much you plan to spend."
+      },
+      "observation": {
+        "label": "Note (optional)",
+        "placeholder": "e.g. Buy on the weekend"
+      }
+    }
   }
 }

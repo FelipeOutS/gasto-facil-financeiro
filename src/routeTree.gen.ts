@@ -91,6 +91,7 @@ import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
 import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
 import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
+import { Route as MercadoListasNovaRouteImport } from './routes/mercado.listas.nova'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as InvestimentosIdRendimentoRouteImport } from './routes/investimentos.$id.rendimento'
 import { Route as InvestimentosIdMovimentacaoRouteImport } from './routes/investimentos.$id.movimentacao'
@@ -531,6 +532,11 @@ const MetasIdAdicionarRoute = MetasIdAdicionarRouteImport.update({
   path: '/metas/$id/adicionar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MercadoListasNovaRoute = MercadoListasNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => MercadoListasRoute,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -746,7 +752,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
-  '/mercado/listas': typeof MercadoListasRoute
+  '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -772,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/mercado/listas/nova': typeof MercadoListasNovaRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
@@ -857,7 +864,7 @@ export interface FileRoutesByTo {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
-  '/mercado/listas': typeof MercadoListasRoute
+  '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -883,6 +890,7 @@ export interface FileRoutesByTo {
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/mercado/listas/nova': typeof MercadoListasNovaRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
@@ -969,7 +977,7 @@ export interface FileRoutesById {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
-  '/mercado/listas': typeof MercadoListasRoute
+  '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -995,6 +1003,7 @@ export interface FileRoutesById {
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/mercado/listas/nova': typeof MercadoListasNovaRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
@@ -1108,6 +1117,7 @@ export interface FileRouteTypes {
     | '/investimentos/$id/movimentacao'
     | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
+    | '/mercado/listas/nova'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
@@ -1219,6 +1229,7 @@ export interface FileRouteTypes {
     | '/investimentos/$id/movimentacao'
     | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
+    | '/mercado/listas/nova'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
@@ -1330,6 +1341,7 @@ export interface FileRouteTypes {
     | '/investimentos/$id/movimentacao'
     | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
+    | '/mercado/listas/nova'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
@@ -2038,6 +2050,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetasIdAdicionarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mercado/listas/nova': {
+      id: '/mercado/listas/nova'
+      path: '/nova'
+      fullPath: '/mercado/listas/nova'
+      preLoaderRoute: typeof MercadoListasNovaRouteImport
+      parentRoute: typeof MercadoListasRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -2241,12 +2260,24 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface MercadoListasRouteChildren {
+  MercadoListasNovaRoute: typeof MercadoListasNovaRoute
+}
+
+const MercadoListasRouteChildren: MercadoListasRouteChildren = {
+  MercadoListasNovaRoute: MercadoListasNovaRoute,
+}
+
+const MercadoListasRouteWithChildren = MercadoListasRoute._addFileChildren(
+  MercadoListasRouteChildren,
+)
+
 interface MercadoRouteChildren {
-  MercadoListasRoute: typeof MercadoListasRoute
+  MercadoListasRoute: typeof MercadoListasRouteWithChildren
 }
 
 const MercadoRouteChildren: MercadoRouteChildren = {
-  MercadoListasRoute: MercadoListasRoute,
+  MercadoListasRoute: MercadoListasRouteWithChildren,
 }
 
 const MercadoRouteWithChildren =
@@ -2369,12 +2400,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
