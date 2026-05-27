@@ -41,8 +41,19 @@ const USER_AGENT =
   "GastoInteligente/1.0 (+https://gastointeligente.com.br) MercadoInteligente";
 const REQ_TIMEOUT_MS = 8000;
 const MAX_RESULTS = 15;
-/** Raio padrão (metros) ao redor do ponto geocodificado. */
-const DEFAULT_RADIUS_M = 3000;
+/** Raio progressivo (km). Para no primeiro que retornar resultados. */
+const RADIUS_STEPS_KM = [3, 5, 8, 10] as const;
+/** Tags OSM tratadas como "mercado/loja de comida" (sem farmácia/restaurante). */
+const SHOP_TAGS = [
+  "supermarket",
+  "convenience",
+  "general",
+  "grocery",
+  "greengrocer",
+  "butcher",
+  "bakery",
+] as const;
+const SOURCE_LABEL = "OpenStreetMap";
 
 function parseQuery(input: unknown): MercadoNearbyQuery {
   const obj = (input ?? {}) as Record<string, unknown>;
@@ -82,6 +93,25 @@ async function fetchWithTimeout(
 
 type GeocodeHit = { lat: number; lon: number };
 
+async function nominatimSearch(
+  params: URLSearchParams,
+): Promise<GeocodeHit | null> {
+  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+  try {
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return null;
+    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+    const hit = data[0];
+    if (!hit) return null;
+    const lat = Number(hit.lat);
+    const lon = Number(hit.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return { lat, lon };
+  } catch {
+    return null;
+  }
+}
+
 async function geocode(q: MercadoNearbyQuery): Promise<GeocodeHit | null> {
   const cep = normalizeCep(q.cep);
   const cidade = normalizeCidade(q.cidade);
@@ -96,33 +126,51 @@ async function geocode(q: MercadoNearbyQuery): Promise<GeocodeHit | null> {
     return { lat: q.latitude, lon: q.longitude };
   }
 
-  const params = new URLSearchParams({
-    format: "json",
-    limit: "1",
-    countrycodes: "br",
-    addressdetails: "0",
-  });
+  // 1) Tenta CEP estruturado (postalcode + country)
   if (cep.length === 8) {
-    params.set("postalcode", cep);
-    params.set("country", "Brazil");
-  } else if (cidade.length >= 2 && uf.length === 2) {
-    params.set("city", cidade);
-    params.set("state", uf);
-    params.set("country", "Brazil");
-  } else {
-    return null;
+    const byPostal = await nominatimSearch(
+      new URLSearchParams({
+        format: "json",
+        limit: "1",
+        countrycodes: "br",
+        addressdetails: "0",
+        postalcode: cep,
+        country: "Brazil",
+      }),
+    );
+    if (byPostal) return byPostal;
+
+    // 1b) Fallback: CEP em texto livre (Nominatim costuma resolver assim)
+    const cepMasked = `${cep.slice(0, 5)}-${cep.slice(5)}`;
+    const byFreeText = await nominatimSearch(
+      new URLSearchParams({
+        format: "json",
+        limit: "1",
+        countrycodes: "br",
+        addressdetails: "0",
+        q: `${cepMasked}, Brasil`,
+      }),
+    );
+    if (byFreeText) return byFreeText;
   }
 
-  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-  const res = await fetchWithTimeout(url);
-  if (!res.ok) return null;
-  const data = (await res.json()) as Array<{ lat: string; lon: string }>;
-  const hit = data[0];
-  if (!hit) return null;
-  const lat = Number(hit.lat);
-  const lon = Number(hit.lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  return { lat, lon };
+  // 2) Fallback final: cidade + UF (mesmo quando havia CEP, se ele falhou)
+  if (cidade.length >= 2 && uf.length === 2) {
+    const byCity = await nominatimSearch(
+      new URLSearchParams({
+        format: "json",
+        limit: "1",
+        countrycodes: "br",
+        addressdetails: "0",
+        city: cidade,
+        state: uf,
+        country: "Brazil",
+      }),
+    );
+    if (byCity) return byCity;
+  }
+
+  return null;
 }
 
 type OverpassElement = {
@@ -138,12 +186,15 @@ async function queryOverpass(
   center: GeocodeHit,
   radiusM: number,
 ): Promise<OverpassElement[]> {
-  // shop=supermarket|convenience|grocery cobre supermercados e mercadinhos.
+  const shopRegex = SHOP_TAGS.join("|");
+  // Inclui shop=* (mercadinhos/padarias/açougues) e amenity=marketplace (feiras).
   const query = `
     [out:json][timeout:20];
     (
-      node["shop"~"^(supermarket|convenience|grocery)$"](around:${radiusM},${center.lat},${center.lon});
-      way["shop"~"^(supermarket|convenience|grocery)$"](around:${radiusM},${center.lat},${center.lon});
+      node["shop"~"^(${shopRegex})$"](around:${radiusM},${center.lat},${center.lon});
+      way["shop"~"^(${shopRegex})$"](around:${radiusM},${center.lat},${center.lon});
+      node["amenity"="marketplace"](around:${radiusM},${center.lat},${center.lon});
+      way["amenity"="marketplace"](around:${radiusM},${center.lat},${center.lon});
     );
     out center ${MAX_RESULTS};
   `.trim();
@@ -203,35 +254,48 @@ export const findNearbyMarketsServerFn = createServerFn({ method: "POST" })
     try {
       const center = await geocode(data);
       if (!center) {
-        // Input válido, mas o geocoder gratuito (Nominatim) não localizou.
-        // Tratamos como "sem resultados" — NÃO como CEP inválido.
+        // Input válido, mas o geocoder gratuito (Nominatim) não localizou a
+        // região exata. Não é "CEP inválido" — tratamos como sem resultados.
         return {
           ok: false,
           provider: ACTIVE_NEARBY_PROVIDER,
           error: { code: "empty" },
         };
       }
-      const radiusM = Math.max(
-        500,
-        Math.min(10000, Math.round((data.radiusKm ?? 3) * 1000)),
-      );
-      const elements = await queryOverpass(
-        center,
-        radiusM || DEFAULT_RADIUS_M,
-      );
-      const results = elements
-        .map(mapElement)
-        .filter((r): r is MercadoNearbyResult => r !== null)
-        .slice(0, MAX_RESULTS);
 
-      if (results.length === 0) {
-        return {
-          ok: false,
-          provider: ACTIVE_NEARBY_PROVIDER,
-          error: { code: "empty" },
-        };
+      // Se o usuário passou um raio explícito, usa esse único valor;
+      // caso contrário, faz busca progressiva.
+      const steps =
+        typeof data.radiusKm === "number" && Number.isFinite(data.radiusKm)
+          ? [Math.max(0.5, Math.min(10, data.radiusKm))]
+          : (RADIUS_STEPS_KM as readonly number[]);
+
+      let lastTriedKm = 0;
+      for (const km of steps) {
+        lastTriedKm = km;
+        const radiusM = Math.round(km * 1000);
+        const elements = await queryOverpass(center, radiusM);
+        const results = elements
+          .map(mapElement)
+          .filter((r): r is MercadoNearbyResult => r !== null)
+          .slice(0, MAX_RESULTS);
+        if (results.length > 0) {
+          return {
+            ok: true,
+            provider: ACTIVE_NEARBY_PROVIDER,
+            results,
+            radiusKmUsed: km,
+            sourceLabel: SOURCE_LABEL,
+          };
+        }
       }
-      return { ok: true, provider: ACTIVE_NEARBY_PROVIDER, results };
+
+      return {
+        ok: false,
+        provider: ACTIVE_NEARBY_PROVIDER,
+        error: { code: "empty" },
+        radiusKmTried: lastTriedKm,
+      };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       const code =

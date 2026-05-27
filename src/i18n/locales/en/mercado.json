@@ -767,7 +767,7 @@
         "invalid_location": "Enter a valid ZIP code or city and state to search.",
         "network": "Couldn't connect right now. Please try again shortly.",
         "timeout": "The search took too long. Please try again.",
-        "empty": "No markets found in this area. Add one manually for now.",
+        "empty": "We didn't find any markets listed on OpenStreetMap for this area. You can still add a market manually below.",
         "unknown": "Something went wrong with the search. You can add manually below."
       },
       "results": {
@@ -775,6 +775,7 @@
         "count_one": "{{count}} market found",
         "count_other": "{{count}} markets found",
         "source": "Source: OpenStreetMap",
+        "radiusInfo": "Results found within approximately {{km}} km.",
         "useCta": "Use this market",
         "noAddress": "Address not provided"
       }

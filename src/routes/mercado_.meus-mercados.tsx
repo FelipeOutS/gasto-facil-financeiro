@@ -676,6 +676,7 @@ function NearbySearchCard({
   const [uf, setUf] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MercadoNearbyResult[]>([]);
+  const [radiusKmUsed, setRadiusKmUsed] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<{
     kind: "idle" | "info" | "error";
     code?: MercadoNearbyErrorCode;
@@ -686,6 +687,7 @@ function NearbySearchCard({
     setLoading(true);
     setFeedback({ kind: "idle" });
     setResults([]);
+    setRadiusKmUsed(null);
     try {
       const res = await findNearbyMarkets({
         cep: normalizeCep(cep),
@@ -694,6 +696,7 @@ function NearbySearchCard({
       });
       if (res.ok) {
         setResults(res.results);
+        setRadiusKmUsed(res.radiusKmUsed ?? null);
       } else {
         setFeedback({ kind: "info", code: res.error.code });
       }
@@ -799,6 +802,11 @@ function NearbySearchCard({
               {t("meusMercados.nearby.results.count", { count: results.length })}
             </span>
           </div>
+          {radiusKmUsed != null && (
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {t("meusMercados.nearby.results.radiusInfo", { km: radiusKmUsed })}
+            </p>
+          )}
           <ul className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {results.map((r) => {
               const cidadeUf = [r.cidade, r.uf].filter(Boolean).join("/");
