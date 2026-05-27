@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
 
 
-export const Route = createFileRoute("/mercado/listas")({
+export const Route = createFileRoute("/mercado_/listas")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.listasTitle", { lng: i18n.language }) }] }),
   component: MercadoListasPage,
 });

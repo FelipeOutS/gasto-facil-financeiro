@@ -33,7 +33,7 @@ import {
   type MercadoLista,
 } from "@/lib/mercado/listas-store";
 
-export const Route = createFileRoute("/mercado/listas/$id")({
+export const Route = createFileRoute("/mercado_/listas/$id")({
   head: () => ({
     meta: [{ title: i18n.t("mercado:detail.metaTitle", { lng: i18n.language }) }],
   }),
