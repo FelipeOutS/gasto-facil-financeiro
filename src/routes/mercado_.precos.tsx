@@ -11,6 +11,7 @@ import {
   Shield,
   BarChart3,
   Info,
+  Store,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
