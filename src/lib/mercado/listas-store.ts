@@ -32,6 +32,7 @@ export function __setMercadoActiveUser(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
   emit();
+  emitHistorico();
 }
 
 export function __replaceListasCache(listas: MercadoLista[]) {
@@ -579,9 +580,32 @@ export function useMercadoLista(id: string | undefined): MercadoLista | undefine
 
 // ----------------------------------------------------------------------------
 // Historico local de compras finalizadas
+// (Cache local por usuário, sincronizado com Supabase via mercado-sync)
 // ----------------------------------------------------------------------------
 
 export const MERCADO_HISTORICO_STORAGE_KEY = "gi:mercado:historico:v1";
+export const MERCADO_HISTORICO_LEGACY_ANON_KEY = MERCADO_HISTORICO_STORAGE_KEY;
+
+function currentHistoricoKey(): string {
+  return activeUserId
+    ? `${MERCADO_HISTORICO_STORAGE_KEY}:${activeUserId}`
+    : MERCADO_HISTORICO_STORAGE_KEY;
+}
+
+type HistoricoSyncHooks = {
+  onUpsertHistorico?: (h: MercadoCompraHistorico) => void;
+  onDeleteHistorico?: (id: string) => void;
+};
+let historicoSyncHooks: HistoricoSyncHooks = {};
+
+export function __setMercadoHistoricoSyncHooks(hooks: HistoricoSyncHooks) {
+  historicoSyncHooks = hooks;
+}
+
+export function __replaceHistoricoCache(items: MercadoCompraHistorico[]) {
+  safeWriteHistorico(items);
+  emitHistorico();
+}
 
 export type MercadoCompraHistorico = {
   id: string;
@@ -604,7 +628,7 @@ export type MercadoCompraHistorico = {
 
 const historicoListeners = new Set<Listener>();
 
-function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
+export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   if (typeof r.id !== "string" || typeof r.listaId !== "string") return null;
@@ -680,7 +704,7 @@ function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
 function safeReadHistorico(): MercadoCompraHistorico[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_HISTORICO_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentHistoricoKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -695,7 +719,7 @@ function safeReadHistorico(): MercadoCompraHistorico[] {
 function safeWriteHistorico(next: MercadoCompraHistorico[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_HISTORICO_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentHistoricoKey(), JSON.stringify(next));
   } catch {
     // ignore
   }
@@ -752,6 +776,11 @@ export function finalizarListaCompra(
   safeWriteHistorico([entry, ...current]);
   emitHistorico();
 
+  // Push para Supabase (best-effort, não bloqueia o fluxo local).
+  if (historicoSyncHooks.onUpsertHistorico) {
+    try { historicoSyncHooks.onUpsertHistorico(entry); } catch { /* ignore */ }
+  }
+
   // E13: registra preços no histórico local de preços por produto.
   // Operação isolada, dedupada por historicoId. Falhas não afetam o fluxo.
   try {
@@ -776,7 +805,7 @@ function subscribeHistorico(listener: Listener): () => void {
   historicoListeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_HISTORICO_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_HISTORICO_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {

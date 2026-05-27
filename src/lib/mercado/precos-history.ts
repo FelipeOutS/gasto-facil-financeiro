@@ -244,6 +244,36 @@ export function anonimizarRegistro(
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 export const MERCADO_PRECOS_STORAGE_KEY = "gi:mercado:precos:v1";
+export const MERCADO_PRECOS_LEGACY_ANON_KEY = MERCADO_PRECOS_STORAGE_KEY;
+
+// ----- Sync state (preenchido por mercado-sync.ts) -----
+let precosActiveUserId: string | null = null;
+
+function currentPrecosKey(): string {
+  return precosActiveUserId
+    ? `${MERCADO_PRECOS_STORAGE_KEY}:${precosActiveUserId}`
+    : MERCADO_PRECOS_STORAGE_KEY;
+}
+
+type PrecosSyncHooks = {
+  onUpsertRegistros?: (regs: MercadoPrecoLocal[]) => void;
+};
+let precosSyncHooks: PrecosSyncHooks = {};
+
+export function __setMercadoPrecosSyncHooks(hooks: PrecosSyncHooks) {
+  precosSyncHooks = hooks;
+}
+
+export function __setMercadoPrecosActiveUser(uid: string | null) {
+  if (precosActiveUserId === uid) return;
+  precosActiveUserId = uid;
+  emitPrecos();
+}
+
+export function __replacePrecosCache(items: MercadoPrecoLocal[]) {
+  safeWritePrecos(items);
+  emitPrecos();
+}
 
 /** Versão pública do registro local (mesma forma do registro privado). */
 export type MercadoPrecoLocal = MercadoPrecoUsuarioRegistro;
@@ -316,7 +346,7 @@ function normalizePreco(raw: unknown): MercadoPrecoLocal | null {
 function safeReadPrecos(): MercadoPrecoLocal[] {
   if (!isBrowserPrec()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_PRECOS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentPrecosKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -329,7 +359,7 @@ function safeReadPrecos(): MercadoPrecoLocal[] {
 function safeWritePrecos(next: MercadoPrecoLocal[]) {
   if (!isBrowserPrec()) return;
   try {
-    window.localStorage.setItem(MERCADO_PRECOS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentPrecosKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
@@ -520,6 +550,10 @@ export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number 
   }
   safeWritePrecos([...novos, ...atuais]);
   emitPrecos();
+  // Push para Supabase (best-effort, não bloqueia o fluxo local).
+  if (precosSyncHooks.onUpsertRegistros) {
+    try { precosSyncHooks.onUpsertRegistros(novos); } catch { /* ignore */ }
+  }
   return novos.length;
 }
 
@@ -527,7 +561,7 @@ function subscribePrecos(listener: PrecoListener): () => void {
   precosListeners.add(listener);
   if (isBrowserPrec()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_PRECOS_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_PRECOS_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
