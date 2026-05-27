@@ -9,6 +9,7 @@ import {
   PackageCheck,
   Sparkles,
   ChevronRight,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
