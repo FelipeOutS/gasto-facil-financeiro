@@ -440,6 +440,13 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           </button>
         </form>
       )}
+      {editing && (
+        <PrecoInsight
+          nome={item.nome}
+          codigoBarras={item.codigoBarras}
+          precoUnitario={Number(valor.replace(",", ".")) || undefined}
+        />
+      )}
     </li>
   );
 }
