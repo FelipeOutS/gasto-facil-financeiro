@@ -125,9 +125,10 @@ function MercadoListasPage() {
               key={lista.id}
               lista={lista}
               dateLabel={dateFormatter.format(new Date(lista.createdAt))}
-              onOpen={handleOpenLista}
+              onOpen={() => handleOpenLista(lista.id)}
             />
           ))}
+
         </section>
       )}
 
