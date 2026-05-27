@@ -440,5 +440,82 @@
       "point5": "O usuário deverá ter controle sobre participação, quando esse recurso for implementado.",
       "futureOptIn": "Quando a base comunitária estiver pronta, o usuário decidirá se deseja participar. Nenhum dado será compartilhado sem consentimento."
     }
+  },
+  "cesta": {
+    "metaTitle": "Cesta padrão — Mercado Inteligente",
+    "title": "Cesta padrão",
+    "subtitle": "Monte cestas reutilizáveis com os itens que você compra com frequência.",
+    "back": "Voltar",
+    "home": "Início",
+    "intro": "Crie cestas como compra do mês, reposição semanal ou farmácia. Quando precisar, gere uma nova lista de compras a partir da cesta em um toque.",
+    "yourBaskets": "Suas cestas ({{count}})",
+    "newBasket": "Nova cesta",
+    "types": {
+      "compraMes": "Compra do mês",
+      "reposicao": "Reposição",
+      "limpeza": "Limpeza",
+      "farmacia": "Farmácia",
+      "churrasco": "Churrasco",
+      "outros": "Outros"
+    },
+    "empty": {
+      "title": "Nenhuma cesta padrão ainda",
+      "description": "Monte uma cesta com os produtos que você compra sempre e crie listas mais rápido.",
+      "cta": "Criar cesta padrão"
+    },
+    "form": {
+      "title": "Nova cesta padrão",
+      "nameLabel": "Nome da cesta",
+      "namePlaceholder": "Ex.: Compra do mês",
+      "typeLabel": "Tipo",
+      "descriptionLabel": "Descrição (opcional)",
+      "descriptionPlaceholder": "Breve descrição da cesta",
+      "cancel": "Cancelar",
+      "submit": "Criar cesta",
+      "saveMeta": "Salvar alterações",
+      "errors": {
+        "nameRequired": "Informe um nome para a cesta.",
+        "itemNameRequired": "Informe o nome do item."
+      }
+    },
+    "card": {
+      "items": "Itens",
+      "estimated": "Estimado",
+      "updated": "Atualizada",
+      "openEdit": "Editar",
+      "close": "Fechar",
+      "generate": "Gerar lista",
+      "delete": "Excluir cesta"
+    },
+    "items": {
+      "title": "Itens da cesta",
+      "empty": "Nenhum item ainda. Use o formulário abaixo para adicionar.",
+      "qty": "Qtd",
+      "price": "Preço un.",
+      "remove": "Remover item"
+    },
+    "addItem": {
+      "title": "Adicionar item",
+      "hint": "Informe o preço unitário. O total é calculado automaticamente pela quantidade.",
+      "nameLabel": "Nome do item",
+      "namePlaceholder": "Ex.: Arroz 5kg",
+      "qtyLabel": "Quantidade",
+      "unitLabel": "Unidade (opcional)",
+      "unitPlaceholder": "Ex.: un, kg, L",
+      "unitPriceLabel": "Preço unitário (opcional)",
+      "unitPricePlaceholder": "Ex.: 2,99",
+      "submit": "Adicionar à cesta"
+    },
+    "toasts": {
+      "created": "Cesta \"{{name}}\" criada.",
+      "saved": "Cesta atualizada.",
+      "deleted": "Cesta excluída.",
+      "generated": "Lista criada a partir de \"{{name}}\".",
+      "emptyItems": "Adicione pelo menos um item antes de gerar a lista.",
+      "generateError": "Não foi possível gerar a lista."
+    },
+    "confirm": {
+      "delete": "Excluir a cesta \"{{name}}\"? Esta ação não pode ser desfeita."
+    }
   }
 }
