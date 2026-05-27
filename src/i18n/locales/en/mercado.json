@@ -439,6 +439,10 @@
       "point4": "In the future it may use only aggregated and approximate data.",
       "point5": "The user will have control over participation when this feature is implemented.",
       "futureOptIn": "When the community base is ready, the user will decide whether to participate. No data will be shared without consent."
+    },
+    "ctaLocal": {
+      "title": "View my local price history",
+      "desc": "See prices of products purchased on this device."
     }
   },
   "cesta": {
