@@ -57,6 +57,7 @@ import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
+import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcamento'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
 import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
 import { Route as MercadoCalculadorasRouteImport } from './routes/mercado_.calculadoras'
@@ -361,6 +362,11 @@ const PtSplatRoute = PtSplatRouteImport.update({
 const MetasNovaRoute = MetasNovaRouteImport.update({
   id: '/metas/nova',
   path: '/metas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoOrcamentoRoute = MercadoOrcamentoRouteImport.update({
+  id: '/mercado_/orcamento',
+  path: '/mercado/orcamento',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoListasRoute = MercadoListasRouteImport.update({
@@ -773,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
+  '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -888,6 +895,7 @@ export interface FileRoutesByTo {
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
+  '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1004,6 +1012,7 @@ export interface FileRoutesById {
   '/mercado_/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado_/historico': typeof MercadoHistoricoRoute
   '/mercado_/listas': typeof MercadoListasRoute
+  '/mercado_/orcamento': typeof MercadoOrcamentoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1121,6 +1130,7 @@ export interface FileRouteTypes {
     | '/mercado/calculadoras'
     | '/mercado/historico'
     | '/mercado/listas'
+    | '/mercado/orcamento'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1236,6 +1246,7 @@ export interface FileRouteTypes {
     | '/mercado/calculadoras'
     | '/mercado/historico'
     | '/mercado/listas'
+    | '/mercado/orcamento'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1351,6 +1362,7 @@ export interface FileRouteTypes {
     | '/mercado_/calculadoras'
     | '/mercado_/historico'
     | '/mercado_/listas'
+    | '/mercado_/orcamento'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1467,6 +1479,7 @@ export interface RootRouteChildren {
   MercadoCalculadorasRoute: typeof MercadoCalculadorasRoute
   MercadoHistoricoRoute: typeof MercadoHistoricoRoute
   MercadoListasRoute: typeof MercadoListasRoute
+  MercadoOrcamentoRoute: typeof MercadoOrcamentoRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1851,6 +1864,13 @@ declare module '@tanstack/react-router' {
       path: '/metas/nova'
       fullPath: '/metas/nova'
       preLoaderRoute: typeof MetasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/orcamento': {
+      id: '/mercado_/orcamento'
+      path: '/mercado/orcamento'
+      fullPath: '/mercado/orcamento'
+      preLoaderRoute: typeof MercadoOrcamentoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/listas': {
@@ -2389,6 +2409,7 @@ const rootRouteChildren: RootRouteChildren = {
   MercadoCalculadorasRoute: MercadoCalculadorasRoute,
   MercadoHistoricoRoute: MercadoHistoricoRoute,
   MercadoListasRoute: MercadoListasRoute,
+  MercadoOrcamentoRoute: MercadoOrcamentoRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
