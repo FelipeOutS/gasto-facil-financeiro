@@ -274,6 +274,192 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
   );
 }
 
+const TIPOS_EDIT: ListaTipo[] = ["compraMes", "reposicao", "churrasco", "farmacia", "outros"];
+
+function EditListaCard({ lista }: { lista: MercadoLista }) {
+  const { t } = useTranslation("mercado");
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(lista.name);
+  const [tipo, setTipo] = useState<ListaTipo>(lista.tipo);
+  const [estimate, setEstimate] = useState(
+    lista.estimate != null ? String(lista.estimate).replace(".", ",") : "",
+  );
+  const [observation, setObservation] = useState(lista.observation ?? "");
+
+  function handleOpen() {
+    setName(lista.name);
+    setTipo(lista.tipo);
+    setEstimate(lista.estimate != null ? String(lista.estimate).replace(".", ",") : "");
+    setObservation(lista.observation ?? "");
+    setOpen(true);
+  }
+
+  function handleCancel() {
+    setOpen(false);
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error(t("detail.editList.requiredName"));
+      return;
+    }
+    const parsed = estimate ? Number(estimate.replace(/\./g, "").replace(",", ".")) : NaN;
+    const estimateValue: number | null =
+      Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+
+    const ok = updateListaDados(lista.id, {
+      name: trimmed,
+      tipo,
+      estimate: estimateValue,
+      observation: observation.trim() || null,
+    });
+    if (!ok) {
+      toast.error(t("detail.editList.requiredName"));
+      return;
+    }
+    toast.success(t("detail.editList.saved"));
+    setOpen(false);
+  }
+
+  if (!open) {
+    return (
+      <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold text-foreground">
+              {t("detail.editList.title")}
+            </h2>
+            {lista.observation && (
+              <p className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
+                {lista.observation}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-card active:scale-95"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {t("detail.editList.open")}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label
+            htmlFor="edit-lista-name"
+            className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+          >
+            {t("detail.editList.name")}
+          </label>
+          <input
+            id="edit-lista-name"
+            type="text"
+            required
+            maxLength={80}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <span className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("detail.editList.tipo")}
+          </span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {TIPOS_EDIT.map((opt) => {
+              const active = tipo === opt;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setTipo(opt)}
+                  aria-pressed={active}
+                  className={cn(
+                    "rounded-full border px-3.5 py-2 text-sm font-medium transition-all active:scale-95",
+                    active
+                      ? "border-transparent bg-brand-grad text-primary-foreground shadow-elevated"
+                      : "border-border bg-card-elevated text-foreground/80 hover:text-foreground",
+                  )}
+                >
+                  {t(`nova.fields.tipo.options.${opt}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="edit-lista-estimate"
+            className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+          >
+            {t("detail.editList.estimate")}
+          </label>
+          <input
+            id="edit-lista-estimate"
+            type="text"
+            inputMode="decimal"
+            maxLength={12}
+            value={estimate}
+            onChange={(e) => setEstimate(e.target.value.replace(/[^\d.,]/g, ""))}
+            className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            {t("detail.editList.estimateHint")}
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="edit-lista-observation"
+            className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+          >
+            {t("detail.editList.observation")}
+          </label>
+          <input
+            id="edit-lista-observation"
+            type="text"
+            maxLength={200}
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            placeholder={t("detail.editList.observationPlaceholder")}
+            className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 md:col-span-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-border bg-card-elevated px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-card active:scale-95"
+          >
+            <X className="h-4 w-4" />
+            {t("detail.editList.cancel")}
+          </button>
+          <button
+            type="submit"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-brand-grad px-4 py-2 text-sm font-semibold text-primary-foreground shadow-elevated transition active:scale-95"
+          >
+            <Save className="h-4 w-4" />
+            {t("detail.editList.save")}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+
 function BudgetCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const o = useMemo(() => computeOrcamentoLista(lista), [lista]);
