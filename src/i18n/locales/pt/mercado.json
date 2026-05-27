@@ -197,6 +197,18 @@
       "noName": "Produto sem nome cadastrado",
       "applied": "Produto preenchido. Confira preço e quantidade."
     },
+    "barcodeScanner": {
+      "scan": "Escanear código",
+      "scanning": "Lendo código…",
+      "close": "Fechar câmera",
+      "unsupported": "Leitura pela câmera não disponível neste dispositivo.",
+      "permissionDenied": "Não foi possível acessar a câmera. Verifique a permissão do navegador.",
+      "detected": "Código detectado.",
+      "invalidCode": "Código inválido. Use entre 8 e 14 dígitos.",
+      "manualFallback": "Você ainda pode digitar o código manualmente.",
+      "cameraError": "Não foi possível iniciar a câmera.",
+      "hint": "Aponte a câmera para o código de barras do produto."
+    },
     "finalize": {
       "cta": "Finalizar compra",
       "hint": "Salve esta compra no seu histórico local.",
