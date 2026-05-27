@@ -65,6 +65,18 @@ function cleanStr(v: unknown): string | undefined {
   return t ? t : undefined;
 }
 
+function cleanCep(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const digits = v.replace(/\D/g, "").slice(0, 8);
+  return digits ? digits : undefined;
+}
+
+function cleanUf(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+  return t ? t : undefined;
+}
+
 function normalize(raw: unknown): MercadoLocal | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
