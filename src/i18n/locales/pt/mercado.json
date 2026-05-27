@@ -751,6 +751,25 @@
       "title": "Seus mercados",
       "count_one": "{{count}} mercado",
       "count_other": "{{count}} mercados"
+    },
+    "nearby": {
+      "title": "Mercados próximos",
+      "description": "Em breve, você poderá encontrar mercados próximos pelo CEP ou cidade. Por enquanto, a busca automática está em preparação — você pode cadastrar seus mercados manualmente abaixo.",
+      "searchCta": "Buscar mercados",
+      "fields": {
+        "cep": "CEP",
+        "cidade": "Cidade",
+        "cidadePlaceholder": "Ex.: São Paulo",
+        "uf": "UF"
+      },
+      "messages": {
+        "provider_unavailable": "A busca automática ainda está em preparação. Você pode cadastrar o mercado manualmente abaixo.",
+        "invalid_location": "Informe um CEP válido ou cidade e UF para tentar buscar.",
+        "network": "Não foi possível conectar agora. Tente novamente em alguns instantes.",
+        "timeout": "A busca demorou demais. Tente novamente.",
+        "empty": "Nenhum mercado encontrado nessa região. Cadastre manualmente enquanto isso.",
+        "unknown": "Algo deu errado na busca. Você pode cadastrar manualmente abaixo."
+      }
     }
   }
 }

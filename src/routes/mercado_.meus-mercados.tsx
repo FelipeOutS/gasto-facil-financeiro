@@ -28,6 +28,14 @@ import {
   useMercadosLocais,
   type MercadoLocal,
 } from "@/lib/mercado/mercados-store";
+import {
+  findNearbyMarkets,
+  normalizeCep,
+  normalizeCidade,
+  normalizeUf,
+  type MercadoNearbyErrorCode,
+} from "@/lib/mercado/nearby-markets-api";
+
 
 export const Route = createFileRoute("/mercado_/meus-mercados")({
   head: () => ({
@@ -205,6 +213,9 @@ function MeusMercadosPage() {
           </p>
         </div>
       </section>
+
+      <NearbySearchCard />
+
 
       <section className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
@@ -634,5 +645,131 @@ function MercadoCard({
         </button>
       </div>
     </article>
+  );
+}
+
+function NearbySearchCard() {
+  const { t } = useTranslation("mercado");
+  const [cep, setCep] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    kind: "idle" | "info" | "error";
+    code?: MercadoNearbyErrorCode;
+  }>({ kind: "idle" });
+
+  async function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setFeedback({ kind: "idle" });
+    try {
+      const res = await findNearbyMarkets({
+        cep: normalizeCep(cep),
+        cidade: normalizeCidade(cidade),
+        uf: normalizeUf(uf),
+      });
+      if (res.ok) {
+        if (res.results.length === 0) {
+          setFeedback({ kind: "info", code: "empty" });
+        } else {
+          // Reservado para etapa futura: render dos resultados encontrados.
+          setFeedback({ kind: "info", code: "empty" });
+        }
+      } else {
+        setFeedback({ kind: "info", code: res.error.code });
+      }
+    } catch {
+      setFeedback({ kind: "error", code: "unknown" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const messageKey =
+    feedback.kind === "idle"
+      ? null
+      : `meusMercados.nearby.messages.${feedback.code ?? "unknown"}`;
+
+  return (
+    <section className="mt-5 rounded-3xl border border-dashed border-border bg-card p-4 shadow-card md:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+          <Search className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold md:text-lg">
+            {t("meusMercados.nearby.title")}
+          </h2>
+          <p className="mt-1 text-[13px] leading-snug text-muted-foreground md:text-sm">
+            {t("meusMercados.nearby.description")}
+          </p>
+        </div>
+      </div>
+
+      <form
+        onSubmit={handleSearch}
+        className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_120px]"
+      >
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("meusMercados.nearby.fields.cep")}
+          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={cep}
+            onChange={(e) => setCep(formatCepMask(e.target.value))}
+            placeholder="00000-000"
+            className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none transition-colors focus:border-brand"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("meusMercados.nearby.fields.cidade")}
+          </span>
+          <input
+            type="text"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            placeholder={t("meusMercados.nearby.fields.cidadePlaceholder")}
+            className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none transition-colors focus:border-brand"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("meusMercados.nearby.fields.uf")}
+          </span>
+          <input
+            type="text"
+            value={uf}
+            onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))}
+            maxLength={2}
+            placeholder="SP"
+            className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm uppercase outline-none transition-colors focus:border-brand"
+          />
+        </label>
+        <div className="sm:col-span-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 text-sm font-semibold text-primary-foreground shadow-elevated transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            {t("meusMercados.nearby.searchCta")}
+          </button>
+        </div>
+      </form>
+
+      {messageKey && (
+        <p className="mt-3 rounded-2xl bg-card-elevated px-3 py-2 text-[13px] leading-snug text-muted-foreground ring-1 ring-border/60">
+          {t(messageKey)}
+        </p>
+      )}
+    </section>
   );
 }
