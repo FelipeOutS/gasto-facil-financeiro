@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BarChart3,
   Store,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
