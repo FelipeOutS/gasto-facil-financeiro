@@ -268,6 +268,7 @@ export function addLista(input: {
     updatedAt: now,
   });
   mutate((cur) => [lista, ...cur]);
+  pushUpsert(lista.id);
   return lista;
 }
 
