@@ -253,6 +253,141 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
   );
 }
 
+function BudgetCard({ lista }: { lista: MercadoLista }) {
+  const { t } = useTranslation("mercado");
+  const o = useMemo(() => computeOrcamentoLista(lista), [lista]);
+
+  if (!o.hasBudget) {
+    return (
+      <section className="mt-4 rounded-3xl border border-dashed border-border bg-card p-4 shadow-card md:p-5">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-card-elevated text-muted-foreground ring-1 ring-border/60">
+            <WalletCards className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("detail.budget.noBudgetTitle")}
+            </h2>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
+              {t("detail.budget.noBudgetHint")}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const pct = o.percentualUsado;
+  const barWidth = Math.max(0, Math.min(100, pct));
+  const barClass = pct > 100 ? "bg-destructive" : pct > 80 ? "bg-warning" : "bg-success";
+  const pctTextClass =
+    pct > 100 ? "text-destructive" : pct > 80 ? "text-warning" : "text-success";
+  const diffAbs = Math.abs(o.diferenca);
+
+  return (
+    <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-card-elevated ring-1 ring-border/60",
+            pctTextClass,
+          )}
+        >
+          <WalletCards className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-foreground">{t("detail.budget.title")}</h2>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            {t("detail.budget.subtitle")}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-border/60 bg-card-elevated p-3">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("detail.budget.defined")}
+          </p>
+          <p className="mt-1 text-base font-bold tabular-nums">
+            <Money value={o.budget} />
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-card-elevated p-3">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("detail.budget.totalEstimated")}
+          </p>
+          <p className="mt-1 text-base font-bold tabular-nums">
+            <Money value={o.totalEstimado} />
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-card-elevated p-3">
+          <p
+            className={cn(
+              "truncate text-[10px] font-semibold uppercase tracking-widest",
+              o.overBudget ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
+            {o.overBudget ? t("detail.budget.over") : t("detail.budget.remaining")}
+          </p>
+          <p
+            className={cn(
+              "mt-1 text-base font-bold tabular-nums",
+              o.overBudget ? "text-destructive" : "text-success",
+            )}
+          >
+            <Money value={diffAbs} />
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("detail.budget.usedLabel")}
+          </span>
+          <span className={cn("text-[12px] font-semibold tabular-nums", pctTextClass)}>
+            {pct}%
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.min(100, pct)}
+          className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-card-elevated ring-1 ring-border/60"
+        >
+          <div
+            className={cn("h-full rounded-full transition-all", barClass)}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+        <p
+          className={cn(
+            "mt-2 text-[12px]",
+            o.overBudget ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {o.overBudget
+            ? t("detail.budget.overHint", {
+                value: diffAbs.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "BRL",
+                }),
+              })
+            : t("detail.budget.withinHint", {
+                value: diffAbs.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "BRL",
+                }),
+              })}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+
+
 function SummaryTile({
   icon: Icon,
   label,
