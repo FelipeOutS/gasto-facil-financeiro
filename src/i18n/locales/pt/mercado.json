@@ -550,7 +550,20 @@
       "marketSingle": "Registrado em: {{value}}",
       "marketMultiple_one": "Registrado em {{count}} mercado",
       "marketMultiple_other": "Registrado em {{count}} mercados",
-      "marketUnknown": "Mercado não informado"
+      "marketUnknown": "Mercado não informado",
+      "filteredBy": "Filtrado por: {{value}}"
+    },
+    "filters": {
+      "label": "Mercado",
+      "all": "Todos os mercados",
+      "noMarket": "Sem mercado informado",
+      "showingAll": "Mostrando todos os preços do seu histórico local.",
+      "showingMarket": "Mostrando preços registrados em {{value}}.",
+      "showingNoMarket": "Mostrando produtos sem mercado informado.",
+      "emptyMarketTitle": "Nenhum preço encontrado para este mercado",
+      "emptyMarketDescription": "Tente selecionar outro mercado ou finalize uma compra informando esse local.",
+      "emptyNoMarketTitle": "Nenhum produto sem mercado informado",
+      "emptyNoMarketDescription": "Todos os seus preços locais já têm um mercado associado."
     }
   },
   "precoInsight": {
