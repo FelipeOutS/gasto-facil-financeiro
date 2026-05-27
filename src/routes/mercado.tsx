@@ -25,7 +25,7 @@ export const Route = createFileRoute("/mercado")({
 type CardStatus = "soon" | "future" | "open";
 
 type CardDef = {
-  key: "listas" | "calculadoras" | "orcamento" | "historico" | "carrinho" | "precos" | "cesta";
+  key: "listas" | "calculadoras" | "orcamento" | "historico" | "carrinho" | "precos" | "cesta" | "mercados";
   icon: LucideIcon;
   status: CardStatus;
   to?: string;
@@ -37,6 +37,7 @@ const CARDS: CardDef[] = [
   { key: "orcamento", icon: WalletCards, status: "open", to: "/mercado/orcamento" },
   { key: "historico", icon: History, status: "open", to: "/mercado/historico" },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
+  { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados" },
   { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos" },
   { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta" },
 ];
