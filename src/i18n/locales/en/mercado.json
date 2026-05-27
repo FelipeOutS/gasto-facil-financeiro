@@ -202,7 +202,9 @@
       "error": "Could not finalize this shopping.",
       "marketLabel": "Market or place of purchase",
       "marketPlaceholder": "E.g.: Walmart, Costco, neighborhood market",
-      "marketHint": "Optional. Helps you remember where you paid these prices."
+      "marketHint": "Optional. Helps you remember where you paid these prices.",
+      "savedMarkets": "Your markets",
+      "noSavedMarketsHint": "You can save favorite markets in My markets."
     }
   },
   "historico": {
