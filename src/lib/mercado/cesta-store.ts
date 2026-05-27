@@ -318,9 +318,7 @@ export function gerarListaAPartirDaCesta(cestaId: string): MercadoLista | null {
       precoEstimado: it.precoEstimado,
     });
   }
-  // Re-read to get the most up-to-date snapshot with items.
-  const arr = safeRead();
-  void arr; // no-op, just keeps types happy
+  // Return the created list reference (entries são persistidas no listas-store).
   return { ...lista };
 }
 
