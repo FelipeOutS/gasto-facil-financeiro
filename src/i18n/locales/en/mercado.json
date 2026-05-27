@@ -191,7 +191,10 @@
       "emptyError": "Add at least one item before finalizing.",
       "confirmPending": "There are still pending items in this list. Finalize anyway?",
       "success": "Shopping saved to history.",
-      "error": "Could not finalize this shopping."
+      "error": "Could not finalize this shopping.",
+      "marketLabel": "Market or place of purchase",
+      "marketPlaceholder": "E.g.: Walmart, Costco, neighborhood market",
+      "marketHint": "Optional. Helps you remember where you paid these prices."
     }
   },
   "historico": {
