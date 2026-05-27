@@ -371,6 +371,7 @@ export function removeItemLista(listaId: string, itemId: string) {
         : l,
     ),
   );
+  pushUpsert(listaId);
 }
 
 /**
