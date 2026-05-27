@@ -403,3 +403,203 @@ export function useMercadoLista(id: string | undefined): MercadoLista | undefine
   if (!id) return undefined;
   return all.find((l) => l.id === id);
 }
+
+// ----------------------------------------------------------------------------
+// Historico local de compras finalizadas
+// ----------------------------------------------------------------------------
+
+export const MERCADO_HISTORICO_STORAGE_KEY = "gi:mercado:historico:v1";
+
+export type MercadoCompraHistorico = {
+  id: string;
+  listaId: string;
+  nome: string;
+  tipo: ListaTipo;
+  concluidaEm: string;
+  totalItens: number;
+  itensComprados: number;
+  itensPendentes: number;
+  totalEstimado: number;
+  totalCompradoEstimado: number;
+  orcamento?: number;
+  percentualConcluido: number;
+  economiaOuEstouro: number; // positive = saved (under budget), negative = over
+  itensSnapshot: ListaItem[];
+};
+
+const historicoListeners = new Set<Listener>();
+
+function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== "string" || typeof r.listaId !== "string") return null;
+  const itensSnapshot: ListaItem[] = Array.isArray(r.itensSnapshot)
+    ? (r.itensSnapshot as unknown[])
+        .map((e): ListaItem | null => {
+          if (!e || typeof e !== "object") return null;
+          const it = e as Record<string, unknown>;
+          if (typeof it.id !== "string" || typeof it.nome !== "string") return null;
+          return {
+            id: it.id,
+            nome: it.nome,
+            quantidade:
+              typeof it.quantidade === "number" && Number.isFinite(it.quantidade)
+                ? it.quantidade
+                : 1,
+            unidade: typeof it.unidade === "string" && it.unidade ? it.unidade : undefined,
+            precoEstimado:
+              typeof it.precoEstimado === "number" && Number.isFinite(it.precoEstimado)
+                ? it.precoEstimado
+                : undefined,
+            comprado: Boolean(it.comprado),
+            criadoEm: typeof it.criadoEm === "string" ? it.criadoEm : new Date().toISOString(),
+            atualizadoEm:
+              typeof it.atualizadoEm === "string" ? it.atualizadoEm : new Date().toISOString(),
+          };
+        })
+        .filter((e): e is ListaItem => e !== null)
+    : [];
+  const num = (v: unknown, fallback = 0) =>
+    typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  return {
+    id: r.id,
+    listaId: r.listaId,
+    nome: typeof r.nome === "string" ? r.nome : "",
+    tipo: (r.tipo as ListaTipo) ?? "outros",
+    concluidaEm: typeof r.concluidaEm === "string" ? r.concluidaEm : new Date().toISOString(),
+    totalItens: num(r.totalItens),
+    itensComprados: num(r.itensComprados),
+    itensPendentes: num(r.itensPendentes),
+    totalEstimado: num(r.totalEstimado),
+    totalCompradoEstimado: num(r.totalCompradoEstimado),
+    orcamento:
+      typeof r.orcamento === "number" && Number.isFinite(r.orcamento) && r.orcamento > 0
+        ? r.orcamento
+        : undefined,
+    percentualConcluido: num(r.percentualConcluido),
+    economiaOuEstouro: num(r.economiaOuEstouro),
+    itensSnapshot,
+  };
+}
+
+function safeReadHistorico(): MercadoCompraHistorico[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(MERCADO_HISTORICO_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map(normalizeHistorico)
+      .filter((x): x is MercadoCompraHistorico => x !== null);
+  } catch {
+    return [];
+  }
+}
+
+function safeWriteHistorico(next: MercadoCompraHistorico[]) {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(MERCADO_HISTORICO_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+}
+
+function emitHistorico() {
+  for (const l of Array.from(historicoListeners)) {
+    try {
+      l();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export function getHistoricoCompras(): MercadoCompraHistorico[] {
+  return safeReadHistorico().sort((a, b) => b.concluidaEm.localeCompare(a.concluidaEm));
+}
+
+export function getCompraHistoricoById(id: string): MercadoCompraHistorico | undefined {
+  return safeReadHistorico().find((h) => h.id === id);
+}
+
+export function finalizarListaCompra(listaId: string): MercadoCompraHistorico | null {
+  const lista = getListaById(listaId);
+  if (!lista) return null;
+  const resumo = computeResumo(lista);
+  const orc = computeOrcamentoLista(lista);
+  const entry: MercadoCompraHistorico = {
+    id: genId("hst"),
+    listaId: lista.id,
+    nome: lista.name,
+    tipo: lista.tipo,
+    concluidaEm: new Date().toISOString(),
+    totalItens: resumo.totalItens,
+    itensComprados: resumo.itensComprados,
+    itensPendentes: resumo.itensPendentes,
+    totalEstimado: resumo.totalEstimado,
+    totalCompradoEstimado: resumo.totalCompradoEstimado,
+    orcamento: orc.hasBudget ? orc.budget : undefined,
+    percentualConcluido: resumo.percentualConcluido,
+    economiaOuEstouro: orc.hasBudget ? orc.diferenca : 0,
+    itensSnapshot: lista.entries.map((e) => ({ ...e })),
+  };
+  const current = safeReadHistorico();
+  safeWriteHistorico([entry, ...current]);
+  emitHistorico();
+
+  // Mark the source list as done (snapshot already saved).
+  mutate((all) =>
+    all.map((l) =>
+      l.id === listaId
+        ? recomputeDerived({ ...l, status: "done", updatedAt: new Date().toISOString() })
+        : l,
+    ),
+  );
+
+  return entry;
+}
+
+function subscribeHistorico(listener: Listener): () => void {
+  historicoListeners.add(listener);
+  if (isBrowser()) {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === MERCADO_HISTORICO_STORAGE_KEY) listener();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      historicoListeners.delete(listener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }
+  return () => historicoListeners.delete(listener);
+}
+
+let cachedHistorico: MercadoCompraHistorico[] = [];
+let cachedHistoricoSerialized = "[]";
+
+function getHistoricoSnapshot(): MercadoCompraHistorico[] {
+  const fresh = getHistoricoCompras();
+  const serialized = JSON.stringify(fresh);
+  if (serialized !== cachedHistoricoSerialized) {
+    cachedHistoricoSerialized = serialized;
+    cachedHistorico = fresh;
+  }
+  return cachedHistorico;
+}
+
+function getHistoricoServerSnapshot(): MercadoCompraHistorico[] {
+  return [];
+}
+
+export function useMercadoHistorico(): MercadoCompraHistorico[] {
+  const data = useSyncExternalStore(
+    subscribeHistorico,
+    getHistoricoSnapshot,
+    getHistoricoServerSnapshot,
+  );
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? data : [];
+}
