@@ -1,10 +1,25 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, BarChart3, Info, PackageSearch } from "lucide-react";
+import { ArrowLeft, Home, BarChart3, Info, PackageSearch, Store } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
-import { useResumosPrecos } from "@/lib/mercado/precos-history";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  MERCADO_FILTRO_ALL,
+  MERCADO_FILTRO_SEM,
+  agruparResumosPorProduto,
+  buildMercadosDisponiveis,
+  filterRegistrosPrecoPorMercado,
+  useHistoricoPrecos,
+} from "@/lib/mercado/precos-history";
 
 export const Route = createFileRoute("/mercado_/precos-historico")({
   head: () => ({
@@ -16,7 +31,26 @@ export const Route = createFileRoute("/mercado_/precos-historico")({
 function PrecosHistoricoPage() {
   const { t, i18n: i18nInst } = useTranslation("mercado");
   const navigate = useNavigate();
-  const resumos = useResumosPrecos();
+  const registros = useHistoricoPrecos();
+  const [filtro, setFiltro] = useState<string>(MERCADO_FILTRO_ALL);
+
+  const mercados = useMemo(() => buildMercadosDisponiveis(registros), [registros]);
+  const registrosFiltrados = useMemo(
+    () => filterRegistrosPrecoPorMercado(registros, filtro),
+    [registros, filtro],
+  );
+  const resumos = useMemo(
+    () => agruparResumosPorProduto(registrosFiltrados),
+    [registrosFiltrados],
+  );
+
+  // If the active filter no longer exists in the data (e.g. user deleted history),
+  // gracefully fall back to "all" — pure computation, no effect needed.
+  const filtroEfetivo = useMemo(() => {
+    if (filtro === MERCADO_FILTRO_ALL || filtro === MERCADO_FILTRO_SEM) return filtro;
+    const exists = mercados.some((m) => m.toLowerCase() === filtro.toLowerCase());
+    return exists ? filtro : MERCADO_FILTRO_ALL;
+  }, [filtro, mercados]);
 
   function handleBack() {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -31,6 +65,18 @@ function PrecosHistoricoPage() {
     month: "short",
     year: "numeric",
   });
+
+  const isAll = filtroEfetivo === MERCADO_FILTRO_ALL;
+  const isSem = filtroEfetivo === MERCADO_FILTRO_SEM;
+  const isMarket = !isAll && !isSem;
+
+  const summaryText = isAll
+    ? t("precosHistorico.filters.showingAll")
+    : isSem
+      ? t("precosHistorico.filters.showingNoMarket")
+      : t("precosHistorico.filters.showingMarket", { value: filtroEfetivo });
+
+  const hasAnyHistory = registros.length > 0;
 
   return (
     <MobileShell wide>
@@ -77,24 +123,51 @@ function PrecosHistoricoPage() {
         </div>
       </section>
 
-      {resumos.length === 0 ? (
-        <section className="mt-5 grid place-items-center rounded-3xl border border-dashed border-border/60 bg-card p-8 text-center shadow-card">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
-            <PackageSearch className="h-6 w-6" />
-          </span>
-          <h2 className="mt-3 text-base font-semibold md:text-lg">
-            {t("precosHistorico.empty.title")}
-          </h2>
-          <p className="mt-1 max-w-md text-sm leading-snug text-muted-foreground">
-            {t("precosHistorico.empty.desc")}
+      {hasAnyHistory && (
+        <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-card-elevated text-brand ring-1 ring-border/60">
+                <Store className="h-4 w-4" />
+              </span>
+              <label
+                htmlFor="mercado-filtro"
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+              >
+                {t("precosHistorico.filters.label")}
+              </label>
+            </div>
+            <div className="w-full md:max-w-xs">
+              <Select value={filtroEfetivo} onValueChange={setFiltro}>
+                <SelectTrigger id="mercado-filtro" className="h-11 rounded-2xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MERCADO_FILTRO_ALL}>
+                    {t("precosHistorico.filters.all")}
+                  </SelectItem>
+                  <SelectItem value={MERCADO_FILTRO_SEM}>
+                    {t("precosHistorico.filters.noMarket")}
+                  </SelectItem>
+                  {mercados.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      <span className="block max-w-[14rem] truncate">{m}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="mt-3 text-xs leading-snug text-muted-foreground md:text-sm">
+            {summaryText}
           </p>
-          <Link
-            to="/mercado/listas"
-            className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl bg-brand-grad px-5 text-sm font-semibold text-primary-foreground shadow-elevated active:scale-[0.99]"
-          >
-            {t("precosHistorico.empty.cta")}
-          </Link>
         </section>
+      )}
+
+      {!hasAnyHistory ? (
+        <EmptyHistory t={t} />
+      ) : resumos.length === 0 ? (
+        <FilteredEmpty isSem={isSem} t={t} />
       ) : (
         <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {resumos.map((r) => (
@@ -118,11 +191,15 @@ function PrecosHistoricoPage() {
               </div>
 
               <p className="truncate text-[11px] text-muted-foreground">
-                {r.mercados.length === 0
+                {isSem
                   ? t("precosHistorico.card.marketUnknown")
-                  : r.mercados.length === 1
-                    ? t("precosHistorico.card.marketSingle", { value: r.mercados[0] })
-                    : t("precosHistorico.card.marketMultiple", { count: r.mercados.length })}
+                  : isMarket
+                    ? t("precosHistorico.card.filteredBy", { value: filtroEfetivo })
+                    : r.mercados.length === 0
+                      ? t("precosHistorico.card.marketUnknown")
+                      : r.mercados.length === 1
+                        ? t("precosHistorico.card.marketSingle", { value: r.mercados[0] })
+                        : t("precosHistorico.card.marketMultiple", { count: r.mercados.length })}
               </p>
 
               <p className="text-[11px] text-muted-foreground">
@@ -135,6 +212,54 @@ function PrecosHistoricoPage() {
         </section>
       )}
     </MobileShell>
+  );
+}
+
+function EmptyHistory({ t }: { t: (k: string) => string }) {
+  return (
+    <section className="mt-5 grid place-items-center rounded-3xl border border-dashed border-border/60 bg-card p-8 text-center shadow-card">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
+        <PackageSearch className="h-6 w-6" />
+      </span>
+      <h2 className="mt-3 text-base font-semibold md:text-lg">
+        {t("precosHistorico.empty.title")}
+      </h2>
+      <p className="mt-1 max-w-md text-sm leading-snug text-muted-foreground">
+        {t("precosHistorico.empty.desc")}
+      </p>
+      <Link
+        to="/mercado/listas"
+        className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl bg-brand-grad px-5 text-sm font-semibold text-primary-foreground shadow-elevated active:scale-[0.99]"
+      >
+        {t("precosHistorico.empty.cta")}
+      </Link>
+    </section>
+  );
+}
+
+function FilteredEmpty({
+  isSem,
+  t,
+}: {
+  isSem: boolean;
+  t: (k: string) => string;
+}) {
+  return (
+    <section className="mt-5 grid place-items-center rounded-3xl border border-dashed border-border/60 bg-card p-8 text-center shadow-card">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
+        <PackageSearch className="h-6 w-6" />
+      </span>
+      <h2 className="mt-3 text-base font-semibold md:text-lg">
+        {isSem
+          ? t("precosHistorico.filters.emptyNoMarketTitle")
+          : t("precosHistorico.filters.emptyMarketTitle")}
+      </h2>
+      <p className="mt-1 max-w-md text-sm leading-snug text-muted-foreground">
+        {isSem
+          ? t("precosHistorico.filters.emptyNoMarketDescription")
+          : t("precosHistorico.filters.emptyMarketDescription")}
+      </p>
+    </section>
   );
 }
 

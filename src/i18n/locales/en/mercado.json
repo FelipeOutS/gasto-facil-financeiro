@@ -550,7 +550,20 @@
       "marketSingle": "Recorded at: {{value}}",
       "marketMultiple_one": "Recorded at {{count}} market",
       "marketMultiple_other": "Recorded at {{count}} markets",
-      "marketUnknown": "Market not informed"
+      "marketUnknown": "Market not informed",
+      "filteredBy": "Filtered by: {{value}}"
+    },
+    "filters": {
+      "label": "Market",
+      "all": "All markets",
+      "noMarket": "No market informed",
+      "showingAll": "Showing every price from your local history.",
+      "showingMarket": "Showing prices recorded at {{value}}.",
+      "showingNoMarket": "Showing products with no market informed.",
+      "emptyMarketTitle": "No prices found for this market",
+      "emptyMarketDescription": "Try selecting another market or finish a purchase tagging this place.",
+      "emptyNoMarketTitle": "No products without a market",
+      "emptyNoMarketDescription": "Every local price already has a market associated."
     }
   },
   "precoInsight": {
