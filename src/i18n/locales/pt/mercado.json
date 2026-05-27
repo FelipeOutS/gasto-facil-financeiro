@@ -75,7 +75,11 @@
       "items": "Itens",
       "estimate": "Estimativa",
       "progress": "Progresso",
-      "open": "Abrir"
+      "open": "Abrir",
+      "delete": "Excluir",
+      "deleteConfirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
+      "deleteSuccess": "Lista excluída com sucesso.",
+      "deleteError": "Não foi possível excluir esta lista."
     },
     "empty": {
       "title": "Nenhuma lista criada ainda",
@@ -219,6 +223,14 @@
       "cancel": "Cancelar",
       "saved": "Dados da lista atualizados.",
       "requiredName": "Informe um nome para a lista."
+    },
+    "delete": {
+      "title": "Zona de risco",
+      "description": "Isso remove apenas esta lista de compras. Compras já finalizadas e histórico de preços continuarão salvos.",
+      "button": "Excluir lista",
+      "confirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
+      "success": "Lista excluída com sucesso.",
+      "error": "Não foi possível excluir esta lista."
     }
   },
   "historico": {
