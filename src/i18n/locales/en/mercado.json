@@ -25,7 +25,7 @@
       },
       "orcamento": {
         "title": "Grocery budget",
-        "desc": "Set a monthly limit for grocery shopping."
+        "desc": "Set and track your monthly grocery limit."
       },
       "historico": {
         "title": "Purchase history",
@@ -263,7 +263,46 @@
       "withinBudget": "Your shopping is still within budget.",
       "subtotal": "Subtotal"
     }
+  },
+  "budget": {
+    "metaTitle": "Grocery budget — Smart Market",
+    "title": "Grocery budget",
+    "subtitle": "Set a monthly limit and follow your grocery spending locally.",
+    "back": "Back",
+    "home": "Home",
+    "form": {
+      "title": "Monthly limit",
+      "monthHint": "Reference month: {{month}}",
+      "amountLabel": "Budget amount",
+      "amountPlaceholder": "e.g.: 1200",
+      "save": "Save budget",
+      "saved": "Budget updated."
+    },
+    "summary": {
+      "title": "Month summary",
+      "limit": "Budget",
+      "spent": "Spent this month",
+      "remaining": "Remaining",
+      "used": "Used"
+    },
+    "status": {
+      "sem_orcamento": "No budget",
+      "dentro": "On track",
+      "atencao": "Warning",
+      "excedido": "Exceeded"
+    },
+    "message": {
+      "sem_orcamento": "Set a limit to better track your shopping.",
+      "dentro": "You're still within the budget.",
+      "atencao": "You're close to your limit.",
+      "excedido": "You went over this month's budget."
+    },
+    "history": {
+      "title": "Purchases completed this month",
+      "seeAll": "See all",
+      "emptyTitle": "No purchases completed this month",
+      "emptyDesc": "Once you finalize a list, it shows up here automatically.",
+      "cta": "Go to my lists"
+    }
   }
 }
-
-

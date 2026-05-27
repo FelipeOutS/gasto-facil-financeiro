@@ -25,7 +25,7 @@
       },
       "orcamento": {
         "title": "Orçamento de mercado",
-        "desc": "Defina um limite mensal para compras de mercado."
+        "desc": "Defina e acompanhe seu limite mensal de mercado."
       },
       "historico": {
         "title": "Histórico de compras",
@@ -263,7 +263,46 @@
       "withinBudget": "A compra ainda está dentro do orçamento.",
       "subtotal": "Subtotal"
     }
+  },
+  "budget": {
+    "metaTitle": "Orçamento de mercado — Mercado Inteligente",
+    "title": "Orçamento de mercado",
+    "subtitle": "Defina um limite mensal e acompanhe suas compras de mercado localmente.",
+    "back": "Voltar",
+    "home": "Início",
+    "form": {
+      "title": "Limite mensal",
+      "monthHint": "Mês de referência: {{month}}",
+      "amountLabel": "Valor do orçamento",
+      "amountPlaceholder": "Ex.: 1200",
+      "save": "Salvar orçamento",
+      "saved": "Orçamento atualizado."
+    },
+    "summary": {
+      "title": "Resumo do mês",
+      "limit": "Orçamento",
+      "spent": "Gasto no mês",
+      "remaining": "Saldo restante",
+      "used": "Usado"
+    },
+    "status": {
+      "sem_orcamento": "Sem orçamento",
+      "dentro": "Dentro",
+      "atencao": "Atenção",
+      "excedido": "Excedido"
+    },
+    "message": {
+      "sem_orcamento": "Defina um limite para acompanhar melhor suas compras.",
+      "dentro": "Você ainda está dentro do orçamento.",
+      "atencao": "Você está perto do limite definido.",
+      "excedido": "Você passou do orçamento deste mês."
+    },
+    "history": {
+      "title": "Compras finalizadas neste mês",
+      "seeAll": "Ver tudo",
+      "emptyTitle": "Nenhuma compra finalizada neste mês",
+      "emptyDesc": "Quando você finalizar uma lista, ela aparece aqui automaticamente.",
+      "cta": "Ir para minhas listas"
+    }
   }
 }
-
-
