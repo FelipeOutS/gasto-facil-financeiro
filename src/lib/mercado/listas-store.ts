@@ -348,6 +348,7 @@ export function updateItemLista(
       return recomputeDerived({ ...l, entries, updatedAt: now });
     }),
   );
+  pushUpsert(listaId);
 }
 
 export function toggleItemComprado(listaId: string, itemId: string) {
