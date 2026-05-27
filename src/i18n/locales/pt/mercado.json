@@ -108,5 +108,51 @@
         "placeholder": "Ex.: Comprar no fim de semana"
       }
     }
+  },
+  "detail": {
+    "metaTitle": "Lista — Mercado Inteligente",
+    "titleFallback": "Lista",
+    "back": "Voltar",
+    "home": "Início",
+    "notFoundTitle": "Lista não encontrada",
+    "notFoundDescription": "Essa lista pode ter sido removida ou ainda não foi criada neste dispositivo.",
+    "summary": {
+      "totalEstimated": "Total estimado",
+      "bought": "Comprados",
+      "pending": "Pendentes",
+      "progress": "Progresso"
+    },
+    "status": {
+      "planning": "Em planejamento",
+      "active": "Em andamento",
+      "done": "Concluída"
+    },
+    "form": {
+      "title": "Adicionar item",
+      "itemName": "Nome do item",
+      "quantity": "Quantidade",
+      "unit": "Unidade",
+      "unitPlaceholder": "un, kg, L",
+      "estimatedPrice": "Preço estimado",
+      "add": "Adicionar item",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "requiredName": "Informe o nome do item.",
+      "added": "Item adicionado.",
+      "updated": "Item atualizado.",
+      "removed": "Item removido."
+    },
+    "empty": {
+      "title": "Sua lista ainda está vazia",
+      "description": "Adicione os primeiros itens para começar a organizar sua compra."
+    },
+    "item": {
+      "markBought": "Marcar como comprado",
+      "markPending": "Marcar como pendente",
+      "edit": "Editar item",
+      "remove": "Excluir item",
+      "confirmRemove": "Remover este item da lista?"
+    }
   }
 }
+
