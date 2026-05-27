@@ -536,7 +536,7 @@ function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_LISTAS_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_LISTAS_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
