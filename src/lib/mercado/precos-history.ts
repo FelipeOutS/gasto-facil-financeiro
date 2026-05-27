@@ -255,7 +255,14 @@ export function buildProdutoKey(input: {
 }): string {
   const ean = (input.codigoBarras ?? "").trim();
   if (ean) return `ean:${ean}`;
-  const nome = (input.nome ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  // Normaliza: minúsculas, remove acentos (NFD), colapsa espaços.
+  // Evita que "Açúcar" vs "acucar" gerem produtos diferentes.
+  const nome = (input.nome ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
   return nome ? `nome:${nome}` : "";
 }
 
