@@ -40,9 +40,11 @@ import {
   removeItemLista,
   toggleItemComprado,
   updateItemLista,
+  updateListaDados,
   useMercadoLista,
   type ListaItem,
   type ListaStatus,
+  type ListaTipo,
   type MercadoLista,
 } from "@/lib/mercado/listas-store";
 
