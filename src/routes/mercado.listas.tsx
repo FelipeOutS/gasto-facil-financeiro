@@ -49,9 +49,10 @@ function MercadoListasPage() {
     void navigate({ to: "/mercado/listas/nova" });
   }
 
-  function handleOpenLista() {
-    toast.info(t("listas.openToast"));
+  function handleOpenLista(id: string) {
+    void navigate({ to: "/mercado/listas/$id", params: { id } });
   }
+
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
     day: "2-digit",
