@@ -802,6 +802,11 @@ function NearbySearchCard({
               {t("meusMercados.nearby.results.count", { count: results.length })}
             </span>
           </div>
+          {radiusKmUsed != null && (
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {t("meusMercados.nearby.results.radiusInfo", { km: radiusKmUsed })}
+            </p>
+          )}
           <ul className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {results.map((r) => {
               const cidadeUf = [r.cidade, r.uf].filter(Boolean).join("/");
