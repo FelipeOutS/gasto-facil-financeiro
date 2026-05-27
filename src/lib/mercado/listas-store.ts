@@ -2,6 +2,7 @@
 // Persists to localStorage under an isolated key. NO Supabase, NO API.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { registrarPrecosDaCompra } from "./precos-history";
 
 export const MERCADO_LISTAS_STORAGE_KEY = "gi:mercado:listas:v1";
 
