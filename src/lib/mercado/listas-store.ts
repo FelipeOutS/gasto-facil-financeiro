@@ -452,6 +452,7 @@ export function removeLista(id: string): boolean {
   if (next.length === atuais.length) return false;
   safeWrite(next);
   emit();
+  pushDelete(id);
   return true;
 }
 
