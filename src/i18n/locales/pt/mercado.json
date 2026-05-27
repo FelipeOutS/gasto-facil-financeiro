@@ -767,7 +767,7 @@
         "invalid_location": "Informe um CEP válido ou cidade e UF para tentar buscar.",
         "network": "Não foi possível conectar agora. Tente novamente em alguns instantes.",
         "timeout": "A busca demorou demais. Tente novamente.",
-        "empty": "Não encontramos mercados cadastrados no OpenStreetMap para essa região. Você ainda pode cadastrar o mercado manualmente abaixo.",
+        "empty": "Nenhum mercado foi encontrado nessa busca. Como a base gratuita depende do OpenStreetMap, alguns estabelecimentos podem não aparecer. Você ainda pode cadastrar o mercado manualmente.",
         "unknown": "Algo deu errado na busca. Você pode cadastrar manualmente abaixo."
       },
       "results": {
