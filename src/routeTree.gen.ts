@@ -47,6 +47,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as MetasIndexRouteImport } from './routes/metas.index'
+import { Route as MercadoIndexRouteImport } from './routes/mercado.index'
 import { Route as InvestimentosIndexRouteImport } from './routes/investimentos.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
@@ -305,6 +306,11 @@ const PtIndexRoute = PtIndexRouteImport.update({
 const MetasIndexRoute = MetasIndexRouteImport.update({
   id: '/metas/',
   path: '/metas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoIndexRoute = MercadoIndexRouteImport.update({
+  id: '/mercado/',
+  path: '/mercado/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvestimentosIndexRoute = InvestimentosIndexRouteImport.update({
@@ -742,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
   '/investimentos/': typeof InvestimentosIndexRoute
+  '/mercado/': typeof MercadoIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -851,6 +858,7 @@ export interface FileRoutesByTo {
   '/contas-a-receber': typeof ContasAReceberIndexRoute
   '/en': typeof EnIndexRoute
   '/investimentos': typeof InvestimentosIndexRoute
+  '/mercado': typeof MercadoIndexRoute
   '/metas': typeof MetasIndexRoute
   '/pt': typeof PtIndexRoute
   '/renda': typeof RendaIndexRoute
@@ -961,6 +969,7 @@ export interface FileRoutesById {
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
   '/investimentos/': typeof InvestimentosIndexRoute
+  '/mercado/': typeof MercadoIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -1072,6 +1081,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber/'
     | '/en/'
     | '/investimentos/'
+    | '/mercado/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1181,6 +1191,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber'
     | '/en'
     | '/investimentos'
+    | '/mercado'
     | '/metas'
     | '/pt'
     | '/renda'
@@ -1290,6 +1301,7 @@ export interface FileRouteTypes {
     | '/contas-a-receber/'
     | '/en/'
     | '/investimentos/'
+    | '/mercado/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1400,6 +1412,7 @@ export interface RootRouteChildren {
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   InvestimentosIndexRoute: typeof InvestimentosIndexRoute
+  MercadoIndexRoute: typeof MercadoIndexRoute
   MetasIndexRoute: typeof MetasIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   RendaIndexRoute: typeof RendaIndexRoute
@@ -1703,6 +1716,13 @@ declare module '@tanstack/react-router' {
       path: '/metas'
       fullPath: '/metas/'
       preLoaderRoute: typeof MetasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado/': {
+      id: '/mercado/'
+      path: '/mercado'
+      fullPath: '/mercado/'
+      preLoaderRoute: typeof MercadoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/investimentos/': {
@@ -2274,6 +2294,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
   EnIndexRoute: EnIndexRoute,
   InvestimentosIndexRoute: InvestimentosIndexRoute,
+  MercadoIndexRoute: MercadoIndexRoute,
   MetasIndexRoute: MetasIndexRoute,
   PtIndexRoute: PtIndexRoute,
   RendaIndexRoute: RendaIndexRoute,
@@ -2318,12 +2339,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
