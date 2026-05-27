@@ -153,6 +153,19 @@
       "edit": "Edit item",
       "remove": "Remove item",
       "confirmRemove": "Remove this item from the list?"
+    },
+    "budget": {
+      "title": "Shopping budget",
+      "subtitle": "Track whether the list still fits in the planned amount.",
+      "defined": "Budget set",
+      "totalEstimated": "Estimated total",
+      "remaining": "Still available",
+      "over": "Over budget",
+      "usedLabel": "Used of budget",
+      "withinHint": "You still have {{value}} within the budget.",
+      "overHint": "This list went {{value}} over the budget.",
+      "noBudgetTitle": "No budget set",
+      "noBudgetHint": "Set a budget on the list to better track your shopping."
     }
   },
   "calculators": {
