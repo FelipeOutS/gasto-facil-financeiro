@@ -42,6 +42,10 @@
       "cesta": {
         "title": "Cesta padrão",
         "desc": "Monte uma lista recorrente com os itens que você compra todo mês."
+      },
+      "mercados": {
+        "title": "Comparativo por mercado",
+        "desc": "Descubra onde você costuma pagar melhores preços, só com seu histórico local."
       }
     }
   },
