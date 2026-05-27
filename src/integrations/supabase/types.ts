@@ -1523,6 +1523,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_listas: {
+        Row: {
+          created_at: string
+          entries: Json
+          estimate: number | null
+          id: string
+          items_count: number
+          name: string
+          observation: string | null
+          progress: number
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entries?: Json
+          estimate?: number | null
+          id?: string
+          items_count?: number
+          name?: string
+          observation?: string | null
+          progress?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entries?: Json
+          estimate?: number | null
+          id?: string
+          items_count?: number
+          name?: string
+          observation?: string | null
+          progress?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       merchant_brand_aliases: {
         Row: {
           confidence: number | null
