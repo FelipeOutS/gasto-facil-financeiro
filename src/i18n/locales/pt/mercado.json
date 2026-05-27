@@ -202,7 +202,9 @@
       "error": "Não foi possível finalizar a compra.",
       "marketLabel": "Mercado ou local da compra",
       "marketPlaceholder": "Ex.: Atacadão, Assaí, mercado do bairro",
-      "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços."
+      "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços.",
+      "savedMarkets": "Seus mercados",
+      "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
     }
   },
   "historico": {
@@ -390,7 +392,9 @@
       "errorEmpty": "Adicione itens antes de finalizar.",
       "errorGeneric": "Não foi possível finalizar a compra.",
       "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
-      "success": "Compra finalizada e salva no histórico."
+      "success": "Compra finalizada e salva no histórico.",
+      "savedMarkets": "Seus mercados",
+      "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
     }
   },
   "precos": {
