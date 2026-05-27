@@ -14,6 +14,8 @@ import {
   Store,
   X,
   Check,
+  Search,
+  Loader2,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
