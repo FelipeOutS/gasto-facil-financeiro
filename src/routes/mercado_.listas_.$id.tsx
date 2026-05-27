@@ -891,6 +891,16 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
         </button>
       </div>
 
+      <div className="mt-2">
+        <BarcodeScannerButton
+          onDetected={(code) => {
+            setCode(code);
+            setError(null);
+            setResult(null);
+          }}
+        />
+      </div>
+
       {error ? (
         <p className="mt-2 text-[12px] text-destructive">{error}</p>
       ) : null}
