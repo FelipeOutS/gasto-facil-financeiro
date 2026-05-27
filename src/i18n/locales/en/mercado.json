@@ -167,6 +167,20 @@
       "noBudgetTitle": "No budget set",
       "noBudgetHint": "Set a budget on the list to better track your shopping."
     },
+    "barcode": {
+      "title": "Barcode",
+      "placeholder": "Enter code (8 to 14 digits)",
+      "search": "Search product",
+      "loading": "Searching product...",
+      "useProduct": "Use this product",
+      "notFound": "We couldn't find that product. You can still add it manually.",
+      "error": "Couldn't check right now. Try again or add manually.",
+      "invalid": "Invalid code. Use between 8 and 14 numeric digits.",
+      "manualHint": "Optional. Fills in the product name automatically.",
+      "source": "Source: Open Food Facts",
+      "noName": "Product has no registered name",
+      "applied": "Product filled in. Review price and quantity."
+    },
     "finalize": {
       "cta": "Finalize shopping",
       "hint": "Save this shopping trip to your local history.",
