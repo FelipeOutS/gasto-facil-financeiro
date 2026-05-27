@@ -271,7 +271,49 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
 
       {/* Finalize */}
       <FinalizeCard lista={lista} />
+
+      {/* Danger zone */}
+      <DangerZoneCard listaId={lista.id} />
     </MobileShell>
+  );
+}
+
+function DangerZoneCard({ listaId }: { listaId: string }) {
+  const { t } = useTranslation("mercado");
+  const navigate = useNavigate();
+
+  function handleDelete() {
+    const ok = window.confirm(t("detail.delete.confirm"));
+    if (!ok) return;
+    if (removeLista(listaId)) {
+      toast.success(t("detail.delete.success"));
+      void navigate({ to: "/mercado/listas" });
+    } else {
+      toast.error(t("detail.delete.error"));
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-3xl border border-destructive/30 bg-destructive/5 p-4 shadow-card md:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-destructive">
+            {t("detail.delete.title")}
+          </h2>
+          <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
+            {t("detail.delete.description")}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
+        >
+          <Trash2 className="h-4 w-4" />
+          {t("detail.delete.button")}
+        </button>
+      </div>
+    </section>
   );
 }
 
