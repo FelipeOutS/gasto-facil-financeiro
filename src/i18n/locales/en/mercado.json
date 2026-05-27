@@ -694,6 +694,13 @@
     "home": "Home",
     "title": "My markets",
     "subtitle": "Save the markets where you usually shop. For now, they are stored only on this device.",
+    "comingSoon": {
+      "subtitle": "Feature in preparation.",
+      "title": "Coming soon",
+      "description": "We're preparing an area to save favorite markets, find nearby stores and use that information in your price history.",
+      "manualHint": "For now, keep typing the market name manually when you finish a purchase.",
+      "backToHub": "Back to Smart Market"
+    },
     "localNotice": "For now, saved markets stay only on this device. In a future step, this area may connect to location APIs and to the community price base.",
     "addCta": "New market",
     "addCtaShort": "Add",
