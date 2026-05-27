@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Home,
@@ -17,6 +16,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import { useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
+
 
 export const Route = createFileRoute("/mercado/listas")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.listasTitle", { lng: i18n.language }) }] }),
