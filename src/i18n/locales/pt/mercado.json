@@ -46,7 +46,7 @@
     "back": "Voltar",
     "home": "Início",
     "newList": "Nova lista",
-    "newListToast": "Criação de listas será ativada na próxima etapa.",
+    "openToast": "A edição dos itens da lista será ativada na próxima etapa.",
     "summary": {
       "active": "Listas ativas",
       "items": "Itens planejados",
@@ -59,19 +59,54 @@
     },
     "card": {
       "itemsCount": "{{count}} itens",
+      "items": "Itens",
       "estimate": "Estimativa",
-      "progress": "Progresso"
+      "progress": "Progresso",
+      "open": "Abrir"
     },
     "empty": {
       "title": "Nenhuma lista criada ainda",
       "description": "Crie uma lista para organizar suas compras e evitar gastos fora do planejado.",
       "cta": "Criar lista"
+    }
+  },
+  "nova": {
+    "metaTitle": "Nova lista — Mercado Inteligente",
+    "title": "Nova lista",
+    "subtitle": "Dê um nome para sua lista e, se quiser, informe um orçamento estimado.",
+    "back": "Voltar",
+    "home": "Início",
+    "cancel": "Cancelar",
+    "submit": "Criar lista",
+    "success": "Lista criada com sucesso.",
+    "errors": {
+      "nameRequired": "Informe um nome para a lista.",
+      "generic": "Não foi possível criar a lista. Tente novamente."
     },
-    "mock": {
-      "compraMes": "Compra do mês",
-      "reposicaoSemana": "Reposição da semana",
-      "churrascoSabado": "Churrasco de sábado"
-    },
-    "previewBadge": "Pré-visualização"
+    "fields": {
+      "name": {
+        "label": "Nome da lista",
+        "placeholder": "Ex.: Compra do mês"
+      },
+      "tipo": {
+        "label": "Tipo de lista",
+        "options": {
+          "compraMes": "Compra do mês",
+          "reposicao": "Reposição",
+          "churrasco": "Churrasco",
+          "farmacia": "Farmácia",
+          "outros": "Outros"
+        }
+      },
+      "estimate": {
+        "label": "Orçamento estimado (opcional)",
+        "placeholder": "0,00",
+        "hint": "Valor de referência para acompanhar o quanto pretende gastar."
+      },
+      "observation": {
+        "label": "Observação (opcional)",
+        "placeholder": "Ex.: Comprar no fim de semana"
+      }
+    }
   }
 }
