@@ -517,5 +517,27 @@
     "confirm": {
       "delete": "Delete basket \"{{name}}\"? This action cannot be undone."
     }
+  },
+  "precosHistorico": {
+    "metaTitle": "Local price history — Smart Market",
+    "title": "Local price history",
+    "subtitle": "See the prices of products you bought on this device.",
+    "back": "Back",
+    "home": "Home",
+    "localNotice": "Local history from this device only. The community database is not active yet.",
+    "empty": {
+      "title": "No prices recorded yet",
+      "desc": "Prices appear here after you finish a purchase with the unit price of the items.",
+      "cta": "Go to my lists"
+    },
+    "card": {
+      "recordsCount_one": "{{count}} record",
+      "recordsCount_other": "{{count}} records",
+      "min": "Lowest",
+      "max": "Highest",
+      "avg": "Average",
+      "last": "Latest",
+      "lastDate": "Last record on {{date}}"
+    }
   }
 }
