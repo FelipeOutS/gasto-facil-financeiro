@@ -767,7 +767,7 @@
         "invalid_location": "Enter a valid ZIP code or city and state to search.",
         "network": "Couldn't connect right now. Please try again shortly.",
         "timeout": "The search took too long. Please try again.",
-        "empty": "We didn't find any markets listed on OpenStreetMap for this area. You can still add a market manually below.",
+        "empty": "No market was found in this search. Since the free database depends on OpenStreetMap, some places may not show up. You can still add the market manually.",
         "unknown": "Something went wrong with the search. You can add manually below."
       },
       "results": {

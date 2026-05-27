@@ -42,16 +42,14 @@ const USER_AGENT =
 const REQ_TIMEOUT_MS = 8000;
 const MAX_RESULTS = 15;
 /** Raio progressivo (km). Para no primeiro que retornar resultados. */
-const RADIUS_STEPS_KM = [3, 5, 8, 10] as const;
+const RADIUS_STEPS_KM = [3, 5, 10] as const;
 /** Tags OSM tratadas como "mercado/loja de comida" (sem farmácia/restaurante). */
 const SHOP_TAGS = [
   "supermarket",
-  "convenience",
-  "general",
   "grocery",
-  "greengrocer",
-  "butcher",
-  "bakery",
+  "convenience",
+  "wholesale",
+  "department_store",
 ] as const;
 const SOURCE_LABEL = "OpenStreetMap";
 
