@@ -205,6 +205,20 @@
       "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços.",
       "savedMarkets": "Seus mercados",
       "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
+    },
+    "editList": {
+      "title": "Editar dados da lista",
+      "open": "Editar dados da lista",
+      "name": "Nome da lista",
+      "tipo": "Tipo de compra",
+      "estimate": "Orçamento da compra",
+      "estimateHint": "Opcional. Limite estimado para esta compra.",
+      "observation": "Observação",
+      "observationPlaceholder": "Anotações opcionais sobre esta lista",
+      "save": "Salvar alterações",
+      "cancel": "Cancelar",
+      "saved": "Dados da lista atualizados.",
+      "requiredName": "Informe um nome para a lista."
     }
   },
   "historico": {
