@@ -39,7 +39,7 @@ const CARDS: CardDef[] = [
   { key: "historico", icon: History, status: "open", to: "/mercado/historico" },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
   { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados" },
-  { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados" },
+  { key: "meusMercados", icon: MapPin, status: "soon" },
   { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos" },
   { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta" },
 ];
