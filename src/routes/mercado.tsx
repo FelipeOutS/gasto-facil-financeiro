@@ -34,7 +34,7 @@ const CARDS: CardDef[] = [
   { key: "calculadoras", icon: Calculator, status: "open", to: "/mercado/calculadoras" },
   { key: "orcamento", icon: WalletCards, status: "open", to: "/mercado/orcamento" },
   { key: "historico", icon: History, status: "open", to: "/mercado/historico" },
-  { key: "carrinho", icon: ShoppingCart, status: "future" },
+  { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
   { key: "cesta", icon: PackageCheck, status: "future" },
 ];
 
