@@ -42,6 +42,10 @@
       "cesta": {
         "title": "Standard basket",
         "desc": "Build a recurring list with the items you buy every month."
+      },
+      "mercados": {
+        "title": "Compare by market",
+        "desc": "Discover where you usually pay better prices, using only your local history."
       }
     }
   },
