@@ -73,12 +73,14 @@ function emit() {
   }
 }
 
+const EMPTY_TIMESTAMP = new Date(0).toISOString();
+
 export function getOrcamentoMercado(): MercadoOrcamento {
   return (
     safeRead() ?? {
       valorMensal: 0,
       mesReferencia: currentMonthKey(),
-      atualizadoEm: new Date().toISOString(),
+      atualizadoEm: EMPTY_TIMESTAMP,
     }
   );
 }
