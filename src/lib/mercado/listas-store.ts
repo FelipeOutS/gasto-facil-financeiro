@@ -1,10 +1,49 @@
-// Local-only store for Mercado Inteligente shopping lists.
-// Persists to localStorage under an isolated key. NO Supabase, NO API.
+// Mercado Inteligente — store de listas de compras.
+// Fonte de verdade: Supabase (tabela public.mercado_listas) quando há usuário
+// autenticado. localStorage funciona como cache por usuário para manter a API
+// síncrona (useSyncExternalStore). Quando não há usuário, usa chave anônima
+// (uso pré-login e dados que serão migrados no primeiro login).
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { registrarPrecosDaCompra } from "./precos-history";
 
 export const MERCADO_LISTAS_STORAGE_KEY = "gi:mercado:listas:v1";
+
+// ----- Sync state (preenchido por mercado-sync.ts) -----
+let activeUserId: string | null = null;
+
+function currentStorageKey(): string {
+  return activeUserId
+    ? `${MERCADO_LISTAS_STORAGE_KEY}:${activeUserId}`
+    : MERCADO_LISTAS_STORAGE_KEY;
+}
+
+type SyncHooks = {
+  onUpsertLista?: (lista: MercadoLista) => void;
+  onDeleteLista?: (id: string) => void;
+};
+let syncHooks: SyncHooks = {};
+
+export function __setMercadoSyncHooks(hooks: SyncHooks) {
+  syncHooks = hooks;
+}
+
+export function __setMercadoActiveUser(uid: string | null) {
+  if (activeUserId === uid) return;
+  activeUserId = uid;
+  emit();
+}
+
+export function __replaceListasCache(listas: MercadoLista[]) {
+  safeWrite(listas.map(recomputeDerived));
+  emit();
+}
+
+export function __getMercadoActiveUserId(): string | null {
+  return activeUserId;
+}
+
+export const MERCADO_LEGACY_ANON_KEY = MERCADO_LISTAS_STORAGE_KEY;
 
 export type ListaTipo =
   | "compraMes"
@@ -147,7 +186,7 @@ function recomputeDerived(l: MercadoLista): MercadoLista {
 function safeRead(): MercadoLista[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_LISTAS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentStorageKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -160,11 +199,12 @@ function safeRead(): MercadoLista[] {
 function safeWrite(next: MercadoLista[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_LISTAS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentStorageKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
 }
+
 
 function emit() {
   for (const l of Array.from(listeners)) {
@@ -181,6 +221,20 @@ function mutate(updater: (current: MercadoLista[]) => MercadoLista[]) {
   safeWrite(next);
   emit();
 }
+
+function pushUpsert(id: string) {
+  if (!syncHooks.onUpsertLista) return;
+  const fresh = safeRead().find((l) => l.id === id);
+  if (fresh) {
+    try { syncHooks.onUpsertLista(fresh); } catch { /* ignore */ }
+  }
+}
+
+function pushDelete(id: string) {
+  if (!syncHooks.onDeleteLista) return;
+  try { syncHooks.onDeleteLista(id); } catch { /* ignore */ }
+}
+
 
 export function getListas(): MercadoLista[] {
   return safeRead();
@@ -214,6 +268,7 @@ export function addLista(input: {
     updatedAt: now,
   });
   mutate((cur) => [lista, ...cur]);
+  pushUpsert(lista.id);
   return lista;
 }
 
@@ -249,6 +304,7 @@ export function addItemLista(
         : l,
     ),
   );
+  pushUpsert(listaId);
   return item;
 }
 
@@ -292,6 +348,7 @@ export function updateItemLista(
       return recomputeDerived({ ...l, entries, updatedAt: now });
     }),
   );
+  pushUpsert(listaId);
 }
 
 export function toggleItemComprado(listaId: string, itemId: string) {
@@ -314,6 +371,7 @@ export function removeItemLista(listaId: string, itemId: string) {
         : l,
     ),
   );
+  pushUpsert(listaId);
 }
 
 /**
@@ -377,6 +435,7 @@ export function updateListaDados(
   copy[idx] = updated;
   safeWrite(copy);
   emit();
+  pushUpsert(updated.id);
   return updated;
 }
 
@@ -393,6 +452,7 @@ export function removeLista(id: string): boolean {
   if (next.length === atuais.length) return false;
   safeWrite(next);
   emit();
+  pushDelete(id);
   return true;
 }
 
@@ -476,7 +536,7 @@ function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_LISTAS_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_LISTAS_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
