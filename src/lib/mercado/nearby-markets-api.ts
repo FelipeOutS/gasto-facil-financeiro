@@ -1,44 +1,53 @@
 /**
  * Mercado Inteligente — Camada de provider para "Mercados próximos"
  * ----------------------------------------------------------------------------
- * Esta camada é isolada da UI e dos stores locais. Ela define a forma como
- * o app irá consultar mercados próximos no futuro, mas NÃO faz nenhuma
- * chamada externa real nesta etapa (E23).
+ * Esta camada é client-safe e isolada de UI/stores. Define a forma como o app
+ * irá consultar mercados próximos. NÃO faz chamadas externas reais nesta etapa
+ * (E23/E24). A integração real será plugada via createServerFn em
+ * `nearby-markets.functions.ts` (server-only) — NUNCA via fetch direto do
+ * navegador.
  *
- * Providers previstos:
- * - manual_only      → estado atual. Sem busca automática.
- * - google_places    → futuro. EXIGE backend/server function próprio para
- *                      proteger a chave; NUNCA chamar Google Places direto
- *                      do navegador.
- * - openstreetmap    → futuro. Overpass API é pública, mas exige rate-limit
- *                      e User-Agent. Provavelmente também via proxy.
+ * Providers previstos
+ * -------------------
+ * - manual_only            → estado atual. Sem busca automática. Default.
+ * - google_places          → futuro. EXIGE backend (createServerFn) para
+ *                            proteger a chave (env: GOOGLE_PLACES_API_KEY).
+ *                            NUNCA chamar do navegador.
+ * - openstreetmap_overpass → futuro. Overpass API é pública, mas exige
+ *                            User-Agent identificável, rate-limit e cache.
+ *                            Também deve passar por backend.
  *
- * Regras:
- * - Sem chave de API hardcoded.
- * - Sem fetch para provider externo neste arquivo. Quando a integração real
- *   for ativada, ela deve ser feita via createServerFn (TanStack), nunca
- *   exposta no client.
- * - Sem acoplamento com UI, sem leitura/escrita em localStorage,
- *   sem Supabase, sem alteração de stores existentes.
+ * Regras de segurança/privacidade
+ * -------------------------------
+ * - Sem chave de API hardcoded ou em variáveis VITE_*.
+ * - Sem fetch para provider externo neste arquivo.
+ * - Sem acoplamento com UI, sem localStorage, sem Supabase.
  * - Resultado vazio ou indisponível NÃO deve quebrar o cadastro manual.
+ * - Resultados automáticos DEVEM ser revisados/confirmados pelo usuário antes
+ *   de salvar no cadastro local. Nenhum mercado é persistido automaticamente.
  */
 
 export type MercadoNearbyProvider =
   | "manual_only"
   | "google_places"
-  | "openstreetmap";
+  | "openstreetmap_overpass";
 
 export type MercadoNearbyResult = {
+  /** Identificador interno estável (uuid local ou hash do placeId). */
   id: string;
+  /** Identificador do provedor externo (ex.: Google place_id, OSM id). */
+  placeId?: string;
   nome: string;
   endereco?: string;
   bairro?: string;
   cidade?: string;
   uf?: string;
   cep?: string;
-  distanciaKm?: number;
+  telefone?: string;
   latitude?: number;
   longitude?: number;
+  distanciaKm?: number;
+  /** Provedor que produziu este resultado. */
   fonte: MercadoNearbyProvider;
 };
 
@@ -60,26 +69,42 @@ export type MercadoNearbyQuery = {
   cep?: string;
   cidade?: string;
   uf?: string;
-  /** Coordenadas opcionais (geolocalização do navegador, com opt-in). */
+  /** Coordenadas opcionais — exigem opt-in de geolocalização no navegador. */
   latitude?: number;
   longitude?: number;
-  /** Raio de busca em km (apenas hint para provider futuro). */
+  /** Raio de busca em km. Apenas hint para providers futuros. */
   radiusKm?: number;
 };
 
 export type MercadoNearbyResponse =
-  | { ok: true; results: MercadoNearbyResult[]; provider: MercadoNearbyProvider }
-  | { ok: false; error: MercadoNearbyError; provider: MercadoNearbyProvider };
+  | {
+      ok: true;
+      provider: MercadoNearbyProvider;
+      results: MercadoNearbyResult[];
+    }
+  | {
+      ok: false;
+      provider: MercadoNearbyProvider;
+      error: MercadoNearbyError;
+    };
 
 /**
  * Provider ativo no momento. Enquanto não houver backend seguro para
  * consultar Google Places / Overpass, mantemos "manual_only" para que a UI
- * exiba a mensagem de preparação e o usuário continue cadastrando à mão.
+ * mostre a mensagem de preparação e o cadastro manual permaneça intocado.
+ *
+ * Para ativar um provider futuro:
+ * 1. Implementar a chamada real em `nearby-markets.functions.ts` dentro de
+ *    `.handler()` (server-only), lendo `process.env.GOOGLE_PLACES_API_KEY`
+ *    ou similar dentro do handler — nunca no escopo do módulo.
+ * 2. Trocar o valor de `ACTIVE_NEARBY_PROVIDER` para o provider desejado.
+ * 3. Trocar o corpo de `findNearbyMarkets` (abaixo) por uma chamada à
+ *    server fn correspondente.
  */
 export const ACTIVE_NEARBY_PROVIDER: MercadoNearbyProvider = "manual_only";
 
 // ---------------------------------------------------------------------------
-// Normalizadores (puros, sem efeito colateral)
+// Normalizadores (puros, sem efeito colateral, client-safe)
 // ---------------------------------------------------------------------------
 
 export function normalizeCep(input: string | undefined | null): string {
@@ -110,17 +135,56 @@ export function isValidNearbyQuery(q: MercadoNearbyQuery): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Descritores de provider (apenas documentação tipada — sem efeito runtime)
+// ---------------------------------------------------------------------------
+
+export type MercadoNearbyProviderDescriptor = {
+  id: MercadoNearbyProvider;
+  label: string;
+  requiresBackend: boolean;
+  envKeyName?: string;
+  notes: string;
+};
+
+export const NEARBY_PROVIDER_DESCRIPTORS: Readonly<
+  Record<MercadoNearbyProvider, MercadoNearbyProviderDescriptor>
+> = {
+  manual_only: {
+    id: "manual_only",
+    label: "Cadastro manual",
+    requiresBackend: false,
+    notes:
+      "Estado padrão. Sem busca automática. O usuário cadastra cada mercado à mão.",
+  },
+  google_places: {
+    id: "google_places",
+    label: "Google Places",
+    requiresBackend: true,
+    envKeyName: "GOOGLE_PLACES_API_KEY",
+    notes:
+      "API paga. EXIGE chamada via createServerFn server-side para proteger a chave. NUNCA usar do navegador. Implementar retry/quota e mapear place_id → MercadoNearbyResult.placeId.",
+  },
+  openstreetmap_overpass: {
+    id: "openstreetmap_overpass",
+    label: "OpenStreetMap (Overpass)",
+    requiresBackend: true,
+    notes:
+      "API pública, mas exige User-Agent identificável, respeito ao rate-limit do servidor público e cache local de respostas para evitar abuso. Também deve passar por backend.",
+  },
+} as const;
+
+// ---------------------------------------------------------------------------
 // Busca pública (preparada — não ativa)
 // ---------------------------------------------------------------------------
 
 /**
- * Busca mercados próximos. Nesta etapa retorna sempre
- * `provider_unavailable` quando o provider ativo é `manual_only`, sinalizando
- * para a UI que ela deve manter o cadastro manual.
+ * Busca mercados próximos. Enquanto `ACTIVE_NEARBY_PROVIDER === "manual_only"`,
+ * resolve sempre com `provider_unavailable` para que a UI mostre a mensagem
+ * de preparação e o usuário siga cadastrando manualmente.
  *
- * Quando google_places/openstreetmap forem ativados, a implementação real
- * deve ocorrer aqui chamando uma createServerFn no backend — nunca um fetch
- * direto para provider externo no client.
+ * Quando um provider real for ativado, esta função deve delegar para a
+ * server fn correspondente (ex.: `findNearbyMarketsServerFn` em
+ * `nearby-markets.functions.ts`). Nunca colocar fetch externo aqui.
  */
 export async function findNearbyMarkets(
   query: MercadoNearbyQuery,
@@ -128,15 +192,15 @@ export async function findNearbyMarkets(
   if (!isValidNearbyQuery(query)) {
     return {
       ok: false,
-      error: { code: "invalid_location" },
       provider: ACTIVE_NEARBY_PROVIDER,
+      error: { code: "invalid_location" },
     };
   }
 
   // Provider ainda não ativado. Resposta controlada — não quebra a UI.
   return {
     ok: false,
-    error: { code: "provider_unavailable" },
     provider: ACTIVE_NEARBY_PROVIDER,
+    error: { code: "provider_unavailable" },
   };
 }
