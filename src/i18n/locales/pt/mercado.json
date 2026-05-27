@@ -543,5 +543,22 @@
       "last": "Último",
       "lastDate": "Último registro em {{date}}"
     }
+  },
+  "precoInsight": {
+    "label": "Preço local",
+    "noHistoryTitle": "Ainda não há histórico suficiente para comparar",
+    "noHistoryDesc": "Ao finalizar compras com esse item, vamos guardar o preço aqui no seu aparelho para comparar depois.",
+    "goodTitle": "Preço melhor que seu histórico",
+    "goodDesc": "Esse valor está igual ou abaixo do menor preço que você já registrou para esse produto.",
+    "normalTitle": "Dentro da média que você costuma pagar",
+    "normalDesc": "Esse valor está próximo da média do seu histórico local.",
+    "highTitle": "Um pouco acima da sua média",
+    "highDesc": "Esse valor está um pouco acima da média que você costuma pagar.",
+    "veryHighTitle": "Bem acima do seu histórico recente",
+    "veryHighDesc": "Esse valor está bem acima da média do seu histórico local. Vale conferir se compensa.",
+    "lowest": "Menor",
+    "average": "Média",
+    "last": "Último"
   }
+}
 }
