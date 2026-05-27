@@ -440,5 +440,82 @@
       "point5": "The user will have control over participation when this feature is implemented.",
       "futureOptIn": "When the community base is ready, the user will decide whether to participate. No data will be shared without consent."
     }
+  },
+  "cesta": {
+    "metaTitle": "Standard basket — Smart Market",
+    "title": "Standard basket",
+    "subtitle": "Build reusable baskets with the items you buy most often.",
+    "back": "Back",
+    "home": "Home",
+    "intro": "Create baskets like monthly shopping, weekly restock or pharmacy. When you need it, generate a new shopping list from a basket in one tap.",
+    "yourBaskets": "Your baskets ({{count}})",
+    "newBasket": "New basket",
+    "types": {
+      "compraMes": "Monthly shopping",
+      "reposicao": "Restock",
+      "limpeza": "Cleaning",
+      "farmacia": "Pharmacy",
+      "churrasco": "BBQ",
+      "outros": "Other"
+    },
+    "empty": {
+      "title": "No standard baskets yet",
+      "description": "Build a basket with the products you always buy and create lists faster.",
+      "cta": "Create standard basket"
+    },
+    "form": {
+      "title": "New standard basket",
+      "nameLabel": "Basket name",
+      "namePlaceholder": "E.g. Monthly shopping",
+      "typeLabel": "Type",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Short description of the basket",
+      "cancel": "Cancel",
+      "submit": "Create basket",
+      "saveMeta": "Save changes",
+      "errors": {
+        "nameRequired": "Enter a name for the basket.",
+        "itemNameRequired": "Enter the item name."
+      }
+    },
+    "card": {
+      "items": "Items",
+      "estimated": "Estimated",
+      "updated": "Updated",
+      "openEdit": "Edit",
+      "close": "Close",
+      "generate": "Generate list",
+      "delete": "Delete basket"
+    },
+    "items": {
+      "title": "Basket items",
+      "empty": "No items yet. Use the form below to add them.",
+      "qty": "Qty",
+      "price": "Unit price",
+      "remove": "Remove item"
+    },
+    "addItem": {
+      "title": "Add item",
+      "hint": "Enter the unit price. The total is calculated automatically from the quantity.",
+      "nameLabel": "Item name",
+      "namePlaceholder": "E.g. Rice 5kg",
+      "qtyLabel": "Quantity",
+      "unitLabel": "Unit (optional)",
+      "unitPlaceholder": "E.g. un, kg, L",
+      "unitPriceLabel": "Unit price (optional)",
+      "unitPricePlaceholder": "E.g. 2.99",
+      "submit": "Add to basket"
+    },
+    "toasts": {
+      "created": "Basket \"{{name}}\" created.",
+      "saved": "Basket updated.",
+      "deleted": "Basket deleted.",
+      "generated": "List created from \"{{name}}\".",
+      "emptyItems": "Add at least one item before generating the list.",
+      "generateError": "Could not generate the list."
+    },
+    "confirm": {
+      "delete": "Delete basket \"{{name}}\"? This action cannot be undone."
+    }
   }
 }
