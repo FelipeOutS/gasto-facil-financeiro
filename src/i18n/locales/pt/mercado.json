@@ -153,7 +153,58 @@
       "edit": "Editar item",
       "remove": "Excluir item",
       "confirmRemove": "Remover este item da lista?"
+  },
+  "calculators": {
+    "title": "Calculadoras do Mercado",
+    "subtitle": "Ferramentas rápidas para comparar preços e planejar suas compras.",
+    "back": "Voltar",
+    "home": "Início",
+    "compare": {
+      "title": "Comparar preço por unidade",
+      "subtitle": "Veja qual produto compensa mais comparando preço por kg, litro ou unidade.",
+      "productA": "Produto A",
+      "productB": "Produto B",
+      "name": "Nome (opcional)",
+      "namePlaceholder": "Ex.: Arroz tipo 1",
+      "price": "Preço",
+      "quantity": "Quantidade",
+      "unit": "Unidade",
+      "units": {
+        "g": "g",
+        "kg": "kg",
+        "ml": "ml",
+        "L": "L",
+        "un": "un"
+      },
+      "fillBoth": "Preencha os dois produtos para comparar.",
+      "incompatibleUnits": "As unidades dos dois produtos não são compatíveis. Compare peso com peso, volume com volume ou unidade com unidade.",
+      "bestOption": "{{name}} compensa mais. Sai cerca de {{percent}}% mais barato por {{unit}}.",
+      "samePrice": "Os dois produtos têm praticamente o mesmo preço por {{unit}}.",
+      "unitPrice": "Preço por {{unit}}",
+      "cheaperBy": "Diferença: {{amount}} por {{unit}}",
+      "productAFallback": "Produto A",
+      "productBFallback": "Produto B"
+    },
+    "estimate": {
+      "title": "Estimativa rápida de compra",
+      "subtitle": "Some itens da sua compra sem precisar salvar uma lista.",
+      "itemName": "Nome do item",
+      "itemPlaceholder": "Ex.: Leite",
+      "value": "Valor estimado",
+      "quantity": "Quantidade",
+      "budget": "Orçamento da compra (opcional)",
+      "budgetPlaceholder": "0,00",
+      "add": "Adicionar item",
+      "empty": "Adicione itens para ver o total estimado da sua compra.",
+      "total": "Total estimado",
+      "items": "Itens",
+      "remove": "Remover item",
+      "requiredName": "Informe o nome do item.",
+      "overBudget": "A estimativa passou do orçamento em {{amount}}.",
+      "withinBudget": "A compra ainda está dentro do orçamento.",
+      "subtotal": "Subtotal"
     }
   }
 }
+
 
