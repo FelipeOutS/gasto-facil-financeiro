@@ -676,6 +676,7 @@ function NearbySearchCard({
   const [uf, setUf] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MercadoNearbyResult[]>([]);
+  const [radiusKmUsed, setRadiusKmUsed] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<{
     kind: "idle" | "info" | "error";
     code?: MercadoNearbyErrorCode;
@@ -686,6 +687,7 @@ function NearbySearchCard({
     setLoading(true);
     setFeedback({ kind: "idle" });
     setResults([]);
+    setRadiusKmUsed(null);
     try {
       const res = await findNearbyMarkets({
         cep: normalizeCep(cep),
@@ -694,6 +696,7 @@ function NearbySearchCard({
       });
       if (res.ok) {
         setResults(res.results);
+        setRadiusKmUsed(res.radiusKmUsed ?? null);
       } else {
         setFeedback({ kind: "info", code: res.error.code });
       }
