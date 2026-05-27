@@ -191,7 +191,10 @@
       "emptyError": "Adicione pelo menos um item antes de finalizar.",
       "confirmPending": "Ainda há itens pendentes nesta lista. Deseja finalizar mesmo assim?",
       "success": "Compra registrada no histórico.",
-      "error": "Não foi possível finalizar a compra."
+      "error": "Não foi possível finalizar a compra.",
+      "marketLabel": "Mercado ou local da compra",
+      "marketPlaceholder": "Ex.: Atacadão, Assaí, mercado do bairro",
+      "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços."
     }
   },
   "historico": {
@@ -214,7 +217,9 @@
       "savedBy": "Economia de {{value}}",
       "overBy": "Estouro de {{value}}",
       "noBudget": "Sem orçamento definido",
-      "progress": "{{percent}}% concluída"
+      "progress": "{{percent}}% concluída",
+      "market": "Mercado: {{value}}",
+      "marketUnknown": "Mercado não informado"
     }
   },
   "calculators": {
