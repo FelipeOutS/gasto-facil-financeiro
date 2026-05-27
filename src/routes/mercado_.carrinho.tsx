@@ -24,7 +24,7 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
-import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
+
 import { cn } from "@/lib/utils";
 import {
   addItemLista,
@@ -322,12 +322,6 @@ function CartMode({ lista }: { lista: MercadoLista }) {
             maxLength={80}
             placeholder={t("detail.finalize.marketPlaceholder")}
             className="mt-1.5 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/40"
-          />
-          <SavedMarketsChips
-            label={t("carrinho.finalize.savedMarkets")}
-            emptyHint={t("carrinho.finalize.noSavedMarketsHint")}
-            selected={mercadoNome}
-            onSelect={(nome) => setMercadoNome(nome)}
           />
           <p className="mt-1 text-[11px] text-muted-foreground">
             {t("detail.finalize.marketHint")}
