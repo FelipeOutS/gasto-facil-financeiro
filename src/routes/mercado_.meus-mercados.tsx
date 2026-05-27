@@ -28,6 +28,14 @@ import {
   useMercadosLocais,
   type MercadoLocal,
 } from "@/lib/mercado/mercados-store";
+import {
+  findNearbyMarkets,
+  normalizeCep,
+  normalizeCidade,
+  normalizeUf,
+  type MercadoNearbyErrorCode,
+} from "@/lib/mercado/nearby-markets-api";
+
 
 export const Route = createFileRoute("/mercado_/meus-mercados")({
   head: () => ({
