@@ -34,6 +34,7 @@ import {
   normalizeCidade,
   normalizeUf,
   type MercadoNearbyErrorCode,
+  type MercadoNearbyResult,
 } from "@/lib/mercado/nearby-markets-api";
 
 
