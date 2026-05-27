@@ -23,6 +23,7 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OrcamentoRouteImport } from './routes/orcamento'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MeuPlanoRouteImport } from './routes/meu-plano'
+import { Route as MercadoRouteImport } from './routes/mercado'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LgpdRouteImport } from './routes/lgpd'
@@ -47,7 +48,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as MetasIndexRouteImport } from './routes/metas.index'
-import { Route as MercadoIndexRouteImport } from './routes/mercado.index'
 import { Route as InvestimentosIndexRouteImport } from './routes/investimentos.index'
 import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
@@ -189,6 +189,11 @@ const MeuPlanoRoute = MeuPlanoRouteImport.update({
   path: '/meu-plano',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MercadoRoute = MercadoRouteImport.update({
+  id: '/mercado',
+  path: '/mercado',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManualRoute = ManualRouteImport.update({
   id: '/manual',
   path: '/manual',
@@ -309,11 +314,6 @@ const MetasIndexRoute = MetasIndexRouteImport.update({
   path: '/metas/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MercadoIndexRoute = MercadoIndexRouteImport.update({
-  id: '/mercado/',
-  path: '/mercado/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InvestimentosIndexRoute = InvestimentosIndexRouteImport.update({
   id: '/investimentos/',
   path: '/investimentos/',
@@ -360,9 +360,9 @@ const MetasNovaRoute = MetasNovaRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoListasRoute = MercadoListasRouteImport.update({
-  id: '/mercado/listas',
-  path: '/mercado/listas',
-  getParentRoute: () => rootRouteImport,
+  id: '/listas',
+  path: '/listas',
+  getParentRoute: () => MercadoRoute,
 } as any)
 const InvestimentosNovoRoute = InvestimentosNovoRouteImport.update({
   id: '/investimentos/novo',
@@ -704,6 +704,7 @@ export interface FileRoutesByFullPath {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
+  '/mercado': typeof MercadoRouteWithChildren
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -755,7 +756,6 @@ export interface FileRoutesByFullPath {
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
   '/investimentos/': typeof InvestimentosIndexRoute
-  '/mercado/': typeof MercadoIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -815,6 +815,7 @@ export interface FileRoutesByTo {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
+  '/mercado': typeof MercadoRouteWithChildren
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -866,7 +867,6 @@ export interface FileRoutesByTo {
   '/contas-a-receber': typeof ContasAReceberIndexRoute
   '/en': typeof EnIndexRoute
   '/investimentos': typeof InvestimentosIndexRoute
-  '/mercado': typeof MercadoIndexRoute
   '/metas': typeof MetasIndexRoute
   '/pt': typeof PtIndexRoute
   '/renda': typeof RendaIndexRoute
@@ -927,6 +927,7 @@ export interface FileRoutesById {
   '/lgpd': typeof LgpdRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRoute
+  '/mercado': typeof MercadoRouteWithChildren
   '/meu-plano': typeof MeuPlanoRoute
   '/onboarding': typeof OnboardingRoute
   '/orcamento': typeof OrcamentoRoute
@@ -978,7 +979,6 @@ export interface FileRoutesById {
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
   '/en/': typeof EnIndexRoute
   '/investimentos/': typeof InvestimentosIndexRoute
-  '/mercado/': typeof MercadoIndexRoute
   '/metas/': typeof MetasIndexRoute
   '/pt/': typeof PtIndexRoute
   '/renda/': typeof RendaIndexRoute
@@ -1040,6 +1040,7 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
+    | '/mercado'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -1091,7 +1092,6 @@ export interface FileRouteTypes {
     | '/contas-a-receber/'
     | '/en/'
     | '/investimentos/'
-    | '/mercado/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1151,6 +1151,7 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
+    | '/mercado'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -1202,7 +1203,6 @@ export interface FileRouteTypes {
     | '/contas-a-receber'
     | '/en'
     | '/investimentos'
-    | '/mercado'
     | '/metas'
     | '/pt'
     | '/renda'
@@ -1262,6 +1262,7 @@ export interface FileRouteTypes {
     | '/lgpd'
     | '/login'
     | '/manual'
+    | '/mercado'
     | '/meu-plano'
     | '/onboarding'
     | '/orcamento'
@@ -1313,7 +1314,6 @@ export interface FileRouteTypes {
     | '/contas-a-receber/'
     | '/en/'
     | '/investimentos/'
-    | '/mercado/'
     | '/metas/'
     | '/pt/'
     | '/renda/'
@@ -1374,6 +1374,7 @@ export interface RootRouteChildren {
   LgpdRoute: typeof LgpdRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRoute
+  MercadoRoute: typeof MercadoRouteWithChildren
   MeuPlanoRoute: typeof MeuPlanoRoute
   OnboardingRoute: typeof OnboardingRoute
   OrcamentoRoute: typeof OrcamentoRoute
@@ -1415,7 +1416,6 @@ export interface RootRouteChildren {
   InvestimentosImportacoesRoute: typeof InvestimentosImportacoesRoute
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
-  MercadoListasRoute: typeof MercadoListasRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1425,7 +1425,6 @@ export interface RootRouteChildren {
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
   EnIndexRoute: typeof EnIndexRoute
   InvestimentosIndexRoute: typeof InvestimentosIndexRoute
-  MercadoIndexRoute: typeof MercadoIndexRoute
   MetasIndexRoute: typeof MetasIndexRoute
   PtIndexRoute: typeof PtIndexRoute
   RendaIndexRoute: typeof RendaIndexRoute
@@ -1561,6 +1560,13 @@ declare module '@tanstack/react-router' {
       path: '/meu-plano'
       fullPath: '/meu-plano'
       preLoaderRoute: typeof MeuPlanoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado': {
+      id: '/mercado'
+      path: '/mercado'
+      fullPath: '/mercado'
+      preLoaderRoute: typeof MercadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manual': {
@@ -1731,13 +1737,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mercado/': {
-      id: '/mercado/'
-      path: '/mercado'
-      fullPath: '/mercado/'
-      preLoaderRoute: typeof MercadoIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/investimentos/': {
       id: '/investimentos/'
       path: '/investimentos'
@@ -1803,10 +1802,10 @@ declare module '@tanstack/react-router' {
     }
     '/mercado/listas': {
       id: '/mercado/listas'
-      path: '/mercado/listas'
+      path: '/listas'
       fullPath: '/mercado/listas'
       preLoaderRoute: typeof MercadoListasRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MercadoRoute
     }
     '/investimentos/novo': {
       id: '/investimentos/novo'
@@ -2242,6 +2241,17 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface MercadoRouteChildren {
+  MercadoListasRoute: typeof MercadoListasRoute
+}
+
+const MercadoRouteChildren: MercadoRouteChildren = {
+  MercadoListasRoute: MercadoListasRoute,
+}
+
+const MercadoRouteWithChildren =
+  MercadoRoute._addFileChildren(MercadoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -2264,6 +2274,7 @@ const rootRouteChildren: RootRouteChildren = {
   LgpdRoute: LgpdRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRoute,
+  MercadoRoute: MercadoRouteWithChildren,
   MeuPlanoRoute: MeuPlanoRoute,
   OnboardingRoute: OnboardingRoute,
   OrcamentoRoute: OrcamentoRoute,
@@ -2305,7 +2316,6 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosImportacoesRoute: InvestimentosImportacoesRoute,
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
-  MercadoListasRoute: MercadoListasRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
@@ -2315,7 +2325,6 @@ const rootRouteChildren: RootRouteChildren = {
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
   EnIndexRoute: EnIndexRoute,
   InvestimentosIndexRoute: InvestimentosIndexRoute,
-  MercadoIndexRoute: MercadoIndexRoute,
   MetasIndexRoute: MetasIndexRoute,
   PtIndexRoute: PtIndexRoute,
   RendaIndexRoute: RendaIndexRoute,
@@ -2360,3 +2369,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
