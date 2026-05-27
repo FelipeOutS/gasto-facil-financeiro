@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "title": "Smart Grocery — Gasto Inteligente"
+  },
+  "hub": {
+    "title": "Smart Grocery",
+    "subtitle": "Plan purchases, compare prices and track your grocery spending in a simple way.",
+    "intro": "Start by organizing your grocery shopping. In the next stages, this area will bring together lists, budget, history, cart and price comparisons.",
+    "futureNote": "Ready for future integrations.",
+    "status": {
+      "soon": "Coming soon",
+      "future": "Future"
+    },
+    "cards": {
+      "listas": {
+        "title": "Shopping lists",
+        "desc": "Create lists to organize what you need to buy."
+      },
+      "calculadoras": {
+        "title": "Calculators",
+        "desc": "Compare price per kg, per unit, discounts and best value."
+      },
+      "orcamento": {
+        "title": "Grocery budget",
+        "desc": "Set a monthly limit for grocery shopping."
+      },
+      "historico": {
+        "title": "Purchase history",
+        "desc": "Review past purchases and see how your spending evolves."
+      },
+      "carrinho": {
+        "title": "Smart cart",
+        "desc": "Add up items while you shop and avoid going over budget."
+      },
+      "cesta": {
+        "title": "Standard basket",
+        "desc": "Build a recurring list with the items you buy every month."
+      }
+    }
+  }
+}
