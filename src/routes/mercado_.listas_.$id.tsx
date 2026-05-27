@@ -218,8 +218,12 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
             )}
             style={{ width: `${Math.max(0, Math.min(100, resumo.percentualConcluido))}%` }}
           />
-        </div>
       </div>
+
+      {/* Budget */}
+      <BudgetCard lista={lista} />
+
+
 
       {/* Form */}
       <AddItemForm listaId={lista.id} />
