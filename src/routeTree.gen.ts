@@ -92,8 +92,8 @@ import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
 import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
 import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
-import { Route as MercadoListasNovaRouteImport } from './routes/mercado_.listas.nova'
-import { Route as MercadoListasIdRouteImport } from './routes/mercado_.listas.$id'
+import { Route as MercadoListasNovaRouteImport } from './routes/mercado_.listas_.nova'
+import { Route as MercadoListasIdRouteImport } from './routes/mercado_.listas_.$id'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as InvestimentosIdRendimentoRouteImport } from './routes/investimentos.$id.rendimento'
 import { Route as InvestimentosIdMovimentacaoRouteImport } from './routes/investimentos.$id.movimentacao'
@@ -540,14 +540,14 @@ const MetasIdAdicionarRoute = MetasIdAdicionarRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoListasNovaRoute = MercadoListasNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => MercadoListasRoute,
+  id: '/mercado_/listas_/nova',
+  path: '/mercado/listas/nova',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoListasIdRoute = MercadoListasIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MercadoListasRoute,
+  id: '/mercado_/listas_/$id',
+  path: '/mercado/listas/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
@@ -765,7 +765,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
-  '/mercado/listas': typeof MercadoListasRouteWithChildren
+  '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -879,7 +879,7 @@ export interface FileRoutesByTo {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
-  '/mercado/listas': typeof MercadoListasRouteWithChildren
+  '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -994,7 +994,7 @@ export interface FileRoutesById {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado_/calculadoras': typeof MercadoCalculadorasRoute
-  '/mercado_/listas': typeof MercadoListasRouteWithChildren
+  '/mercado_/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1020,8 +1020,8 @@ export interface FileRoutesById {
   '/investimentos/$id/movimentacao': typeof InvestimentosIdMovimentacaoRoute
   '/investimentos/$id/rendimento': typeof InvestimentosIdRendimentoRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
-  '/mercado_/listas/$id': typeof MercadoListasIdRoute
-  '/mercado_/listas/nova': typeof MercadoListasNovaRoute
+  '/mercado_/listas_/$id': typeof MercadoListasIdRoute
+  '/mercado_/listas_/nova': typeof MercadoListasNovaRoute
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
@@ -1364,8 +1364,8 @@ export interface FileRouteTypes {
     | '/investimentos/$id/movimentacao'
     | '/investimentos/$id/rendimento'
     | '/lovable/email/suppression'
-    | '/mercado_/listas/$id'
-    | '/mercado_/listas/nova'
+    | '/mercado_/listas_/$id'
+    | '/mercado_/listas_/nova'
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
@@ -1453,7 +1453,7 @@ export interface RootRouteChildren {
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
   MercadoCalculadorasRoute: typeof MercadoCalculadorasRoute
-  MercadoListasRoute: typeof MercadoListasRouteWithChildren
+  MercadoListasRoute: typeof MercadoListasRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1478,6 +1478,8 @@ export interface RootRouteChildren {
   InvestimentosIdMovimentacaoRoute: typeof InvestimentosIdMovimentacaoRoute
   InvestimentosIdRendimentoRoute: typeof InvestimentosIdRendimentoRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  MercadoListasIdRoute: typeof MercadoListasIdRoute
+  MercadoListasNovaRoute: typeof MercadoListasNovaRoute
   MetasIdAdicionarRoute: typeof MetasIdAdicionarRoute
   MetasIdEditarRoute: typeof MetasIdEditarRoute
   MetasIdRemoverRoute: typeof MetasIdRemoverRoute
@@ -2083,19 +2085,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetasIdAdicionarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mercado_/listas/nova': {
-      id: '/mercado_/listas/nova'
-      path: '/nova'
+    '/mercado_/listas_/nova': {
+      id: '/mercado_/listas_/nova'
+      path: '/mercado/listas/nova'
       fullPath: '/mercado/listas/nova'
       preLoaderRoute: typeof MercadoListasNovaRouteImport
-      parentRoute: typeof MercadoListasRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/mercado_/listas/$id': {
-      id: '/mercado_/listas/$id'
-      path: '/$id'
+    '/mercado_/listas_/$id': {
+      id: '/mercado_/listas_/$id'
+      path: '/mercado/listas/$id'
       fullPath: '/mercado/listas/$id'
       preLoaderRoute: typeof MercadoListasIdRouteImport
-      parentRoute: typeof MercadoListasRoute
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -2300,20 +2302,6 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
-interface MercadoListasRouteChildren {
-  MercadoListasIdRoute: typeof MercadoListasIdRoute
-  MercadoListasNovaRoute: typeof MercadoListasNovaRoute
-}
-
-const MercadoListasRouteChildren: MercadoListasRouteChildren = {
-  MercadoListasIdRoute: MercadoListasIdRoute,
-  MercadoListasNovaRoute: MercadoListasNovaRoute,
-}
-
-const MercadoListasRouteWithChildren = MercadoListasRoute._addFileChildren(
-  MercadoListasRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -2379,7 +2367,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
   MercadoCalculadorasRoute: MercadoCalculadorasRoute,
-  MercadoListasRoute: MercadoListasRouteWithChildren,
+  MercadoListasRoute: MercadoListasRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
@@ -2404,6 +2392,8 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosIdMovimentacaoRoute: InvestimentosIdMovimentacaoRoute,
   InvestimentosIdRendimentoRoute: InvestimentosIdRendimentoRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  MercadoListasIdRoute: MercadoListasIdRoute,
+  MercadoListasNovaRoute: MercadoListasNovaRoute,
   MetasIdAdicionarRoute: MetasIdAdicionarRoute,
   MetasIdEditarRoute: MetasIdEditarRoute,
   MetasIdRemoverRoute: MetasIdRemoverRoute,
