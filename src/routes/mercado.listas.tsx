@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Home,
@@ -17,6 +16,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import { useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
+
 
 export const Route = createFileRoute("/mercado/listas")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.listasTitle", { lng: i18n.language }) }] }),
@@ -49,9 +49,10 @@ function MercadoListasPage() {
     void navigate({ to: "/mercado/listas/nova" });
   }
 
-  function handleOpenLista() {
-    toast.info(t("listas.openToast"));
+  function handleOpenLista(id: string) {
+    void navigate({ to: "/mercado/listas/$id", params: { id } });
   }
+
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
     day: "2-digit",
@@ -124,9 +125,10 @@ function MercadoListasPage() {
               key={lista.id}
               lista={lista}
               dateLabel={dateFormatter.format(new Date(lista.createdAt))}
-              onOpen={handleOpenLista}
+              onOpen={() => handleOpenLista(lista.id)}
             />
           ))}
+
         </section>
       )}
 

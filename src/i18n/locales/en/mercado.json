@@ -108,5 +108,51 @@
         "placeholder": "e.g. Buy on the weekend"
       }
     }
+  },
+  "detail": {
+    "metaTitle": "List — Smart Grocery",
+    "titleFallback": "List",
+    "back": "Back",
+    "home": "Home",
+    "notFoundTitle": "List not found",
+    "notFoundDescription": "This list may have been removed or has not been created on this device yet.",
+    "summary": {
+      "totalEstimated": "Total estimated",
+      "bought": "Bought",
+      "pending": "Pending",
+      "progress": "Progress"
+    },
+    "status": {
+      "planning": "Planning",
+      "active": "In progress",
+      "done": "Completed"
+    },
+    "form": {
+      "title": "Add item",
+      "itemName": "Item name",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "unitPlaceholder": "ea, kg, L",
+      "estimatedPrice": "Estimated price",
+      "add": "Add item",
+      "save": "Save",
+      "cancel": "Cancel",
+      "requiredName": "Please enter the item name.",
+      "added": "Item added.",
+      "updated": "Item updated.",
+      "removed": "Item removed."
+    },
+    "empty": {
+      "title": "Your list is still empty",
+      "description": "Add the first items to start organizing your shopping."
+    },
+    "item": {
+      "markBought": "Mark as bought",
+      "markPending": "Mark as pending",
+      "edit": "Edit item",
+      "remove": "Remove item",
+      "confirmRemove": "Remove this item from the list?"
+    }
   }
 }
+
