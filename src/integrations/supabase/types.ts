@@ -1523,6 +1523,69 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_historico_compras: {
+        Row: {
+          budget: number | null
+          concluida_em: string
+          created_at: string
+          economia_ou_estouro: number | null
+          id: string
+          itens_comprados: number
+          itens_pendentes: number
+          itens_snapshot: Json
+          lista_id: string | null
+          mercado_nome: string | null
+          nome: string
+          percentual_concluido: number
+          tipo: string
+          total_comprado_estimado: number
+          total_estimado: number
+          total_itens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          concluida_em: string
+          created_at?: string
+          economia_ou_estouro?: number | null
+          id: string
+          itens_comprados?: number
+          itens_pendentes?: number
+          itens_snapshot?: Json
+          lista_id?: string | null
+          mercado_nome?: string | null
+          nome: string
+          percentual_concluido?: number
+          tipo: string
+          total_comprado_estimado?: number
+          total_estimado?: number
+          total_itens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          concluida_em?: string
+          created_at?: string
+          economia_ou_estouro?: number | null
+          id?: string
+          itens_comprados?: number
+          itens_pendentes?: number
+          itens_snapshot?: Json
+          lista_id?: string | null
+          mercado_nome?: string | null
+          nome?: string
+          percentual_concluido?: number
+          tipo?: string
+          total_comprado_estimado?: number
+          total_estimado?: number
+          total_itens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mercado_listas: {
         Row: {
           created_at: string
@@ -1563,6 +1626,81 @@ export type Database = {
           progress?: number
           status?: string
           tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mercado_precos_usuario: {
+        Row: {
+          categoria: string | null
+          cidade: string | null
+          codigo_barras: string | null
+          comprado_em: string
+          created_at: string
+          estabelecimento: string | null
+          from_paid_price: boolean
+          historico_id: string
+          id: string
+          item_id: string | null
+          lista_id: string | null
+          marca: string | null
+          nome_produto: string
+          origem: string
+          preco_total: number
+          preco_unitario: number
+          produto_key: string
+          quantidade: number
+          uf: string | null
+          unidade: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          cidade?: string | null
+          codigo_barras?: string | null
+          comprado_em: string
+          created_at?: string
+          estabelecimento?: string | null
+          from_paid_price?: boolean
+          historico_id: string
+          id: string
+          item_id?: string | null
+          lista_id?: string | null
+          marca?: string | null
+          nome_produto: string
+          origem?: string
+          preco_total?: number
+          preco_unitario: number
+          produto_key: string
+          quantidade?: number
+          uf?: string | null
+          unidade?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          cidade?: string | null
+          codigo_barras?: string | null
+          comprado_em?: string
+          created_at?: string
+          estabelecimento?: string | null
+          from_paid_price?: boolean
+          historico_id?: string
+          id?: string
+          item_id?: string | null
+          lista_id?: string | null
+          marca?: string | null
+          nome_produto?: string
+          origem?: string
+          preco_total?: number
+          preco_unitario?: number
+          produto_key?: string
+          quantidade?: number
+          uf?: string | null
+          unidade?: string | null
           updated_at?: string
           user_id?: string
         }
