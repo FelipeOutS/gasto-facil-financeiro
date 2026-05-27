@@ -346,7 +346,7 @@ function normalizePreco(raw: unknown): MercadoPrecoLocal | null {
 function safeReadPrecos(): MercadoPrecoLocal[] {
   if (!isBrowserPrec()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_PRECOS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentPrecosKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -359,7 +359,7 @@ function safeReadPrecos(): MercadoPrecoLocal[] {
 function safeWritePrecos(next: MercadoPrecoLocal[]) {
   if (!isBrowserPrec()) return;
   try {
-    window.localStorage.setItem(MERCADO_PRECOS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentPrecosKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
