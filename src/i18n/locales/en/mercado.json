@@ -166,6 +166,37 @@
       "overHint": "This list went {{value}} over the budget.",
       "noBudgetTitle": "No budget set",
       "noBudgetHint": "Set a budget on the list to better track your shopping."
+    },
+    "finalize": {
+      "cta": "Finalize shopping",
+      "hint": "Save this shopping trip to your local history.",
+      "emptyError": "Add at least one item before finalizing.",
+      "confirmPending": "There are still pending items in this list. Finalize anyway?",
+      "success": "Shopping saved to history.",
+      "error": "Could not finalize this shopping."
+    }
+  },
+  "historico": {
+    "metaTitle": "Shopping history — Smart Grocery",
+    "title": "Shopping history",
+    "subtitle": "Finalized shopping trips saved locally on this device.",
+    "back": "Back",
+    "home": "Home",
+    "empty": {
+      "title": "You haven't finalized any shopping yet",
+      "description": "Finalize a shopping list to start building your local history."
+    },
+    "card": {
+      "finishedOn": "Finished on",
+      "items": "Items",
+      "bought": "Bought",
+      "pending": "Pending",
+      "totalEstimated": "Estimated total",
+      "budget": "Budget",
+      "savedBy": "Saved {{value}}",
+      "overBy": "Over by {{value}}",
+      "noBudget": "No budget set",
+      "progress": "{{percent}}% complete"
     }
   },
   "calculators": {
