@@ -2,6 +2,7 @@
 // Persists to localStorage under an isolated key. NO Supabase, NO API.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { registrarPrecosDaCompra } from "./precos-history";
 
 export const MERCADO_LISTAS_STORAGE_KEY = "gi:mercado:listas:v1";
 
@@ -598,6 +599,14 @@ export function finalizarListaCompra(listaId: string): MercadoCompraHistorico | 
   const current = safeReadHistorico();
   safeWriteHistorico([entry, ...current]);
   emitHistorico();
+
+  // E13: registra preços no histórico local de preços por produto.
+  // Operação isolada, dedupada por historicoId. Falhas não afetam o fluxo.
+  try {
+    registrarPrecosDaCompra(entry);
+  } catch {
+    // ignore — store local não pode quebrar a finalização da compra
+  }
 
   // Mark the source list as done (snapshot already saved).
   mutate((all) =>

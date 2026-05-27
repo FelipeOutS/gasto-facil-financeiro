@@ -439,6 +439,10 @@
       "point4": "In the future it may use only aggregated and approximate data.",
       "point5": "The user will have control over participation when this feature is implemented.",
       "futureOptIn": "When the community base is ready, the user will decide whether to participate. No data will be shared without consent."
+    },
+    "ctaLocal": {
+      "title": "View my local price history",
+      "desc": "See prices of products purchased on this device."
     }
   },
   "cesta": {
@@ -516,6 +520,28 @@
     },
     "confirm": {
       "delete": "Delete basket \"{{name}}\"? This action cannot be undone."
+    }
+  },
+  "precosHistorico": {
+    "metaTitle": "Local price history — Smart Market",
+    "title": "Local price history",
+    "subtitle": "See the prices of products you bought on this device.",
+    "back": "Back",
+    "home": "Home",
+    "localNotice": "Local history from this device only. The community database is not active yet.",
+    "empty": {
+      "title": "No prices recorded yet",
+      "desc": "Prices appear here after you finish a purchase with the unit price of the items.",
+      "cta": "Go to my lists"
+    },
+    "card": {
+      "recordsCount_one": "{{count}} record",
+      "recordsCount_other": "{{count}} records",
+      "min": "Lowest",
+      "max": "Highest",
+      "avg": "Average",
+      "last": "Latest",
+      "lastDate": "Last record on {{date}}"
     }
   }
 }

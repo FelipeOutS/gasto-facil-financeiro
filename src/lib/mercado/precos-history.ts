@@ -234,3 +234,280 @@ export function anonimizarRegistro(
     visibility: "anonymized",
   };
 }
+
+// ---------------------------------------------------------------------------
+// E13 — Histórico LOCAL de preços por produto (somente este dispositivo)
+// ---------------------------------------------------------------------------
+// Persiste em localStorage, isolado dos demais stores do Mercado. SSR-safe.
+// Não usa Supabase, não compartilha dados, não cria base comunitária.
+
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+export const MERCADO_PRECOS_STORAGE_KEY = "gi:mercado:precos:v1";
+
+/** Versão pública do registro local (mesma forma do registro privado). */
+export type MercadoPrecoLocal = MercadoPrecoUsuarioRegistro;
+
+/** Chave determinística para agrupar registros do mesmo produto. */
+export function buildProdutoKey(input: {
+  nome?: string;
+  codigoBarras?: string;
+}): string {
+  const ean = (input.codigoBarras ?? "").trim();
+  if (ean) return `ean:${ean}`;
+  const nome = (input.nome ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  return nome ? `nome:${nome}` : "";
+}
+
+function isBrowserPrec() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function normalizePreco(raw: unknown): MercadoPrecoLocal | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== "string" || typeof r.produtoNome !== "string") return null;
+  const num = (v: unknown): number | undefined =>
+    typeof v === "number" && Number.isFinite(v) && v > 0 ? v : undefined;
+  const precoUnitario = num(r.precoUnitario);
+  if (precoUnitario === undefined) return null;
+  const qtd = num(r.quantidade) ?? 1;
+  const origens = ["manual", "lista", "barcode", "cupom", "qrcode"] as const;
+  const origem = (origens as readonly string[]).includes(r.origem as string)
+    ? (r.origem as PrecoOrigem)
+    : "manual";
+  return {
+    id: r.id,
+    itemId: typeof r.itemId === "string" ? r.itemId : "",
+    listaId: typeof r.listaId === "string" ? r.listaId : undefined,
+    historicoId: typeof r.historicoId === "string" ? r.historicoId : undefined,
+    produtoNome: r.produtoNome,
+    categoria: typeof r.categoria === "string" && r.categoria ? r.categoria : undefined,
+    codigoBarras:
+      typeof r.codigoBarras === "string" && r.codigoBarras ? r.codigoBarras : undefined,
+    unidade: typeof r.unidade === "string" && r.unidade ? r.unidade : undefined,
+    quantidade: qtd,
+    precoUnitario,
+    precoTotal: num(r.precoTotal) ?? precoUnitario * qtd,
+    fromPaidPrice: Boolean(r.fromPaidPrice),
+    compradoEm:
+      typeof r.compradoEm === "string" && r.compradoEm
+        ? r.compradoEm
+        : "1970-01-01T00:00:00.000Z",
+    origem,
+    cidade: typeof r.cidade === "string" && r.cidade ? r.cidade : undefined,
+    uf: typeof r.uf === "string" && r.uf ? r.uf : undefined,
+    estabelecimento:
+      typeof r.estabelecimento === "string" && r.estabelecimento
+        ? r.estabelecimento
+        : undefined,
+    visibility: "private",
+    contribuirAnonimamente: false,
+  };
+}
+
+function safeReadPrecos(): MercadoPrecoLocal[] {
+  if (!isBrowserPrec()) return [];
+  try {
+    const raw = window.localStorage.getItem(MERCADO_PRECOS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizePreco).filter((x): x is MercadoPrecoLocal => x !== null);
+  } catch {
+    return [];
+  }
+}
+
+function safeWritePrecos(next: MercadoPrecoLocal[]) {
+  if (!isBrowserPrec()) return;
+  try {
+    window.localStorage.setItem(MERCADO_PRECOS_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore quota / privacy errors
+  }
+}
+
+type PrecoListener = () => void;
+const precosListeners = new Set<PrecoListener>();
+
+function emitPrecos() {
+  for (const l of Array.from(precosListeners)) {
+    try {
+      l();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export function getHistoricoPrecos(): MercadoPrecoLocal[] {
+  return safeReadPrecos().sort((a, b) => b.compradoEm.localeCompare(a.compradoEm));
+}
+
+export function getPrecosPorProduto(nomeOuCodigo: string): MercadoPrecoLocal[] {
+  const key = buildProdutoKey({
+    nome: nomeOuCodigo,
+    codigoBarras: /^\d{8,14}$/.test(nomeOuCodigo.trim()) ? nomeOuCodigo.trim() : undefined,
+  });
+  if (!key) return [];
+  return getHistoricoPrecos().filter(
+    (r) => buildProdutoKey({ nome: r.produtoNome, codigoBarras: r.codigoBarras }) === key,
+  );
+}
+
+export type ResumoPrecoProduto = {
+  produtoKey: string;
+  produtoNome: string;
+  unidade?: string;
+  codigoBarras?: string;
+  registros: number;
+  precoMin: number;
+  precoMax: number;
+  precoMedio: number;
+  ultimoPreco: number;
+  ultimoEm: string;
+};
+
+export function getResumoPrecoProduto(nomeOuCodigo: string): ResumoPrecoProduto | null {
+  const regs = getPrecosPorProduto(nomeOuCodigo);
+  if (regs.length === 0) return null;
+  return resumirRegistros(regs);
+}
+
+function resumirRegistros(regs: MercadoPrecoLocal[]): ResumoPrecoProduto {
+  // regs assumed non-empty
+  const sorted = [...regs].sort((a, b) => b.compradoEm.localeCompare(a.compradoEm));
+  const last = sorted[0];
+  let min = Infinity;
+  let max = -Infinity;
+  let sum = 0;
+  for (const r of sorted) {
+    if (r.precoUnitario < min) min = r.precoUnitario;
+    if (r.precoUnitario > max) max = r.precoUnitario;
+    sum += r.precoUnitario;
+  }
+  const safeMin = Number.isFinite(min) ? min : last.precoUnitario;
+  const safeMax = Number.isFinite(max) ? max : last.precoUnitario;
+  const medio = sorted.length > 0 ? sum / sorted.length : last.precoUnitario;
+  return {
+    produtoKey: buildProdutoKey({ nome: last.produtoNome, codigoBarras: last.codigoBarras }),
+    produtoNome: last.produtoNome,
+    unidade: last.unidade,
+    codigoBarras: last.codigoBarras,
+    registros: sorted.length,
+    precoMin: safeMin,
+    precoMax: safeMax,
+    precoMedio: medio,
+    ultimoPreco: last.precoUnitario,
+    ultimoEm: last.compradoEm,
+  };
+}
+
+/** Resumos agrupados por produto, ordenados pelo registro mais recente. */
+export function getResumosPrecos(): ResumoPrecoProduto[] {
+  const all = getHistoricoPrecos();
+  const groups = new Map<string, MercadoPrecoLocal[]>();
+  for (const r of all) {
+    const key = buildProdutoKey({ nome: r.produtoNome, codigoBarras: r.codigoBarras });
+    if (!key) continue;
+    const arr = groups.get(key);
+    if (arr) arr.push(r);
+    else groups.set(key, [r]);
+  }
+  const out: ResumoPrecoProduto[] = [];
+  for (const regs of groups.values()) {
+    out.push(resumirRegistros(regs));
+  }
+  out.sort((a, b) => b.ultimoEm.localeCompare(a.ultimoEm));
+  return out;
+}
+
+/**
+ * Registra os preços de uma compra finalizada no histórico LOCAL.
+ * Deduplica por `historicoId`: se já houver registros dessa compra, não insere
+ * novamente (evita duplicar quando o usuário finalizar a mesma lista duas vezes
+ * rapidamente). Retorna a quantidade de novos registros inseridos.
+ */
+export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number {
+  const novos = compraParaRegistrosPrivados(compra);
+  if (novos.length === 0) return 0;
+  const atuais = safeReadPrecos();
+  if (compra.id && atuais.some((r) => r.historicoId === compra.id)) {
+    return 0;
+  }
+  safeWritePrecos([...novos, ...atuais]);
+  emitPrecos();
+  return novos.length;
+}
+
+function subscribePrecos(listener: PrecoListener): () => void {
+  precosListeners.add(listener);
+  if (isBrowserPrec()) {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === MERCADO_PRECOS_STORAGE_KEY) listener();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      precosListeners.delete(listener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }
+  return () => precosListeners.delete(listener);
+}
+
+let cachedPrecos: MercadoPrecoLocal[] = [];
+let cachedPrecosSerialized = "[]";
+
+function getPrecosSnapshot(): MercadoPrecoLocal[] {
+  const fresh = getHistoricoPrecos();
+  const serialized = JSON.stringify(fresh);
+  if (serialized !== cachedPrecosSerialized) {
+    cachedPrecosSerialized = serialized;
+    cachedPrecos = fresh;
+  }
+  return cachedPrecos;
+}
+
+function getPrecosServerSnapshot(): MercadoPrecoLocal[] {
+  return [];
+}
+
+export function useHistoricoPrecos(): MercadoPrecoLocal[] {
+  const data = useSyncExternalStore(
+    subscribePrecos,
+    getPrecosSnapshot,
+    getPrecosServerSnapshot,
+  );
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? data : [];
+}
+
+let cachedResumos: ResumoPrecoProduto[] = [];
+let cachedResumosSerialized = "[]";
+
+function getResumosSnapshot(): ResumoPrecoProduto[] {
+  const fresh = getResumosPrecos();
+  const serialized = JSON.stringify(fresh);
+  if (serialized !== cachedResumosSerialized) {
+    cachedResumosSerialized = serialized;
+    cachedResumos = fresh;
+  }
+  return cachedResumos;
+}
+
+function getResumosServerSnapshot(): ResumoPrecoProduto[] {
+  return [];
+}
+
+export function useResumosPrecos(): ResumoPrecoProduto[] {
+  const data = useSyncExternalStore(
+    subscribePrecos,
+    getResumosSnapshot,
+    getResumosServerSnapshot,
+  );
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? data : [];
+}
