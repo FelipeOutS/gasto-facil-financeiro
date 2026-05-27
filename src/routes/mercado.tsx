@@ -15,7 +15,7 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/mercado/")({
+export const Route = createFileRoute("/mercado")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.title", { lng: i18n.language }) }] }),
   component: MercadoHubPage,
 });
