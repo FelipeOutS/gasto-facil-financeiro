@@ -153,6 +153,19 @@
       "edit": "Editar item",
       "remove": "Excluir item",
       "confirmRemove": "Remover este item da lista?"
+    },
+    "budget": {
+      "title": "Orçamento da compra",
+      "subtitle": "Acompanhe se a lista ainda cabe no valor planejado.",
+      "defined": "Orçamento definido",
+      "totalEstimated": "Total estimado",
+      "remaining": "Ainda disponível",
+      "over": "Acima do orçamento",
+      "usedLabel": "Usado do orçamento",
+      "withinHint": "Você ainda tem {{value}} dentro do orçamento.",
+      "overHint": "Esta lista passou {{value}} do orçamento.",
+      "noBudgetTitle": "Sem orçamento definido",
+      "noBudgetHint": "Defina um orçamento na lista para acompanhar melhor sua compra."
     }
   },
   "calculators": {

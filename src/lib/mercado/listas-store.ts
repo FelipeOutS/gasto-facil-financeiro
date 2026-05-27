@@ -329,6 +329,36 @@ export function computeResumo(l: MercadoLista): ResumoLista {
   };
 }
 
+export type OrcamentoLista = {
+  hasBudget: boolean;
+  budget: number;
+  totalEstimado: number;
+  diferenca: number; // budget - totalEstimado (positive = remaining)
+  percentualUsado: number; // 0..N (can exceed 100)
+  overBudget: boolean;
+};
+
+export function computeOrcamentoLista(l: MercadoLista): OrcamentoLista {
+  const totalEstimado = l.entries.reduce(
+    (a, e) => a + (e.precoEstimado ?? 0) * (e.quantidade || 1),
+    0,
+  );
+  const rawBudget = l.estimate;
+  const hasBudget =
+    typeof rawBudget === "number" && Number.isFinite(rawBudget) && rawBudget > 0;
+  const budget = hasBudget ? (rawBudget as number) : 0;
+  const diferenca = budget - totalEstimado;
+  const percentualUsado = hasBudget ? Math.round((totalEstimado / budget) * 100) : 0;
+  return {
+    hasBudget,
+    budget,
+    totalEstimado,
+    diferenca,
+    percentualUsado,
+    overBudget: hasBudget && totalEstimado > budget,
+  };
+}
+
 function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
