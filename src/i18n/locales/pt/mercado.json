@@ -166,6 +166,37 @@
       "overHint": "Esta lista passou {{value}} do orçamento.",
       "noBudgetTitle": "Sem orçamento definido",
       "noBudgetHint": "Defina um orçamento na lista para acompanhar melhor sua compra."
+    },
+    "finalize": {
+      "cta": "Finalizar compra",
+      "hint": "Salve esta compra no seu histórico local.",
+      "emptyError": "Adicione pelo menos um item antes de finalizar.",
+      "confirmPending": "Ainda há itens pendentes nesta lista. Deseja finalizar mesmo assim?",
+      "success": "Compra registrada no histórico.",
+      "error": "Não foi possível finalizar a compra."
+    }
+  },
+  "historico": {
+    "metaTitle": "Histórico de compras — Mercado Inteligente",
+    "title": "Histórico de compras",
+    "subtitle": "Compras finalizadas salvas localmente neste dispositivo.",
+    "back": "Voltar",
+    "home": "Início",
+    "empty": {
+      "title": "Você ainda não finalizou nenhuma compra",
+      "description": "Finalize uma lista de compras para começar a montar seu histórico local."
+    },
+    "card": {
+      "finishedOn": "Concluída em",
+      "items": "Itens",
+      "bought": "Comprados",
+      "pending": "Pendentes",
+      "totalEstimated": "Total estimado",
+      "budget": "Orçamento",
+      "savedBy": "Economia de {{value}}",
+      "overBy": "Estouro de {{value}}",
+      "noBudget": "Sem orçamento definido",
+      "progress": "{{percent}}% concluída"
     }
   },
   "calculators": {
