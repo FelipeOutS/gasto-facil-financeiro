@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Home,
@@ -9,13 +10,14 @@ import {
   ShoppingCart,
   WalletCards,
   CalendarDays,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
-import { useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
+import { removeLista, useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
