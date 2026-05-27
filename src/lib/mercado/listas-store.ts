@@ -805,7 +805,7 @@ function subscribeHistorico(listener: Listener): () => void {
   historicoListeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_HISTORICO_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_HISTORICO_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
