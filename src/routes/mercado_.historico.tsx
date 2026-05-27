@@ -187,6 +187,12 @@ function HistoricoCard({
         </div>
       )}
 
+      <p className="truncate text-[12px] text-muted-foreground">
+        {item.mercadoNome
+          ? t("historico.card.market", { value: item.mercadoNome })
+          : t("historico.card.marketUnknown")}
+      </p>
+
       <p className="text-[12px] text-muted-foreground">
         {t("historico.card.progress", { percent: item.percentualConcluido })}
       </p>
