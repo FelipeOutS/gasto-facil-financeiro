@@ -401,10 +401,10 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
             {item.nome}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {item.quantidade} {item.unidade || ""} ·{" "}
-            <span className="tabular-nums">
-              <Money value={subtotal} />
-            </span>
+            {item.quantidade} {item.unidade || ""} ×{" "}
+            <span className="tabular-nums"><Money value={item.precoEstimado || 0} /></span>
+            {" = "}
+            <span className="tabular-nums"><Money value={subtotal} /></span>
           </p>
         </div>
         <button
@@ -449,6 +449,8 @@ function QuickAddForm({ listaId }: { listaId: string }) {
   const [quantidade, setQuantidade] = useState("1");
   const [unidade, setUnidade] = useState("");
   const [preco, setPreco] = useState("");
+
+  const subtotalPreview = (Number(quantidade) || 1) * (Number(preco.replace(",", ".")) || 0);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
