@@ -306,6 +306,27 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           {t(`carrinho.message.${status}`)}
         </p>
 
+        <div className="mt-4">
+          <label
+            htmlFor="carrinho-mercado"
+            className="block text-[12px] font-semibold text-foreground"
+          >
+            {t("detail.finalize.marketLabel")}
+          </label>
+          <input
+            id="carrinho-mercado"
+            type="text"
+            value={mercadoNome}
+            onChange={(e) => setMercadoNome(e.target.value)}
+            maxLength={80}
+            placeholder={t("detail.finalize.marketPlaceholder")}
+            className="mt-1.5 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/40"
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t("detail.finalize.marketHint")}
+          </p>
+        </div>
+
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <Link
             to="/mercado/carrinho"
