@@ -89,6 +89,24 @@ function normalize(raw: unknown): MercadoLista | null {
               typeof it.precoEstimado === "number" && Number.isFinite(it.precoEstimado)
                 ? it.precoEstimado
                 : undefined,
+            precoPago:
+              typeof it.precoPago === "number" && Number.isFinite(it.precoPago)
+                ? it.precoPago
+                : undefined,
+            categoria:
+              typeof it.categoria === "string" && it.categoria ? it.categoria : undefined,
+            codigoBarras:
+              typeof it.codigoBarras === "string" && it.codigoBarras
+                ? it.codigoBarras
+                : undefined,
+            origem:
+              it.origem === "manual" ||
+              it.origem === "lista" ||
+              it.origem === "barcode" ||
+              it.origem === "cupom" ||
+              it.origem === "qrcode"
+                ? it.origem
+                : undefined,
             comprado: Boolean(it.comprado),
             criadoEm: typeof it.criadoEm === "string" ? it.criadoEm : new Date().toISOString(),
             atualizadoEm:
