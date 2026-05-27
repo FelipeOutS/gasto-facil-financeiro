@@ -484,9 +484,6 @@ function AddItemForm({ listaId }: { listaId: string }) {
           >
             {t("detail.form.itemName")}
           </label>
-          >
-            {t("detail.form.itemName")}
-          </label>
           <input
             id="item-nome"
             type="text"
