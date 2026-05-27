@@ -202,7 +202,9 @@
       "error": "Não foi possível finalizar a compra.",
       "marketLabel": "Mercado ou local da compra",
       "marketPlaceholder": "Ex.: Atacadão, Assaí, mercado do bairro",
-      "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços."
+      "marketHint": "Opcional. Ajuda a lembrar onde você pagou esses preços.",
+      "savedMarkets": "Seus mercados",
+      "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
     }
   },
   "historico": {
