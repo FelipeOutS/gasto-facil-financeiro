@@ -538,6 +538,10 @@ function QuickAddForm({ listaId }: { listaId: string }) {
           </span>
         </p>
       )}
+      <PrecoInsight
+        nome={nome}
+        precoUnitario={Number(preco.replace(",", ".")) || undefined}
+      />
     </section>
   );
 }
