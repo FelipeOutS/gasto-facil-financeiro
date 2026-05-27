@@ -580,9 +580,32 @@ export function useMercadoLista(id: string | undefined): MercadoLista | undefine
 
 // ----------------------------------------------------------------------------
 // Historico local de compras finalizadas
+// (Cache local por usuário, sincronizado com Supabase via mercado-sync)
 // ----------------------------------------------------------------------------
 
 export const MERCADO_HISTORICO_STORAGE_KEY = "gi:mercado:historico:v1";
+export const MERCADO_HISTORICO_LEGACY_ANON_KEY = MERCADO_HISTORICO_STORAGE_KEY;
+
+function currentHistoricoKey(): string {
+  return activeUserId
+    ? `${MERCADO_HISTORICO_STORAGE_KEY}:${activeUserId}`
+    : MERCADO_HISTORICO_STORAGE_KEY;
+}
+
+type HistoricoSyncHooks = {
+  onUpsertHistorico?: (h: MercadoCompraHistorico) => void;
+  onDeleteHistorico?: (id: string) => void;
+};
+let historicoSyncHooks: HistoricoSyncHooks = {};
+
+export function __setMercadoHistoricoSyncHooks(hooks: HistoricoSyncHooks) {
+  historicoSyncHooks = hooks;
+}
+
+export function __replaceHistoricoCache(items: MercadoCompraHistorico[]) {
+  safeWriteHistorico(items);
+  emitHistorico();
+}
 
 export type MercadoCompraHistorico = {
   id: string;
