@@ -628,7 +628,7 @@ export type MercadoCompraHistorico = {
 
 const historicoListeners = new Set<Listener>();
 
-function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
+export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   if (typeof r.id !== "string" || typeof r.listaId !== "string") return null;
