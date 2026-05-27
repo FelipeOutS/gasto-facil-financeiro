@@ -435,6 +435,7 @@ export function updateListaDados(
   copy[idx] = updated;
   safeWrite(copy);
   emit();
+  pushUpsert(updated.id);
   return updated;
 }
 
