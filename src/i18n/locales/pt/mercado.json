@@ -767,7 +767,7 @@
         "invalid_location": "Informe um CEP válido ou cidade e UF para tentar buscar.",
         "network": "Não foi possível conectar agora. Tente novamente em alguns instantes.",
         "timeout": "A busca demorou demais. Tente novamente.",
-        "empty": "Nenhum mercado encontrado nessa região. Cadastre manualmente enquanto isso.",
+        "empty": "Não encontramos mercados cadastrados no OpenStreetMap para essa região. Você ainda pode cadastrar o mercado manualmente abaixo.",
         "unknown": "Algo deu errado na busca. Você pode cadastrar manualmente abaixo."
       },
       "results": {
@@ -775,6 +775,7 @@
         "count_one": "{{count}} mercado encontrado",
         "count_other": "{{count}} mercados encontrados",
         "source": "Fonte: OpenStreetMap",
+        "radiusInfo": "Resultados encontrados em um raio aproximado de {{km}} km.",
         "useCta": "Usar este mercado",
         "noAddress": "Endereço não informado"
       }
