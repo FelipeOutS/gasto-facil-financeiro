@@ -8,7 +8,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 import { addLista, type ListaTipo } from "@/lib/mercado/listas-store";
 
-export const Route = createFileRoute("/mercado/listas/nova")({
+export const Route = createFileRoute("/mercado_/listas_/nova")({
   head: () => ({
     meta: [{ title: i18n.t("mercado:nova.metaTitle", { lng: i18n.language }) }],
   }),
@@ -94,7 +94,6 @@ function NovaListaPage() {
           </p>
         </div>
       </header>
-
       <form
         onSubmit={handleSubmit}
         className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-6"
@@ -213,5 +212,5 @@ function NovaListaPage() {
         </div>
       </form>
     </MobileShell>
-  );
+  )
 }

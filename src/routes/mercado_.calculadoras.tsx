@@ -17,7 +17,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/mercado/calculadoras")({
+export const Route = createFileRoute("/mercado_/calculadoras")({
   head: () => ({
     meta: [{ title: i18n.t("mercado:meta.calculadorasTitle", { lng: i18n.language }) }],
   }),
