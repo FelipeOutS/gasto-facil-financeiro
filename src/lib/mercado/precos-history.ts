@@ -244,6 +244,36 @@ export function anonimizarRegistro(
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 export const MERCADO_PRECOS_STORAGE_KEY = "gi:mercado:precos:v1";
+export const MERCADO_PRECOS_LEGACY_ANON_KEY = MERCADO_PRECOS_STORAGE_KEY;
+
+// ----- Sync state (preenchido por mercado-sync.ts) -----
+let precosActiveUserId: string | null = null;
+
+function currentPrecosKey(): string {
+  return precosActiveUserId
+    ? `${MERCADO_PRECOS_STORAGE_KEY}:${precosActiveUserId}`
+    : MERCADO_PRECOS_STORAGE_KEY;
+}
+
+type PrecosSyncHooks = {
+  onUpsertRegistros?: (regs: MercadoPrecoLocal[]) => void;
+};
+let precosSyncHooks: PrecosSyncHooks = {};
+
+export function __setMercadoPrecosSyncHooks(hooks: PrecosSyncHooks) {
+  precosSyncHooks = hooks;
+}
+
+export function __setMercadoPrecosActiveUser(uid: string | null) {
+  if (precosActiveUserId === uid) return;
+  precosActiveUserId = uid;
+  emitPrecos();
+}
+
+export function __replacePrecosCache(items: MercadoPrecoLocal[]) {
+  safeWritePrecos(items);
+  emitPrecos();
+}
 
 /** Versão pública do registro local (mesma forma do registro privado). */
 export type MercadoPrecoLocal = MercadoPrecoUsuarioRegistro;
