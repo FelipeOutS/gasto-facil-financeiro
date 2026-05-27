@@ -23,6 +23,7 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { cn } from "@/lib/utils";
 import {
   addItemLista,
