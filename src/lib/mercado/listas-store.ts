@@ -19,7 +19,21 @@ export type ListaItem = {
   nome: string;
   quantidade: number;
   unidade?: string;
+  /** Preço estimado/planejado pelo usuário (referência, antes da compra). */
   precoEstimado?: number;
+  /**
+   * Preço realmente pago no caixa (opcional, futuro).
+   * Conceitualmente separado de `precoEstimado` para permitir, no futuro,
+   * alimentar um histórico privado de preços por produto. Não usado pela UI
+   * atual — apenas reservado no modelo para evolução incremental.
+   */
+  precoPago?: number;
+  /** Categoria opcional do produto (ex.: "hortifruti"). Reservado para futuro. */
+  categoria?: string;
+  /** Código de barras opcional (EAN/UPC). Reservado para futuro. */
+  codigoBarras?: string;
+  /** Origem do registro do item. Default: manual. */
+  origem?: "manual" | "lista" | "barcode" | "cupom" | "qrcode";
   comprado: boolean;
   criadoEm: string;
   atualizadoEm: string;
