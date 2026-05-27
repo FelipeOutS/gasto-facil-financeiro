@@ -475,11 +475,15 @@ function AddItemForm({ listaId }: { listaId: string }) {
       className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5"
     >
       <h2 className="text-sm font-semibold text-foreground">{t("detail.form.title")}</h2>
+      <BarcodeBlock onApply={(name) => setNome(name)} />
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="md:col-span-2">
           <label
             htmlFor="item-nome"
             className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+          >
+            {t("detail.form.itemName")}
+          </label>
           >
             {t("detail.form.itemName")}
           </label>
