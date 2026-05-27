@@ -518,3 +518,99 @@ export function useResumosPrecos(): ResumoPrecoProduto[] {
   useEffect(() => setMounted(true), []);
   return mounted ? data : [];
 }
+
+// ---------------------------------------------------------------------------
+// E14 — Inteligência local de preços (pura, sem React, sem I/O)
+// ---------------------------------------------------------------------------
+
+export type PrecoInsightStatus =
+  | "sem_historico"
+  | "bom"
+  | "normal"
+  | "alto"
+  | "muito_alto";
+
+export interface PrecoLocalInsight {
+  status: PrecoInsightStatus;
+  /** Diferença relativa à média, em porcentagem. Positivo = acima da média. */
+  diffPercent?: number;
+  menorPreco?: number;
+  precoMedio?: number;
+  ultimoPreco?: number;
+  registros?: number;
+}
+
+/**
+ * Análise pura do preço unitário informado vs histórico local do mesmo
+ * produto. Não usa React, não lê localStorage diretamente: recebe os
+ * resumos já calculados como parâmetro.
+ *
+ * Retorna `null` quando faltam dados mínimos (sem nome/código ou sem preço
+ * válido). Para produto sem histórico, retorna `status: "sem_historico"`.
+ *
+ * Regras (apenas leitura, não altera nada):
+ *  - preço ≤ menor preço histórico  → "bom"
+ *  - até +10% da média              → "normal"
+ *  - entre +10% e +25% da média     → "alto"
+ *  - acima de +25% da média         → "muito_alto"
+ */
+export function buildPrecoLocalInsight(input: {
+  nome?: string;
+  codigoBarras?: string;
+  precoUnitario: number | undefined | null;
+  resumos: ResumoPrecoProduto[];
+}): PrecoLocalInsight | null {
+  const preco =
+    typeof input.precoUnitario === "number" &&
+    Number.isFinite(input.precoUnitario) &&
+    input.precoUnitario > 0
+      ? input.precoUnitario
+      : undefined;
+  if (preco === undefined) return null;
+
+  const key = buildProdutoKey({ nome: input.nome, codigoBarras: input.codigoBarras });
+  if (!key) return null;
+
+  const resumo = input.resumos.find((r) => r.produtoKey === key);
+  if (!resumo || resumo.registros === 0) {
+    return { status: "sem_historico" };
+  }
+
+  const { precoMedio, precoMin, ultimoPreco, registros } = resumo;
+  const diffPercent =
+    precoMedio > 0 ? ((preco - precoMedio) / precoMedio) * 100 : 0;
+
+  let status: PrecoInsightStatus;
+  if (preco <= precoMin) {
+    status = "bom";
+  } else if (diffPercent <= 10) {
+    status = "normal";
+  } else if (diffPercent <= 25) {
+    status = "alto";
+  } else {
+    status = "muito_alto";
+  }
+
+  return {
+    status,
+    diffPercent: Math.round(diffPercent * 10) / 10,
+    menorPreco: precoMin,
+    precoMedio,
+    ultimoPreco,
+    registros,
+  };
+}
+
+/**
+ * Hook ergonômico para componentes: reativo aos resumos locais.
+ * Retorna `null` quando não há insight aplicável.
+ */
+export function usePrecoInsight(
+  nome: string | undefined,
+  codigoBarras: string | undefined,
+  precoUnitario: number | undefined | null,
+): PrecoLocalInsight | null {
+  const resumos = useResumosPrecos();
+  return buildPrecoLocalInsight({ nome, codigoBarras, precoUnitario, resumos });
+}
+
