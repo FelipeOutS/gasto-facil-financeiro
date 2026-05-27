@@ -14,6 +14,8 @@ import {
   Store,
   X,
   Check,
+  Search,
+  Loader2,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -38,19 +40,29 @@ type FormMode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: strin
 
 type FormState = {
   nome: string;
+  cep: string;
   endereco: string;
   bairro: string;
   cidade: string;
+  uf: string;
   observacao: string;
 };
 
 const EMPTY_FORM: FormState = {
   nome: "",
+  cep: "",
   endereco: "",
   bairro: "",
   cidade: "",
+  uf: "",
   observacao: "",
 };
+
+function formatCepMask(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
 
 function MeusMercadosPage() {
   const { t, i18n: i18nInst } = useTranslation("mercado");
@@ -86,9 +98,11 @@ function MeusMercadosPage() {
   function openEdit(m: MercadoLocal) {
     setForm({
       nome: m.nome,
+      cep: m.cep ? formatCepMask(m.cep) : "",
       endereco: m.endereco ?? "",
       bairro: m.bairro ?? "",
       cidade: m.cidade ?? "",
+      uf: m.uf ?? "",
       observacao: m.observacao ?? "",
     });
     setMode({ kind: "edit", id: m.id });
@@ -107,9 +121,11 @@ function MeusMercadosPage() {
     }
     const payload = {
       nome,
+      cep: form.cep,
       endereco: form.endereco,
       bairro: form.bairro,
       cidade: form.cidade,
+      uf: form.uf,
       observacao: form.observacao,
     };
     if (mode.kind === "edit") {
@@ -296,6 +312,50 @@ function MercadoForm({
   t: (k: string, opts?: Record<string, unknown>) => string;
 }) {
   const isEdit = mode.kind === "edit";
+  const [searching, setSearching] = useState(false);
+
+  async function handleSearchCep() {
+    const digits = form.cep.replace(/\D/g, "");
+    if (digits.length !== 8) {
+      toast.error(t("meusMercados.fields.invalidCep"));
+      return;
+    }
+    setSearching(true);
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error("network");
+      const data = (await res.json()) as {
+        erro?: boolean;
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+        uf?: string;
+      };
+      if (data.erro) {
+        toast.error(t("meusMercados.fields.cepNotFound"));
+        return;
+      }
+      setForm({
+        ...form,
+        cep: formatCepMask(digits),
+        endereco: data.logradouro || form.endereco,
+        bairro: data.bairro || form.bairro,
+        cidade: data.localidade || form.cidade,
+        uf: data.uf || form.uf,
+      });
+      toast.success(t("meusMercados.fields.cepFilled"));
+    } catch {
+      toast.error(t("meusMercados.fields.cepFetchError"));
+    } finally {
+      clearTimeout(timeoutId);
+      setSearching(false);
+    }
+  }
+
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
       <div className="flex items-start justify-between gap-3">
@@ -334,6 +394,39 @@ function MercadoForm({
             className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
           />
         </Field>
+
+        <Field label={t("meusMercados.fields.cep")} className="md:col-span-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              value={form.cep}
+              maxLength={9}
+              onChange={(e) =>
+                setForm({ ...form, cep: formatCepMask(e.target.value) })
+              }
+              placeholder={t("meusMercados.fields.cepPlaceholder")}
+              className="h-11 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3 text-sm tabular-nums outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:max-w-[180px]"
+            />
+            <button
+              type="button"
+              onClick={handleSearchCep}
+              disabled={searching}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 text-sm font-semibold text-foreground transition-colors hover:bg-card active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {searching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              {searching
+                ? t("meusMercados.fields.searchingCep")
+                : t("meusMercados.fields.searchCep")}
+            </button>
+          </div>
+        </Field>
+
         <Field label={t("meusMercados.fields.address")} className="md:col-span-2">
           <input
             type="text"
@@ -359,6 +452,21 @@ function MercadoForm({
             onChange={(e) => setForm({ ...form, cidade: e.target.value })}
             placeholder={t("meusMercados.fields.cityPlaceholder")}
             className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+        </Field>
+        <Field label={t("meusMercados.fields.uf")}>
+          <input
+            type="text"
+            value={form.uf}
+            maxLength={2}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                uf: e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase(),
+              })
+            }
+            placeholder={t("meusMercados.fields.ufPlaceholder")}
+            className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm uppercase outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 sm:max-w-[120px]"
           />
         </Field>
         <Field label={t("meusMercados.fields.note")} className="md:col-span-2">
@@ -437,7 +545,8 @@ function MercadoCard({
   onToggleFav: () => void;
   isEditing: boolean;
 }) {
-  const localizacao = [m.endereco, m.bairro, m.cidade].filter(Boolean).join(" · ");
+  const cidadeUf = [m.cidade, m.uf].filter(Boolean).join("/");
+  const localizacao = [m.endereco, m.bairro, cidadeUf].filter(Boolean).join(" · ");
   return (
     <article
       className={cn(

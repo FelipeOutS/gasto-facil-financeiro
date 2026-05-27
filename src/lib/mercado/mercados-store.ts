@@ -16,9 +16,11 @@ export const MERCADOS_LOCAIS_STORAGE_KEY = "gi:mercado:mercados:v1";
 export type MercadoLocal = {
   id: string;
   nome: string;
+  cep?: string;
   endereco?: string;
   bairro?: string;
   cidade?: string;
+  uf?: string;
   observacao?: string;
   favorito?: boolean;
   criadoEm: string;
@@ -27,9 +29,11 @@ export type MercadoLocal = {
 
 export type MercadoLocalInput = {
   nome: string;
+  cep?: string;
   endereco?: string;
   bairro?: string;
   cidade?: string;
+  uf?: string;
   observacao?: string;
   favorito?: boolean;
 };
@@ -61,6 +65,18 @@ function cleanStr(v: unknown): string | undefined {
   return t ? t : undefined;
 }
 
+function cleanCep(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const digits = v.replace(/\D/g, "").slice(0, 8);
+  return digits ? digits : undefined;
+}
+
+function cleanUf(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+  return t ? t : undefined;
+}
+
 function normalize(raw: unknown): MercadoLocal | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -75,9 +91,11 @@ function normalize(raw: unknown): MercadoLocal | null {
   return {
     id,
     nome,
+    cep: cleanCep(r.cep),
     endereco: cleanStr(r.endereco),
     bairro: cleanStr(r.bairro),
     cidade: cleanStr(r.cidade),
+    uf: cleanUf(r.uf),
     observacao: cleanStr(r.observacao),
     favorito: Boolean(r.favorito),
     criadoEm,
@@ -176,9 +194,11 @@ export function addMercadoLocal(input: MercadoLocalInput): MercadoLocal | null {
   const novo: MercadoLocal = {
     id: newId(),
     nome,
+    cep: cleanCep(input.cep),
     endereco: cleanStr(input.endereco),
     bairro: cleanStr(input.bairro),
     cidade: cleanStr(input.cidade),
+    uf: cleanUf(input.uf),
     observacao: cleanStr(input.observacao),
     favorito: Boolean(input.favorito),
     criadoEm: now,
@@ -203,10 +223,12 @@ export function updateMercadoLocal(
   const next: MercadoLocal = {
     ...prev,
     nome,
+    cep: input.cep !== undefined ? cleanCep(input.cep) : prev.cep,
     endereco:
       input.endereco !== undefined ? cleanStr(input.endereco) : prev.endereco,
     bairro: input.bairro !== undefined ? cleanStr(input.bairro) : prev.bairro,
     cidade: input.cidade !== undefined ? cleanStr(input.cidade) : prev.cidade,
+    uf: input.uf !== undefined ? cleanUf(input.uf) : prev.uf,
     observacao:
       input.observacao !== undefined ? cleanStr(input.observacao) : prev.observacao,
     favorito: input.favorito !== undefined ? Boolean(input.favorito) : prev.favorito,
