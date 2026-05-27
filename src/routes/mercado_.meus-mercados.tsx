@@ -119,9 +119,11 @@ function MeusMercadosPage() {
     }
     const payload = {
       nome,
+      cep: form.cep,
       endereco: form.endereco,
       bairro: form.bairro,
       cidade: form.cidade,
+      uf: form.uf,
       observacao: form.observacao,
     };
     if (mode.kind === "edit") {
