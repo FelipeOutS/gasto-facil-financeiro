@@ -561,6 +561,156 @@ function AddItemForm({ listaId }: { listaId: string }) {
   );
 }
 
+function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
+  const { t } = useTranslation("mercado");
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<ProductLookupResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSearch() {
+    setError(null);
+    setResult(null);
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setError(t("detail.barcode.invalid"));
+      return;
+    }
+    setLoading(true);
+    try {
+      const r = await buscarProdutoPorCodigoBarras(trimmed);
+      setResult(r);
+    } catch (err) {
+      if (err instanceof ProductLookupError) {
+        if (err.code === "invalid" || err.code === "empty") {
+          setError(t("detail.barcode.invalid"));
+        } else {
+          setError(t("detail.barcode.error"));
+        }
+      } else {
+        setError(t("detail.barcode.error"));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleApply() {
+    if (!result?.found) return;
+    const name = result.name?.trim();
+    if (!name) {
+      toast.error(t("detail.barcode.noName"));
+      return;
+    }
+    onApply(name);
+    toast.success(t("detail.barcode.applied"));
+    setResult(null);
+    setCode("");
+    setError(null);
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-dashed border-border bg-card-elevated/40 p-3">
+      <div className="flex items-center gap-2">
+        <ScanBarcode className="h-4 w-4 text-muted-foreground" />
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          {t("detail.barcode.title")}
+        </span>
+      </div>
+      <p className="mt-1 text-[12px] text-muted-foreground">
+        {t("detail.barcode.manualHint")}
+      </p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={14}
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D+/g, ""))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (!loading) void handleSearch();
+            }
+          }}
+          placeholder={t("detail.barcode.placeholder")}
+          className="min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 py-2.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+        />
+        <button
+          type="button"
+          onClick={() => void handleSearch()}
+          disabled={loading || !code.trim()}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card-elevated active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+          <span>{loading ? t("detail.barcode.loading") : t("detail.barcode.search")}</span>
+        </button>
+      </div>
+
+      {error ? (
+        <p className="mt-2 text-[12px] text-destructive">{error}</p>
+      ) : null}
+
+      {result && !result.found ? (
+        <p className="mt-2 text-[12px] text-muted-foreground">
+          {t("detail.barcode.notFound")}
+        </p>
+      ) : null}
+
+      {result?.found ? (
+        <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border/60 bg-card p-3">
+          {result.imageUrl ? (
+            <img
+              src={result.imageUrl}
+              alt=""
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className="h-14 w-14 shrink-0 rounded-xl border border-border/60 bg-background object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-border/60 bg-card-elevated text-muted-foreground">
+              <ShoppingBasket className="h-5 w-5" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {result.name?.trim() || t("detail.barcode.noName")}
+            </p>
+            {result.brand ? (
+              <p className="truncate text-[12px] text-muted-foreground">{result.brand}</p>
+            ) : null}
+            {result.quantity ? (
+              <p className="truncate text-[12px] text-muted-foreground">{result.quantity}</p>
+            ) : null}
+            <p className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+              {t("detail.barcode.source")}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={!result.name?.trim()}
+            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl bg-brand-grad px-3 py-2 text-[12px] font-semibold text-primary-foreground shadow-elevated transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Check className="h-3.5 w-3.5" />
+            {t("detail.barcode.useProduct")}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+
+
 function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   const { t } = useTranslation("mercado");
   const [editing, setEditing] = useState(false);
