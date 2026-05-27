@@ -458,6 +458,8 @@ export type MercadoCompraHistorico = {
   percentualConcluido: number;
   economiaOuEstouro: number; // positive = saved (under budget), negative = over
   itensSnapshot: ListaItem[];
+  /** E15: nome do mercado/estabelecimento informado opcionalmente. Pode estar ausente em compras antigas. */
+  mercadoNome?: string;
 };
 
 const historicoListeners = new Set<Listener>();
