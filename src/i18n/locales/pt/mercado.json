@@ -439,6 +439,10 @@
       "point4": "Futuramente poderá usar apenas dados agregados e aproximados.",
       "point5": "O usuário deverá ter controle sobre participação, quando esse recurso for implementado.",
       "futureOptIn": "Quando a base comunitária estiver pronta, o usuário decidirá se deseja participar. Nenhum dado será compartilhado sem consentimento."
+    },
+    "ctaLocal": {
+      "title": "Ver meu histórico local de preços",
+      "desc": "Veja os preços dos produtos comprados neste dispositivo."
     }
   },
   "cesta": {
