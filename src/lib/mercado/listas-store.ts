@@ -532,6 +532,8 @@ function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
     percentualConcluido: num(r.percentualConcluido),
     economiaOuEstouro: num(r.economiaOuEstouro),
     itensSnapshot,
+    mercadoNome:
+      typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
   };
 }
 
