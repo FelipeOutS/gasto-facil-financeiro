@@ -543,5 +543,21 @@
       "last": "Latest",
       "lastDate": "Last record on {{date}}"
     }
+  },
+  "precoInsight": {
+    "label": "Local price",
+    "noHistoryTitle": "Not enough history to compare yet",
+    "noHistoryDesc": "When you finish purchases with this item, we'll keep the price on your device so we can compare next time.",
+    "goodTitle": "Better than your usual price",
+    "goodDesc": "This value is equal to or below the lowest price you've recorded for this product.",
+    "normalTitle": "In line with what you usually pay",
+    "normalDesc": "This value is close to the average of your local history.",
+    "highTitle": "A bit above your average",
+    "highDesc": "This value is a little above the average you usually pay.",
+    "veryHighTitle": "Well above your recent history",
+    "veryHighDesc": "This value is well above your local average. Worth double-checking if it's worth it.",
+    "lowest": "Lowest",
+    "average": "Average",
+    "last": "Latest"
   }
 }

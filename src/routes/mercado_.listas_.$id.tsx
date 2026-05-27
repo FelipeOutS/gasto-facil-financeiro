@@ -29,6 +29,7 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { cn } from "@/lib/utils";
 import {
   addItemLista,
@@ -546,6 +547,7 @@ function AddItemForm({ listaId }: { listaId: string }) {
             placeholder="0,00"
             className="mt-1.5 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
           />
+          <PrecoInsight nome={nome} precoUnitario={parseNumber(precoEstimado)} />
         </div>
       </div>
       <div className="mt-4 flex justify-end">
@@ -812,6 +814,11 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
               onChange={(e) => setPrecoEstimado(e.target.value.replace(/[^\d.,]/g, ""))}
               placeholder="0,00"
               className="mt-1.5 w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+            />
+            <PrecoInsight
+              nome={nome}
+              codigoBarras={item.codigoBarras}
+              precoUnitario={parseNumber(precoEstimado)}
             />
           </div>
         </div>

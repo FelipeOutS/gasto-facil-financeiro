@@ -23,6 +23,7 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { cn } from "@/lib/utils";
 import {
   addItemLista,
@@ -439,6 +440,13 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           </button>
         </form>
       )}
+      {editing && (
+        <PrecoInsight
+          nome={item.nome}
+          codigoBarras={item.codigoBarras}
+          precoUnitario={Number(valor.replace(",", ".")) || undefined}
+        />
+      )}
     </li>
   );
 }
@@ -530,6 +538,10 @@ function QuickAddForm({ listaId }: { listaId: string }) {
           </span>
         </p>
       )}
+      <PrecoInsight
+        nome={nome}
+        precoUnitario={Number(preco.replace(",", ".")) || undefined}
+      />
     </section>
   );
 }
