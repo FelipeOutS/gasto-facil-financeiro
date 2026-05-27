@@ -126,6 +126,28 @@ function PrecosHistoricoPage() {
         </div>
       </section>
 
+      {/* CTA: comparativo por mercado */}
+      <Link
+        to="/mercado/mercados"
+        preload="intent"
+        className="mt-4 flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card transition-colors hover:bg-card-elevated active:scale-[0.99] md:p-5"
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
+            <Store className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold md:text-base">
+              {t("mercados.ctaFromHistorico.title")}
+            </p>
+            <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+              {t("mercados.ctaFromHistorico.desc")}
+            </p>
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Link>
+
       {hasAnyHistory && (
         <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
