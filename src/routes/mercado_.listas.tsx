@@ -74,7 +74,7 @@ function MercadoListasPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <Link
-          to="/"
+          to="/app"
           aria-label={t("listas.home")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
