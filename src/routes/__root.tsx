@@ -21,6 +21,7 @@ import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
 import { OfflineIncomeSyncStatus } from "@/components/offline/OfflineIncomeSyncStatus";
 import { useAuth } from "@/lib/auth-context";
+import { useMercadoSync } from "@/lib/mercado/mercado-sync";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
 import { useOfflineIncomeQueue } from "@/lib/offline/use-offline-income-sync";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
