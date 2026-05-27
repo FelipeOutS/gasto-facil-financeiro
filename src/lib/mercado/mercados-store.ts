@@ -16,9 +16,11 @@ export const MERCADOS_LOCAIS_STORAGE_KEY = "gi:mercado:mercados:v1";
 export type MercadoLocal = {
   id: string;
   nome: string;
+  cep?: string;
   endereco?: string;
   bairro?: string;
   cidade?: string;
+  uf?: string;
   observacao?: string;
   favorito?: boolean;
   criadoEm: string;
@@ -27,9 +29,11 @@ export type MercadoLocal = {
 
 export type MercadoLocalInput = {
   nome: string;
+  cep?: string;
   endereco?: string;
   bairro?: string;
   cidade?: string;
+  uf?: string;
   observacao?: string;
   favorito?: boolean;
 };
