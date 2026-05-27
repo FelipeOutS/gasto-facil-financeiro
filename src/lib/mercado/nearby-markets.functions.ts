@@ -203,10 +203,12 @@ export const findNearbyMarketsServerFn = createServerFn({ method: "POST" })
     try {
       const center = await geocode(data);
       if (!center) {
+        // Input válido, mas o geocoder gratuito (Nominatim) não localizou.
+        // Tratamos como "sem resultados" — NÃO como CEP inválido.
         return {
           ok: false,
           provider: ACTIVE_NEARBY_PROVIDER,
-          error: { code: "invalid_location" },
+          error: { code: "empty" },
         };
       }
       const radiusM = Math.max(
