@@ -91,9 +91,11 @@ function normalize(raw: unknown): MercadoLocal | null {
   return {
     id,
     nome,
+    cep: cleanCep(r.cep),
     endereco: cleanStr(r.endereco),
     bairro: cleanStr(r.bairro),
     cidade: cleanStr(r.cidade),
+    uf: cleanUf(r.uf),
     observacao: cleanStr(r.observacao),
     favorito: Boolean(r.favorito),
     criadoEm,
