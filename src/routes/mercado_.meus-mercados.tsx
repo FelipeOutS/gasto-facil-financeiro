@@ -38,19 +38,29 @@ type FormMode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: strin
 
 type FormState = {
   nome: string;
+  cep: string;
   endereco: string;
   bairro: string;
   cidade: string;
+  uf: string;
   observacao: string;
 };
 
 const EMPTY_FORM: FormState = {
   nome: "",
+  cep: "",
   endereco: "",
   bairro: "",
   cidade: "",
+  uf: "",
   observacao: "",
 };
+
+function formatCepMask(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
 
 function MeusMercadosPage() {
   const { t, i18n: i18nInst } = useTranslation("mercado");
