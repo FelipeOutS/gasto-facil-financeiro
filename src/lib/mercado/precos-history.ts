@@ -561,7 +561,7 @@ function subscribePrecos(listener: PrecoListener): () => void {
   precosListeners.add(listener);
   if (isBrowserPrec()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_PRECOS_STORAGE_KEY) listener();
+      if (e.key && e.key.startsWith(MERCADO_PRECOS_STORAGE_KEY)) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
