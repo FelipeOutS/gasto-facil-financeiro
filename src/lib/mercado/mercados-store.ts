@@ -194,9 +194,11 @@ export function addMercadoLocal(input: MercadoLocalInput): MercadoLocal | null {
   const novo: MercadoLocal = {
     id: newId(),
     nome,
+    cep: cleanCep(input.cep),
     endereco: cleanStr(input.endereco),
     bairro: cleanStr(input.bairro),
     cidade: cleanStr(input.cidade),
+    uf: cleanUf(input.uf),
     observacao: cleanStr(input.observacao),
     favorito: Boolean(input.favorito),
     criadoEm: now,
