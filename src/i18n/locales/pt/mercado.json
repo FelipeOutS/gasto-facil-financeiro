@@ -35,6 +35,10 @@
         "title": "Carrinho inteligente",
         "desc": "Use durante a compra para acompanhar itens em tempo real."
       },
+      "precos": {
+        "title": "Preços da comunidade",
+        "desc": "Veja uma prévia da futura base comunitária de comparação de preços."
+      },
       "cesta": {
         "title": "Cesta padrão",
         "desc": "Monte uma lista recorrente com os itens que você compra todo mês."
