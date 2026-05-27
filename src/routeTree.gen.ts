@@ -57,6 +57,7 @@ import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
+import { Route as MercadoPrecosHistoricoRouteImport } from './routes/mercado_.precos-historico'
 import { Route as MercadoPrecosRouteImport } from './routes/mercado_.precos'
 import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcamento'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
@@ -365,6 +366,11 @@ const PtSplatRoute = PtSplatRouteImport.update({
 const MetasNovaRoute = MetasNovaRouteImport.update({
   id: '/metas/nova',
   path: '/metas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoPrecosHistoricoRoute = MercadoPrecosHistoricoRouteImport.update({
+  id: '/mercado_/precos-historico',
+  path: '/mercado/precos-historico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoPrecosRoute = MercadoPrecosRouteImport.update({
@@ -801,6 +807,7 @@ export interface FileRoutesByFullPath {
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/mercado/precos': typeof MercadoPrecosRoute
+  '/mercado/precos-historico': typeof MercadoPrecosHistoricoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -920,6 +927,7 @@ export interface FileRoutesByTo {
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/mercado/precos': typeof MercadoPrecosRoute
+  '/mercado/precos-historico': typeof MercadoPrecosHistoricoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1040,6 +1048,7 @@ export interface FileRoutesById {
   '/mercado_/listas': typeof MercadoListasRoute
   '/mercado_/orcamento': typeof MercadoOrcamentoRoute
   '/mercado_/precos': typeof MercadoPrecosRoute
+  '/mercado_/precos-historico': typeof MercadoPrecosHistoricoRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1161,6 +1170,7 @@ export interface FileRouteTypes {
     | '/mercado/listas'
     | '/mercado/orcamento'
     | '/mercado/precos'
+    | '/mercado/precos-historico'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1280,6 +1290,7 @@ export interface FileRouteTypes {
     | '/mercado/listas'
     | '/mercado/orcamento'
     | '/mercado/precos'
+    | '/mercado/precos-historico'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1399,6 +1410,7 @@ export interface FileRouteTypes {
     | '/mercado_/listas'
     | '/mercado_/orcamento'
     | '/mercado_/precos'
+    | '/mercado_/precos-historico'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1519,6 +1531,7 @@ export interface RootRouteChildren {
   MercadoListasRoute: typeof MercadoListasRoute
   MercadoOrcamentoRoute: typeof MercadoOrcamentoRoute
   MercadoPrecosRoute: typeof MercadoPrecosRoute
+  MercadoPrecosHistoricoRoute: typeof MercadoPrecosHistoricoRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1903,6 +1916,13 @@ declare module '@tanstack/react-router' {
       path: '/metas/nova'
       fullPath: '/metas/nova'
       preLoaderRoute: typeof MetasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/precos-historico': {
+      id: '/mercado_/precos-historico'
+      path: '/mercado/precos-historico'
+      fullPath: '/mercado/precos-historico'
+      preLoaderRoute: typeof MercadoPrecosHistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/precos': {
@@ -2473,6 +2493,7 @@ const rootRouteChildren: RootRouteChildren = {
   MercadoListasRoute: MercadoListasRoute,
   MercadoOrcamentoRoute: MercadoOrcamentoRoute,
   MercadoPrecosRoute: MercadoPrecosRoute,
+  MercadoPrecosHistoricoRoute: MercadoPrecosHistoricoRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
