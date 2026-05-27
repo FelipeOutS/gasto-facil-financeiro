@@ -38,6 +38,7 @@ import {
   computeResumo,
   finalizarListaCompra,
   removeItemLista,
+  removeLista,
   toggleItemComprado,
   updateItemLista,
   updateListaDados,
