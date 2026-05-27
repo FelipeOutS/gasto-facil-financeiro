@@ -689,3 +689,243 @@ export function usePrecoInsight(
   return buildPrecoLocalInsight({ nome, codigoBarras, precoUnitario, resumos });
 }
 
+// ---------------------------------------------------------------------------
+// E17 — Comparativo LOCAL por mercado (pura, sem React, sem I/O)
+// ---------------------------------------------------------------------------
+
+export type ResumoMercadoStatus = "melhor" | "medio" | "pouco_dado";
+
+export interface ResumoMercadoProdutoBom {
+  produtoKey: string;
+  produtoNome: string;
+  /** Menor preço unitário registrado para este produto neste mercado. */
+  precoNesteMercado: number;
+  /** Média do preço unitário global do produto (todos os mercados). */
+  precoMedioGlobal: number;
+  /** Diferença percentual vs média global. Negativo = mais barato neste mercado. */
+  diffPercent: number;
+}
+
+export interface ResumoMercadoCard {
+  /** Chave estável (normalizada). Para "sem mercado", `__sem__`. */
+  mercadoKey: string;
+  /** Nome de exibição do mercado. Vazio quando `semMercado`. */
+  mercadoNome: string;
+  semMercado: boolean;
+  registros: number;
+  produtos: number;
+  ultimoEm: string;
+  status: ResumoMercadoStatus;
+  /**
+   * Média das diferenças percentuais (preço deste mercado vs média global)
+   * across all produtos deste mercado. Negativo = barato em média.
+   * `null` quando não há produto com média global computável.
+   */
+  diffMedioPercent: number | null;
+  /** Até 3 produtos mais baratos neste mercado em relação à média global. */
+  melhoresProdutos: ResumoMercadoProdutoBom[];
+}
+
+export interface ResumoMercadosGlobal {
+  mercados: ResumoMercadoCard[];
+  totalMercados: number;
+  /** Mercados nomeados (exclui o agrupamento "sem mercado"). */
+  totalMercadosNomeados: number;
+  totalProdutos: number;
+  totalRegistros: number;
+  /** Nome do mercado com mais registros (exclui "sem mercado"). Pode ser null. */
+  mercadoComMaisRegistros: string | null;
+  hasSemMercado: boolean;
+}
+
+const MERCADO_SEM_KEY = "__sem__";
+
+/**
+ * Agrupa os registros locais por mercado/local da compra e produz um resumo
+ * conservador, baseado APENAS no histórico do próprio usuário. Pura: não usa
+ * React, não toca em localStorage, não faz rede.
+ *
+ * Regras:
+ *  - Ignora registros inválidos (sem nome ou sem preço > 0).
+ *  - Registros sem `estabelecimento` válido são agrupados como "sem mercado".
+ *  - A média global de um produto é calculada considerando TODOS os mercados.
+ *  - `diffPercent` por produto = (precoNesteMercado − médiaGlobal) / médiaGlobal × 100.
+ *  - `status`:
+ *      - `pouco_dado` quando o mercado tem < 3 registros;
+ *      - `melhor` quando `diffMedioPercent` ≤ −5%;
+ *      - `medio` caso contrário.
+ *  - `melhoresProdutos`: top 3 produtos com menor `diffPercent` (mais baratos vs média global).
+ */
+export function buildResumoMercados(
+  registros: MercadoPrecoLocal[],
+): ResumoMercadosGlobal {
+  if (!Array.isArray(registros) || registros.length === 0) {
+    return {
+      mercados: [],
+      totalMercados: 0,
+      totalMercadosNomeados: 0,
+      totalProdutos: 0,
+      totalRegistros: 0,
+      mercadoComMaisRegistros: null,
+      hasSemMercado: false,
+    };
+  }
+
+  // Filtra registros utilizáveis (preço > 0 e produtoKey válido).
+  type Valid = { reg: MercadoPrecoLocal; produtoKey: string; mercadoKey: string; mercadoNome: string };
+  const valid: Valid[] = [];
+  for (const r of registros) {
+    if (typeof r.precoUnitario !== "number" || !Number.isFinite(r.precoUnitario) || r.precoUnitario <= 0) {
+      continue;
+    }
+    const produtoKey = buildProdutoKey({ nome: r.produtoNome, codigoBarras: r.codigoBarras });
+    if (!produtoKey) continue;
+    const mercadoNome = (r.estabelecimento ?? "").replace(/\s+/g, " ").trim();
+    const mercadoKey = mercadoNome ? mercadoNome.toLowerCase() : MERCADO_SEM_KEY;
+    valid.push({ reg: r, produtoKey, mercadoKey, mercadoNome });
+  }
+
+  if (valid.length === 0) {
+    return {
+      mercados: [],
+      totalMercados: 0,
+      totalMercadosNomeados: 0,
+      totalProdutos: 0,
+      totalRegistros: 0,
+      mercadoComMaisRegistros: null,
+      hasSemMercado: false,
+    };
+  }
+
+  // Média global de preço por produto.
+  const globalPorProduto = new Map<string, { soma: number; n: number; nome: string }>();
+  for (const v of valid) {
+    const cur = globalPorProduto.get(v.produtoKey);
+    if (cur) {
+      cur.soma += v.reg.precoUnitario;
+      cur.n += 1;
+    } else {
+      globalPorProduto.set(v.produtoKey, {
+        soma: v.reg.precoUnitario,
+        n: 1,
+        nome: v.reg.produtoNome,
+      });
+    }
+  }
+
+  // Agrupa por mercado.
+  type MercadoBucket = {
+    key: string;
+    nome: string;
+    semMercado: boolean;
+    registros: MercadoPrecoLocal[];
+    produtoMin: Map<string, { preco: number; nome: string }>;
+    ultimoEm: string;
+  };
+  const buckets = new Map<string, MercadoBucket>();
+  for (const v of valid) {
+    let b = buckets.get(v.mercadoKey);
+    if (!b) {
+      b = {
+        key: v.mercadoKey,
+        nome: v.mercadoNome,
+        semMercado: v.mercadoKey === MERCADO_SEM_KEY,
+        registros: [],
+        produtoMin: new Map(),
+        ultimoEm: v.reg.compradoEm,
+      };
+      buckets.set(v.mercadoKey, b);
+    }
+    b.registros.push(v.reg);
+    if (v.reg.compradoEm > b.ultimoEm) b.ultimoEm = v.reg.compradoEm;
+    const cur = b.produtoMin.get(v.produtoKey);
+    if (!cur || v.reg.precoUnitario < cur.preco) {
+      b.produtoMin.set(v.produtoKey, { preco: v.reg.precoUnitario, nome: v.reg.produtoNome });
+    }
+  }
+
+  const mercados: ResumoMercadoCard[] = [];
+  for (const b of buckets.values()) {
+    const comparaveis: ResumoMercadoProdutoBom[] = [];
+    for (const [produtoKey, { preco, nome }] of b.produtoMin.entries()) {
+      const g = globalPorProduto.get(produtoKey);
+      if (!g || g.n === 0) continue;
+      const medio = g.soma / g.n;
+      if (medio <= 0) continue;
+      const diffPercent = ((preco - medio) / medio) * 100;
+      comparaveis.push({
+        produtoKey,
+        produtoNome: nome,
+        precoNesteMercado: preco,
+        precoMedioGlobal: medio,
+        diffPercent: Math.round(diffPercent * 10) / 10,
+      });
+    }
+    comparaveis.sort((a, b2) => a.diffPercent - b2.diffPercent);
+    const melhores = comparaveis.filter((c) => c.diffPercent < 0).slice(0, 3);
+    // Fallback: se nenhum negativo, mostra os 3 mais próximos da média (não exagera).
+    const melhoresProdutos = melhores.length > 0 ? melhores : comparaveis.slice(0, 3);
+
+    const diffMedioPercent =
+      comparaveis.length === 0
+        ? null
+        : Math.round(
+            (comparaveis.reduce((s, c) => s + c.diffPercent, 0) / comparaveis.length) * 10,
+          ) / 10;
+
+    let status: ResumoMercadoStatus;
+    if (b.registros.length < 3) {
+      status = "pouco_dado";
+    } else if (diffMedioPercent !== null && diffMedioPercent <= -5) {
+      status = "melhor";
+    } else {
+      status = "medio";
+    }
+
+    mercados.push({
+      mercadoKey: b.key,
+      mercadoNome: b.nome,
+      semMercado: b.semMercado,
+      registros: b.registros.length,
+      produtos: b.produtoMin.size,
+      ultimoEm: b.ultimoEm,
+      status,
+      diffMedioPercent,
+      melhoresProdutos,
+    });
+  }
+
+  // Ordena: mercados nomeados primeiro (por status melhor → médio → pouco_dado,
+  // depois por nº de registros desc), "sem mercado" sempre por último.
+  const statusOrder: Record<ResumoMercadoStatus, number> = { melhor: 0, medio: 1, pouco_dado: 2 };
+  mercados.sort((a, b2) => {
+    if (a.semMercado !== b2.semMercado) return a.semMercado ? 1 : -1;
+    const so = statusOrder[a.status] - statusOrder[b2.status];
+    if (so !== 0) return so;
+    if (b2.registros !== a.registros) return b2.registros - a.registros;
+    return a.mercadoNome.localeCompare(b2.mercadoNome, "pt-BR");
+  });
+
+  const nomeados = mercados.filter((m) => !m.semMercado);
+  const topNomeado = nomeados.reduce<ResumoMercadoCard | null>(
+    (top, m) => (top === null || m.registros > top.registros ? m : top),
+    null,
+  );
+
+  return {
+    mercados,
+    totalMercados: mercados.length,
+    totalMercadosNomeados: nomeados.length,
+    totalProdutos: globalPorProduto.size,
+    totalRegistros: valid.length,
+    mercadoComMaisRegistros: topNomeado ? topNomeado.mercadoNome : null,
+    hasSemMercado: mercados.some((m) => m.semMercado),
+  };
+}
+
+/** Hook ergonômico para componentes: reativo aos registros locais. */
+export function useResumoMercados(): ResumoMercadosGlobal {
+  const registros = useHistoricoPrecos();
+  return buildResumoMercados(registros);
+}
+
