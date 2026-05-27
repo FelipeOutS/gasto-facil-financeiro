@@ -238,6 +238,10 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
       {/* Budget */}
       <BudgetCard lista={lista} />
 
+      {/* Edit list metadata (name, tipo, estimate, observation) */}
+      <EditListaCard lista={lista} />
+
+
 
 
 
