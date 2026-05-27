@@ -517,5 +517,27 @@
     "confirm": {
       "delete": "Excluir a cesta \"{{name}}\"? Esta ação não pode ser desfeita."
     }
+  },
+  "precosHistorico": {
+    "metaTitle": "Histórico local de preços — Mercado Inteligente",
+    "title": "Histórico local de preços",
+    "subtitle": "Veja o preço dos produtos que você comprou neste dispositivo.",
+    "back": "Voltar",
+    "home": "Início",
+    "localNotice": "Histórico local deste dispositivo. A base comunitária ainda não está ativa.",
+    "empty": {
+      "title": "Nenhum preço registrado ainda",
+      "desc": "Os preços aparecem aqui depois que você finalizar uma compra informando o preço unitário dos itens.",
+      "cta": "Ir para minhas listas"
+    },
+    "card": {
+      "recordsCount_one": "{{count}} registro",
+      "recordsCount_other": "{{count}} registros",
+      "min": "Menor",
+      "max": "Maior",
+      "avg": "Média",
+      "last": "Último",
+      "lastDate": "Último registro em {{date}}"
+    }
   }
 }
