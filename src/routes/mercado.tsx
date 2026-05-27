@@ -10,6 +10,7 @@ import {
   Sparkles,
   ChevronRight,
   BarChart3,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
