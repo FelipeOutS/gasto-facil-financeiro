@@ -35,6 +35,10 @@
         "title": "Smart cart",
         "desc": "Use it while shopping to track items in real time."
       },
+      "precos": {
+        "title": "Community prices",
+        "desc": "Preview the future community price comparison database."
+      },
       "cesta": {
         "title": "Standard basket",
         "desc": "Build a recurring list with the items you buy every month."

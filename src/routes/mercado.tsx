@@ -73,7 +73,7 @@ function MercadoHubPage() {
         {CARDS.map((card) => {
           const Icon = card.icon;
           const statusLabel = t(`hub.status.${card.status}`);
-          const isInteractive = card.status === "open" && !!card.to;
+          const isInteractive = !!card.to;
           const statusClass =
             card.status === "open"
               ? "bg-brand-grad text-primary-foreground shadow-elevated"
