@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, BarChart3, Info, PackageSearch, Store } from "lucide-react";
+import { ArrowLeft, Home, BarChart3, Info, PackageSearch, Store, ChevronRight } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
