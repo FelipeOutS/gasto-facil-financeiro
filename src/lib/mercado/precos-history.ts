@@ -437,7 +437,9 @@ export function getResumosPrecos(): ResumoPrecoProduto[] {
  * rapidamente). Retorna a quantidade de novos registros inseridos.
  */
 export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number {
-  const novos = compraParaRegistrosPrivados(compra);
+  const novos = compraParaRegistrosPrivados(compra, {
+    estabelecimento: compra.mercadoNome,
+  });
   if (novos.length === 0) return 0;
   const atuais = safeReadPrecos();
   if (compra.id && atuais.some((r) => r.historicoId === compra.id)) {
