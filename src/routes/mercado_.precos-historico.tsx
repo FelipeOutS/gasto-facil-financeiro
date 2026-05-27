@@ -35,22 +35,25 @@ function PrecosHistoricoPage() {
   const [filtro, setFiltro] = useState<string>(MERCADO_FILTRO_ALL);
 
   const mercados = useMemo(() => buildMercadosDisponiveis(registros), [registros]);
+
+  // If the active filter no longer exists in the data (e.g. user deleted history),
+  // gracefully fall back to "all" — pure computation, no effect needed.
+  // The Select and the filter logic BOTH consume filtroEfetivo to stay in sync.
+  const filtroEfetivo = useMemo(() => {
+    if (filtro === MERCADO_FILTRO_ALL || filtro === MERCADO_FILTRO_SEM) return filtro;
+    const exists = mercados.some((m) => m.toLowerCase() === filtro.toLowerCase());
+    return exists ? filtro : MERCADO_FILTRO_ALL;
+  }, [filtro, mercados]);
+
   const registrosFiltrados = useMemo(
-    () => filterRegistrosPrecoPorMercado(registros, filtro),
-    [registros, filtro],
+    () => filterRegistrosPrecoPorMercado(registros, filtroEfetivo),
+    [registros, filtroEfetivo],
   );
   const resumos = useMemo(
     () => agruparResumosPorProduto(registrosFiltrados),
     [registrosFiltrados],
   );
 
-  // If the active filter no longer exists in the data (e.g. user deleted history),
-  // gracefully fall back to "all" — pure computation, no effect needed.
-  const filtroEfetivo = useMemo(() => {
-    if (filtro === MERCADO_FILTRO_ALL || filtro === MERCADO_FILTRO_SEM) return filtro;
-    const exists = mercados.some((m) => m.toLowerCase() === filtro.toLowerCase());
-    return exists ? filtro : MERCADO_FILTRO_ALL;
-  }, [filtro, mercados]);
 
   function handleBack() {
     if (typeof window !== "undefined" && window.history.length > 1) {
