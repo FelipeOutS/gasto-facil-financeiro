@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "title": "Mercado Inteligente — Gasto Inteligente"
+  },
+  "hub": {
+    "title": "Mercado Inteligente",
+    "subtitle": "Planeje compras, compare preços e acompanhe seus gastos de mercado de forma simples.",
+    "intro": "Comece organizando suas compras de mercado. Nas próximas etapas, este espaço poderá reunir listas, orçamento, histórico, carrinho e comparações de preço.",
+    "futureNote": "Preparado para futuras integrações.",
+    "status": {
+      "soon": "Em breve",
+      "future": "Futuro"
+    },
+    "cards": {
+      "listas": {
+        "title": "Listas de compras",
+        "desc": "Crie listas para organizar o que precisa comprar."
+      },
+      "calculadoras": {
+        "title": "Calculadoras",
+        "desc": "Compare preço por kg, unidade, desconto e melhor custo-benefício."
+      },
+      "orcamento": {
+        "title": "Orçamento de mercado",
+        "desc": "Defina um limite mensal para compras de mercado."
+      },
+      "historico": {
+        "title": "Histórico de compras",
+        "desc": "Acompanhe suas compras anteriores e veja a evolução dos gastos."
+      },
+      "carrinho": {
+        "title": "Carrinho inteligente",
+        "desc": "Some os itens durante a compra e evite passar do orçamento."
+      },
+      "cesta": {
+        "title": "Cesta padrão",
+        "desc": "Monte uma lista recorrente com os itens que você compra todo mês."
+      }
+    }
+  }
+}
