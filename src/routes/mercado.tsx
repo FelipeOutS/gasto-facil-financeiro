@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BarChart3,
   Store,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/mercado")({
 type CardStatus = "soon" | "future" | "open";
 
 type CardDef = {
-  key: "listas" | "calculadoras" | "orcamento" | "historico" | "carrinho" | "precos" | "cesta" | "mercados";
+  key: "listas" | "calculadoras" | "orcamento" | "historico" | "carrinho" | "precos" | "cesta" | "mercados" | "meusMercados";
   icon: LucideIcon;
   status: CardStatus;
   to?: string;
@@ -38,6 +39,7 @@ const CARDS: CardDef[] = [
   { key: "historico", icon: History, status: "open", to: "/mercado/historico" },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
   { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados" },
+  { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados" },
   { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos" },
   { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta" },
 ];

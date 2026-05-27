@@ -60,6 +60,7 @@ import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as MercadoPrecosHistoricoRouteImport } from './routes/mercado_.precos-historico'
 import { Route as MercadoPrecosRouteImport } from './routes/mercado_.precos'
 import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcamento'
+import { Route as MercadoMeusMercadosRouteImport } from './routes/mercado_.meus-mercados'
 import { Route as MercadoMercadosRouteImport } from './routes/mercado_.mercados'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
 import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
@@ -382,6 +383,11 @@ const MercadoPrecosRoute = MercadoPrecosRouteImport.update({
 const MercadoOrcamentoRoute = MercadoOrcamentoRouteImport.update({
   id: '/mercado_/orcamento',
   path: '/mercado/orcamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoMeusMercadosRoute = MercadoMeusMercadosRouteImport.update({
+  id: '/mercado_/meus-mercados',
+  path: '/mercado/meus-mercados',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoMercadosRoute = MercadoMercadosRouteImport.update({
@@ -812,6 +818,7 @@ export interface FileRoutesByFullPath {
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/mercados': typeof MercadoMercadosRoute
+  '/mercado/meus-mercados': typeof MercadoMeusMercadosRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/mercado/precos': typeof MercadoPrecosRoute
   '/mercado/precos-historico': typeof MercadoPrecosHistoricoRoute
@@ -933,6 +940,7 @@ export interface FileRoutesByTo {
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/mercados': typeof MercadoMercadosRoute
+  '/mercado/meus-mercados': typeof MercadoMeusMercadosRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
   '/mercado/precos': typeof MercadoPrecosRoute
   '/mercado/precos-historico': typeof MercadoPrecosHistoricoRoute
@@ -1055,6 +1063,7 @@ export interface FileRoutesById {
   '/mercado_/historico': typeof MercadoHistoricoRoute
   '/mercado_/listas': typeof MercadoListasRoute
   '/mercado_/mercados': typeof MercadoMercadosRoute
+  '/mercado_/meus-mercados': typeof MercadoMeusMercadosRoute
   '/mercado_/orcamento': typeof MercadoOrcamentoRoute
   '/mercado_/precos': typeof MercadoPrecosRoute
   '/mercado_/precos-historico': typeof MercadoPrecosHistoricoRoute
@@ -1178,6 +1187,7 @@ export interface FileRouteTypes {
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/mercados'
+    | '/mercado/meus-mercados'
     | '/mercado/orcamento'
     | '/mercado/precos'
     | '/mercado/precos-historico'
@@ -1299,6 +1309,7 @@ export interface FileRouteTypes {
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/mercados'
+    | '/mercado/meus-mercados'
     | '/mercado/orcamento'
     | '/mercado/precos'
     | '/mercado/precos-historico'
@@ -1420,6 +1431,7 @@ export interface FileRouteTypes {
     | '/mercado_/historico'
     | '/mercado_/listas'
     | '/mercado_/mercados'
+    | '/mercado_/meus-mercados'
     | '/mercado_/orcamento'
     | '/mercado_/precos'
     | '/mercado_/precos-historico'
@@ -1542,6 +1554,7 @@ export interface RootRouteChildren {
   MercadoHistoricoRoute: typeof MercadoHistoricoRoute
   MercadoListasRoute: typeof MercadoListasRoute
   MercadoMercadosRoute: typeof MercadoMercadosRoute
+  MercadoMeusMercadosRoute: typeof MercadoMeusMercadosRoute
   MercadoOrcamentoRoute: typeof MercadoOrcamentoRoute
   MercadoPrecosRoute: typeof MercadoPrecosRoute
   MercadoPrecosHistoricoRoute: typeof MercadoPrecosHistoricoRoute
@@ -1950,6 +1963,13 @@ declare module '@tanstack/react-router' {
       path: '/mercado/orcamento'
       fullPath: '/mercado/orcamento'
       preLoaderRoute: typeof MercadoOrcamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/meus-mercados': {
+      id: '/mercado_/meus-mercados'
+      path: '/mercado/meus-mercados'
+      fullPath: '/mercado/meus-mercados'
+      preLoaderRoute: typeof MercadoMeusMercadosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/mercados': {
@@ -2512,6 +2532,7 @@ const rootRouteChildren: RootRouteChildren = {
   MercadoHistoricoRoute: MercadoHistoricoRoute,
   MercadoListasRoute: MercadoListasRoute,
   MercadoMercadosRoute: MercadoMercadosRoute,
+  MercadoMeusMercadosRoute: MercadoMeusMercadosRoute,
   MercadoOrcamentoRoute: MercadoOrcamentoRoute,
   MercadoPrecosRoute: MercadoPrecosRoute,
   MercadoPrecosHistoricoRoute: MercadoPrecosHistoricoRoute,

@@ -46,6 +46,10 @@
       "mercados": {
         "title": "Comparativo por mercado",
         "desc": "Descubra onde você costuma pagar melhores preços, só com seu histórico local."
+      },
+      "meusMercados": {
+        "title": "Meus mercados",
+        "desc": "Cadastre os mercados onde você costuma comprar para organizar melhor seus preços e históricos."
       }
     }
   },
@@ -652,6 +656,60 @@
     "hub": {
       "title": "Comparativo por mercado",
       "desc": "Descubra onde você costuma pagar melhores preços, só com seu histórico local."
+    }
+  },
+  "meusMercados": {
+    "metaTitle": "Meus mercados",
+    "back": "Voltar",
+    "home": "Início",
+    "title": "Meus mercados",
+    "subtitle": "Cadastre os mercados onde você costuma fazer compras. Por enquanto, eles ficam salvos só neste dispositivo.",
+    "localNotice": "Por enquanto, os mercados cadastrados ficam salvos apenas neste dispositivo. Em uma etapa futura, essa área poderá se conectar a APIs de locais e à base comunitária de preços.",
+    "addCta": "Novo mercado",
+    "addCtaShort": "Adicionar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saveEdit": "Salvar alterações",
+    "fields": {
+      "name": "Nome do mercado",
+      "namePlaceholder": "Ex.: Atacadão da Vila",
+      "address": "Endereço",
+      "addressPlaceholder": "Rua, número (opcional)",
+      "neighborhood": "Bairro",
+      "neighborhoodPlaceholder": "Bairro (opcional)",
+      "city": "Cidade",
+      "cityPlaceholder": "Cidade (opcional)",
+      "note": "Observação",
+      "notePlaceholder": "Anotações como horários, dia de promoção (opcional)",
+      "required": "Obrigatório"
+    },
+    "toast": {
+      "added": "Mercado adicionado.",
+      "updated": "Mercado atualizado.",
+      "removed": "Mercado removido.",
+      "favOn": "Mercado marcado como favorito.",
+      "favOff": "Mercado removido dos favoritos.",
+      "nameRequired": "Informe o nome do mercado."
+    },
+    "confirmRemove": "Tem certeza que deseja remover este mercado? Isso não apaga seu histórico de compras nem seus preços.",
+    "empty": {
+      "title": "Nenhum mercado cadastrado",
+      "desc": "Adicione os mercados onde você costuma comprar para encontrá-los rapidamente ao registrar uma compra."
+    },
+    "card": {
+      "favorite": "Favorito",
+      "markFavorite": "Marcar como favorito",
+      "unmarkFavorite": "Tirar dos favoritos",
+      "edit": "Editar",
+      "remove": "Excluir",
+      "createdAt": "Adicionado em {{date}}"
+    },
+    "editingTitle": "Editar mercado",
+    "newFormTitle": "Novo mercado",
+    "list": {
+      "title": "Seus mercados",
+      "count_one": "{{count}} mercado",
+      "count_other": "{{count}} mercados"
     }
   }
 }
