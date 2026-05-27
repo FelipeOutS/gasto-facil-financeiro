@@ -197,6 +197,18 @@
       "noName": "Product has no registered name",
       "applied": "Product filled in. Review price and quantity."
     },
+    "barcodeScanner": {
+      "scan": "Scan barcode",
+      "scanning": "Reading code…",
+      "close": "Close camera",
+      "unsupported": "Camera scanning is not available on this device.",
+      "permissionDenied": "Could not access the camera. Check your browser permissions.",
+      "detected": "Code detected.",
+      "invalidCode": "Invalid code. Use 8 to 14 digits.",
+      "manualFallback": "You can still type the code manually.",
+      "cameraError": "Could not start the camera.",
+      "hint": "Point the camera at the product barcode."
+    },
     "finalize": {
       "cta": "Finalize shopping",
       "hint": "Save this shopping trip to your local history.",

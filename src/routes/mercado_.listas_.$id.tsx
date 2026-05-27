@@ -30,6 +30,7 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
+import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 
 import { cn } from "@/lib/utils";
 import {
@@ -888,6 +889,16 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
           )}
           <span>{loading ? t("detail.barcode.loading") : t("detail.barcode.search")}</span>
         </button>
+      </div>
+
+      <div className="mt-2">
+        <BarcodeScannerButton
+          onDetected={(code) => {
+            setCode(code);
+            setError(null);
+            setResult(null);
+          }}
+        />
       </div>
 
       {error ? (
