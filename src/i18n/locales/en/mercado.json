@@ -33,7 +33,7 @@
       },
       "carrinho": {
         "title": "Smart cart",
-        "desc": "Add up items while you shop and avoid going over budget."
+        "desc": "Use it while shopping to track items in real time."
       },
       "cesta": {
         "title": "Standard basket",
@@ -303,6 +303,76 @@
       "emptyTitle": "No purchases completed this month",
       "emptyDesc": "Once you finalize a list, it shows up here automatically.",
       "cta": "Go to my lists"
+    }
+  },
+  "carrinho": {
+    "metaTitle": "Smart Cart — Smart Market",
+    "title": "Smart Cart",
+    "subtitle": "Use it while shopping to track items, prices and budget in real time.",
+    "back": "Back",
+    "home": "Home",
+    "missingList": "The selected list was not found. Pick one of the available lists below.",
+    "empty": {
+      "title": "Create a list to use the cart",
+      "description": "Smart Cart uses one of your shopping lists as its base.",
+      "cta": "Create list"
+    },
+    "picker": {
+      "title": "Choose a list",
+      "description": "Pick which list you'll use at the market right now.",
+      "itemsCount_one": "{{count}} item",
+      "itemsCount_other": "{{count}} items",
+      "totalEstimated": "Total estimated",
+      "budget": "Budget",
+      "use": "Use in cart"
+    },
+    "summary": {
+      "activeList": "Active list",
+      "totalEstimated": "Total estimated",
+      "totalBought": "Already bought",
+      "bought": "Bought",
+      "pending": "Pending",
+      "budget": "Budget",
+      "progress": "{{percent}}% complete",
+      "changeList": "Change list",
+      "finalize": "Finalize purchase"
+    },
+    "status": {
+      "sem_orcamento": "No budget",
+      "dentro": "On track",
+      "atencao": "Warning",
+      "excedido": "Exceeded"
+    },
+    "message": {
+      "sem_orcamento": "Set a budget on the list to track the limit.",
+      "dentro": "You're within the list's budget.",
+      "atencao": "You're close to the limit.",
+      "excedido": "You went over this list's budget."
+    },
+    "items": {
+      "title": "Items",
+      "empty": "This list has no items yet. Add some below.",
+      "mark": "Mark as bought",
+      "unmark": "Unmark",
+      "editPrice": "Edit price",
+      "pricePlaceholder": "0.00",
+      "save": "Save"
+    },
+    "quickAdd": {
+      "title": "Quick add item",
+      "hint": "Name is required. Quantity, unit and price are optional.",
+      "namePlaceholder": "Item name",
+      "qtyPlaceholder": "Qty",
+      "unitPlaceholder": "Unit",
+      "pricePlaceholder": "Price",
+      "errorNome": "Please enter the item name.",
+      "errorGeneric": "Couldn't add the item."
+    },
+    "finalize": {
+      "errorEmpty": "Add items before finalizing.",
+      "errorGeneric": "Couldn't finalize the purchase.",
+      "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
+      "success": "Purchase finalized and saved to history."
     }
   }
 }

@@ -33,7 +33,7 @@
       },
       "carrinho": {
         "title": "Carrinho inteligente",
-        "desc": "Some os itens durante a compra e evite passar do orçamento."
+        "desc": "Use durante a compra para acompanhar itens em tempo real."
       },
       "cesta": {
         "title": "Cesta padrão",
@@ -303,6 +303,76 @@
       "emptyTitle": "Nenhuma compra finalizada neste mês",
       "emptyDesc": "Quando você finalizar uma lista, ela aparece aqui automaticamente.",
       "cta": "Ir para minhas listas"
+    }
+  },
+  "carrinho": {
+    "metaTitle": "Carrinho Inteligente — Mercado Inteligente",
+    "title": "Carrinho Inteligente",
+    "subtitle": "Use durante a compra para acompanhar itens, valores e orçamento em tempo real.",
+    "back": "Voltar",
+    "home": "Início",
+    "missingList": "A lista escolhida não foi encontrada. Selecione uma lista disponível abaixo.",
+    "empty": {
+      "title": "Crie uma lista para usar o carrinho",
+      "description": "O Carrinho Inteligente usa uma das suas listas de compras como base.",
+      "cta": "Criar lista"
+    },
+    "picker": {
+      "title": "Escolha uma lista",
+      "description": "Selecione qual lista você vai usar agora no mercado.",
+      "itemsCount_one": "{{count}} item",
+      "itemsCount_other": "{{count}} itens",
+      "totalEstimated": "Total estimado",
+      "budget": "Orçamento",
+      "use": "Usar no carrinho"
+    },
+    "summary": {
+      "activeList": "Lista ativa",
+      "totalEstimated": "Total estimado",
+      "totalBought": "Já comprado",
+      "bought": "Comprados",
+      "pending": "Pendentes",
+      "budget": "Orçamento",
+      "progress": "{{percent}}% concluída",
+      "changeList": "Trocar lista",
+      "finalize": "Finalizar compra"
+    },
+    "status": {
+      "sem_orcamento": "Sem orçamento",
+      "dentro": "Dentro",
+      "atencao": "Atenção",
+      "excedido": "Excedido"
+    },
+    "message": {
+      "sem_orcamento": "Defina um orçamento na lista para acompanhar o limite.",
+      "dentro": "Você está dentro do orçamento da lista.",
+      "atencao": "Você está perto do limite definido.",
+      "excedido": "Você passou do orçamento desta lista."
+    },
+    "items": {
+      "title": "Itens",
+      "empty": "Esta lista ainda não tem itens. Adicione abaixo.",
+      "mark": "Marcar como comprado",
+      "unmark": "Desmarcar",
+      "editPrice": "Editar preço",
+      "pricePlaceholder": "0,00",
+      "save": "Salvar"
+    },
+    "quickAdd": {
+      "title": "Adicionar item rápido",
+      "hint": "Nome obrigatório. Quantidade, unidade e preço são opcionais.",
+      "namePlaceholder": "Nome do item",
+      "qtyPlaceholder": "Qtd",
+      "unitPlaceholder": "Un.",
+      "pricePlaceholder": "Preço",
+      "errorNome": "Informe o nome do item.",
+      "errorGeneric": "Não foi possível adicionar o item."
+    },
+    "finalize": {
+      "errorEmpty": "Adicione itens antes de finalizar.",
+      "errorGeneric": "Não foi possível finalizar a compra.",
+      "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
+      "success": "Compra finalizada e salva no histórico."
     }
   }
 }
