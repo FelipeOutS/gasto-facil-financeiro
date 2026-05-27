@@ -42,6 +42,10 @@
       "cesta": {
         "title": "Standard basket",
         "desc": "Build a recurring list with the items you buy every month."
+      },
+      "mercados": {
+        "title": "Compare by market",
+        "desc": "Discover where you usually pay better prices, using only your local history."
       }
     }
   },
@@ -581,5 +585,73 @@
     "lowest": "Lowest",
     "average": "Average",
     "last": "Latest"
+  },
+  "mercados": {
+    "metaTitle": "Local market comparison — Smart Grocery",
+    "title": "Compare by market",
+    "subtitle": "See where you usually get better prices, based only on the purchases you've recorded on this device.",
+    "back": "Back",
+    "home": "Home",
+    "localNotice": "Everything here is computed on your device from purchases you've finished. Nothing is shared.",
+    "summary": {
+      "title": "Summary of your records",
+      "markets_one": "{{count}} market",
+      "markets_other": "{{count}} markets",
+      "products_one": "{{count}} product",
+      "products_other": "{{count}} products",
+      "records_one": "{{count}} record",
+      "records_other": "{{count}} records",
+      "topMarketLabel": "Most records",
+      "topMarketEmpty": "No standout market yet"
+    },
+    "empty": {
+      "title": "No records to compare yet",
+      "desc": "Finish purchases with item prices and the comparison will show up here.",
+      "cta": "Go to my lists"
+    },
+    "noMarketState": {
+      "title": "You have prices, but no market informed",
+      "desc": "To compare markets, tag the market or place on your next purchase before finishing it.",
+      "cta": "Open price history"
+    },
+    "status": {
+      "melhor": "Good prices in your records",
+      "medio": "Data still building",
+      "poucoDado": "Few records"
+    },
+    "statusDesc": {
+      "melhor": "In your records, this market showed prices below your overall average.",
+      "medio": "Prices here sit close to your overall average.",
+      "poucoDado": "Not enough records to compare safely yet."
+    },
+    "card": {
+      "products_one": "{{count}} product",
+      "products_other": "{{count}} products",
+      "records_one": "{{count}} record",
+      "records_other": "{{count}} records",
+      "lastDate": "Last record on {{date}}",
+      "unknownMarket": "No market informed",
+      "bestPricesTitle": "Good prices you recorded here",
+      "noBestPrices": "No products below your overall average yet.",
+      "priceVsAverage": "Here: {{price}} · average: {{avg}}",
+      "diffBelow": "{{value}}% below your average",
+      "diffAbove": "{{value}}% above your average",
+      "diffEqual": "In line with your average",
+      "diffAverageBelow": "Average {{value}}% below overall",
+      "diffAverageAbove": "Average {{value}}% above overall",
+      "diffAverageEqual": "Average in line with overall"
+    },
+    "ctaFromPrecos": {
+      "title": "Local comparison by market",
+      "desc": "See where you usually pay better prices, using only your local data."
+    },
+    "ctaFromHistorico": {
+      "title": "See market comparison",
+      "desc": "Compare your prices grouped by market, based on your local history."
+    },
+    "hub": {
+      "title": "Compare by market",
+      "desc": "Discover where you usually pay better prices, using only your local history."
+    }
   }
 }

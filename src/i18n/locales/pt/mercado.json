@@ -42,6 +42,10 @@
       "cesta": {
         "title": "Cesta padrão",
         "desc": "Monte uma lista recorrente com os itens que você compra todo mês."
+      },
+      "mercados": {
+        "title": "Comparativo por mercado",
+        "desc": "Descubra onde você costuma pagar melhores preços, só com seu histórico local."
       }
     }
   },
@@ -581,5 +585,73 @@
     "lowest": "Menor",
     "average": "Média",
     "last": "Último"
+  },
+  "mercados": {
+    "metaTitle": "Comparativo local por mercado — Mercado Inteligente",
+    "title": "Comparativo por mercado",
+    "subtitle": "Veja em quais mercados você costuma pagar melhores preços, com base apenas nas suas próprias compras registradas neste aparelho.",
+    "back": "Voltar",
+    "home": "Início",
+    "localNotice": "Tudo aqui é calculado no seu aparelho a partir das compras que você finalizou. Nada é compartilhado.",
+    "summary": {
+      "title": "Resumo dos seus registros",
+      "markets_one": "{{count}} mercado",
+      "markets_other": "{{count}} mercados",
+      "products_one": "{{count}} produto",
+      "products_other": "{{count}} produtos",
+      "records_one": "{{count}} registro",
+      "records_other": "{{count}} registros",
+      "topMarketLabel": "Mais registros",
+      "topMarketEmpty": "Ainda sem mercado destaque"
+    },
+    "empty": {
+      "title": "Ainda não há registros para comparar",
+      "desc": "Finalize compras com o preço dos itens para o comparativo aparecer aqui.",
+      "cta": "Ir para minhas listas"
+    },
+    "noMarketState": {
+      "title": "Você tem preços, mas sem mercado informado",
+      "desc": "Para comparar mercados, na próxima compra informe o mercado ou local antes de finalizar.",
+      "cta": "Abrir histórico de preços"
+    },
+    "status": {
+      "melhor": "Bons preços nos seus registros",
+      "medio": "Dados em formação",
+      "poucoDado": "Poucos registros"
+    },
+    "statusDesc": {
+      "melhor": "Nos seus registros, este mercado apareceu com preços abaixo da sua média geral.",
+      "medio": "Preços por aqui ficam próximos da sua média geral.",
+      "poucoDado": "Ainda há poucos registros para comparar com segurança."
+    },
+    "card": {
+      "products_one": "{{count}} produto",
+      "products_other": "{{count}} produtos",
+      "records_one": "{{count}} registro",
+      "records_other": "{{count}} registros",
+      "lastDate": "Último registro em {{date}}",
+      "unknownMarket": "Sem mercado informado",
+      "bestPricesTitle": "Bons preços que você registrou aqui",
+      "noBestPrices": "Sem produtos com preço abaixo da sua média geral.",
+      "priceVsAverage": "Aqui: {{price}} · média: {{avg}}",
+      "diffBelow": "{{value}}% abaixo da sua média",
+      "diffAbove": "{{value}}% acima da sua média",
+      "diffEqual": "Na linha da sua média",
+      "diffAverageBelow": "Média {{value}}% abaixo da geral",
+      "diffAverageAbove": "Média {{value}}% acima da geral",
+      "diffAverageEqual": "Média na linha da geral"
+    },
+    "ctaFromPrecos": {
+      "title": "Comparativo local por mercado",
+      "desc": "Veja em quais mercados você costuma pagar melhores preços, só com seus dados locais."
+    },
+    "ctaFromHistorico": {
+      "title": "Ver comparativo por mercado",
+      "desc": "Compare seus preços agrupados por mercado, com base no seu histórico local."
+    },
+    "hub": {
+      "title": "Comparativo por mercado",
+      "desc": "Descubra onde você costuma pagar melhores preços, só com seu histórico local."
+    }
   }
 }
