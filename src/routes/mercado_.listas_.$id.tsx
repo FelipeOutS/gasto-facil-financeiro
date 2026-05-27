@@ -23,6 +23,7 @@ import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import {
   addItemLista,
+  computeOrcamentoLista,
   computeResumo,
   removeItemLista,
   toggleItemComprado,
