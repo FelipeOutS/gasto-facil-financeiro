@@ -546,7 +546,11 @@
       "max": "Maior",
       "avg": "Média",
       "last": "Último",
-      "lastDate": "Último registro em {{date}}"
+      "lastDate": "Último registro em {{date}}",
+      "marketSingle": "Registrado em: {{value}}",
+      "marketMultiple_one": "Registrado em {{count}} mercado",
+      "marketMultiple_other": "Registrado em {{count}} mercados",
+      "marketUnknown": "Mercado não informado"
     }
   },
   "precoInsight": {
