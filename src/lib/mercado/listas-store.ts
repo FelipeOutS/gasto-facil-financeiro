@@ -32,6 +32,7 @@ export function __setMercadoActiveUser(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
   emit();
+  emitHistorico();
 }
 
 export function __replaceListasCache(listas: MercadoLista[]) {
