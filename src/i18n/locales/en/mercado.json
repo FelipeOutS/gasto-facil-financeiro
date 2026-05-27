@@ -751,6 +751,25 @@
       "title": "Your markets",
       "count_one": "{{count}} market",
       "count_other": "{{count}} markets"
+    },
+    "nearby": {
+      "title": "Nearby markets",
+      "description": "Soon you'll be able to find nearby markets by ZIP code or city. For now, the automatic search is being prepared — you can add your markets manually below.",
+      "searchCta": "Search markets",
+      "fields": {
+        "cep": "ZIP code",
+        "cidade": "City",
+        "cidadePlaceholder": "e.g.: New York",
+        "uf": "State"
+      },
+      "messages": {
+        "provider_unavailable": "Automatic search is still being prepared. You can add the market manually below.",
+        "invalid_location": "Enter a valid ZIP code or city and state to search.",
+        "network": "Couldn't connect right now. Please try again shortly.",
+        "timeout": "The search took too long. Please try again.",
+        "empty": "No markets found in this area. Add one manually for now.",
+        "unknown": "Something went wrong with the search. You can add manually below."
+      }
     }
   }
 }
