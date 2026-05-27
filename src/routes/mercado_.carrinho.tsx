@@ -217,6 +217,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
   const navigate = useNavigate();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
+  const [mercadoNome, setMercadoNome] = useState("");
 
   const status: "sem_orcamento" | "dentro" | "atencao" | "excedido" = !orc.hasBudget
     ? "sem_orcamento"
@@ -240,7 +241,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       );
       if (!ok) return;
     }
-    const entry = finalizarListaCompra(lista.id);
+    const entry = finalizarListaCompra(lista.id, {
+      mercadoNome: mercadoNome.trim() || undefined,
+    });
     if (!entry) {
       toast.error(t("carrinho.finalize.errorGeneric"));
       return;
