@@ -776,6 +776,11 @@ export function finalizarListaCompra(
   safeWriteHistorico([entry, ...current]);
   emitHistorico();
 
+  // Push para Supabase (best-effort, não bloqueia o fluxo local).
+  if (historicoSyncHooks.onUpsertHistorico) {
+    try { historicoSyncHooks.onUpsertHistorico(entry); } catch { /* ignore */ }
+  }
+
   // E13: registra preços no histórico local de preços por produto.
   // Operação isolada, dedupada por historicoId. Falhas não afetam o fluxo.
   try {
