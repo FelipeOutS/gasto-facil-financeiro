@@ -46,6 +46,10 @@
       "mercados": {
         "title": "Compare by market",
         "desc": "Discover where you usually pay better prices, using only your local history."
+      },
+      "meusMercados": {
+        "title": "My markets",
+        "desc": "Add the markets where you usually shop to better organize your prices and history."
       }
     }
   },
@@ -652,6 +656,60 @@
     "hub": {
       "title": "Compare by market",
       "desc": "Discover where you usually pay better prices, using only your local history."
+    }
+  },
+  "meusMercados": {
+    "metaTitle": "My markets",
+    "back": "Back",
+    "home": "Home",
+    "title": "My markets",
+    "subtitle": "Save the markets where you usually shop. For now, they are stored only on this device.",
+    "localNotice": "For now, saved markets stay only on this device. In a future step, this area may connect to location APIs and to the community price base.",
+    "addCta": "New market",
+    "addCtaShort": "Add",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saveEdit": "Save changes",
+    "fields": {
+      "name": "Market name",
+      "namePlaceholder": "e.g. Whole Foods Downtown",
+      "address": "Address",
+      "addressPlaceholder": "Street, number (optional)",
+      "neighborhood": "Neighborhood",
+      "neighborhoodPlaceholder": "Neighborhood (optional)",
+      "city": "City",
+      "cityPlaceholder": "City (optional)",
+      "note": "Notes",
+      "notePlaceholder": "Notes like hours or sale day (optional)",
+      "required": "Required"
+    },
+    "toast": {
+      "added": "Market added.",
+      "updated": "Market updated.",
+      "removed": "Market removed.",
+      "favOn": "Market marked as favorite.",
+      "favOff": "Market removed from favorites.",
+      "nameRequired": "Enter the market name."
+    },
+    "confirmRemove": "Are you sure you want to remove this market? This does not delete your purchase history or your prices.",
+    "empty": {
+      "title": "No markets saved yet",
+      "desc": "Add the markets where you usually shop to find them quickly when recording a purchase."
+    },
+    "card": {
+      "favorite": "Favorite",
+      "markFavorite": "Mark as favorite",
+      "unmarkFavorite": "Unmark favorite",
+      "edit": "Edit",
+      "remove": "Delete",
+      "createdAt": "Added on {{date}}"
+    },
+    "editingTitle": "Edit market",
+    "newFormTitle": "New market",
+    "list": {
+      "title": "Your markets",
+      "count_one": "{{count}} market",
+      "count_other": "{{count}} markets"
     }
   }
 }
