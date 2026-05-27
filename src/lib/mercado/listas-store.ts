@@ -316,6 +316,70 @@ export function removeItemLista(listaId: string, itemId: string) {
   );
 }
 
+/**
+ * Atualiza dados gerais da lista (nome, tipo, estimativa, observação).
+ * NÃO toca em entries/items/progress/status — recomputeDerived mantém consistência.
+ * Retorna a lista atualizada ou null se id inexistente / nome vazio.
+ */
+export function updateListaDados(
+  id: string,
+  input: { name?: string; tipo?: ListaTipo; estimate?: number | null; observation?: string | null },
+): MercadoLista | null {
+  if (!id) return null;
+  const atuais = safeRead();
+  const idx = atuais.findIndex((l) => l.id === id);
+  if (idx === -1) return null;
+  const prev = atuais[idx];
+
+  const nextName =
+    input.name !== undefined ? input.name.trim() : prev.name;
+  if (!nextName) return null;
+
+  const validTipos: ListaTipo[] = ["compraMes", "reposicao", "churrasco", "farmacia", "outros"];
+  const nextTipo: ListaTipo =
+    input.tipo !== undefined && validTipos.includes(input.tipo) ? input.tipo : prev.tipo;
+
+  let nextEstimate: number | undefined = prev.estimate;
+  if (input.estimate !== undefined) {
+    if (input.estimate === null) {
+      nextEstimate = undefined;
+    } else if (
+      typeof input.estimate === "number" &&
+      Number.isFinite(input.estimate) &&
+      input.estimate > 0
+    ) {
+      nextEstimate = input.estimate;
+    } else {
+      nextEstimate = undefined;
+    }
+  }
+
+  let nextObservation: string | undefined = prev.observation;
+  if (input.observation !== undefined) {
+    if (input.observation === null) {
+      nextObservation = undefined;
+    } else {
+      const trimmed = input.observation.trim();
+      nextObservation = trimmed ? trimmed : undefined;
+    }
+  }
+
+  const updated: MercadoLista = recomputeDerived({
+    ...prev,
+    name: nextName,
+    tipo: nextTipo,
+    estimate: nextEstimate,
+    observation: nextObservation,
+    updatedAt: new Date().toISOString(),
+  });
+
+  const copy = atuais.slice();
+  copy[idx] = updated;
+  safeWrite(copy);
+  emit();
+  return updated;
+}
+
 export type ResumoLista = {
   totalItens: number;
   itensComprados: number;
