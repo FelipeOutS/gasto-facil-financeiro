@@ -60,6 +60,7 @@ import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcamento'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
 import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
+import { Route as MercadoCarrinhoRouteImport } from './routes/mercado_.carrinho'
 import { Route as MercadoCalculadorasRouteImport } from './routes/mercado_.calculadoras'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
@@ -377,6 +378,11 @@ const MercadoListasRoute = MercadoListasRouteImport.update({
 const MercadoHistoricoRoute = MercadoHistoricoRouteImport.update({
   id: '/mercado_/historico',
   path: '/mercado/historico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoCarrinhoRoute = MercadoCarrinhoRouteImport.update({
+  id: '/mercado_/carrinho',
+  path: '/mercado/carrinho',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoCalculadorasRoute = MercadoCalculadorasRouteImport.update({
@@ -777,6 +783,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado/carrinho': typeof MercadoCarrinhoRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
@@ -893,6 +900,7 @@ export interface FileRoutesByTo {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado/carrinho': typeof MercadoCarrinhoRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
@@ -1010,6 +1018,7 @@ export interface FileRoutesById {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado_/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado_/carrinho': typeof MercadoCarrinhoRoute
   '/mercado_/historico': typeof MercadoHistoricoRoute
   '/mercado_/listas': typeof MercadoListasRoute
   '/mercado_/orcamento': typeof MercadoOrcamentoRoute
@@ -1128,6 +1137,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado/calculadoras'
+    | '/mercado/carrinho'
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/orcamento'
@@ -1244,6 +1254,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado/calculadoras'
+    | '/mercado/carrinho'
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/orcamento'
@@ -1360,6 +1371,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado_/calculadoras'
+    | '/mercado_/carrinho'
     | '/mercado_/historico'
     | '/mercado_/listas'
     | '/mercado_/orcamento'
@@ -1477,6 +1489,7 @@ export interface RootRouteChildren {
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
   MercadoCalculadorasRoute: typeof MercadoCalculadorasRoute
+  MercadoCarrinhoRoute: typeof MercadoCarrinhoRoute
   MercadoHistoricoRoute: typeof MercadoHistoricoRoute
   MercadoListasRoute: typeof MercadoListasRoute
   MercadoOrcamentoRoute: typeof MercadoOrcamentoRoute
@@ -1885,6 +1898,13 @@ declare module '@tanstack/react-router' {
       path: '/mercado/historico'
       fullPath: '/mercado/historico'
       preLoaderRoute: typeof MercadoHistoricoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/carrinho': {
+      id: '/mercado_/carrinho'
+      path: '/mercado/carrinho'
+      fullPath: '/mercado/carrinho'
+      preLoaderRoute: typeof MercadoCarrinhoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/calculadoras': {
@@ -2407,6 +2427,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
   MercadoCalculadorasRoute: MercadoCalculadorasRoute,
+  MercadoCarrinhoRoute: MercadoCarrinhoRoute,
   MercadoHistoricoRoute: MercadoHistoricoRoute,
   MercadoListasRoute: MercadoListasRoute,
   MercadoOrcamentoRoute: MercadoOrcamentoRoute,
