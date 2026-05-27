@@ -186,7 +186,7 @@ function recomputeDerived(l: MercadoLista): MercadoLista {
 function safeRead(): MercadoLista[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_LISTAS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentStorageKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -199,11 +199,12 @@ function safeRead(): MercadoLista[] {
 function safeWrite(next: MercadoLista[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_LISTAS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentStorageKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
 }
+
 
 function emit() {
   for (const l of Array.from(listeners)) {
