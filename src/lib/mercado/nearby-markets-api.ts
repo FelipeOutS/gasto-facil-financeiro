@@ -81,11 +81,17 @@ export type MercadoNearbyResponse =
       ok: true;
       provider: MercadoNearbyProvider;
       results: MercadoNearbyResult[];
+      /** Raio (km) efetivamente usado quando os resultados foram encontrados. */
+      radiusKmUsed?: number;
+      /** Rótulo amigável da fonte, e.g. "OpenStreetMap". */
+      sourceLabel?: string;
     }
   | {
       ok: false;
       provider: MercadoNearbyProvider;
       error: MercadoNearbyError;
+      /** Maior raio (km) tentado antes de desistir. */
+      radiusKmTried?: number;
     };
 
 /**
