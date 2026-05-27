@@ -89,19 +89,21 @@ export type MercadoNearbyResponse =
     };
 
 /**
- * Provider ativo no momento. Enquanto não houver backend seguro para
- * consultar Google Places / Overpass, mantemos "manual_only" para que a UI
- * mostre a mensagem de preparação e o cadastro manual permaneça intocado.
+ * Provider ativo no momento.
  *
- * Para ativar um provider futuro:
- * 1. Implementar a chamada real em `nearby-markets.functions.ts` dentro de
- *    `.handler()` (server-only), lendo `process.env.GOOGLE_PLACES_API_KEY`
- *    ou similar dentro do handler — nunca no escopo do módulo.
- * 2. Trocar o valor de `ACTIVE_NEARBY_PROVIDER` para o provider desejado.
- * 3. Trocar o corpo de `findNearbyMarkets` (abaixo) por uma chamada à
- *    server fn correspondente.
+ * Etapa E25: ativado `openstreetmap_overpass` (gratuito, sem chave).
+ * A chamada real acontece SOMENTE em `nearby-markets.functions.ts` (server fn),
+ * respeitando o User-Agent e o rate-limit da Overpass/Nominatim. Nada é
+ * persistido automaticamente — o usuário revisa e confirma antes de salvar.
+ *
+ * Google Places fica preparado para uma fase futura (exige billing/cartão e
+ * GOOGLE_PLACES_API_KEY). Para migrar:
+ *   1. Adicionar a secret no projeto.
+ *   2. Implementar a chamada real no handler da server fn.
+ *   3. Trocar `ACTIVE_NEARBY_PROVIDER` para "google_places".
  */
-export const ACTIVE_NEARBY_PROVIDER: MercadoNearbyProvider = "manual_only";
+export const ACTIVE_NEARBY_PROVIDER: MercadoNearbyProvider =
+  "openstreetmap_overpass";
 
 // ---------------------------------------------------------------------------
 // Normalizadores (puros, sem efeito colateral, client-safe)
@@ -196,11 +198,9 @@ export async function findNearbyMarkets(
       error: { code: "invalid_location" },
     };
   }
-
-  // Provider ainda não ativado. Resposta controlada — não quebra a UI.
-  return {
-    ok: false,
-    provider: ACTIVE_NEARBY_PROVIDER,
-    error: { code: "provider_unavailable" },
-  };
+  // Delegação para a server fn (Overpass/Nominatim). Importação dinâmica
+  // garante que o módulo *.functions.ts seja transformado pelo bundler como
+  // RPC stub no client — sem qualquer chave ou fetch externo do navegador.
+  const { findNearbyMarketsServerFn } = await import("./nearby-markets.functions");
+  return findNearbyMarketsServerFn({ data: query });
 }

@@ -34,6 +34,7 @@ import {
   normalizeCidade,
   normalizeUf,
   type MercadoNearbyErrorCode,
+  type MercadoNearbyResult,
 } from "@/lib/mercado/nearby-markets-api";
 
 
@@ -214,7 +215,23 @@ function MeusMercadosPage() {
         </div>
       </section>
 
-      <NearbySearchCard />
+      <NearbySearchCard
+        onUseResult={(r) => {
+          setForm({
+            nome: r.nome,
+            cep: r.cep ? formatCepMask(r.cep) : "",
+            endereco: r.endereco ?? "",
+            bairro: r.bairro ?? "",
+            cidade: r.cidade ?? "",
+            uf: r.uf ?? "",
+            observacao: "",
+          });
+          setMode({ kind: "new" });
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      />
 
 
       <section className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -648,12 +665,17 @@ function MercadoCard({
   );
 }
 
-function NearbySearchCard() {
+function NearbySearchCard({
+  onUseResult,
+}: {
+  onUseResult: (r: MercadoNearbyResult) => void;
+}) {
   const { t } = useTranslation("mercado");
   const [cep, setCep] = useState("");
   const [cidade, setCidade] = useState("");
   const [uf, setUf] = useState("");
   const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<MercadoNearbyResult[]>([]);
   const [feedback, setFeedback] = useState<{
     kind: "idle" | "info" | "error";
     code?: MercadoNearbyErrorCode;
@@ -663,6 +685,7 @@ function NearbySearchCard() {
     e.preventDefault();
     setLoading(true);
     setFeedback({ kind: "idle" });
+    setResults([]);
     try {
       const res = await findNearbyMarkets({
         cep: normalizeCep(cep),
@@ -670,12 +693,7 @@ function NearbySearchCard() {
         uf: normalizeUf(uf),
       });
       if (res.ok) {
-        if (res.results.length === 0) {
-          setFeedback({ kind: "info", code: "empty" });
-        } else {
-          // Reservado para etapa futura: render dos resultados encontrados.
-          setFeedback({ kind: "info", code: "empty" });
-        }
+        setResults(res.results);
       } else {
         setFeedback({ kind: "info", code: res.error.code });
       }
@@ -711,7 +729,7 @@ function NearbySearchCard() {
         onSubmit={handleSearch}
         className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_120px]"
       >
-        <label className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5 min-w-0">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("meusMercados.nearby.fields.cep")}
           </span>
@@ -724,7 +742,7 @@ function NearbySearchCard() {
             className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none transition-colors focus:border-brand"
           />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5 min-w-0">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("meusMercados.nearby.fields.cidade")}
           </span>
@@ -736,7 +754,7 @@ function NearbySearchCard() {
             className="h-11 w-full rounded-2xl border border-border bg-card-elevated px-3 text-sm outline-none transition-colors focus:border-brand"
           />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5 min-w-0">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("meusMercados.nearby.fields.uf")}
           </span>
@@ -769,6 +787,53 @@ function NearbySearchCard() {
         <p className="mt-3 rounded-2xl bg-card-elevated px-3 py-2 text-[13px] leading-snug text-muted-foreground ring-1 ring-border/60">
           {t(messageKey)}
         </p>
+      )}
+
+      {results.length > 0 && (
+        <div className="mt-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold md:text-base">
+              {t("meusMercados.nearby.results.title")}
+            </h3>
+            <span className="text-[11px] text-muted-foreground">
+              {t("meusMercados.nearby.results.count", { count: results.length })}
+            </span>
+          </div>
+          <ul className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {results.map((r) => {
+              const cidadeUf = [r.cidade, r.uf].filter(Boolean).join("/");
+              const linha2 = [r.endereco, r.bairro, cidadeUf]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <li
+                  key={r.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3 ring-1 ring-border/30"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {r.nome}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
+                      {linha2 || t("meusMercados.nearby.results.noAddress")}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground/80">
+                      {t("meusMercados.nearby.results.source")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onUseResult(r)}
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-2xl bg-brand-grad px-3 text-[12px] font-semibold text-primary-foreground shadow-elevated active:scale-[0.99]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t("meusMercados.nearby.results.useCta")}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </section>
   );
