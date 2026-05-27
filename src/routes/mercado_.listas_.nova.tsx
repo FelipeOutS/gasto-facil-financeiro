@@ -8,7 +8,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 import { addLista, type ListaTipo } from "@/lib/mercado/listas-store";
 
-export const Route = createFileRoute("/mercado_/listas/nova")({
+export const Route = createFileRoute("/mercado_/listas_/nova")({
   head: () => ({
     meta: [{ title: i18n.t("mercado:nova.metaTitle", { lng: i18n.language }) }],
   }),
