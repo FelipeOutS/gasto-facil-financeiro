@@ -58,6 +58,7 @@ import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as MercadoListasRouteImport } from './routes/mercado.listas'
+import { Route as MercadoCalculadorasRouteImport } from './routes/mercado.calculadoras'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
 import { Route as InvestimentosImportacoesRouteImport } from './routes/investimentos.importacoes'
@@ -364,6 +365,11 @@ const MetasNovaRoute = MetasNovaRouteImport.update({
 const MercadoListasRoute = MercadoListasRouteImport.update({
   id: '/listas',
   path: '/listas',
+  getParentRoute: () => MercadoRoute,
+} as any)
+const MercadoCalculadorasRoute = MercadoCalculadorasRouteImport.update({
+  id: '/calculadoras',
+  path: '/calculadoras',
   getParentRoute: () => MercadoRoute,
 } as any)
 const InvestimentosNovoRoute = InvestimentosNovoRouteImport.update({
@@ -758,6 +764,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -871,6 +878,7 @@ export interface FileRoutesByTo {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -985,6 +993,7 @@ export interface FileRoutesById {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/calculadoras': typeof MercadoCalculadorasRoute
   '/mercado/listas': typeof MercadoListasRouteWithChildren
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -1100,6 +1109,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/calculadoras'
     | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1213,6 +1223,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/calculadoras'
     | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1326,6 +1337,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/calculadoras'
     | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1831,6 +1843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MercadoListasRouteImport
       parentRoute: typeof MercadoRoute
     }
+    '/mercado/calculadoras': {
+      id: '/mercado/calculadoras'
+      path: '/calculadoras'
+      fullPath: '/mercado/calculadoras'
+      preLoaderRoute: typeof MercadoCalculadorasRouteImport
+      parentRoute: typeof MercadoRoute
+    }
     '/investimentos/novo': {
       id: '/investimentos/novo'
       path: '/investimentos/novo'
@@ -2294,10 +2313,12 @@ const MercadoListasRouteWithChildren = MercadoListasRoute._addFileChildren(
 )
 
 interface MercadoRouteChildren {
+  MercadoCalculadorasRoute: typeof MercadoCalculadorasRoute
   MercadoListasRoute: typeof MercadoListasRouteWithChildren
 }
 
 const MercadoRouteChildren: MercadoRouteChildren = {
+  MercadoCalculadorasRoute: MercadoCalculadorasRoute,
   MercadoListasRoute: MercadoListasRouteWithChildren,
 }
 
