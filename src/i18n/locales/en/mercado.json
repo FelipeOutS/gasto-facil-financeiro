@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Smart Grocery — Gasto Inteligente",
-    "listasTitle": "Shopping lists — Smart Grocery"
+    "listasTitle": "Shopping lists — Smart Grocery",
+    "calculadorasTitle": "Calculators — Smart Grocery"
   },
   "hub": {
     "title": "Smart Grocery",
