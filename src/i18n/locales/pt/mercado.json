@@ -694,6 +694,13 @@
     "home": "Início",
     "title": "Meus mercados",
     "subtitle": "Cadastre os mercados onde você costuma fazer compras. Por enquanto, eles ficam salvos só neste dispositivo.",
+    "comingSoon": {
+      "subtitle": "Funcionalidade em preparação.",
+      "title": "Em breve por aqui",
+      "description": "Estamos preparando uma área para cadastrar mercados favoritos, buscar estabelecimentos próximos e usar essas informações no histórico de preços.",
+      "manualHint": "Por enquanto, continue preenchendo o nome do mercado manualmente ao finalizar uma compra.",
+      "backToHub": "Voltar para o Mercado Inteligente"
+    },
     "localNotice": "Por enquanto, os mercados cadastrados ficam salvos apenas neste dispositivo. Em uma etapa futura, essa área poderá se conectar a APIs de locais e à base comunitária de preços.",
     "addCta": "Novo mercado",
     "addCtaShort": "Adicionar",
