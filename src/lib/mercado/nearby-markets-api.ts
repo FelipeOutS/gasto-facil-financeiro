@@ -198,11 +198,9 @@ export async function findNearbyMarkets(
       error: { code: "invalid_location" },
     };
   }
-
-  // Provider ainda não ativado. Resposta controlada — não quebra a UI.
-  return {
-    ok: false,
-    provider: ACTIVE_NEARBY_PROVIDER,
-    error: { code: "provider_unavailable" },
-  };
+  // Delegação para a server fn (Overpass/Nominatim). Importação dinâmica
+  // garante que o módulo *.functions.ts seja transformado pelo bundler como
+  // RPC stub no client — sem qualquer chave ou fetch externo do navegador.
+  const { findNearbyMarketsServerFn } = await import("./nearby-markets.functions");
+  return findNearbyMarketsServerFn({ data: query });
 }
