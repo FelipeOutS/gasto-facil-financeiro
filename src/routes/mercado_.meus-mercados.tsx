@@ -96,9 +96,11 @@ function MeusMercadosPage() {
   function openEdit(m: MercadoLocal) {
     setForm({
       nome: m.nome,
+      cep: m.cep ? formatCepMask(m.cep) : "",
       endereco: m.endereco ?? "",
       bairro: m.bairro ?? "",
       cidade: m.cidade ?? "",
+      uf: m.uf ?? "",
       observacao: m.observacao ?? "",
     });
     setMode({ kind: "edit", id: m.id });
