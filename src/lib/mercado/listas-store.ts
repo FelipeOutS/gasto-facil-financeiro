@@ -380,6 +380,22 @@ export function updateListaDados(
   return updated;
 }
 
+/**
+ * Remove apenas a lista informada do localStorage `gi:mercado:listas:v1`.
+ * NÃO toca em histórico de compras, histórico de preços, cesta padrão,
+ * mercados cadastrados ou orçamento de mercado (stores isolados).
+ * Retorna true se removeu, false se id inexistente/inválido.
+ */
+export function removeLista(id: string): boolean {
+  if (!id) return false;
+  const atuais = safeRead();
+  const next = atuais.filter((l) => l.id !== id);
+  if (next.length === atuais.length) return false;
+  safeWrite(next);
+  emit();
+  return true;
+}
+
 export type ResumoLista = {
   totalItens: number;
   itensComprados: number;
