@@ -217,7 +217,9 @@
       "savedBy": "Saved {{value}}",
       "overBy": "Over by {{value}}",
       "noBudget": "No budget set",
-      "progress": "{{percent}}% complete"
+      "progress": "{{percent}}% complete",
+      "market": "Market: {{value}}",
+      "marketUnknown": "Market not informed"
     }
   },
   "calculators": {
