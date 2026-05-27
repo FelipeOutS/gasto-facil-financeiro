@@ -249,6 +249,9 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           ))}
         </section>
       )}
+
+      {/* Finalize */}
+      <FinalizeCard lista={lista} />
     </MobileShell>
   );
 }
