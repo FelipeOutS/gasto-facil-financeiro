@@ -336,6 +336,3 @@ function formatBRL(value: number): string {
     return `R$ ${value.toFixed(2)}`;
   }
 }
-
-// Unused but kept for tree-shaking visibility of Money import in case of edits later.
-void Money;
