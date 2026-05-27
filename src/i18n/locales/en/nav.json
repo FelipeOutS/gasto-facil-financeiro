@@ -45,7 +45,8 @@
     "perfilMobile": "My profile",
     "idioma": "App language",
     "more": "More",
-    "integracoes": "Integrations"
+    "integracoes": "Integrations",
+    "mercado": "Grocery"
   },
   "more": {
     "title": "More options",
@@ -83,7 +84,8 @@
     "admin": "Admin panel",
     "perfilMobile": "Account data, profile and personal shortcuts",
     "idioma": "Switch between Português and English",
-    "integracoes": "Connect Mercado Pago and other services"
+    "integracoes": "Connect Mercado Pago and other services",
+    "mercado": "Lists, budget and grocery purchases"
   },
   "groups": {
     "financeiro": "Finance",

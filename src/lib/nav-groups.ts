@@ -1,5 +1,6 @@
 import {
   List,
+  ShoppingCart,
   ArrowUp,
   CalendarClock,
   HandCoins,
@@ -54,6 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
       { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat, feature: "assinaturas_recorrencias" },
       { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart, feature: "orcamento" },
+      { to: "/mercado", labelKey: "mercado", descKey: "mercado", icon: ShoppingCart },
     ],
   },
   {

@@ -45,7 +45,8 @@
     "perfilMobile": "Meu perfil",
     "idioma": "Idioma do app",
     "more": "Mais",
-    "integracoes": "Integrações"
+    "integracoes": "Integrações",
+    "mercado": "Mercado"
   },
   "more": {
     "title": "Mais opções",
@@ -83,7 +84,8 @@
     "admin": "Painel administrativo",
     "perfilMobile": "Dados da conta, perfil e atalhos pessoais",
     "idioma": "Troque entre Português e English",
-    "integracoes": "Conecte Mercado Pago e outros serviços"
+    "integracoes": "Conecte Mercado Pago e outros serviços",
+    "mercado": "Listas, orçamento e compras de mercado"
   },
   "groups": {
     "financeiro": "Financeiro",

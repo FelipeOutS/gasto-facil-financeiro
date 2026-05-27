@@ -19,6 +19,7 @@ import {
   Contact,
   ClipboardList,
   Plug,
+  ShoppingCart,
   type LucideIcon,
 } from "lucide-react";
 import type { FeatureKey } from "@/lib/plans";
@@ -36,6 +37,7 @@ export const INTEGRACOES_ITEM: MoreItem = { to: "/app/integracoes", labelKey: "i
 
 export const MORE_ITEMS: MoreItem[] = [
   { to: "/alertas", labelKey: "alertas", descKey: "alertas", icon: Bell },
+  { to: "/mercado", labelKey: "mercado", descKey: "mercado", icon: ShoppingCart },
   { to: "/renda", labelKey: "renda", descKey: "renda", icon: ArrowUp },
   { to: "/contas-a-pagar", labelKey: "contasPagar", descKey: "contasPagar", icon: CalendarClock },
   { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
