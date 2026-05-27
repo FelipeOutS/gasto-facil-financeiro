@@ -31,7 +31,7 @@ type CardDef = {
 
 const CARDS: CardDef[] = [
   { key: "listas", icon: ListChecks, status: "open", to: "/mercado/listas" },
-  { key: "calculadoras", icon: Calculator, status: "soon" },
+  { key: "calculadoras", icon: Calculator, status: "open", to: "/mercado/calculadoras" },
   { key: "orcamento", icon: WalletCards, status: "soon" },
   { key: "historico", icon: History, status: "soon" },
   { key: "carrinho", icon: ShoppingCart, status: "future" },

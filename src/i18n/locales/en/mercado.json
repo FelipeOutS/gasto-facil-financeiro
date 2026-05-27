@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Smart Grocery — Gasto Inteligente",
-    "listasTitle": "Shopping lists — Smart Grocery"
+    "listasTitle": "Shopping lists — Smart Grocery",
+    "calculadorasTitle": "Calculators — Smart Grocery"
   },
   "hub": {
     "title": "Smart Grocery",
@@ -153,6 +154,58 @@
       "remove": "Remove item",
       "confirmRemove": "Remove this item from the list?"
     }
+  },
+  "calculators": {
+    "title": "Grocery Calculators",
+    "subtitle": "Quick tools to compare prices and plan your shopping.",
+    "back": "Back",
+    "home": "Home",
+    "compare": {
+      "title": "Compare price per unit",
+      "subtitle": "See which product is the better deal by comparing price per kg, liter or unit.",
+      "productA": "Product A",
+      "productB": "Product B",
+      "name": "Name (optional)",
+      "namePlaceholder": "e.g. Rice",
+      "price": "Price",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "units": {
+        "g": "g",
+        "kg": "kg",
+        "ml": "ml",
+        "L": "L",
+        "un": "un"
+      },
+      "fillBoth": "Fill in both products to compare.",
+      "incompatibleUnits": "The units of the two products are not compatible. Compare weight with weight, volume with volume, or unit with unit.",
+      "bestOption": "{{name}} is the better deal. About {{percent}}% cheaper per {{unit}}.",
+      "samePrice": "Both products cost about the same per {{unit}}.",
+      "unitPrice": "Price per {{unit}}",
+      "cheaperBy": "Difference: {{amount}} per {{unit}}",
+      "productAFallback": "Product A",
+      "productBFallback": "Product B"
+    },
+    "estimate": {
+      "title": "Quick shopping estimate",
+      "subtitle": "Add up items from your shopping without saving a list.",
+      "itemName": "Item name",
+      "itemPlaceholder": "e.g. Milk",
+      "value": "Estimated value",
+      "quantity": "Quantity",
+      "budget": "Shopping budget (optional)",
+      "budgetPlaceholder": "0.00",
+      "add": "Add item",
+      "empty": "Add items to see your estimated shopping total.",
+      "total": "Estimated total",
+      "items": "Items",
+      "remove": "Remove item",
+      "requiredName": "Enter the item name.",
+      "overBudget": "The estimate is over budget by {{amount}}.",
+      "withinBudget": "Your shopping is still within budget.",
+      "subtotal": "Subtotal"
+    }
   }
 }
+
 
