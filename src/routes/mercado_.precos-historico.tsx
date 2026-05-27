@@ -117,6 +117,14 @@ function PrecosHistoricoPage() {
                 <Tile label={t("precosHistorico.card.last")} value={<Money value={r.ultimoPreco} />} />
               </div>
 
+              <p className="truncate text-[11px] text-muted-foreground">
+                {r.mercados.length === 0
+                  ? t("precosHistorico.card.marketUnknown")
+                  : r.mercados.length === 1
+                    ? t("precosHistorico.card.marketSingle", { value: r.mercados[0] })
+                    : t("precosHistorico.card.marketMultiple", { count: r.mercados.length })}
+              </p>
+
               <p className="text-[11px] text-muted-foreground">
                 {t("precosHistorico.card.lastDate", {
                   date: dateFormatter.format(new Date(r.ultimoEm)),

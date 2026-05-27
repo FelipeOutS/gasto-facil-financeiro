@@ -911,6 +911,7 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
+  const [mercadoNome, setMercadoNome] = useState("");
 
   function handleFinalize() {
     if (resumo.totalItens === 0) {
@@ -923,7 +924,9 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
         window.confirm(t("detail.finalize.confirmPending"));
       if (!ok) return;
     }
-    const result = finalizarListaCompra(lista.id);
+    const result = finalizarListaCompra(lista.id, {
+      mercadoNome: mercadoNome.trim() || undefined,
+    });
     if (!result) {
       toast.error(t("detail.finalize.error"));
       return;
@@ -934,29 +937,49 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
 
   return (
     <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-card-elevated text-success ring-1 ring-border/60">
-            <CheckCircle2 className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              {t("detail.finalize.cta")}
-            </h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
-              {t("detail.finalize.hint")}
-            </p>
-          </div>
+      <div className="flex items-start gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-card-elevated text-success ring-1 ring-border/60">
+          <CheckCircle2 className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-foreground">
+            {t("detail.finalize.cta")}
+          </h2>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            {t("detail.finalize.hint")}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={handleFinalize}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-5 py-3 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          {t("detail.finalize.cta")}
-        </button>
       </div>
+
+      <div className="mt-4">
+        <label
+          htmlFor="finalize-mercado"
+          className="block text-[12px] font-semibold text-foreground"
+        >
+          {t("detail.finalize.marketLabel")}
+        </label>
+        <input
+          id="finalize-mercado"
+          type="text"
+          value={mercadoNome}
+          onChange={(e) => setMercadoNome(e.target.value)}
+          maxLength={80}
+          placeholder={t("detail.finalize.marketPlaceholder")}
+          className="mt-1.5 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/40"
+        />
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {t("detail.finalize.marketHint")}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleFinalize}
+        className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-brand-grad px-5 py-3 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98] sm:w-auto"
+      >
+        <CheckCircle2 className="h-4 w-4" />
+        {t("detail.finalize.cta")}
+      </button>
     </section>
   );
 }

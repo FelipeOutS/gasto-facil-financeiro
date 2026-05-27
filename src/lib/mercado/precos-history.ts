@@ -374,6 +374,8 @@ export type ResumoPrecoProduto = {
   precoMedio: number;
   ultimoPreco: number;
   ultimoEm: string;
+  /** E15: lista única de mercados onde o produto foi registrado, em ordem de aparição. */
+  mercados: string[];
 };
 
 export function getResumoPrecoProduto(nomeOuCodigo: string): ResumoPrecoProduto | null {
@@ -389,10 +391,17 @@ function resumirRegistros(regs: MercadoPrecoLocal[]): ResumoPrecoProduto {
   let min = Infinity;
   let max = -Infinity;
   let sum = 0;
+  const mercadosSet = new Set<string>();
+  const mercados: string[] = [];
   for (const r of sorted) {
     if (r.precoUnitario < min) min = r.precoUnitario;
     if (r.precoUnitario > max) max = r.precoUnitario;
     sum += r.precoUnitario;
+    const m = (r.estabelecimento ?? "").trim();
+    if (m && !mercadosSet.has(m)) {
+      mercadosSet.add(m);
+      mercados.push(m);
+    }
   }
   const safeMin = Number.isFinite(min) ? min : last.precoUnitario;
   const safeMax = Number.isFinite(max) ? max : last.precoUnitario;
@@ -408,6 +417,7 @@ function resumirRegistros(regs: MercadoPrecoLocal[]): ResumoPrecoProduto {
     precoMedio: medio,
     ultimoPreco: last.precoUnitario,
     ultimoEm: last.compradoEm,
+    mercados,
   };
 }
 
@@ -437,7 +447,9 @@ export function getResumosPrecos(): ResumoPrecoProduto[] {
  * rapidamente). Retorna a quantidade de novos registros inseridos.
  */
 export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number {
-  const novos = compraParaRegistrosPrivados(compra);
+  const novos = compraParaRegistrosPrivados(compra, {
+    estabelecimento: compra.mercadoNome,
+  });
   if (novos.length === 0) return 0;
   const atuais = safeReadPrecos();
   if (compra.id && atuais.some((r) => r.historicoId === compra.id)) {

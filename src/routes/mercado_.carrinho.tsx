@@ -217,6 +217,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
   const navigate = useNavigate();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
+  const [mercadoNome, setMercadoNome] = useState("");
 
   const status: "sem_orcamento" | "dentro" | "atencao" | "excedido" = !orc.hasBudget
     ? "sem_orcamento"
@@ -240,7 +241,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       );
       if (!ok) return;
     }
-    const entry = finalizarListaCompra(lista.id);
+    const entry = finalizarListaCompra(lista.id, {
+      mercadoNome: mercadoNome.trim() || undefined,
+    });
     if (!entry) {
       toast.error(t("carrinho.finalize.errorGeneric"));
       return;
@@ -302,6 +305,27 @@ function CartMode({ lista }: { lista: MercadoLista }) {
         <p className={cn("mt-3 rounded-2xl border p-3 text-[13px] leading-snug", tone.message)}>
           {t(`carrinho.message.${status}`)}
         </p>
+
+        <div className="mt-4">
+          <label
+            htmlFor="carrinho-mercado"
+            className="block text-[12px] font-semibold text-foreground"
+          >
+            {t("detail.finalize.marketLabel")}
+          </label>
+          <input
+            id="carrinho-mercado"
+            type="text"
+            value={mercadoNome}
+            onChange={(e) => setMercadoNome(e.target.value)}
+            maxLength={80}
+            placeholder={t("detail.finalize.marketPlaceholder")}
+            className="mt-1.5 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/40"
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t("detail.finalize.marketHint")}
+          </p>
+        </div>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <Link

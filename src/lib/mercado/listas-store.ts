@@ -458,6 +458,8 @@ export type MercadoCompraHistorico = {
   percentualConcluido: number;
   economiaOuEstouro: number; // positive = saved (under budget), negative = over
   itensSnapshot: ListaItem[];
+  /** E15: nome do mercado/estabelecimento informado opcionalmente. Pode estar ausente em compras antigas. */
+  mercadoNome?: string;
 };
 
 const historicoListeners = new Set<Listener>();
@@ -530,6 +532,8 @@ function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
     percentualConcluido: num(r.percentualConcluido),
     economiaOuEstouro: num(r.economiaOuEstouro),
     itensSnapshot,
+    mercadoNome:
+      typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
   };
 }
 
@@ -575,11 +579,18 @@ export function getCompraHistoricoById(id: string): MercadoCompraHistorico | und
   return safeReadHistorico().find((h) => h.id === id);
 }
 
-export function finalizarListaCompra(listaId: string): MercadoCompraHistorico | null {
+export function finalizarListaCompra(
+  listaId: string,
+  opts: { mercadoNome?: string } = {},
+): MercadoCompraHistorico | null {
   const lista = getListaById(listaId);
   if (!lista) return null;
   const resumo = computeResumo(lista);
   const orc = computeOrcamentoLista(lista);
+  const mercadoNome =
+    typeof opts.mercadoNome === "string" && opts.mercadoNome.trim()
+      ? opts.mercadoNome.trim()
+      : undefined;
   const entry: MercadoCompraHistorico = {
     id: genId("hst"),
     listaId: lista.id,
@@ -595,6 +606,7 @@ export function finalizarListaCompra(listaId: string): MercadoCompraHistorico | 
     percentualConcluido: resumo.percentualConcluido,
     economiaOuEstouro: orc.hasBudget ? orc.diferenca : 0,
     itensSnapshot: lista.entries.map((e) => ({ ...e })),
+    mercadoNome,
   };
   const current = safeReadHistorico();
   safeWriteHistorico([entry, ...current]);
