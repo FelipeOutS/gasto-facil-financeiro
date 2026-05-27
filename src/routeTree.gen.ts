@@ -57,6 +57,7 @@ import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
+import { Route as MercadoPrecosRouteImport } from './routes/mercado_.precos'
 import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcamento'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
 import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
@@ -363,6 +364,11 @@ const PtSplatRoute = PtSplatRouteImport.update({
 const MetasNovaRoute = MetasNovaRouteImport.update({
   id: '/metas/nova',
   path: '/metas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoPrecosRoute = MercadoPrecosRouteImport.update({
+  id: '/mercado_/precos',
+  path: '/mercado/precos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoOrcamentoRoute = MercadoOrcamentoRouteImport.update({
@@ -787,6 +793,7 @@ export interface FileRoutesByFullPath {
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
+  '/mercado/precos': typeof MercadoPrecosRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -904,6 +911,7 @@ export interface FileRoutesByTo {
   '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/orcamento': typeof MercadoOrcamentoRoute
+  '/mercado/precos': typeof MercadoPrecosRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1022,6 +1030,7 @@ export interface FileRoutesById {
   '/mercado_/historico': typeof MercadoHistoricoRoute
   '/mercado_/listas': typeof MercadoListasRoute
   '/mercado_/orcamento': typeof MercadoOrcamentoRoute
+  '/mercado_/precos': typeof MercadoPrecosRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1141,6 +1150,7 @@ export interface FileRouteTypes {
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/orcamento'
+    | '/mercado/precos'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1258,6 +1268,7 @@ export interface FileRouteTypes {
     | '/mercado/historico'
     | '/mercado/listas'
     | '/mercado/orcamento'
+    | '/mercado/precos'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1375,6 +1386,7 @@ export interface FileRouteTypes {
     | '/mercado_/historico'
     | '/mercado_/listas'
     | '/mercado_/orcamento'
+    | '/mercado_/precos'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1493,6 +1505,7 @@ export interface RootRouteChildren {
   MercadoHistoricoRoute: typeof MercadoHistoricoRoute
   MercadoListasRoute: typeof MercadoListasRoute
   MercadoOrcamentoRoute: typeof MercadoOrcamentoRoute
+  MercadoPrecosRoute: typeof MercadoPrecosRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1877,6 +1890,13 @@ declare module '@tanstack/react-router' {
       path: '/metas/nova'
       fullPath: '/metas/nova'
       preLoaderRoute: typeof MetasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/precos': {
+      id: '/mercado_/precos'
+      path: '/mercado/precos'
+      fullPath: '/mercado/precos'
+      preLoaderRoute: typeof MercadoPrecosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/orcamento': {
@@ -2431,6 +2451,7 @@ const rootRouteChildren: RootRouteChildren = {
   MercadoHistoricoRoute: MercadoHistoricoRoute,
   MercadoListasRoute: MercadoListasRoute,
   MercadoOrcamentoRoute: MercadoOrcamentoRoute,
+  MercadoPrecosRoute: MercadoPrecosRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
@@ -2486,12 +2507,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

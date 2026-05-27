@@ -375,5 +375,66 @@
       "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
       "success": "Purchase finalized and saved to history."
     }
+  },
+  "precos": {
+    "metaTitle": "Community prices — Smart Grocery",
+    "title": "Community prices",
+    "subtitle": "Compare values from future purchases and follow price trends.",
+    "back": "Back",
+    "home": "Home",
+    "badge": {
+      "preparing": "In preparation"
+    },
+    "intro": {
+      "text": "In the future, the system may collect prices registered by users themselves and show aggregated comparisons. For now, this is a visual preparation of the feature."
+    },
+    "featureCards": {
+      "averagePrice": {
+        "title": "Average price",
+        "desc": "The system may calculate the average of registered prices for the same product."
+      },
+      "minMax": {
+        "title": "Lowest and highest price",
+        "desc": "It will be possible to identify price variations between different purchases."
+      },
+      "markets": {
+        "title": "Markets and regions",
+        "desc": "In the future it may consider market and approximate region, without exposing personal data."
+      },
+      "history": {
+        "title": "Price history",
+        "desc": "Users will be able to track whether a product went up or down over time."
+      },
+      "community": {
+        "title": "Community contribution",
+        "desc": "User records may enrich the database collectively, respecting privacy."
+      }
+    },
+    "mock": {
+      "title": "Illustrative example",
+      "disclaimer": "Illustrative example — the community database is not active yet.",
+      "productName": "Rice 5kg",
+      "averageLabel": "Average price",
+      "minLabel": "Lowest price",
+      "maxLabel": "Highest price",
+      "lastUpdate": "Last update: illustrative example",
+      "status": "Illustrative data"
+    },
+    "howItWorks": {
+      "title": "How it may work",
+      "step1": "The user registers a purchase as usual.",
+      "step2": "The system identifies product, price, market and date.",
+      "step3": "Data is handled securely and anonymized.",
+      "step4": "The community base shows trends and future comparisons."
+    },
+    "privacy": {
+      "title": "Privacy",
+      "point1": "The feature must not expose personal data.",
+      "point2": "It must not show who made the purchase.",
+      "point3": "It must not show exact address.",
+      "point4": "In the future it may use only aggregated and approximate data.",
+      "point5": "The user will have control over participation when this feature is implemented.",
+      "futureOptIn": "When the community base is ready, the user will decide whether to participate. No data will be shared without consent."
+    }
   }
 }

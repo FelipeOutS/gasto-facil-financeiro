@@ -375,5 +375,66 @@
       "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
       "success": "Compra finalizada e salva no histórico."
     }
+  },
+  "precos": {
+    "metaTitle": "Preços da comunidade — Mercado Inteligente",
+    "title": "Preços da comunidade",
+    "subtitle": "Compare valores registrados em compras futuras e acompanhe tendências de preço.",
+    "back": "Voltar",
+    "home": "Início",
+    "badge": {
+      "preparing": "Em preparação"
+    },
+    "intro": {
+      "text": "No futuro, o sistema poderá reunir preços cadastrados pelos próprios usuários e mostrar comparações agregadas. Por enquanto, esta é uma preparação visual do recurso."
+    },
+    "featureCards": {
+      "averagePrice": {
+        "title": "Preço médio",
+        "desc": "O sistema poderá calcular a média dos preços registrados para o mesmo produto."
+      },
+      "minMax": {
+        "title": "Menor e maior preço",
+        "desc": "Será possível identificar variações de preço entre diferentes compras."
+      },
+      "markets": {
+        "title": "Mercados e regiões",
+        "desc": "Futuramente poderá considerar mercado e região aproximada, sem expor dados pessoais."
+      },
+      "history": {
+        "title": "Histórico de preço",
+        "desc": "O usuário poderá acompanhar se um produto subiu ou caiu ao longo do tempo."
+      },
+      "community": {
+        "title": "Contribuição da comunidade",
+        "desc": "Os registros dos usuários poderão enriquecer a base de forma coletiva, respeitando privacidade."
+      }
+    },
+    "mock": {
+      "title": "Exemplo ilustrativo",
+      "disclaimer": "Exemplo ilustrativo — a base comunitária ainda não está ativa.",
+      "productName": "Arroz 5kg",
+      "averageLabel": "Preço médio",
+      "minLabel": "Menor preço",
+      "maxLabel": "Maior preço",
+      "lastUpdate": "Última atualização: exemplo ilustrativo",
+      "status": "Dados ilustrativos"
+    },
+    "howItWorks": {
+      "title": "Como poderá funcionar",
+      "step1": "O usuário registra uma compra normalmente.",
+      "step2": "O sistema identifica produto, preço, mercado e data.",
+      "step3": "Os dados são tratados de forma segura e anonimizada.",
+      "step4": "A base comunitária mostra tendências e comparações futuras."
+    },
+    "privacy": {
+      "title": "Privacidade",
+      "point1": "A função não deve expor dados pessoais.",
+      "point2": "Não deve mostrar quem comprou.",
+      "point3": "Não deve mostrar endereço exato.",
+      "point4": "Futuramente poderá usar apenas dados agregados e aproximados.",
+      "point5": "O usuário deverá ter controle sobre participação, quando esse recurso for implementado.",
+      "futureOptIn": "Quando a base comunitária estiver pronta, o usuário decidirá se deseja participar. Nenhum dado será compartilhado sem consentimento."
+    }
   }
 }
