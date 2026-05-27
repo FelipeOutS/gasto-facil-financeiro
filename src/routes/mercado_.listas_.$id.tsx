@@ -16,8 +16,16 @@ import {
   CheckCircle2,
   X,
   Save,
+  ScanBarcode,
+  Search,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
+import {
+  buscarProdutoPorCodigoBarras,
+  ProductLookupError,
+  type ProductLookupResult,
+} from "@/lib/mercado/products-api";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
