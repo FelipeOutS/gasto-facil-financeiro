@@ -522,6 +522,14 @@ function QuickAddForm({ listaId }: { listaId: string }) {
           <Plus className="h-4 w-4" />
         </button>
       </form>
+      {subtotalPreview > 0 && (
+        <p className="mt-2 text-[13px] text-muted-foreground">
+          {t("carrinho.quickAdd.subtotalPreview")}:{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            <Money value={subtotalPreview} />
+          </span>
+        </p>
+      )}
     </section>
   );
 }
