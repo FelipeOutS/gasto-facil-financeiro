@@ -547,6 +547,7 @@ function AddItemForm({ listaId }: { listaId: string }) {
             placeholder="0,00"
             className="mt-1.5 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
           />
+          <PrecoInsight nome={nome} precoUnitario={parseNumber(precoEstimado)} />
         </div>
       </div>
       <div className="mt-4 flex justify-end">
