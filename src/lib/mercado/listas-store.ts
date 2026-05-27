@@ -222,6 +222,20 @@ function mutate(updater: (current: MercadoLista[]) => MercadoLista[]) {
   emit();
 }
 
+function pushUpsert(id: string) {
+  if (!syncHooks.onUpsertLista) return;
+  const fresh = safeRead().find((l) => l.id === id);
+  if (fresh) {
+    try { syncHooks.onUpsertLista(fresh); } catch { /* ignore */ }
+  }
+}
+
+function pushDelete(id: string) {
+  if (!syncHooks.onDeleteLista) return;
+  try { syncHooks.onDeleteLista(id); } catch { /* ignore */ }
+}
+
+
 export function getListas(): MercadoLista[] {
   return safeRead();
 }
