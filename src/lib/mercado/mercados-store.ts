@@ -223,10 +223,12 @@ export function updateMercadoLocal(
   const next: MercadoLocal = {
     ...prev,
     nome,
+    cep: input.cep !== undefined ? cleanCep(input.cep) : prev.cep,
     endereco:
       input.endereco !== undefined ? cleanStr(input.endereco) : prev.endereco,
     bairro: input.bairro !== undefined ? cleanStr(input.bairro) : prev.bairro,
     cidade: input.cidade !== undefined ? cleanStr(input.cidade) : prev.cidade,
+    uf: input.uf !== undefined ? cleanUf(input.uf) : prev.uf,
     observacao:
       input.observacao !== undefined ? cleanStr(input.observacao) : prev.observacao,
     favorito: input.favorito !== undefined ? Boolean(input.favorito) : prev.favorito,
