@@ -704,7 +704,7 @@ function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
 function safeReadHistorico(): MercadoCompraHistorico[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_HISTORICO_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentHistoricoKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -719,7 +719,7 @@ function safeReadHistorico(): MercadoCompraHistorico[] {
 function safeWriteHistorico(next: MercadoCompraHistorico[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_HISTORICO_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentHistoricoKey(), JSON.stringify(next));
   } catch {
     // ignore
   }
