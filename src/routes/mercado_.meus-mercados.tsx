@@ -215,7 +215,23 @@ function MeusMercadosPage() {
         </div>
       </section>
 
-      <NearbySearchCard />
+      <NearbySearchCard
+        onUseResult={(r) => {
+          setForm({
+            nome: r.nome,
+            cep: r.cep ? formatCepMask(r.cep) : "",
+            endereco: r.endereco ?? "",
+            bairro: r.bairro ?? "",
+            cidade: r.cidade ?? "",
+            uf: r.uf ?? "",
+            observacao: "",
+          });
+          setMode({ kind: "new" });
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      />
 
 
       <section className="mt-5 flex flex-wrap items-center justify-between gap-3">
