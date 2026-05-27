@@ -1,6 +1,7 @@
 {
   "meta": {
-    "title": "Mercado Inteligente — Gasto Inteligente"
+    "title": "Mercado Inteligente — Gasto Inteligente",
+    "listasTitle": "Listas de compras — Mercado Inteligente"
   },
   "hub": {
     "title": "Mercado Inteligente",
@@ -9,7 +10,8 @@
     "futureNote": "Preparado para futuras integrações.",
     "status": {
       "soon": "Em breve",
-      "future": "Futuro"
+      "future": "Futuro",
+      "open": "Abrir"
     },
     "cards": {
       "listas": {
@@ -37,5 +39,39 @@
         "desc": "Monte uma lista recorrente com os itens que você compra todo mês."
       }
     }
+  },
+  "listas": {
+    "title": "Listas de compras",
+    "subtitle": "Organize suas compras antes de ir ao mercado.",
+    "back": "Voltar",
+    "home": "Início",
+    "newList": "Nova lista",
+    "newListToast": "Criação de listas será ativada na próxima etapa.",
+    "summary": {
+      "active": "Listas ativas",
+      "items": "Itens planejados",
+      "estimate": "Estimativa total"
+    },
+    "status": {
+      "planning": "Em planejamento",
+      "ongoing": "Em andamento",
+      "done": "Concluída"
+    },
+    "card": {
+      "itemsCount": "{{count}} itens",
+      "estimate": "Estimativa",
+      "progress": "Progresso"
+    },
+    "empty": {
+      "title": "Nenhuma lista criada ainda",
+      "description": "Crie uma lista para organizar suas compras e evitar gastos fora do planejado.",
+      "cta": "Criar lista"
+    },
+    "mock": {
+      "compraMes": "Compra do mês",
+      "reposicaoSemana": "Reposição da semana",
+      "churrascoSabado": "Churrasco de sábado"
+    },
+    "previewBadge": "Pré-visualização"
   }
 }

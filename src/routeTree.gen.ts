@@ -57,6 +57,7 @@ import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
+import { Route as MercadoListasRouteImport } from './routes/mercado.listas'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
 import { Route as InvestimentosImportacoesRouteImport } from './routes/investimentos.importacoes'
@@ -356,6 +357,11 @@ const PtSplatRoute = PtSplatRouteImport.update({
 const MetasNovaRoute = MetasNovaRouteImport.update({
   id: '/metas/nova',
   path: '/metas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoListasRoute = MercadoListasRouteImport.update({
+  id: '/mercado/listas',
+  path: '/mercado/listas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvestimentosNovoRoute = InvestimentosNovoRouteImport.update({
@@ -739,6 +745,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -849,6 +856,7 @@ export interface FileRoutesByTo {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -960,6 +968,7 @@ export interface FileRoutesById {
   '/investimentos/importacoes': typeof InvestimentosImportacoesRoute
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
+  '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
@@ -1072,6 +1081,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1182,6 +1192,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1292,6 +1303,7 @@ export interface FileRouteTypes {
     | '/investimentos/importacoes'
     | '/investimentos/importar'
     | '/investimentos/novo'
+    | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
     | '/renda/nova'
@@ -1403,6 +1415,7 @@ export interface RootRouteChildren {
   InvestimentosImportacoesRoute: typeof InvestimentosImportacoesRoute
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
+  MercadoListasRoute: typeof MercadoListasRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
@@ -1786,6 +1799,13 @@ declare module '@tanstack/react-router' {
       path: '/metas/nova'
       fullPath: '/metas/nova'
       preLoaderRoute: typeof MetasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado/listas': {
+      id: '/mercado/listas'
+      path: '/mercado/listas'
+      fullPath: '/mercado/listas'
+      preLoaderRoute: typeof MercadoListasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/investimentos/novo': {
@@ -2285,6 +2305,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosImportacoesRoute: InvestimentosImportacoesRoute,
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
+  MercadoListasRoute: MercadoListasRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   ShoppingCart,
@@ -8,6 +8,7 @@ import {
   History,
   PackageCheck,
   Sparkles,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
@@ -19,14 +20,17 @@ export const Route = createFileRoute("/mercado/")({
   component: MercadoHubPage,
 });
 
+type CardStatus = "soon" | "future" | "open";
+
 type CardDef = {
   key: "listas" | "calculadoras" | "orcamento" | "historico" | "carrinho" | "cesta";
   icon: LucideIcon;
-  status: "soon" | "future";
+  status: CardStatus;
+  to?: string;
 };
 
 const CARDS: CardDef[] = [
-  { key: "listas", icon: ListChecks, status: "soon" },
+  { key: "listas", icon: ListChecks, status: "open", to: "/mercado/listas" },
   { key: "calculadoras", icon: Calculator, status: "soon" },
   { key: "orcamento", icon: WalletCards, status: "soon" },
   { key: "historico", icon: History, status: "soon" },
@@ -66,18 +70,26 @@ function MercadoHubPage() {
       <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {CARDS.map((card) => {
           const Icon = card.icon;
-          const statusLabel = t(`hub.status.${card.status === "soon" ? "soon" : "future"}`);
-          return (
-            <article
-              key={card.key}
-              className={cn(
-                "group flex min-h-[120px] flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5",
-                "transition-colors",
-              )}
-              aria-disabled="true"
-            >
+          const statusLabel = t(`hub.status.${card.status}`);
+          const isInteractive = card.status === "open" && !!card.to;
+          const statusClass =
+            card.status === "open"
+              ? "bg-brand-grad text-primary-foreground shadow-elevated"
+              : card.status === "soon"
+                ? "bg-brand-soft text-brand-on-soft"
+                : "bg-card-elevated text-muted-foreground ring-1 ring-border/60";
+
+          const innerBody = (
+            <>
               <div className="flex items-start gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-foreground ring-1 ring-border/60">
+                <span
+                  className={cn(
+                    "grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ring-border/60",
+                    isInteractive
+                      ? "bg-brand-soft text-brand"
+                      : "bg-card-elevated text-foreground",
+                  )}
+                >
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -88,19 +100,43 @@ function MercadoHubPage() {
                     {t(`hub.cards.${card.key}.desc`)}
                   </p>
                 </div>
+                {isInteractive && (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
               </div>
               <div className="mt-auto flex items-center justify-end">
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest",
-                    card.status === "soon"
-                      ? "bg-brand-soft text-brand-on-soft"
-                      : "bg-card-elevated text-muted-foreground ring-1 ring-border/60",
+                    statusClass,
                   )}
                 >
                   {statusLabel}
                 </span>
               </div>
+            </>
+          );
+
+          const baseClasses =
+            "group flex min-h-[120px] flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5 transition-colors";
+
+          if (isInteractive) {
+            return (
+              <Link
+                key={card.key}
+                to={card.to!}
+                preload="intent"
+                preloadDelay={0}
+                className={cn(baseClasses, "hover:bg-card-elevated active:scale-[0.99]")}
+              >
+                {innerBody}
+              </Link>
+            );
+          }
+
+          return (
+            <article key={card.key} className={baseClasses} aria-disabled="true">
+              {innerBody}
             </article>
           );
         })}

@@ -1,6 +1,7 @@
 {
   "meta": {
-    "title": "Smart Grocery — Gasto Inteligente"
+    "title": "Smart Grocery — Gasto Inteligente",
+    "listasTitle": "Shopping lists — Smart Grocery"
   },
   "hub": {
     "title": "Smart Grocery",
@@ -9,7 +10,8 @@
     "futureNote": "Ready for future integrations.",
     "status": {
       "soon": "Coming soon",
-      "future": "Future"
+      "future": "Future",
+      "open": "Open"
     },
     "cards": {
       "listas": {
@@ -37,5 +39,39 @@
         "desc": "Build a recurring list with the items you buy every month."
       }
     }
+  },
+  "listas": {
+    "title": "Shopping lists",
+    "subtitle": "Organize your shopping before heading to the store.",
+    "back": "Back",
+    "home": "Home",
+    "newList": "New list",
+    "newListToast": "Creating lists will be enabled in the next stage.",
+    "summary": {
+      "active": "Active lists",
+      "items": "Planned items",
+      "estimate": "Total estimate"
+    },
+    "status": {
+      "planning": "Planning",
+      "ongoing": "In progress",
+      "done": "Completed"
+    },
+    "card": {
+      "itemsCount": "{{count}} items",
+      "estimate": "Estimate",
+      "progress": "Progress"
+    },
+    "empty": {
+      "title": "No lists created yet",
+      "description": "Create a list to organize your shopping and avoid unplanned spending.",
+      "cta": "Create list"
+    },
+    "mock": {
+      "compraMes": "Monthly shopping",
+      "reposicaoSemana": "Weekly restock",
+      "churrascoSabado": "Saturday barbecue"
+    },
+    "previewBadge": "Preview"
   }
 }
