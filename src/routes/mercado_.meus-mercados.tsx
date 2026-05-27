@@ -545,7 +545,8 @@ function MercadoCard({
   onToggleFav: () => void;
   isEditing: boolean;
 }) {
-  const localizacao = [m.endereco, m.bairro, m.cidade].filter(Boolean).join(" · ");
+  const cidadeUf = [m.cidade, m.uf].filter(Boolean).join("/");
+  const localizacao = [m.endereco, m.bairro, cidadeUf].filter(Boolean).join(" · ");
   return (
     <article
       className={cn(
