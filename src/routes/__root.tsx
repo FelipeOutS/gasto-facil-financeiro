@@ -195,6 +195,9 @@ function RootComponent() {
     preloadAllMerchantLogos();
   }, []);
 
+  // Sincroniza Mercado Inteligente (listas) com Supabase por usuário.
+  useMercadoSync();
+
   // Sincroniza idioma (URL ↔ i18n ↔ localStorage ↔ <html lang>)
   useLocale();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
