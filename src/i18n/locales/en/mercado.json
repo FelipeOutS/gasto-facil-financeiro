@@ -754,7 +754,7 @@
     },
     "nearby": {
       "title": "Nearby markets",
-      "description": "Soon you'll be able to find nearby markets by ZIP code or city. For now, the automatic search is being prepared — you can add your markets manually below.",
+      "description": "Free search via OpenStreetMap. Enter a ZIP code or city + state. Results appear for you to review before saving — nothing is added automatically.",
       "searchCta": "Search markets",
       "fields": {
         "cep": "ZIP code",
@@ -769,6 +769,14 @@
         "timeout": "The search took too long. Please try again.",
         "empty": "No markets found in this area. Add one manually for now.",
         "unknown": "Something went wrong with the search. You can add manually below."
+      },
+      "results": {
+        "title": "Results found",
+        "count_one": "{{count}} market found",
+        "count_other": "{{count}} markets found",
+        "source": "Source: OpenStreetMap",
+        "useCta": "Use this market",
+        "noAddress": "Address not provided"
       }
     }
   }

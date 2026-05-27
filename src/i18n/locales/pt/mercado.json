@@ -754,7 +754,7 @@
     },
     "nearby": {
       "title": "Mercados próximos",
-      "description": "Em breve, você poderá encontrar mercados próximos pelo CEP ou cidade. Por enquanto, a busca automática está em preparação — você pode cadastrar seus mercados manualmente abaixo.",
+      "description": "Busca gratuita via OpenStreetMap. Informe CEP ou cidade + UF. Os resultados aparecem para você revisar antes de salvar — nada é adicionado automaticamente.",
       "searchCta": "Buscar mercados",
       "fields": {
         "cep": "CEP",
@@ -769,6 +769,14 @@
         "timeout": "A busca demorou demais. Tente novamente.",
         "empty": "Nenhum mercado encontrado nessa região. Cadastre manualmente enquanto isso.",
         "unknown": "Algo deu errado na busca. Você pode cadastrar manualmente abaixo."
+      },
+      "results": {
+        "title": "Resultados encontrados",
+        "count_one": "{{count}} mercado encontrado",
+        "count_other": "{{count}} mercados encontrados",
+        "source": "Fonte: OpenStreetMap",
+        "useCta": "Usar este mercado",
+        "noAddress": "Endereço não informado"
       }
     }
   }
