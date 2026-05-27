@@ -354,17 +354,18 @@
       "empty": "This list has no items yet. Add some below.",
       "mark": "Mark as bought",
       "unmark": "Unmark",
-      "editPrice": "Edit price",
-      "pricePlaceholder": "0.00",
+      "editPrice": "Edit unit price",
+      "pricePlaceholder": "Unit price",
       "save": "Save"
     },
     "quickAdd": {
       "title": "Quick add item",
-      "hint": "Name is required. Quantity, unit and price are optional.",
+      "hint": "Enter the product name. If you fill in quantity and unit price, the subtotal will be calculated automatically.",
       "namePlaceholder": "Item name",
       "qtyPlaceholder": "Qty",
       "unitPlaceholder": "Unit",
-      "pricePlaceholder": "Price",
+      "pricePlaceholder": "Unit price",
+      "subtotalPreview": "Estimated subtotal",
       "errorNome": "Please enter the item name.",
       "errorGeneric": "Couldn't add the item."
     },

@@ -354,17 +354,18 @@
       "empty": "Esta lista ainda não tem itens. Adicione abaixo.",
       "mark": "Marcar como comprado",
       "unmark": "Desmarcar",
-      "editPrice": "Editar preço",
-      "pricePlaceholder": "0,00",
+      "editPrice": "Editar preço unitário",
+      "pricePlaceholder": "Preço unitário",
       "save": "Salvar"
     },
     "quickAdd": {
       "title": "Adicionar item rápido",
-      "hint": "Nome obrigatório. Quantidade, unidade e preço são opcionais.",
+      "hint": "Informe o nome do produto. Se preencher quantidade e preço unitário, o subtotal será calculado automaticamente.",
       "namePlaceholder": "Nome do item",
       "qtyPlaceholder": "Qtd",
       "unitPlaceholder": "Un.",
-      "pricePlaceholder": "Preço",
+      "pricePlaceholder": "Preço unitário",
+      "subtotalPreview": "Subtotal estimado",
       "errorNome": "Informe o nome do item.",
       "errorGeneric": "Não foi possível adicionar o item."
     },
