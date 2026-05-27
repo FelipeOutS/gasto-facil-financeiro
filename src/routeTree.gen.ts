@@ -58,6 +58,7 @@ import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
 import { Route as MetasNovaRouteImport } from './routes/metas.nova'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
+import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
 import { Route as MercadoCalculadorasRouteImport } from './routes/mercado_.calculadoras'
 import { Route as InvestimentosNovoRouteImport } from './routes/investimentos.novo'
 import { Route as InvestimentosImportarRouteImport } from './routes/investimentos.importar'
@@ -365,6 +366,11 @@ const MetasNovaRoute = MetasNovaRouteImport.update({
 const MercadoListasRoute = MercadoListasRouteImport.update({
   id: '/mercado_/listas',
   path: '/mercado/listas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoHistoricoRoute = MercadoHistoricoRouteImport.update({
+  id: '/mercado_/historico',
+  path: '/mercado/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoCalculadorasRoute = MercadoCalculadorasRouteImport.update({
@@ -765,6 +771,7 @@ export interface FileRoutesByFullPath {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -879,6 +886,7 @@ export interface FileRoutesByTo {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado/historico': typeof MercadoHistoricoRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -994,6 +1002,7 @@ export interface FileRoutesById {
   '/investimentos/importar': typeof InvestimentosImportarRoute
   '/investimentos/novo': typeof InvestimentosNovoRoute
   '/mercado_/calculadoras': typeof MercadoCalculadorasRoute
+  '/mercado_/historico': typeof MercadoHistoricoRoute
   '/mercado_/listas': typeof MercadoListasRoute
   '/metas/nova': typeof MetasNovaRoute
   '/pt/$': typeof PtSplatRoute
@@ -1110,6 +1119,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado/calculadoras'
+    | '/mercado/historico'
     | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1224,6 +1234,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado/calculadoras'
+    | '/mercado/historico'
     | '/mercado/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1338,6 +1349,7 @@ export interface FileRouteTypes {
     | '/investimentos/importar'
     | '/investimentos/novo'
     | '/mercado_/calculadoras'
+    | '/mercado_/historico'
     | '/mercado_/listas'
     | '/metas/nova'
     | '/pt/$'
@@ -1453,6 +1465,7 @@ export interface RootRouteChildren {
   InvestimentosImportarRoute: typeof InvestimentosImportarRoute
   InvestimentosNovoRoute: typeof InvestimentosNovoRoute
   MercadoCalculadorasRoute: typeof MercadoCalculadorasRoute
+  MercadoHistoricoRoute: typeof MercadoHistoricoRoute
   MercadoListasRoute: typeof MercadoListasRoute
   MetasNovaRoute: typeof MetasNovaRoute
   PtSplatRoute: typeof PtSplatRoute
@@ -1845,6 +1858,13 @@ declare module '@tanstack/react-router' {
       path: '/mercado/listas'
       fullPath: '/mercado/listas'
       preLoaderRoute: typeof MercadoListasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/historico': {
+      id: '/mercado_/historico'
+      path: '/mercado/historico'
+      fullPath: '/mercado/historico'
+      preLoaderRoute: typeof MercadoHistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/calculadoras': {
@@ -2367,6 +2387,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosImportarRoute: InvestimentosImportarRoute,
   InvestimentosNovoRoute: InvestimentosNovoRoute,
   MercadoCalculadorasRoute: MercadoCalculadorasRoute,
+  MercadoHistoricoRoute: MercadoHistoricoRoute,
   MercadoListasRoute: MercadoListasRoute,
   MetasNovaRoute: MetasNovaRoute,
   PtSplatRoute: PtSplatRoute,
