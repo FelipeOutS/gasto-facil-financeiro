@@ -153,6 +153,7 @@
       "edit": "Edit item",
       "remove": "Remove item",
       "confirmRemove": "Remove this item from the list?"
+    }
   },
   "calculators": {
     "title": "Grocery Calculators",
