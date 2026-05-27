@@ -421,11 +421,13 @@ function resumirRegistros(regs: MercadoPrecoLocal[]): ResumoPrecoProduto {
   };
 }
 
-/** Resumos agrupados por produto, ordenados pelo registro mais recente. */
-export function getResumosPrecos(): ResumoPrecoProduto[] {
-  const all = getHistoricoPrecos();
+/**
+ * E16 — Agrupa uma lista qualquer de registros locais por produto e devolve
+ * os resumos, ordenados pelo registro mais recente. Pura, sem I/O.
+ */
+export function agruparResumosPorProduto(regs: MercadoPrecoLocal[]): ResumoPrecoProduto[] {
   const groups = new Map<string, MercadoPrecoLocal[]>();
-  for (const r of all) {
+  for (const r of regs) {
     const key = buildProdutoKey({ nome: r.produtoNome, codigoBarras: r.codigoBarras });
     if (!key) continue;
     const arr = groups.get(key);
@@ -433,11 +435,72 @@ export function getResumosPrecos(): ResumoPrecoProduto[] {
     else groups.set(key, [r]);
   }
   const out: ResumoPrecoProduto[] = [];
-  for (const regs of groups.values()) {
-    out.push(resumirRegistros(regs));
+  for (const arr of groups.values()) {
+    out.push(resumirRegistros(arr));
   }
   out.sort((a, b) => b.ultimoEm.localeCompare(a.ultimoEm));
   return out;
+}
+
+/** Resumos agrupados por produto, ordenados pelo registro mais recente. */
+export function getResumosPrecos(): ResumoPrecoProduto[] {
+  return agruparResumosPorProduto(getHistoricoPrecos());
+}
+
+// ---------------------------------------------------------------------------
+// E16 — Filtros locais por mercado (puros, sem React, sem I/O)
+// ---------------------------------------------------------------------------
+
+/** Sentinelas usados pela UI de filtro de mercado. */
+export const MERCADO_FILTRO_ALL = "__all__";
+export const MERCADO_FILTRO_SEM = "__sem_mercado__";
+
+function normalizeMercado(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Filtra registros locais por mercado. Pura: não usa React, não toca em
+ * localStorage, não faz fetch.
+ *
+ * Regras:
+ *  - `MERCADO_FILTRO_ALL` (ou string vazia) → retorna tudo;
+ *  - `MERCADO_FILTRO_SEM` → registros sem estabelecimento;
+ *  - qualquer outro valor → match por nome normalizado (case-insensitive,
+ *    espaços colapsados).
+ */
+export function filterRegistrosPrecoPorMercado(
+  registros: MercadoPrecoLocal[],
+  mercadoFiltro: string,
+): MercadoPrecoLocal[] {
+  if (!Array.isArray(registros)) return [];
+  const filtro = (mercadoFiltro ?? "").trim();
+  if (!filtro || filtro === MERCADO_FILTRO_ALL) return registros;
+  if (filtro === MERCADO_FILTRO_SEM) {
+    return registros.filter((r) => normalizeMercado(r.estabelecimento) === "");
+  }
+  const alvo = normalizeMercado(filtro).toLowerCase();
+  if (!alvo) return registros;
+  return registros.filter(
+    (r) => normalizeMercado(r.estabelecimento).toLowerCase() === alvo,
+  );
+}
+
+/**
+ * Lista única e ordenada (locale-aware) dos mercados existentes nos registros.
+ * Ignora valores vazios. Não inclui o sentinela "sem mercado informado".
+ */
+export function buildMercadosDisponiveis(registros: MercadoPrecoLocal[]): string[] {
+  if (!Array.isArray(registros)) return [];
+  const seen = new Map<string, string>();
+  for (const r of registros) {
+    const m = normalizeMercado(r.estabelecimento);
+    if (!m) continue;
+    const key = m.toLowerCase();
+    if (!seen.has(key)) seen.set(key, m);
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
 /**
