@@ -99,7 +99,7 @@ function CarrinhoPage() {
       </header>
 
       {listaId && lista ? (
-        <CartMode lista={lista} />
+        <CartMode key={lista.id} lista={lista} />
       ) : (
         <ListPicker requestedId={listaId} />
       )}
