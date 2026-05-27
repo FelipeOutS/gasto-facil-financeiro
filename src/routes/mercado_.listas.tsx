@@ -186,10 +186,12 @@ function ListaCard({
   lista,
   dateLabel,
   onOpen,
+  onDelete,
 }: {
   lista: MercadoLista;
   dateLabel: string;
   onOpen: () => void;
+  onDelete: () => void;
 }) {
   const { t } = useTranslation("mercado");
   const statusClasses: Record<Status, string> = {
@@ -219,7 +221,7 @@ function ListaCard({
         </span>
       </div>
 
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {lista.estimate ? t("listas.card.estimate") : t("listas.card.items")}
@@ -232,13 +234,24 @@ function ListaCard({
             )}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3.5 py-2 text-xs font-semibold text-foreground/80 transition-colors hover:text-foreground active:scale-95"
-        >
-          {t("listas.card.open")}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={t("listas.card.delete")}
+            title={t("listas.card.delete")}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card-elevated text-destructive transition-colors hover:bg-destructive/10 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3.5 py-2 text-xs font-semibold text-foreground/80 transition-colors hover:text-foreground active:scale-95"
+          >
+            {t("listas.card.open")}
+          </button>
+        </div>
       </div>
     </article>
   );
