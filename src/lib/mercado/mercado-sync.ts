@@ -115,6 +115,10 @@ async function migrateLegacyOnce(userId: string) {
     }
   }
   localStorage.setItem(flag, "1");
+  // Limpa a chave anônima após migração bem-sucedida para evitar que
+  // dados de um usuário sejam migrados novamente para outro usuário
+  // que faça login no mesmo dispositivo.
+  try { localStorage.removeItem(MERCADO_LEGACY_ANON_KEY); } catch { /* ignore */ }
 }
 
 // Registra hooks de mutação uma única vez (módulo-singleton).
