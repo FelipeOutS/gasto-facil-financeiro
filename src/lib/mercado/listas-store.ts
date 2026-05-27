@@ -304,6 +304,7 @@ export function addItemLista(
         : l,
     ),
   );
+  pushUpsert(listaId);
   return item;
 }
 
