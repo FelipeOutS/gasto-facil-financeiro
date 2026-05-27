@@ -550,6 +550,10 @@ export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number 
   }
   safeWritePrecos([...novos, ...atuais]);
   emitPrecos();
+  // Push para Supabase (best-effort, não bloqueia o fluxo local).
+  if (precosSyncHooks.onUpsertRegistros) {
+    try { precosSyncHooks.onUpsertRegistros(novos); } catch { /* ignore */ }
+  }
   return novos.length;
 }
 
