@@ -1,10 +1,28 @@
-import { type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AuthGate } from "./AuthGate";
 import { ExpiredAccessBanner } from "./ExpiredAccessBanner";
 import { useSidebarCollapsed } from "@/lib/sidebar-collapsed";
+
+/**
+ * Sinaliza que o conteúdo já está dentro de um MobileShell persistente
+ * renderizado no nível do root layout. Quando este contexto estiver `true`,
+ * qualquer <MobileShell> aninhado dentro das páginas vira pass-through:
+ * não re-renderiza AuthGate / Sidebar / TopBar / BottomNav / <main>,
+ * apenas devolve `children`. Isso impede a sensação de "recarregar a tela"
+ * ao navegar entre rotas — o shell deixa de remontar.
+ */
+const PersistentShellContext = createContext(false);
+
+export function PersistentShellProvider({ children }: { children: ReactNode }) {
+  return (
+    <PersistentShellContext.Provider value={true}>
+      {children}
+    </PersistentShellContext.Provider>
+  );
+}
 
 export function MobileShell({
   children,
@@ -19,6 +37,16 @@ export function MobileShell({
   /** Use a wider container on desktop (good for dashboard with grids). */
   wide?: boolean;
 }) {
+  const insidePersistent = useContext(PersistentShellContext);
+
+  // Pass-through: já existe um shell persistente acima. Não duplicamos
+  // AuthGate/Sidebar/TopBar/BottomNav/<main>. Apenas devolvemos o conteúdo.
+  // Props como `wide` e `hideNav` são resolvidas a nível de root pelo
+  // pathname para preservar layout responsivo.
+  if (insidePersistent) {
+    return <>{children}</>;
+  }
+
   const showNav = !hideNav;
   const collapsed = useSidebarCollapsed();
 
@@ -41,7 +69,7 @@ export function MobileShell({
           }
         >
           {!unprotected && <ExpiredAccessBanner />}
-          {children}
+          <PersistentShellProvider>{children}</PersistentShellProvider>
         </main>
       </div>
       {showNav && <BottomNav />}
