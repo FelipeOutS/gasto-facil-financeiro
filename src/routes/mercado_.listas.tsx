@@ -38,6 +38,9 @@ function MercadoListasPage() {
   const { t, i18n: i18next } = useTranslation("mercado");
   const navigate = useNavigate();
   const userListas = useMercadoListas();
+  const syncState = useMercadoListasSyncState();
+  const { user } = useAuth();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
 
   const summary = useMemo(() => {
     const active = userListas.filter((l) => l.status !== "done").length;
@@ -45,6 +48,15 @@ function MercadoListasPage() {
     const estimate = userListas.reduce((a, l) => a + (l.estimate ?? 0), 0);
     return { active, items, estimate };
   }, [userListas]);
+
+  async function handleManualRefresh() {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    const res = await refreshMercadoListas();
+    setManualRefreshing(false);
+    if (res.ok && user) toast.success(t("listas.sync.refreshedToast"));
+    else if (!res.ok) toast.error(t("listas.sync.failed"));
+  }
 
   function handleBack() {
     if (typeof window !== "undefined" && window.history.length > 1) {
