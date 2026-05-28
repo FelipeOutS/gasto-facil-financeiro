@@ -399,9 +399,17 @@ async function pullPrecosUsuario(userId: string) {
     .eq("user_id", userId)
     .order("comprado_em", { ascending: false });
   if (error) throw error;
-  const items = (data as PrecoRow[] | null)?.map(precoRowToLocal) ?? [];
-  __replacePrecosCache(items);
+  const server = (data as PrecoRow[] | null)?.map(precoRowToLocal) ?? [];
+  const local = getHistoricoPrecos();
+  const serverIds = new Set(server.map((p) => p.id));
+  const orphans = local.filter((p) => !serverIds.has(p.id));
+  const merged = [...server, ...orphans].sort((a, b) =>
+    (b.compradoEm ?? "").localeCompare(a.compradoEm ?? "")
+  );
+  __replacePrecosCache(merged);
+  if (orphans.length > 0) void pushUpsertRegistrosPreco(orphans);
 }
+
 
 async function pushUpsertRegistrosPreco(regs: MercadoPrecoLocal[]) {
   const uid = __getMercadoActiveUserId();
