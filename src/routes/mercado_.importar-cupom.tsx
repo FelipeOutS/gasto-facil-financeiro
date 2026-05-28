@@ -461,10 +461,10 @@ function DestinationCard() {
                 key={l.id}
                 aria-disabled="true"
                 className="inline-flex max-w-full cursor-not-allowed items-center gap-1 truncate rounded-full border border-border/60 bg-card px-2.5 py-1 text-[12px] text-foreground opacity-90"
-                title={l.nome}
+                title={l.name}
               >
                 <ListChecks className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="truncate">{l.nome}</span>
+                <span className="truncate">{l.name}</span>
               </span>
             ))}
             {extra > 0 && (
