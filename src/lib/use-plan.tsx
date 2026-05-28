@@ -160,6 +160,23 @@ export function usePlan(): PlanState {
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
+  const applyCached = useCallback((cached: CachedSubscription) => {
+    setStoredRaw(cached.storedPlan);
+    setStatus(cached.status);
+    setTrialEndsAt(cached.trialEndsAt);
+    setTrialStartedAt(cached.trialStartedAt);
+    setTrialPlanRaw(cached.trialPlan);
+    setTrialUsed(cached.trialUsed);
+    setCancelledAt(cached.cancelledAt);
+    setAccessUntil(cached.accessUntil);
+    setPaymentMethod(cached.paymentMethod);
+    setPaymentAmountCents(cached.paymentAmountCents);
+    setPaidAt(cached.paidAt);
+    setPeriodicidade(cached.periodicidade);
+    setCurrentPeriodStart(cached.currentPeriodStart);
+    setCurrentPeriodEnd(cached.currentPeriodEnd);
+  }, []);
+
   // Hidratação síncrona a partir do cache local (evita "Verificando...").
   useEffect(() => {
     if (authLoading) return;
@@ -168,26 +185,13 @@ export function usePlan(): PlanState {
       return;
     }
     if (hydratedUserId === user.id) return;
-    const cached = readCache(user.id);
+    const cached = getRuntimeCache(user.id) ?? readCache(user.id);
     if (cached) {
-      setStoredRaw(cached.storedPlan);
-      setStatus(cached.status);
-      setTrialEndsAt(cached.trialEndsAt);
-      setTrialStartedAt(cached.trialStartedAt);
-      setTrialPlanRaw(cached.trialPlan);
-      setTrialUsed(cached.trialUsed);
-      setCancelledAt(cached.cancelledAt);
-      setAccessUntil(cached.accessUntil);
-      setPaymentMethod(cached.paymentMethod);
-      setPaymentAmountCents(cached.paymentAmountCents);
-      setPaidAt(cached.paidAt);
-      setPeriodicidade(cached.periodicidade);
-      setCurrentPeriodStart(cached.currentPeriodStart);
-      setCurrentPeriodEnd(cached.currentPeriodEnd);
+      applyCached(cached);
       setLoading(false);
     }
     setHydratedUserId(user.id);
-  }, [user, authLoading, hydratedUserId]);
+  }, [user, authLoading, hydratedUserId, applyCached]);
 
   const load = useCallback(async () => {
     if (authLoading) return;
