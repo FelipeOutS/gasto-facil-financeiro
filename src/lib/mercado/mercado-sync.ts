@@ -159,16 +159,14 @@ function clearDirtyUpsert(uid: string | null, id: string) {
   if (!cur.delete(id)) return;
   writeDirty(uid, cur);
 }
-/** Marca todas as listas locais como dirty na primeira execução com esta lógica,
- *  para não perder dados pré-existentes do cache antes desta correção. */
-function seedDirtyIfMissing(uid: string) {
+function discardUnsafeSeededDirtyOnce(uid: string) {
   const seedFlag = `${LISTAS_DIRTY_KEY_BASE}:seeded:${uid}`;
-  try { if (localStorage.getItem(seedFlag) === "1") return; } catch { return; }
-  const ids = getListas().map((l) => l.id);
-  const cur = readDirty(uid);
-  for (const id of ids) cur.add(id);
-  writeDirty(uid, cur);
-  try { localStorage.setItem(seedFlag, "1"); } catch { /* ignore */ }
+  const cleanupFlag = `${LISTAS_DIRTY_KEY_BASE}:seed-cleaned:v1:${uid}`;
+  try {
+    if (localStorage.getItem(seedFlag) !== "1" || localStorage.getItem(cleanupFlag) === "1") return;
+    localStorage.removeItem(dirtyKey(uid));
+    localStorage.setItem(cleanupFlag, "1");
+  } catch { /* ignore */ }
 }
 
 async function pullListas(userId: string) {
