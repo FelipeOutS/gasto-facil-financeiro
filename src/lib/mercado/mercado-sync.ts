@@ -1145,6 +1145,7 @@ export function useMercadoSync() {
     __setMercadoActiveUser(uid);
     __setMercadoPrecosActiveUser(uid);
     __setMercadoCestaActiveUser(uid);
+    __setMercadoOrcamentoActiveUser(uid);
     if (!uid) {
       setListasSyncState({ status: "idle", errorMessage: null });
       return;
