@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -11,6 +11,10 @@ import {
   WalletCards,
   CalendarDays,
   Trash2,
+  RefreshCw,
+  CloudOff,
+  CloudCheck,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
@@ -18,6 +22,9 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import { removeLista, useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
+import { refreshMercadoListas, useMercadoListasSyncState } from "@/lib/mercado/mercado-sync";
+import { useAuth } from "@/lib/auth-context";
+import { useState } from "react";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
@@ -31,6 +38,9 @@ function MercadoListasPage() {
   const { t, i18n: i18next } = useTranslation("mercado");
   const navigate = useNavigate();
   const userListas = useMercadoListas();
+  const syncState = useMercadoListasSyncState();
+  const { user } = useAuth();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
 
   const summary = useMemo(() => {
     const active = userListas.filter((l) => l.status !== "done").length;
@@ -38,6 +48,15 @@ function MercadoListasPage() {
     const estimate = userListas.reduce((a, l) => a + (l.estimate ?? 0), 0);
     return { active, items, estimate };
   }, [userListas]);
+
+  async function handleManualRefresh() {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    const res = await refreshMercadoListas();
+    setManualRefreshing(false);
+    if (res.ok && user) toast.success(t("listas.sync.refreshedToast"));
+    else if (!res.ok) toast.error(t("listas.sync.failed"));
+  }
 
   function handleBack() {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -98,6 +117,16 @@ function MercadoListasPage() {
         </button>
       </header>
 
+      {/* Sync status */}
+      <SyncStatusBar
+        state={syncState}
+        loggedIn={Boolean(user)}
+        manualRefreshing={manualRefreshing}
+        onRefresh={() => void handleManualRefresh()}
+        locale={i18next.language || "pt-BR"}
+        t={t}
+      />
+
       {/* Summary */}
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryTile
@@ -118,7 +147,14 @@ function MercadoListasPage() {
       </section>
 
       {/* Listas */}
-      {userListas.length === 0 ? (
+      {userListas.length === 0 && (syncState.status === "syncing" || manualRefreshing) ? (
+        <section className="mt-5 grid place-items-center rounded-2xl border border-dashed border-border/60 bg-card/60 py-10 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("listas.sync.syncing")}
+          </span>
+        </section>
+      ) : userListas.length === 0 ? (
         <EmptyState onCreate={goToNova} />
       ) : (
         <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -277,5 +313,66 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
         {t("listas.empty.cta")}
       </button>
     </section>
+  );
+}
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function SyncStatusBar({
+  state,
+  loggedIn,
+  manualRefreshing,
+  onRefresh,
+  locale,
+  t,
+}: {
+  state: { status: "idle" | "syncing" | "synced" | "error"; lastSyncedAt: string | null };
+  loggedIn: boolean;
+  manualRefreshing: boolean;
+  onRefresh: () => void;
+  locale: string;
+  t: TFn;
+}) {
+  const busy = manualRefreshing || state.status === "syncing";
+  let icon: ReactNode;
+  let label: string;
+  let tone = "text-muted-foreground";
+  if (!loggedIn) {
+    icon = <CloudOff className="h-3.5 w-3.5" />;
+    label = t("listas.sync.localSaved");
+  } else if (busy) {
+    icon = <Loader2 className="h-3.5 w-3.5 animate-spin" />;
+    label = t("listas.sync.syncing");
+  } else if (state.status === "error") {
+    icon = <CloudOff className="h-3.5 w-3.5 text-destructive" />;
+    label = t("listas.sync.failed");
+    tone = "text-destructive";
+  } else {
+    icon = <CloudCheck className="h-3.5 w-3.5" />;
+    if (state.lastSyncedAt) {
+      const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(
+        new Date(state.lastSyncedAt),
+      );
+      label = `${t("listas.sync.synced")} · ${t("listas.sync.lastUpdated", { time })}`;
+    } else {
+      label = t("listas.sync.synced");
+    }
+  }
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card/60 px-3 py-2">
+      <span className={cn("inline-flex items-center gap-1.5 text-[12px]", tone)}>
+        {icon}
+        <span className="line-clamp-1">{label}</span>
+      </span>
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={busy}
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border bg-card-elevated px-3 py-1.5 text-[12px] font-semibold text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
+        {busy ? t("listas.sync.refreshing") : t("listas.sync.refresh")}
+      </button>
+    </div>
   );
 }

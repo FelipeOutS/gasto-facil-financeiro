@@ -60,6 +60,16 @@
     "home": "Início",
     "newList": "Nova lista",
     "openToast": "A edição dos itens da lista será ativada na próxima etapa.",
+    "sync": {
+      "syncing": "Sincronizando listas…",
+      "synced": "Listas sincronizadas",
+      "failed": "Não foi possível sincronizar agora. Suas listas locais continuam salvas.",
+      "refresh": "Atualizar listas",
+      "refreshing": "Atualizando…",
+      "localSaved": "Salvo apenas neste dispositivo. Faça login para sincronizar.",
+      "lastUpdated": "Atualizado às {{time}}",
+      "refreshedToast": "Listas atualizadas."
+    },
     "summary": {
       "active": "Listas ativas",
       "items": "Itens planejados",

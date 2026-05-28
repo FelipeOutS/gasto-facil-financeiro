@@ -2,7 +2,7 @@
 // Mantém a API síncrona dos consumidores intacta. Local-first: erros de
 // rede apenas geram console.warn, nunca quebram a UI.
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -498,6 +498,56 @@ function ensureHooks() {
   });
 }
 
+// ============================================================
+// Estado visível de sincronização das LISTAS
+// ============================================================
+
+export type MercadoListasSyncStatus = "idle" | "syncing" | "synced" | "error";
+type ListasSyncState = {
+  status: MercadoListasSyncStatus;
+  lastSyncedAt: string | null;
+  errorMessage: string | null;
+};
+let listasSyncState: ListasSyncState = { status: "idle", lastSyncedAt: null, errorMessage: null };
+const listasSyncListeners = new Set<() => void>();
+function emitListasSync() { for (const l of listasSyncListeners) { try { l(); } catch { /* ignore */ } } }
+function setListasSyncState(next: Partial<ListasSyncState>) {
+  listasSyncState = { ...listasSyncState, ...next };
+  emitListasSync();
+}
+
+export function useMercadoListasSyncState(): ListasSyncState {
+  return useSyncExternalStore(
+    (cb) => { listasSyncListeners.add(cb); return () => { listasSyncListeners.delete(cb); }; },
+    () => listasSyncState,
+    () => listasSyncState,
+  );
+}
+
+/**
+ * Pull manual disparado pelo botão "Atualizar listas". Faz merge seguro com
+ * o cache local (preserva listas locais ainda não sincronizadas). Se não
+ * houver usuário logado, marca como "synced" no estado local (sem rede).
+ */
+export async function refreshMercadoListas(): Promise<{ ok: boolean; error?: string }> {
+  const uid = __getMercadoActiveUserId();
+  setListasSyncState({ status: "syncing", errorMessage: null });
+  if (!uid) {
+    setListasSyncState({ status: "synced", lastSyncedAt: new Date().toISOString() });
+    return { ok: true };
+  }
+  try {
+    await pullListas(uid);
+    setListasSyncState({ status: "synced", lastSyncedAt: new Date().toISOString(), errorMessage: null });
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn("[mercado-sync] manual refresh failed:", msg);
+    setListasSyncState({ status: "error", errorMessage: msg });
+    return { ok: false, error: msg };
+  }
+}
+
 /** Hook montado no root para sincronizar Mercado com o usuário atual. */
 export function useMercadoSync() {
   const { user, loading } = useAuth();
@@ -507,14 +557,20 @@ export function useMercadoSync() {
     const uid = user?.id ?? null;
     __setMercadoActiveUser(uid);
     __setMercadoPrecosActiveUser(uid);
-    if (!uid) return;
+    if (!uid) {
+      setListasSyncState({ status: "idle", errorMessage: null });
+      return;
+    }
     let cancelled = false;
+    setListasSyncState({ status: "syncing", errorMessage: null });
     (async () => {
+      let listasOk = false;
       try {
         // Listas
         await migrateLegacyListasOnce(uid);
         if (cancelled) return;
         await pullListas(uid);
+        listasOk = true;
         if (cancelled) return;
         // Histórico de compras
         await migrateLegacyHistoricoOnce(uid);
@@ -527,8 +583,17 @@ export function useMercadoSync() {
         await pullPrecosUsuario(uid);
       } catch (e) {
         console.warn("[mercado-sync] initial sync failed:", e);
+        if (!listasOk && !cancelled) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setListasSyncState({ status: "error", errorMessage: msg });
+        }
+      } finally {
+        if (!cancelled && listasOk) {
+          setListasSyncState({ status: "synced", lastSyncedAt: new Date().toISOString(), errorMessage: null });
+        }
       }
     })();
     return () => { cancelled = true; };
   }, [user?.id, loading]);
 }
+
