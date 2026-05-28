@@ -234,14 +234,23 @@ async function pushUpsertLista(l: MercadoLista) {
   const { error } = await supabase
     .from("mercado_listas")
     .upsert(listaToRow(l, uid), { onConflict: "id" });
-  if (error) console.warn("[mercado-sync] upsert lista failed:", error.message);
+  if (error) {
+    console.warn("[mercado-sync] upsert lista failed:", error.message);
+    return;
+  }
+  clearDirtyUpsert(uid, l.id);
 }
 
 async function pushDeleteLista(id: string) {
   const uid = __getMercadoActiveUserId();
   if (!uid) return;
   const { error } = await supabase.from("mercado_listas").delete().eq("id", id).eq("user_id", uid);
-  if (error) console.warn("[mercado-sync] delete lista failed:", error.message);
+  if (error) {
+    console.warn("[mercado-sync] delete lista failed:", error.message);
+    return;
+  }
+  clearDirtyUpsert(uid, id);
+  removeTombstones(uid, [id]);
 }
 
 function readLegacyAnonListas(): MercadoLista[] {
