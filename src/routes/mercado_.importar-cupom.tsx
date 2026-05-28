@@ -890,7 +890,13 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       );
       toast.success(t("importarCupom.importActions.cartImportedSuccess"));
       const id = selectedListaId;
+      resetForm();
+      void navigate({ to: "/mercado/carrinho", search: { lista: id } });
+    } finally {
+      setSubmitting(false);
+    }
   }
+
 
   function openFinish() {
     if (!hasValid) {
