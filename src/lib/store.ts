@@ -874,8 +874,8 @@ export async function hydrateUser(userId: string): Promise<void> {
 
   hydrationInFlightUserId = userId;
   hydrationInFlightPromise = (async () => {
-  setHydrationStatus("loading");
-  try {
+    setHydrationStatus("loading");
+    try {
     await Promise.all([
       ensureDefaultCategorias(userId),
       ensureDefaultBancos(userId),
@@ -990,15 +990,15 @@ export async function hydrateUser(userId: string): Promise<void> {
     void reclassificarCategoriasExistentes().catch((err) => {
       console.warn("[store] reclassificarCategoriasExistentes failed", err);
     });
-  } catch (e) {
-    console.error("[store] hydrateUser failed", e);
-    setHydrationStatus("error");
-  } finally {
-    if (hydrationInFlightUserId === userId) {
-      hydrationInFlightUserId = null;
-      hydrationInFlightPromise = null;
+    } catch (e) {
+      console.error("[store] hydrateUser failed", e);
+      setHydrationStatus("error");
+    } finally {
+      if (hydrationInFlightUserId === userId) {
+        hydrationInFlightUserId = null;
+        hydrationInFlightPromise = null;
+      }
     }
-  }
   })();
 
   return hydrationInFlightPromise;
