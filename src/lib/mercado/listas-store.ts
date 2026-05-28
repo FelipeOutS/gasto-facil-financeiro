@@ -799,11 +799,14 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
     orcamento:
       typeof r.orcamento === "number" && Number.isFinite(r.orcamento) && r.orcamento > 0
         ? r.orcamento
-        : undefined,
-    percentualConcluido: num(r.percentualConcluido),
-    economiaOuEstouro: num(r.economiaOuEstouro),
     itensSnapshot,
     mercadoNome:
+      typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
+    observacao:
+      typeof r.observacao === "string" && r.observacao.trim() ? r.observacao.trim() : undefined,
+  };
+}
+
       typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
   };
 }
