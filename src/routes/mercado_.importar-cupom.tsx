@@ -30,6 +30,7 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
+import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
 import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
