@@ -236,11 +236,19 @@ async function pullHistoricoCompras(userId: string) {
     .eq("user_id", userId)
     .order("concluida_em", { ascending: false });
   if (error) throw error;
-  const items = (data as HistoricoRow[] | null)
+  const server = (data as HistoricoRow[] | null)
     ?.map(historicoRowToEntry)
     .filter((x): x is MercadoCompraHistorico => x !== null) ?? [];
-  __replaceHistoricoCache(items);
+  const local = getHistoricoCompras();
+  const serverIds = new Set(server.map((h) => h.id));
+  const orphans = local.filter((h) => !serverIds.has(h.id));
+  const merged = [...server, ...orphans].sort((a, b) =>
+    (b.concluidaEm ?? "").localeCompare(a.concluidaEm ?? "")
+  );
+  __replaceHistoricoCache(merged);
+  for (const o of orphans) void pushUpsertHistoricoCompra(o);
 }
+
 
 async function pushUpsertHistoricoCompra(h: MercadoCompraHistorico) {
   const uid = __getMercadoActiveUserId();
