@@ -96,11 +96,17 @@ export const getRouter = () => {
     routeTree,
     context: {},
     scrollRestoration: true,
-    // Pré-carrega rotas ao passar o mouse / focar — navegação quase instantânea.
-    defaultPreload: "intent",
+    // Pré-carrega chunks de rotas assim que os <Link> aparecem na viewport
+    // (BottomNav, Sidebar, listas de navegação). No mobile/WebView não existe
+    // hover, então "intent" só dispara no toque — o que causa o atraso
+    // perceptível na navegação. Com "viewport", quando o usuário tocar o
+    // botão, o chunk já está em cache e a troca de tela é instantânea.
+    defaultPreload: "viewport",
     defaultPreloadDelay: 50,
-    // Mantém rotas pré-carregadas em cache por 30s para evitar refetch ao navegar.
-    defaultPreloadStaleTime: 30_000,
+    // Mantém rotas pré-carregadas em cache por 5 min para evitar refetch
+    // ao alternar entre páginas já visitadas.
+    defaultPreloadStaleTime: 5 * 60_000,
+
     // Sem pending component global: o TanStack Router mantém a página atual
     // visível enquanto a próxima carrega — navegação parece instantânea, sem
     // splash/skeleton entre rotas. Páginas individuais podem mostrar
