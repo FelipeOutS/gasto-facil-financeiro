@@ -275,11 +275,22 @@ export function addLista(input: {
 
 export function addItemLista(
   listaId: string,
-  input: { nome: string; quantidade?: number; unidade?: string; precoEstimado?: number },
+  input: {
+    nome: string;
+    quantidade?: number;
+    unidade?: string;
+    precoEstimado?: number;
+    codigoBarras?: string;
+    origem?: ListaItem["origem"];
+  },
 ): ListaItem | null {
   const nome = input.nome.trim();
   if (!nome) return null;
   const now = new Date().toISOString();
+  const barcode =
+    typeof input.codigoBarras === "string"
+      ? input.codigoBarras.replace(/\D/g, "")
+      : "";
   const item: ListaItem = {
     id: genId("itm"),
     nome,
@@ -294,6 +305,8 @@ export function addItemLista(
       input.precoEstimado > 0
         ? input.precoEstimado
         : undefined,
+    codigoBarras: barcode ? barcode : undefined,
+    origem: input.origem ?? "manual",
     comprado: false,
     criadoEm: now,
     atualizadoEm: now,
@@ -308,6 +321,7 @@ export function addItemLista(
   pushUpsert(listaId);
   return item;
 }
+
 
 export function updateItemLista(
   listaId: string,
