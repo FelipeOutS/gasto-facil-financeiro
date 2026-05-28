@@ -1664,6 +1664,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_orcamentos: {
+        Row: {
+          atualizado_em: string
+          created_at: string
+          id: string
+          mes_referencia: string
+          updated_at: string
+          user_id: string
+          valor_mensal: number
+        }
+        Insert: {
+          atualizado_em?: string
+          created_at?: string
+          id?: string
+          mes_referencia: string
+          updated_at?: string
+          user_id: string
+          valor_mensal?: number
+        }
+        Update: {
+          atualizado_em?: string
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          updated_at?: string
+          user_id?: string
+          valor_mensal?: number
+        }
+        Relationships: []
+      }
       mercado_precos_usuario: {
         Row: {
           categoria: string | null
