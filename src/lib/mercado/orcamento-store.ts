@@ -1,6 +1,6 @@
-// Local-only store for the Mercado Inteligente monthly budget.
-// Isolated from listas-store; persists to localStorage under its own key.
-// NO Supabase, NO API. Reads historico from listas-store for the monthly summary.
+// Store local-first do orçamento mensal do Mercado Inteligente.
+// E35 / Parte 2: agora user-scoped + sync-aware (Supabase via mercado-sync).
+// Mantém a API pública intacta e SSR-safe.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
@@ -8,7 +8,10 @@ import {
   type MercadoCompraHistorico,
 } from "./listas-store";
 
-export const MERCADO_ORCAMENTO_STORAGE_KEY = "gi:mercado:orcamento:v1";
+// Chave legada (anônima, pré-sync). Preservada para migração one-shot.
+export const MERCADO_ORCAMENTO_LEGACY_ANON_KEY = "gi:mercado:orcamento:v1";
+// Base da chave por usuário: `${BASE}:${uid}`. Sem uid usa a legada (anônima).
+export const MERCADO_ORCAMENTO_STORAGE_KEY = "gi:mercado:orcamento:v2";
 
 export type MercadoOrcamento = {
   valorMensal: number;
@@ -27,7 +30,7 @@ function currentMonthKey(d = new Date()): string {
   return `${y}-${m}`;
 }
 
-function normalize(raw: unknown): MercadoOrcamento | null {
+export function normalizeOrcamento(raw: unknown): MercadoOrcamento | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   const valor = typeof r.valorMensal === "number" && Number.isFinite(r.valorMensal)
@@ -40,12 +43,43 @@ function normalize(raw: unknown): MercadoOrcamento | null {
   return { valorMensal: valor, mesReferencia: mes, atualizadoEm: upd };
 }
 
+// --- Sync wiring ---------------------------------------------------------
+
+let activeUserId: string | null = null;
+
+type SyncHooks = {
+  onUpsertOrcamento?: (o: MercadoOrcamento) => void;
+};
+let syncHooks: SyncHooks = {};
+
+export function __setMercadoOrcamentoActiveUser(uid: string | null) {
+  if (activeUserId === uid) return;
+  activeUserId = uid;
+  emit();
+}
+export function __getMercadoOrcamentoActiveUserId(): string | null {
+  return activeUserId;
+}
+export function __setMercadoOrcamentoSyncHooks(hooks: SyncHooks) {
+  syncHooks = hooks;
+}
+export function __replaceOrcamentoCache(next: MercadoOrcamento) {
+  safeWrite(next);
+  emit();
+}
+
+function storageKey(): string {
+  return activeUserId
+    ? `${MERCADO_ORCAMENTO_STORAGE_KEY}:${activeUserId}`
+    : MERCADO_ORCAMENTO_LEGACY_ANON_KEY;
+}
+
 function safeRead(): MercadoOrcamento | null {
   if (!isBrowser()) return null;
   try {
-    const raw = window.localStorage.getItem(MERCADO_ORCAMENTO_STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey());
     if (!raw) return null;
-    return normalize(JSON.parse(raw));
+    return normalizeOrcamento(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -54,7 +88,7 @@ function safeRead(): MercadoOrcamento | null {
 function safeWrite(next: MercadoOrcamento) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_ORCAMENTO_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(storageKey(), JSON.stringify(next));
   } catch {
     // ignore
   }
@@ -102,6 +136,7 @@ export function setOrcamentoMercado(input: {
   };
   safeWrite(next);
   emit();
+  try { syncHooks.onUpsertOrcamento?.(next); } catch { /* ignore */ }
   return next;
 }
 
@@ -158,7 +193,7 @@ function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_ORCAMENTO_STORAGE_KEY) listener();
+      if (e.key === storageKey()) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
