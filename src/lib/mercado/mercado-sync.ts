@@ -761,7 +761,11 @@ async function pushUpsertCesta(c: MercadoCestaPadrao) {
     const { error } = await supabase
       .from("mercado_cestas_padrao")
       .upsert(cestaToRow(c, uid), { onConflict: "id" });
-    if (error) console.warn("[mercado-sync] cesta upsert failed:", error.message);
+    if (error) {
+      console.warn("[mercado-sync] cesta upsert failed:", error.message);
+      return;
+    }
+    clearCestaDirty(uid, c.id);
   } catch (e) {
     console.warn("[mercado-sync] cesta upsert threw:", e);
   }
@@ -776,11 +780,16 @@ async function pushDeleteCesta(id: string) {
       .delete()
       .eq("id", id)
       .eq("user_id", uid);
-    if (error) console.warn("[mercado-sync] cesta delete failed:", error.message);
+    if (error) {
+      console.warn("[mercado-sync] cesta delete failed:", error.message);
+      return;
+    }
+    clearCestaDirty(uid, id);
   } catch (e) {
     console.warn("[mercado-sync] cesta delete threw:", e);
   }
 }
+
 
 async function pullCestas(userId: string) {
   const { data, error } = await supabase
