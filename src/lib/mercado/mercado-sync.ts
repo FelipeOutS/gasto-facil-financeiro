@@ -1520,6 +1520,11 @@ export function useMercadoSync() {
         await migrateLegacyOrcamentoOnce(uid);
         if (cancelled) return;
         await pullOrcamento(uid);
+        if (cancelled) return;
+        // Mercados salvos (E35 / Parte 3)
+        await migrateLegacyMercadosOnce(uid);
+        if (cancelled) return;
+        await pullMercados(uid);
       } catch (e) {
         console.warn("[mercado-sync] initial sync failed:", e);
         if (!listasOk && !cancelled) {
