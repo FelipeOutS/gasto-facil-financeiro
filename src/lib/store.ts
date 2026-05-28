@@ -166,6 +166,9 @@ const sbAny = supabase as unknown as any;
 export function setActiveUserId(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
+  hydratedUserId = null;
+  hydrationInFlightUserId = null;
+  hydrationInFlightPromise = null;
   // Clear in-memory caches on user change
   memGastos = EMPTY_GASTOS;
   memCategorias = EMPTY_CATEGORIAS;
@@ -184,7 +187,7 @@ export function setActiveUserId(uid: string | null) {
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
-  hydrationStatus = "idle";
+  setHydrationStatus("idle");
   emit();
 }
 
