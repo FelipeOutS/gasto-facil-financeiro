@@ -754,7 +754,12 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setEstimateText("");
     setObservation("");
     setSelectedListaId(null);
+    setFinishName("");
+    setFinishMarket("");
+    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishObs("");
   }
+
 
   function openNew() {
     if (!hasValid) {
