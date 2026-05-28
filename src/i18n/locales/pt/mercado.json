@@ -732,7 +732,9 @@
       "manualHint": "Por enquanto, continue preenchendo o nome do mercado manualmente ao finalizar uma compra.",
       "backToHub": "Voltar para o Mercado Inteligente"
     },
-    "localNotice": "Por enquanto, os mercados cadastrados ficam salvos apenas neste dispositivo. Em uma etapa futura, essa área poderá se conectar a APIs de locais e à base comunitária de preços.",
+    "localNotice": "Os mercados ficam salvos na sua conta e sincronizam entre seus dispositivos. Use-os para associar compras e preços ao lugar certo.",
+    "infoCard": "Cadastre os mercados onde você costuma comprar. Assim, ao finalizar compras ou importar cupons, você consegue associar preços ao mercado correto.",
+    "emptyCta": "Cadastrar primeiro mercado",
     "addCta": "Novo mercado",
     "addCtaShort": "Adicionar",
     "cancel": "Cancelar",
