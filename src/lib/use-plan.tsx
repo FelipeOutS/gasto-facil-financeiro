@@ -138,25 +138,26 @@ function writeCache(userId: string, value: CachedSubscription) {
 
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
-  const [storedRaw, setStoredRaw] = useState<string | null>(null);
-  const [status, setStatus] = useState<SubscriptionStatus>("sem_assinatura");
-  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
-  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(null);
-  const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(null);
-  const [trialUsed, setTrialUsed] = useState(false);
-  const [cancelledAt, setCancelledAt] = useState<string | null>(null);
-  const [accessUntil, setAccessUntil] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
-  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(null);
-  const [paidAt, setPaidAt] = useState<string | null>(null);
-  const [periodicidade, setPeriodicidade] = useState<string | null>(null);
-  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const initialCache = user ? getRuntimeCache(user.id) ?? readCache(user.id) : null;
+  const [storedRaw, setStoredRaw] = useState<string | null>(initialCache?.storedPlan ?? null);
+  const [status, setStatus] = useState<SubscriptionStatus>(initialCache?.status ?? "sem_assinatura");
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(initialCache?.trialEndsAt ?? null);
+  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(initialCache?.trialStartedAt ?? null);
+  const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(initialCache?.trialPlan ?? null);
+  const [trialUsed, setTrialUsed] = useState(initialCache?.trialUsed ?? false);
+  const [cancelledAt, setCancelledAt] = useState<string | null>(initialCache?.cancelledAt ?? null);
+  const [accessUntil, setAccessUntil] = useState<string | null>(initialCache?.accessUntil ?? null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(initialCache?.paymentMethod ?? null);
+  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(initialCache?.paymentAmountCents ?? null);
+  const [paidAt, setPaidAt] = useState<string | null>(initialCache?.paidAt ?? null);
+  const [periodicidade, setPeriodicidade] = useState<string | null>(initialCache?.periodicidade ?? null);
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(initialCache?.currentPeriodStart ?? null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(initialCache?.currentPeriodEnd ?? null);
   // `loading` é true APENAS na primeiríssima carga (sem cache). Revalidações
   // ficam em segundo plano e mantêm o último estado válido para evitar
   // o "piscar" entre liberado/bloqueado durante a navegação.
-  const [loading, setLoading] = useState(true);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!initialCache);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialCache && user ? user.id : null);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
