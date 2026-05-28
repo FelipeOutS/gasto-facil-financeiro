@@ -946,11 +946,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   }
 
 
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
       <div className="flex items-start gap-3">
