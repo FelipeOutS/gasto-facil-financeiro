@@ -38,12 +38,14 @@ import {
   parseCupomItemsFromText,
   makeEmptyCupomItem,
   type CupomItemPreview,
-  type CupomParseResult,
-} from "@/lib/mercado/nfce-items-parser";
 import {
   useMercadoListas,
   addLista,
   addItensLista,
+  registrarCompraFinalizadaDoCupom,
+  type ListaTipo,
+} from "@/lib/mercado/listas-store";
+
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
 import { formatBRL } from "@/lib/format";
