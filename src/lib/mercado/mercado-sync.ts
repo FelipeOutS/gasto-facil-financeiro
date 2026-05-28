@@ -951,7 +951,10 @@ function ensureHooks() {
     onUpsertRegistros: (regs) => { void pushUpsertRegistrosPreco(regs); },
   });
   __setMercadoCestaSyncHooks({
-    onUpsertCesta: (c) => { void pushUpsertCesta(c); },
+    onUpsertCesta: (c) => {
+      markCestaDirty(__getMercadoCestaActiveUserId(), c.id);
+      void pushUpsertCesta(c);
+    },
     onDeleteCesta: (id) => {
       addCestaTombstone(__getMercadoCestaActiveUserId(), id);
       void pushDeleteCesta(id);
