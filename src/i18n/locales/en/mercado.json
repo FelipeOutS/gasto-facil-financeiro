@@ -991,7 +991,26 @@
       "confirmExistingCart": "Add and open in cart",
       "cartCreatedSuccess": "Cart created with the receipt items.",
       "cartImportedSuccess": "Items added to the cart.",
-      "cartNoListsHint": "You don't have any lists yet. Create a quick cart to start."
+      "cartNoListsHint": "You don't have any lists yet. Create a quick cart to start.",
+      "finishPurchase": {
+        "cardTitle": "Register purchase",
+        "cardDesc": "Save this purchase in the Market history and use the prices to compare in future purchases.",
+        "formTitle": "Register a finished purchase",
+        "purchaseName": "Purchase name",
+        "purchaseNamePlaceholder": "e.g. Monthly groceries",
+        "defaultPurchaseName": "Receipt import",
+        "market": "Market or place (optional)",
+        "marketPlaceholder": "e.g. Walmart",
+        "date": "Purchase date",
+        "observation": "Note (optional)",
+        "observationPlaceholder": "Notes about this purchase…",
+        "confirm": "Register purchase",
+        "cancel": "Cancel",
+        "noExpenseNotice": "This does not create a financial expense. The purchase is saved only in the Market history.",
+        "success": "Purchase saved in the Market history."
+      }
+    },
+
     },
     "privacy": {
       "title": "Privacy & security",
