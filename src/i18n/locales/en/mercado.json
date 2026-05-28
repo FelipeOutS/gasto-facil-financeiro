@@ -60,6 +60,16 @@
     "home": "Home",
     "newList": "New list",
     "openToast": "Editing list items will be enabled in the next stage.",
+    "sync": {
+      "syncing": "Syncing lists…",
+      "synced": "Lists in sync",
+      "failed": "Couldn't sync now. Your local lists are still saved.",
+      "refresh": "Refresh lists",
+      "refreshing": "Refreshing…",
+      "localSaved": "Saved on this device only. Sign in to sync.",
+      "lastUpdated": "Updated at {{time}}",
+      "refreshedToast": "Lists refreshed."
+    },
     "summary": {
       "active": "Active lists",
       "items": "Planned items",
