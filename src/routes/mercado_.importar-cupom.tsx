@@ -787,7 +787,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       }
       toast.success(t("importarCupom.importActions.createdSuccess"));
       resetForm();
-      void navigate({ to: "/mercado_/listas_/$id", params: { id: lista.id } });
+      void navigate({ to: "/mercado/listas/$id", params: { id: lista.id } });
     } finally {
       setSubmitting(false);
     }
@@ -808,7 +808,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       toast.success(t("importarCupom.importActions.importedSuccess"));
       const id = selectedListaId;
       resetForm();
-      void navigate({ to: "/mercado_/listas_/$id", params: { id } });
+      void navigate({ to: "/mercado/listas/$id", params: { id } });
     } finally {
       setSubmitting(false);
     }
