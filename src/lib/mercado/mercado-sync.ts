@@ -161,6 +161,38 @@ function clearDirtyUpsert(uid: string | null, id: string) {
   if (!cur.delete(id)) return;
   writeDirty(uid, cur);
 }
+
+// ----- Quarentena de listas locais antigas (safety check único) ------
+// Risco coberto: listas criadas localmente ANTES de dirty:v2 que nunca
+// chegaram ao Supabase. Sem proteção, o pull as removeria do cache
+// (regra "ausente no server + sem dirty + sem tombstone" = excluída em
+// outro dispositivo). Para não apagar silenciosamente, no PRIMEIRO pull
+// pós-deploy por usuário, essas listas vão para uma quarentena local.
+// NÃO são re-upsertadas (isso reintroduziria o bug de ressurreição).
+// Após o flag ser setado, o comportamento volta ao padrão (drop silencioso),
+// pois daí em diante toda mutação local nova já marca dirty:v2.
+const LISTAS_SAFETY_FLAG_BASE = "gi:mercado:listas:dirty-v2-safety-checked:v1";
+const LISTAS_QUARANTINE_KEY_BASE = "gi:mercado:listas:pending-review:v1";
+function safetyFlagKey(uid: string) { return `${LISTAS_SAFETY_FLAG_BASE}:${uid}`; }
+function quarantineKey(uid: string) { return `${LISTAS_QUARANTINE_KEY_BASE}:${uid}`; }
+function readQuarantine(uid: string): MercadoLista[] {
+  try {
+    const raw = localStorage.getItem(quarantineKey(uid));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as MercadoLista[]) : [];
+  } catch { return []; }
+}
+function addToQuarantine(uid: string, items: MercadoLista[]) {
+  if (!uid || items.length === 0) return;
+  try {
+    const cur = readQuarantine(uid);
+    const map = new Map(cur.map((l) => [l.id, l]));
+    for (const it of items) map.set(it.id, it);
+    localStorage.setItem(quarantineKey(uid), JSON.stringify(Array.from(map.values())));
+  } catch { /* ignore */ }
+}
+
 async function pullListas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_listas")
@@ -175,9 +207,13 @@ async function pullListas(userId: string) {
   const serverById = new Map(server.map((l) => [l.id, l]));
   const localById = new Map(local.map((l) => [l.id, l]));
   const dirtySet = readDirty(userId);
+  const safetyDone = (() => {
+    try { return localStorage.getItem(safetyFlagKey(userId)) === "1"; } catch { return true; }
+  })();
   const merged: MercadoLista[] = [];
   const orphans: MercadoLista[] = [];
   const deleteRetries: string[] = [];
+  const toQuarantine: MercadoLista[] = [];
   // Server + conflict resolution; respeita tombstones locais.
   for (const s of server) {
     if (tombSet.has(s.id)) {
@@ -196,16 +232,23 @@ async function pullListas(userId: string) {
   // Local-only items not on server:
   // - tombstone local -> não preservar; tentar delete novamente.
   // - dirty.upsert local -> preservar e re-push (offline/falha de rede).
-  // - nem dirty nem tombstone -> foi excluído em outro dispositivo;
-  //   REMOVER do cache local (não ressuscitar no servidor).
+  // - nem dirty nem tombstone:
+  //     * primeiro pull pós-deploy (safety): vai para quarentena (não apaga
+  //       silenciosamente, mas também não re-upserta para não ressuscitar).
+  //     * pulls subsequentes: excluído em outro dispositivo -> remove do cache.
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
     if (dirtySet.has(l.id)) { merged.push(l); orphans.push(l); continue; }
+    if (!safetyDone) { toQuarantine.push(l); continue; }
     // implicit delete: outro dispositivo removeu. Não adiciona ao merged.
   }
   merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   __replaceListasCache(merged);
+  if (!safetyDone) {
+    if (toQuarantine.length > 0) addToQuarantine(userId, toQuarantine);
+    try { localStorage.setItem(safetyFlagKey(userId), "1"); } catch { /* ignore */ }
+  }
   for (const o of orphans) void pushUpsertLista(o);
   for (const id of deleteRetries) void pushDeleteLista(id);
   // Limpa tombstones já confirmados: servidor não retornou e o local não tem.
@@ -216,6 +259,7 @@ async function pullListas(userId: string) {
     .map((t) => t.id);
   if (confirmed.length > 0) removeTombstones(userId, confirmed);
 }
+
 
 
 async function pushUpsertLista(l: MercadoLista) {
