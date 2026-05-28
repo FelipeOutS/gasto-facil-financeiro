@@ -191,6 +191,15 @@ function ImportarCupomPage() {
 
       {parsed && <ResultCard result={parsed} />}
 
+      {parsed &&
+        (parsed.status === "valid_nfce_url" ||
+          parsed.status === "possible_nfce_url") && (
+          <>
+            <NextStepCard />
+            <DestinationCard />
+          </>
+        )}
+
       <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 md:p-5">
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
