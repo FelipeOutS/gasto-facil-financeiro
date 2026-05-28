@@ -721,6 +721,10 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
 }
 
 function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
+  const { t } = useTranslation("mercado");
+  const navigate = useNavigate();
+  const listas = useMercadoListas();
+
   type Mode = "none" | "new" | "existing" | "cart" | "finish";
   type CartSub = "none" | "quick" | "existing";
 
@@ -738,10 +742,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const [finishDate, setFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [finishObs, setFinishObs] = useState("");
 
-  const [estimateText, setEstimateText] = useState("");
-  const [observation, setObservation] = useState("");
-  const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   const validItems = useMemo(() => sanitizeItemsForImport(items), [items]);
   const hasValid = validItems.length > 0;
