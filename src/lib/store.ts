@@ -194,12 +194,16 @@ export function setActiveUserId(uid: string | null) {
 type HydrationStatus = "idle" | "loading" | "ready" | "error";
 let hydrationStatus: HydrationStatus = "idle";
 let localBootstrapReady = false;
+let hydratedUserId: string | null = null;
+let hydrationInFlightUserId: string | null = null;
+let hydrationInFlightPromise: Promise<void> | null = null;
 
 export function getHydrationStatus(): HydrationStatus {
   return hydrationStatus;
 }
 
 function setHydrationStatus(s: HydrationStatus) {
+  if (hydrationStatus === s) return;
   hydrationStatus = s;
   emit();
 }
