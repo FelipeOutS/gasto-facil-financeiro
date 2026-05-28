@@ -2,7 +2,7 @@
 // Mantém a API síncrona dos consumidores intacta. Local-first: erros de
 // rede apenas geram console.warn, nunca quebram a UI.
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import {
