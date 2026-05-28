@@ -2995,6 +2995,23 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      fetch_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          accepted_at: string
+          access_level: Database["public"]["Enums"]["connected_account_access"]
+          id: string
+          invite_expires_at: string
+          invite_sent_at: string
+          invited_email: string
+          nickname: string
+          owner_user_id: string
+          refused_at: string
+          removed_at: string
+          status: Database["public"]["Enums"]["connected_account_status"]
+          viewer_user_id: string
+        }[]
+      }
       has_active_plan_access: { Args: { _user_id: string }; Returns: boolean }
       has_feature_access: {
         Args: { _feature: string; _user_id: string }
@@ -3010,6 +3027,23 @@ export type Database = {
       is_admin_email: { Args: { _email: string }; Returns: boolean }
       is_full_access: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      list_my_pending_invites: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          access_level: Database["public"]["Enums"]["connected_account_access"]
+          id: string
+          invite_expires_at: string
+          invite_sent_at: string
+          invited_email: string
+          nickname: string
+          owner_user_id: string
+          refused_at: string
+          removed_at: string
+          status: Database["public"]["Enums"]["connected_account_status"]
+          viewer_user_id: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
