@@ -950,7 +950,6 @@
       "addToExistingList": "Adicionar a uma lista existente",
       "addToExistingListDesc": "Mescla estes itens em uma lista que você já tem.",
       "cartTitle": "Carrinho inteligente",
-      "cartComingSoon": "Envio direto para o carrinho — em breve.",
       "soonBadge": "Em breve",
       "noValidItems": "Nenhum item válido para importar. Revise os produtos antes de continuar.",
       "noValidItemsHint": "Adicione ou ajuste pelo menos um item com nome para liberar a importação.",
@@ -979,9 +978,21 @@
       "createdSuccess": "Lista criada com os itens do cupom.",
       "importedSuccess": "Itens importados para a lista.",
       "reviewWarning": "Os dados podem variar conforme o formato do cupom. Depois de importar, você poderá editar a lista normalmente.",
-      "unnamedList": "Lista sem nome"
+      "unnamedList": "Lista sem nome",
+      "cartCardDesc": "Envie os itens direto para o carrinho de compras.",
+      "cartChooseOption": "Como deseja enviar para o carrinho?",
+      "cartHint": "Você ainda poderá marcar os produtos como comprados e ajustar os preços no carrinho.",
+      "cartOptionQuickTitle": "Criar carrinho rápido",
+      "cartOptionQuickDesc": "Cria uma nova lista e já abre no carrinho.",
+      "cartOptionExistingTitle": "Usar lista existente",
+      "cartOptionExistingDesc": "Adiciona os itens a uma lista sua e abre no carrinho.",
+      "defaultCartListName": "Compra importada do cupom",
+      "confirmCreateCart": "Criar e abrir no carrinho",
+      "confirmExistingCart": "Adicionar e abrir no carrinho",
+      "cartCreatedSuccess": "Carrinho criado com os itens do cupom.",
+      "cartImportedSuccess": "Itens adicionados ao carrinho.",
+      "cartNoListsHint": "Você ainda não tem listas. Crie um carrinho rápido para começar."
     },
-
     "privacy": {
       "title": "Privacidade e segurança",
       "local": "A foto e o QR Code são processados localmente neste dispositivo nesta etapa.",
@@ -990,4 +1001,3 @@
     }
   }
 }
-

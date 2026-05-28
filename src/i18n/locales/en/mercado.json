@@ -950,7 +950,6 @@
       "addToExistingList": "Add to an existing list",
       "addToExistingListDesc": "Merge these items into a list you already have.",
       "cartTitle": "Smart cart",
-      "cartComingSoon": "Send straight to the cart — coming soon.",
       "soonBadge": "Coming soon",
       "noValidItems": "No valid items to import. Review the products before continuing.",
       "noValidItemsHint": "Add or adjust at least one item with a name to enable the import.",
@@ -979,9 +978,21 @@
       "createdSuccess": "List created with the receipt items.",
       "importedSuccess": "Items imported into the list.",
       "reviewWarning": "Data may vary depending on the receipt format. After importing, you can edit the list normally.",
-      "unnamedList": "Unnamed list"
+      "unnamedList": "Unnamed list",
+      "cartCardDesc": "Send the items straight to the shopping cart.",
+      "cartChooseOption": "How would you like to send them to the cart?",
+      "cartHint": "You can still mark products as purchased and adjust prices inside the cart.",
+      "cartOptionQuickTitle": "Create a quick cart",
+      "cartOptionQuickDesc": "Creates a new list and opens it in the cart.",
+      "cartOptionExistingTitle": "Use an existing list",
+      "cartOptionExistingDesc": "Adds the items to one of your lists and opens it in the cart.",
+      "defaultCartListName": "Receipt import",
+      "confirmCreateCart": "Create and open in cart",
+      "confirmExistingCart": "Add and open in cart",
+      "cartCreatedSuccess": "Cart created with the receipt items.",
+      "cartImportedSuccess": "Items added to the cart.",
+      "cartNoListsHint": "You don't have any lists yet. Create a quick cart to start."
     },
-
     "privacy": {
       "title": "Privacy & security",
       "local": "The photo and QR Code are processed locally on this device at this stage.",
@@ -990,4 +1001,3 @@
     }
   }
 }
-

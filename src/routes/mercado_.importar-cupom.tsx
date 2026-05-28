@@ -721,7 +721,11 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const navigate = useNavigate();
   const listas = useMercadoListas();
 
-  const [mode, setMode] = useState<"none" | "new" | "existing">("none");
+  type Mode = "none" | "new" | "existing" | "cart";
+  type CartSub = "none" | "quick" | "existing";
+
+  const [mode, setMode] = useState<Mode>("none");
+  const [cartSub, setCartSub] = useState<CartSub>("none");
   const [listName, setListName] = useState("");
   const [tipo, setTipo] = useState<ListaTipo>("compraMes");
   const [estimateText, setEstimateText] = useState("");
@@ -734,6 +738,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
 
   function resetForm() {
     setMode("none");
+    setCartSub("none");
     setListName("");
     setTipo("compraMes");
     setEstimateText("");
@@ -756,6 +761,17 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       return;
     }
     setMode("existing");
+    setSelectedListaId(null);
+  }
+
+  function openCart() {
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    setMode("cart");
+    setCartSub("none");
+    setListName(t("importarCupom.importActions.defaultCartListName"));
     setSelectedListaId(null);
   }
 
@@ -809,6 +825,54 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       const id = selectedListaId;
       resetForm();
       void navigate({ to: "/mercado/listas/$id", params: { id } });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function confirmCreateCart() {
+    if (submitting) return;
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    const name = listName.trim() || t("importarCupom.importActions.defaultCartListName");
+    setSubmitting(true);
+    try {
+      const lista = addLista({
+        name,
+        tipo,
+        estimate: parseEstimate(),
+        observation: observation.trim() || undefined,
+      });
+      for (const it of validItems) {
+        addItemLista(lista.id, { ...it, origem: "cupom" });
+      }
+      toast.success(t("importarCupom.importActions.cartCreatedSuccess"));
+      const id = lista.id;
+      resetForm();
+      void navigate({ to: "/mercado/carrinho", search: { lista: id } });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function confirmExistingCart() {
+    if (submitting) return;
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    if (!selectedListaId) return;
+    setSubmitting(true);
+    try {
+      for (const it of validItems) {
+        addItemLista(selectedListaId, { ...it, origem: "cupom" });
+      }
+      toast.success(t("importarCupom.importActions.cartImportedSuccess"));
+      const id = selectedListaId;
+      resetForm();
+      void navigate({ to: "/mercado/carrinho", search: { lista: id } });
     } finally {
       setSubmitting(false);
     }
@@ -881,28 +945,30 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
           </span>
         </button>
 
-        <div
-          aria-disabled="true"
-          className="relative cursor-not-allowed select-none rounded-2xl border border-dashed border-border/60 bg-card-elevated p-3 opacity-90"
+        <button
+          type="button"
+          onClick={openCart}
+          disabled={!hasValid}
+          className={cn(
+            "group flex min-h-11 items-start gap-2.5 rounded-2xl border p-3 text-left transition active:scale-[0.99]",
+            mode === "cart"
+              ? "border-primary bg-primary/5"
+              : "border-border/60 bg-card-elevated hover:bg-card",
+            !hasValid && "cursor-not-allowed opacity-60",
+          )}
         >
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card text-muted-foreground ring-1 ring-border/60">
-              <ShoppingCart className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold text-foreground">
-                {t("importarCupom.importActions.cartTitle")}
-              </p>
-              <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
-                {t("importarCupom.importActions.cartComingSoon")}
-              </p>
-            </div>
-          </div>
-          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10.5px] font-semibold text-muted-foreground ring-1 ring-border/60">
-            <Lock className="h-3 w-3" />
-            {t("importarCupom.importActions.soonBadge")}
+          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card text-brand ring-1 ring-border/60">
+            <ShoppingCart className="h-4 w-4" />
           </span>
-        </div>
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-semibold text-foreground">
+              {t("importarCupom.importActions.cartTitle")}
+            </span>
+            <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+              {t("importarCupom.importActions.cartCardDesc")}
+            </span>
+          </span>
+        </button>
       </div>
 
       {!hasValid && (
@@ -1081,6 +1147,236 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </div>
       )}
 
+      {mode === "cart" && hasValid && (
+        <div className="mt-4 grid gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3 md:p-4">
+          <div>
+            <p className="text-[12px] font-semibold text-foreground">
+              {t("importarCupom.importActions.cartChooseOption")}
+            </p>
+            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+              {t("importarCupom.importActions.cartHint")}
+            </p>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setCartSub("quick")}
+              className={cn(
+                "flex min-h-11 items-start gap-2.5 rounded-xl border p-3 text-left transition active:scale-[0.99]",
+                cartSub === "quick"
+                  ? "border-primary bg-primary/5"
+                  : "border-border/60 bg-card hover:bg-card-elevated",
+              )}
+            >
+              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card-elevated text-brand ring-1 ring-border/60">
+                <ShoppingCart className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[13px] font-semibold text-foreground">
+                  {t("importarCupom.importActions.cartOptionQuickTitle")}
+                </span>
+                <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+                  {t("importarCupom.importActions.cartOptionQuickDesc")}
+                </span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCartSub("existing")}
+              className={cn(
+                "flex min-h-11 items-start gap-2.5 rounded-xl border p-3 text-left transition active:scale-[0.99]",
+                cartSub === "existing"
+                  ? "border-primary bg-primary/5"
+                  : "border-border/60 bg-card hover:bg-card-elevated",
+              )}
+            >
+              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card-elevated text-brand ring-1 ring-border/60">
+                <ListChecks className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[13px] font-semibold text-foreground">
+                  {t("importarCupom.importActions.cartOptionExistingTitle")}
+                </span>
+                <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+                  {t("importarCupom.importActions.cartOptionExistingDesc")}
+                </span>
+              </span>
+            </button>
+          </div>
+
+          {cartSub === "quick" && (
+            <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-3 md:p-4">
+              <label className="min-w-0">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("importarCupom.importActions.listName")}
+                </span>
+                <input
+                  type="text"
+                  value={listName}
+                  onChange={(e) => setListName(e.target.value)}
+                  placeholder={t("importarCupom.importActions.listNamePlaceholder")}
+                  className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                />
+              </label>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="min-w-0">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("importarCupom.importActions.tipo")}
+                  </span>
+                  <select
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value as ListaTipo)}
+                    className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  >
+                    {LISTA_TIPOS.map((tp) => (
+                      <option key={tp} value={tp}>
+                        {t(`importarCupom.importActions.tipoOptions.${tp}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="min-w-0">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("importarCupom.importActions.estimate")}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={estimateText}
+                    onChange={(e) => setEstimateText(e.target.value)}
+                    placeholder={t("importarCupom.importActions.estimatePlaceholder")}
+                    className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  />
+                </label>
+              </div>
+
+              <label className="min-w-0">
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("importarCupom.importActions.observation")}
+                </span>
+                <textarea
+                  value={observation}
+                  onChange={(e) => setObservation(e.target.value)}
+                  placeholder={t("importarCupom.importActions.observationPlaceholder")}
+                  rows={2}
+                  className="mt-1 block w-full min-w-0 resize-y rounded-xl border border-border bg-card-elevated px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                />
+              </label>
+
+              <p className="text-[12px] text-muted-foreground">
+                {t("importarCupom.importActions.itemsCount", { count: validItems.length })}
+              </p>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <button
+                  type="button"
+                  onClick={confirmCreateCart}
+                  disabled={submitting}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {t("importarCupom.importActions.confirmCreateCart")}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground active:scale-[0.98]"
+                >
+                  {t("importarCupom.importActions.cancel")}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {cartSub === "existing" && (
+            <div className="grid gap-3 rounded-xl border border-border/60 bg-card p-3 md:p-4">
+              {listas.length === 0 ? (
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t("importarCupom.importActions.cartNoListsHint")}
+                </p>
+              ) : (
+                <>
+                  <p className="text-[12px] font-semibold text-foreground">
+                    {t("importarCupom.importActions.chooseList")}
+                  </p>
+                  <ul className="grid gap-2 md:grid-cols-2">
+                    {listas.map((l) => {
+                      const sel = selectedListaId === l.id;
+                      return (
+                        <li key={l.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedListaId(l.id)}
+                            className={cn(
+                              "flex w-full min-h-11 items-start gap-2 rounded-xl border p-3 text-left transition",
+                              sel
+                                ? "border-primary bg-primary/5"
+                                : "border-border/60 bg-card-elevated hover:bg-card",
+                            )}
+                          >
+                            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-card text-muted-foreground ring-1 ring-border/60">
+                              <ListChecks className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-semibold text-foreground">
+                                {l.name || t("importarCupom.importActions.unnamedList")}
+                              </span>
+                              <span className="mt-0.5 block text-[11.5px] text-muted-foreground">
+                                {t(`importarCupom.importActions.tipoOptions.${l.tipo}`)}
+                                {" · "}
+                                {t("importarCupom.importActions.itemsCount", {
+                                  count: l.entries.length,
+                                })}
+                                {typeof l.estimate === "number" && (
+                                  <>
+                                    {" · "}
+                                    <span className="tabular-nums">{formatBRL(l.estimate)}</span>
+                                  </>
+                                )}
+                              </span>
+                            </span>
+                            {sel && (
+                              <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {selectedListaId && (
+                    <p className="text-[12px] text-muted-foreground">
+                      {t("importarCupom.importActions.itemsCount", { count: validItems.length })}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button
+                      type="button"
+                      onClick={confirmExistingCart}
+                      disabled={submitting || !selectedListaId}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      {t("importarCupom.importActions.confirmExistingCart")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground active:scale-[0.98]"
+                    >
+                      {t("importarCupom.importActions.cancel")}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
         <span>{t("importarCupom.importActions.reviewWarning")}</span>
@@ -1088,6 +1384,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     </section>
   );
 }
+
 
 
 function ImportarCupomPage() {
