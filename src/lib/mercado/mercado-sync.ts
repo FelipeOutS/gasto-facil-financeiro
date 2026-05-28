@@ -1423,7 +1423,6 @@ function ensureHooks() {
     },
   });
 }
-}
 
 // ============================================================
 // Estado visível de sincronização das LISTAS
