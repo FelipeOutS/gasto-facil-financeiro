@@ -1175,6 +1175,11 @@ export function useMercadoSync() {
         await migrateLegacyCestasOnce(uid);
         if (cancelled) return;
         await pullCestas(uid);
+        if (cancelled) return;
+        // Orçamento de mercado (E35 / Parte 2)
+        await migrateLegacyOrcamentoOnce(uid);
+        if (cancelled) return;
+        await pullOrcamento(uid);
       } catch (e) {
         console.warn("[mercado-sync] initial sync failed:", e);
         if (!listasOk && !cancelled) {
