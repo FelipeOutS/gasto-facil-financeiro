@@ -66,9 +66,10 @@ function writeRolesCache(userId: string, roles: AppRole[]) {
 
 export function useRoles(): RolesState {
   const { user, loading: authLoading } = useAuth();
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
+  const initialRoles = user ? getRuntimeRoles(user.id) ?? readRolesCache(user.id) : null;
+  const [roles, setRoles] = useState<AppRole[]>(initialRoles ?? []);
+  const [loading, setLoading] = useState(!initialRoles);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialRoles && user ? user.id : null);
 
   // Hidratação síncrona do cache (evita perder permissões durante a navegação).
   useEffect(() => {
