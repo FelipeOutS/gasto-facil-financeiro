@@ -130,7 +130,9 @@ function removeTombstones(uid: string | null, ids: Iterable<string>) {
 // ----- Dirty upserts (alterações locais pendentes de push) ------
 // Diferencia "lista local nova/alterada offline" de "cache antigo já apagado
 // em outro dispositivo". Sem isso, o merge ressuscita listas excluídas.
-const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v1";
+// v2 ignora o dirty:v1, que podia ter sido populado automaticamente por
+// seed antigo. A partir daqui, dirty nasce apenas de mutação local real.
+const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v2";
 function dirtyKey(uid: string) { return `${LISTAS_DIRTY_KEY_BASE}:${uid}`; }
 function readDirty(uid: string | null): Set<string> {
   if (!uid) return new Set();
@@ -159,18 +161,6 @@ function clearDirtyUpsert(uid: string | null, id: string) {
   if (!cur.delete(id)) return;
   writeDirty(uid, cur);
 }
-/** Marca todas as listas locais como dirty na primeira execução com esta lógica,
- *  para não perder dados pré-existentes do cache antes desta correção. */
-function seedDirtyIfMissing(uid: string) {
-  const seedFlag = `${LISTAS_DIRTY_KEY_BASE}:seeded:${uid}`;
-  try { if (localStorage.getItem(seedFlag) === "1") return; } catch { return; }
-  const ids = getListas().map((l) => l.id);
-  const cur = readDirty(uid);
-  for (const id of ids) cur.add(id);
-  writeDirty(uid, cur);
-  try { localStorage.setItem(seedFlag, "1"); } catch { /* ignore */ }
-}
-
 async function pullListas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_listas")
@@ -184,6 +174,7 @@ async function pullListas(userId: string) {
   const tombSet = new Set(tombstones.map((t) => t.id));
   const serverById = new Map(server.map((l) => [l.id, l]));
   const localById = new Map(local.map((l) => [l.id, l]));
+  const dirtySet = readDirty(userId);
   const merged: MercadoLista[] = [];
   const orphans: MercadoLista[] = [];
   const deleteRetries: string[] = [];
@@ -195,7 +186,7 @@ async function pullListas(userId: string) {
       continue;
     }
     const l = localById.get(s.id);
-    if (l && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
+    if (l && dirtySet.has(l.id) && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
       merged.push(l);
       orphans.push(l); // re-push newer local
     } else {
@@ -207,7 +198,6 @@ async function pullListas(userId: string) {
   // - dirty.upsert local -> preservar e re-push (offline/falha de rede).
   // - nem dirty nem tombstone -> foi excluído em outro dispositivo;
   //   REMOVER do cache local (não ressuscitar no servidor).
-  const dirtySet = readDirty(userId);
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
@@ -697,9 +687,6 @@ export function useMercadoSync() {
         // Listas
         await migrateLegacyListasOnce(uid);
         if (cancelled) return;
-        // Garante que dados locais pré-existentes (antes desta lógica)
-        // não sejam interpretados como "apagados em outro dispositivo".
-        seedDirtyIfMissing(uid);
         await pullListas(uid);
         listasOk = true;
         if (cancelled) return;
