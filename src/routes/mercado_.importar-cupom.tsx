@@ -19,6 +19,9 @@ import {
   ShoppingCart,
   Sparkles,
   Lock,
+  Plus,
+  Trash2,
+  ScanLine,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -27,8 +30,16 @@ import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
 } from "@/lib/mercado/nfce-parser";
+import {
+  parseCupomItemsFromText,
+  makeEmptyCupomItem,
+  type CupomItemPreview,
+  type CupomParseResult,
+} from "@/lib/mercado/nfce-items-parser";
 import { useMercadoListas } from "@/lib/mercado/listas-store";
+import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 export const Route = createFileRoute("/mercado_/importar-cupom")({
