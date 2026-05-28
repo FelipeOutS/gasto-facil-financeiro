@@ -766,7 +766,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setSelectedListaId(null);
     setFinishName("");
     setFinishMarket("");
-    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishDate(todayLocalISODate());
     setFinishObs("");
   }
 
@@ -916,7 +916,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setMode("finish");
     setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
     setFinishMarket("");
-    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishDate(todayLocalISODate());
     setFinishObs("");
   }
 
