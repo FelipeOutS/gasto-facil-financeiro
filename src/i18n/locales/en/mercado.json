@@ -905,7 +905,42 @@
       "existingListsTitle": "Your current lists (preview)",
       "existingListsHint": "Preview only. No list will be changed in this step.",
       "noListsHint": "You don't have any lists yet. You'll be able to create one when the import is available.",
-      "moreListsCount": "+{{count}} more"
+      "moreListsCount": "+{{count}} more",
+      "nextStepReady": "In the next step, the reviewed items can be sent to a list or to the cart."
+    },
+    "itemsPreview": {
+      "title": "Preview of detected items",
+      "description": "Paste the receipt text (items, quantities and prices) below to try to identify the products. Reading happens locally.",
+      "textareaLabel": "Receipt content for item reading",
+      "textareaPlaceholder": "Paste the receipt lines with items here, e.g. '1 RICE 5KG 24.90'…",
+      "parseButton": "Read items from receipt",
+      "emptyTitle": "Paste the receipt content",
+      "emptyDescription": "Paste the receipt content above to try to identify the items.",
+      "noItemsTitle": "No items identified",
+      "noItemsDescription": "We couldn't identify items automatically. You'll be able to import manually in a future step.",
+      "foundTitle": "Identified items",
+      "addManualItem": "Add item manually",
+      "removeItem": "Remove item",
+      "fields": {
+        "name": "Product name",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit price",
+        "totalPrice": "Total price",
+        "barcode": "Barcode"
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "summary": {
+        "items": "Items found",
+        "total": "Estimated total",
+        "lowConfidence": "Low-confidence items",
+        "reviewWarning": "Review the items before importing. The reader may not recognize every product correctly."
+      },
+      "destinationNextStep": "In the next step, the reviewed items can be sent to a list or to the cart."
     },
     "privacy": {
       "title": "Privacy & security",
