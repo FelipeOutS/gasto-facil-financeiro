@@ -802,6 +802,10 @@ function ImportarCupomPage() {
 
       {parsed && <ResultCard result={parsed} />}
 
+      {(parsed || manual.trim().length > 0) && (
+        <ItemsPreviewCard initialText={manual} />
+      )}
+
       {parsed &&
         (parsed.status === "valid_nfce_url" ||
           parsed.status === "possible_nfce_url") && (
