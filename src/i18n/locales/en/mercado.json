@@ -198,15 +198,19 @@
       "applied": "Product filled in. Review price and quantity."
     },
     "barcodeScanner": {
-      "scan": "Scan barcode",
+      "scan": "Scan with camera",
       "scanning": "Reading code…",
-      "close": "Close camera",
+      "decoding": "Analyzing photo…",
+      "close": "Close",
+      "uploadPhoto": "Upload barcode photo",
+      "tryAnotherPhoto": "Try another photo",
       "unsupported": "Camera scanning is not available on this device.",
       "permissionDenied": "Could not access the camera. Check your browser permissions.",
       "detected": "Code detected.",
       "invalidCode": "Invalid code. Use 8 to 14 digits.",
       "manualFallback": "You can still type the code manually.",
       "cameraError": "Could not start the camera.",
+      "imageError": "We couldn't read the code in this image. Try taking the photo closer, with good lighting, or type the code manually.",
       "hint": "Point the camera at the product barcode."
     },
     "finalize": {
