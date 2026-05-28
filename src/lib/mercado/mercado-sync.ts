@@ -14,6 +14,7 @@ import {
   __getMercadoActiveUserId,
   MERCADO_LEGACY_ANON_KEY,
   MERCADO_HISTORICO_LEGACY_ANON_KEY,
+  getListas,
   getHistoricoCompras,
   normalizeHistorico,
   type MercadoLista,
@@ -23,6 +24,7 @@ import {
   __setMercadoPrecosActiveUser,
   __setMercadoPrecosSyncHooks,
   __replacePrecosCache,
+  getHistoricoPrecos,
   MERCADO_PRECOS_LEGACY_ANON_KEY,
   MERCADO_PRECOS_STORAGE_KEY,
   buildProdutoKey,
@@ -88,9 +90,34 @@ async function pullListas(userId: string) {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  const listas = (data as ListaRow[] | null)?.map(listaRowToLista) ?? [];
-  __replaceListasCache(listas);
+  const server = (data as ListaRow[] | null)?.map(listaRowToLista) ?? [];
+  const local = getListas();
+  const serverById = new Map(server.map((l) => [l.id, l]));
+  const localById = new Map(local.map((l) => [l.id, l]));
+  const merged: MercadoLista[] = [];
+  const orphans: MercadoLista[] = [];
+  // Server + conflict resolution
+  for (const s of server) {
+    const l = localById.get(s.id);
+    if (l && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
+      merged.push(l);
+      orphans.push(l); // re-push newer local
+    } else {
+      merged.push(s);
+    }
+  }
+  // Local-only items not on server
+  for (const l of local) {
+    if (!serverById.has(l.id)) {
+      merged.push(l);
+      orphans.push(l);
+    }
+  }
+  merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+  __replaceListasCache(merged);
+  for (const o of orphans) void pushUpsertLista(o);
 }
+
 
 async function pushUpsertLista(l: MercadoLista) {
   const uid = __getMercadoActiveUserId();
@@ -209,11 +236,19 @@ async function pullHistoricoCompras(userId: string) {
     .eq("user_id", userId)
     .order("concluida_em", { ascending: false });
   if (error) throw error;
-  const items = (data as HistoricoRow[] | null)
+  const server = (data as HistoricoRow[] | null)
     ?.map(historicoRowToEntry)
     .filter((x): x is MercadoCompraHistorico => x !== null) ?? [];
-  __replaceHistoricoCache(items);
+  const local = getHistoricoCompras();
+  const serverIds = new Set(server.map((h) => h.id));
+  const orphans = local.filter((h) => !serverIds.has(h.id));
+  const merged = [...server, ...orphans].sort((a, b) =>
+    (b.concluidaEm ?? "").localeCompare(a.concluidaEm ?? "")
+  );
+  __replaceHistoricoCache(merged);
+  for (const o of orphans) void pushUpsertHistoricoCompra(o);
 }
+
 
 async function pushUpsertHistoricoCompra(h: MercadoCompraHistorico) {
   const uid = __getMercadoActiveUserId();
@@ -364,9 +399,17 @@ async function pullPrecosUsuario(userId: string) {
     .eq("user_id", userId)
     .order("comprado_em", { ascending: false });
   if (error) throw error;
-  const items = (data as PrecoRow[] | null)?.map(precoRowToLocal) ?? [];
-  __replacePrecosCache(items);
+  const server = (data as PrecoRow[] | null)?.map(precoRowToLocal) ?? [];
+  const local = getHistoricoPrecos();
+  const serverIds = new Set(server.map((p) => p.id));
+  const orphans = local.filter((p) => !serverIds.has(p.id));
+  const merged = [...server, ...orphans].sort((a, b) =>
+    (b.compradoEm ?? "").localeCompare(a.compradoEm ?? "")
+  );
+  __replacePrecosCache(merged);
+  if (orphans.length > 0) void pushUpsertRegistrosPreco(orphans);
 }
+
 
 async function pushUpsertRegistrosPreco(regs: MercadoPrecoLocal[]) {
   const uid = __getMercadoActiveUserId();
