@@ -38,6 +38,8 @@ import {
   parseCupomItemsFromText,
   makeEmptyCupomItem,
   type CupomItemPreview,
+  type CupomParseResult,
+} from "@/lib/mercado/nfce-items-parser";
 import {
   useMercadoListas,
   addLista,
@@ -46,8 +48,6 @@ import {
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
 
-  type ListaTipo,
-} from "@/lib/mercado/listas-store";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
