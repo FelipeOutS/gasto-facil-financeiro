@@ -101,9 +101,12 @@ export const getRouter = () => {
     defaultPreloadDelay: 50,
     // Mantém rotas pré-carregadas em cache por 30s para evitar refetch ao navegar.
     defaultPreloadStaleTime: 30_000,
-    // Só mostra o skeleton se a navegação demorar mais de 250ms (evita "piscadas").
-    defaultPendingMs: 250,
-    defaultPendingMinMs: 300,
+    // Só mostra o skeleton se a navegação demorar bastante (evita "splash" ao
+    // voltar entre rotas já carregadas — ex.: Mercado Inteligente).
+    // Combinado com defaultPendingMinMs: 0, o skeleton desaparece assim que a
+    // rota está pronta, sem ficar "preso" na tela.
+    defaultPendingMs: 1000,
+    defaultPendingMinMs: 0,
     defaultPendingComponent: () => <PageSkeleton wide />,
     defaultErrorComponent: DefaultErrorComponent,
   });
