@@ -19,6 +19,9 @@ import {
   ShoppingCart,
   Sparkles,
   Lock,
+  Plus,
+  Trash2,
+  ScanLine,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -27,8 +30,16 @@ import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
 } from "@/lib/mercado/nfce-parser";
+import {
+  parseCupomItemsFromText,
+  makeEmptyCupomItem,
+  type CupomItemPreview,
+  type CupomParseResult,
+} from "@/lib/mercado/nfce-items-parser";
 import { useMercadoListas } from "@/lib/mercado/listas-store";
+import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 export const Route = createFileRoute("/mercado_/importar-cupom")({
@@ -294,9 +305,351 @@ function DestinationCard() {
           </div>
         )}
       </div>
+
+      <p className="mt-3 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+        {t("importarCupom.destination.nextStepReady")}
+      </p>
     </section>
   );
 }
+
+function ConfidenceBadge({ value }: { value: CupomItemPreview["confianca"] }) {
+  const { t } = useTranslation("mercado");
+  const map: Record<CupomItemPreview["confianca"], { label: string; cls: string }> = {
+    alta: {
+      label: t("importarCupom.itemsPreview.confidence.high"),
+      cls: "bg-success/15 text-success ring-success/30",
+    },
+    media: {
+      label: t("importarCupom.itemsPreview.confidence.medium"),
+      cls: "bg-warning/15 text-warning ring-warning/30",
+    },
+    baixa: {
+      label: t("importarCupom.itemsPreview.confidence.low"),
+      cls: "bg-destructive/10 text-destructive ring-destructive/30",
+    },
+  };
+  const v = map[value];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1",
+        v.cls,
+      )}
+    >
+      {v.label}
+    </span>
+  );
+}
+
+function ItemsPreviewCard({ initialText }: { initialText: string }) {
+  const { t } = useTranslation("mercado");
+  const [text, setText] = useState(initialText);
+  const [result, setResult] = useState<CupomParseResult | null>(null);
+  const [items, setItems] = useState<CupomItemPreview[]>([]);
+
+  function handleParse() {
+    const r = parseCupomItemsFromText(text);
+    setResult(r);
+    setItems(r.items);
+  }
+
+  function updateItem(id: string, patch: Partial<CupomItemPreview>) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  }
+
+  function removeItem(id: string) {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }
+
+  function addManualItem() {
+    const empty = makeEmptyCupomItem();
+    setItems((prev) => [...prev, empty]);
+    if (!result) setResult({ status: "parsed", items: [empty], warnings: [] });
+  }
+
+  function parseMaybeNumber(v: string): number | undefined {
+    if (!v.trim()) return undefined;
+    const n = Number.parseFloat(v.replace(",", "."));
+    if (!Number.isFinite(n)) return undefined;
+    return n;
+  }
+
+  const totalEstimado = useMemo(
+    () =>
+      items.reduce((acc, it) => {
+        if (typeof it.valorTotal === "number" && Number.isFinite(it.valorTotal)) {
+          return acc + it.valorTotal;
+        }
+        if (
+          typeof it.valorUnitario === "number" &&
+          Number.isFinite(it.valorUnitario)
+        ) {
+          return acc + it.valorUnitario * (it.quantidade || 1);
+        }
+        return acc;
+      }, 0),
+    [items],
+  );
+  const lowCount = useMemo(
+    () => items.filter((it) => it.confianca === "baixa").length,
+    [items],
+  );
+
+  return (
+    <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+          <ScanLine className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-foreground md:text-base">
+            {t("importarCupom.itemsPreview.title")}
+          </h2>
+          <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+            {t("importarCupom.itemsPreview.description")}
+          </p>
+        </div>
+      </div>
+
+      <label className="mt-3 block text-[12px] font-medium text-foreground">
+        {t("importarCupom.itemsPreview.textareaLabel")}
+      </label>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={t("importarCupom.itemsPreview.textareaPlaceholder")}
+        rows={5}
+        className="mt-1.5 block w-full resize-y rounded-2xl border border-border bg-card-elevated px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+      />
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <button
+          type="button"
+          onClick={handleParse}
+          disabled={!text.trim()}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <ScanLine className="h-4 w-4" />
+          {t("importarCupom.itemsPreview.parseButton")}
+        </button>
+        <button
+          type="button"
+          onClick={addManualItem}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98]"
+        >
+          <Plus className="h-4 w-4 text-muted-foreground" />
+          {t("importarCupom.itemsPreview.addManualItem")}
+        </button>
+      </div>
+
+      {result === null && (
+        <div className="mt-4 rounded-2xl border border-dashed border-border/60 bg-card-elevated p-4 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            {t("importarCupom.itemsPreview.emptyTitle")}
+          </p>
+          <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+            {t("importarCupom.itemsPreview.emptyDescription")}
+          </p>
+        </div>
+      )}
+
+      {result && result.status === "empty" && (
+        <div className="mt-4 rounded-2xl border border-dashed border-border/60 bg-card-elevated p-4 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            {t("importarCupom.itemsPreview.emptyTitle")}
+          </p>
+          <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+            {t("importarCupom.itemsPreview.emptyDescription")}
+          </p>
+        </div>
+      )}
+
+      {result && result.status === "no_items" && items.length === 0 && (
+        <div className="mt-4 rounded-2xl border border-dashed border-warning/40 bg-warning/5 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            {t("importarCupom.itemsPreview.noItemsTitle")}
+          </p>
+          <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+            {t("importarCupom.itemsPreview.noItemsDescription")}
+          </p>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-foreground">
+              {t("importarCupom.itemsPreview.foundTitle")}
+            </h3>
+          </div>
+
+          <ul className="mt-3 grid gap-3">
+            {items.map((it) => (
+              <li
+                key={it.id}
+                className="rounded-2xl border border-border/60 bg-card-elevated p-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <ConfidenceBadge value={it.confianca} />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(it.id)}
+                    aria-label={t("importarCupom.itemsPreview.removeItem")}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-muted-foreground transition hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <label className="min-w-0">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("importarCupom.itemsPreview.fields.name")}
+                    </span>
+                    <input
+                      type="text"
+                      value={it.nome}
+                      onChange={(e) => updateItem(it.id, { nome: e.target.value })}
+                      className="mt-1 block w-full min-w-0 truncate rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                    />
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="min-w-0">
+                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t("importarCupom.itemsPreview.fields.quantity")}
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={String(it.quantidade ?? "")}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            quantidade: parseMaybeNumber(e.target.value) ?? 1,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-xl border border-border bg-card px-3 py-2 text-sm tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t("importarCupom.itemsPreview.fields.unit")}
+                      </span>
+                      <input
+                        type="text"
+                        value={it.unidade ?? ""}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            unidade: e.target.value.trim() || undefined,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="min-w-0">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("importarCupom.itemsPreview.fields.unitPrice")}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        typeof it.valorUnitario === "number" ? String(it.valorUnitario) : ""
+                      }
+                      onChange={(e) =>
+                        updateItem(it.id, {
+                          valorUnitario: parseMaybeNumber(e.target.value),
+                        })
+                      }
+                      className="mt-1 block w-full rounded-xl border border-border bg-card px-3 py-2 text-sm tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                    />
+                  </label>
+                  <label className="min-w-0">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("importarCupom.itemsPreview.fields.totalPrice")}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        typeof it.valorTotal === "number" ? String(it.valorTotal) : ""
+                      }
+                      onChange={(e) =>
+                        updateItem(it.id, {
+                          valorTotal: parseMaybeNumber(e.target.value),
+                        })
+                      }
+                      className="mt-1 block w-full rounded-xl border border-border bg-card px-3 py-2 text-sm tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                    />
+                  </label>
+
+                  <label className="min-w-0 md:col-span-2">
+                    <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("importarCupom.itemsPreview.fields.barcode")}
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={it.codigoBarras ?? ""}
+                      onChange={(e) =>
+                        updateItem(it.id, {
+                          codigoBarras: e.target.value.replace(/\D/g, "") || undefined,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-xl border border-border bg-card px-3 py-2 font-mono text-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                    />
+                  </label>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4 rounded-2xl border border-border/60 bg-card-elevated p-3">
+            <div className="grid gap-2 md:grid-cols-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("importarCupom.itemsPreview.summary.items")}
+                </p>
+                <p className="mt-0.5 text-base font-semibold text-foreground tabular-nums">
+                  {items.length}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("importarCupom.itemsPreview.summary.total")}
+                </p>
+                <p className="mt-0.5 text-base font-semibold text-foreground tabular-nums">
+                  {formatBRL(totalEstimado)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("importarCupom.itemsPreview.summary.lowConfidence")}
+                </p>
+                <p
+                  className={cn(
+                    "mt-0.5 text-base font-semibold tabular-nums",
+                    lowCount > 0 ? "text-warning" : "text-foreground",
+                  )}
+                >
+                  {lowCount}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 flex items-start gap-2 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+              <span>{t("importarCupom.itemsPreview.summary.reviewWarning")}</span>
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+
 
 function ImportarCupomPage() {
   const { t } = useTranslation("mercado");
@@ -448,6 +801,10 @@ function ImportarCupomPage() {
       </section>
 
       {parsed && <ResultCard result={parsed} />}
+
+      {(parsed || manual.trim().length > 0) && (
+        <ItemsPreviewCard initialText={manual} />
+      )}
 
       {parsed &&
         (parsed.status === "valid_nfce_url" ||
