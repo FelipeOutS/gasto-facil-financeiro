@@ -1247,7 +1247,13 @@ function ImportarCupomPage() {
       {parsed && <ResultCard result={parsed} />}
 
       {(parsed || manual.trim().length > 0) && (
-        <ItemsPreviewCard initialText={manual} />
+        <ItemsPreviewCard
+          initialText={manual}
+          items={previewItems}
+          setItems={setPreviewItems}
+          result={previewResult}
+          setResult={setPreviewResult}
+        />
       )}
 
       {parsed &&
@@ -1255,9 +1261,14 @@ function ImportarCupomPage() {
           parsed.status === "possible_nfce_url") && (
           <>
             <NextStepCard />
-            <DestinationCard />
+            {previewItems.length > 0 ? (
+              <ImportActionsCard items={previewItems} />
+            ) : (
+              <DestinationCard />
+            )}
           </>
         )}
+
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 md:p-5">
         <div className="flex items-start gap-3">
