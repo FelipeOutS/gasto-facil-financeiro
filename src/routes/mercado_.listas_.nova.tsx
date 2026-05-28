@@ -28,7 +28,7 @@ function NovaListaPage() {
   const [submitting, setSubmitting] = useState(false);
 
   function handleBack() {
-    void navigate({ to: "/mercado/listas" });
+    void navigate({ to: "/mercado/listas", replace: true });
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {

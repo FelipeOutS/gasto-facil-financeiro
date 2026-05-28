@@ -40,7 +40,7 @@ function OrcamentoPage() {
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {

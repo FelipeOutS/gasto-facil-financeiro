@@ -69,7 +69,7 @@ function CarrinhoPage() {
   const lista = useMercadoLista(listaId);
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   return (

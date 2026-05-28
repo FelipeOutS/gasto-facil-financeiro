@@ -64,7 +64,7 @@ function ListaDetailPage() {
   const lista = useMercadoLista(id);
 
   function handleBack() {
-    void navigate({ to: "/mercado/listas" });
+    void navigate({ to: "/mercado/listas", replace: true });
   }
 
   if (!lista) {

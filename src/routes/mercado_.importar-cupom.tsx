@@ -1099,7 +1099,7 @@ function ImportarCupomPage() {
   const [previewItems, setPreviewItems] = useState<CupomItemPreview[]>([]);
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   function handleDetected(content: string) {
