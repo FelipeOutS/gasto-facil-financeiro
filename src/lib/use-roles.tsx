@@ -26,7 +26,7 @@ const ROLES_CACHE_PREFIX = "gf-roles-cache:";
 const ROLES_RUNTIME_CACHE_TTL_MS = 5 * 60_000;
 
 let rolesRuntimeCache: { userId: string; roles: AppRole[]; loadedAt: number } | null = null;
-let rolesRuntimeInFlight: { userId: string; promise: Promise<AppRole[]> } | null = null;
+let rolesRuntimeInFlight: { userId: string; promise: Promise<AppRole[] | null> } | null = null;
 
 function getRuntimeRoles(userId: string): AppRole[] | null {
   if (
@@ -123,7 +123,7 @@ export function useRoles(): RolesState {
               if (error || !data) return null;
               return data.map((r) => r.role as AppRole);
             })();
-            rolesRuntimeInFlight = { userId: user.id, promise: promise.then((value) => value ?? []) };
+            rolesRuntimeInFlight = { userId: user.id, promise };
             promise.finally(() => {
               if (rolesRuntimeInFlight?.promise === promise) {
                 rolesRuntimeInFlight = null;
