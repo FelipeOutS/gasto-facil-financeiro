@@ -687,9 +687,6 @@ export function useMercadoSync() {
         // Listas
         await migrateLegacyListasOnce(uid);
         if (cancelled) return;
-        // Remove dirty criado pela estratégia antiga de marcar todo cache local.
-        // A partir daqui, dirty só representa mutação local real do usuário.
-        discardUnsafeSeededDirtyOnce(uid);
         await pullListas(uid);
         listasOk = true;
         if (cancelled) return;
