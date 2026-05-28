@@ -101,13 +101,10 @@ export const getRouter = () => {
     defaultPreloadDelay: 50,
     // Mantém rotas pré-carregadas em cache por 30s para evitar refetch ao navegar.
     defaultPreloadStaleTime: 30_000,
-    // Só mostra o skeleton se a navegação demorar bastante (evita "splash" ao
-    // voltar entre rotas já carregadas — ex.: Mercado Inteligente).
-    // Combinado com defaultPendingMinMs: 0, o skeleton desaparece assim que a
-    // rota está pronta, sem ficar "preso" na tela.
-    defaultPendingMs: 1000,
-    defaultPendingMinMs: 0,
-    defaultPendingComponent: () => <PageSkeleton wide />,
+    // Sem pending component global: o TanStack Router mantém a página atual
+    // visível enquanto a próxima carrega — navegação parece instantânea, sem
+    // splash/skeleton entre rotas. Páginas individuais podem mostrar
+    // skeletons locais para dados próprios quando fizer sentido.
     defaultErrorComponent: DefaultErrorComponent,
   });
 
