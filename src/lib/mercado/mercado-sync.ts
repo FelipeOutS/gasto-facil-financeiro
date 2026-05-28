@@ -807,28 +807,45 @@ async function pullCestas(userId: string) {
   const toRetryDelete: string[] = [];
   const toRePushUpsert: MercadoCestaPadrao[] = [];
 
+  const dirty = readCestasDirty(userId);
+  const safetyDone = (() => {
+    try { return localStorage.getItem(cestasSafetyFlagKey(userId)) === "1"; } catch { return true; }
+  })();
+
   // Server + conflict resolution (last-write-wins por atualizadoEm).
   for (const s of server) {
     if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
     const l = localById.get(s.id);
-    if (l && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+    if (l && dirty.has(l.id) && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
       merged.push(l);
       toRePushUpsert.push(l);
     } else {
       merged.push(s);
     }
   }
-  // Cestas locais ausentes no servidor: preserva e re-push (local-first).
-  // Não há "implicit delete" silencioso — exclusões em outro device só
-  // valem se houver tombstone (ainda não existia este store sincronizado).
+  // Cestas locais ausentes no servidor:
+  // - tombstone local -> nada a fazer.
+  // - dirty (mutada localmente, push pendente) -> preserva e re-push.
+  // - primeiro pull pós-deploy (safety): preserva e marca dirty para não
+  //   apagar cestas legítimas pré-sync; subsequentes pulls aplicam drop.
+  // - sem dirty + safety já feito -> excluída em outro device, drop silencioso.
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombs.has(l.id)) continue;
-    merged.push(l);
-    toRePushUpsert.push(l);
+    if (dirty.has(l.id)) { merged.push(l); toRePushUpsert.push(l); continue; }
+    if (!safetyDone) {
+      markCestaDirty(userId, l.id);
+      merged.push(l);
+      toRePushUpsert.push(l);
+      continue;
+    }
+    // implicit delete: outro dispositivo removeu.
   }
   merged.sort((a, b) => (b.atualizadoEm ?? "").localeCompare(a.atualizadoEm ?? ""));
   __replaceCestaCache(merged);
+  if (!safetyDone) {
+    try { localStorage.setItem(cestasSafetyFlagKey(userId), "1"); } catch { /* ignore */ }
+  }
 
   // Best-effort: re-push pendências e retentativas de delete.
   for (const id of toRetryDelete) { void pushDeleteCesta(id); }
@@ -838,10 +855,15 @@ async function pullCestas(userId: string) {
       const { error } = await supabase
         .from("mercado_cestas_padrao")
         .upsert(rows, { onConflict: "id" });
-      if (error) console.warn("[mercado-sync] cestas re-push failed:", error.message);
+      if (error) {
+        console.warn("[mercado-sync] cestas re-push failed:", error.message);
+      } else {
+        for (const c of toRePushUpsert) clearCestaDirty(userId, c.id);
+      }
     } catch (e) {
       console.warn("[mercado-sync] cestas re-push threw:", e);
     }
+
   }
 }
 
