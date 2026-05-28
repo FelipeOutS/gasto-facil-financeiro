@@ -721,17 +721,23 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
 }
 
 function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
-  const { t } = useTranslation("mercado");
-  const navigate = useNavigate();
-  const listas = useMercadoListas();
-
-  type Mode = "none" | "new" | "existing" | "cart";
+  type Mode = "none" | "new" | "existing" | "cart" | "finish";
   type CartSub = "none" | "quick" | "existing";
 
   const [mode, setMode] = useState<Mode>("none");
   const [cartSub, setCartSub] = useState<CartSub>("none");
   const [listName, setListName] = useState("");
   const [tipo, setTipo] = useState<ListaTipo>("compraMes");
+  const [estimateText, setEstimateText] = useState("");
+  const [observation, setObservation] = useState("");
+  const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  // E34 finish-purchase form state
+  const [finishName, setFinishName] = useState("");
+  const [finishMarket, setFinishMarket] = useState("");
+  const [finishDate, setFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [finishObs, setFinishObs] = useState("");
+
   const [estimateText, setEstimateText] = useState("");
   const [observation, setObservation] = useState("");
   const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
