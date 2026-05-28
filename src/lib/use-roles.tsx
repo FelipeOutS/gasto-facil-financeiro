@@ -23,6 +23,25 @@ type RolesState = {
  * lidas da tabela `user_roles` no servidor, com RLS restringindo escrita.
  */
 const ROLES_CACHE_PREFIX = "gf-roles-cache:";
+const ROLES_RUNTIME_CACHE_TTL_MS = 5 * 60_000;
+
+let rolesRuntimeCache: { userId: string; roles: AppRole[]; loadedAt: number } | null = null;
+let rolesRuntimeInFlight: { userId: string; promise: Promise<AppRole[]> } | null = null;
+
+function getRuntimeRoles(userId: string): AppRole[] | null {
+  if (
+    rolesRuntimeCache?.userId === userId &&
+    Date.now() - rolesRuntimeCache.loadedAt < ROLES_RUNTIME_CACHE_TTL_MS
+  ) {
+    return rolesRuntimeCache.roles;
+  }
+  return null;
+}
+
+function rememberRuntimeRoles(userId: string, roles: AppRole[]) {
+  rolesRuntimeCache = { userId, roles, loadedAt: Date.now() };
+  writeRolesCache(userId, roles);
+}
 
 function readRolesCache(userId: string): AppRole[] | null {
   if (typeof window === "undefined") return null;
