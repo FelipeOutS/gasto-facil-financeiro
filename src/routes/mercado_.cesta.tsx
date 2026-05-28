@@ -56,10 +56,6 @@ function CestaPadraoPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
-      return;
-    }
     void navigate({ to: "/mercado" });
   }
 

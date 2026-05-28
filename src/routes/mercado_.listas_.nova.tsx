@@ -28,10 +28,6 @@ function NovaListaPage() {
   const [submitting, setSubmitting] = useState(false);
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
-      return;
-    }
     void navigate({ to: "/mercado/listas" });
   }
 
