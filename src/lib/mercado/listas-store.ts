@@ -799,6 +799,9 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
     orcamento:
       typeof r.orcamento === "number" && Number.isFinite(r.orcamento) && r.orcamento > 0
         ? r.orcamento
+        : undefined,
+    percentualConcluido: num(r.percentualConcluido),
+    economiaOuEstouro: num(r.economiaOuEstouro),
     itensSnapshot,
     mercadoNome:
       typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
@@ -807,9 +810,6 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
   };
 }
 
-      typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
-  };
-}
 
 function safeReadHistorico(): MercadoCompraHistorico[] {
   if (!isBrowser()) return [];
