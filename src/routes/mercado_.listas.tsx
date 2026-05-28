@@ -334,7 +334,7 @@ function SyncStatusBar({
   t: TFn;
 }) {
   const busy = manualRefreshing || state.status === "syncing";
-  let icon: JSX.Element;
+  let icon: React.ReactNode;
   let label: string;
   let tone = "text-muted-foreground";
   if (!loggedIn) {
