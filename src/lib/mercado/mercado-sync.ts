@@ -30,6 +30,17 @@ import {
   buildProdutoKey,
   type MercadoPrecoLocal,
 } from "./precos-history";
+import {
+  __setMercadoCestaActiveUser,
+  __setMercadoCestaSyncHooks,
+  __replaceCestaCache,
+  __getMercadoCestaActiveUserId,
+  MERCADO_CESTA_LEGACY_ANON_KEY,
+  MERCADO_CESTA_STORAGE_KEY,
+  getCestasPadrao,
+  normalizeCesta,
+  type MercadoCestaPadrao,
+} from "./cesta-store";
 
 // ============================================================
 // Listas
