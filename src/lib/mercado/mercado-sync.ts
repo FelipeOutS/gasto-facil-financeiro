@@ -130,7 +130,9 @@ function removeTombstones(uid: string | null, ids: Iterable<string>) {
 // ----- Dirty upserts (alterações locais pendentes de push) ------
 // Diferencia "lista local nova/alterada offline" de "cache antigo já apagado
 // em outro dispositivo". Sem isso, o merge ressuscita listas excluídas.
-const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v1";
+// v2 ignora o dirty:v1, que podia ter sido populado automaticamente por
+// seed antigo. A partir daqui, dirty nasce apenas de mutação local real.
+const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v2";
 function dirtyKey(uid: string) { return `${LISTAS_DIRTY_KEY_BASE}:${uid}`; }
 function readDirty(uid: string | null): Set<string> {
   if (!uid) return new Set();
@@ -159,18 +161,7 @@ function clearDirtyUpsert(uid: string | null, id: string) {
   if (!cur.delete(id)) return;
   writeDirty(uid, cur);
 }
-function discardUnsafeSeededDirtyOnce(uid: string) {
-  const seedFlag = `${LISTAS_DIRTY_KEY_BASE}:seeded:${uid}`;
-  const cleanupFlag = `${LISTAS_DIRTY_KEY_BASE}:seed-cleaned:v1:${uid}`;
-  try {
-    if (localStorage.getItem(seedFlag) !== "1" || localStorage.getItem(cleanupFlag) === "1") return;
-    localStorage.removeItem(dirtyKey(uid));
-    localStorage.setItem(cleanupFlag, "1");
-  } catch { /* ignore */ }
-}
-
 async function pullListas(userId: string) {
-  discardUnsafeSeededDirtyOnce(userId);
   const { data, error } = await supabase
     .from("mercado_listas")
     .select("*")
