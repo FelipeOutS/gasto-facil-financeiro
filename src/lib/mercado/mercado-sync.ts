@@ -52,6 +52,17 @@ import {
   MERCADO_ORCAMENTO_STORAGE_KEY,
   type MercadoOrcamento,
 } from "./orcamento-store";
+import {
+  __setMercadoMercadosActiveUser,
+  __setMercadoMercadosSyncHooks,
+  __getMercadoMercadosActiveUserId,
+  __replaceMercadosCache,
+  getMercadosLocais,
+  normalizeMercadoLocal,
+  MERCADO_MERCADOS_LEGACY_ANON_KEY,
+  MERCADOS_LOCAIS_STORAGE_KEY,
+  type MercadoLocal,
+} from "./mercados-store";
 
 // ============================================================
 // Listas
