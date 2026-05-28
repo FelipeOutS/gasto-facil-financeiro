@@ -740,7 +740,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   // E34 finish-purchase form state
   const [finishName, setFinishName] = useState("");
   const [finishMarket, setFinishMarket] = useState("");
-  const [finishDate, setFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [finishDate, setFinishDate] = useState(() => todayLocalISODate());
   const [finishObs, setFinishObs] = useState("");
 
 
