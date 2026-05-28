@@ -350,11 +350,21 @@ function ConfidenceBadge({ value }: { value: CupomItemPreview["confianca"] }) {
   );
 }
 
-function ItemsPreviewCard({ initialText }: { initialText: string }) {
+function ItemsPreviewCard({
+  initialText,
+  items,
+  setItems,
+  result,
+  setResult,
+}: {
+  initialText: string;
+  items: CupomItemPreview[];
+  setItems: React.Dispatch<React.SetStateAction<CupomItemPreview[]>>;
+  result: CupomParseResult | null;
+  setResult: React.Dispatch<React.SetStateAction<CupomParseResult | null>>;
+}) {
   const { t } = useTranslation("mercado");
   const [text, setText] = useState(initialText);
-  const [result, setResult] = useState<CupomParseResult | null>(null);
-  const [items, setItems] = useState<CupomItemPreview[]>([]);
 
   function handleParse() {
     const r = parseCupomItemsFromText(text);
@@ -375,6 +385,7 @@ function ItemsPreviewCard({ initialText }: { initialText: string }) {
     setItems((prev) => [...prev, empty]);
     if (!result) setResult({ status: "parsed", items: [empty], warnings: [] });
   }
+
 
   function parseMaybeNumber(v: string): number | undefined {
     if (!v.trim()) return undefined;
