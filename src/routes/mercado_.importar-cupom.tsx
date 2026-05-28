@@ -1036,8 +1036,34 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
             <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
               {t("importarCupom.importActions.cartCardDesc")}
             </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openFinish}
+          disabled={!hasValid}
+          className={cn(
+            "group flex min-h-11 items-start gap-2.5 rounded-2xl border p-3 text-left transition active:scale-[0.99]",
+            mode === "finish"
+              ? "border-primary bg-primary/5"
+              : "border-border/60 bg-card-elevated hover:bg-card",
+            !hasValid && "cursor-not-allowed opacity-60",
+          )}
+        >
+          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card text-brand ring-1 ring-border/60">
+            <Receipt className="h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-semibold text-foreground">
+              {t("importarCupom.importActions.finishPurchase.cardTitle")}
+            </span>
+            <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+              {t("importarCupom.importActions.finishPurchase.cardDesc")}
+            </span>
           </span>
         </button>
+      </div>
+
       </div>
 
       {!hasValid && (
