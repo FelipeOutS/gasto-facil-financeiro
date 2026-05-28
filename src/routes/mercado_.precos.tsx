@@ -30,10 +30,6 @@ function PrecosPage() {
   const navigate = useNavigate();
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
-      return;
-    }
     void navigate({ to: "/mercado" });
   }
 
