@@ -641,6 +641,218 @@ async function migrateLegacyPrecosOnce(userId: string) {
 }
 
 // ============================================================
+// Cestas padrão (E35 / Parte 1)
+// ============================================================
+
+type CestaRow = {
+  id: string;
+  user_id: string;
+  nome: string;
+  tipo: string;
+  descricao: string | null;
+  itens: unknown;
+  created_at: string;
+  updated_at: string;
+};
+
+function cestaRowToCesta(r: CestaRow): MercadoCestaPadrao {
+  const normalized = normalizeCesta({
+    id: r.id,
+    nome: r.nome ?? "",
+    tipo: r.tipo ?? "outros",
+    descricao: r.descricao ?? undefined,
+    itens: Array.isArray(r.itens) ? r.itens : [],
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  });
+  // normalizeCesta retorna null apenas se id estiver ausente; aqui sempre existe.
+  return normalized as MercadoCestaPadrao;
+}
+
+function cestaToRow(c: MercadoCestaPadrao, userId: string) {
+  return {
+    id: c.id,
+    user_id: userId,
+    nome: c.nome,
+    tipo: c.tipo,
+    descricao: c.descricao ?? null,
+    itens: c.itens,
+    created_at: c.criadoEm,
+    updated_at: c.atualizadoEm,
+  };
+}
+
+// ----- Tombstones de exclusão de cestas (mesmo padrão das listas) -----
+const CESTAS_TOMBSTONE_KEY_BASE = "gi:mercado:cestas:deleted:v1";
+function cestasTombstoneKey(uid: string) {
+  return `${CESTAS_TOMBSTONE_KEY_BASE}:${uid}`;
+}
+function readCestasTombstones(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(cestasTombstoneKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return new Set(
+        parsed
+          .filter((t): t is { id: string } => !!t && typeof (t as { id?: unknown }).id === "string")
+          .map((t) => t.id),
+      );
+    }
+    return new Set();
+  } catch { return new Set(); }
+}
+function addCestaTombstone(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readCestasTombstones(uid);
+  if (cur.has(id)) return;
+  cur.add(id);
+  try {
+    localStorage.setItem(
+      cestasTombstoneKey(uid),
+      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+    );
+  } catch { /* ignore */ }
+}
+
+async function pushUpsertCesta(c: MercadoCestaPadrao) {
+  const uid = __getMercadoCestaActiveUserId();
+  if (!uid) return;
+  try {
+    const { error } = await supabase
+      .from("mercado_cestas_padrao")
+      .upsert(cestaToRow(c, uid), { onConflict: "id" });
+    if (error) console.warn("[mercado-sync] cesta upsert failed:", error.message);
+  } catch (e) {
+    console.warn("[mercado-sync] cesta upsert threw:", e);
+  }
+}
+
+async function pushDeleteCesta(id: string) {
+  const uid = __getMercadoCestaActiveUserId();
+  if (!uid) return;
+  try {
+    const { error } = await supabase
+      .from("mercado_cestas_padrao")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", uid);
+    if (error) console.warn("[mercado-sync] cesta delete failed:", error.message);
+  } catch (e) {
+    console.warn("[mercado-sync] cesta delete threw:", e);
+  }
+}
+
+async function pullCestas(userId: string) {
+  const { data, error } = await supabase
+    .from("mercado_cestas_padrao")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  const server = (data as CestaRow[] | null)?.map(cestaRowToCesta) ?? [];
+  const local = getCestasPadrao();
+  const tombs = readCestasTombstones(userId);
+  const serverById = new Map(server.map((c) => [c.id, c]));
+  const localById = new Map(local.map((c) => [c.id, c]));
+  const merged: MercadoCestaPadrao[] = [];
+  const toRetryDelete: string[] = [];
+  const toRePushUpsert: MercadoCestaPadrao[] = [];
+
+  // Server + conflict resolution (last-write-wins por atualizadoEm).
+  for (const s of server) {
+    if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
+    const l = localById.get(s.id);
+    if (l && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+      merged.push(l);
+      toRePushUpsert.push(l);
+    } else {
+      merged.push(s);
+    }
+  }
+  // Cestas locais ausentes no servidor: preserva e re-push (local-first).
+  // Não há "implicit delete" silencioso — exclusões em outro device só
+  // valem se houver tombstone (ainda não existia este store sincronizado).
+  for (const l of local) {
+    if (serverById.has(l.id)) continue;
+    if (tombs.has(l.id)) continue;
+    merged.push(l);
+    toRePushUpsert.push(l);
+  }
+  merged.sort((a, b) => (b.atualizadoEm ?? "").localeCompare(a.atualizadoEm ?? ""));
+  __replaceCestaCache(merged);
+
+  // Best-effort: re-push pendências e retentativas de delete.
+  for (const id of toRetryDelete) { void pushDeleteCesta(id); }
+  if (toRePushUpsert.length > 0) {
+    const rows = toRePushUpsert.map((c) => cestaToRow(c, userId));
+    try {
+      const { error } = await supabase
+        .from("mercado_cestas_padrao")
+        .upsert(rows, { onConflict: "id" });
+      if (error) console.warn("[mercado-sync] cestas re-push failed:", error.message);
+    } catch (e) {
+      console.warn("[mercado-sync] cestas re-push threw:", e);
+    }
+  }
+}
+
+// Migração one-shot da chave anônima legada para a chave por usuário.
+async function migrateLegacyCestasOnce(userId: string) {
+  const flag = `gi:mercado:cestas:migrated:v1:${userId}`;
+  if (localStorage.getItem(flag) === "1") return;
+  let legacy: MercadoCestaPadrao[] = [];
+  try {
+    const raw = localStorage.getItem(MERCADO_CESTA_LEGACY_ANON_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        legacy = parsed
+          .map((x) => normalizeCesta(x))
+          .filter((c): c is MercadoCestaPadrao => c !== null);
+      }
+    }
+  } catch { /* ignore */ }
+
+  // Combina com o que já está na chave por usuário, sem duplicar por id.
+  const userKey = `${MERCADO_CESTA_STORAGE_KEY}:${userId}`;
+  let current: MercadoCestaPadrao[] = [];
+  try {
+    const raw = localStorage.getItem(userKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        current = parsed
+          .map((x) => normalizeCesta(x))
+          .filter((c): c is MercadoCestaPadrao => c !== null);
+      }
+    }
+  } catch { /* ignore */ }
+  const map = new Map<string, MercadoCestaPadrao>();
+  for (const c of [...current, ...legacy]) map.set(c.id, c);
+  const all = Array.from(map.values());
+  if (all.length > 0) {
+    try {
+      localStorage.setItem(userKey, JSON.stringify(all));
+      const rows = all.map((c) => cestaToRow(c, userId));
+      const { error } = await supabase
+        .from("mercado_cestas_padrao")
+        .upsert(rows, { onConflict: "id", ignoreDuplicates: true });
+      if (error) {
+        console.warn("[mercado-sync] legacy cestas migration failed:", error.message);
+        return;
+      }
+    } catch (e) {
+      console.warn("[mercado-sync] legacy cestas migration threw:", e);
+      return;
+    }
+  }
+  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
+  try { localStorage.removeItem(MERCADO_CESTA_LEGACY_ANON_KEY); } catch { /* ignore */ }
+}
+
+// ============================================================
 // Wiring
 // ============================================================
 
