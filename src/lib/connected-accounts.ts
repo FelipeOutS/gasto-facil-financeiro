@@ -161,11 +161,11 @@ export async function refuseInviteByToken(token: string) {
 }
 
 export async function fetchInviteByToken(token: string) {
-  const { data, error } = await supabase
-    .from("connected_accounts")
-    .select("*")
-    .eq("invite_token", token)
-    .maybeSingle();
+  // SECURITY DEFINER RPC — returns invite details for any caller (the URL token
+  // is the bearer secret) but intentionally does NOT return invite_token itself.
+  const { data, error } = await supabase.rpc("fetch_invite_by_token", { _token: token });
   if (error) throw error;
-  return (data as ConnectedAccount | null) ?? null;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return { ...(row as ConnectedAccount), invite_token: "" } as ConnectedAccount;
 }
