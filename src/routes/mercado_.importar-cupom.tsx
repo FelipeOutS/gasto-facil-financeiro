@@ -25,6 +25,8 @@ import {
   ScanLine,
   Check,
 } from "lucide-react";
+
+
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
@@ -42,8 +44,10 @@ import {
   useMercadoListas,
   addLista,
   addItensLista,
+  registrarCompraFinalizadaDoCupom,
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
+
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -721,7 +725,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const navigate = useNavigate();
   const listas = useMercadoListas();
 
-  type Mode = "none" | "new" | "existing" | "cart";
+  type Mode = "none" | "new" | "existing" | "cart" | "finish";
   type CartSub = "none" | "quick" | "existing";
 
   const [mode, setMode] = useState<Mode>("none");
@@ -732,6 +736,12 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const [observation, setObservation] = useState("");
   const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // E34 finish-purchase form state
+  const [finishName, setFinishName] = useState("");
+  const [finishMarket, setFinishMarket] = useState("");
+  const [finishDate, setFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [finishObs, setFinishObs] = useState("");
+
 
   const validItems = useMemo(() => sanitizeItemsForImport(items), [items]);
   const hasValid = validItems.length > 0;
@@ -744,7 +754,12 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setEstimateText("");
     setObservation("");
     setSelectedListaId(null);
+    setFinishName("");
+    setFinishMarket("");
+    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishObs("");
   }
+
 
   function openNew() {
     if (!hasValid) {
@@ -882,6 +897,55 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
   }
 
+
+  function openFinish() {
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    setMode("finish");
+    setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
+    setFinishMarket("");
+    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishObs("");
+  }
+
+  function confirmFinish() {
+    if (submitting) return;
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const concluidaEm = (() => {
+        const d = finishDate.trim();
+        if (!d) return new Date().toISOString();
+        const parsed = new Date(`${d}T12:00:00`);
+        return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+      })();
+      const entry = registrarCompraFinalizadaDoCupom({
+        nome:
+          finishName.trim() ||
+          t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+        mercadoNome: finishMarket.trim() || undefined,
+        concluidaEm,
+        observacao: finishObs.trim() || undefined,
+        itens: validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      });
+      if (!entry) {
+        toast.error(t("importarCupom.importActions.noValidItems"));
+        return;
+      }
+      toast.success(t("importarCupom.importActions.finishPurchase.success"));
+      resetForm();
+      void navigate({ to: "/mercado/historico" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
       <div className="flex items-start gap-3">
@@ -898,7 +962,8 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+
         <button
           type="button"
           onClick={openNew}
@@ -971,8 +1036,34 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
             <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
               {t("importarCupom.importActions.cartCardDesc")}
             </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openFinish}
+          disabled={!hasValid}
+          className={cn(
+            "group flex min-h-11 items-start gap-2.5 rounded-2xl border p-3 text-left transition active:scale-[0.99]",
+            mode === "finish"
+              ? "border-primary bg-primary/5"
+              : "border-border/60 bg-card-elevated hover:bg-card",
+            !hasValid && "cursor-not-allowed opacity-60",
+          )}
+        >
+          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-card text-brand ring-1 ring-border/60">
+            <Receipt className="h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-semibold text-foreground">
+              {t("importarCupom.importActions.finishPurchase.cardTitle")}
+            </span>
+            <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+              {t("importarCupom.importActions.finishPurchase.cardDesc")}
+            </span>
           </span>
         </button>
+      </div>
+
       </div>
 
       {!hasValid && (

@@ -728,7 +728,10 @@ export type MercadoCompraHistorico = {
   itensSnapshot: ListaItem[];
   /** E15: nome do mercado/estabelecimento informado opcionalmente. Pode estar ausente em compras antigas. */
   mercadoNome?: string;
+  /** E34: observação livre fornecida ao registrar a compra. */
+  observacao?: string;
 };
+
 
 const historicoListeners = new Set<Listener>();
 
@@ -802,8 +805,11 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
     itensSnapshot,
     mercadoNome:
       typeof r.mercadoNome === "string" && r.mercadoNome.trim() ? r.mercadoNome.trim() : undefined,
+    observacao:
+      typeof r.observacao === "string" && r.observacao.trim() ? r.observacao.trim() : undefined,
   };
 }
+
 
 function safeReadHistorico(): MercadoCompraHistorico[] {
   if (!isBrowser()) return [];
@@ -904,6 +910,135 @@ export function finalizarListaCompra(
 
   return entry;
 }
+
+/**
+ * E34: Registra uma compra finalizada diretamente a partir de itens já
+ * revisados (ex.: cupom fiscal). NÃO cria lista ativa em /mercado/listas
+ * (usa um listaId sintético) e marca todos os itens como comprados para
+ * alimentar o histórico de preços via registrarPrecosDaCompra.
+ *
+ * Sanitização por item: igual a addItensLista.
+ * Retorna a entrada de histórico criada, ou null se nenhum item for válido.
+ */
+export function registrarCompraFinalizadaDoCupom(input: {
+  nome: string;
+  mercadoNome?: string;
+  concluidaEm?: string;
+  observacao?: string;
+  itens: Array<{
+    nome: string;
+    quantidade?: number;
+    unidade?: string;
+    precoEstimado?: number;
+    codigoBarras?: string;
+    origem?: "cupom" | "qrcode";
+  }>;
+}): MercadoCompraHistorico | null {
+  if (!input || !Array.isArray(input.itens) || input.itens.length === 0) return null;
+
+  const now = new Date().toISOString();
+  const concluidaEm =
+    typeof input.concluidaEm === "string" && input.concluidaEm.trim()
+      ? input.concluidaEm
+      : now;
+
+  const validOrigens: NonNullable<ListaItem["origem"]>[] = [
+    "manual",
+    "lista",
+    "barcode",
+    "cupom",
+    "qrcode",
+  ];
+
+  const snapshot: ListaItem[] = [];
+  for (const it of input.itens) {
+    if (!it || typeof it.nome !== "string") continue;
+    const nome = it.nome.trim();
+    if (!nome) continue;
+    const quantidade =
+      typeof it.quantidade === "number" && Number.isFinite(it.quantidade) && it.quantidade > 0
+        ? it.quantidade
+        : 1;
+    const precoEstimado =
+      typeof it.precoEstimado === "number" &&
+      Number.isFinite(it.precoEstimado) &&
+      it.precoEstimado > 0
+        ? it.precoEstimado
+        : undefined;
+    const barcode =
+      typeof it.codigoBarras === "string" ? it.codigoBarras.replace(/\D/g, "") : "";
+    const origem: ListaItem["origem"] =
+      it.origem && validOrigens.includes(it.origem) ? it.origem : "cupom";
+    snapshot.push({
+      id: genId("itm"),
+      nome,
+      quantidade,
+      unidade: it.unidade?.trim() || undefined,
+      precoEstimado,
+      codigoBarras: barcode ? barcode : undefined,
+      origem,
+      comprado: true,
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+  }
+
+  if (snapshot.length === 0) return null;
+
+  const totalEstimado = snapshot.reduce(
+    (acc, e) => acc + (e.precoEstimado ?? 0) * (e.quantidade || 1),
+    0,
+  );
+
+  const mercadoNome =
+    typeof input.mercadoNome === "string" && input.mercadoNome.trim()
+      ? input.mercadoNome.trim()
+      : undefined;
+  const observacao =
+    typeof input.observacao === "string" && input.observacao.trim()
+      ? input.observacao.trim()
+      : undefined;
+
+  const entry: MercadoCompraHistorico = {
+    id: genId("hst"),
+    // listaId sintético — NÃO referencia nenhuma MercadoLista ativa,
+    // mantendo o registro fora de /mercado/listas.
+    listaId: genId("cupom"),
+    nome: (input.nome || "").trim() || "Compra importada do cupom",
+    tipo: "outros",
+    concluidaEm,
+    totalItens: snapshot.length,
+    itensComprados: snapshot.length,
+    itensPendentes: 0,
+    totalEstimado,
+    totalCompradoEstimado: totalEstimado,
+    orcamento: undefined,
+    percentualConcluido: 100,
+    economiaOuEstouro: 0,
+    itensSnapshot: snapshot,
+    mercadoNome,
+    observacao,
+  };
+
+  const current = safeReadHistorico();
+  safeWriteHistorico([entry, ...current]);
+  emitHistorico();
+
+  // Push para Supabase (best-effort).
+  if (historicoSyncHooks.onUpsertHistorico) {
+    try { historicoSyncHooks.onUpsertHistorico(entry); } catch { /* ignore */ }
+  }
+
+  // Alimenta histórico local de preços (dedup por historicoId).
+  try {
+    registrarPrecosDaCompra(entry);
+  } catch {
+    // ignore — store de preços não pode quebrar o registro
+  }
+
+  return entry;
+}
+
 
 function subscribeHistorico(listener: Listener): () => void {
   historicoListeners.add(listener);
