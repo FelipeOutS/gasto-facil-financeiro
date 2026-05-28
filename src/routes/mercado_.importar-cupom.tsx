@@ -848,9 +848,10 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         estimate: parseEstimate(),
         observation: observation.trim() || undefined,
       });
-      for (const it of validItems) {
-        addItemLista(lista.id, { ...it, origem: "cupom" });
-      }
+      addItensLista(
+        lista.id,
+        validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      );
       toast.success(t("importarCupom.importActions.cartCreatedSuccess"));
       const id = lista.id;
       resetForm();
