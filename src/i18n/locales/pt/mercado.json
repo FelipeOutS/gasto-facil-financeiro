@@ -2,7 +2,8 @@
   "meta": {
     "title": "Mercado Inteligente — Gasto Inteligente",
     "listasTitle": "Listas de compras — Mercado Inteligente",
-    "calculadorasTitle": "Calculadoras — Mercado Inteligente"
+    "calculadorasTitle": "Calculadoras — Mercado Inteligente",
+    "importarCupomTitle": "Importar cupom fiscal — Mercado Inteligente"
   },
   "hub": {
     "title": "Mercado Inteligente",
@@ -50,6 +51,10 @@
       "meusMercados": {
         "title": "Meus mercados",
         "desc": "Cadastre seus mercados favoritos e encontre estabelecimentos próximos em uma etapa futura."
+      },
+      "importarCupom": {
+        "title": "Importar cupom fiscal",
+        "desc": "Leia o QR Code do cupom para preparar a importação da compra."
       }
     }
   },
@@ -812,6 +817,64 @@
         "useCta": "Usar este mercado",
         "noAddress": "Endereço não informado"
       }
+    }
+  },
+  "importarCupom": {
+    "back": "Voltar",
+    "home": "Início",
+    "title": "Importar cupom fiscal",
+    "subtitle": "Leia o QR Code do cupom fiscal (NFC-e) para preparar a importação da compra.",
+    "preparingNotice": "Por enquanto, esta tela apenas lê e identifica o conteúdo do QR Code. A importação automática completa dos itens ainda está em preparação.",
+    "futureNote": "Em uma próxima etapa, a leitura dos produtos da nota poderá ser revisada por você antes de ser adicionada a uma lista ou ao histórico de preços.",
+    "scanner": {
+      "title": "Ler QR Code do cupom",
+      "description": "Aponte a câmera para o QR Code impresso no cupom ou envie uma foto. A leitura é feita localmente no seu dispositivo.",
+      "scan": "Ler com a câmera",
+      "uploadPhoto": "Enviar foto do QR Code",
+      "tryAnotherPhoto": "Tentar outra foto",
+      "scanning": "Aponte para o QR Code…",
+      "decoding": "Lendo a imagem…",
+      "close": "Fechar",
+      "hint": "Centralize o QR Code e mantenha firme.",
+      "unsupported": "Seu navegador não suporta leitura de QR Code pela câmera.",
+      "permissionDenied": "Permissão da câmera negada.",
+      "cameraError": "Não foi possível iniciar a câmera.",
+      "imageError": "Não conseguimos ler um QR Code nesta imagem.",
+      "manualFallback": "Você pode enviar uma foto ou colar o conteúdo manualmente."
+    },
+    "manual": {
+      "title": "Colar conteúdo manualmente",
+      "description": "Se você já tem o link ou o texto do QR Code, pode colar aqui para análise.",
+      "placeholder": "Cole aqui o link ou o texto lido do QR Code…",
+      "analyze": "Analisar",
+      "paste": "Colar da área de transferência",
+      "reset": "Limpar"
+    },
+    "result": {
+      "status": {
+        "valid_nfce_url": "QR Code de NFC-e identificado",
+        "possible_nfce_url": "Possível QR Code de cupom fiscal",
+        "unsupported": "Conteúdo não reconhecido como NFC-e",
+        "invalid": "Conteúdo não reconhecido"
+      },
+      "statusDesc": {
+        "valid_nfce_url": "O conteúdo lido parece ser um QR Code oficial de cupom fiscal eletrônico.",
+        "possible_nfce_url": "O conteúdo tem características de cupom fiscal, mas não pudemos confirmar totalmente.",
+        "unsupported": "Conseguimos ler o conteúdo, mas ele não parece ser um cupom fiscal eletrônico.",
+        "invalid": "Não foi possível interpretar este conteúdo como QR Code de cupom fiscal."
+      },
+      "link": "Link detectado",
+      "host": "Origem",
+      "accessKey": "Chave de acesso",
+      "uf": "UF provável",
+      "itemsLater": "A leitura dos itens da nota será adicionada em uma próxima etapa. Nada foi salvo automaticamente.",
+      "invalidHint": "Confira se o QR Code está legível, tente outra foto ou cole o link manualmente."
+    },
+    "privacy": {
+      "title": "Privacidade e segurança",
+      "local": "A foto e o QR Code são processados localmente neste dispositivo nesta etapa.",
+      "nothingSaved": "Nada é salvo automaticamente em listas, carrinho ou histórico de preços.",
+      "reviewLater": "Você revisará todos os itens antes de qualquer importação futura."
     }
   }
 }
