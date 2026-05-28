@@ -14,6 +14,11 @@ import {
   Search,
   RefreshCw,
   ExternalLink,
+  ListPlus,
+  ListChecks,
+  ShoppingCart,
+  Sparkles,
+  Lock,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -22,7 +27,9 @@ import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
 } from "@/lib/mercado/nfce-parser";
+import { useMercadoListas } from "@/lib/mercado/listas-store";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/mercado_/importar-cupom")({
   head: () => ({
