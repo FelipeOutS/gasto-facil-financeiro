@@ -604,9 +604,16 @@ function ensureHooks() {
   if (hooksRegistered) return;
   hooksRegistered = true;
   __setMercadoSyncHooks({
-    onUpsertLista: (l) => { void pushUpsertLista(l); },
+    onUpsertLista: (l) => {
+      // marca dirty ANTES do push para sobreviver offline/falha de rede
+      markDirtyUpsert(__getMercadoActiveUserId(), l.id);
+      void pushUpsertLista(l);
+    },
     onDeleteLista: (id) => {
-      addTombstone(__getMercadoActiveUserId(), id);
+      const uid = __getMercadoActiveUserId();
+      addTombstone(uid, id);
+      // garante que não fique pendente de upsert depois de excluir
+      clearDirtyUpsert(uid, id);
       void pushDeleteLista(id);
     },
   });
