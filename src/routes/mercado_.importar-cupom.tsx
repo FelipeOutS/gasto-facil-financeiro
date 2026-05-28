@@ -869,11 +869,11 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
     if (!selectedListaId) return;
     setSubmitting(true);
+    try {
       addItensLista(
         selectedListaId,
         validItems.map((it) => ({ ...it, origem: "cupom" as const })),
       );
-      }
       toast.success(t("importarCupom.importActions.cartImportedSuccess"));
       const id = selectedListaId;
       resetForm();
