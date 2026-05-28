@@ -1,7 +1,7 @@
 import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
-import { PageSkeleton } from "./components/PageSkeleton";
+
 
 function isRecoverableRouteLoadError(error: Error) {
   const text = `${error.name} ${error.message} ${error.stack ?? ""}`.toLowerCase();
