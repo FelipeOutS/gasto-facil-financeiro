@@ -905,7 +905,42 @@
       "existingListsTitle": "Suas listas atuais (prévia)",
       "existingListsHint": "Apenas para visualização. Nenhuma lista será alterada nesta etapa.",
       "noListsHint": "Você ainda não tem listas. Você poderá criar uma quando a importação estiver disponível.",
-      "moreListsCount": "+{{count}} outras"
+      "moreListsCount": "+{{count}} outras",
+      "nextStepReady": "Na próxima etapa, estes itens revisados poderão ser enviados para uma lista ou para o carrinho."
+    },
+    "itemsPreview": {
+      "title": "Prévia dos itens encontrados",
+      "description": "Cole abaixo o texto do cupom (itens, quantidades e valores) para tentar identificar os produtos. A leitura é feita localmente.",
+      "textareaLabel": "Conteúdo do cupom para leitura dos itens",
+      "textareaPlaceholder": "Cole aqui as linhas do cupom com os itens, por exemplo: '1 ARROZ 5KG 24,90'…",
+      "parseButton": "Ler itens do cupom",
+      "emptyTitle": "Cole o conteúdo do cupom",
+      "emptyDescription": "Cole o conteúdo do cupom acima para tentar identificar os itens.",
+      "noItemsTitle": "Nenhum item identificado",
+      "noItemsDescription": "Não foi possível identificar itens automaticamente. Você poderá importar manualmente em uma próxima etapa.",
+      "foundTitle": "Itens identificados",
+      "addManualItem": "Adicionar item manualmente",
+      "removeItem": "Remover item",
+      "fields": {
+        "name": "Nome do produto",
+        "quantity": "Quantidade",
+        "unit": "Unidade",
+        "unitPrice": "Valor unitário",
+        "totalPrice": "Valor total",
+        "barcode": "Código de barras"
+      },
+      "confidence": {
+        "high": "Alta confiança",
+        "medium": "Média confiança",
+        "low": "Baixa confiança"
+      },
+      "summary": {
+        "items": "Itens encontrados",
+        "total": "Total estimado",
+        "lowConfidence": "Itens com baixa confiança",
+        "reviewWarning": "Revise os itens antes de importar. A leitura pode não reconhecer todos os produtos corretamente."
+      },
+      "destinationNextStep": "Na próxima etapa, estes itens revisados poderão ser enviados para uma lista ou para o carrinho."
     },
     "privacy": {
       "title": "Privacidade e segurança",
