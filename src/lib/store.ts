@@ -867,7 +867,13 @@ async function ensureDefaultBancos(userId: string): Promise<void> {
 
 // ---------- Hydrate everything ----------
 export async function hydrateUser(userId: string): Promise<void> {
-  if (hydrationStatus === "loading") return;
+  if (hydratedUserId === userId && hydrationStatus === "ready") return;
+  if (hydrationInFlightPromise && hydrationInFlightUserId === userId) {
+    return hydrationInFlightPromise;
+  }
+
+  hydrationInFlightUserId = userId;
+  hydrationInFlightPromise = (async () => {
   setHydrationStatus("loading");
   try {
     await Promise.all([
@@ -973,6 +979,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       memFaturas = (faturasRes.data ?? []).map(rowToFatura);
     }
 
+    hydratedUserId = userId;
     setHydrationStatus("ready");
 
     // Backfill em background: recupera lotes antigos que foram importados
@@ -986,7 +993,15 @@ export async function hydrateUser(userId: string): Promise<void> {
   } catch (e) {
     console.error("[store] hydrateUser failed", e);
     setHydrationStatus("error");
+  } finally {
+    if (hydrationInFlightUserId === userId) {
+      hydrationInFlightUserId = null;
+      hydrationInFlightPromise = null;
+    }
   }
+  })();
+
+  return hydrationInFlightPromise;
 }
 
 // ============================================================
