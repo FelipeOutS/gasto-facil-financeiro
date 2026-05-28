@@ -716,6 +716,44 @@ function addCestaTombstone(uid: string | null, id: string) {
   } catch { /* ignore */ }
 }
 
+
+
+// ----- Dirty upserts de cestas (mesmo princípio de listas dirty:v2) -----
+// Sem isso, pullCestas re-upserta toda cesta local-only — inclusive cestas
+// que foram excluídas em outro dispositivo — causando "ressurreição".
+const CESTAS_DIRTY_KEY_BASE = "gi:mercado:cestas:dirty:v1";
+const CESTAS_SAFETY_FLAG_BASE = "gi:mercado:cestas:dirty-safety-checked:v1";
+function cestasDirtyKey(uid: string) { return `${CESTAS_DIRTY_KEY_BASE}:${uid}`; }
+function cestasSafetyFlagKey(uid: string) { return `${CESTAS_SAFETY_FLAG_BASE}:${uid}`; }
+function readCestasDirty(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(cestasDirtyKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    return new Set();
+  } catch { return new Set(); }
+}
+function writeCestasDirty(uid: string | null, ids: Set<string>) {
+  if (!uid) return;
+  try { localStorage.setItem(cestasDirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+}
+function markCestaDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readCestasDirty(uid);
+  if (cur.has(id)) return;
+  cur.add(id); writeCestasDirty(uid, cur);
+}
+function clearCestaDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readCestasDirty(uid);
+  if (!cur.delete(id)) return;
+  writeCestasDirty(uid, cur);
+}
+
+
+
 async function pushUpsertCesta(c: MercadoCestaPadrao) {
   const uid = __getMercadoCestaActiveUserId();
   if (!uid) return;
@@ -723,7 +761,11 @@ async function pushUpsertCesta(c: MercadoCestaPadrao) {
     const { error } = await supabase
       .from("mercado_cestas_padrao")
       .upsert(cestaToRow(c, uid), { onConflict: "id" });
-    if (error) console.warn("[mercado-sync] cesta upsert failed:", error.message);
+    if (error) {
+      console.warn("[mercado-sync] cesta upsert failed:", error.message);
+      return;
+    }
+    clearCestaDirty(uid, c.id);
   } catch (e) {
     console.warn("[mercado-sync] cesta upsert threw:", e);
   }
@@ -738,11 +780,16 @@ async function pushDeleteCesta(id: string) {
       .delete()
       .eq("id", id)
       .eq("user_id", uid);
-    if (error) console.warn("[mercado-sync] cesta delete failed:", error.message);
+    if (error) {
+      console.warn("[mercado-sync] cesta delete failed:", error.message);
+      return;
+    }
+    clearCestaDirty(uid, id);
   } catch (e) {
     console.warn("[mercado-sync] cesta delete threw:", e);
   }
 }
+
 
 async function pullCestas(userId: string) {
   const { data, error } = await supabase
@@ -760,28 +807,45 @@ async function pullCestas(userId: string) {
   const toRetryDelete: string[] = [];
   const toRePushUpsert: MercadoCestaPadrao[] = [];
 
+  const dirty = readCestasDirty(userId);
+  const safetyDone = (() => {
+    try { return localStorage.getItem(cestasSafetyFlagKey(userId)) === "1"; } catch { return true; }
+  })();
+
   // Server + conflict resolution (last-write-wins por atualizadoEm).
   for (const s of server) {
     if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
     const l = localById.get(s.id);
-    if (l && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+    if (l && dirty.has(l.id) && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
       merged.push(l);
       toRePushUpsert.push(l);
     } else {
       merged.push(s);
     }
   }
-  // Cestas locais ausentes no servidor: preserva e re-push (local-first).
-  // Não há "implicit delete" silencioso — exclusões em outro device só
-  // valem se houver tombstone (ainda não existia este store sincronizado).
+  // Cestas locais ausentes no servidor:
+  // - tombstone local -> nada a fazer.
+  // - dirty (mutada localmente, push pendente) -> preserva e re-push.
+  // - primeiro pull pós-deploy (safety): preserva e marca dirty para não
+  //   apagar cestas legítimas pré-sync; subsequentes pulls aplicam drop.
+  // - sem dirty + safety já feito -> excluída em outro device, drop silencioso.
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombs.has(l.id)) continue;
-    merged.push(l);
-    toRePushUpsert.push(l);
+    if (dirty.has(l.id)) { merged.push(l); toRePushUpsert.push(l); continue; }
+    if (!safetyDone) {
+      markCestaDirty(userId, l.id);
+      merged.push(l);
+      toRePushUpsert.push(l);
+      continue;
+    }
+    // implicit delete: outro dispositivo removeu.
   }
   merged.sort((a, b) => (b.atualizadoEm ?? "").localeCompare(a.atualizadoEm ?? ""));
   __replaceCestaCache(merged);
+  if (!safetyDone) {
+    try { localStorage.setItem(cestasSafetyFlagKey(userId), "1"); } catch { /* ignore */ }
+  }
 
   // Best-effort: re-push pendências e retentativas de delete.
   for (const id of toRetryDelete) { void pushDeleteCesta(id); }
@@ -791,10 +855,15 @@ async function pullCestas(userId: string) {
       const { error } = await supabase
         .from("mercado_cestas_padrao")
         .upsert(rows, { onConflict: "id" });
-      if (error) console.warn("[mercado-sync] cestas re-push failed:", error.message);
+      if (error) {
+        console.warn("[mercado-sync] cestas re-push failed:", error.message);
+      } else {
+        for (const c of toRePushUpsert) clearCestaDirty(userId, c.id);
+      }
     } catch (e) {
       console.warn("[mercado-sync] cestas re-push threw:", e);
     }
+
   }
 }
 
@@ -882,7 +951,10 @@ function ensureHooks() {
     onUpsertRegistros: (regs) => { void pushUpsertRegistrosPreco(regs); },
   });
   __setMercadoCestaSyncHooks({
-    onUpsertCesta: (c) => { void pushUpsertCesta(c); },
+    onUpsertCesta: (c) => {
+      markCestaDirty(__getMercadoCestaActiveUserId(), c.id);
+      void pushUpsertCesta(c);
+    },
     onDeleteCesta: (id) => {
       addCestaTombstone(__getMercadoCestaActiveUserId(), id);
       void pushDeleteCesta(id);
