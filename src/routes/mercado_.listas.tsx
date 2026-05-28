@@ -117,6 +117,16 @@ function MercadoListasPage() {
         </button>
       </header>
 
+      {/* Sync status */}
+      <SyncStatusBar
+        state={syncState}
+        loggedIn={Boolean(user)}
+        manualRefreshing={manualRefreshing}
+        onRefresh={() => void handleManualRefresh()}
+        locale={i18next.language || "pt-BR"}
+        t={t}
+      />
+
       {/* Summary */}
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryTile
@@ -137,7 +147,14 @@ function MercadoListasPage() {
       </section>
 
       {/* Listas */}
-      {userListas.length === 0 ? (
+      {userListas.length === 0 && (syncState.status === "syncing" || manualRefreshing) ? (
+        <section className="mt-5 grid place-items-center rounded-2xl border border-dashed border-border/60 bg-card/60 py-10 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("listas.sync.syncing")}
+          </span>
+        </section>
+      ) : userListas.length === 0 ? (
         <EmptyState onCreate={goToNova} />
       ) : (
         <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
