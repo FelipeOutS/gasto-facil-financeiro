@@ -24,8 +24,8 @@ import {
   Trash2,
   ScanLine,
   Check,
-  Receipt as ReceiptIcon,
 } from "lucide-react";
+
 
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
