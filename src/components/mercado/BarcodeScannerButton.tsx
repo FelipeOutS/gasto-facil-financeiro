@@ -56,11 +56,11 @@ interface Props {
 
 // Carrega ZXing sob demanda para não pesar no bundle inicial.
 type ZxingReader = {
-  decodeFromVideoDevice: (
-    deviceId: string | null,
+  decodeFromStream: (
+    stream: MediaStream,
     video: HTMLVideoElement,
     cb: (result: { getText: () => string } | null) => void,
-  ) => Promise<{ stop: () => void } | void>;
+  ) => Promise<{ stop: () => void }>;
   decodeFromImageElement: (img: HTMLImageElement) => Promise<{ getText: () => string }>;
   reset?: () => void;
 };
