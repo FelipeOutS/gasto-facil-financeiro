@@ -41,6 +41,17 @@ import {
   normalizeCesta,
   type MercadoCestaPadrao,
 } from "./cesta-store";
+import {
+  __setMercadoOrcamentoActiveUser,
+  __setMercadoOrcamentoSyncHooks,
+  __getMercadoOrcamentoActiveUserId,
+  __replaceOrcamentoCache,
+  getOrcamentoMercado,
+  normalizeOrcamento,
+  MERCADO_ORCAMENTO_LEGACY_ANON_KEY,
+  MERCADO_ORCAMENTO_STORAGE_KEY,
+  type MercadoOrcamento,
+} from "./orcamento-store";
 
 // ============================================================
 // Listas
@@ -922,8 +933,117 @@ async function migrateLegacyCestasOnce(userId: string) {
 }
 
 // ============================================================
+// Orçamento mensal (E35 / Parte 2)
+// ============================================================
+// Modelo simples: um registro por (user_id, mes_referencia).
+// Estratégia: last-write-wins por atualizado_em. Sem tombstones — "limpar"
+// o orçamento é apenas um upsert com valor_mensal = 0.
+
+type OrcamentoRow = {
+  id: string;
+  user_id: string;
+  mes_referencia: string;
+  valor_mensal: number;
+  atualizado_em: string;
+  created_at: string;
+  updated_at: string;
+};
+
+function orcamentoRowToLocal(r: OrcamentoRow): MercadoOrcamento {
+  return {
+    valorMensal: Number(r.valor_mensal) || 0,
+    mesReferencia: r.mes_referencia,
+    atualizadoEm: r.atualizado_em,
+  };
+}
+
+async function pushUpsertOrcamento(o: MercadoOrcamento) {
+  const uid = __getMercadoOrcamentoActiveUserId();
+  if (!uid) return;
+  try {
+    const { error } = await supabase
+      .from("mercado_orcamentos")
+      .upsert(
+        {
+          user_id: uid,
+          mes_referencia: o.mesReferencia,
+          valor_mensal: o.valorMensal,
+          atualizado_em: o.atualizadoEm,
+        },
+        { onConflict: "user_id,mes_referencia" },
+      );
+    if (error) console.warn("[mercado-sync] upsert orcamento failed:", error.message);
+  } catch (e) {
+    console.warn("[mercado-sync] upsert orcamento threw:", e);
+  }
+}
+
+async function pullOrcamento(userId: string) {
+  const { data, error } = await supabase
+    .from("mercado_orcamentos")
+    .select("*")
+    .eq("user_id", userId)
+    .order("atualizado_em", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  const rows = (data as OrcamentoRow[] | null) ?? [];
+  const server = rows[0] ? orcamentoRowToLocal(rows[0]) : null;
+  const local = getOrcamentoMercado();
+  const localHasData = local.valorMensal > 0 || local.atualizadoEm !== new Date(0).toISOString();
+
+  // Sem dado no servidor: se temos algo local, faz push best-effort.
+  if (!server) {
+    if (localHasData) void pushUpsertOrcamento(local);
+    return;
+  }
+
+  // Last-write-wins por atualizadoEm. Se local é mais novo, re-push.
+  if (localHasData && local.atualizadoEm > server.atualizadoEm) {
+    void pushUpsertOrcamento(local);
+    return;
+  }
+
+  // Servidor vence: atualiza cache local (se diferente).
+  if (
+    !localHasData ||
+    server.atualizadoEm !== local.atualizadoEm ||
+    server.valorMensal !== local.valorMensal ||
+    server.mesReferencia !== local.mesReferencia
+  ) {
+    __replaceOrcamentoCache(server);
+  }
+}
+
+async function migrateLegacyOrcamentoOnce(userId: string) {
+  const flag = `gi:mercado:orcamento:migrated:v1:${userId}`;
+  try {
+    if (localStorage.getItem(flag) === "1") return;
+  } catch { return; }
+
+  const userKey = `${MERCADO_ORCAMENTO_STORAGE_KEY}:${userId}`;
+  // Se a chave por usuário ainda não existe, tenta promover a chave legada anônima.
+  try {
+    const userRaw = localStorage.getItem(userKey);
+    if (!userRaw) {
+      const legacyRaw = localStorage.getItem(MERCADO_ORCAMENTO_LEGACY_ANON_KEY);
+      if (legacyRaw) {
+        const parsed = normalizeOrcamento(JSON.parse(legacyRaw));
+        if (parsed) {
+          localStorage.setItem(userKey, JSON.stringify(parsed));
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
+  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
+  // Não removemos a chave anônima legada para não afetar outras abas/usuários
+  // sem login. A migração é one-shot por usuário via flag.
+}
+
+// ============================================================
 // Wiring
 // ============================================================
+
 
 let hooksRegistered = false;
 function ensureHooks() {
@@ -959,6 +1079,9 @@ function ensureHooks() {
       addCestaTombstone(__getMercadoCestaActiveUserId(), id);
       void pushDeleteCesta(id);
     },
+  });
+  __setMercadoOrcamentoSyncHooks({
+    onUpsertOrcamento: (o) => { void pushUpsertOrcamento(o); },
   });
 }
 
@@ -1022,6 +1145,7 @@ export function useMercadoSync() {
     __setMercadoActiveUser(uid);
     __setMercadoPrecosActiveUser(uid);
     __setMercadoCestaActiveUser(uid);
+    __setMercadoOrcamentoActiveUser(uid);
     if (!uid) {
       setListasSyncState({ status: "idle", errorMessage: null });
       return;
@@ -1051,6 +1175,11 @@ export function useMercadoSync() {
         await migrateLegacyCestasOnce(uid);
         if (cancelled) return;
         await pullCestas(uid);
+        if (cancelled) return;
+        // Orçamento de mercado (E35 / Parte 2)
+        await migrateLegacyOrcamentoOnce(uid);
+        if (cancelled) return;
+        await pullOrcamento(uid);
       } catch (e) {
         console.warn("[mercado-sync] initial sync failed:", e);
         if (!listasOk && !cancelled) {
