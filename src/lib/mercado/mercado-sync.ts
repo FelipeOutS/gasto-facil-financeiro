@@ -14,11 +14,17 @@ import {
   __getMercadoActiveUserId,
   MERCADO_LEGACY_ANON_KEY,
   MERCADO_HISTORICO_LEGACY_ANON_KEY,
+  getListas,
   getHistoricoCompras,
   normalizeHistorico,
   type MercadoLista,
   type MercadoCompraHistorico,
 } from "./listas-store";
+import {
+  __setMercadoPrecosActiveUser,
+  __setMercadoPrecosSyncHooks,
+  __replacePrecosCache,
+  getHistoricoPrecos,
 import {
   __setMercadoPrecosActiveUser,
   __setMercadoPrecosSyncHooks,
