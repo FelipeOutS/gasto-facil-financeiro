@@ -127,6 +127,50 @@ function removeTombstones(uid: string | null, ids: Iterable<string>) {
   if (next.length !== current.length) writeTombstones(uid, next);
 }
 
+// ----- Dirty upserts (alterações locais pendentes de push) ------
+// Diferencia "lista local nova/alterada offline" de "cache antigo já apagado
+// em outro dispositivo". Sem isso, o merge ressuscita listas excluídas.
+const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v1";
+function dirtyKey(uid: string) { return `${LISTAS_DIRTY_KEY_BASE}:${uid}`; }
+function readDirty(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(dirtyKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    if (parsed && typeof parsed === "object") return new Set(Object.keys(parsed));
+    return new Set();
+  } catch { return new Set(); }
+}
+function writeDirty(uid: string | null, ids: Set<string>) {
+  if (!uid) return;
+  try { localStorage.setItem(dirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+}
+function markDirtyUpsert(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readDirty(uid);
+  if (cur.has(id)) return;
+  cur.add(id); writeDirty(uid, cur);
+}
+function clearDirtyUpsert(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readDirty(uid);
+  if (!cur.delete(id)) return;
+  writeDirty(uid, cur);
+}
+/** Marca todas as listas locais como dirty na primeira execução com esta lógica,
+ *  para não perder dados pré-existentes do cache antes desta correção. */
+function seedDirtyIfMissing(uid: string) {
+  const seedFlag = `${LISTAS_DIRTY_KEY_BASE}:seeded:${uid}`;
+  try { if (localStorage.getItem(seedFlag) === "1") return; } catch { return; }
+  const ids = getListas().map((l) => l.id);
+  const cur = readDirty(uid);
+  for (const id of ids) cur.add(id);
+  writeDirty(uid, cur);
+  try { localStorage.setItem(seedFlag, "1"); } catch { /* ignore */ }
+}
+
 async function pullListas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_listas")
