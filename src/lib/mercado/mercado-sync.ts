@@ -52,6 +52,17 @@ import {
   MERCADO_ORCAMENTO_STORAGE_KEY,
   type MercadoOrcamento,
 } from "./orcamento-store";
+import {
+  __setMercadoMercadosActiveUser,
+  __setMercadoMercadosSyncHooks,
+  __getMercadoMercadosActiveUserId,
+  __replaceMercadosCache,
+  getMercadosLocais,
+  normalizeMercadoLocal,
+  MERCADO_MERCADOS_LEGACY_ANON_KEY,
+  MERCADOS_LOCAIS_STORAGE_KEY,
+  type MercadoLocal,
+} from "./mercados-store";
 
 // ============================================================
 // Listas
@@ -1040,6 +1051,321 @@ async function migrateLegacyOrcamentoOnce(userId: string) {
   // sem login. A migração é one-shot por usuário via flag.
 }
 
+
+// ============================================================
+// Mercados salvos (E35 / Parte 3)
+// ============================================================
+// Mesmo padrão das listas/cestas: dirty + tombstone por usuário + safety
+// flag de primeira execução para não apagar mercados locais legítimos
+// criados antes do sync.
+
+type MercadoSalvoRow = {
+  id: string;
+  user_id: string;
+  nome: string;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  observacao: string | null;
+  favorito: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+function mercadoRowToLocal(r: MercadoSalvoRow): MercadoLocal {
+  const normalized = normalizeMercadoLocal({
+    id: r.id,
+    nome: r.nome,
+    cep: r.cep ?? undefined,
+    endereco: r.endereco ?? undefined,
+    bairro: r.bairro ?? undefined,
+    cidade: r.cidade ?? undefined,
+    uf: r.uf ?? undefined,
+    observacao: r.observacao ?? undefined,
+    favorito: r.favorito,
+    criadoEm: r.created_at,
+    atualizadoEm: r.updated_at,
+  });
+  // r.nome é NOT NULL no banco; normalize só retorna null se faltar nome.
+  return normalized as MercadoLocal;
+}
+
+function mercadoLocalToRow(m: MercadoLocal, userId: string) {
+  return {
+    id: m.id,
+    user_id: userId,
+    nome: m.nome,
+    endereco: m.endereco ?? null,
+    bairro: m.bairro ?? null,
+    cidade: m.cidade ?? null,
+    uf: m.uf ?? null,
+    cep: m.cep ?? null,
+    observacao: m.observacao ?? null,
+    favorito: Boolean(m.favorito),
+    created_at: m.criadoEm,
+    updated_at: m.atualizadoEm,
+  };
+}
+
+const MERCADOS_DIRTY_KEY_BASE = "gi:mercado:mercados:dirty:v1";
+const MERCADOS_TOMBSTONE_KEY_BASE = "gi:mercado:mercados:deleted:v1";
+const MERCADOS_SAFETY_FLAG_BASE = "gi:mercado:mercados:dirty-safety-checked:v1";
+
+function mercadosDirtyKey(uid: string) { return `${MERCADOS_DIRTY_KEY_BASE}:${uid}`; }
+function mercadosTombKey(uid: string) { return `${MERCADOS_TOMBSTONE_KEY_BASE}:${uid}`; }
+function mercadosSafetyKey(uid: string) { return `${MERCADOS_SAFETY_FLAG_BASE}:${uid}`; }
+
+function readMercadosDirty(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(mercadosDirtyKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    return new Set();
+  } catch { return new Set(); }
+}
+function writeMercadosDirty(uid: string | null, ids: Set<string>) {
+  if (!uid) return;
+  try { localStorage.setItem(mercadosDirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+}
+function markMercadoDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readMercadosDirty(uid);
+  if (cur.has(id)) return;
+  cur.add(id); writeMercadosDirty(uid, cur);
+}
+function clearMercadoDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readMercadosDirty(uid);
+  if (!cur.delete(id)) return;
+  writeMercadosDirty(uid, cur);
+}
+
+function readMercadosTombstones(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(mercadosTombKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return new Set(
+        parsed
+          .filter((t): t is { id: string } => !!t && typeof (t as { id?: unknown }).id === "string")
+          .map((t) => t.id),
+      );
+    }
+    return new Set();
+  } catch { return new Set(); }
+}
+function addMercadoTombstone(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readMercadosTombstones(uid);
+  if (cur.has(id)) return;
+  cur.add(id);
+  try {
+    localStorage.setItem(
+      mercadosTombKey(uid),
+      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+    );
+  } catch { /* ignore */ }
+}
+function removeMercadoTombstones(uid: string | null, ids: Iterable<string>) {
+  if (!uid) return;
+  const drop = new Set(ids);
+  if (drop.size === 0) return;
+  const cur = readMercadosTombstones(uid);
+  let changed = false;
+  for (const id of drop) { if (cur.delete(id)) changed = true; }
+  if (!changed) return;
+  try {
+    localStorage.setItem(
+      mercadosTombKey(uid),
+      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+    );
+  } catch { /* ignore */ }
+}
+
+async function pushUpsertMercado(m: MercadoLocal) {
+  const uid = __getMercadoMercadosActiveUserId();
+  if (!uid) return;
+  try {
+    const { error } = await supabase
+      .from("mercado_mercados_salvos")
+      .upsert(mercadoLocalToRow(m, uid), { onConflict: "id" });
+    if (error) {
+      console.warn("[mercado-sync] mercado upsert failed:", error.message);
+      return;
+    }
+    clearMercadoDirty(uid, m.id);
+  } catch (e) {
+    console.warn("[mercado-sync] mercado upsert threw:", e);
+  }
+}
+
+async function pushDeleteMercado(id: string) {
+  const uid = __getMercadoMercadosActiveUserId();
+  if (!uid) return;
+  try {
+    const { error } = await supabase
+      .from("mercado_mercados_salvos")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", uid);
+    if (error) {
+      console.warn("[mercado-sync] mercado delete failed:", error.message);
+      return;
+    }
+    clearMercadoDirty(uid, id);
+    removeMercadoTombstones(uid, [id]);
+  } catch (e) {
+    console.warn("[mercado-sync] mercado delete threw:", e);
+  }
+}
+
+async function pullMercados(userId: string) {
+  const { data, error } = await supabase
+    .from("mercado_mercados_salvos")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  const server = (data as MercadoSalvoRow[] | null)?.map(mercadoRowToLocal) ?? [];
+  const local = getMercadosLocais();
+  const tombs = readMercadosTombstones(userId);
+  const dirty = readMercadosDirty(userId);
+  const serverById = new Map(server.map((m) => [m.id, m]));
+  const localById = new Map(local.map((m) => [m.id, m]));
+  const safetyDone = (() => {
+    try { return localStorage.getItem(mercadosSafetyKey(userId)) === "1"; } catch { return true; }
+  })();
+
+  const merged: MercadoLocal[] = [];
+  const toRetryDelete: string[] = [];
+  const toRePushUpsert: MercadoLocal[] = [];
+
+  // Server + conflict resolution (last-write-wins por atualizadoEm).
+  for (const s of server) {
+    if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
+    const l = localById.get(s.id);
+    if (l && dirty.has(l.id) && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+      merged.push(l);
+      toRePushUpsert.push(l);
+    } else {
+      merged.push(s);
+    }
+  }
+  // Local-only:
+  // - tombstone -> nada a fazer (já marcado para delete).
+  // - dirty -> preserva e re-push (mutação offline).
+  // - primeiro pull pós-deploy (safety): marca dirty + preserva (não apagar
+  //   mercados pré-sync); pulls subsequentes aplicam drop silencioso.
+  // - sem dirty + safety feito -> excluído em outro dispositivo, drop.
+  for (const l of local) {
+    if (serverById.has(l.id)) continue;
+    if (tombs.has(l.id)) continue;
+    if (dirty.has(l.id)) { merged.push(l); toRePushUpsert.push(l); continue; }
+    if (!safetyDone) {
+      markMercadoDirty(userId, l.id);
+      merged.push(l);
+      toRePushUpsert.push(l);
+      continue;
+    }
+    // implicit delete
+  }
+
+  __replaceMercadosCache(merged);
+  if (!safetyDone) {
+    try { localStorage.setItem(mercadosSafetyKey(userId), "1"); } catch { /* ignore */ }
+  }
+
+  for (const id of toRetryDelete) void pushDeleteMercado(id);
+  if (toRePushUpsert.length > 0) {
+    const rows = toRePushUpsert.map((m) => mercadoLocalToRow(m, userId));
+    try {
+      const { error } = await supabase
+        .from("mercado_mercados_salvos")
+        .upsert(rows, { onConflict: "id" });
+      if (error) {
+        console.warn("[mercado-sync] mercados re-push failed:", error.message);
+      } else {
+        for (const m of toRePushUpsert) clearMercadoDirty(userId, m.id);
+      }
+    } catch (e) {
+      console.warn("[mercado-sync] mercados re-push threw:", e);
+    }
+  }
+
+  // Limpa tombstones confirmados (servidor não retornou e local não tem).
+  const localIds = new Set(local.map((l) => l.id));
+  const serverIds = new Set(server.map((s) => s.id));
+  const confirmed: string[] = [];
+  for (const id of tombs) {
+    if (!serverIds.has(id) && !localIds.has(id)) confirmed.push(id);
+  }
+  if (confirmed.length > 0) removeMercadoTombstones(userId, confirmed);
+}
+
+async function migrateLegacyMercadosOnce(userId: string) {
+  const flag = `gi:mercado:mercados:migrated:v1:${userId}`;
+  try {
+    if (localStorage.getItem(flag) === "1") return;
+  } catch { return; }
+
+  const userKey = `${MERCADOS_LOCAIS_STORAGE_KEY}:${userId}`;
+  let legacy: MercadoLocal[] = [];
+  try {
+    const raw = localStorage.getItem(MERCADO_MERCADOS_LEGACY_ANON_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        legacy = parsed
+          .map((x) => normalizeMercadoLocal(x))
+          .filter((m): m is MercadoLocal => m !== null);
+      }
+    }
+  } catch { /* ignore */ }
+
+  // Combina com o que já estiver na chave por usuário, sem duplicar.
+  let current: MercadoLocal[] = [];
+  try {
+    const raw = localStorage.getItem(userKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        current = parsed
+          .map((x) => normalizeMercadoLocal(x))
+          .filter((m): m is MercadoLocal => m !== null);
+      }
+    }
+  } catch { /* ignore */ }
+
+  const map = new Map<string, MercadoLocal>();
+  for (const m of [...current, ...legacy]) map.set(m.id, m);
+  const all = Array.from(map.values());
+  if (all.length > 0) {
+    try {
+      localStorage.setItem(userKey, JSON.stringify(all));
+      const rows = all.map((m) => mercadoLocalToRow(m, userId));
+      const { error } = await supabase
+        .from("mercado_mercados_salvos")
+        .upsert(rows, { onConflict: "id", ignoreDuplicates: true });
+      if (error) {
+        console.warn("[mercado-sync] legacy mercados migration failed:", error.message);
+        return;
+      }
+    } catch (e) {
+      console.warn("[mercado-sync] legacy mercados migration threw:", e);
+      return;
+    }
+  }
+  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
+  // Não removemos a chave anônima legada: pode estar em uso por outras abas
+  // sem login; a migração é one-shot via flag por usuário.
+}
+
 // ============================================================
 // Wiring
 // ============================================================
@@ -1082,6 +1408,19 @@ function ensureHooks() {
   });
   __setMercadoOrcamentoSyncHooks({
     onUpsertOrcamento: (o) => { void pushUpsertOrcamento(o); },
+  });
+  __setMercadoMercadosSyncHooks({
+    onUpsertMercado: (m) => {
+      const uid = __getMercadoMercadosActiveUserId();
+      markMercadoDirty(uid, m.id);
+      void pushUpsertMercado(m);
+    },
+    onDeleteMercado: (id) => {
+      const uid = __getMercadoMercadosActiveUserId();
+      addMercadoTombstone(uid, id);
+      clearMercadoDirty(uid, id);
+      void pushDeleteMercado(id);
+    },
   });
 }
 
@@ -1146,6 +1485,7 @@ export function useMercadoSync() {
     __setMercadoPrecosActiveUser(uid);
     __setMercadoCestaActiveUser(uid);
     __setMercadoOrcamentoActiveUser(uid);
+    __setMercadoMercadosActiveUser(uid);
     if (!uid) {
       setListasSyncState({ status: "idle", errorMessage: null });
       return;
@@ -1180,6 +1520,11 @@ export function useMercadoSync() {
         await migrateLegacyOrcamentoOnce(uid);
         if (cancelled) return;
         await pullOrcamento(uid);
+        if (cancelled) return;
+        // Mercados salvos (E35 / Parte 3)
+        await migrateLegacyMercadosOnce(uid);
+        if (cancelled) return;
+        await pullMercados(uid);
       } catch (e) {
         console.warn("[mercado-sync] initial sync failed:", e);
         if (!listasOk && !cancelled) {

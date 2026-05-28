@@ -1664,6 +1664,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_mercados_salvos: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          created_at: string
+          endereco: string | null
+          favorito: boolean
+          id: string
+          nome: string
+          observacao: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          endereco?: string | null
+          favorito?: boolean
+          id: string
+          nome: string
+          observacao?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          endereco?: string | null
+          favorito?: boolean
+          id?: string
+          nome?: string
+          observacao?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mercado_orcamentos: {
         Row: {
           atualizado_em: string
