@@ -65,16 +65,32 @@ export async function listOutgoingConnections(viewerUserId: string) {
 }
 
 /** Pessoas que receberam acesso à conta do usuário (ele é o "owner"). */
-export async function listIncomingConnections(ownerUserId: string, ownerEmail: string) {
-  const email = ownerEmail.trim().toLowerCase();
-  const { data, error } = await supabase
+export async function listIncomingConnections(ownerUserId: string, _ownerEmail: string) {
+  // Owned rows (already-accepted invites where this user is the owner) are
+  // visible directly via RLS.
+  const ownedPromise = supabase
     .from("connected_accounts")
     .select("*")
-    .or(`owner_user_id.eq.${ownerUserId},invited_email.eq.${email}`)
+    .eq("owner_user_id", ownerUserId)
     .neq("status", "removed")
     .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as ConnectedAccount[];
+
+  // Pending invitations addressed to this user's email — fetched via
+  // SECURITY DEFINER RPC that intentionally omits the secret invite_token.
+  const invitesPromise = supabase.rpc("list_my_pending_invites");
+
+  const [owned, invites] = await Promise.all([ownedPromise, invitesPromise]);
+  if (owned.error) throw owned.error;
+  if (invites.error) throw invites.error;
+
+  const seen = new Set<string>();
+  const rows: ConnectedAccount[] = [];
+  for (const r of [...((owned.data ?? []) as ConnectedAccount[]), ...((invites.data ?? []) as Omit<ConnectedAccount, "invite_token">[])]) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    rows.push({ invite_token: "", ...(r as ConnectedAccount) } as ConnectedAccount);
+  }
+  return rows;
 }
 
 /* ============================== Mutations ============================== */
