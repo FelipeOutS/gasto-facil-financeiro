@@ -64,13 +64,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    // Mantém o uid já hidratado nesta sessão de página. Evita re-disparar
+    // hydrateUser em TOKEN_REFRESHED / USER_UPDATED / SIGNED_IN repetidos
+    // (que ocorrem ao reganhar foco da aba, refresh de token periódico,
+    // etc.). hydrateUser zera hydrationStatus para "loading", o que faria
+    // todas as páginas (`if (!ready) return <PageSkeleton/>`) piscarem
+    // skeleton entre rotas — exatamente o "splash entre telas" reportado.
+    let hydratedUidThisSession: string | null = null;
     // Safety: nunca deixe loading=true para sempre (WebView pode travar getSession)
     const loadingFallback = window.setTimeout(() => {
       if (mounted) setLoading(false);
     }, AUTH_BOOT_TIMEOUT_MS + 1000);
 
     // 1) listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
       setSession(sess);
       const uid = sess?.user.id ?? null;
       setActiveUserId(uid);
@@ -78,18 +85,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isLoginBioEnabledForEmail(sess?.user.email)) {
           persistLoginBioSession(sess);
         }
-        // Defer cloud work to avoid blocking the auth callback
-        setTimeout(() => {
-          void (async () => {
-            await migrateLegacyDataToUser(uid);
-            await hydrateUser(uid);
-            void loadProfile(uid);
-          })();
-        }, 0);
+        // Só roda hidratação pesada quando é realmente um novo login
+        // (uid mudou) ou um sign-in inicial. Eventos como TOKEN_REFRESHED
+        // e USER_UPDATED para o mesmo uid não devem re-hidratar.
+        const isNewLogin = hydratedUidThisSession !== uid;
+        const isSigninEvent = evt === "SIGNED_IN" || evt === "INITIAL_SESSION";
+        if (isNewLogin && isSigninEvent) {
+          hydratedUidThisSession = uid;
+          // Defer cloud work to avoid blocking the auth callback
+          setTimeout(() => {
+            void (async () => {
+              await migrateLegacyDataToUser(uid);
+              await hydrateUser(uid);
+              void loadProfile(uid);
+            })();
+          }, 0);
+        }
       } else {
+        hydratedUidThisSession = null;
         setProfile(null);
       }
     });
+
+
 
     const onBioSessionRestored = (event: Event) => {
       const sess = (event as CustomEvent<{ session?: Session }>).detail?.session ?? null;
