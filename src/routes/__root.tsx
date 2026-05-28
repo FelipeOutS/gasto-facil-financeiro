@@ -20,6 +20,7 @@ import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
 import { OfflineIncomeSyncStatus } from "@/components/offline/OfflineIncomeSyncStatus";
+import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { useMercadoSync } from "@/lib/mercado/mercado-sync";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
