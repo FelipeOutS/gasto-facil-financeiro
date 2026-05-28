@@ -51,6 +51,10 @@
       "meusMercados": {
         "title": "Meus mercados",
         "desc": "Cadastre seus mercados favoritos e encontre estabelecimentos próximos em uma etapa futura."
+      },
+      "importarCupom": {
+        "title": "Importar cupom fiscal",
+        "desc": "Leia o QR Code do cupom para preparar a importação da compra."
       }
     }
   },
