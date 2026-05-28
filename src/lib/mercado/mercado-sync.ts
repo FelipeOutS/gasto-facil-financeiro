@@ -170,6 +170,7 @@ function discardUnsafeSeededDirtyOnce(uid: string) {
 }
 
 async function pullListas(userId: string) {
+  discardUnsafeSeededDirtyOnce(userId);
   const { data, error } = await supabase
     .from("mercado_listas")
     .select("*")
@@ -182,6 +183,7 @@ async function pullListas(userId: string) {
   const tombSet = new Set(tombstones.map((t) => t.id));
   const serverById = new Map(server.map((l) => [l.id, l]));
   const localById = new Map(local.map((l) => [l.id, l]));
+  const dirtySet = readDirty(userId);
   const merged: MercadoLista[] = [];
   const orphans: MercadoLista[] = [];
   const deleteRetries: string[] = [];
@@ -193,7 +195,7 @@ async function pullListas(userId: string) {
       continue;
     }
     const l = localById.get(s.id);
-    if (l && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
+    if (l && dirtySet.has(l.id) && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
       merged.push(l);
       orphans.push(l); // re-push newer local
     } else {
@@ -205,7 +207,6 @@ async function pullListas(userId: string) {
   // - dirty.upsert local -> preservar e re-push (offline/falha de rede).
   // - nem dirty nem tombstone -> foi excluído em outro dispositivo;
   //   REMOVER do cache local (não ressuscitar no servidor).
-  const dirtySet = readDirty(userId);
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
