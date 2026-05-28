@@ -890,8 +890,56 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       );
       toast.success(t("importarCupom.importActions.cartImportedSuccess"));
       const id = selectedListaId;
+  }
+
+  function openFinish() {
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    setMode("finish");
+    setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
+    setFinishMarket("");
+    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishObs("");
+  }
+
+  function confirmFinish() {
+    if (submitting) return;
+    if (!hasValid) {
+      toast.error(t("importarCupom.importActions.noValidItems"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const concluidaEm = (() => {
+        const d = finishDate.trim();
+        if (!d) return new Date().toISOString();
+        const parsed = new Date(`${d}T12:00:00`);
+        return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+      })();
+      const entry = registrarCompraFinalizadaDoCupom({
+        nome:
+          finishName.trim() ||
+          t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+        mercadoNome: finishMarket.trim() || undefined,
+        concluidaEm,
+        observacao: finishObs.trim() || undefined,
+        itens: validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      });
+      if (!entry) {
+        toast.error(t("importarCupom.importActions.noValidItems"));
+        return;
+      }
+      toast.success(t("importarCupom.importActions.finishPurchase.success"));
       resetForm();
-      void navigate({ to: "/mercado/carrinho", search: { lista: id } });
+      void navigate({ to: "/mercado/historico" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+
     } finally {
       setSubmitting(false);
     }
