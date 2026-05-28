@@ -1,17 +1,21 @@
 /**
- * Mercado Inteligente — E18
- * Cadastro LOCAL de mercados do usuário.
+ * Mercado Inteligente — E18 + E35/Parte 3
+ * Cadastro local de mercados do usuário, agora com sincronização opcional
+ * via Supabase (mesmo padrão das outras stores de Mercado).
  *
- * 100% localStorage. Sem Supabase, sem rede, sem API externa.
- * Isolado dos demais stores do Mercado (listas, preços).
+ * Local-first: continua funcionando 100% offline / sem login. Quando há
+ * usuário ativo, mercado-sync.ts injeta hooks de push e troca a chave de
+ * localStorage para uma versão por usuário.
  *
- * SSR-safe via useSyncExternalStore + snapshot cacheado por serialização
- * (mesmo padrão de `precos-history.ts`).
+ * SSR-safe via useSyncExternalStore + snapshot cacheado por serialização.
  */
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+// Chave legada (anônima, pré-sync) — preservada apenas para migração
+// one-shot por usuário no primeiro login.
 export const MERCADOS_LOCAIS_STORAGE_KEY = "gi:mercado:mercados:v1";
+export const MERCADO_MERCADOS_LEGACY_ANON_KEY = MERCADOS_LOCAIS_STORAGE_KEY;
 
 export type MercadoLocal = {
   id: string;
@@ -77,7 +81,7 @@ function cleanUf(v: unknown): string | undefined {
   return t ? t : undefined;
 }
 
-function normalize(raw: unknown): MercadoLocal | null {
+export function normalizeMercadoLocal(raw: unknown): MercadoLocal | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   const nome = cleanStr(r.nome);
@@ -103,17 +107,54 @@ function normalize(raw: unknown): MercadoLocal | null {
   };
 }
 
+// ---------- sync wiring (preenchido por mercado-sync.ts) -----------------
+
+let mercadosActiveUserId: string | null = null;
+
+function currentMercadosKey(): string {
+  return mercadosActiveUserId
+    ? `${MERCADOS_LOCAIS_STORAGE_KEY}:${mercadosActiveUserId}`
+    : MERCADOS_LOCAIS_STORAGE_KEY;
+}
+
+type MercadosSyncHooks = {
+  onUpsertMercado?: (m: MercadoLocal) => void;
+  onDeleteMercado?: (id: string) => void;
+};
+let mercadosSyncHooks: MercadosSyncHooks = {};
+
+export function __setMercadoMercadosSyncHooks(hooks: MercadosSyncHooks) {
+  mercadosSyncHooks = hooks;
+}
+
+export function __setMercadoMercadosActiveUser(uid: string | null) {
+  if (mercadosActiveUserId === uid) return;
+  mercadosActiveUserId = uid;
+  emit();
+}
+
+export function __getMercadoMercadosActiveUserId(): string | null {
+  return mercadosActiveUserId;
+}
+
+export function __replaceMercadosCache(items: MercadoLocal[]) {
+  safeWrite(items);
+  emit();
+}
+
+// ---------- storage I/O --------------------------------------------------
+
 function safeRead(): MercadoLocal[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADOS_LOCAIS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentMercadosKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     const out: MercadoLocal[] = [];
     const seen = new Set<string>();
     for (const item of parsed) {
-      const n = normalize(item);
+      const n = normalizeMercadoLocal(item);
       if (!n) continue;
       if (seen.has(n.id)) continue;
       seen.add(n.id);
@@ -128,7 +169,7 @@ function safeRead(): MercadoLocal[] {
 function safeWrite(next: MercadoLocal[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADOS_LOCAIS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentMercadosKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
@@ -153,7 +194,12 @@ function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADOS_LOCAIS_STORAGE_KEY) listener();
+      if (
+        e.key === MERCADOS_LOCAIS_STORAGE_KEY ||
+        (e.key && mercadosActiveUserId && e.key === `${MERCADOS_LOCAIS_STORAGE_KEY}:${mercadosActiveUserId}`)
+      ) {
+        listener();
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => {
@@ -173,6 +219,18 @@ function sortMercados(arr: MercadoLocal[]): MercadoLocal[] {
     if (fa !== fb) return fb - fa;
     return a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
   });
+}
+
+// ---------- push helpers -------------------------------------------------
+
+function pushUpsert(m: MercadoLocal) {
+  if (!mercadosSyncHooks.onUpsertMercado) return;
+  try { mercadosSyncHooks.onUpsertMercado(m); } catch { /* ignore */ }
+}
+
+function pushDelete(id: string) {
+  if (!mercadosSyncHooks.onDeleteMercado) return;
+  try { mercadosSyncHooks.onDeleteMercado(id); } catch { /* ignore */ }
 }
 
 // ---------- API pública --------------------------------------------------
@@ -206,6 +264,7 @@ export function addMercadoLocal(input: MercadoLocalInput): MercadoLocal | null {
   };
   safeWrite([novo, ...atuais]);
   emit();
+  pushUpsert(novo);
   return novo;
 }
 
@@ -238,6 +297,7 @@ export function updateMercadoLocal(
   copy[idx] = next;
   safeWrite(copy);
   emit();
+  pushUpsert(next);
   return next;
 }
 
@@ -248,6 +308,7 @@ export function removeMercadoLocal(id: string): boolean {
   if (next.length === atuais.length) return false;
   safeWrite(next);
   emit();
+  pushDelete(id);
   return true;
 }
 
