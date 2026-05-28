@@ -818,5 +818,63 @@
         "noAddress": "Address not provided"
       }
     }
+  },
+  "importarCupom": {
+    "back": "Back",
+    "home": "Home",
+    "title": "Import receipt",
+    "subtitle": "Scan the QR Code on your electronic receipt (NFC-e) to prepare importing the purchase.",
+    "preparingNotice": "For now, this screen only reads and identifies the QR Code content. Full automatic import of the items is still being prepared.",
+    "futureNote": "In a future step, you will be able to review the items read from the receipt before adding them to a list or to the price history.",
+    "scanner": {
+      "title": "Scan the receipt QR Code",
+      "description": "Point your camera at the QR Code printed on the receipt or upload a photo. Reading happens locally on your device.",
+      "scan": "Scan with camera",
+      "uploadPhoto": "Upload QR Code photo",
+      "tryAnotherPhoto": "Try another photo",
+      "scanning": "Aim at the QR Code…",
+      "decoding": "Reading the image…",
+      "close": "Close",
+      "hint": "Center the QR Code and hold steady.",
+      "unsupported": "Your browser doesn't support QR Code scanning via the camera.",
+      "permissionDenied": "Camera permission denied.",
+      "cameraError": "We couldn't start the camera.",
+      "imageError": "We couldn't read a QR Code in this image.",
+      "manualFallback": "You can upload a photo or paste the content manually."
+    },
+    "manual": {
+      "title": "Paste content manually",
+      "description": "If you already have the link or the text from the QR Code, you can paste it here for analysis.",
+      "placeholder": "Paste here the link or text read from the QR Code…",
+      "analyze": "Analyze",
+      "paste": "Paste from clipboard",
+      "reset": "Clear"
+    },
+    "result": {
+      "status": {
+        "valid_nfce_url": "NFC-e QR Code identified",
+        "possible_nfce_url": "Possible receipt QR Code",
+        "unsupported": "Content not recognized as NFC-e",
+        "invalid": "Content not recognized"
+      },
+      "statusDesc": {
+        "valid_nfce_url": "The scanned content appears to be an official electronic receipt QR Code.",
+        "possible_nfce_url": "The content has receipt characteristics, but we couldn't fully confirm it.",
+        "unsupported": "We could read the content, but it doesn't appear to be an electronic receipt.",
+        "invalid": "We couldn't interpret this content as a receipt QR Code."
+      },
+      "link": "Detected link",
+      "host": "Source",
+      "accessKey": "Access key",
+      "uf": "Likely state",
+      "itemsLater": "Reading the items from the receipt will be added in a future step. Nothing was saved automatically.",
+      "invalidHint": "Make sure the QR Code is clearly visible, try another photo, or paste the link manually."
+    },
+    "privacy": {
+      "title": "Privacy & security",
+      "local": "The photo and QR Code are processed locally on this device at this stage.",
+      "nothingSaved": "Nothing is saved automatically to lists, cart, or price history.",
+      "reviewLater": "You will review all items before any future import."
+    }
   }
 }
