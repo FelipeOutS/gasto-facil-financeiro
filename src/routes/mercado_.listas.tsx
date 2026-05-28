@@ -315,3 +315,64 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
     </section>
   );
 }
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function SyncStatusBar({
+  state,
+  loggedIn,
+  manualRefreshing,
+  onRefresh,
+  locale,
+  t,
+}: {
+  state: { status: "idle" | "syncing" | "synced" | "error"; lastSyncedAt: string | null };
+  loggedIn: boolean;
+  manualRefreshing: boolean;
+  onRefresh: () => void;
+  locale: string;
+  t: TFn;
+}) {
+  const busy = manualRefreshing || state.status === "syncing";
+  let icon: JSX.Element;
+  let label: string;
+  let tone = "text-muted-foreground";
+  if (!loggedIn) {
+    icon = <CloudOff className="h-3.5 w-3.5" />;
+    label = t("listas.sync.localSaved");
+  } else if (busy) {
+    icon = <Loader2 className="h-3.5 w-3.5 animate-spin" />;
+    label = t("listas.sync.syncing");
+  } else if (state.status === "error") {
+    icon = <CloudOff className="h-3.5 w-3.5 text-destructive" />;
+    label = t("listas.sync.failed");
+    tone = "text-destructive";
+  } else {
+    icon = <CloudCheck className="h-3.5 w-3.5" />;
+    if (state.lastSyncedAt) {
+      const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(
+        new Date(state.lastSyncedAt),
+      );
+      label = `${t("listas.sync.synced")} · ${t("listas.sync.lastUpdated", { time })}`;
+    } else {
+      label = t("listas.sync.synced");
+    }
+  }
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card/60 px-3 py-2">
+      <span className={cn("inline-flex items-center gap-1.5 text-[12px]", tone)}>
+        {icon}
+        <span className="line-clamp-1">{label}</span>
+      </span>
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={busy}
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border bg-card-elevated px-3 py-1.5 text-[12px] font-semibold text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
+        {busy ? t("listas.sync.refreshing") : t("listas.sync.refresh")}
+      </button>
+    </div>
+  );
+}
