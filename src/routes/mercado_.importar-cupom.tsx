@@ -1036,6 +1036,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
             <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
               {t("importarCupom.importActions.cartCardDesc")}
             </span>
+          </span>
         </button>
 
         <button
@@ -1064,7 +1065,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </button>
       </div>
 
-      </div>
+
 
       {!hasValid && (
         <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
