@@ -83,6 +83,50 @@ function listaToRow(l: MercadoLista, userId: string) {
   };
 }
 
+// ----- Tombstones de exclusão de listas (local-first) ------
+// Evita que listas excluídas em um dispositivo sejam "ressuscitadas" pelo
+// merge ao puxar do Supabase em outro dispositivo (ou no mesmo offline).
+const LISTAS_TOMBSTONE_KEY_BASE = "gi:mercado:listas:deleted:v1";
+type Tombstone = { id: string; deletedAt: string };
+
+function tombstoneKey(uid: string) {
+  return `${LISTAS_TOMBSTONE_KEY_BASE}:${uid}`;
+}
+function readTombstones(uid: string | null): Tombstone[] {
+  if (!uid) return [];
+  try {
+    const raw = localStorage.getItem(tombstoneKey(uid));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (t): t is Tombstone =>
+        !!t &&
+        typeof (t as Tombstone).id === "string" &&
+        typeof (t as Tombstone).deletedAt === "string",
+    );
+  } catch { return []; }
+}
+function writeTombstones(uid: string | null, ts: Tombstone[]) {
+  if (!uid) return;
+  try { localStorage.setItem(tombstoneKey(uid), JSON.stringify(ts)); } catch { /* ignore */ }
+}
+function addTombstone(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const current = readTombstones(uid);
+  if (current.some((t) => t.id === id)) return;
+  current.push({ id, deletedAt: new Date().toISOString() });
+  writeTombstones(uid, current);
+}
+function removeTombstones(uid: string | null, ids: Iterable<string>) {
+  if (!uid) return;
+  const drop = new Set(ids);
+  if (drop.size === 0) return;
+  const current = readTombstones(uid);
+  const next = current.filter((t) => !drop.has(t.id));
+  if (next.length !== current.length) writeTombstones(uid, next);
+}
+
 async function pullListas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_listas")
@@ -92,12 +136,20 @@ async function pullListas(userId: string) {
   if (error) throw error;
   const server = (data as ListaRow[] | null)?.map(listaRowToLista) ?? [];
   const local = getListas();
+  const tombstones = readTombstones(userId);
+  const tombSet = new Set(tombstones.map((t) => t.id));
   const serverById = new Map(server.map((l) => [l.id, l]));
   const localById = new Map(local.map((l) => [l.id, l]));
   const merged: MercadoLista[] = [];
   const orphans: MercadoLista[] = [];
-  // Server + conflict resolution
+  const deleteRetries: string[] = [];
+  // Server + conflict resolution; respeita tombstones locais.
   for (const s of server) {
+    if (tombSet.has(s.id)) {
+      // Usuário deletou neste dispositivo; servidor ainda tem -> reenvia delete.
+      deleteRetries.push(s.id);
+      continue;
+    }
     const l = localById.get(s.id);
     if (l && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
       merged.push(l);
@@ -106,9 +158,9 @@ async function pullListas(userId: string) {
       merged.push(s);
     }
   }
-  // Local-only items not on server
+  // Local-only items not on server (não reenviar se está em tombstone).
   for (const l of local) {
-    if (!serverById.has(l.id)) {
+    if (!serverById.has(l.id) && !tombSet.has(l.id)) {
       merged.push(l);
       orphans.push(l);
     }
@@ -116,6 +168,14 @@ async function pullListas(userId: string) {
   merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   __replaceListasCache(merged);
   for (const o of orphans) void pushUpsertLista(o);
+  for (const id of deleteRetries) void pushDeleteLista(id);
+  // Limpa tombstones já confirmados: servidor não retornou e o local não tem.
+  const localIds = new Set(local.map((l) => l.id));
+  const serverIds = new Set(server.map((l) => l.id));
+  const confirmed = tombstones
+    .filter((t) => !serverIds.has(t.id) && !localIds.has(t.id))
+    .map((t) => t.id);
+  if (confirmed.length > 0) removeTombstones(userId, confirmed);
 }
 
 
