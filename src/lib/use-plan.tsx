@@ -215,25 +215,45 @@ export function usePlan(): PlanState {
     }
     // Não força loading se já temos algum estado hidratado: revalida em
     // segundo plano mantendo o último resultado válido.
+    const runtimeCached = getRuntimeCache(user.id);
+    if (runtimeCached) {
+      applyCached(runtimeCached);
+      setLoading(false);
+      return;
+    }
+
     const hasCache = !!readCache(user.id);
     if (!hasCache) setLoading(true);
     try {
-      const data = await getCurrentUserSubscription();
-      setStoredRaw(data.storedPlan);
-      setStatus(data.status);
-      setTrialEndsAt(data.trialEndsAt);
-      setTrialStartedAt(data.trialStartedAt);
-      setTrialPlanRaw(data.trialPlan);
-      setTrialUsed(data.trialUsed);
-      setCancelledAt(data.cancelledAt);
-      setAccessUntil(data.accessUntil);
-      setPaymentMethod(data.paymentMethod);
-      setPaymentAmountCents(data.paymentAmountCents);
-      setPaidAt(data.paidAt);
-      setPeriodicidade(data.periodicidade);
-      setCurrentPeriodStart(data.currentPeriodStart);
-      setCurrentPeriodEnd(data.currentPeriodEnd);
-      writeCache(user.id, {
+      const data = await (runtimeSubscriptionInFlight?.userId === user.id
+        ? runtimeSubscriptionInFlight.promise
+        : (() => {
+            const promise = getCurrentUserSubscription().then((subscription) => ({
+              storedPlan: subscription.storedPlan,
+              status: subscription.status,
+              trialEndsAt: subscription.trialEndsAt,
+              trialStartedAt: subscription.trialStartedAt,
+              trialPlan: subscription.trialPlan,
+              trialUsed: subscription.trialUsed,
+              cancelledAt: subscription.cancelledAt,
+              accessUntil: subscription.accessUntil,
+              paymentMethod: subscription.paymentMethod,
+              paymentAmountCents: subscription.paymentAmountCents,
+              paidAt: subscription.paidAt,
+              periodicidade: subscription.periodicidade,
+              currentPeriodStart: subscription.currentPeriodStart,
+              currentPeriodEnd: subscription.currentPeriodEnd,
+            }));
+            runtimeSubscriptionInFlight = { userId: user.id, promise };
+            promise.finally(() => {
+              if (runtimeSubscriptionInFlight?.promise === promise) {
+                runtimeSubscriptionInFlight = null;
+              }
+            });
+            return promise;
+          })());
+      applyCached(data);
+      rememberRuntimeCache(user.id, {
         storedPlan: data.storedPlan,
         status: data.status,
         trialEndsAt: data.trialEndsAt,
@@ -259,7 +279,7 @@ export function usePlan(): PlanState {
       });
     }
     setLoading(false);
-  }, [user, authLoading]);
+  }, [user, authLoading, applyCached]);
 
   useEffect(() => {
     void load();
