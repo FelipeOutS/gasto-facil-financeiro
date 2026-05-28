@@ -12,6 +12,7 @@ import {
   BarChart3,
   Store,
   MapPin,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";

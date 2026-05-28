@@ -63,6 +63,7 @@ import { Route as MercadoOrcamentoRouteImport } from './routes/mercado_.orcament
 import { Route as MercadoMeusMercadosRouteImport } from './routes/mercado_.meus-mercados'
 import { Route as MercadoMercadosRouteImport } from './routes/mercado_.mercados'
 import { Route as MercadoListasRouteImport } from './routes/mercado_.listas'
+import { Route as MercadoImportarCupomRouteImport } from './routes/mercado_.importar-cupom'
 import { Route as MercadoHistoricoRouteImport } from './routes/mercado_.historico'
 import { Route as MercadoCestaRouteImport } from './routes/mercado_.cesta'
 import { Route as MercadoCarrinhoRouteImport } from './routes/mercado_.carrinho'
@@ -398,6 +399,11 @@ const MercadoMercadosRoute = MercadoMercadosRouteImport.update({
 const MercadoListasRoute = MercadoListasRouteImport.update({
   id: '/mercado_/listas',
   path: '/mercado/listas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MercadoImportarCupomRoute = MercadoImportarCupomRouteImport.update({
+  id: '/mercado_/importar-cupom',
+  path: '/mercado/importar-cupom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MercadoHistoricoRoute = MercadoHistoricoRouteImport.update({
@@ -816,6 +822,7 @@ export interface FileRoutesByFullPath {
   '/mercado/carrinho': typeof MercadoCarrinhoRoute
   '/mercado/cesta': typeof MercadoCestaRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
+  '/mercado/importar-cupom': typeof MercadoImportarCupomRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/mercados': typeof MercadoMercadosRoute
   '/mercado/meus-mercados': typeof MercadoMeusMercadosRoute
@@ -938,6 +945,7 @@ export interface FileRoutesByTo {
   '/mercado/carrinho': typeof MercadoCarrinhoRoute
   '/mercado/cesta': typeof MercadoCestaRoute
   '/mercado/historico': typeof MercadoHistoricoRoute
+  '/mercado/importar-cupom': typeof MercadoImportarCupomRoute
   '/mercado/listas': typeof MercadoListasRoute
   '/mercado/mercados': typeof MercadoMercadosRoute
   '/mercado/meus-mercados': typeof MercadoMeusMercadosRoute
@@ -1061,6 +1069,7 @@ export interface FileRoutesById {
   '/mercado_/carrinho': typeof MercadoCarrinhoRoute
   '/mercado_/cesta': typeof MercadoCestaRoute
   '/mercado_/historico': typeof MercadoHistoricoRoute
+  '/mercado_/importar-cupom': typeof MercadoImportarCupomRoute
   '/mercado_/listas': typeof MercadoListasRoute
   '/mercado_/mercados': typeof MercadoMercadosRoute
   '/mercado_/meus-mercados': typeof MercadoMeusMercadosRoute
@@ -1185,6 +1194,7 @@ export interface FileRouteTypes {
     | '/mercado/carrinho'
     | '/mercado/cesta'
     | '/mercado/historico'
+    | '/mercado/importar-cupom'
     | '/mercado/listas'
     | '/mercado/mercados'
     | '/mercado/meus-mercados'
@@ -1307,6 +1317,7 @@ export interface FileRouteTypes {
     | '/mercado/carrinho'
     | '/mercado/cesta'
     | '/mercado/historico'
+    | '/mercado/importar-cupom'
     | '/mercado/listas'
     | '/mercado/mercados'
     | '/mercado/meus-mercados'
@@ -1429,6 +1440,7 @@ export interface FileRouteTypes {
     | '/mercado_/carrinho'
     | '/mercado_/cesta'
     | '/mercado_/historico'
+    | '/mercado_/importar-cupom'
     | '/mercado_/listas'
     | '/mercado_/mercados'
     | '/mercado_/meus-mercados'
@@ -1552,6 +1564,7 @@ export interface RootRouteChildren {
   MercadoCarrinhoRoute: typeof MercadoCarrinhoRoute
   MercadoCestaRoute: typeof MercadoCestaRoute
   MercadoHistoricoRoute: typeof MercadoHistoricoRoute
+  MercadoImportarCupomRoute: typeof MercadoImportarCupomRoute
   MercadoListasRoute: typeof MercadoListasRoute
   MercadoMercadosRoute: typeof MercadoMercadosRoute
   MercadoMeusMercadosRoute: typeof MercadoMeusMercadosRoute
@@ -1984,6 +1997,13 @@ declare module '@tanstack/react-router' {
       path: '/mercado/listas'
       fullPath: '/mercado/listas'
       preLoaderRoute: typeof MercadoListasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mercado_/importar-cupom': {
+      id: '/mercado_/importar-cupom'
+      path: '/mercado/importar-cupom'
+      fullPath: '/mercado/importar-cupom'
+      preLoaderRoute: typeof MercadoImportarCupomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mercado_/historico': {
@@ -2530,6 +2550,7 @@ const rootRouteChildren: RootRouteChildren = {
   MercadoCarrinhoRoute: MercadoCarrinhoRoute,
   MercadoCestaRoute: MercadoCestaRoute,
   MercadoHistoricoRoute: MercadoHistoricoRoute,
+  MercadoImportarCupomRoute: MercadoImportarCupomRoute,
   MercadoListasRoute: MercadoListasRoute,
   MercadoMercadosRoute: MercadoMercadosRoute,
   MercadoMeusMercadosRoute: MercadoMeusMercadosRoute,
@@ -2591,12 +2612,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
