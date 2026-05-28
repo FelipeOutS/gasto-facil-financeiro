@@ -90,9 +90,34 @@ async function pullListas(userId: string) {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  const listas = (data as ListaRow[] | null)?.map(listaRowToLista) ?? [];
-  __replaceListasCache(listas);
+  const server = (data as ListaRow[] | null)?.map(listaRowToLista) ?? [];
+  const local = getListas();
+  const serverById = new Map(server.map((l) => [l.id, l]));
+  const localById = new Map(local.map((l) => [l.id, l]));
+  const merged: MercadoLista[] = [];
+  const orphans: MercadoLista[] = [];
+  // Server + conflict resolution
+  for (const s of server) {
+    const l = localById.get(s.id);
+    if (l && l.updatedAt && s.updatedAt && l.updatedAt > s.updatedAt) {
+      merged.push(l);
+      orphans.push(l); // re-push newer local
+    } else {
+      merged.push(s);
+    }
+  }
+  // Local-only items not on server
+  for (const l of local) {
+    if (!serverById.has(l.id)) {
+      merged.push(l);
+      orphans.push(l);
+    }
+  }
+  merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
+  __replaceListasCache(merged);
+  for (const o of orphans) void pushUpsertLista(o);
 }
+
 
 async function pushUpsertLista(l: MercadoLista) {
   const uid = __getMercadoActiveUserId();
