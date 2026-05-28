@@ -20,6 +20,7 @@ import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
 import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
 import { OfflineIncomeSyncStatus } from "@/components/offline/OfflineIncomeSyncStatus";
+import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { useMercadoSync } from "@/lib/mercado/mercado-sync";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
@@ -211,11 +212,98 @@ function RootComponent() {
       <HreflangTags path={cleanPath} />
       <ConnectedAccountBanner />
       <OfflineQueueMount />
-      <Outlet />
+      <PersistentAppShell pathname={pathname} />
       <Toaster position="top-center" />
     </>
   );
 }
+
+/**
+ * Shell persistente no nível do root. Para rotas autenticadas do app,
+ * envolve <Outlet /> com um único <MobileShell> que NÃO remonta entre
+ * navegações — apenas o conteúdo da rota troca dentro do mesmo shell.
+ *
+ * Para rotas públicas (login, landing, termos, etc.) renderiza apenas
+ * <Outlet /> e deixa a própria página decidir o layout (AuthShell,
+ * PublicLanding, etc.).
+ *
+ * Páginas internas que ainda chamam <MobileShell> diretamente passam a
+ * detectar o contexto persistente e se tornam pass-through (ver
+ * MobileShell.tsx) — não há sidebar/topbar/bottomnav duplicados.
+ */
+const PUBLIC_PATH_PREFIXES = [
+  "/login",
+  "/cadastro",
+  "/recuperar-senha",
+  "/reset-password",
+  "/confirmar",
+  "/landing",
+  "/termos",
+  "/privacidade",
+  "/lgpd",
+  "/status",
+  "/onboarding",
+  "/aceitar-convite",
+  "/app/idioma", // página decide sozinha entre público e shell
+  "/pt",
+  "/en",
+];
+
+const WIDE_EXACT = new Set<string>([
+  "/",
+  "/relatorios",
+  "/orcamento",
+  "/meu-plano",
+  "/contas-conectadas",
+  "/admin",
+  "/resumo",
+  "/radar",
+  "/alertas",
+  "/guardado",
+  "/gasto-ai",
+]);
+
+const WIDE_PREFIXES = [
+  "/gastos",
+  "/cartoes",
+  "/contas-a-pagar",
+  "/contas-a-receber",
+  "/assinaturas",
+  "/metas",
+  "/renda",
+  "/mercado",
+  "/investimentos",
+];
+
+function isPublicPath(p: string) {
+  for (const pre of PUBLIC_PATH_PREFIXES) {
+    if (p === pre || p.startsWith(pre + "/")) return true;
+  }
+  return false;
+}
+
+function isWidePath(p: string) {
+  if (WIDE_EXACT.has(p)) return true;
+  for (const pre of WIDE_PREFIXES) {
+    if (p === pre || p.startsWith(pre + "/")) return true;
+  }
+  return false;
+}
+
+function PersistentAppShell({ pathname }: { pathname: string }) {
+  const isPublic = isPublicPath(pathname);
+  const wide = isWidePath(pathname);
+
+  if (isPublic) {
+    return <Outlet />;
+  }
+  return (
+    <MobileShell wide={wide}>
+      <Outlet />
+    </MobileShell>
+  );
+}
+
 
 /**
  * Mantém a fila offline de gastos viva no app inteiro: ao logar, dispara
