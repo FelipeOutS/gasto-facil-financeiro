@@ -1,12 +1,15 @@
-// Local-only store for Mercado Inteligente "Cesta padrão" (recurring baskets).
-// 100% localStorage. NO Supabase, NO API, NO Dashboard integration.
-// Independent from listas-store, but uses its public helpers (addLista,
-// addItemLista) when generating a new shopping list from a basket.
+// Cesta padrão store — local-first com sincronização opcional via Supabase
+// (E35 / Parte 1). Mantém localStorage como cache por usuário e degrada
+// silenciosamente se o sync falhar. Independente do listas-store, mas usa
+// suas funções públicas (addLista, addItemLista) ao gerar uma lista de
+// compras a partir de uma cesta.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { addItemLista, addLista, type MercadoLista } from "./listas-store";
 
+// Chave legada (anônima) — preservada para migração one-shot por usuário.
 export const MERCADO_CESTA_STORAGE_KEY = "gi:mercado:cesta:v1";
+export const MERCADO_CESTA_LEGACY_ANON_KEY = MERCADO_CESTA_STORAGE_KEY;
 
 export type CestaTipo =
   | "compraMes"
@@ -89,7 +92,7 @@ function normalizeItem(raw: unknown): MercadoCestaItem | null {
   };
 }
 
-function normalize(raw: unknown): MercadoCestaPadrao | null {
+export function normalizeCesta(raw: unknown): MercadoCestaPadrao | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   if (typeof r.id !== "string") return null;
@@ -110,14 +113,48 @@ function normalize(raw: unknown): MercadoCestaPadrao | null {
   };
 }
 
+// ----- Sync state (preenchido por mercado-sync.ts) -----
+let cestaActiveUserId: string | null = null;
+
+function currentCestaKey(): string {
+  return cestaActiveUserId
+    ? `${MERCADO_CESTA_STORAGE_KEY}:${cestaActiveUserId}`
+    : MERCADO_CESTA_STORAGE_KEY;
+}
+
+type CestaSyncHooks = {
+  onUpsertCesta?: (cesta: MercadoCestaPadrao) => void;
+  onDeleteCesta?: (id: string) => void;
+};
+let cestaSyncHooks: CestaSyncHooks = {};
+
+export function __setMercadoCestaSyncHooks(hooks: CestaSyncHooks) {
+  cestaSyncHooks = hooks;
+}
+
+export function __setMercadoCestaActiveUser(uid: string | null) {
+  if (cestaActiveUserId === uid) return;
+  cestaActiveUserId = uid;
+  emit();
+}
+
+export function __getMercadoCestaActiveUserId(): string | null {
+  return cestaActiveUserId;
+}
+
+export function __replaceCestaCache(items: MercadoCestaPadrao[]) {
+  safeWrite(items);
+  emit();
+}
+
 function safeRead(): MercadoCestaPadrao[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(MERCADO_CESTA_STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentCestaKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.map(normalize).filter((x): x is MercadoCestaPadrao => x !== null);
+    return parsed.map(normalizeCesta).filter((x): x is MercadoCestaPadrao => x !== null);
   } catch {
     return [];
   }
@@ -126,7 +163,7 @@ function safeRead(): MercadoCestaPadrao[] {
 function safeWrite(next: MercadoCestaPadrao[]) {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(MERCADO_CESTA_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(currentCestaKey(), JSON.stringify(next));
   } catch {
     // ignore quota / privacy errors
   }
@@ -156,6 +193,19 @@ export function getCestaPadraoById(id: string): MercadoCestaPadrao | undefined {
   return safeRead().find((c) => c.id === id);
 }
 
+function pushUpsert(id: string) {
+  if (!cestaSyncHooks.onUpsertCesta) return;
+  const snap = safeRead().find((c) => c.id === id);
+  if (snap) {
+    try { cestaSyncHooks.onUpsertCesta(snap); } catch { /* ignore */ }
+  }
+}
+
+function pushDelete(id: string) {
+  if (!cestaSyncHooks.onDeleteCesta) return;
+  try { cestaSyncHooks.onDeleteCesta(id); } catch { /* ignore */ }
+}
+
 export function addCestaPadrao(input: {
   nome: string;
   tipo: CestaTipo;
@@ -172,6 +222,7 @@ export function addCestaPadrao(input: {
     atualizadoEm: now,
   };
   mutate((cur) => [cesta, ...cur]);
+  pushUpsert(cesta.id);
   return cesta;
 }
 
@@ -193,10 +244,12 @@ export function updateCestaPadrao(
       };
     }),
   );
+  pushUpsert(id);
 }
 
 export function removeCestaPadrao(id: string) {
   mutate((cur) => cur.filter((c) => c.id !== id));
+  pushDelete(id);
 }
 
 export function addItemCesta(
@@ -230,6 +283,7 @@ export function addItemCesta(
       c.id === cestaId ? { ...c, itens: [...c.itens, item], atualizadoEm: now } : c,
     ),
   );
+  pushUpsert(cestaId);
   return item;
 }
 
@@ -269,6 +323,7 @@ export function updateItemCesta(
       return { ...c, itens, atualizadoEm: now };
     }),
   );
+  pushUpsert(cestaId);
 }
 
 export function removeItemCesta(cestaId: string, itemId: string) {
@@ -280,6 +335,7 @@ export function removeItemCesta(cestaId: string, itemId: string) {
         : c,
     ),
   );
+  pushUpsert(cestaId);
 }
 
 export function computeCestaTotal(c: MercadoCestaPadrao): number {
@@ -294,7 +350,6 @@ export function computeCestaTotal(c: MercadoCestaPadrao): number {
 export function gerarListaAPartirDaCesta(cestaId: string): MercadoLista | null {
   const cesta = getCestaPadraoById(cestaId);
   if (!cesta) return null;
-  // Mapeia o tipo da cesta para um tipo de lista compatível.
   const tipoLista =
     cesta.tipo === "compraMes" || cesta.tipo === "reposicao"
       ? cesta.tipo
@@ -318,7 +373,6 @@ export function gerarListaAPartirDaCesta(cestaId: string): MercadoLista | null {
       precoEstimado: it.precoEstimado,
     });
   }
-  // Return the created list reference (entries são persistidas no listas-store).
   return { ...lista };
 }
 
@@ -326,7 +380,13 @@ function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   if (isBrowser()) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MERCADO_CESTA_STORAGE_KEY) listener();
+      // Reage tanto à chave legada quanto à chave por usuário ativo.
+      if (
+        e.key === MERCADO_CESTA_STORAGE_KEY ||
+        (e.key && cestaActiveUserId && e.key === `${MERCADO_CESTA_STORAGE_KEY}:${cestaActiveUserId}`)
+      ) {
+        listener();
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => {
