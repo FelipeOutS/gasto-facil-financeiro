@@ -88,7 +88,7 @@ export async function listIncomingConnections(ownerUserId: string, _ownerEmail: 
   for (const r of [...((owned.data ?? []) as ConnectedAccount[]), ...((invites.data ?? []) as Omit<ConnectedAccount, "invite_token">[])]) {
     if (seen.has(r.id)) continue;
     seen.add(r.id);
-    rows.push({ invite_token: "", ...(r as ConnectedAccount) } as ConnectedAccount);
+    rows.push({ ...(r as ConnectedAccount), invite_token: (r as ConnectedAccount).invite_token ?? "" });
   }
   return rows;
 }
