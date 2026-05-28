@@ -870,6 +870,43 @@
       "itemsLater": "A leitura dos itens da nota será adicionada em uma próxima etapa. Nada foi salvo automaticamente.",
       "invalidHint": "Confira se o QR Code está legível, tente outra foto ou cole o link manualmente."
     },
+    "summary": {
+      "title": "Resumo do cupom",
+      "awaitingItems": "Os itens da nota ainda não foram lidos nesta etapa.",
+      "noData": "Nenhum dado adicional foi extraído do QR Code."
+    },
+    "nextStep": {
+      "title": "Próximo passo",
+      "description": "Esta tela ainda é uma preparação. Nas próximas etapas, planejamos:",
+      "items": {
+        "readItems": "Ler os itens da nota fiscal a partir da chave de acesso.",
+        "reviewProducts": "Permitir que você revise produtos, quantidades e preços antes de salvar.",
+        "chooseList": "Escolher uma lista de compras existente ou criar uma nova.",
+        "enrichHistory": "Enriquecer seu histórico local de preços apenas após sua confirmação."
+      },
+      "disclaimer": "A leitura automática dos itens ainda não está ativa. Nada será salvo sem sua revisão."
+    },
+    "destination": {
+      "title": "Para onde importar depois?",
+      "description": "Quando a leitura dos itens estiver disponível, você poderá escolher um destino. Hoje, esta seção é apenas uma prévia — nada será alterado.",
+      "soonBadge": "Em breve nesta importação",
+      "optionNewList": {
+        "title": "Criar nova lista",
+        "desc": "Gerar uma nova lista de compras com os itens do cupom."
+      },
+      "optionExistingList": {
+        "title": "Adicionar em lista existente",
+        "desc": "Mesclar os itens em uma lista que você já tem."
+      },
+      "optionCart": {
+        "title": "Usar no carrinho inteligente",
+        "desc": "Enviar os itens direto para o carrinho da próxima compra."
+      },
+      "existingListsTitle": "Suas listas atuais (prévia)",
+      "existingListsHint": "Apenas para visualização. Nenhuma lista será alterada nesta etapa.",
+      "noListsHint": "Você ainda não tem listas. Você poderá criar uma quando a importação estiver disponível.",
+      "moreListsCount": "+{{count}} outras"
+    },
     "privacy": {
       "title": "Privacidade e segurança",
       "local": "A foto e o QR Code são processados localmente neste dispositivo nesta etapa.",
@@ -878,3 +915,4 @@
     }
   }
 }
+
