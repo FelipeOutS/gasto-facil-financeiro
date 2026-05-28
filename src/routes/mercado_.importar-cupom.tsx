@@ -1065,7 +1065,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </button>
       </div>
 
-      </div>
+
 
       {!hasValid && (
         <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
