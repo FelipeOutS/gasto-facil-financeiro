@@ -202,12 +202,17 @@ async function pullListas(userId: string) {
       merged.push(s);
     }
   }
-  // Local-only items not on server (não reenviar se está em tombstone).
+  // Local-only items not on server:
+  // - tombstone local -> não preservar; tentar delete novamente.
+  // - dirty.upsert local -> preservar e re-push (offline/falha de rede).
+  // - nem dirty nem tombstone -> foi excluído em outro dispositivo;
+  //   REMOVER do cache local (não ressuscitar no servidor).
+  const dirtySet = readDirty(userId);
   for (const l of local) {
-    if (!serverById.has(l.id) && !tombSet.has(l.id)) {
-      merged.push(l);
-      orphans.push(l);
-    }
+    if (serverById.has(l.id)) continue;
+    if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
+    if (dirtySet.has(l.id)) { merged.push(l); orphans.push(l); continue; }
+    // implicit delete: outro dispositivo removeu. Não adiciona ao merged.
   }
   merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   __replaceListasCache(merged);
