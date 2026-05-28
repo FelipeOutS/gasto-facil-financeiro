@@ -41,7 +41,6 @@ import {
 import {
   useMercadoListas,
   addLista,
-  addItemLista,
   addItensLista,
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
