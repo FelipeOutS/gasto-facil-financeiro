@@ -697,6 +697,9 @@ export function useMercadoSync() {
         // Listas
         await migrateLegacyListasOnce(uid);
         if (cancelled) return;
+        // Garante que dados locais pré-existentes (antes desta lógica)
+        // não sejam interpretados como "apagados em outro dispositivo".
+        seedDirtyIfMissing(uid);
         await pullListas(uid);
         listasOk = true;
         if (cancelled) return;
