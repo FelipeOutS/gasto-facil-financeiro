@@ -732,7 +732,9 @@
       "manualHint": "For now, keep typing the market name manually when you finish a purchase.",
       "backToHub": "Back to Smart Market"
     },
-    "localNotice": "For now, saved markets stay only on this device. In a future step, this area may connect to location APIs and to the community price base.",
+    "localNotice": "Saved markets are tied to your account and sync across your devices. Use them to link purchases and prices to the right place.",
+    "infoCard": "Save the markets where you usually shop. That way, when you finish purchases or import receipts, you can link prices to the right market.",
+    "emptyCta": "Add your first market",
     "addCta": "New market",
     "addCtaShort": "Add",
     "cancel": "Cancel",
