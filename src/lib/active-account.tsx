@@ -137,10 +137,17 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
   function applySwitch(ownerId: string, persist: boolean) {
     setActiveOwnerIdState(ownerId);
     setActiveUserId(ownerId);
-    void hydrateUser(ownerId);
+    // Só re-hidrata quando estamos trocando para uma conta CONECTADA
+    // (diferente da própria). Se for a conta do próprio usuário, o
+    // auth-context já hidratou — chamar hydrateUser aqui zera o status
+    // para "loading" e faz todas as páginas piscarem PageSkeleton.
+    if (viewerId && ownerId !== viewerId) {
+      void hydrateUser(ownerId);
+    }
     if (persist && viewerId) writeStored(viewerId, ownerId === viewerId ? null : ownerId);
     // O store já emite/atualiza componentes via subscribe; hydrateUser repovoa caches.
   }
+
 
   const switchTo = useCallback(
     async (ownerId: string | null) => {
