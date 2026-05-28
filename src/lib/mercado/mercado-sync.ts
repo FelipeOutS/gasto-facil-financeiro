@@ -1409,6 +1409,20 @@ function ensureHooks() {
   __setMercadoOrcamentoSyncHooks({
     onUpsertOrcamento: (o) => { void pushUpsertOrcamento(o); },
   });
+  __setMercadoMercadosSyncHooks({
+    onUpsertMercado: (m) => {
+      const uid = __getMercadoMercadosActiveUserId();
+      markMercadoDirty(uid, m.id);
+      void pushUpsertMercado(m);
+    },
+    onDeleteMercado: (id) => {
+      const uid = __getMercadoMercadosActiveUserId();
+      addMercadoTombstone(uid, id);
+      clearMercadoDirty(uid, id);
+      void pushDeleteMercado(id);
+    },
+  });
+}
 }
 
 // ============================================================
