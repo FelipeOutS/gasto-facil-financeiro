@@ -870,6 +870,43 @@
       "itemsLater": "Reading the items from the receipt will be added in a future step. Nothing was saved automatically.",
       "invalidHint": "Make sure the QR Code is clearly visible, try another photo, or paste the link manually."
     },
+    "summary": {
+      "title": "Receipt summary",
+      "awaitingItems": "The items from the receipt have not been read in this step yet.",
+      "noData": "No additional data was extracted from the QR Code."
+    },
+    "nextStep": {
+      "title": "Next step",
+      "description": "This screen is still a preparation. In the next steps we plan to:",
+      "items": {
+        "readItems": "Read the items from the receipt using the access key.",
+        "reviewProducts": "Let you review products, quantities, and prices before saving.",
+        "chooseList": "Choose an existing shopping list or create a new one.",
+        "enrichHistory": "Enrich your local price history only after your confirmation."
+      },
+      "disclaimer": "Automatic item reading is not active yet. Nothing will be saved without your review."
+    },
+    "destination": {
+      "title": "Where to import later?",
+      "description": "Once item reading is available, you'll be able to choose a destination. For now, this section is just a preview — nothing will be changed.",
+      "soonBadge": "Soon in this import",
+      "optionNewList": {
+        "title": "Create new list",
+        "desc": "Generate a new shopping list with the receipt items."
+      },
+      "optionExistingList": {
+        "title": "Add to existing list",
+        "desc": "Merge the items into a list you already have."
+      },
+      "optionCart": {
+        "title": "Use in smart cart",
+        "desc": "Send the items straight to the cart for your next shopping."
+      },
+      "existingListsTitle": "Your current lists (preview)",
+      "existingListsHint": "Preview only. No list will be changed in this step.",
+      "noListsHint": "You don't have any lists yet. You'll be able to create one when the import is available.",
+      "moreListsCount": "+{{count}} more"
+    },
     "privacy": {
       "title": "Privacy & security",
       "local": "The photo and QR Code are processed locally on this device at this stage.",
@@ -878,3 +915,4 @@
     }
   }
 }
+
