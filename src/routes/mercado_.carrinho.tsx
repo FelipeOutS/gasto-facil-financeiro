@@ -19,7 +19,18 @@ import {
   Pencil,
   X,
   Save,
+  ScanBarcode,
+  Search,
+  Loader2,
+  Check,
+  ShoppingBasket,
 } from "lucide-react";
+import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
+import {
+  buscarProdutoPorCodigoBarras,
+  ProductLookupError,
+  type ProductLookupResult,
+} from "@/lib/mercado/products-api";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
