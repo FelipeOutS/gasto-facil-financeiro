@@ -127,6 +127,50 @@ function removeTombstones(uid: string | null, ids: Iterable<string>) {
   if (next.length !== current.length) writeTombstones(uid, next);
 }
 
+// ----- Dirty upserts (alterações locais pendentes de push) ------
+// Diferencia "lista local nova/alterada offline" de "cache antigo já apagado
+// em outro dispositivo". Sem isso, o merge ressuscita listas excluídas.
+const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v1";
+function dirtyKey(uid: string) { return `${LISTAS_DIRTY_KEY_BASE}:${uid}`; }
+function readDirty(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(dirtyKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    if (parsed && typeof parsed === "object") return new Set(Object.keys(parsed));
+    return new Set();
+  } catch { return new Set(); }
+}
+function writeDirty(uid: string | null, ids: Set<string>) {
+  if (!uid) return;
+  try { localStorage.setItem(dirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+}
+function markDirtyUpsert(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readDirty(uid);
+  if (cur.has(id)) return;
+  cur.add(id); writeDirty(uid, cur);
+}
+function clearDirtyUpsert(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readDirty(uid);
+  if (!cur.delete(id)) return;
+  writeDirty(uid, cur);
+}
+/** Marca todas as listas locais como dirty na primeira execução com esta lógica,
+ *  para não perder dados pré-existentes do cache antes desta correção. */
+function seedDirtyIfMissing(uid: string) {
+  const seedFlag = `${LISTAS_DIRTY_KEY_BASE}:seeded:${uid}`;
+  try { if (localStorage.getItem(seedFlag) === "1") return; } catch { return; }
+  const ids = getListas().map((l) => l.id);
+  const cur = readDirty(uid);
+  for (const id of ids) cur.add(id);
+  writeDirty(uid, cur);
+  try { localStorage.setItem(seedFlag, "1"); } catch { /* ignore */ }
+}
+
 async function pullListas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_listas")
@@ -158,12 +202,17 @@ async function pullListas(userId: string) {
       merged.push(s);
     }
   }
-  // Local-only items not on server (não reenviar se está em tombstone).
+  // Local-only items not on server:
+  // - tombstone local -> não preservar; tentar delete novamente.
+  // - dirty.upsert local -> preservar e re-push (offline/falha de rede).
+  // - nem dirty nem tombstone -> foi excluído em outro dispositivo;
+  //   REMOVER do cache local (não ressuscitar no servidor).
+  const dirtySet = readDirty(userId);
   for (const l of local) {
-    if (!serverById.has(l.id) && !tombSet.has(l.id)) {
-      merged.push(l);
-      orphans.push(l);
-    }
+    if (serverById.has(l.id)) continue;
+    if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
+    if (dirtySet.has(l.id)) { merged.push(l); orphans.push(l); continue; }
+    // implicit delete: outro dispositivo removeu. Não adiciona ao merged.
   }
   merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   __replaceListasCache(merged);
@@ -185,14 +234,23 @@ async function pushUpsertLista(l: MercadoLista) {
   const { error } = await supabase
     .from("mercado_listas")
     .upsert(listaToRow(l, uid), { onConflict: "id" });
-  if (error) console.warn("[mercado-sync] upsert lista failed:", error.message);
+  if (error) {
+    console.warn("[mercado-sync] upsert lista failed:", error.message);
+    return;
+  }
+  clearDirtyUpsert(uid, l.id);
 }
 
 async function pushDeleteLista(id: string) {
   const uid = __getMercadoActiveUserId();
   if (!uid) return;
   const { error } = await supabase.from("mercado_listas").delete().eq("id", id).eq("user_id", uid);
-  if (error) console.warn("[mercado-sync] delete lista failed:", error.message);
+  if (error) {
+    console.warn("[mercado-sync] delete lista failed:", error.message);
+    return;
+  }
+  clearDirtyUpsert(uid, id);
+  removeTombstones(uid, [id]);
 }
 
 function readLegacyAnonListas(): MercadoLista[] {
@@ -546,9 +604,16 @@ function ensureHooks() {
   if (hooksRegistered) return;
   hooksRegistered = true;
   __setMercadoSyncHooks({
-    onUpsertLista: (l) => { void pushUpsertLista(l); },
+    onUpsertLista: (l) => {
+      // marca dirty ANTES do push para sobreviver offline/falha de rede
+      markDirtyUpsert(__getMercadoActiveUserId(), l.id);
+      void pushUpsertLista(l);
+    },
     onDeleteLista: (id) => {
-      addTombstone(__getMercadoActiveUserId(), id);
+      const uid = __getMercadoActiveUserId();
+      addTombstone(uid, id);
+      // garante que não fique pendente de upsert depois de excluir
+      clearDirtyUpsert(uid, id);
       void pushDeleteLista(id);
     },
   });
@@ -632,6 +697,9 @@ export function useMercadoSync() {
         // Listas
         await migrateLegacyListasOnce(uid);
         if (cancelled) return;
+        // Garante que dados locais pré-existentes (antes desta lógica)
+        // não sejam interpretados como "apagados em outro dispositivo".
+        seedDirtyIfMissing(uid);
         await pullListas(uid);
         listasOk = true;
         if (cancelled) return;
