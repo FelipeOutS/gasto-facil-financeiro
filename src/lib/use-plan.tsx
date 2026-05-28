@@ -92,6 +92,29 @@ type CachedSubscription = {
 };
 
 const CACHE_PREFIX = "gf-plan-cache:";
+const RUNTIME_CACHE_TTL_MS = 5 * 60_000;
+
+let runtimeSubscriptionCache:
+  | { userId: string; value: CachedSubscription; loadedAt: number }
+  | null = null;
+let runtimeSubscriptionInFlight:
+  | { userId: string; promise: Promise<CachedSubscription> }
+  | null = null;
+
+function getRuntimeCache(userId: string): CachedSubscription | null {
+  if (
+    runtimeSubscriptionCache?.userId === userId &&
+    Date.now() - runtimeSubscriptionCache.loadedAt < RUNTIME_CACHE_TTL_MS
+  ) {
+    return runtimeSubscriptionCache.value;
+  }
+  return null;
+}
+
+function rememberRuntimeCache(userId: string, value: CachedSubscription) {
+  runtimeSubscriptionCache = { userId, value, loadedAt: Date.now() };
+  writeCache(userId, value);
+}
 
 function readCache(userId: string): CachedSubscription | null {
   if (typeof window === "undefined") return null;
