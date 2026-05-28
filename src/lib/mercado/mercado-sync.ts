@@ -714,6 +714,9 @@ function addCestaTombstone(uid: string | null, id: string) {
       JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
     );
   } catch { /* ignore */ }
+}
+
+
 
 // ----- Dirty upserts de cestas (mesmo princípio de listas dirty:v2) -----
 // Sem isso, pullCestas re-upserta toda cesta local-only — inclusive cestas
