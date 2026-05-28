@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Home,
@@ -22,6 +23,7 @@ import {
   Plus,
   Trash2,
   ScanLine,
+  Check,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -36,9 +38,15 @@ import {
   type CupomItemPreview,
   type CupomParseResult,
 } from "@/lib/mercado/nfce-items-parser";
-import { useMercadoListas } from "@/lib/mercado/listas-store";
+import {
+  useMercadoListas,
+  addLista,
+  addItemLista,
+  type ListaTipo,
+} from "@/lib/mercado/listas-store";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 
