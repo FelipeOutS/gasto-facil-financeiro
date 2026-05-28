@@ -962,7 +962,8 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+
         <button
           type="button"
           onClick={openNew}
