@@ -728,7 +728,10 @@ export type MercadoCompraHistorico = {
   itensSnapshot: ListaItem[];
   /** E15: nome do mercado/estabelecimento informado opcionalmente. Pode estar ausente em compras antigas. */
   mercadoNome?: string;
+  /** E34: observação livre fornecida ao registrar a compra. */
+  observacao?: string;
 };
+
 
 const historicoListeners = new Set<Listener>();
 
