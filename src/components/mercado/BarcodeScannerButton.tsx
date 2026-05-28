@@ -56,11 +56,11 @@ interface Props {
 
 // Carrega ZXing sob demanda para não pesar no bundle inicial.
 type ZxingReader = {
-  decodeFromVideoDevice: (
-    deviceId: string | null,
+  decodeFromStream: (
+    stream: MediaStream,
     video: HTMLVideoElement,
     cb: (result: { getText: () => string } | null) => void,
-  ) => Promise<{ stop: () => void } | void>;
+  ) => Promise<{ stop: () => void }>;
   decodeFromImageElement: (img: HTMLImageElement) => Promise<{ getText: () => string }>;
   reset?: () => void;
 };
@@ -158,18 +158,14 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
     zxingRef.current = reader;
     const v = videoRef.current;
     if (!v) return;
-    // Use the stream we already acquired (avoids second permission prompt).
-    v.srcObject = stream;
-    v.setAttribute("playsinline", "true");
-    try { await v.play(); } catch { /* ignore */ }
     try {
-      const controls = await reader.decodeFromVideoDevice(null, v, (result) => {
+      // decodeFromStream reuses the MediaStream we already acquired —
+      // avoids a second getUserMedia call / permission prompt.
+      const controls = await reader.decodeFromStream(stream, v, (result) => {
         if (stoppedRef.current || !result) return;
         handleDetected(result.getText());
       });
-      if (controls && typeof controls === "object" && "stop" in controls) {
-        zxingControlsRef.current = controls as { stop: () => void };
-      }
+      zxingControlsRef.current = controls;
     } catch {
       setStatus("error");
       stopCamera();
