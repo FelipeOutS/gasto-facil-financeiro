@@ -117,13 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = sess.user.id;
       setActiveUserId(uid);
       persistLoginBioSession(sess);
-      setTimeout(() => {
-        void (async () => {
-          await migrateLegacyDataToUser(uid);
-          await hydrateUser(uid);
-          void loadProfile(uid);
-        })();
-      }, 0);
+      if (hydratedUidThisSession !== uid) {
+        hydratedUidThisSession = uid;
+        setTimeout(() => {
+          void (async () => {
+            await migrateLegacyDataToUser(uid);
+            await hydrateUser(uid);
+            void loadProfile(uid);
+          })();
+        }, 0);
+      }
     };
     window.addEventListener(
       LOGIN_BIO_SESSION_RESTORED_EVENT,
@@ -142,17 +145,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isLoginBioEnabledForEmail(data.session?.user.email)) {
             persistLoginBioSession(data.session);
           }
-          void (async () => {
-            await migrateLegacyDataToUser(uid);
-            await hydrateUser(uid);
-            void loadProfile(uid);
-          })();
+          if (hydratedUidThisSession !== uid) {
+            hydratedUidThisSession = uid;
+            void (async () => {
+              await migrateLegacyDataToUser(uid);
+              await hydrateUser(uid);
+              void loadProfile(uid);
+            })();
+          }
         }
       })
       .finally(() => {
         window.clearTimeout(loadingFallback);
         if (mounted) setLoading(false);
       });
+
 
     return () => {
       mounted = false;
