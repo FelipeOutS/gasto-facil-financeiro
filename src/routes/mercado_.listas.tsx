@@ -11,6 +11,10 @@ import {
   WalletCards,
   CalendarDays,
   Trash2,
+  RefreshCw,
+  CloudOff,
+  CloudCheck,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
@@ -18,6 +22,9 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import { removeLista, useMercadoListas, type MercadoLista } from "@/lib/mercado/listas-store";
+import { refreshMercadoListas, useMercadoListasSyncState } from "@/lib/mercado/mercado-sync";
+import { useAuth } from "@/lib/auth-context";
+import { useState } from "react";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
