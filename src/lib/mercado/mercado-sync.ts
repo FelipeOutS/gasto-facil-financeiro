@@ -714,7 +714,42 @@ function addCestaTombstone(uid: string | null, id: string) {
       JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
     );
   } catch { /* ignore */ }
+
+// ----- Dirty upserts de cestas (mesmo princípio de listas dirty:v2) -----
+// Sem isso, pullCestas re-upserta toda cesta local-only — inclusive cestas
+// que foram excluídas em outro dispositivo — causando "ressurreição".
+const CESTAS_DIRTY_KEY_BASE = "gi:mercado:cestas:dirty:v1";
+const CESTAS_SAFETY_FLAG_BASE = "gi:mercado:cestas:dirty-safety-checked:v1";
+function cestasDirtyKey(uid: string) { return `${CESTAS_DIRTY_KEY_BASE}:${uid}`; }
+function cestasSafetyFlagKey(uid: string) { return `${CESTAS_SAFETY_FLAG_BASE}:${uid}`; }
+function readCestasDirty(uid: string | null): Set<string> {
+  if (!uid) return new Set();
+  try {
+    const raw = localStorage.getItem(cestasDirtyKey(uid));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    return new Set();
+  } catch { return new Set(); }
 }
+function writeCestasDirty(uid: string | null, ids: Set<string>) {
+  if (!uid) return;
+  try { localStorage.setItem(cestasDirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+}
+function markCestaDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readCestasDirty(uid);
+  if (cur.has(id)) return;
+  cur.add(id); writeCestasDirty(uid, cur);
+}
+function clearCestaDirty(uid: string | null, id: string) {
+  if (!uid || !id) return;
+  const cur = readCestasDirty(uid);
+  if (!cur.delete(id)) return;
+  writeCestasDirty(uid, cur);
+}
+
+
 
 async function pushUpsertCesta(c: MercadoCestaPadrao) {
   const uid = __getMercadoCestaActiveUserId();
