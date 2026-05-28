@@ -721,6 +721,15 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
     .filter((x): x is NonNullable<typeof x> => x !== null);
 }
 
+// E34: Local timezone "YYYY-MM-DD" (avoid UTC drift in pre-filled date input).
+function todayLocalISODate(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
@@ -740,7 +749,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   // E34 finish-purchase form state
   const [finishName, setFinishName] = useState("");
   const [finishMarket, setFinishMarket] = useState("");
-  const [finishDate, setFinishDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [finishDate, setFinishDate] = useState(() => todayLocalISODate());
   const [finishObs, setFinishObs] = useState("");
 
 
@@ -757,7 +766,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setSelectedListaId(null);
     setFinishName("");
     setFinishMarket("");
-    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishDate(todayLocalISODate());
     setFinishObs("");
   }
 
@@ -907,7 +916,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setMode("finish");
     setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
     setFinishMarket("");
-    setFinishDate(new Date().toISOString().slice(0, 10));
+    setFinishDate(todayLocalISODate());
     setFinishObs("");
   }
 
