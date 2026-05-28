@@ -2,7 +2,8 @@
   "meta": {
     "title": "Mercado Inteligente — Gasto Inteligente",
     "listasTitle": "Listas de compras — Mercado Inteligente",
-    "calculadorasTitle": "Calculadoras — Mercado Inteligente"
+    "calculadorasTitle": "Calculadoras — Mercado Inteligente",
+    "importarCupomTitle": "Importar cupom fiscal — Mercado Inteligente"
   },
   "hub": {
     "title": "Mercado Inteligente",
