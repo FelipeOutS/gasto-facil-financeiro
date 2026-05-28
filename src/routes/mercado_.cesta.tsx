@@ -56,7 +56,7 @@ function CestaPadraoPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   function handleGenerate(c: MercadoCestaPadrao) {

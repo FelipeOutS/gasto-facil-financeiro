@@ -56,7 +56,7 @@ function PrecosHistoricoPage() {
 
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   const dateFormatter = new Intl.DateTimeFormat(i18nInst.language || "pt-BR", {

@@ -59,7 +59,7 @@ function MercadoListasPage() {
   }
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   function goToNova() {

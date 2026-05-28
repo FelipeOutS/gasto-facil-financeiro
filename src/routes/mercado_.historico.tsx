@@ -23,7 +23,7 @@ function HistoricoPage() {
   const historico = useMercadoHistorico();
 
   function handleBack() {
-    void navigate({ to: "/mercado" });
+    void navigate({ to: "/mercado", replace: true });
   }
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
