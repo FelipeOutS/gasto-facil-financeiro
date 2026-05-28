@@ -166,6 +166,9 @@ const sbAny = supabase as unknown as any;
 export function setActiveUserId(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
+  hydratedUserId = null;
+  hydrationInFlightUserId = null;
+  hydrationInFlightPromise = null;
   // Clear in-memory caches on user change
   memGastos = EMPTY_GASTOS;
   memCategorias = EMPTY_CATEGORIAS;
@@ -184,7 +187,7 @@ export function setActiveUserId(uid: string | null) {
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
-  hydrationStatus = "idle";
+  setHydrationStatus("idle");
   emit();
 }
 
@@ -194,12 +197,16 @@ export function setActiveUserId(uid: string | null) {
 type HydrationStatus = "idle" | "loading" | "ready" | "error";
 let hydrationStatus: HydrationStatus = "idle";
 let localBootstrapReady = false;
+let hydratedUserId: string | null = null;
+let hydrationInFlightUserId: string | null = null;
+let hydrationInFlightPromise: Promise<void> | null = null;
 
 export function getHydrationStatus(): HydrationStatus {
   return hydrationStatus;
 }
 
 function setHydrationStatus(s: HydrationStatus) {
+  if (hydrationStatus === s) return;
   hydrationStatus = s;
   emit();
 }
@@ -860,9 +867,15 @@ async function ensureDefaultBancos(userId: string): Promise<void> {
 
 // ---------- Hydrate everything ----------
 export async function hydrateUser(userId: string): Promise<void> {
-  if (hydrationStatus === "loading") return;
-  setHydrationStatus("loading");
-  try {
+  if (hydratedUserId === userId && hydrationStatus === "ready") return;
+  if (hydrationInFlightPromise && hydrationInFlightUserId === userId) {
+    return hydrationInFlightPromise;
+  }
+
+  hydrationInFlightUserId = userId;
+  hydrationInFlightPromise = (async () => {
+    setHydrationStatus("loading");
+    try {
     await Promise.all([
       ensureDefaultCategorias(userId),
       ensureDefaultBancos(userId),
@@ -966,6 +979,7 @@ export async function hydrateUser(userId: string): Promise<void> {
       memFaturas = (faturasRes.data ?? []).map(rowToFatura);
     }
 
+    hydratedUserId = userId;
     setHydrationStatus("ready");
 
     // Backfill em background: recupera lotes antigos que foram importados
@@ -976,10 +990,18 @@ export async function hydrateUser(userId: string): Promise<void> {
     void reclassificarCategoriasExistentes().catch((err) => {
       console.warn("[store] reclassificarCategoriasExistentes failed", err);
     });
-  } catch (e) {
-    console.error("[store] hydrateUser failed", e);
-    setHydrationStatus("error");
-  }
+    } catch (e) {
+      console.error("[store] hydrateUser failed", e);
+      setHydrationStatus("error");
+    } finally {
+      if (hydrationInFlightUserId === userId) {
+        hydrationInFlightUserId = null;
+        hydrationInFlightPromise = null;
+      }
+    }
+  })();
+
+  return hydrationInFlightPromise;
 }
 
 // ============================================================

@@ -92,6 +92,29 @@ type CachedSubscription = {
 };
 
 const CACHE_PREFIX = "gf-plan-cache:";
+const RUNTIME_CACHE_TTL_MS = 5 * 60_000;
+
+let runtimeSubscriptionCache:
+  | { userId: string; value: CachedSubscription; loadedAt: number }
+  | null = null;
+let runtimeSubscriptionInFlight:
+  | { userId: string; promise: Promise<CachedSubscription> }
+  | null = null;
+
+function getRuntimeCache(userId: string): CachedSubscription | null {
+  if (
+    runtimeSubscriptionCache?.userId === userId &&
+    Date.now() - runtimeSubscriptionCache.loadedAt < RUNTIME_CACHE_TTL_MS
+  ) {
+    return runtimeSubscriptionCache.value;
+  }
+  return null;
+}
+
+function rememberRuntimeCache(userId: string, value: CachedSubscription) {
+  runtimeSubscriptionCache = { userId, value, loadedAt: Date.now() };
+  writeCache(userId, value);
+}
 
 function readCache(userId: string): CachedSubscription | null {
   if (typeof window === "undefined") return null;
@@ -115,27 +138,45 @@ function writeCache(userId: string, value: CachedSubscription) {
 
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
-  const [storedRaw, setStoredRaw] = useState<string | null>(null);
-  const [status, setStatus] = useState<SubscriptionStatus>("sem_assinatura");
-  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
-  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(null);
-  const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(null);
-  const [trialUsed, setTrialUsed] = useState(false);
-  const [cancelledAt, setCancelledAt] = useState<string | null>(null);
-  const [accessUntil, setAccessUntil] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
-  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(null);
-  const [paidAt, setPaidAt] = useState<string | null>(null);
-  const [periodicidade, setPeriodicidade] = useState<string | null>(null);
-  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(null);
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const initialCache = user ? getRuntimeCache(user.id) ?? readCache(user.id) : null;
+  const [storedRaw, setStoredRaw] = useState<string | null>(initialCache?.storedPlan ?? null);
+  const [status, setStatus] = useState<SubscriptionStatus>(initialCache?.status ?? "sem_assinatura");
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(initialCache?.trialEndsAt ?? null);
+  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(initialCache?.trialStartedAt ?? null);
+  const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(initialCache?.trialPlan ?? null);
+  const [trialUsed, setTrialUsed] = useState(initialCache?.trialUsed ?? false);
+  const [cancelledAt, setCancelledAt] = useState<string | null>(initialCache?.cancelledAt ?? null);
+  const [accessUntil, setAccessUntil] = useState<string | null>(initialCache?.accessUntil ?? null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(initialCache?.paymentMethod ?? null);
+  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(initialCache?.paymentAmountCents ?? null);
+  const [paidAt, setPaidAt] = useState<string | null>(initialCache?.paidAt ?? null);
+  const [periodicidade, setPeriodicidade] = useState<string | null>(initialCache?.periodicidade ?? null);
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(initialCache?.currentPeriodStart ?? null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(initialCache?.currentPeriodEnd ?? null);
   // `loading` é true APENAS na primeiríssima carga (sem cache). Revalidações
   // ficam em segundo plano e mantêm o último estado válido para evitar
   // o "piscar" entre liberado/bloqueado durante a navegação.
-  const [loading, setLoading] = useState(true);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!initialCache);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialCache && user ? user.id : null);
 
   const isAdminMaster = isAdminMasterEmail(user?.email);
+
+  const applyCached = useCallback((cached: CachedSubscription) => {
+    setStoredRaw(cached.storedPlan);
+    setStatus(cached.status);
+    setTrialEndsAt(cached.trialEndsAt);
+    setTrialStartedAt(cached.trialStartedAt);
+    setTrialPlanRaw(cached.trialPlan);
+    setTrialUsed(cached.trialUsed);
+    setCancelledAt(cached.cancelledAt);
+    setAccessUntil(cached.accessUntil);
+    setPaymentMethod(cached.paymentMethod);
+    setPaymentAmountCents(cached.paymentAmountCents);
+    setPaidAt(cached.paidAt);
+    setPeriodicidade(cached.periodicidade);
+    setCurrentPeriodStart(cached.currentPeriodStart);
+    setCurrentPeriodEnd(cached.currentPeriodEnd);
+  }, []);
 
   // Hidratação síncrona a partir do cache local (evita "Verificando...").
   useEffect(() => {
@@ -145,26 +186,13 @@ export function usePlan(): PlanState {
       return;
     }
     if (hydratedUserId === user.id) return;
-    const cached = readCache(user.id);
+    const cached = getRuntimeCache(user.id) ?? readCache(user.id);
     if (cached) {
-      setStoredRaw(cached.storedPlan);
-      setStatus(cached.status);
-      setTrialEndsAt(cached.trialEndsAt);
-      setTrialStartedAt(cached.trialStartedAt);
-      setTrialPlanRaw(cached.trialPlan);
-      setTrialUsed(cached.trialUsed);
-      setCancelledAt(cached.cancelledAt);
-      setAccessUntil(cached.accessUntil);
-      setPaymentMethod(cached.paymentMethod);
-      setPaymentAmountCents(cached.paymentAmountCents);
-      setPaidAt(cached.paidAt);
-      setPeriodicidade(cached.periodicidade);
-      setCurrentPeriodStart(cached.currentPeriodStart);
-      setCurrentPeriodEnd(cached.currentPeriodEnd);
+      applyCached(cached);
       setLoading(false);
     }
     setHydratedUserId(user.id);
-  }, [user, authLoading, hydratedUserId]);
+  }, [user, authLoading, hydratedUserId, applyCached]);
 
   const load = useCallback(async () => {
     if (authLoading) return;
@@ -188,25 +216,45 @@ export function usePlan(): PlanState {
     }
     // Não força loading se já temos algum estado hidratado: revalida em
     // segundo plano mantendo o último resultado válido.
+    const runtimeCached = getRuntimeCache(user.id);
+    if (runtimeCached) {
+      applyCached(runtimeCached);
+      setLoading(false);
+      return;
+    }
+
     const hasCache = !!readCache(user.id);
     if (!hasCache) setLoading(true);
     try {
-      const data = await getCurrentUserSubscription();
-      setStoredRaw(data.storedPlan);
-      setStatus(data.status);
-      setTrialEndsAt(data.trialEndsAt);
-      setTrialStartedAt(data.trialStartedAt);
-      setTrialPlanRaw(data.trialPlan);
-      setTrialUsed(data.trialUsed);
-      setCancelledAt(data.cancelledAt);
-      setAccessUntil(data.accessUntil);
-      setPaymentMethod(data.paymentMethod);
-      setPaymentAmountCents(data.paymentAmountCents);
-      setPaidAt(data.paidAt);
-      setPeriodicidade(data.periodicidade);
-      setCurrentPeriodStart(data.currentPeriodStart);
-      setCurrentPeriodEnd(data.currentPeriodEnd);
-      writeCache(user.id, {
+      const data = await (runtimeSubscriptionInFlight?.userId === user.id
+        ? runtimeSubscriptionInFlight.promise
+        : (() => {
+            const promise = getCurrentUserSubscription().then((subscription) => ({
+              storedPlan: subscription.storedPlan,
+              status: subscription.status,
+              trialEndsAt: subscription.trialEndsAt,
+              trialStartedAt: subscription.trialStartedAt,
+              trialPlan: subscription.trialPlan,
+              trialUsed: subscription.trialUsed,
+              cancelledAt: subscription.cancelledAt,
+              accessUntil: subscription.accessUntil,
+              paymentMethod: subscription.paymentMethod,
+              paymentAmountCents: subscription.paymentAmountCents,
+              paidAt: subscription.paidAt,
+              periodicidade: subscription.periodicidade,
+              currentPeriodStart: subscription.currentPeriodStart,
+              currentPeriodEnd: subscription.currentPeriodEnd,
+            }));
+            runtimeSubscriptionInFlight = { userId: user.id, promise };
+            promise.finally(() => {
+              if (runtimeSubscriptionInFlight?.promise === promise) {
+                runtimeSubscriptionInFlight = null;
+              }
+            });
+            return promise;
+          })());
+      applyCached(data);
+      rememberRuntimeCache(user.id, {
         storedPlan: data.storedPlan,
         status: data.status,
         trialEndsAt: data.trialEndsAt,
@@ -232,7 +280,7 @@ export function usePlan(): PlanState {
       });
     }
     setLoading(false);
-  }, [user, authLoading]);
+  }, [user, authLoading, applyCached]);
 
   useEffect(() => {
     void load();

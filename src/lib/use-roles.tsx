@@ -23,6 +23,25 @@ type RolesState = {
  * lidas da tabela `user_roles` no servidor, com RLS restringindo escrita.
  */
 const ROLES_CACHE_PREFIX = "gf-roles-cache:";
+const ROLES_RUNTIME_CACHE_TTL_MS = 5 * 60_000;
+
+let rolesRuntimeCache: { userId: string; roles: AppRole[]; loadedAt: number } | null = null;
+let rolesRuntimeInFlight: { userId: string; promise: Promise<AppRole[] | null> } | null = null;
+
+function getRuntimeRoles(userId: string): AppRole[] | null {
+  if (
+    rolesRuntimeCache?.userId === userId &&
+    Date.now() - rolesRuntimeCache.loadedAt < ROLES_RUNTIME_CACHE_TTL_MS
+  ) {
+    return rolesRuntimeCache.roles;
+  }
+  return null;
+}
+
+function rememberRuntimeRoles(userId: string, roles: AppRole[]) {
+  rolesRuntimeCache = { userId, roles, loadedAt: Date.now() };
+  writeRolesCache(userId, roles);
+}
 
 function readRolesCache(userId: string): AppRole[] | null {
   if (typeof window === "undefined") return null;
@@ -47,9 +66,10 @@ function writeRolesCache(userId: string, roles: AppRole[]) {
 
 export function useRoles(): RolesState {
   const { user, loading: authLoading } = useAuth();
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
+  const initialRoles = user ? getRuntimeRoles(user.id) ?? readRolesCache(user.id) : null;
+  const [roles, setRoles] = useState<AppRole[]>(initialRoles ?? []);
+  const [loading, setLoading] = useState(!initialRoles);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialRoles && user ? user.id : null);
 
   // Hidratação síncrona do cache (evita perder permissões durante a navegação).
   useEffect(() => {
@@ -59,7 +79,7 @@ export function useRoles(): RolesState {
       return;
     }
     if (hydratedUserId === user.id) return;
-    const cached = readRolesCache(user.id);
+    const cached = getRuntimeRoles(user.id) ?? readRolesCache(user.id);
     if (cached) {
       setRoles(cached);
       setLoading(false);
@@ -76,27 +96,49 @@ export function useRoles(): RolesState {
         setLoading(false);
         return;
       }
+      const runtimeCached = getRuntimeRoles(user.id);
+      if (runtimeCached) {
+        setRoles(runtimeCached);
+        setLoading(false);
+        return;
+      }
+
       const hasCache = !!readRolesCache(user.id);
       if (!hasCache) setLoading(true);
 
-      try {
-        await supabase.rpc("claim_owner_if_first");
-      } catch {
-        // silencioso
-      }
+      const next = await (rolesRuntimeInFlight?.userId === user.id
+        ? rolesRuntimeInFlight.promise
+        : (() => {
+            const promise = (async () => {
+              try {
+                await supabase.rpc("claim_owner_if_first");
+              } catch {
+                // silencioso
+              }
 
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
+              const { data, error } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", user.id);
+
+              if (error || !data) return null;
+              return data.map((r) => r.role as AppRole);
+            })();
+            rolesRuntimeInFlight = { userId: user.id, promise };
+            promise.finally(() => {
+              if (rolesRuntimeInFlight?.promise === promise) {
+                rolesRuntimeInFlight = null;
+              }
+            });
+            return promise;
+          })());
 
       if (cancelled) return;
-      if (error || !data) {
+      if (!next) {
         if (!hasCache) setRoles([]);
       } else {
-        const next = data.map((r) => r.role as AppRole);
         setRoles(next);
-        writeRolesCache(user.id, next);
+        rememberRuntimeRoles(user.id, next);
       }
       setLoading(false);
     }
