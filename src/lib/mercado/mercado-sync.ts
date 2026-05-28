@@ -547,7 +547,10 @@ function ensureHooks() {
   hooksRegistered = true;
   __setMercadoSyncHooks({
     onUpsertLista: (l) => { void pushUpsertLista(l); },
-    onDeleteLista: (id) => { void pushDeleteLista(id); },
+    onDeleteLista: (id) => {
+      addTombstone(__getMercadoActiveUserId(), id);
+      void pushDeleteLista(id);
+    },
   });
   __setMercadoHistoricoSyncHooks({
     onUpsertHistorico: (h) => { void pushUpsertHistoricoCompra(h); },
