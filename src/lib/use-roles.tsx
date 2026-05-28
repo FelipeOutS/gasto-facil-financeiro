@@ -78,7 +78,7 @@ export function useRoles(): RolesState {
       return;
     }
     if (hydratedUserId === user.id) return;
-    const cached = readRolesCache(user.id);
+    const cached = getRuntimeRoles(user.id) ?? readRolesCache(user.id);
     if (cached) {
       setRoles(cached);
       setLoading(false);
@@ -95,27 +95,49 @@ export function useRoles(): RolesState {
         setLoading(false);
         return;
       }
+      const runtimeCached = getRuntimeRoles(user.id);
+      if (runtimeCached) {
+        setRoles(runtimeCached);
+        setLoading(false);
+        return;
+      }
+
       const hasCache = !!readRolesCache(user.id);
       if (!hasCache) setLoading(true);
 
-      try {
-        await supabase.rpc("claim_owner_if_first");
-      } catch {
-        // silencioso
-      }
+      const next = await (rolesRuntimeInFlight?.userId === user.id
+        ? rolesRuntimeInFlight.promise
+        : (() => {
+            const promise = (async () => {
+              try {
+                await supabase.rpc("claim_owner_if_first");
+              } catch {
+                // silencioso
+              }
 
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
+              const { data, error } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", user.id);
+
+              if (error || !data) return null;
+              return data.map((r) => r.role as AppRole);
+            })();
+            rolesRuntimeInFlight = { userId: user.id, promise: promise.then((value) => value ?? []) };
+            promise.finally(() => {
+              if (rolesRuntimeInFlight?.promise === promise) {
+                rolesRuntimeInFlight = null;
+              }
+            });
+            return promise;
+          })());
 
       if (cancelled) return;
-      if (error || !data) {
+      if (!next) {
         if (!hasCache) setRoles([]);
       } else {
-        const next = data.map((r) => r.role as AppRole);
         setRoles(next);
-        writeRolesCache(user.id, next);
+        rememberRuntimeRoles(user.id, next);
       }
       setLoading(false);
     }
