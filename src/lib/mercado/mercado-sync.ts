@@ -1080,6 +1080,9 @@ function ensureHooks() {
       void pushDeleteCesta(id);
     },
   });
+  __setMercadoOrcamentoSyncHooks({
+    onUpsertOrcamento: (o) => { void pushUpsertOrcamento(o); },
+  });
 }
 
 // ============================================================
