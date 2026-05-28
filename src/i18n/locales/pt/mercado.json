@@ -991,7 +991,26 @@
       "confirmExistingCart": "Adicionar e abrir no carrinho",
       "cartCreatedSuccess": "Carrinho criado com os itens do cupom.",
       "cartImportedSuccess": "Itens adicionados ao carrinho.",
-      "cartNoListsHint": "Você ainda não tem listas. Crie um carrinho rápido para começar."
+      "cartNoListsHint": "Você ainda não tem listas. Crie um carrinho rápido para começar.",
+      "finishPurchase": {
+        "cardTitle": "Registrar compra",
+        "cardDesc": "Salve esta compra no histórico do Mercado e use os preços para comparar em compras futuras.",
+        "formTitle": "Registrar compra finalizada",
+        "purchaseName": "Nome da compra",
+        "purchaseNamePlaceholder": "Ex.: Compra do mês",
+        "defaultPurchaseName": "Compra importada do cupom",
+        "market": "Mercado ou local (opcional)",
+        "marketPlaceholder": "Ex.: Atacadão",
+        "date": "Data da compra",
+        "observation": "Observação (opcional)",
+        "observationPlaceholder": "Anotações sobre esta compra…",
+        "confirm": "Registrar compra",
+        "cancel": "Cancelar",
+        "noExpenseNotice": "Isso não cria despesa financeira. A compra será salva apenas no histórico do Mercado.",
+        "success": "Compra registrada no histórico do Mercado."
+      }
+    },
+
     },
     "privacy": {
       "title": "Privacidade e segurança",
