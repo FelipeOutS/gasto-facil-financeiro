@@ -51,6 +51,10 @@
       "meusMercados": {
         "title": "My markets",
         "desc": "Save your favorite markets and find nearby stores in a future step."
+      },
+      "importarCupom": {
+        "title": "Import receipt",
+        "desc": "Scan the receipt QR Code to prepare importing the purchase."
       }
     }
   },
