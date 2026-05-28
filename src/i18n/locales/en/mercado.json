@@ -2,7 +2,8 @@
   "meta": {
     "title": "Smart Grocery — Gasto Inteligente",
     "listasTitle": "Shopping lists — Smart Grocery",
-    "calculadorasTitle": "Calculators — Smart Grocery"
+    "calculadorasTitle": "Calculators — Smart Grocery",
+    "importarCupomTitle": "Import receipt — Smart Grocery"
   },
   "hub": {
     "title": "Smart Grocery",
