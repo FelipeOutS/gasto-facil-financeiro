@@ -322,6 +322,96 @@ export function addItemLista(
   return item;
 }
 
+/**
+ * Adiciona múltiplos itens a uma lista em UMA única mutação,
+ * recomputando derivados, atualizando updatedAt e disparando pushUpsert
+ * apenas uma vez. Aditiva — não substitui addItemLista.
+ *
+ * Sanitização por item:
+ * - nome: trim; se vazio, item ignorado.
+ * - quantidade: número finito > 0; caso contrário, 1.
+ * - precoEstimado: número finito > 0; caso contrário, undefined (sem NaN/Infinity).
+ * - codigoBarras: apenas dígitos; vazio vira undefined.
+ * - origem: preservada quando válida; default "manual".
+ */
+export function addItensLista(
+  listaId: string,
+  inputs: Array<{
+    nome: string;
+    quantidade?: number;
+    unidade?: string;
+    precoEstimado?: number;
+    codigoBarras?: string;
+    origem?: ListaItem["origem"];
+  }>,
+): MercadoLista | null {
+  if (!listaId || !Array.isArray(inputs) || inputs.length === 0) return null;
+  const atuais = safeRead();
+  const idx = atuais.findIndex((l) => l.id === listaId);
+  if (idx === -1) return null;
+
+  const now = new Date().toISOString();
+  const validOrigens: NonNullable<ListaItem["origem"]>[] = [
+    "manual",
+    "lista",
+    "barcode",
+    "cupom",
+    "qrcode",
+  ];
+
+  const novos: ListaItem[] = [];
+  for (const input of inputs) {
+    if (!input || typeof input.nome !== "string") continue;
+    const nome = input.nome.trim();
+    if (!nome) continue;
+    const quantidade =
+      typeof input.quantidade === "number" &&
+      Number.isFinite(input.quantidade) &&
+      input.quantidade > 0
+        ? input.quantidade
+        : 1;
+    const precoEstimado =
+      typeof input.precoEstimado === "number" &&
+      Number.isFinite(input.precoEstimado) &&
+      input.precoEstimado > 0
+        ? input.precoEstimado
+        : undefined;
+    const barcode =
+      typeof input.codigoBarras === "string"
+        ? input.codigoBarras.replace(/\D/g, "")
+        : "";
+    const origem: ListaItem["origem"] =
+      input.origem && validOrigens.includes(input.origem) ? input.origem : "manual";
+    novos.push({
+      id: genId("itm"),
+      nome,
+      quantidade,
+      unidade: input.unidade?.trim() || undefined,
+      precoEstimado,
+      codigoBarras: barcode ? barcode : undefined,
+      origem,
+      comprado: false,
+      criadoEm: now,
+      atualizadoEm: now,
+    });
+  }
+
+  if (novos.length === 0) return atuais[idx];
+
+  const prev = atuais[idx];
+  const updated = recomputeDerived({
+    ...prev,
+    entries: [...prev.entries, ...novos],
+    updatedAt: now,
+  });
+  const copy = atuais.slice();
+  copy[idx] = updated;
+  safeWrite(copy);
+  emit();
+  pushUpsert(listaId);
+  return updated;
+}
+
 
 export function updateItemLista(
   listaId: string,

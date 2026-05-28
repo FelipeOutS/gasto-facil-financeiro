@@ -41,7 +41,7 @@ import {
 import {
   useMercadoListas,
   addLista,
-  addItemLista,
+  addItensLista,
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
 import { formatBRL } from "@/lib/format";
@@ -798,9 +798,10 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         estimate: parseEstimate(),
         observation: observation.trim() || undefined,
       });
-      for (const it of validItems) {
-        addItemLista(lista.id, { ...it, origem: "cupom" });
-      }
+      addItensLista(
+        lista.id,
+        validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      );
       toast.success(t("importarCupom.importActions.createdSuccess"));
       resetForm();
       void navigate({ to: "/mercado/listas/$id", params: { id: lista.id } });
@@ -818,9 +819,10 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     if (!selectedListaId) return;
     setSubmitting(true);
     try {
-      for (const it of validItems) {
-        addItemLista(selectedListaId, { ...it, origem: "cupom" });
-      }
+      addItensLista(
+        selectedListaId,
+        validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      );
       toast.success(t("importarCupom.importActions.importedSuccess"));
       const id = selectedListaId;
       resetForm();
@@ -845,9 +847,10 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         estimate: parseEstimate(),
         observation: observation.trim() || undefined,
       });
-      for (const it of validItems) {
-        addItemLista(lista.id, { ...it, origem: "cupom" });
-      }
+      addItensLista(
+        lista.id,
+        validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      );
       toast.success(t("importarCupom.importActions.cartCreatedSuccess"));
       const id = lista.id;
       resetForm();
@@ -866,9 +869,10 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     if (!selectedListaId) return;
     setSubmitting(true);
     try {
-      for (const it of validItems) {
-        addItemLista(selectedListaId, { ...it, origem: "cupom" });
-      }
+      addItensLista(
+        selectedListaId,
+        validItems.map((it) => ({ ...it, origem: "cupom" as const })),
+      );
       toast.success(t("importarCupom.importActions.cartImportedSuccess"));
       const id = selectedListaId;
       resetForm();
