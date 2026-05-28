@@ -41,6 +41,17 @@ import {
   normalizeCesta,
   type MercadoCestaPadrao,
 } from "./cesta-store";
+import {
+  __setMercadoOrcamentoActiveUser,
+  __setMercadoOrcamentoSyncHooks,
+  __getMercadoOrcamentoActiveUserId,
+  __replaceOrcamentoCache,
+  getOrcamentoMercado,
+  normalizeOrcamento,
+  MERCADO_ORCAMENTO_LEGACY_ANON_KEY,
+  MERCADO_ORCAMENTO_STORAGE_KEY,
+  type MercadoOrcamento,
+} from "./orcamento-store";
 
 // ============================================================
 // Listas
