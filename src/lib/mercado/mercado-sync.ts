@@ -974,7 +974,11 @@ export function useMercadoSync() {
         await migrateLegacyPrecosOnce(uid);
         if (cancelled) return;
         await pullPrecosUsuario(uid);
-      } catch (e) {
+        if (cancelled) return;
+        // Cestas padrão (E35 / Parte 1)
+        await migrateLegacyCestasOnce(uid);
+        if (cancelled) return;
+        await pullCestas(uid);
         console.warn("[mercado-sync] initial sync failed:", e);
         if (!listasOk && !cancelled) {
           const msg = e instanceof Error ? e.message : String(e);
