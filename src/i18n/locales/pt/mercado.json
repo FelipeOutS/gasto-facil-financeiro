@@ -50,7 +50,7 @@
       },
       "meusMercados": {
         "title": "Meus mercados",
-        "desc": "Cadastre seus mercados favoritos e encontre estabelecimentos próximos em uma etapa futura."
+        "desc": "Cadastre os mercados onde você costuma comprar, marque favoritos e use no histórico e na finalização de compras."
       },
       "importarCupom": {
         "title": "Importar cupom fiscal",
@@ -1012,7 +1012,6 @@
         "success": "Compra registrada no histórico do Mercado."
       }
     },
-
     "privacy": {
       "title": "Privacidade e segurança",
       "local": "A foto e o QR Code são processados localmente neste dispositivo nesta etapa.",

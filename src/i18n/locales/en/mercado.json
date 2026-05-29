@@ -50,7 +50,7 @@
       },
       "meusMercados": {
         "title": "My markets",
-        "desc": "Save your favorite markets and find nearby stores in a future step."
+        "desc": "Save the markets where you usually shop, mark favorites and use them in history and at checkout."
       },
       "importarCupom": {
         "title": "Import receipt",
@@ -1012,7 +1012,6 @@
         "success": "Purchase saved in the Market history."
       }
     },
-
     "privacy": {
       "title": "Privacy & security",
       "local": "The photo and QR Code are processed locally on this device at this stage.",
