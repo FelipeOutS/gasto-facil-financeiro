@@ -94,7 +94,12 @@
       "delete": "Excluir",
       "deleteConfirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
       "deleteSuccess": "Lista excluída com sucesso.",
-      "deleteError": "Não foi possível excluir esta lista."
+      "deleteError": "Não foi possível excluir esta lista.",
+      "deleteConfirmTitle": "Tem certeza que deseja excluir esta lista?",
+      "deleteConfirmDescription": "Essa ação remove apenas a lista de compras. Compras já finalizadas, histórico e preços salvos não serão apagados.",
+      "deleteConfirmName": "Lista: {{name}}",
+      "deleteCancel": "Cancelar",
+      "deleteConfirmButton": "Excluir lista"
     },
     "empty": {
       "title": "Nenhuma lista criada ainda",
@@ -260,6 +265,10 @@
       "description": "Isso remove apenas esta lista de compras. Compras já finalizadas e histórico de preços continuarão salvos.",
       "button": "Excluir lista",
       "confirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
+      "confirmTitle": "Tem certeza que deseja excluir esta lista?",
+      "confirmDescription": "Essa ação remove apenas a lista de compras. Compras já finalizadas, histórico e preços salvos não serão apagados.",
+      "cancel": "Cancelar",
+      "confirmButton": "Excluir lista",
       "success": "Lista excluída com sucesso.",
       "error": "Não foi possível excluir esta lista."
     }
