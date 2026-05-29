@@ -94,7 +94,12 @@
       "delete": "Delete",
       "deleteConfirm": "Are you sure you want to delete this list? Finalized purchases and price history will remain saved.",
       "deleteSuccess": "List deleted successfully.",
-      "deleteError": "Could not delete this list."
+      "deleteError": "Could not delete this list.",
+      "deleteConfirmTitle": "Are you sure you want to delete this list?",
+      "deleteConfirmDescription": "This action only removes the shopping list. Finalized purchases, history and saved prices will not be erased.",
+      "deleteConfirmName": "List: {{name}}",
+      "deleteCancel": "Cancel",
+      "deleteConfirmButton": "Delete list"
     },
     "empty": {
       "title": "No lists created yet",
@@ -260,6 +265,10 @@
       "description": "This removes only this shopping list. Finalized purchases and price history will remain saved.",
       "button": "Delete list",
       "confirm": "Are you sure you want to delete this list? Finalized purchases and price history will remain saved.",
+      "confirmTitle": "Are you sure you want to delete this list?",
+      "confirmDescription": "This action only removes the shopping list. Finalized purchases, history and saved prices will not be erased.",
+      "cancel": "Cancel",
+      "confirmButton": "Delete list",
       "success": "List deleted successfully.",
       "error": "Could not delete this list."
     }
