@@ -278,13 +278,13 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
 function DangerZoneCard({ listaId }: { listaId: string }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
+  const [confirming, setConfirming] = useState(false);
 
-  function handleDelete() {
-    const ok = window.confirm(t("detail.delete.confirm"));
-    if (!ok) return;
+  function handleConfirm() {
+    setConfirming(false);
     if (removeLista(listaId)) {
       toast.success(t("detail.delete.success"));
-      void navigate({ to: "/mercado/listas" });
+      void navigate({ to: "/mercado/listas", replace: true });
     } else {
       toast.error(t("detail.delete.error"));
     }
@@ -301,15 +301,52 @@ function DangerZoneCard({ listaId }: { listaId: string }) {
             {t("detail.delete.description")}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
-        >
-          <Trash2 className="h-4 w-4" />
-          {t("detail.delete.button")}
-        </button>
+        {!confirming && (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4" />
+            {t("detail.delete.button")}
+          </button>
+        )}
       </div>
+
+      {confirming && (
+        <div
+          role="alertdialog"
+          aria-labelledby="detail-delete-title"
+          className="mt-4 rounded-2xl border border-destructive/30 bg-card p-3"
+        >
+          <p
+            id="detail-delete-title"
+            className="text-sm font-semibold text-destructive"
+          >
+            {t("detail.delete.confirmTitle")}
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+            {t("detail.delete.confirmDescription")}
+          </p>
+          <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card-elevated px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-card active:scale-95"
+            >
+              {t("detail.delete.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("detail.delete.confirmButton")}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
