@@ -161,8 +161,6 @@ function MercadoListasPage() {
               dateLabel={dateFormatter.format(new Date(lista.createdAt))}
               onOpen={() => handleOpenLista(lista.id)}
               onDelete={() => {
-                const ok = window.confirm(t("listas.card.deleteConfirm"));
-                if (!ok) return;
                 if (removeLista(lista.id)) {
                   toast.success(t("listas.card.deleteSuccess"));
                 } else {
