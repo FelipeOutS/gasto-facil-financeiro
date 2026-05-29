@@ -224,6 +224,7 @@ function ListaCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("mercado");
+  const [confirming, setConfirming] = useState(false);
   const statusClasses: Record<Status, string> = {
     planning: "bg-warning/10 text-warning ring-1 ring-warning/20",
     ongoing: "bg-primary/10 text-primary ring-1 ring-primary/20",
@@ -267,7 +268,7 @@ function ListaCard({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={() => setConfirming(true)}
             aria-label={t("listas.card.delete")}
             title={t("listas.card.delete")}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-card-elevated text-destructive transition-colors hover:bg-destructive/10 active:scale-95"
@@ -283,6 +284,47 @@ function ListaCard({
           </button>
         </div>
       </div>
+
+      {confirming && (
+        <div
+          role="alertdialog"
+          aria-labelledby={`del-${lista.id}-title`}
+          className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3"
+        >
+          <p
+            id={`del-${lista.id}-title`}
+            className="text-sm font-semibold text-destructive"
+          >
+            {t("listas.card.deleteConfirmTitle")}
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+            {t("listas.card.deleteConfirmDescription")}
+          </p>
+          <p className="mt-1 truncate text-[12px] font-medium text-foreground">
+            {t("listas.card.deleteConfirmName", { name: lista.name })}
+          </p>
+          <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card-elevated px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-card active:scale-95"
+            >
+              {t("listas.card.deleteCancel")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirming(false);
+                onDelete();
+              }}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("listas.card.deleteConfirmButton")}
+            </button>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
