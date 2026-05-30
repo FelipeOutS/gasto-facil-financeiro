@@ -686,9 +686,9 @@ export function ImportInvestimentosFlow({
         {step === "processando" && (
           <div className="py-10 text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-3" />
-            <div className="text-sm font-medium">Lendo o arquivo…</div>
+            <div className="text-sm font-medium">{ti("processing.title")}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Isso pode levar alguns segundos.
+              {ti("processing.description")}
             </div>
           </div>
         )}
