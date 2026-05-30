@@ -1,9 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Lock, Sparkles, ArrowRight, Target, Repeat, type LucideIcon } from "lucide-react";
 import { usePlan } from "@/lib/use-plan";
-import { minPlanFor, PLAN_LABEL } from "@/lib/plans";
+import { minPlanFor, PLAN_LABEL, type FeatureKey } from "@/lib/plans";
 import { NAV_GROUPS, getLockedNavItems } from "@/lib/nav-groups";
+
+/**
+ * Etapa 8 — Sub-recursos premium que não viram item de menu próprio.
+ * Aparecem como card de upgrade quando o usuário não tem a feature,
+ * mas o item de menu correspondente já está visível (versão básica).
+ */
+type SubFeatureTeaser = {
+  feature: FeatureKey;
+  to: string;
+  icon: LucideIcon;
+  labelKey: string;
+};
+const SUBFEATURE_TEASERS: SubFeatureTeaser[] = [
+  { feature: "metas_visuais", to: "/metas", icon: Target, labelKey: "metasVisuais" },
+  { feature: "assinaturas_recorrencias", to: "/assinaturas", icon: Repeat, labelKey: "assinaturasAuto" },
+];
 
 /**
  * Etapa 7 — Cards de upgrade.
@@ -29,12 +45,26 @@ export function UpgradeCardsList({
   if (loading || isAdminMaster) return null;
 
   const groups = NAV_GROUPS.filter((g) => !g.adminMasterOnly);
-  const locked = getLockedNavItems(groups, can, false)
+  const navLocked = getLockedNavItems(groups, can, false)
     // WhatsApp ainda é "em breve": não usar como gancho comercial agora.
     .filter((it) => it.to !== "/whatsapp")
-    .slice(0, max);
+    .map((it) => ({
+      to: it.to,
+      icon: it.icon,
+      feature: it.feature,
+      label: tNav(`items.${it.labelKey}`),
+    }));
 
+  const subLocked = SUBFEATURE_TEASERS.filter((s) => !can(s.feature)).map((s) => ({
+    to: s.to,
+    icon: s.icon,
+    feature: s.feature,
+    label: t(`upgradeCards.subFeatures.${s.labelKey}`),
+  }));
+
+  const locked = [...navLocked, ...subLocked].slice(0, max);
   if (locked.length === 0) return null;
+
 
   return (
     <section
@@ -74,7 +104,7 @@ export function UpgradeCardsList({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 text-sm font-semibold leading-tight">
                     <span className="truncate">
-                      {tNav(`items.${item.labelKey}`)}
+                      {item.label}
                     </span>
                     <Lock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                   </span>

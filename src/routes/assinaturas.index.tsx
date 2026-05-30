@@ -36,6 +36,10 @@ import { formatBRL, parseDateLocal } from "@/lib/format";
 import { requireOnline } from "@/lib/use-online-status";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { Lock } from "lucide-react";
+
 import {
   useStore,
   getCategorias,
@@ -132,6 +136,10 @@ function AssinaturasPage() {
   const cartoes = useStore(getCartoes);
 
   const [syncing, setSyncing] = useState(false);
+  const { can } = usePlan();
+  const canAutomations = can("assinaturas_recorrencias");
+  const [premiumOpen, setPremiumOpen] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Recorrencia | null>(null);
   const [historicoOpen, setHistoricoOpen] = useState<Recorrencia | null>(null);
@@ -364,12 +372,18 @@ function AssinaturasPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSync}
+              onClick={() => (canAutomations ? handleSync() : setPremiumOpen(true))}
               disabled={syncing}
+              title={!canAutomations ? t("premium.reanalyzeLocked") : undefined}
             >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {canAutomations ? (
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              ) : (
+                <Lock className="h-4 w-4 text-amber-500" />
+              )}
               <span className="hidden sm:inline">{t("actions.reanalyze")}</span>
             </Button>
+
             <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("actions.new")}</span>
@@ -590,7 +604,16 @@ function AssinaturasPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <PremiumLockModal
+        open={premiumOpen}
+        onOpenChange={setPremiumOpen}
+        title={t("premium.title")}
+        description={t("premium.desc")}
+        feature="assinaturas_recorrencias"
+      />
     </MobileShell>
+
   );
 }
 

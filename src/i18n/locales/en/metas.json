@@ -1,5 +1,7 @@
 {
-  "head": { "title": "Financial goals — Gasto Inteligente" },
+  "head": {
+    "title": "Financial goals — Gasto Inteligente"
+  },
   "back": "Back",
   "eyebrow": "Objectives",
   "title": "Financial goals",
@@ -84,7 +86,10 @@
     "create": "Create goal",
     "save": "Save changes",
     "saveValue": "Save value",
-    "removeValue": "Remove value"
+    "removeValue": "Remove value",
+    "visualPremiumTitle": "Goals with custom visuals",
+    "visualPremiumDesc": "Upload your own cover and pick from rich image galleries to personalize each goal.",
+    "visualPremiumCta": "Unlock"
   },
   "upload": {
     "errType": "Please select an image file.",

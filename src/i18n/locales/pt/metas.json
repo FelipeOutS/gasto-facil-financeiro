@@ -1,5 +1,7 @@
 {
-  "head": { "title": "Metas financeiras — Gasto Inteligente" },
+  "head": {
+    "title": "Metas financeiras — Gasto Inteligente"
+  },
   "back": "Voltar",
   "eyebrow": "Objetivos",
   "title": "Metas financeiras",
@@ -84,7 +86,10 @@
     "create": "Criar meta",
     "save": "Salvar alterações",
     "saveValue": "Salvar valor",
-    "removeValue": "Remover valor"
+    "removeValue": "Remover valor",
+    "visualPremiumTitle": "Metas com visual personalizado",
+    "visualPremiumDesc": "Envie sua própria capa e escolha entre galerias de imagens para deixar cada meta com a sua cara.",
+    "visualPremiumCta": "Desbloquear"
   },
   "upload": {
     "errType": "Selecione um arquivo de imagem.",

@@ -83,7 +83,7 @@
     "usado": "{{pct}}% usado"
   },
   "minhaRenda": {
-    "title": "Minha renda",
+    "title": "Receitas",
     "esteMes": "{{valor}} este mês"
   },
   "calendario": {
@@ -330,10 +330,22 @@
   },
   "smartLimite": {
     "modes": {
-      "variaveis": { "label": "Somente gastos variáveis", "desc": "Ignora contas fixas e faturas já pagas" },
-      "hoje": { "label": "A partir de hoje", "desc": "O quanto você ainda pode gastar até o fim do mês" },
-      "mes": { "label": "Mês inteiro", "desc": "Todos os gastos elegíveis do mês" },
-      "fluxo": { "label": "Fluxo de caixa", "desc": "Tudo que entrou e saiu no mês" }
+      "variaveis": {
+        "label": "Somente gastos variáveis",
+        "desc": "Ignora contas fixas e faturas já pagas"
+      },
+      "hoje": {
+        "label": "A partir de hoje",
+        "desc": "O quanto você ainda pode gastar até o fim do mês"
+      },
+      "mes": {
+        "label": "Mês inteiro",
+        "desc": "Todos os gastos elegíveis do mês"
+      },
+      "fluxo": {
+        "label": "Fluxo de caixa",
+        "desc": "Tudo que entrou e saiu no mês"
+      }
     },
     "title": "Seu limite inteligente",
     "byDay": "/ dia",
@@ -489,8 +501,14 @@
     "subtitle": "Estime o valor em reais antes de fechar a compra.",
     "currency": "Moeda",
     "valueIn": "Valor em {{moeda}}",
-    "currencyNames": { "USD": "dólares", "EUR": "euros" },
-    "placeholder": { "USD": "Ex: 19,90", "EUR": "Ex: 25,00" },
+    "currencyNames": {
+      "USD": "dólares",
+      "EUR": "euros"
+    },
+    "placeholder": {
+      "USD": "Ex: 19,90",
+      "EUR": "Ex: 25,00"
+    },
     "descLabel": "Descrição (opcional)",
     "descPlaceholder": "Ex: Assinatura, hospedagem…",
     "cardLabel": "Cartão (opcional)",
@@ -577,6 +595,10 @@
   "upgradeCards": {
     "title": "Desbloqueie mais recursos",
     "unlockIn": "Disponível no plano {{plan}}",
-    "seeAll": "Ver todos os planos"
+    "seeAll": "Ver todos os planos",
+    "subFeatures": {
+      "metasVisuais": "Metas com visual personalizado",
+      "assinaturasAuto": "Automações de assinaturas"
+    }
   }
 }

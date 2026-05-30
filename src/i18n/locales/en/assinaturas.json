@@ -148,5 +148,10 @@
   "confirms": {
     "cancel": "Cancel the \"{{name}}\" recurring?",
     "delete": "Delete the \"{{name}}\" recurring? This cannot be undone."
+  },
+  "premium": {
+    "title": "Smart subscription reanalysis",
+    "desc": "Automatic detection of subscriptions and recurring charges is available on premium plans.",
+    "reanalyzeLocked": "Smart reanalysis available on premium plans"
   }
 }
