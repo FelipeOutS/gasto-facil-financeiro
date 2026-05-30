@@ -1440,7 +1440,7 @@ function HistoricoImportacoesDialog({
                     {itensDetalhe.ativos.map((a) => (
                       <li key={a.id} className="flex justify-between gap-2">
                         <span className="truncate">{a.nome}</span>
-                        <span className="text-xs text-muted-foreground">{tipoLabel(a.tipo)}</span>
+                        <span className="text-xs text-muted-foreground">{getTipoInvestimentoLabel(a.tipo, tInv)}</span>
                       </li>
                     ))}
                   </ul>
