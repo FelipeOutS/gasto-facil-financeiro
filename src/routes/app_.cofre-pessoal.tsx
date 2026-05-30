@@ -944,6 +944,14 @@ function VaultMain({
   }, [entries, debouncedQuery, cat, onlyFav, strengthFilter, sort]);
 
   // ===== Sub-views =====
+  // Etapa 15 — Em modo somente leitura, redireciona views de escrita para a lista.
+  // Defesa em profundidade: além de esconder os botões, neutraliza a renderização.
+  const WRITE_VIEWS: View["kind"][] = ["create", "edit", "change_master", "quick_unlock"];
+  if (readOnly && WRITE_VIEWS.includes(view.kind)) {
+    toast.error(tCofre("readOnly.lockedAction"));
+    setView({ kind: "list" });
+    return null;
+  }
   if (view.kind === "create") {
     return (
       <>
