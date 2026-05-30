@@ -80,6 +80,7 @@ import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import { PublicLanding } from "@/components/landing/PublicLanding";
 import { BrandLoader } from "@/components/BrandLoader";
 import {
@@ -134,9 +135,15 @@ function IndexGate() {
 }
 
 function Index() {
-  const { t } = useTranslation("dashboard");
+  const { t: tBase } = useTranslation("dashboard");
   const ready = useBootstrap();
   const { profile } = useAuth();
+  // Vocabulário contextual: MEI/Empresa veem variantes "_mei"/"_empresa"
+  // de chaves do dashboard quando definidas (ex.: minhaRenda.title).
+  const t = useMemo(
+    () => makeRevenueT(tBase, revenueSuffix(profile?.tipo_cadastro as TipoCadastro)),
+    [tBase, profile?.tipo_cadastro],
+  );
   const today = new Date();
   const [ym, setYm] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },

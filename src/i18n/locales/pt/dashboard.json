@@ -84,6 +84,8 @@
   },
   "minhaRenda": {
     "title": "Receitas",
+    "title_mei": "Faturamento",
+    "title_empresa": "Faturamento",
     "esteMes": "{{valor}} este mês"
   },
   "calendario": {

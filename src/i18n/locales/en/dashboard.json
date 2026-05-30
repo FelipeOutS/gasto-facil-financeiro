@@ -83,7 +83,9 @@
     "usado": "{{pct}}% used"
   },
   "minhaRenda": {
-    "title": "My income",
+    "title": "Income",
+    "title_mei": "Revenue",
+    "title_empresa": "Revenue",
     "esteMes": "{{valor}} this month"
   },
   "calendario": {
