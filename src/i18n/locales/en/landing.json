@@ -842,8 +842,8 @@
       "theme": "Light and dark mode",
       "android": "Optimized for Android"
     },
-    "whatsappTitle": "Add expenses via WhatsApp",
-    "whatsappText": "Record expenses through WhatsApp in a practical way — with confirmation before saving.",
+    "whatsappTitle": "Add expenses via WhatsApp (coming soon)",
+    "whatsappText": "Soon you'll be able to log expenses via WhatsApp with confirmation before saving. Integration prepared for a future release.",
     "whatsappSample": {
       "user": "spent 35 on uber",
       "bot": "Confirm: <b>R$ 35.00</b> in Transport?"
