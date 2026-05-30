@@ -1700,7 +1700,7 @@ function AtualizarValorDialog({
             <label className="text-xs text-muted-foreground">Investimento</label>
             <div className="text-sm font-medium">{ativo.nome}</div>
             <div className="text-[11px] text-muted-foreground">
-              {tipoLabel(ativo.tipo)}
+              {getTipoInvestimentoLabel(ativo.tipo, tInv)}
               {ativo.instituicao ? ` · ${ativo.instituicao}` : ""}
             </div>
           </div>
