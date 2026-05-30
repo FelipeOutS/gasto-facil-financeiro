@@ -571,24 +571,25 @@ export function ImportInvestimentosFlow({
   function baixarModelo() {
     const ws = XLSX.utils.aoa_to_sheet([
       [
-        "Ativo",
-        "Ticker",
-        "Tipo",
-        "Quantidade",
-        "Preço médio",
-        "Valor aplicado",
-        "Valor atual",
-        "Instituição",
-        "Data",
+        ti("template.headers.asset"),
+        ti("template.headers.ticker"),
+        ti("template.headers.type"),
+        ti("template.headers.quantity"),
+        ti("template.headers.averagePrice"),
+        ti("template.headers.appliedValue"),
+        ti("template.headers.currentValue"),
+        ti("template.headers.institution"),
+        ti("template.headers.date"),
       ],
       ["Petrobras PN", "PETR4", "acoes", 100, "32,50", "3.250,00", "3.500,00", "XP", "01/05/2026"],
       ["Tesouro IPCA+ 2029", "", "tesouro", "", "", "5.000,00", "5.420,00", "Banco Inter", "10/01/2024"],
       ["CDB Inter 110% CDI", "", "cdb", "", "", "10.000,00", "10.580,00", "Banco Inter", "01/03/2025"],
     ]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Investimentos");
-    XLSX.writeFile(wb, "modelo-investimentos.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, ti("template.sheetName"));
+    XLSX.writeFile(wb, ti("template.fileName"));
   }
+
 
   const posProntos = posicoes.filter(
     (i) => !i._ignorado && i.confianca !== "baixa" && (i.valorAplicado || i.valorAtual),
