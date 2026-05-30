@@ -62,6 +62,7 @@ export function InvestimentoForm({
   hideFooter,
   submitLabel,
 }: InvestimentoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [nome, setNome] = useState("");
   const [ticker, setTicker] = useState("");
   const [tipo, setTipo] = useState<TipoInvestimento>("acoes");
