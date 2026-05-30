@@ -113,7 +113,9 @@
     "removed": "Income removed.",
     "removed_mei": "Revenue removed.",
     "removed_empresa": "Revenue removed.",
-    "fillFields": "Please fill in the description and amount."
+    "fillFields": "Please fill in the description and amount.",
+    "offlineSaved": "Income saved offline. It will sync when the internet returns.",
+    "offlineSaveError": "Could not save offline."
   },
   "duplicate": {
     "title": "Similar income found",

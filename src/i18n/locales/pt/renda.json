@@ -121,7 +121,9 @@
     "removed": "Receita removida.",
     "removed_mei": "Faturamento removido.",
     "removed_empresa": "Faturamento removido.",
-    "fillFields": "Preencha a descrição e o valor."
+    "fillFields": "Preencha a descrição e o valor.",
+    "offlineSaved": "Receita salva offline. Ela será sincronizada quando a internet voltar.",
+    "offlineSaveError": "Não foi possível salvar offline."
   },
   "duplicate": {
     "title": "Receita parecida encontrada",
