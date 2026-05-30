@@ -203,6 +203,7 @@ export function ImportInvestimentosFlow({
   ativosExistentes: Ativo[];
 }) {
   const { t: tc } = useTranslation("common");
+  const { t: ti } = useTranslation("import-investimentos");
   const premiumGate = usePremiumApiGate();
   const [step, setStep] = useState<"upload" | "processando" | "preview" | "salvando" | "feito">(
     "upload",
