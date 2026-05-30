@@ -171,16 +171,21 @@ export const Route = createFileRoute("/renda/")({
 });
 
 function RendaPage() {
-  const { t, i18n } = useTranslation("renda");
+  const { t: tBase, i18n } = useTranslation("renda");
+  const ready = useBootstrap();
+  const { profile, user } = useAuth();
+  const tipoCad = profile?.tipo_cadastro as TipoCadastro;
+  const vocab = getVocab(tipoCad);
+  const suffix = revenueSuffix(tipoCad);
+  // `t` aplica vocabulário contextual: MEI/Empresa veem variantes
+  // "<chave>_mei" / "<chave>_empresa" quando existem; demais usam padrão.
+  const t = useMemo(() => makeRevenueT(tBase, suffix), [tBase, suffix]);
   const monthShort = useMemo(() => {
     const raw = t("months", { returnObjects: true }) as unknown;
     return Array.isArray(raw) && raw.length === 12 ? (raw as string[]) : MONTH_SHORT_FALLBACK;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language]);
   const tipoLabel = (id: TipoReceita) => t(`tipo.${id}`);
-  const ready = useBootstrap();
-  const { profile, user } = useAuth();
-  const vocab = getVocab(profile?.tipo_cadastro as TipoCadastro);
   const receitas = useStore(() => getReceitas());
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/renda/" });
