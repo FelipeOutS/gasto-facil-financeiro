@@ -1283,6 +1283,7 @@ function HistoricoImportacoesDialog({
   userId?: string;
   onChanged: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [detalhe, setDetalhe] = useState<Importacao | null>(null);
   const [confirmar, setConfirmar] = useState<Importacao | null>(null);
   const [itensDetalhe, setItensDetalhe] = useState<ItensImportacao | null>(null);
