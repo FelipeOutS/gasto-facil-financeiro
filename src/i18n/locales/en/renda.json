@@ -252,5 +252,10 @@
     "bonus": "Bonus",
     "outros": "Other"
   },
+  "notFound": {
+    "title": "Income not found.",
+    "title_mei": "Revenue not found.",
+    "title_empresa": "Revenue not found."
+  },
   "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 }
