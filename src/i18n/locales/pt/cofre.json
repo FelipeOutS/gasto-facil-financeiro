@@ -1,0 +1,14 @@
+{
+  "gate": {
+    "title": "Cofre Pessoal é um recurso premium",
+    "description": "Guarde informações sensíveis com mais segurança em um espaço protegido por PIN.",
+    "cta": "Ver planos",
+    "back": "Voltar ao início"
+  },
+  "transition": {
+    "badge": "Aviso de transição",
+    "title": "O Cofre passou a ser um recurso premium",
+    "description": "Seu Cofre possui informações salvas. Para evitar perda de acesso, você ainda pode visualizar seus dados existentes, mas novos cadastros exigem upgrade de plano.",
+    "cta": "Melhorar plano"
+  }
+}
