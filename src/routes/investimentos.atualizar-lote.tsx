@@ -15,8 +15,10 @@ import {
   atualizarValorAtivo,
   descreverUltimaAtualizacao,
   tipoLabel,
+  getTipoInvestimentoLabel,
   type Ativo,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/investimentos/atualizar-lote")({
   head: () => ({ meta: [{ title: "Atualizar valores — Gasto Inteligente" }] }),
