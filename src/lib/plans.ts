@@ -53,7 +53,8 @@ export type FeatureKey =
   | "lancamentos_ilimitados"
   | "contas_conectadas"
   | "gasto_ai"
-  | "empresa_inteligente";
+  | "empresa_inteligente"
+  | "cofre_pessoal";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
