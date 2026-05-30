@@ -78,6 +78,7 @@ import {
 } from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
 import { extractDomain } from "@/lib/brand/resolver";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import {
   getQuickUnlock,
   disableQuickUnlock,
