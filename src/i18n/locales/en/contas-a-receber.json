@@ -31,7 +31,8 @@
   "empty": {
     "none": "No receivables added yet.",
     "noResults": "No results for these filters.",
-    "addFirst": "Add first receivable"
+    "addFirst": "Add first receivable",
+    "clearFilters": "Clear filters"
   },
   "card": {
     "from": "from {{name}}",

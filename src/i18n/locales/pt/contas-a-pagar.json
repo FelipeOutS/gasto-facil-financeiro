@@ -53,7 +53,8 @@
     "label": "Buscar contas",
     "clear": "Limpar busca",
     "noResults": "Nada encontrado para \"{{query}}\".",
-    "emptyFilter": "Nada nesse filtro por aqui."
+    "emptyFilter": "Nada nesse filtro por aqui.",
+    "clearFilters": "Limpar filtros"
   },
   "empty": {
     "title": "Sem boletos te perseguindo por enquanto",

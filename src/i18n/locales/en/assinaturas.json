@@ -75,7 +75,8 @@
     "none": "No recurring",
     "noneStatus": "No {{status}} recurring",
     "hint": "Keep logging your expenses. When something repeats, we'll suggest it here.",
-    "cta": "Add recurring"
+    "cta": "Add recurring",
+    "viewAll": "View all"
   },
   "debug": {
     "found": "Expenses found: {{n}}",

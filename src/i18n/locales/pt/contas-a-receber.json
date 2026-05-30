@@ -31,7 +31,8 @@
   "empty": {
     "none": "Nenhuma conta a receber cadastrada ainda.",
     "noResults": "Nenhum resultado para os filtros.",
-    "addFirst": "Adicionar primeira conta"
+    "addFirst": "Adicionar primeira conta",
+    "clearFilters": "Limpar filtros"
   },
   "card": {
     "from": "de {{name}}",
