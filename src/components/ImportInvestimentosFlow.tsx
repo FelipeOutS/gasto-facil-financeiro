@@ -781,7 +781,7 @@ export function ImportInvestimentosFlow({
         {step === "salvando" && (
           <div className="py-10 text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-3" />
-            <div className="text-sm font-medium">Salvando seus investimentos…</div>
+            <div className="text-sm font-medium">{ti("saving.title")}</div>
           </div>
         )}
 
