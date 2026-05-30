@@ -1,3 +1,4 @@
+import i18n from "i18next";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -84,7 +85,7 @@ function Manual() {
                 navigate({ to: "/" });
               } catch (err) {
                 console.error("[offline] enqueue failed", err);
-                toast.error("Não foi possível salvar offline. Tente novamente.");
+                toast.error(i18n.t("common:errors.saveOffline"));
               }
               return;
             }
