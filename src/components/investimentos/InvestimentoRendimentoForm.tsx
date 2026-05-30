@@ -18,9 +18,12 @@ import {
   type Rendimento,
   type TipoRendimento,
   tipoLabel,
+  getTipoInvestimentoLabel,
+  getTipoRendimentoLabel,
   criarRendimento,
   atualizarRendimento,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export type InvestimentoRendimentoFormProps = {
   userId?: string;
