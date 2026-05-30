@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import i18n from "i18next";
 import {
   Dialog,
   DialogContent,
