@@ -57,5 +57,21 @@
       "viewCreate": "You can view and add entries on this account, but not edit/delete existing records.",
       "noPermission": "You don't have enough permission for this action."
     }
+  },
+  "premium": {
+    "title": "Premium feature",
+    "defaultDescription": "This feature is available only on eligible plans. Choose a plan to unlock it.",
+    "unlockFromPlan": "Available from plan",
+    "unlockedFromPlan": "Unlocked from plan",
+    "ctaSeePlans": "View plans",
+    "ctaUpgrade": "Upgrade plan",
+    "ctaUnlock": "Unlock feature",
+    "ctaNotNow": "Not now",
+    "trialCta": "Try free for 10 days",
+    "trialActivating": "Activating…",
+    "trialActivated": "Free trial activated for 10 days.",
+    "trialLoginRequired": "Sign in to start your trial.",
+    "trialError": "Could not start the trial.",
+    "badge": "Premium"
   }
 }

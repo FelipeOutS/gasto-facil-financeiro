@@ -57,5 +57,21 @@
       "viewCreate": "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes.",
       "noPermission": "Sem permissão suficiente para esta ação."
     }
+  },
+  "premium": {
+    "title": "Recurso premium",
+    "defaultDescription": "Este recurso está disponível apenas em planos elegíveis. Escolha um plano para liberá-lo.",
+    "unlockFromPlan": "Disponível a partir do plano",
+    "unlockedFromPlan": "Liberado a partir do plano",
+    "ctaSeePlans": "Ver planos",
+    "ctaUpgrade": "Melhorar plano",
+    "ctaUnlock": "Desbloquear recurso",
+    "ctaNotNow": "Agora não",
+    "trialCta": "Testar grátis por 10 dias",
+    "trialActivating": "Ativando…",
+    "trialActivated": "Teste grátis ativado por 10 dias.",
+    "trialLoginRequired": "Faça login para testar.",
+    "trialError": "Erro ao iniciar o teste.",
+    "badge": "Premium"
   }
 }
