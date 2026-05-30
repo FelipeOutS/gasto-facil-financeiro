@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import i18n from "i18next";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +60,7 @@ export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
       onOpenChange(false);
     } catch (err) {
       console.error("[offline] update failed", err);
-      toast.error("Não foi possível atualizar a pendência.");
+      toast.error(i18n.t("common:errors.update"));
     }
   }
 

@@ -1,3 +1,4 @@
+import i18n from "i18next";
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Home, Clock } from "lucide-react";
@@ -58,7 +59,7 @@ function AtualizarLotePage() {
         setValores(map);
       } catch (e) {
         console.error(e);
-        toast.error("Não foi possível carregar os investimentos.");
+        toast.error(i18n.t("common:errors.load"));
       } finally {
         if (!cancel) setLoading(false);
       }

@@ -1,3 +1,4 @@
+import i18n from "i18next";
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Home, Info } from "lucide-react";
@@ -47,7 +48,7 @@ function ImportarInvestimentosPage() {
         if (!cancel) setAtivos(list);
       } catch (e) {
         console.error(e);
-        toast.error("Não foi possível carregar os investimentos.");
+        toast.error(i18n.t("common:errors.load"));
       } finally {
         if (!cancel) setLoading(false);
       }

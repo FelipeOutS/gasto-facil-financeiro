@@ -177,5 +177,27 @@
         "description": "Importe faturas, extratos, PDFs e imagens compatíveis para reduzir lançamentos manuais."
       }
     }
+  },
+  "errors": {
+    "save": "Não foi possível salvar agora. Tente novamente.",
+    "saveOffline": "Não foi possível salvar offline. Tente novamente.",
+    "savedOffline": "Salvo offline. Vamos sincronizar quando a internet voltar.",
+    "update": "Não foi possível atualizar agora. Tente novamente.",
+    "delete": "Não foi possível excluir agora. Tente novamente.",
+    "load": "Não foi possível carregar as informações. Tente novamente.",
+    "loadDetails": "Não foi possível carregar os detalhes. Tente novamente.",
+    "network": "Não foi possível conectar agora. Verifique sua internet e tente novamente.",
+    "server": "Não conseguimos concluir essa ação agora. Tente novamente em alguns instantes.",
+    "authExpired": "Sua sessão expirou. Entre novamente para continuar.",
+    "fileType": "O arquivo enviado não é compatível. Tente usar PDF, PNG ou JPG.",
+    "fileSize": "O arquivo é muito grande. Envie um arquivo menor.",
+    "processFile": "Não foi possível processar o arquivo. Verifique se ele é compatível e tente novamente.",
+    "ai": "Não conseguimos gerar a análise agora. Tente novamente em instantes.",
+    "copy": "Não foi possível copiar. Selecione manualmente."
+  },
+  "success": {
+    "saved": "Salvo com sucesso.",
+    "deleted": "Excluído com sucesso.",
+    "updated": "Atualizado com sucesso."
   }
 }

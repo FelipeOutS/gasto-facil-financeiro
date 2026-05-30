@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import i18n from "i18next";
 import {
   Dialog,
   DialogContent,
@@ -106,7 +107,7 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
       handleClose(false);
     } catch (err) {
       console.error("[offline-income] update failed", err);
-      toast.error("Não foi possível atualizar a pendência.");
+      toast.error(i18n.t("common:errors.update"));
     }
   }
 

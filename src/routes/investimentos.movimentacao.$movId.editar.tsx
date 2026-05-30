@@ -1,3 +1,4 @@
+import i18n from "i18next";
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Home } from "lucide-react";
@@ -49,7 +50,7 @@ function EditarMovimentacaoPage() {
         setMov(ms.find((m) => m.id === movId) ?? null);
       } catch (e) {
         console.error(e);
-        toast.error("Não foi possível carregar a movimentação.");
+        toast.error(i18n.t("common:errors.load"));
       } finally {
         if (!cancel) setLoading(false);
       }

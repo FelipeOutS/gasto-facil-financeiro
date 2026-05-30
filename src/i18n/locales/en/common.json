@@ -177,5 +177,27 @@
         "description": "Import supported invoices, statements, PDFs and images to cut manual entry."
       }
     }
+  },
+  "errors": {
+    "save": "Could not save right now. Please try again.",
+    "saveOffline": "Could not save offline. Please try again.",
+    "savedOffline": "Saved offline. We will sync when you are back online.",
+    "update": "Could not update right now. Please try again.",
+    "delete": "Could not delete right now. Please try again.",
+    "load": "Could not load this information. Please try again.",
+    "loadDetails": "Could not load the details. Please try again.",
+    "network": "Cannot reach the server. Check your internet and try again.",
+    "server": "We could not complete this action now. Please try again shortly.",
+    "authExpired": "Your session expired. Sign in again to continue.",
+    "fileType": "This file type is not supported. Try a PDF, PNG or JPG.",
+    "fileSize": "This file is too large. Please send a smaller one.",
+    "processFile": "Could not process the file. Check if it is supported and try again.",
+    "ai": "We could not generate the analysis now. Please try again shortly.",
+    "copy": "Could not copy. Please select it manually."
+  },
+  "success": {
+    "saved": "Saved successfully.",
+    "deleted": "Deleted successfully.",
+    "updated": "Updated successfully."
   }
 }
