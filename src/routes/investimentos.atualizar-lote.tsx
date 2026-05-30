@@ -27,6 +27,7 @@ export const Route = createFileRoute("/investimentos/atualizar-lote")({
 
 function AtualizarLotePage() {
   const navigate = useNavigate();
+  const { t: tr } = useTranslation("investimentos");
   const { user } = useAuth();
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [loading, setLoading] = useState(true);
