@@ -1992,6 +1992,7 @@ function MovimentacaoDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const editing = state.mov;
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoMovimentacao>("compra");
