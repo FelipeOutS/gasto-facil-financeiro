@@ -33,6 +33,7 @@ import {
 } from "@/lib/mercado/products-api";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 
@@ -238,15 +239,15 @@ function CartMode({ lista }: { lista: MercadoLista }) {
   const tone = toneFor(status);
   const progressPct = Math.min(100, Math.max(0, orc.percentualUsado));
 
-  function handleFinalize() {
+  async function handleFinalize() {
     if (resumo.totalItens === 0) {
       toast.error(t("carrinho.finalize.errorEmpty"));
       return;
     }
     if (resumo.itensPendentes > 0) {
-      const ok = window.confirm(
-        t("carrinho.finalize.confirmPending", { pending: resumo.itensPendentes }),
-      );
+      const ok = await confirmAsync({
+        title: t("carrinho.finalize.confirmPending", { pending: resumo.itensPendentes }),
+      });
       if (!ok) return;
     }
     const entry = finalizarListaCompra(lista.id, {

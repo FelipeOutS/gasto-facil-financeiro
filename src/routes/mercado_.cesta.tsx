@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import {
@@ -73,11 +74,9 @@ function CestaPadraoPage() {
     void navigate({ to: "/mercado/listas/$id", params: { id: lista.id } });
   }
 
-  function handleDelete(c: MercadoCestaPadrao) {
-    if (typeof window !== "undefined") {
-      const ok = window.confirm(t("cesta.confirm.delete", { name: c.nome }));
-      if (!ok) return;
-    }
+  async function handleDelete(c: MercadoCestaPadrao) {
+    const ok = await confirmAsync({ title: t("cesta.confirm.delete", { name: c.nome }), destructive: true });
+    if (!ok) return;
     removeCestaPadrao(c.id);
     if (expandedId === c.id) setExpandedId(null);
     toast.success(t("cesta.toasts.deleted"));

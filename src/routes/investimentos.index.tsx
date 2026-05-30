@@ -28,6 +28,7 @@ import {
   Eye,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { ImportInvestimentosFlow } from "@/components/ImportInvestimentosFlow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -466,7 +467,8 @@ function InvestimentosPage() {
                         className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm(t("investimentos.wallet.confirmDelete", { name: a.nome }))) return;
+                          const ok = await confirmAsync({ title: t("investimentos.wallet.confirmDelete", { name: a.nome }), destructive: true });
+                          if (!ok) return;
                           await excluirAtivo(a.id);
                           toast.success(t("investimentos.wallet.deleted"));
                           reload();
@@ -597,7 +599,8 @@ function InvestimentosPage() {
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm(t("investimentos.movs.confirmDelete"))) return;
+                          const ok = await confirmAsync({ title: t("investimentos.movs.confirmDelete"), destructive: true });
+                          if (!ok) return;
                           try {
                             const aId = m.ativo_id;
                             await excluirMovimentacao(m.id);
@@ -667,7 +670,8 @@ function InvestimentosPage() {
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          if (!confirm(t("investimentos.rends.confirmDelete"))) return;
+                          const ok = await confirmAsync({ title: t("investimentos.rends.confirmDelete"), destructive: true });
+                          if (!ok) return;
                           try {
                             await excluirRendimento(r.id);
                             toast.success(t("investimentos.rends.deleted"));
@@ -771,7 +775,8 @@ function InvestimentosPage() {
         onAddMovimentacao={(a) => openMovimentacao(a.id)}
         onAddRendimento={(a) => { setDetalheAtivo(null); openRendimento(a.id); }}
         onExcluirAtivo={async (a) => {
-          if (!confirm(t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }))) return;
+          const ok = await confirmAsync({ title: t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }), destructive: true });
+          if (!ok) return;
           try {
             await excluirAtivo(a.id);
             toast.success(t("investimentos.wallet.deleted"));

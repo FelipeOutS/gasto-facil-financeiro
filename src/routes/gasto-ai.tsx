@@ -20,6 +20,7 @@ import {
   clearChatHistory,
 } from "@/lib/finance-ai.functions";
 import { requireOnline } from "@/lib/use-online-status";
+import { confirmAsync } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/gasto-ai")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -124,7 +125,8 @@ function GastoAIPage() {
   }
 
   async function handleClear() {
-    if (!confirm(t("ai.confirmClear"))) return;
+    const ok = await confirmAsync({ title: t("ai.confirmClear"), destructive: true });
+    if (!ok) return;
     if (!(await requireOnline())) return;
     try {
       await clearFn();

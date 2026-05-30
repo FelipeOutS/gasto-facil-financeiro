@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MobileShell } from "@/components/MobileShell";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import i18n from "@/i18n";
@@ -72,7 +73,8 @@ function ContasConectadasPage() {
 
   async function handleRemove(id: string) {
     if (!user) return;
-    if (!confirm(t("connected.confirmRemove"))) return;
+    const ok = await confirmAsync({ title: t("connected.confirmRemove"), destructive: true });
+    if (!ok) return;
     try {
       await removeConnection(id, user.id);
       toast.success(t("connected.removed"));

@@ -34,6 +34,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { formatBRL, parseDateLocal } from "@/lib/format";
 import { requireOnline } from "@/lib/use-online-status";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth-context";
 import {
   useStore,
@@ -318,14 +319,22 @@ function AssinaturasPage() {
   }
 
   async function handleCancelar(r: Recorrencia) {
-    if (!confirm(t("confirms.cancel", { name: r.nome }))) return;
+    const ok = await confirmAsync({
+      title: t("confirms.cancel", { name: r.nome }),
+      destructive: true,
+    });
+    if (!ok) return;
     if (!(await requireOnline())) return;
     await atualizarRecorrencia(r.id, { status: "cancelada" });
     toast.success(t("toasts.canceled"));
   }
 
   async function handleExcluir(r: Recorrencia) {
-    if (!confirm(t("confirms.delete", { name: r.nome }))) return;
+    const ok = await confirmAsync({
+      title: t("confirms.delete", { name: r.nome }),
+      destructive: true,
+    });
+    if (!ok) return;
     await excluirRecorrencia(r.id);
     toast.success(t("toasts.deleted"));
   }
