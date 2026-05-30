@@ -67,6 +67,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [redirecting, setRedirecting] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useTranslation("common");
 
   const isAdmin = plan.isAdminMaster || hasFullAccess;
   const hasActiveAccess =
