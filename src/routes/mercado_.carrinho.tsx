@@ -260,7 +260,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       return;
     }
     toast.success(t("carrinho.finalize.success"));
-    void navigate({ to: "/mercado/historico" });
+    // Etapa 17 — só leva ao histórico se o usuário tem `mercado_avancado`;
+    // caso contrário volta à hub para evitar o modal premium logo após finalizar.
+    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado" });
   }
 
   return (
