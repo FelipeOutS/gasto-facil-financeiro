@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Home, Pencil } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ReceitaForm } from "@/components/renda/ReceitaForm";
+import { useAuth } from "@/lib/auth-context";
+import { type TipoCadastro } from "@/lib/profile-utils";
+import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import { getReceitas, useBootstrap, useStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -14,7 +18,12 @@ export const Route = createFileRoute("/renda/$id/editar")({
 
 function EditarReceitaPage() {
   const { id } = Route.useParams();
-  const { t } = useTranslation("renda");
+  const { t: tBase } = useTranslation("renda");
+  const { profile } = useAuth();
+  const t = useMemo(
+    () => makeRevenueT(tBase, revenueSuffix(profile?.tipo_cadastro as TipoCadastro)),
+    [tBase, profile?.tipo_cadastro],
+  );
   const navigate = useNavigate();
   const ready = useBootstrap();
   const receitas = useStore(() => getReceitas());
