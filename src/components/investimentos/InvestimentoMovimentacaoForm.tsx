@@ -20,10 +20,13 @@ import {
   type TipoMovimentacao,
   isRendaVariavel,
   tipoLabel,
+  getTipoInvestimentoLabel,
+  getTipoMovimentacaoLabel,
   criarMovimentacao,
   atualizarMovimentacao,
   recalcularAtivoPorMovimentacoes,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const TIPOS_MOV_PRINCIPAIS: TipoMovimentacao[] = [
   "compra",
