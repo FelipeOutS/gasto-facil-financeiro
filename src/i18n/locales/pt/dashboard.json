@@ -201,6 +201,8 @@
     "emAberto": "{{valor}} em aberto",
     "ver": "Ver →",
     "proximaEntrada": "Próxima receita",
+    "proximaEntrada_mei": "Próximo faturamento",
+    "proximaEntrada_empresa": "Próximo faturamento",
     "atrasada": "{{dias}} dia(s) atrasado",
     "venceHoje": "vence hoje",
     "venceAmanha": "vence amanhã",
