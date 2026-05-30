@@ -1,3 +1,4 @@
+import i18n from "i18next";
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Home } from "lucide-react";
@@ -49,7 +50,7 @@ function EditarRendimentoPage() {
         setRend(rs.find((r) => r.id === rendId) ?? null);
       } catch (e) {
         console.error(e);
-        toast.error("Não foi possível carregar o rendimento.");
+        toast.error(i18n.t("common:errors.load"));
       } finally {
         if (!cancel) setLoading(false);
       }
