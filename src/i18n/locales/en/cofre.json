@@ -10,5 +10,15 @@
     "title": "The Vault is now a premium feature",
     "description": "Your Vault already has saved information. To avoid losing access, you can still view your existing data, but adding new entries requires a plan upgrade.",
     "cta": "Upgrade plan"
+  },
+  "readOnly": {
+    "badge": "Read-only mode",
+    "title": "Read-only mode",
+    "description": "You can still view and recover the data already saved in the Vault. To create new items or edit information, upgrade to a plan that includes the Personal Vault.",
+    "cta": "See plans",
+    "lockedAction": "Available on plans with Personal Vault.",
+    "createBlocked": "Creating new items is only available on plans with Personal Vault.",
+    "editBlocked": "Editing items is only available on plans with Personal Vault.",
+    "settingsBlocked": "Changing sensitive settings is only available on plans with Personal Vault."
   }
 }

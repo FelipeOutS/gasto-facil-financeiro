@@ -185,6 +185,7 @@ function CofrePessoalPage() {
 
   // Usuário sem acesso mas COM dados salvos: modo transição (banner + acesso de leitura).
   const showTransitionBanner = !hasAccess && !!settings;
+  const isVaultReadOnly = !hasAccess && !!settings;
 
   return (
     <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
@@ -214,6 +215,7 @@ function CofrePessoalPage() {
             onLock={lock}
             settings={settings}
             onSettingsChanged={setSettings}
+            readOnly={isVaultReadOnly}
           />
         )}
       </div>
@@ -264,6 +266,32 @@ function CofreTransitionBanner() {
         </Button>
       </div>
     </div>
+  );
+}
+
+function CofreReadOnlyNotice() {
+  const { t } = useTranslation("cofre");
+  return (
+    <Card className="mb-4 flex items-start gap-3 border-amber-400/40 bg-amber-500/10 p-4 text-sm">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
+        <Lock className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-300">
+          {t("readOnly.badge")}
+        </p>
+        <p className="mt-0.5 font-semibold">{t("readOnly.title")}</p>
+        <p className="mt-1 text-muted-foreground">{t("readOnly.description")}</p>
+        <div className="mt-3">
+          <Button asChild size="sm">
+            <Link to="/meu-plano">
+              <Sparkles className="mr-1 h-4 w-4" />
+              {t("readOnly.cta")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -843,13 +871,16 @@ function VaultMain({
   onLock,
   settings,
   onSettingsChanged,
+  readOnly = false,
 }: {
   userId: string;
   masterKey: CryptoKey;
   onLock: () => void;
   settings: VaultSettingsRow;
   onSettingsChanged: (s: VaultSettingsRow) => void;
+  readOnly?: boolean;
 }) {
+  const { t: tCofre } = useTranslation("cofre");
   const [entries, setEntries] = useState<VaultEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -939,6 +970,14 @@ function VaultMain({
   }, [entries, debouncedQuery, cat, onlyFav, strengthFilter, sort]);
 
   // ===== Sub-views =====
+  // Etapa 15 — Em modo somente leitura, redireciona views de escrita para a lista.
+  // Defesa em profundidade: além de esconder os botões, neutraliza a renderização.
+  const WRITE_VIEWS: View["kind"][] = ["create", "edit", "change_master", "quick_unlock"];
+  if (readOnly && WRITE_VIEWS.includes(view.kind)) {
+    toast.error(tCofre("readOnly.lockedAction"));
+    setView({ kind: "list" });
+    return null;
+  }
   if (view.kind === "create") {
     return (
       <>
@@ -1013,6 +1052,7 @@ function VaultMain({
           await reload();
           setView({ kind: "list" });
         }}
+        readOnly={readOnly}
       />
     );
   }
@@ -1075,18 +1115,22 @@ function VaultMain({
         crumbs={[{ label: "Cofre Pessoal" }]}
         actions={
           <>
-            <Button
-              onClick={() => setView({ kind: "create" })}
-              className="bg-brand text-brand-foreground font-semibold shadow-md hover:bg-brand/90"
-            >
-              <Plus className="h-4 w-4" /> Adicionar acesso
-            </Button>
+            {!readOnly && (
+              <Button
+                onClick={() => setView({ kind: "create" })}
+                className="bg-brand text-brand-foreground font-semibold shadow-md hover:bg-brand/90"
+              >
+                <Plus className="h-4 w-4" /> Adicionar acesso
+              </Button>
+            )}
             <Button variant="outline" onClick={onLock} title="Bloquear cofre">
               <Lock className="h-4 w-4" /> Bloquear
             </Button>
           </>
         }
       />
+
+      {readOnly && <CofreReadOnlyNotice />}
 
       <Card className="mb-5 flex items-start gap-3 border-brand/30 bg-brand-soft/30 p-4 shadow-sm animate-fade-in">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft ring-1 ring-brand/30">
@@ -1217,7 +1261,13 @@ function VaultMain({
         </ul>
       ) : filtered.length === 0 ? (
         entries.length === 0 ? (
-          <EmptyVault onAdd={() => setView({ kind: "create" })} />
+          readOnly ? (
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              {tCofre("readOnly.createBlocked")}
+            </Card>
+          ) : (
+            <EmptyVault onAdd={() => setView({ kind: "create" })} />
+          )
         ) : (
           <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
         )
@@ -1234,6 +1284,11 @@ function VaultMain({
                 setView({ kind: "detail", entry: dec });
               }}
               onToggleFav={async () => {
+                // Etapa 15 — defesa em profundidade: bloqueia escrita mesmo se UI for burlada.
+                if (readOnly) {
+                  toast.error(tCofre("readOnly.lockedAction"));
+                  return;
+                }
                 const sec = getCachedSecret(e.id) ?? (await decryptOne(masterKey, e)).secret;
                 await updateEntry({
                   id: e.id,
@@ -1270,38 +1325,42 @@ function VaultMain({
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </button>
-        <button
-          type="button"
-          onClick={() => setView({ kind: "quick_unlock" })}
-          className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
-        >
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
-            <Fingerprint className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Desbloqueio rápido</p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {getQuickUnlock(userId)
-                ? "Biometria ativa neste dispositivo"
-                : "Configure PIN ou biometria"}
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setView({ kind: "change_master" })}
-          className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
-        >
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
-            <SettingsIcon className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Alterar senha mestra</p>
-            <p className="truncate text-[11px] text-muted-foreground">Troca a senha que protege o cofre.</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setView({ kind: "quick_unlock" })}
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+              <Fingerprint className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Desbloqueio rápido</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {getQuickUnlock(userId)
+                  ? "Biometria ativa neste dispositivo"
+                  : "Configure PIN ou biometria"}
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </button>
+        )}
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setView({ kind: "change_master" })}
+            className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
+              <SettingsIcon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Alterar senha mestra</p>
+              <p className="truncate text-[11px] text-muted-foreground">Troca a senha que protege o cofre.</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setView({ kind: "backup" })}
@@ -1606,11 +1665,13 @@ function DetailView({
   onBack,
   onEdit,
   onDeleted,
+  readOnly = false,
 }: {
   entry: DecryptedEntry;
   onBack: () => void;
   onEdit: () => void;
   onDeleted: () => void;
+  readOnly?: boolean;
 }) {
   const [showPwd, setShowPwd] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -1736,9 +1797,11 @@ function DetailView({
       <div className="mt-4">
         {!confirmingDelete ? (
           <div className="flex flex-wrap gap-2">
-            <Button onClick={onEdit} className="bg-brand text-brand-foreground hover:bg-brand/90">
-              <Pencil className="h-4 w-4" /> Editar
-            </Button>
+            {!readOnly && (
+              <Button onClick={onEdit} className="bg-brand text-brand-foreground hover:bg-brand/90">
+                <Pencil className="h-4 w-4" /> Editar
+              </Button>
+            )}
             <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive variant="outline" size="default">
               <span className="ml-1.5">Copiar senha</span>
             </CopyButton>
