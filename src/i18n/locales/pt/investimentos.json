@@ -1,0 +1,49 @@
+{
+  "types": {
+    "investment": {
+      "acoes": "Ações",
+      "fii": "FIIs",
+      "etf": "ETFs",
+      "bdr": "BDRs",
+      "tesouro": "Tesouro Direto",
+      "cdb": "CDB",
+      "lci": "LCI",
+      "lca": "LCA",
+      "lc": "LC",
+      "fundo": "Fundo de investimento",
+      "previdencia": "Previdência",
+      "cripto": "Cripto",
+      "outros": "Outros"
+    },
+    "investmentClass": {
+      "rendaVariavel": "Renda variável",
+      "rendaFixa": "Renda fixa",
+      "fundos": "Fundos",
+      "cripto": "Cripto",
+      "outros": "Outros"
+    },
+    "movement": {
+      "compra": "Compra",
+      "venda": "Venda",
+      "aplicacao": "Aplicação",
+      "resgate": "Resgate",
+      "transferencia": "Transferência",
+      "rendimento": "Rendimento",
+      "dividendo": "Dividendo",
+      "jcp": "JCP",
+      "amortizacao": "Amortização",
+      "bonificacao": "Bonificação",
+      "desdobramento": "Desdobramento",
+      "grupamento": "Grupamento"
+    },
+    "income": {
+      "dividendo": "Dividendo",
+      "jcp": "JCP",
+      "rendimento_fii": "Rendimento FII",
+      "renda_fixa": "Renda fixa",
+      "cupom": "Cupom",
+      "amortizacao": "Amortização",
+      "outro": "Outro"
+    }
+  }
+}
