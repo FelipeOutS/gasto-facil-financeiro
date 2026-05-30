@@ -677,8 +677,7 @@ export function ImportInvestimentosFlow({
             <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <span>
-                Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação
-                usa apenas arquivos enviados por você.
+                {ti("upload.privacy")}
               </span>
             </div>
           </div>
