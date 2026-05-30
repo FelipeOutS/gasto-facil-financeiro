@@ -218,5 +218,31 @@
     "reports": "Preparing your reports…",
     "plan": "Loading your plan details…",
     "imports": "Loading your imports…"
+  },
+  "loadError": {
+    "title": "We couldn't load this information",
+    "description": "Check your connection and try again.",
+    "retry": "Try again",
+    "dashboard": "We couldn't load your financial summary.",
+    "expenses": "We couldn't load your expenses.",
+    "income": "We couldn't load your income.",
+    "revenue": "We couldn't load your revenue.",
+    "cards": "We couldn't load your cards.",
+    "bills": "We couldn't load your bills.",
+    "billsToPay": "We couldn't load your bills to pay.",
+    "billsToReceive": "We couldn't load your bills to receive.",
+    "subscriptions": "We couldn't load your recurring items.",
+    "goals": "We couldn't load your goals.",
+    "investments": "We couldn't load your investments.",
+    "market": "We couldn't load Smart Grocery.",
+    "marketHistory": "We couldn't load your grocery history.",
+    "imports": "We couldn't load your imports.",
+    "vault": "We couldn't load your Personal Vault.",
+    "reports": "We couldn't load your reports.",
+    "plan": "We couldn't load your plan details.",
+    "clients": "We couldn't load your clients.",
+    "suppliers": "We couldn't load your suppliers.",
+    "alerts": "We couldn't load your alerts.",
+    "connectedAccounts": "We couldn't load your connected accounts."
   }
 }

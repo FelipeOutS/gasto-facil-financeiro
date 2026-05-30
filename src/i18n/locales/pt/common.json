@@ -218,5 +218,31 @@
     "reports": "Preparando seus relatórios…",
     "plan": "Carregando informações do seu plano…",
     "imports": "Carregando suas importações…"
+  },
+  "loadError": {
+    "title": "Não foi possível carregar as informações",
+    "description": "Verifique sua conexão e tente novamente.",
+    "retry": "Tentar novamente",
+    "dashboard": "Não foi possível carregar seu resumo financeiro.",
+    "expenses": "Não foi possível carregar seus gastos.",
+    "income": "Não foi possível carregar suas receitas.",
+    "revenue": "Não foi possível carregar seu faturamento.",
+    "cards": "Não foi possível carregar seus cartões.",
+    "bills": "Não foi possível carregar suas contas.",
+    "billsToPay": "Não foi possível carregar suas contas a pagar.",
+    "billsToReceive": "Não foi possível carregar suas contas a receber.",
+    "subscriptions": "Não foi possível carregar suas recorrências.",
+    "goals": "Não foi possível carregar suas metas.",
+    "investments": "Não foi possível carregar seus investimentos.",
+    "market": "Não foi possível carregar o Mercado Inteligente.",
+    "marketHistory": "Não foi possível carregar o histórico do mercado.",
+    "imports": "Não foi possível carregar suas importações.",
+    "vault": "Não foi possível carregar o Cofre Pessoal.",
+    "reports": "Não foi possível carregar seus relatórios.",
+    "plan": "Não foi possível carregar as informações do seu plano.",
+    "clients": "Não foi possível carregar seus clientes.",
+    "suppliers": "Não foi possível carregar seus fornecedores.",
+    "alerts": "Não foi possível carregar seus alertas.",
+    "connectedAccounts": "Não foi possível carregar suas contas conectadas."
   }
 }
