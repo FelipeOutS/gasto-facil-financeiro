@@ -865,21 +865,22 @@ function PosicaoCard({
   item: PosicaoEdit;
   onChange: (patch: Partial<PosicaoEdit>) => void;
 }) {
+  const { t: ti } = useTranslation("import-investimentos");
   const [editando, setEditando] = useState(false);
   const status = item._ignorado
-    ? { label: "Ignorado", cls: "bg-muted text-muted-foreground" }
+    ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
     ? {
-        label: "Possível duplicado",
+        label: ti("status.duplicated"),
         cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
       }
     : item.confianca === "baixa" || (!item.valorAplicado && !item.valorAtual)
     ? {
-        label: "Precisa revisar",
+        label: ti("status.needsReview"),
         cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
       }
     : {
-        label: "Pronto",
+        label: ti("status.ready"),
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
@@ -908,12 +909,12 @@ function PosicaoCard({
             </span>
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {item.quantidade != null && <span>Qtd: {item.quantidade}</span>}
-            {item.precoMedio != null && <span>PM: {formatBRL(item.precoMedio)}</span>}
+            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
+            {item.precoMedio != null && <span>{ti("fields.avgPrice")}: {formatBRL(item.precoMedio)}</span>}
             {item.valorAplicado != null && (
-              <span>Aplicado: {formatBRL(item.valorAplicado)}</span>
+              <span>{ti("fields.applied")}: {formatBRL(item.valorAplicado)}</span>
             )}
-            {item.valorAtual != null && <span>Atual: {formatBRL(item.valorAtual)}</span>}
+            {item.valorAtual != null && <span>{ti("fields.current")}: {formatBRL(item.valorAtual)}</span>}
             {item.instituicao && <span>{item.instituicao}</span>}
             {item.dataInicio && <span>{item.dataInicio}</span>}
           </div>
@@ -924,7 +925,7 @@ function PosicaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => setEditando((v) => !v)}
-            title="Editar"
+            title={ti("actions.edit")}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -933,7 +934,7 @@ function PosicaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => onChange({ _ignorado: !item._ignorado })}
-            title={item._ignorado ? "Restaurar" : "Ignorar"}
+            title={item._ignorado ? ti("actions.restore") : ti("actions.ignore")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -942,19 +943,19 @@ function PosicaoCard({
 
       {editando && (
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <Field label="Nome">
+          <Field label={ti("fields.name")}>
             <Input
               value={item.nome ?? ""}
               onChange={(e) => onChange({ nome: e.target.value })}
             />
           </Field>
-          <Field label="Ticker">
+          <Field label={ti("fields.ticker")}>
             <Input
               value={item.ticker ?? ""}
               onChange={(e) => onChange({ ticker: e.target.value.toUpperCase() })}
             />
           </Field>
-          <Field label="Tipo">
+          <Field label={ti("fields.type")}>
             <Select
               value={item.tipo}
               onValueChange={(v) => onChange({ tipo: v as TipoInvestimento })}
@@ -971,13 +972,13 @@ function PosicaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Instituição">
+          <Field label={ti("fields.institution")}>
             <Input
               value={item.instituicao ?? ""}
               onChange={(e) => onChange({ instituicao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade">
+          <Field label={ti("fields.quantity")}>
             <Input
               type="number"
               value={item.quantidade ?? ""}
@@ -986,7 +987,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Preço médio">
+          <Field label={ti("fields.avgPriceLabel")}>
             <Input
               type="number"
               value={item.precoMedio ?? ""}
@@ -995,7 +996,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Valor aplicado">
+          <Field label={ti("fields.appliedValue")}>
             <Input
               type="number"
               value={item.valorAplicado ?? ""}
@@ -1006,7 +1007,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Valor atual">
+          <Field label={ti("fields.currentValue")}>
             <Input
               type="number"
               value={item.valorAtual ?? ""}
@@ -1017,14 +1018,14 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Data">
+          <Field label={ti("fields.date")}>
             <Input
               type="date"
               value={item.dataInicio ?? ""}
               onChange={(e) => onChange({ dataInicio: e.target.value || null })}
             />
           </Field>
-          <Field label="Vencimento">
+          <Field label={ti("fields.maturity")}>
             <Input
               type="date"
               value={item.dataVencimento ?? ""}
@@ -1036,6 +1037,7 @@ function PosicaoCard({
     </div>
   );
 }
+
 
 function MovimentacaoCard({
   item,
