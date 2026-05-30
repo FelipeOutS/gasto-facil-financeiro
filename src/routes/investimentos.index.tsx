@@ -1617,6 +1617,7 @@ function AtualizarValorDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [valorAtual, setValorAtual] = useState("");
   const [precoAtual, setPrecoAtual] = useState("");
   const [quantidade, setQuantidade] = useState("");
