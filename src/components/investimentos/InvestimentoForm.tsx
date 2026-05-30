@@ -137,7 +137,7 @@ export function InvestimentoForm({
   async function handleSave() {
     if (!userId) return;
     if (!nome.trim()) {
-      toast.error("Informe o nome do investimento.");
+      toast.error(tr("forms.aux.errors.nameRequired"));
       return;
     }
     const aplicado = parseBRLInput(valorAplicado) || 0;
@@ -166,15 +166,15 @@ export function InvestimentoForm({
     try {
       if (editing) {
         await atualizarAtivo(editing.id, payload);
-        toast.success("Investimento atualizado.");
+        toast.success(tr("forms.aux.success.updated"));
       } else {
         await criarAtivo(userId, payload);
-        toast.success("Investimento cadastrado.");
+        toast.success(tr("forms.aux.success.created"));
       }
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível salvar.");
+      toastFromError(e, tr("forms.aux.errors.saveFailed"));
     } finally {
       setSaving(false);
     }
