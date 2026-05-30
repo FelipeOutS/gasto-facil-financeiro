@@ -176,7 +176,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas da empresa",
         importarContaTitle: "Importar boleto, Pix ou conta da empresa",
 
-        rendaTitle: "Receitas da empresa",
+        rendaTitle: "Faturamento",
         gastosTitle: "Despesas da empresa",
 
         saldoPositivoMsg: "Sua empresa manteve saldo positivo no período.",
