@@ -1235,7 +1235,13 @@ function VaultMain({
         </ul>
       ) : filtered.length === 0 ? (
         entries.length === 0 ? (
-          <EmptyVault onAdd={() => setView({ kind: "create" })} />
+          readOnly ? (
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              {tCofre("readOnly.createBlocked")}
+            </Card>
+          ) : (
+            <EmptyVault onAdd={() => setView({ kind: "create" })} />
+          )
         ) : (
           <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
         )
@@ -1252,6 +1258,11 @@ function VaultMain({
                 setView({ kind: "detail", entry: dec });
               }}
               onToggleFav={async () => {
+                // Etapa 15 — defesa em profundidade: bloqueia escrita mesmo se UI for burlada.
+                if (readOnly) {
+                  toast.error(tCofre("readOnly.lockedAction"));
+                  return;
+                }
                 const sec = getCachedSecret(e.id) ?? (await decryptOne(masterKey, e)).secret;
                 await updateEntry({
                   id: e.id,
