@@ -111,6 +111,9 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   empresa_inteligente: "mei_essencial",
   // Etapa 14 — Cofre Pessoal vira recurso premium.
   cofre_pessoal: "pessoal_premium",
+  // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
+  mercado_avancado: "pessoal_premium",
+  mercado_importar_cupom: "pessoal_premium",
 };
 
 /**
