@@ -99,5 +99,20 @@
     "noneSelected": "Nenhum item selecionado para importar.",
     "partialSuccess": "{{positions}} posição(ões) e {{movements}} movimentação(ões) importadas.",
     "partialErrors": "{{count}} item(ns) não puderam ser salvos."
+  },
+  "template": {
+    "sheetName": "Investimentos",
+    "fileName": "modelo-investimentos.xlsx",
+    "headers": {
+      "asset": "Ativo",
+      "ticker": "Ticker",
+      "type": "Tipo",
+      "quantity": "Quantidade",
+      "averagePrice": "Preço médio",
+      "appliedValue": "Valor aplicado",
+      "currentValue": "Valor atual",
+      "institution": "Instituição",
+      "date": "Data"
+    }
   }
 }
