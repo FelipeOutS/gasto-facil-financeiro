@@ -33,6 +33,7 @@ import ptImportFatura from "./locales/pt/import-fatura.json";
 import ptImportExtrato from "./locales/pt/import-extrato.json";
 import ptExtratosImportados from "./locales/pt/extratos-importados.json";
 import ptMercado from "./locales/pt/mercado.json";
+import ptCofre from "./locales/pt/cofre.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
