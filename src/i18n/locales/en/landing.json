@@ -869,5 +869,55 @@
       "cards": "Cards",
       "more": "More"
     }
+  },
+  "mercadoInteligente": {
+    "eyebrow": "Smart Grocery",
+    "title": "Smart Grocery",
+    "subtitle": "Plan your shopping, track your cart in real time and understand where your grocery money is really going.",
+    "description": "Create shopping lists, set a budget, watch your total before reaching the checkout and review your history to compare prices over time. Smart Grocery helps you shop with more control and avoid surprises at the end of the month.",
+    "highlights": {
+      "list": {
+        "title": "Organized shopping list",
+        "text": "Build lists by shopping type and reuse your standard basket every month."
+      },
+      "cart": {
+        "title": "Real-time cart total",
+        "text": "See your total as you add items — no surprises at the register."
+      },
+      "history": {
+        "title": "Price history by store",
+        "text": "Check what you paid before for the same item to compare prices over time."
+      },
+      "budget": {
+        "title": "Monthly grocery budget",
+        "text": "Set a ceiling for groceries and see, with every purchase, how much you have left."
+      }
+    },
+    "cta": "Explore Smart Grocery"
+  },
+  "importacaoInteligente": {
+    "eyebrow": "Smart import",
+    "title": "Smart import",
+    "subtitle": "Less manual typing, more organization for your financial routine.",
+    "description": "Import data from compatible bills, statements, images and receipts to speed up your entries. Gasto Inteligente helps turn financial data into organized records — and keeps you in control before confirming anything.",
+    "highlights": {
+      "pdfImage": {
+        "title": "PDF and image import",
+        "text": "Upload compatible files and reuse the content instead of typing everything again."
+      },
+      "statements": {
+        "title": "Compatible bills and statements",
+        "text": "Read documents from supported banks and cards to speed up your organization."
+      },
+      "receipt": {
+        "title": "Receipts and QR Code",
+        "text": "Inside Smart Grocery, scan compatible receipts to log a purchase faster."
+      },
+      "review": {
+        "title": "Review before saving",
+        "text": "You check and adjust imported data before it lands in your finances."
+      }
+    },
+    "cta": "See how it works"
   }
 }
