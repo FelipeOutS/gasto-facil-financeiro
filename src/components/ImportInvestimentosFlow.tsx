@@ -1051,6 +1051,7 @@ function MovimentacaoCard({
   onChange: (patch: Partial<MovimentacaoEdit>) => void;
 }) {
   const { t: ti } = useTranslation("import-investimentos");
+  const { t: tInv } = useTranslation("investimentos");
   const [editando, setEditando] = useState(false);
   const precisaRevisar = item.confianca === "baixa" || !item.data || !item.valorTotal;
   const status = item._ignorado
