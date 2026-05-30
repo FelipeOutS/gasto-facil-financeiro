@@ -420,6 +420,16 @@ export function ImportExtratoDialog({
         }
 
         if (!resp.ok) {
+          if (
+            premiumGate.handleResponse(resp, json, {
+              title: tc("premium.premiumApi.importExtrato.title"),
+              description: tc("premium.premiumApi.importExtrato.description"),
+              fallbackFeature: "importar_extrato",
+            })
+          ) {
+            setLoading(false);
+            return;
+          }
           toast.error(json?.error || t("errors.readPdfNo"));
           setLoading(false);
           return;
