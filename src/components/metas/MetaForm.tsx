@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Upload, Check } from "lucide-react";
+import { Upload, Check, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlan } from "@/lib/use-plan";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
+
 import {
   MetaCover,
   getMetaCoverKey,
