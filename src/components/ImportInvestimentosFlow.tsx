@@ -298,6 +298,16 @@ export function ImportInvestimentosFlow({
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.importInvestimentos.title"),
+            description: tc("premium.premiumApi.importInvestimentos.description"),
+            fallbackFeature: "investimentos",
+          })
+        ) {
+          setStep("upload");
+          return;
+        }
         setErro(data?.error || "Não conseguimos ler este arquivo.");
         setStep("upload");
         return;
