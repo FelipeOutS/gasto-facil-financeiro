@@ -20,7 +20,9 @@ import {
   criarAtivo,
   atualizarAtivo,
   classeAtivo,
+  getTipoInvestimentoLabel,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const RENT_TIPOS = [
   { id: "cdi", label: "% do CDI" },
