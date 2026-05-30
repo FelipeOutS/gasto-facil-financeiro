@@ -906,7 +906,7 @@ function PosicaoCard({
               </Badge>
             )}
             <Badge variant="secondary" className="text-[10px]">
-              {TIPOS_INVESTIMENTO.find((t) => t.id === item.tipo)?.label || item.tipo}
+              {getTipoInvestimentoLabel(item.tipo, tInv)}
             </Badge>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${status.cls}`}>
               {status.label}
