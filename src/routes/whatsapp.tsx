@@ -853,7 +853,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
   }
 
   async function excluirLog() {
-    if (!confirm("Excluir apenas o registro desta mensagem? O gasto não será removido.")) return;
+    if (!(await confirmAsync({ title: "Excluir registro?", description: "Excluir apenas o registro desta mensagem. O gasto não será removido.", destructive: true, confirmText: "Excluir registro" }))) return;
     setBusy("delete-log");
     try {
       const { error } = await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
