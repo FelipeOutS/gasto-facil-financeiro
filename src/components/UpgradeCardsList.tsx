@@ -17,13 +17,13 @@ type SubFeatureTeaser = {
   labelKey: string;
 };
 const SUBFEATURE_TEASERS: SubFeatureTeaser[] = [
-  { feature: "metas_visuais", to: "/metas", icon: Target, labelKey: "metasVisuais" },
-  { feature: "assinaturas_recorrencias", to: "/assinaturas", icon: Repeat, labelKey: "assinaturasAuto" },
-  // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
+  // Etapa 22 — Prioridade: importação inteligente primeiro (alta conversão),
+  // depois mercado avançado, cupom, e por último automações utilitárias.
+  { feature: "importacoes", to: "/gastos", icon: FileUp, labelKey: "importacoes" },
   { feature: "mercado_avancado", to: "/mercado", icon: ShoppingCart, labelKey: "mercadoAvancado" },
   { feature: "mercado_importar_cupom", to: "/mercado", icon: Receipt, labelKey: "mercadoImportarCupom" },
-  // Etapa 21 — Importação Inteligente (extratos, faturas, PDF/imagem).
-  { feature: "importacoes", to: "/gastos", icon: FileUp, labelKey: "importacoes" },
+  { feature: "metas_visuais", to: "/metas", icon: Target, labelKey: "metasVisuais" },
+  { feature: "assinaturas_recorrencias", to: "/assinaturas", icon: Repeat, labelKey: "assinaturasAuto" },
 ];
 
 /**
