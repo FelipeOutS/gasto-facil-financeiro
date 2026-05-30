@@ -185,6 +185,7 @@ function CofrePessoalPage() {
 
   // Usuário sem acesso mas COM dados salvos: modo transição (banner + acesso de leitura).
   const showTransitionBanner = !hasAccess && !!settings;
+  const isVaultReadOnly = !hasAccess && !!settings;
 
   return (
     <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
@@ -214,6 +215,7 @@ function CofrePessoalPage() {
             onLock={lock}
             settings={settings}
             onSettingsChanged={setSettings}
+            readOnly={isVaultReadOnly}
           />
         )}
       </div>
