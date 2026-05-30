@@ -51,6 +51,10 @@ import {
   Smartphone,
   Lock,
   Repeat,
+  ShoppingCart,
+  FileText,
+  Upload,
+  ScanLine,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -224,6 +228,7 @@ export function PublicLanding() {
         <DashboardShowcase />
         <PlanejamentoSection />
         <ContasSection />
+        <MercadoInteligenteSection />
         <IntelligenceSection />
         <GastoAISection />
         <FeatureSplit
@@ -251,6 +256,7 @@ export function PublicLanding() {
         />
         <EmpresaInteligenteSection />
         <MoreFeatures />
+        <ImportacaoInteligenteSection />
         <AppExperienceSection />
         <MultiDeviceShowcase />
         <ForWho />
