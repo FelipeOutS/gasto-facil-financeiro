@@ -2,7 +2,11 @@
   "back": "Voltar",
   "header": {
     "kicker": "Suas receitas",
-    "subtitle": "Visão completa do que entra todo mês."
+    "kicker_mei": "Seu faturamento",
+    "kicker_empresa": "Faturamento da empresa",
+    "subtitle": "Visão completa do que entra todo mês.",
+    "subtitle_mei": "Visão completa do faturamento do seu MEI.",
+    "subtitle_empresa": "Visão completa do faturamento da empresa."
   },
   "nav": {
     "prev": "Mês anterior",
@@ -10,31 +14,59 @@
   },
   "summary": {
     "totalLabel": "Total de receitas no mês",
+    "totalLabel_mei": "Total faturado no mês",
+    "totalLabel_empresa": "Total faturado no mês",
     "entries_one": "{{count}} receita registrada",
     "entries_other": "{{count}} receitas registradas",
+    "entries_one_mei": "{{count}} entrada registrada",
+    "entries_other_mei": "{{count}} entradas registradas",
+    "entries_one_empresa": "{{count}} entrada registrada",
+    "entries_other_empresa": "{{count}} entradas registradas",
     "variation": "{{sign}}{{value}}% vs mês anterior"
   },
   "miniStat": {
     "salario": "Salário",
+    "salario_mei": "Pró-labore",
+    "salario_empresa": "Receita principal",
     "extra": "Receita extra",
+    "extra_mei": "Faturamento extra",
+    "extra_empresa": "Faturamento extra",
     "recorrentes": "Recorrentes",
     "outras": "Outras",
     "entries_one": "{{count}} receita",
     "entries_other": "{{count}} receitas",
+    "entries_one_mei": "{{count}} entrada",
+    "entries_other_mei": "{{count}} entradas",
+    "entries_one_empresa": "{{count}} entrada",
+    "entries_other_empresa": "{{count}} entradas",
     "pctMonth": "{{pct}}% do mês"
   },
   "insights": {
     "empty": "Você ainda não cadastrou receitas neste mês. Que tal começar agora?",
+    "empty_mei": "Você ainda não registrou faturamento neste mês. Que tal começar agora?",
+    "empty_empresa": "Você ainda não registrou faturamento neste mês. Que tal começar agora?",
     "up": "Suas receitas subiram {{pct}}% em relação ao mês anterior.",
+    "up_mei": "Seu faturamento subiu {{pct}}% em relação ao mês anterior.",
+    "up_empresa": "O faturamento subiu {{pct}}% em relação ao mês anterior.",
     "down": "Suas receitas caíram {{pct}}% em relação ao mês anterior.",
+    "down_mei": "Seu faturamento caiu {{pct}}% em relação ao mês anterior.",
+    "down_empresa": "O faturamento caiu {{pct}}% em relação ao mês anterior.",
     "topSource": "{{pct}}% das suas receitas vêm de {{label}}.",
+    "topSource_mei": "{{pct}}% do seu faturamento vem de {{label}}.",
+    "topSource_empresa": "{{pct}}% do faturamento vem de {{label}}.",
     "recurring_one": "Você tem {{count}} receita recorrente este mês ({{value}}).",
     "recurring_other": "Você tem {{count}} receitas recorrentes este mês ({{value}}).",
     "extraShare": "Sua receita extra representa {{pct}}% do total do mês.",
-    "noExtra": "Você ainda não cadastrou receita extra este mês."
+    "extraShare_mei": "Seu faturamento extra representa {{pct}}% do total do mês.",
+    "extraShare_empresa": "O faturamento extra representa {{pct}}% do total do mês.",
+    "noExtra": "Você ainda não cadastrou receita extra este mês.",
+    "noExtra_mei": "Você ainda não cadastrou faturamento extra este mês.",
+    "noExtra_empresa": "Você ainda não cadastrou faturamento extra este mês."
   },
   "cta": {
     "new": "Nova receita",
+    "new_mei": "Novo faturamento",
+    "new_empresa": "Novo faturamento",
     "quick": {
       "salario": "Salário",
       "freela": "Freela",
@@ -44,9 +76,17 @@
   },
   "dialog": {
     "newTitle": "Nova receita",
+    "newTitle_mei": "Novo faturamento",
+    "newTitle_empresa": "Novo faturamento",
     "newDescription": "Salário, freelance, comissão e mais.",
+    "newDescription_mei": "Venda, serviço, comissão, recorrência e mais.",
+    "newDescription_empresa": "Venda, serviço, contrato, recorrência e mais.",
     "editTitle": "Editar receita",
+    "editTitle_mei": "Editar faturamento",
+    "editTitle_empresa": "Editar faturamento",
     "editDescription": "Altere os detalhes desta receita.",
+    "editDescription_mei": "Altere os detalhes deste faturamento.",
+    "editDescription_empresa": "Altere os detalhes deste faturamento.",
     "fields": {
       "descricao": "Descrição",
       "descricaoPlaceholder": "Ex.: Salário do mês",
