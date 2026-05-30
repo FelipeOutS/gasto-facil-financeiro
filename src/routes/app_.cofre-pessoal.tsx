@@ -1089,18 +1089,22 @@ function VaultMain({
         crumbs={[{ label: "Cofre Pessoal" }]}
         actions={
           <>
-            <Button
-              onClick={() => setView({ kind: "create" })}
-              className="bg-brand text-brand-foreground font-semibold shadow-md hover:bg-brand/90"
-            >
-              <Plus className="h-4 w-4" /> Adicionar acesso
-            </Button>
+            {!readOnly && (
+              <Button
+                onClick={() => setView({ kind: "create" })}
+                className="bg-brand text-brand-foreground font-semibold shadow-md hover:bg-brand/90"
+              >
+                <Plus className="h-4 w-4" /> Adicionar acesso
+              </Button>
+            )}
             <Button variant="outline" onClick={onLock} title="Bloquear cofre">
               <Lock className="h-4 w-4" /> Bloquear
             </Button>
           </>
         }
       />
+
+      {readOnly && <CofreReadOnlyNotice />}
 
       <Card className="mb-5 flex items-start gap-3 border-brand/30 bg-brand-soft/30 p-4 shadow-sm animate-fade-in">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-on-soft ring-1 ring-brand/30">
