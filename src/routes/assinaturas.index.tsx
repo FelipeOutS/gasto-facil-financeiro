@@ -604,7 +604,16 @@ function AssinaturasPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <PremiumLockModal
+        open={premiumOpen}
+        onOpenChange={setPremiumOpen}
+        title={t("premium.title")}
+        description={t("premium.desc")}
+        feature="assinaturas_recorrencias"
+      />
     </MobileShell>
+
   );
 }
 
