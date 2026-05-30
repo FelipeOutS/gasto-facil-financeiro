@@ -74,7 +74,8 @@
   "empty": {
     "none": "Nenhuma recorrência",
     "noneStatus": "Nenhuma recorrência {{status}}",
-    "hint": "Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui."
+    "hint": "Continue registrando seus gastos. Quando algo se repetir, vamos sugerir aqui.",
+    "cta": "Adicionar recorrência"
   },
   "debug": {
     "found": "Gastos encontrados: {{n}}",
