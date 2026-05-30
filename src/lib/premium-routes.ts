@@ -36,7 +36,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
   { path: "/metas", feature: "metas_visuais", title: "Metas é um recurso premium" },
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
-  { path: "/renda", feature: "lancamentos_ilimitados", title: "Minha renda é um recurso premium" },
+  { path: "/renda", feature: "lancamentos_ilimitados", title: "Receitas é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
   { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Controle Completo Pessoal, MEI e Empresa." },
   { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
