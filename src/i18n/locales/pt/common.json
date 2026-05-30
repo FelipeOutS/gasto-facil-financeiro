@@ -199,5 +199,22 @@
     "saved": "Salvo com sucesso.",
     "deleted": "Excluído com sucesso.",
     "updated": "Atualizado com sucesso."
+  },
+  "loading": {
+    "default": "Carregando…",
+    "dashboard": "Carregando seu resumo financeiro…",
+    "expenses": "Carregando seus gastos…",
+    "income": "Carregando suas receitas…",
+    "revenue": "Carregando seu faturamento…",
+    "cards": "Carregando seus cartões…",
+    "billsToPay": "Carregando contas a pagar…",
+    "billsToReceive": "Carregando contas a receber…",
+    "investments": "Carregando seus investimentos…",
+    "investmentDetails": "Carregando detalhes do investimento…",
+    "market": "Carregando seu Mercado Inteligente…",
+    "vault": "Carregando seu Cofre Pessoal…",
+    "reports": "Preparando seus relatórios…",
+    "plan": "Carregando informações do seu plano…",
+    "imports": "Carregando suas importações…"
   }
 }

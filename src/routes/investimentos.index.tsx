@@ -1,4 +1,3 @@
-import i18n from "i18next";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -1416,7 +1415,7 @@ function HistoricoImportacoesDialog({
           </DialogHeader>
 
           {carregandoDetalhe ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">Carregando…</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">{i18n.t("common:loading.investmentDetails")}</p>
           ) : itensDetalhe ? (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

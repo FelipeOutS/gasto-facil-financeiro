@@ -199,5 +199,22 @@
     "saved": "Saved successfully.",
     "deleted": "Deleted successfully.",
     "updated": "Updated successfully."
+  },
+  "loading": {
+    "default": "Loading…",
+    "dashboard": "Loading your financial overview…",
+    "expenses": "Loading your expenses…",
+    "income": "Loading your income…",
+    "revenue": "Loading your revenue…",
+    "cards": "Loading your cards…",
+    "billsToPay": "Loading bills to pay…",
+    "billsToReceive": "Loading bills to receive…",
+    "investments": "Loading your investments…",
+    "investmentDetails": "Loading investment details…",
+    "market": "Loading your Smart Market…",
+    "vault": "Loading your Personal Vault…",
+    "reports": "Preparing your reports…",
+    "plan": "Loading your plan details…",
+    "imports": "Loading your imports…"
   }
 }
