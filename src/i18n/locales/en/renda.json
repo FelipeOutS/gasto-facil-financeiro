@@ -43,7 +43,7 @@
     }
   },
   "dialog": {
-    "newTitle": "New income entry",
+    "newTitle": "New income",
     "newDescription": "Salary, freelance, commission and more.",
     "editTitle": "Edit income",
     "editDescription": "Update the details of this entry.",
