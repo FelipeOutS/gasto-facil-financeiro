@@ -269,6 +269,32 @@ function CofreTransitionBanner() {
   );
 }
 
+function CofreReadOnlyNotice() {
+  const { t } = useTranslation("cofre");
+  return (
+    <Card className="mb-4 flex items-start gap-3 border-amber-400/40 bg-amber-500/10 p-4 text-sm">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
+        <Lock className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-300">
+          {t("readOnly.badge")}
+        </p>
+        <p className="mt-0.5 font-semibold">{t("readOnly.title")}</p>
+        <p className="mt-1 text-muted-foreground">{t("readOnly.description")}</p>
+        <div className="mt-3">
+          <Button asChild size="sm">
+            <Link to="/meu-plano">
+              <Sparkles className="mr-1 h-4 w-4" />
+              {t("readOnly.cta")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function BootLoading() {
   return (
     <div className="space-y-4 py-12">
