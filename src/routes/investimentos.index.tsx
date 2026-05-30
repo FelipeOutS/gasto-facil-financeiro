@@ -864,6 +864,7 @@ function AddAtivoDialog({
   userId?: string;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [nome, setNome] = useState("");
   const [ticker, setTicker] = useState("");
   const [tipo, setTipo] = useState<TipoInvestimento>("acoes");
