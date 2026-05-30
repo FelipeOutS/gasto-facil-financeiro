@@ -845,13 +845,16 @@ function VaultMain({
   onLock,
   settings,
   onSettingsChanged,
+  readOnly = false,
 }: {
   userId: string;
   masterKey: CryptoKey;
   onLock: () => void;
   settings: VaultSettingsRow;
   onSettingsChanged: (s: VaultSettingsRow) => void;
+  readOnly?: boolean;
 }) {
+  const { t: tCofre } = useTranslation("cofre");
   const [entries, setEntries] = useState<VaultEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
