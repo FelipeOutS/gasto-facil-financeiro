@@ -36,6 +36,10 @@ import { formatBRL, parseDateLocal } from "@/lib/format";
 import { requireOnline } from "@/lib/use-online-status";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
+import { Lock } from "lucide-react";
+
 import {
   useStore,
   getCategorias,
