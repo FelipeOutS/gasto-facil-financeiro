@@ -42,6 +42,7 @@ import {
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { parseBRLInput, todayISO, formatBRL } from "@/lib/format";
+import { confirmAsync } from "@/components/ConfirmDialog";
 
 type ContaExtraida = {
   nome: string | null;
