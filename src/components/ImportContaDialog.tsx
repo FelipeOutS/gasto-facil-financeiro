@@ -235,6 +235,15 @@ export function ImportContaDialog({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (
+          premiumGate.handleResponse(res, json, {
+            title: tc("premium.premiumApi.importConta.title"),
+            description: tc("premium.premiumApi.importConta.description"),
+            fallbackFeature: "importar_conta",
+          })
+        ) {
+          return;
+        }
         toast.error(json?.error ?? t("errors.readPdfFail"));
         return;
       }
