@@ -136,6 +136,10 @@ function AssinaturasPage() {
   const cartoes = useStore(getCartoes);
 
   const [syncing, setSyncing] = useState(false);
+  const { can } = usePlan();
+  const canAutomations = can("assinaturas_recorrencias");
+  const [premiumOpen, setPremiumOpen] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Recorrencia | null>(null);
   const [historicoOpen, setHistoricoOpen] = useState<Recorrencia | null>(null);
