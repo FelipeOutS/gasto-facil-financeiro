@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Lock, Sparkles, ArrowRight, Target, Repeat, ShoppingCart, Receipt, type LucideIcon } from "lucide-react";
+import { Lock, Sparkles, ArrowRight, Target, Repeat, ShoppingCart, Receipt, FileUp, type LucideIcon } from "lucide-react";
 import { usePlan } from "@/lib/use-plan";
 import { minPlanFor, PLAN_LABEL, type FeatureKey } from "@/lib/plans";
 import { NAV_GROUPS, getLockedNavItems } from "@/lib/nav-groups";
@@ -22,6 +22,8 @@ const SUBFEATURE_TEASERS: SubFeatureTeaser[] = [
   // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
   { feature: "mercado_avancado", to: "/mercado", icon: ShoppingCart, labelKey: "mercadoAvancado" },
   { feature: "mercado_importar_cupom", to: "/mercado", icon: Receipt, labelKey: "mercadoImportarCupom" },
+  // Etapa 21 — Importação Inteligente (extratos, faturas, PDF/imagem).
+  { feature: "importacoes", to: "/gastos", icon: FileUp, labelKey: "importacoes" },
 ];
 
 /**

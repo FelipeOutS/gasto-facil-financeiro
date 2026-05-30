@@ -606,7 +606,8 @@
       "metasVisuais": "Metas com visual personalizado",
       "assinaturasAuto": "Automações de assinaturas",
       "mercadoAvancado": "Mercado Inteligente completo",
-      "mercadoImportarCupom": "Importação de cupom/QR Code"
+      "mercadoImportarCupom": "Importação de cupom/QR Code",
+      "importacoes": "Importação Inteligente de faturas e extratos"
     }
   }
 }
