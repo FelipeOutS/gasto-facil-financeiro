@@ -411,7 +411,7 @@ function InvestimentosPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium truncate">{a.nome}</span>
-                        <Badge variant="secondary" className="text-[10px]">{tipoLabel(a.tipo)}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(a.tipo, tInv)}</Badge>
                         {a.instituicao && (
                           <span className="text-[11px] text-muted-foreground">{a.instituicao}</span>
                         )}
