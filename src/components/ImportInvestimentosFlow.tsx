@@ -1071,8 +1071,7 @@ function MovimentacaoCard({
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
-  const tipoLabel =
-    TIPOS_MOVIMENTACAO.find((t) => t.id === item.tipo)?.label || item.tipo;
+  const tipoLabel = getTipoMovimentacaoLabel(item.tipo, tInv);
 
   return (
     <div
