@@ -301,7 +301,7 @@ function BootLoading() {
     <div className="space-y-4 py-12">
       <div className="grid place-items-center text-muted-foreground">
         <LockKeyhole className="mb-3 h-8 w-8 animate-pulse" />
-        <p className="text-sm">Carregando seu cofre…</p>
+        <p className="text-sm">{i18n.t("common:loading.vault")}</p>
       </div>
       <div className="mx-auto max-w-3xl space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
