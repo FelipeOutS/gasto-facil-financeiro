@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Sparkles, ArrowRight, Lock, Check, Crown } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -80,6 +81,7 @@ export function PremiumLockModal({
   const { user } = useAuth();
   const { trialUsed, refresh } = usePlan();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation("common");
 
   const rec = deriveRecommendedPlan(feature, recommendedPlan);
   const planLabel = rec ? PLAN_LABEL[rec] : null;
@@ -88,7 +90,7 @@ export function PremiumLockModal({
 
   async function handleTrial() {
     if (!user?.id) {
-      toast.error("Faça login para testar.");
+      toast.error(t("premium.trialLoginRequired"));
       return;
     }
     setLoading(true);
@@ -98,11 +100,11 @@ export function PremiumLockModal({
         toast.error(res.reason);
         return;
       }
-      toast.success("Teste grátis ativado por 10 dias.");
+      toast.success(t("premium.trialActivated"));
       await refresh();
       onOpenChange(false);
     } catch {
-      toast.error("Erro ao iniciar o teste.");
+      toast.error(t("premium.trialError"));
     } finally {
       setLoading(false);
     }
@@ -122,8 +124,7 @@ export function PremiumLockModal({
             {title}
           </DialogTitle>
           <DialogDescription className="text-center text-sm">
-            {description ??
-              "Este recurso está disponível apenas em planos elegíveis. Escolha um plano para liberar esse recurso."}
+            {description ?? t("premium.defaultDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +134,7 @@ export function PremiumLockModal({
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Crown className="h-4 w-4 text-primary" />
                 <span className="text-xs font-medium text-muted-foreground">
-                  Liberado a partir do plano
+                  {t("premium.unlockedFromPlan")}
                 </span>
                 <StatusBadge tone="info" dot className="font-semibold">
                   {planLabel}
@@ -166,12 +167,12 @@ export function PremiumLockModal({
               onClick={handleTrial}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {loading ? "Ativando…" : "Testar grátis por 10 dias"}
+              {loading ? t("premium.trialActivating") : t("premium.trialCta")}
             </Button>
           )}
           <Button asChild variant={trialUsed ? "default" : "outline"} className="w-full rounded-2xl min-h-11">
             <Link to="/meu-plano" onClick={() => onOpenChange(false)}>
-              Ver planos <ArrowRight className="ml-2 h-4 w-4" />
+              {t("premium.ctaSeePlans")} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
           {showContinue && (
@@ -180,7 +181,7 @@ export function PremiumLockModal({
               className="w-full rounded-2xl min-h-11"
               onClick={() => onOpenChange(false)}
             >
-              Agora não
+              {t("premium.ctaNotNow")}
             </Button>
           )}
         </DialogFooter>
