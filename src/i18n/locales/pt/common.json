@@ -243,6 +243,7 @@
     "clients": "Não foi possível carregar seus clientes.",
     "suppliers": "Não foi possível carregar seus fornecedores.",
     "alerts": "Não foi possível carregar seus alertas.",
-    "connectedAccounts": "Não foi possível carregar suas contas conectadas."
+    "connectedAccounts": "Não foi possível carregar suas contas conectadas.",
+    "bcbIndicators": "Não foi possível atualizar os indicadores agora."
   }
 }

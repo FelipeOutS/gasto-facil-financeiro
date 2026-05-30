@@ -243,6 +243,7 @@
     "clients": "We couldn't load your clients.",
     "suppliers": "We couldn't load your suppliers.",
     "alerts": "We couldn't load your alerts.",
-    "connectedAccounts": "We couldn't load your connected accounts."
+    "connectedAccounts": "We couldn't load your connected accounts.",
+    "bcbIndicators": "We couldn't update the indicators right now."
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Percent,
   LineChart,
@@ -42,6 +43,7 @@ export function RadarEconomicoInteligenteCard({
   className?: string;
   userContext?: UserContext;
 }) {
+  const { t } = useTranslation("common");
   const [data, setData] = useState<BcbRadarResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
@@ -121,7 +123,7 @@ export function RadarEconomicoInteligenteCard({
         <div className="mt-3">
           <LoadErrorState
             variant="compact"
-            description="Não foi possível atualizar os indicadores agora."
+            description={t("loadError.bcbIndicators")}
             onRetry={() => carregar(true)}
           />
         </div>
