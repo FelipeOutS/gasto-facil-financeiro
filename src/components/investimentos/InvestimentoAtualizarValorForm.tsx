@@ -9,8 +9,10 @@ import {
   type Ativo,
   atualizarValorAtivo,
   tipoLabel,
+  getTipoInvestimentoLabel,
   formatarDataHora,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export type InvestimentoAtualizarValorFormProps = {
   userId?: string;
