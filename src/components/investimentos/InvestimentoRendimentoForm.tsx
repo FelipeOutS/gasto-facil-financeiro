@@ -44,6 +44,7 @@ export function InvestimentoRendimentoForm({
   onSaved,
   onCancel,
 }: InvestimentoRendimentoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoRendimento>("dividendo");
   const [dataPag, setDataPag] = useState(todayISO());
