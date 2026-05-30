@@ -132,9 +132,9 @@ export function InvestimentoRendimentoForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TIPOS_RENDIMENTO.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.label}
+              {TIPOS_RENDIMENTO.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {getTipoRendimentoLabel(r.id, tr)}
                 </SelectItem>
               ))}
             </SelectContent>
