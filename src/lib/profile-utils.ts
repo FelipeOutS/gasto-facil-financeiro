@@ -149,7 +149,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas do MEI",
         importarContaTitle: "Importar boleto, Pix ou conta do MEI",
 
-        rendaTitle: "Entradas do MEI",
+        rendaTitle: "Faturamento",
         gastosTitle: "Gastos do MEI",
 
         saldoPositivoMsg: "Seu MEI fechou o mês com saldo positivo.",
