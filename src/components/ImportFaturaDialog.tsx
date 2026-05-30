@@ -123,6 +123,8 @@ export function ImportFaturaDialog({
   cartaoIdInicial?: string;
 }) {
   const { t } = useTranslation("import-fatura");
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const cartoes = useStore(() => getCartoes());
   const categorias = useStore(() => getCategorias());
 
