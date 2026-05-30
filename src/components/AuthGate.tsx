@@ -7,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLoader } from "@/components/BrandLoader";
 import { fetchOnboarding } from "@/lib/onboarding/service";
-import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
+import { findPremiumRule, premiumDescription, routeLockI18nKey } from "@/lib/premium-routes";
+import { useTranslation } from "react-i18next";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
