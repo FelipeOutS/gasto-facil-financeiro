@@ -802,7 +802,7 @@ export function ImportInvestimentosFlow({
           {step === "preview" && (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {ti("actions.cancel")}
               </Button>
               <Button
                 variant="outline"
@@ -813,13 +813,13 @@ export function ImportInvestimentosFlow({
                   setStep("upload");
                 }}
               >
-                Importar outro arquivo
+                {ti("actions.importAnother")}
               </Button>
               <Button
                 onClick={confirmar}
                 disabled={posProntos + posDup + movProntas + movDup === 0}
               >
-                Confirmar importação
+                {ti("actions.confirm")}
               </Button>
             </>
           )}
@@ -835,14 +835,14 @@ export function ImportInvestimentosFlow({
                   setStep("upload");
                 }}
               >
-                Importar outro arquivo
+                {ti("actions.importAnother")}
               </Button>
-              <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+              <Button onClick={() => onOpenChange(false)}>{ti("actions.close")}</Button>
             </>
           )}
           {(step === "upload" || step === "processando") && (
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fechar
+              {ti("actions.close")}
             </Button>
           )}
         </DialogFooter>
