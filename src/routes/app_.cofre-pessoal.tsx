@@ -1771,9 +1771,11 @@ function DetailView({
       <div className="mt-4">
         {!confirmingDelete ? (
           <div className="flex flex-wrap gap-2">
-            <Button onClick={onEdit} className="bg-brand text-brand-foreground hover:bg-brand/90">
-              <Pencil className="h-4 w-4" /> Editar
-            </Button>
+            {!readOnly && (
+              <Button onClick={onEdit} className="bg-brand text-brand-foreground hover:bg-brand/90">
+                <Pencil className="h-4 w-4" /> Editar
+              </Button>
+            )}
             <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive variant="outline" size="default">
               <span className="ml-1.5">Copiar senha</span>
             </CopyButton>
