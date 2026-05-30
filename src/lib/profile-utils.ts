@@ -203,7 +203,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas a pagar",
         importarContaTitle: "Importar boleto, Pix ou conta",
 
-        rendaTitle: "Minha renda",
+        rendaTitle: "Receitas",
         gastosTitle: "Gastos",
 
         saldoPositivoMsg: "Você economizou bem este mês.",
