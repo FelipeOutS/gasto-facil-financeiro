@@ -1094,8 +1094,7 @@ function MovimentacaoCard({
               </Badge>
             )}
             <Badge variant="outline" className="text-[10px]">
-              {TIPOS_INVESTIMENTO.find((t) => t.id === item.tipoAtivo)?.label ||
-                item.tipoAtivo}
+              {getTipoInvestimentoLabel(item.tipoAtivo, tInv)}
             </Badge>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${status.cls}`}>
               {status.label}
