@@ -130,14 +130,12 @@ export function ReceitaForm(props: Props) {
           recorrente: false,
           clienteId: payload.clienteId ?? null,
         });
-        toast.success(
-          "Receita salva offline. Ela será sincronizada quando a internet voltar.",
-        );
+        toast.success(t("toast.offlineSaved"));
         props.onDone();
         return;
       } catch (err) {
         console.error("[offline-income] enqueue failed", err);
-        toast.error("Não foi possível salvar offline.");
+        toast.error(t("toast.offlineSaveError"));
         return;
       }
     }

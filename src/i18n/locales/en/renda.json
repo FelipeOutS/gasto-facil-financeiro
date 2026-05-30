@@ -113,7 +113,9 @@
     "removed": "Income removed.",
     "removed_mei": "Revenue removed.",
     "removed_empresa": "Revenue removed.",
-    "fillFields": "Please fill in the description and amount."
+    "fillFields": "Please fill in the description and amount.",
+    "offlineSaved": "Income saved offline. It will sync when the internet returns.",
+    "offlineSaveError": "Could not save offline."
   },
   "duplicate": {
     "title": "Similar income found",
@@ -251,6 +253,11 @@
     "pix": "Instant transfer",
     "bonus": "Bonus",
     "outros": "Other"
+  },
+  "notFound": {
+    "title": "Income not found.",
+    "title_mei": "Revenue not found.",
+    "title_empresa": "Revenue not found."
   },
   "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 }
