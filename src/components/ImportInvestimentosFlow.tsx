@@ -697,25 +697,25 @@ export function ImportInvestimentosFlow({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="secondary">
-                Posições: {posicoes.length} · Movimentações: {movs.length}
+                {ti("preview.badges.summary", { positions: posicoes.length, movements: movs.length })}
               </Badge>
               {posProntos + movProntas > 0 && (
                 <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
-                  Prontos: {posProntos + movProntas}
+                  {ti("preview.badges.ready", { count: posProntos + movProntas })}
                 </Badge>
               )}
               {posRevisar + movRevisar > 0 && (
                 <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/15">
-                  Revisar: {posRevisar + movRevisar}
+                  {ti("preview.badges.review", { count: posRevisar + movRevisar })}
                 </Badge>
               )}
               {posDup + movDup > 0 && (
                 <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-400 hover:bg-orange-500/15">
-                  Duplicados: {posDup + movDup}
+                  {ti("preview.badges.duplicated", { count: posDup + movDup })}
                 </Badge>
               )}
               {totalIgnorados > 0 && (
-                <Badge variant="outline">Ignorados: {totalIgnorados}</Badge>
+                <Badge variant="outline">{ti("preview.badges.ignored", { count: totalIgnorados })}</Badge>
               )}
             </div>
 
