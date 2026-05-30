@@ -166,7 +166,7 @@ function AtualizarLotePage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {tipoLabel(a.tipo)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tr)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
                       </div>
                     </div>
                     <Badge
