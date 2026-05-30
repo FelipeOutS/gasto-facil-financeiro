@@ -83,6 +83,29 @@ export function forbiddenResponse(message = "Acesso restrito ao administrador ma
 }
 
 /**
+ * Etapa 23 — Resposta 403 enriquecida para bloqueios de plano.
+ * Mantém os campos legados (`error`, `message`) para compatibilidade e
+ * adiciona `code: "PREMIUM_FEATURE_REQUIRED"` + `feature` para que a UI
+ * possa identificar o erro e abrir o modal premium em vez de toast genérico.
+ */
+export function premiumForbiddenResponse(
+  feature: string,
+  message = "Este recurso está disponível em planos superiores. Acesse Meu plano para liberar.",
+  requiredPlan?: string,
+): Response {
+  return new Response(
+    JSON.stringify({
+      error: "forbidden",
+      code: "PREMIUM_FEATURE_REQUIRED",
+      feature,
+      requiredPlan: requiredPlan ?? null,
+      message,
+    }),
+    { status: 403, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+/**
  * Server-side feature gate for premium import/OCR endpoints.
  * Returns null when access is allowed, otherwise a 403 Response.
  *
@@ -103,10 +126,17 @@ export async function ensurePremiumFeatureAccess(
       repairLink: false,
     });
     if (!sub.active) {
-      return forbiddenResponse("Sua assinatura não está ativa. Acesse Meu plano para liberar este recurso.");
+      return premiumForbiddenResponse(
+        feature,
+        "Sua assinatura não está ativa. Acesse Meu plano para liberar este recurso.",
+      );
     }
     if (!planAllowsFeature(sub.plan, feature)) {
-      return forbiddenResponse("Este recurso está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.");
+      return premiumForbiddenResponse(
+        feature,
+        "Este recurso está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+        "Controle Completo Pessoal",
+      );
     }
     return null;
   } catch (err) {
