@@ -1,4 +1,100 @@
 {
+  "origem": {
+    "b3": {
+      "titulo": "Importar extrato da B3",
+      "descricao": "Envie um arquivo exportado da Área do Investidor da B3. Vamos identificar posições e movimentações automaticamente para você revisar antes de salvar."
+    },
+    "corretora": {
+      "titulo": "Importar extrato da corretora",
+      "descricao": "Envie um extrato exportado pela sua corretora. Vamos identificar posições e movimentações automaticamente."
+    },
+    "csv": {
+      "titulo": "Importar CSV / planilha",
+      "descricao": "Envie um CSV ou XLSX com seus ativos ou movimentações. Vamos identificar tudo que conseguirmos para você revisar."
+    },
+    "pdf": {
+      "titulo": "Importar PDF",
+      "descricao": "Envie um extrato em PDF da sua corretora ou da B3. Vamos identificar posições e movimentações para você revisar antes de salvar."
+    }
+  },
+  "upload": {
+    "dropzone": "Clique para escolher um arquivo ou arraste aqui",
+    "supportedFormats": "Formatos aceitos: {{formats}}",
+    "downloadTemplate": "Baixar modelo de planilha",
+    "privacy": "Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação usa apenas arquivos enviados por você.",
+    "errorEmptyFile": "Esse arquivo parece estar vazio ou em um formato não suportado.",
+    "errorUnsupported": "Formato não suportado. Envie PDF, CSV, XLSX ou XLS.",
+    "errorCantRead": "Não conseguimos ler este arquivo.",
+    "errorNoItems": "Conseguimos abrir o arquivo, mas não identificamos investimentos nem movimentações automaticamente. Você pode tentar outro arquivo ou cadastrar manualmente.",
+    "errorGeneric": "Erro ao processar o arquivo."
+  },
+  "processing": {
+    "title": "Lendo o arquivo…",
+    "description": "Isso pode levar alguns segundos."
+  },
+  "saving": {
+    "title": "Salvando seus investimentos…"
+  },
+  "done": {
+    "title": "Importação concluída",
+    "summary": "{{positions}} posição(ões), {{movements}} movimentação(ões), {{ignored}} ignorado(s)",
+    "summaryWithErrors": ", {{errors}} com erro"
+  },
+  "preview": {
+    "aviso": {
+      "movsOnly": "Encontramos movimentações no arquivo. Revise os dados antes de salvar.",
+      "needsReview": "O arquivo foi lido, mas alguns dados precisam de revisão antes de importar."
+    },
+    "badges": {
+      "summary": "Posições: {{positions}} · Movimentações: {{movements}}",
+      "ready": "Prontos: {{count}}",
+      "review": "Revisar: {{count}}",
+      "duplicated": "Duplicados: {{count}}",
+      "ignored": "Ignorados: {{count}}"
+    },
+    "sections": {
+      "positions": "Investimentos encontrados",
+      "movements": "Movimentações encontradas"
+    }
+  },
+  "status": {
+    "ignored": "Ignorado",
+    "duplicated": "Possível duplicado",
+    "needsReview": "Precisa revisar",
+    "ready": "Pronto"
+  },
+  "actions": {
+    "cancel": "Cancelar",
+    "importAnother": "Importar outro arquivo",
+    "confirm": "Confirmar importação",
+    "close": "Fechar",
+    "edit": "Editar",
+    "ignore": "Ignorar",
+    "restore": "Restaurar"
+  },
+  "fields": {
+    "qty": "Qtd",
+    "avgPrice": "PM",
+    "applied": "Aplicado",
+    "current": "Atual",
+    "unit": "Unit.",
+    "total": "Total",
+    "name": "Nome",
+    "ticker": "Ticker",
+    "type": "Tipo",
+    "institution": "Instituição",
+    "quantity": "Quantidade",
+    "avgPriceLabel": "Preço médio",
+    "appliedValue": "Valor aplicado",
+    "currentValue": "Valor atual",
+    "date": "Data",
+    "maturity": "Vencimento",
+    "movementType": "Tipo da movimentação",
+    "assetName": "Nome do ativo",
+    "assetType": "Tipo do ativo",
+    "unitValue": "Valor unitário",
+    "totalValue": "Valor total"
+  },
   "toast": {
     "noneSelected": "Nenhum item selecionado para importar.",
     "partialSuccess": "{{positions}} posição(ões) e {{movements}} movimentação(ões) importadas.",
