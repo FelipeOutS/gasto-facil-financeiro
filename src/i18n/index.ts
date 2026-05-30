@@ -111,7 +111,7 @@ if (!i18n.isInitialized) {
     lng: detectInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,
     defaultNS: "common",
-    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding", "confirmar", "legal", "misc", "import-conta", "import-fatura", "import-extrato", "extratos-importados", "mercado", "cofre"],
+    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding", "confirmar", "legal", "misc", "import-conta", "import-fatura", "import-extrato", "import-investimentos", "extratos-importados", "mercado", "cofre"],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
