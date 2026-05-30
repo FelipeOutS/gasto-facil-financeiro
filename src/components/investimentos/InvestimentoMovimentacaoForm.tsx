@@ -177,7 +177,7 @@ export function InvestimentoMovimentacaoForm({
             <SelectContent>
               {ativos.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.nome} ({tipoLabel(a.tipo)})
+                  {a.nome} ({getTipoInvestimentoLabel(a.tipo, tr)})
                 </SelectItem>
               ))}
             </SelectContent>
