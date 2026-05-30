@@ -663,7 +663,7 @@ export function ImportInvestimentosFlow({
 
             {origem === "csv" && (
               <Button variant="outline" size="sm" onClick={baixarModelo} className="w-full">
-                <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar modelo de planilha
+                <Download className="h-3.5 w-3.5 mr-1.5" /> {ti("upload.downloadTemplate")}
               </Button>
             )}
 
