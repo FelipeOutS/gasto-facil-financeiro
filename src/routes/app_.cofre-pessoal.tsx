@@ -122,9 +122,18 @@ type CategoriaId = (typeof CATEGORIAS)[number]["id"];
 // =====================================================================
 function CofrePessoalPage() {
   const { user } = useAuth();
+  const { can, isAdminMaster, loading: planLoading } = usePlan();
   const { isUnlocked, masterKey, lock } = useVaultKey();
   const [bootstrapState, setBootstrapState] = useState<"loading" | "needs_setup" | "needs_unlock" | "ready">("loading");
   const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
+
+  // Etapa 14 — Gate premium do Cofre Pessoal.
+  // hasAccess: usuário tem a feature liberada no plano (ou é Admin Master).
+  // Para usuários sem acesso, decidimos entre:
+  //  - Bloqueio total (não tem settings = nunca usou o Cofre): tela de upgrade.
+  //  - Modo transição (já tem settings = já configurou o Cofre): banner + leitura.
+  // Não tocamos em criptografia, PIN, biometria nem dados existentes.
+  const hasAccess = isAdminMaster || can("cofre_pessoal");
 
   // Ativa/Desativa bloqueio de print no Android WebView enquanto o usuário
   // estiver dentro do Cofre Pessoal (inclui setup, unlock, lista e detalhes).
@@ -152,11 +161,36 @@ function CofrePessoalPage() {
 
   if (!user) return null;
 
+  // Aguarda carregamento do plano para evitar flash de bloqueio.
+  if (planLoading || bootstrapState === "loading") {
+    return (
+      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
+          <BootLoading />
+        </div>
+      </div>
+    );
+  }
+
+  // Usuário sem acesso e SEM dados salvos: bloqueio total com upgrade.
+  if (!hasAccess && !settings) {
+    return (
+      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
+          <CofrePremiumGate />
+        </div>
+      </div>
+    );
+  }
+
+  // Usuário sem acesso mas COM dados salvos: modo transição (banner + acesso de leitura).
+  const showTransitionBanner = !hasAccess && !!settings;
+
   return (
     <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
       <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
-        {bootstrapState === "loading" && <BootLoading />}
-        {bootstrapState === "needs_setup" && (
+        {showTransitionBanner && <CofreTransitionBanner />}
+        {bootstrapState === "needs_setup" && hasAccess && (
           <SetupView
             userId={user.id}
             onReady={(s) => {
@@ -182,6 +216,52 @@ function CofrePessoalPage() {
             onSettingsChanged={setSettings}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+function CofrePremiumGate() {
+  const { t } = useTranslation("cofre");
+  return (
+    <div className="mx-auto max-w-xl space-y-5 py-12 text-center">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+        <Lock className="h-8 w-8" aria-hidden />
+      </div>
+      <h1 className="text-2xl font-bold tracking-tight">{t("gate.title")}</h1>
+      <p className="text-sm text-muted-foreground">{t("gate.description")}</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <Button asChild>
+          <Link to="/meu-plano">
+            <Sparkles className="mr-1 h-4 w-4" />
+            {t("gate.cta")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/">{t("gate.back")}</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CofreTransitionBanner() {
+  const { t } = useTranslation("cofre");
+  return (
+    <div className="mb-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4 text-sm">
+      <div className="mb-1 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+        <AlertTriangle className="h-4 w-4" aria-hidden />
+        <span className="text-xs font-semibold uppercase tracking-wide">{t("transition.badge")}</span>
+      </div>
+      <p className="font-semibold">{t("transition.title")}</p>
+      <p className="mt-1 text-muted-foreground">{t("transition.description")}</p>
+      <div className="mt-3">
+        <Button asChild size="sm">
+          <Link to="/meu-plano">
+            <Sparkles className="mr-1 h-4 w-4" />
+            {t("transition.cta")}
+          </Link>
+        </Button>
       </div>
     </div>
   );
