@@ -36,6 +36,7 @@ export const Route = createFileRoute("/investimentos/importacoes")({
 function HistoricoImportacoesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t: tInv } = useTranslation("investimentos");
   const [importacoes, setImportacoes] = useState<Importacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmar, setConfirmar] = useState<Importacao | null>(null);
