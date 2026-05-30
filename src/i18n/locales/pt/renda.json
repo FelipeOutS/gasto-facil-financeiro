@@ -113,13 +113,23 @@
   },
   "toast": {
     "added": "Receita adicionada. Boa! 💸",
+    "added_mei": "Faturamento adicionado. Boa! 💸",
+    "added_empresa": "Faturamento adicionado. ✅",
     "updated": "Receita atualizada. ✅",
+    "updated_mei": "Faturamento atualizado. ✅",
+    "updated_empresa": "Faturamento atualizado. ✅",
     "removed": "Receita removida.",
+    "removed_mei": "Faturamento removido.",
+    "removed_empresa": "Faturamento removido.",
     "fillFields": "Preencha a descrição e o valor."
   },
   "duplicate": {
     "title": "Receita parecida encontrada",
+    "title_mei": "Faturamento parecido encontrado",
+    "title_empresa": "Faturamento parecido encontrado",
     "body": "Já existe uma receita parecida neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
+    "body_mei": "Já existe um faturamento parecido neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
+    "body_empresa": "Já existe um faturamento parecido neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
     "confirm": "Salvar mesmo assim",
     "cancel": "Cancelar"
   },
@@ -129,14 +139,22 @@
     "average": "Média:",
     "peak": "Pico:",
     "incomeLabel": "Receitas",
+    "incomeLabel_mei": "Faturamento",
+    "incomeLabel_empresa": "Faturamento",
     "compositionKicker": "Composição",
     "compositionTitle": "Por tipo de receita",
+    "compositionTitle_mei": "Por tipo de faturamento",
+    "compositionTitle_empresa": "Por tipo de faturamento",
     "noData": "Sem dados neste mês."
   },
   "forecast": {
     "kicker": "Previsão",
     "titleCurrent": "Receitas do mês atual",
+    "titleCurrent_mei": "Faturamento do mês atual",
+    "titleCurrent_empresa": "Faturamento do mês atual",
     "titleSelected": "Receitas do mês selecionado",
+    "titleSelected_mei": "Faturamento do mês selecionado",
+    "titleSelected_empresa": "Faturamento do mês selecionado",
     "received": "Já recebido",
     "toReceive": "A receber",
     "total": "Total previsto:",
@@ -144,7 +162,11 @@
   },
   "upcoming": {
     "kicker": "Próximas",
+    "kicker_mei": "Próximos",
+    "kicker_empresa": "Próximos",
     "title": "Receitas recorrentes",
+    "title_mei": "Faturamentos recorrentes",
+    "title_empresa": "Faturamentos recorrentes",
     "empty": "Sem recorrências futuras cadastradas."
   },
   "tabs": {
@@ -165,13 +187,25 @@
   },
   "empty": {
     "monthTitle": "Sem receitas neste mês ainda",
+    "monthTitle_mei": "Sem faturamento neste mês ainda",
+    "monthTitle_empresa": "Sem faturamento neste mês ainda",
     "monthSubtitle": "Cadastre sua primeira receita e veja seu mês ficar mais claro.",
+    "monthSubtitle_mei": "Cadastre seu primeiro faturamento e veja seu mês ficar mais claro.",
+    "monthSubtitle_empresa": "Cadastre o primeiro faturamento do mês para acompanhar a evolução.",
     "filterTitle": "Nenhuma receita com esses filtros",
+    "filterTitle_mei": "Nenhum faturamento com esses filtros",
+    "filterTitle_empresa": "Nenhum faturamento com esses filtros",
     "filterSubtitle": "Tente limpar a busca ou trocar o filtro.",
     "recurringTitle": "Você ainda não tem receitas recorrentes neste mês",
+    "recurringTitle_mei": "Você ainda não tem faturamentos recorrentes neste mês",
+    "recurringTitle_empresa": "Você ainda não tem faturamentos recorrentes neste mês",
     "recurringSubtitle": "Cadastre uma e ela se repete automaticamente.",
+    "recurringSubtitle_mei": "Cadastre um e ele se repete automaticamente.",
+    "recurringSubtitle_empresa": "Cadastre um e ele se repete automaticamente.",
     "recurringAction": "Adicionar recorrente",
     "defaultAction": "Adicionar receita",
+    "defaultAction_mei": "Adicionar faturamento",
+    "defaultAction_empresa": "Adicionar faturamento",
     "examples": {
       "salario": "Salário",
       "freelance": "Freelance",
@@ -182,13 +216,17 @@
   },
   "history": {
     "empty": "Seu histórico ainda está em branco. Quando você cadastrar receitas, elas aparecem aqui agrupadas por mês.",
+    "empty_mei": "Seu histórico ainda está em branco. Quando você cadastrar faturamentos, eles aparecem aqui agrupados por mês.",
+    "empty_empresa": "O histórico ainda está em branco. Quando faturamentos forem cadastrados, eles aparecem aqui agrupados por mês.",
     "search": "Buscar por descrição, tipo, mês, ano ou valor",
     "noResults": "Nenhum resultado para “{{query}}”.",
     "loadMore": "Carregar mais"
   },
   "forecasts": {
     "title": "Previsão dos próximos meses",
-    "subtitle": "Baseado nas receitas recorrentes ativas."
+    "subtitle": "Baseado nas receitas recorrentes ativas.",
+    "subtitle_mei": "Baseado nos faturamentos recorrentes ativos.",
+    "subtitle_empresa": "Baseado nos faturamentos recorrentes ativos."
   },
   "item": {
     "rec": "rec",
@@ -200,8 +238,14 @@
   },
   "delete": {
     "title": "Excluir receita?",
+    "title_mei": "Excluir faturamento?",
+    "title_empresa": "Excluir faturamento?",
     "body": "Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.",
+    "body_mei": "Tem certeza que deseja excluir este faturamento? Esta ação não pode ser desfeita.",
+    "body_empresa": "Tem certeza que deseja excluir este faturamento? Esta ação não pode ser desfeita.",
     "recurringQuestion": "Esta receita é recorrente. O que excluir?",
+    "recurringQuestion_mei": "Este faturamento é recorrente. O que excluir?",
+    "recurringQuestion_empresa": "Este faturamento é recorrente. O que excluir?",
     "scope": {
       "single": "Somente este mês",
       "forward": "Este mês e os próximos",
