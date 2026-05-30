@@ -85,7 +85,16 @@ export function MetaForm({
   const [imagemManual, setImagemManual] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const { can } = usePlan();
+  const canVisuais = can("metas_visuais");
+  const [premiumOpen, setPremiumOpen] = useState(false);
+
   async function handleUploadCover(file: File) {
+    if (!canVisuais) {
+      setPremiumOpen(true);
+      return;
+    }
+
     if (!file.type.startsWith("image/")) {
       toast.error(t("upload.errType"));
       return;
