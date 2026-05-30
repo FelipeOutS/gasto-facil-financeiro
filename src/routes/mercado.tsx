@@ -44,19 +44,21 @@ type CardDef = {
   icon: LucideIcon;
   status: CardStatus;
   to?: string;
+  /** Etapa 16 — feature premium necessária para acessar este card. */
+  feature?: FeatureKey;
 };
 
 const CARDS: CardDef[] = [
   { key: "listas", icon: ListChecks, status: "open", to: "/mercado/listas" },
   { key: "calculadoras", icon: Calculator, status: "open", to: "/mercado/calculadoras" },
   { key: "orcamento", icon: WalletCards, status: "open", to: "/mercado/orcamento" },
-  { key: "historico", icon: History, status: "open", to: "/mercado/historico" },
+  { key: "historico", icon: History, status: "open", to: "/mercado/historico", feature: "mercado_avancado" },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
-  { key: "importarCupom", icon: Receipt, status: "open", to: "/mercado/importar-cupom" },
-  { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados" },
-  { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados" },
-  { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos" },
-  { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta" },
+  { key: "importarCupom", icon: Receipt, status: "open", to: "/mercado/importar-cupom", feature: "mercado_importar_cupom" },
+  { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados", feature: "mercado_avancado" },
+  { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados", feature: "mercado_avancado" },
+  { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos", feature: "mercado_avancado" },
+  { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta", feature: "mercado_avancado" },
 ];
 
 function MercadoHubPage() {
