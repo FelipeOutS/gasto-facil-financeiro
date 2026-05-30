@@ -2,7 +2,11 @@
   "back": "Back",
   "header": {
     "kicker": "Your income",
-    "subtitle": "Full view of what comes in every month."
+    "kicker_mei": "Your revenue",
+    "kicker_empresa": "Company revenue",
+    "subtitle": "Full view of what comes in every month.",
+    "subtitle_mei": "Full view of your business revenue.",
+    "subtitle_empresa": "Full view of your company revenue."
   },
   "nav": {
     "prev": "Previous month",
@@ -10,13 +14,19 @@
   },
   "summary": {
     "totalLabel": "Total income this month",
+    "totalLabel_mei": "Total revenue this month",
+    "totalLabel_empresa": "Total revenue this month",
     "entries_one": "{{count}} entry recorded",
     "entries_other": "{{count}} entries recorded",
     "variation": "{{sign}}{{value}}% vs last month"
   },
   "miniStat": {
     "salario": "Salary",
+    "salario_mei": "Owner pay",
+    "salario_empresa": "Core revenue",
     "extra": "Extra income",
+    "extra_mei": "Extra revenue",
+    "extra_empresa": "Extra revenue",
     "recorrentes": "Recurring",
     "outras": "Other",
     "entries_one": "{{count}} entry",
@@ -25,16 +35,30 @@
   },
   "insights": {
     "empty": "You haven't added any income this month yet. Want to start now?",
+    "empty_mei": "You haven't logged any revenue this month yet. Want to start now?",
+    "empty_empresa": "No revenue logged this month yet. Want to start now?",
     "up": "Your income rose {{pct}}% compared to last month.",
+    "up_mei": "Your revenue rose {{pct}}% compared to last month.",
+    "up_empresa": "Revenue rose {{pct}}% compared to last month.",
     "down": "Your income fell {{pct}}% compared to last month.",
+    "down_mei": "Your revenue fell {{pct}}% compared to last month.",
+    "down_empresa": "Revenue fell {{pct}}% compared to last month.",
     "topSource": "{{pct}}% of your income comes from {{label}}.",
+    "topSource_mei": "{{pct}}% of your revenue comes from {{label}}.",
+    "topSource_empresa": "{{pct}}% of revenue comes from {{label}}.",
     "recurring_one": "You have {{count}} recurring entry this month ({{value}}).",
     "recurring_other": "You have {{count}} recurring entries this month ({{value}}).",
     "extraShare": "Your extra income is {{pct}}% of the monthly total.",
-    "noExtra": "You haven't added any extra income this month yet."
+    "extraShare_mei": "Your extra revenue is {{pct}}% of the monthly total.",
+    "extraShare_empresa": "Extra revenue is {{pct}}% of the monthly total.",
+    "noExtra": "You haven't added any extra income this month yet.",
+    "noExtra_mei": "You haven't added any extra revenue this month yet.",
+    "noExtra_empresa": "No extra revenue logged this month yet."
   },
   "cta": {
     "new": "New income",
+    "new_mei": "New revenue",
+    "new_empresa": "New revenue",
     "quick": {
       "salario": "Salary",
       "freela": "Freelance",
@@ -44,9 +68,17 @@
   },
   "dialog": {
     "newTitle": "New income",
+    "newTitle_mei": "New revenue",
+    "newTitle_empresa": "New revenue",
     "newDescription": "Salary, freelance, commission and more.",
+    "newDescription_mei": "Sale, service, commission, recurring and more.",
+    "newDescription_empresa": "Sale, service, contract, recurring and more.",
     "editTitle": "Edit income",
+    "editTitle_mei": "Edit revenue",
+    "editTitle_empresa": "Edit revenue",
     "editDescription": "Update the details of this entry.",
+    "editDescription_mei": "Update the details of this revenue.",
+    "editDescription_empresa": "Update the details of this revenue.",
     "fields": {
       "descricao": "Description",
       "descricaoPlaceholder": "E.g.: Monthly salary",
