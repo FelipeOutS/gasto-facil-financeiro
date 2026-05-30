@@ -2340,7 +2340,7 @@ function QuickUnlockSettingsView({
   }
 
   async function handleRemovePin() {
-    if (!window.confirm("Remover o PIN da sua conta? Você precisará da senha mestra para entrar em todos os dispositivos.")) return;
+    if (!(await confirmAsync({ title: "Remover o PIN da sua conta?", description: "Você precisará da senha mestra para entrar em todos os dispositivos.", destructive: true, confirmText: "Remover PIN" }))) return;
     setBusy(true);
     try {
       await disableServerPin();
