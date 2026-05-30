@@ -119,6 +119,16 @@ function Confirmar() {
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.ocrGasto.title"),
+            description: tc("premium.premiumApi.ocrGasto.description"),
+            fallbackFeature: "importacoes",
+          })
+        ) {
+          setStep("upload");
+          return;
+        }
         setErro(data?.error ?? t("errors.ocrFallback"));
         setStep("erro");
         return;
