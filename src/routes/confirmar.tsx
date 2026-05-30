@@ -63,6 +63,8 @@ type AIResult = {
 
 function Confirmar() {
   const { t, i18n: i18nInst } = useTranslation("confirmar");
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const navigate = useNavigate();
   const { canWrite, requireSubscription } = useSubscriptionGuard();
   const categorias = useStore(() => getCategorias());
