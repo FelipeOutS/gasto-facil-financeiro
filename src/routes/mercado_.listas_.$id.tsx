@@ -28,6 +28,7 @@ import {
 } from "@/lib/mercado/products-api";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
@@ -1031,10 +1032,9 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
     setEditing(false);
   }
 
-  function handleRemove() {
-    if (typeof window !== "undefined" && !window.confirm(t("detail.item.confirmRemove"))) {
-      return;
-    }
+  async function handleRemove() {
+    const ok = await confirmAsync({ title: t("detail.item.confirmRemove"), destructive: true });
+    if (!ok) return;
     removeItemLista(listaId, item.id);
     toast.success(t("detail.form.removed"));
   }
@@ -1193,15 +1193,13 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
 
-  function handleFinalize() {
+  async function handleFinalize() {
     if (resumo.totalItens === 0) {
       toast.error(t("detail.finalize.emptyError"));
       return;
     }
     if (resumo.itensPendentes > 0) {
-      const ok =
-        typeof window !== "undefined" &&
-        window.confirm(t("detail.finalize.confirmPending"));
+      const ok = await confirmAsync({ title: t("detail.finalize.confirmPending") });
       if (!ok) return;
     }
     const result = finalizarListaCompra(lista.id, {
