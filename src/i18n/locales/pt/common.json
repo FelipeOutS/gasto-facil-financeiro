@@ -94,6 +94,88 @@
         "title": "OCR de gasto é premium",
         "description": "Use leitura de imagem para transformar comprovantes compatíveis em lançamentos organizados."
       }
+    },
+    "routeLocks": {
+      "investimentos": {
+        "title": "Investimentos é um recurso premium",
+        "description": "Acompanhe seus ativos, movimentações e evolução patrimonial em um só lugar. Disponível nos planos superiores."
+      },
+      "cartoes": {
+        "title": "Cartões e faturas é um recurso premium",
+        "description": "Organize cartões de crédito e acompanhe faturas com mais controle. Disponível nos planos superiores."
+      },
+      "assinaturas": {
+        "title": "Assinaturas é um recurso premium",
+        "description": "Controle suas assinaturas e recorrências em um só lugar. Disponível nos planos superiores."
+      },
+      "contasAPagar": {
+        "title": "Contas a pagar é um recurso premium",
+        "description": "Programe e acompanhe contas a pagar sem perder vencimentos. Disponível nos planos superiores."
+      },
+      "contasAReceber": {
+        "title": "Contas a receber é um recurso premium",
+        "description": "Acompanhe valores a receber e mantenha o caixa em dia. Disponível nos planos superiores."
+      },
+      "orcamento": {
+        "title": "Orçamento é um recurso premium",
+        "description": "Defina limites por categoria e acompanhe seus gastos com mais clareza. Disponível nos planos superiores."
+      },
+      "relatorios": {
+        "title": "Relatórios avançados é um recurso premium",
+        "description": "Compare períodos, visualize gráficos detalhados e acompanhe sua evolução financeira com mais profundidade."
+      },
+      "gastoAi": {
+        "title": "IA Financeira é um recurso premium",
+        "description": "Receba análises inteligentes sobre seus gastos, padrões de consumo e oportunidades de economia."
+      },
+      "metas": {
+        "title": "Metas é um recurso premium",
+        "description": "Crie metas financeiras visuais e acompanhe seu progresso. Disponível nos planos superiores."
+      },
+      "whatsapp": {
+        "title": "WhatsApp é um recurso premium",
+        "description": "Registre gastos por WhatsApp de forma rápida e prática. Disponível nos planos superiores."
+      },
+      "renda": {
+        "title": "Receitas é um recurso premium",
+        "description": "Organize suas receitas sem limite de lançamentos. Disponível nos planos superiores."
+      },
+      "guardado": {
+        "title": "Guardado é um recurso premium",
+        "description": "Acompanhe valores guardados e reservas com mais controle. Disponível nos planos superiores."
+      },
+      "contasConectadas": {
+        "title": "Contas conectadas é um recurso premium",
+        "description": "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos superiores."
+      },
+      "empresa": {
+        "title": "Empresa Inteligente é um recurso para MEI e Empresa",
+        "description": "Consulte CNPJ e mantenha os dados da sua empresa organizados. Disponível nos planos Essencial para MEI, MEI Completo e Empresa."
+      },
+      "fornecedores": {
+        "title": "Fornecedores é um recurso para MEI e Empresa",
+        "description": "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais."
+      },
+      "clientes": {
+        "title": "Clientes é um recurso para MEI e Empresa",
+        "description": "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais."
+      },
+      "contador": {
+        "title": "Pacote para Contador é um recurso para MEI e Empresa",
+        "description": "Gere um resumo mensal organizado para enviar ao seu contador."
+      },
+      "mercadoAvancado": {
+        "title": "Mercado Inteligente completo é premium",
+        "description": "Acesse histórico de compras, comparação de preços, cesta padrão e mercados salvos para comprar com mais controle."
+      },
+      "mercadoImportarCupom": {
+        "title": "Importação de cupom é um recurso premium",
+        "description": "Importe informações de cupons fiscais por QR Code/NFC-e para reduzir lançamentos manuais."
+      },
+      "importacoes": {
+        "title": "Importação Inteligente é um recurso premium",
+        "description": "Importe faturas, extratos, PDFs e imagens compatíveis para reduzir lançamentos manuais."
+      }
     }
   }
 }

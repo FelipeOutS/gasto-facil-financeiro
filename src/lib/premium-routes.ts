@@ -65,3 +65,31 @@ export function findPremiumRule(pathname: string): PremiumRouteRule | null {
 export function premiumDescription(rule: PremiumRouteRule): string {
   return rule.description ?? DEFAULT_DESCRIPTION;
 }
+
+/**
+ * Mapeia FeatureKey -> chave em `common.premium.routeLocks.*` (i18n).
+ * Usado por AuthGate/PremiumLockModal para títulos/descrições amigáveis
+ * e traduzidos quando o usuário acessa rota premium por URL direta.
+ */
+const FEATURE_TO_ROUTE_LOCK_KEY: Partial<Record<FeatureKey, string>> = {
+  investimentos: "investimentos",
+  cartoes: "cartoes",
+  assinaturas_recorrencias: "assinaturas",
+  contas_a_pagar: "contasAPagar",
+  contas_a_receber: "contasAReceber",
+  orcamento: "orcamento",
+  relatorios_avancados: "relatorios",
+  gasto_ai: "gastoAi",
+  metas_visuais: "metas",
+  whatsapp: "whatsapp",
+  lancamentos_ilimitados: "renda",
+  contas_conectadas: "contasConectadas",
+  empresa_inteligente: "empresa",
+  mercado_avancado: "mercadoAvancado",
+  mercado_importar_cupom: "mercadoImportarCupom",
+  importacoes: "importacoes",
+};
+
+export function routeLockI18nKey(feature: FeatureKey): string | null {
+  return FEATURE_TO_ROUTE_LOCK_KEY[feature] ?? null;
+}

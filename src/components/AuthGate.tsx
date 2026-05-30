@@ -7,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { BrandLoader } from "@/components/BrandLoader";
 import { fetchOnboarding } from "@/lib/onboarding/service";
-import { findPremiumRule, premiumDescription } from "@/lib/premium-routes";
+import { findPremiumRule, premiumDescription, routeLockI18nKey } from "@/lib/premium-routes";
+import { useTranslation } from "react-i18next";
 import { planAllowsFeature } from "@/lib/plans";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
@@ -66,6 +67,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [redirecting, setRedirecting] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useTranslation("common");
 
   const isAdmin = plan.isAdminMaster || hasFullAccess;
   const hasActiveAccess =
@@ -173,16 +175,25 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // este recurso específico. Não renderiza o conteúdo da rota; mostra o
   // modal padrão de bloqueio premium (mesmo visual de Investimentos).
   if (premiumRule && !plan.loading && !rolesLoading && !featureAllowed) {
+    const i18nKey = routeLockI18nKey(premiumRule.feature);
+    const lockTitle = i18nKey
+      ? t(`premium.routeLocks.${i18nKey}.title`, { defaultValue: premiumRule.title })
+      : premiumRule.title;
+    const lockDescription = i18nKey
+      ? t(`premium.routeLocks.${i18nKey}.description`, {
+          defaultValue: premiumDescription(premiumRule),
+        })
+      : premiumDescription(premiumRule);
     return (
       <>
-        <BrandLoader message={premiumRule.title} className="opacity-70" />
+        <BrandLoader message={lockTitle} className="opacity-70" />
         <PremiumLockModal
           open
           onOpenChange={(v) => {
             if (!v) void navigate({ to: "/meu-plano" });
           }}
-          title={premiumRule.title}
-          description={premiumDescription(premiumRule)}
+          title={lockTitle}
+          description={lockDescription}
           feature={premiumRule.feature}
           showContinue={false}
         />

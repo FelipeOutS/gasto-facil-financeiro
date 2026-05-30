@@ -94,6 +94,88 @@
         "title": "Expense OCR is premium",
         "description": "Use image reading to turn supported receipts into organized entries."
       }
+    },
+    "routeLocks": {
+      "investimentos": {
+        "title": "Investments is a premium feature",
+        "description": "Track assets, transactions and wealth growth in one place. Available on higher plans."
+      },
+      "cartoes": {
+        "title": "Cards and statements is a premium feature",
+        "description": "Organize credit cards and follow statements with more control. Available on higher plans."
+      },
+      "assinaturas": {
+        "title": "Subscriptions is a premium feature",
+        "description": "Control subscriptions and recurring charges in one place. Available on higher plans."
+      },
+      "contasAPagar": {
+        "title": "Bills to pay is a premium feature",
+        "description": "Schedule and follow bills to pay without missing due dates. Available on higher plans."
+      },
+      "contasAReceber": {
+        "title": "Bills to receive is a premium feature",
+        "description": "Track expected income and keep your cash flow healthy. Available on higher plans."
+      },
+      "orcamento": {
+        "title": "Budget is a premium feature",
+        "description": "Set category limits and follow spending with more clarity. Available on higher plans."
+      },
+      "relatorios": {
+        "title": "Advanced reports is a premium feature",
+        "description": "Compare periods, view detailed charts and follow your financial evolution in more depth."
+      },
+      "gastoAi": {
+        "title": "Financial AI is a premium feature",
+        "description": "Get smart insights about your spending, patterns and savings opportunities."
+      },
+      "metas": {
+        "title": "Goals is a premium feature",
+        "description": "Create visual financial goals and follow your progress. Available on higher plans."
+      },
+      "whatsapp": {
+        "title": "WhatsApp is a premium feature",
+        "description": "Log expenses by WhatsApp quickly and easily. Available on higher plans."
+      },
+      "renda": {
+        "title": "Income is a premium feature",
+        "description": "Organize your income without entry limits. Available on higher plans."
+      },
+      "guardado": {
+        "title": "Savings is a premium feature",
+        "description": "Follow saved amounts and reserves with more control. Available on higher plans."
+      },
+      "contasConectadas": {
+        "title": "Connected accounts is a premium feature",
+        "description": "Invite someone by email and follow their account with permission. Available on higher plans."
+      },
+      "empresa": {
+        "title": "Smart Company is for MEI and Company plans",
+        "description": "Look up CNPJ and keep your company data organized. Available on Essencial for MEI, MEI Completo and Empresa plans."
+      },
+      "fornecedores": {
+        "title": "Suppliers is for MEI and Company plans",
+        "description": "Register suppliers by CNPJ and organize business expenses better."
+      },
+      "clientes": {
+        "title": "Clients is for MEI and Company plans",
+        "description": "Register clients by CNPJ and organize business income better."
+      },
+      "contador": {
+        "title": "Accountant package is for MEI and Company plans",
+        "description": "Generate an organized monthly summary to send to your accountant."
+      },
+      "mercadoAvancado": {
+        "title": "Full Smart Market is a premium feature",
+        "description": "Access purchase history, price comparison, default basket and saved markets to shop with more control."
+      },
+      "mercadoImportarCupom": {
+        "title": "Receipt import is a premium feature",
+        "description": "Import receipts via QR Code/NFC-e to cut manual entry."
+      },
+      "importacoes": {
+        "title": "Smart Import is a premium feature",
+        "description": "Import supported invoices, statements, PDFs and images to cut manual entry."
+      }
     }
   }
 }
