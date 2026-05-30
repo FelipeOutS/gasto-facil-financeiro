@@ -323,10 +323,7 @@ export function ImportInvestimentosFlow({
         : [];
 
       if (posBrutas.length === 0 && movBrutas.length === 0) {
-        setErro(
-          data?.observacao ||
-            "Conseguimos abrir o arquivo, mas não identificamos investimentos nem movimentações automaticamente. Você pode tentar outro arquivo ou cadastrar manualmente.",
-        );
+        setErro(data?.observacao || ti("upload.errorNoItems"));
         setStep("upload");
         return;
       }
@@ -337,7 +334,7 @@ export function ImportInvestimentosFlow({
       setMovs(movEdit);
 
       if (posBrutas.length === 0 && movBrutas.length > 0) {
-        setAviso("Encontramos movimentações no arquivo. Revise os dados antes de salvar.");
+        setAviso(ti("preview.aviso.movsOnly"));
       } else {
         const naoProntos =
           posEdit.filter(
@@ -345,15 +342,13 @@ export function ImportInvestimentosFlow({
           ).length +
           movEdit.filter((m) => m.confianca === "baixa" || !m.data || !m.valorTotal).length;
         if (naoProntos > 0) {
-          setAviso(
-            "O arquivo foi lido, mas alguns dados precisam de revisão antes de importar.",
-          );
+          setAviso(ti("preview.aviso.needsReview"));
         }
       }
       setStep("preview");
     } catch (e) {
       console.error(e);
-      setErro(e instanceof Error ? e.message : "Erro ao processar o arquivo.");
+      setErro(e instanceof Error ? e.message : ti("upload.errorGeneric"));
       setStep("upload");
     }
   }
