@@ -573,5 +573,10 @@
     "novaReceita": "Nova receita",
     "importar": "Importar",
     "ia": "IA financeira"
+  },
+  "upgradeCards": {
+    "title": "Desbloqueie mais recursos",
+    "unlockIn": "Disponível no plano {{plan}}",
+    "seeAll": "Ver todos os planos"
   }
 }
