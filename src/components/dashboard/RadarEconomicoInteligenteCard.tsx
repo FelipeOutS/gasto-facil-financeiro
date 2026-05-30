@@ -123,7 +123,7 @@ export function RadarEconomicoInteligenteCard({
         <div className="mt-3">
           <LoadErrorState
             variant="compact"
-            description="Não foi possível atualizar os indicadores agora."
+            description={t("loadError.bcbIndicators")}
             onRetry={() => carregar(true)}
           />
         </div>
