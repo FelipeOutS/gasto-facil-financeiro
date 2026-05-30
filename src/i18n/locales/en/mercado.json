@@ -1030,5 +1030,22 @@
       "nothingSaved": "Nothing is saved automatically to lists, cart, or price history.",
       "reviewLater": "You will review all items before any future import."
     }
+  },
+  "premiumInline": {
+    "avancado": {
+      "title": "Full Smart Grocery",
+      "description": "Unlock purchase history, price comparison, recurring basket and saved markets to shop with more control.",
+      "cta": "View plans"
+    },
+    "importarCupom": {
+      "title": "Receipt import is premium",
+      "description": "Import compatible receipts via QR Code/NFC-e to cut down on manual entry.",
+      "cta": "View plans"
+    },
+    "salvarMercado": {
+      "title": "Saved markets are part of full Smart Grocery",
+      "description": "Save favorite markets and track prices by location with more organization.",
+      "cta": "Unlock feature"
+    }
   }
 }
