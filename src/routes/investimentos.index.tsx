@@ -148,6 +148,7 @@ const RENT_TIPOS = [
 
 function InvestimentosPage() {
   const { t } = useTranslation("misc");
+  const { t: tInv } = useTranslation("investimentos");
   const { user } = useAuth();
   const userId = user?.id;
   const isMobile = useIsMobile();
