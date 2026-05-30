@@ -641,10 +641,10 @@ export function ImportInvestimentosFlow({
                 )}
               </div>
               <div className="font-medium text-sm">
-                Clique para escolher um arquivo ou arraste aqui
+                {ti("upload.dropzone")}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Formatos aceitos: {info.aceita.replace(/\./g, "").toUpperCase()}
+                {ti("upload.supportedFormats", { formats: info.aceita.replace(/\./g, "").toUpperCase() })}
               </div>
               <input
                 ref={inputRef}
