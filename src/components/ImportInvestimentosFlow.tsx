@@ -1145,9 +1145,9 @@ function MovimentacaoCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_MOVIMENTACAO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_MOVIMENTACAO.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {getTipoMovimentacaoLabel(m.id, tInv)}
                   </SelectItem>
                 ))}
               </SelectContent>
