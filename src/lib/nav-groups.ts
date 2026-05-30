@@ -64,7 +64,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/cartoes", labelKey: "cartoes", descKey: "cartoes", icon: CreditCard, feature: "cartoes" },
       { to: "/investimentos", labelKey: "investimentos", descKey: "investimentos", icon: TrendingUp, feature: "investimentos" },
-      { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target, feature: "metas_visuais" },
+      { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target },
       { to: "/guardado", labelKey: "guardado", descKey: "guardado", icon: Wallet },
     ],
   },
