@@ -44,6 +44,83 @@
       "cupom": "Cupom",
       "amortizacao": "Amortização",
       "outro": "Outro"
+    },
+    "rentability": {
+      "cdi": "% do CDI",
+      "ipca": "IPCA +",
+      "prefixado": "Prefixado",
+      "selic": "Selic",
+      "outro": "Outro"
+    },
+    "importSource": {
+      "b3": "B3",
+      "corretora": "Corretora",
+      "csv": "CSV",
+      "pdf": "PDF",
+      "manual": "Manual"
     }
+  },
+  "forms": {
+    "labels": {
+      "type": "Tipo",
+      "institution": "Instituição / corretora",
+      "assetName": "Nome do investimento",
+      "ticker": "Ticker / código",
+      "tickerOptional": "Ticker / código (opcional)",
+      "quantity": "Quantidade",
+      "avgPrice": "Preço médio",
+      "currentPrice": "Preço atual",
+      "appliedValueAuto": "Valor aplicado (auto)",
+      "currentValueAuto": "Valor atual (auto)",
+      "appliedValue": "Valor aplicado",
+      "currentValue": "Valor atual",
+      "purchaseDate": "Data da compra",
+      "applicationDate": "Data da aplicação",
+      "maturity": "Vencimento",
+      "liquidity": "Liquidez",
+      "rentabilityType": "Tipo de rentabilidade",
+      "rentabilityPct": "Percentual / índice",
+      "observation": "Observação"
+    },
+    "placeholders": {
+      "institution": "XP, Nubank, Rico…",
+      "assetNameVariable": "Ex.: Maxi Renda FII",
+      "assetNameFixed": "Ex.: Tesouro Selic 2029",
+      "tickerVariable": "MXRF11, PETR4, BTC…",
+      "tickerDash": "—",
+      "quantity": "10",
+      "avgPrice": "10,20",
+      "currentPrice": "10,50",
+      "appliedValueSmall": "R$ 102,00",
+      "currentValueSmall": "R$ 105,00",
+      "appliedValueLarge": "R$ 1.000,00",
+      "currentValueLarge": "R$ 1.042,30",
+      "rentabilityPct": "110% do CDI",
+      "liquidity": "Diária, no vencimento…",
+      "rentabilityDash": "—"
+    },
+    "aux": {
+      "hintVariable": "Use quantidade, preço médio e preço atual para calcular os valores automaticamente.",
+      "hintFixed": "Use valor aplicado e valor atual. Quantidade e preço médio não são necessários.",
+      "showAdvanced": "Mostrar campos avançados (ticker, quantidade)",
+      "hideAdvanced": "Ocultar campos avançados",
+      "required": "*",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "register": "Cadastrar",
+      "saving": "Salvando…",
+      "errors": {
+        "nameRequired": "Informe o nome do investimento.",
+        "saveFailed": "Não foi possível salvar."
+      },
+      "success": {
+        "updated": "Investimento atualizado.",
+        "created": "Investimento cadastrado."
+      }
+    }
+  },
+  "importacoes": {
+    "manualName": "Importação manual",
+    "importedOn": "Importado em {{date}}"
   }
 }

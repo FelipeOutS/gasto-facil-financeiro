@@ -58,7 +58,7 @@ import {
   TIPOS_INVESTIMENTO,
   TIPOS_MOVIMENTACAO,
   TIPOS_RENDIMENTO,
-  TIPO_IMPORTACAO_LABEL,
+  getTipoImportacaoLabel,
   type Ativo,
   type Movimentacao,
   type Rendimento,
@@ -96,6 +96,7 @@ import {
   getTipoInvestimentoClasseLabel,
   getTipoMovimentacaoLabel,
   getTipoRendimentoLabel,
+  getRentabilidadeTipoLabel,
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos/")({
@@ -1080,8 +1081,8 @@ function AddAtivoDialog({
                   <Select value={rentTipo} onValueChange={setRentTipo}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
-                      {RENT_TIPOS.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                      {RENT_TIPOS.map((rt) => (
+                        <SelectItem key={rt.id} value={rt.id}>{getRentabilidadeTipoLabel(rt.id, tInv)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1362,11 +1363,11 @@ function HistoricoImportacoesDialog({
                     <div className="flex items-start justify-between gap-2 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-sm truncate">
-                          {imp.arquivo_nome || "Importação manual"}
+                          {imp.arquivo_nome || tInv("importacoes.manualName")}
                         </div>
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <Badge variant="secondary" className="text-[10px]">
-                            {TIPO_IMPORTACAO_LABEL[imp.tipo] ?? imp.tipo}
+                            {getTipoImportacaoLabel(imp.tipo, tInv)}
                           </Badge>
                           <Badge
                             variant={imp.status === "concluida" ? "secondary" : "outline"}

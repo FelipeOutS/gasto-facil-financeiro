@@ -44,6 +44,83 @@
       "cupom": "Coupon",
       "amortizacao": "Amortization",
       "outro": "Other"
+    },
+    "rentability": {
+      "cdi": "% of CDI",
+      "ipca": "IPCA +",
+      "prefixado": "Fixed rate",
+      "selic": "Selic rate",
+      "outro": "Other"
+    },
+    "importSource": {
+      "b3": "B3",
+      "corretora": "Broker",
+      "csv": "CSV/spreadsheet",
+      "pdf": "PDF",
+      "manual": "Manual"
     }
+  },
+  "forms": {
+    "labels": {
+      "type": "Type",
+      "institution": "Institution / broker",
+      "assetName": "Investment name",
+      "ticker": "Ticker / code",
+      "tickerOptional": "Ticker / code (optional)",
+      "quantity": "Quantity",
+      "avgPrice": "Average price",
+      "currentPrice": "Current price",
+      "appliedValueAuto": "Invested amount (auto)",
+      "currentValueAuto": "Current value (auto)",
+      "appliedValue": "Invested amount",
+      "currentValue": "Current value",
+      "purchaseDate": "Purchase date",
+      "applicationDate": "Application date",
+      "maturity": "Maturity",
+      "liquidity": "Liquidity",
+      "rentabilityType": "Yield type",
+      "rentabilityPct": "Percentage / index",
+      "observation": "Notes"
+    },
+    "placeholders": {
+      "institution": "XP, Nubank, Rico…",
+      "assetNameVariable": "E.g.: Maxi Renda FII",
+      "assetNameFixed": "E.g.: Treasury Selic 2029",
+      "tickerVariable": "MXRF11, PETR4, BTC…",
+      "tickerDash": "—",
+      "quantity": "10",
+      "avgPrice": "10.20",
+      "currentPrice": "10.50",
+      "appliedValueSmall": "$ 102.00",
+      "currentValueSmall": "$ 105.00",
+      "appliedValueLarge": "$ 1,000.00",
+      "currentValueLarge": "$ 1,042.30",
+      "rentabilityPct": "110% of CDI",
+      "liquidity": "Daily, at maturity…",
+      "rentabilityDash": "—"
+    },
+    "aux": {
+      "hintVariable": "Use quantity, average price and current price to calculate the values automatically.",
+      "hintFixed": "Use invested amount and current value. Quantity and average price are not required.",
+      "showAdvanced": "Show advanced fields (ticker, quantity)",
+      "hideAdvanced": "Hide advanced fields",
+      "required": "*",
+      "cancel": "Cancel",
+      "save": "Save",
+      "register": "Create",
+      "saving": "Saving…",
+      "errors": {
+        "nameRequired": "Enter the investment name.",
+        "saveFailed": "Could not save."
+      },
+      "success": {
+        "updated": "Investment updated.",
+        "created": "Investment created."
+      }
+    }
+  },
+  "importacoes": {
+    "manualName": "Manual import",
+    "importedOn": "Imported on {{date}}"
   }
 }

@@ -23,9 +23,10 @@ import {
   listarImportacoes,
   excluirImportacaoSomenteHistorico,
   excluirImportacaoComDados,
-  TIPO_IMPORTACAO_LABEL,
+  getTipoImportacaoLabel,
   type Importacao,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/investimentos/importacoes")({
   head: () => ({ meta: [{ title: "Histórico de importações — Gasto Inteligente" }] }),
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/investimentos/importacoes")({
 function HistoricoImportacoesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t: tInv } = useTranslation("investimentos");
   const [importacoes, setImportacoes] = useState<Importacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmar, setConfirmar] = useState<Importacao | null>(null);
@@ -130,11 +132,11 @@ function HistoricoImportacoesPage() {
                 <div className="flex items-start justify-between gap-2 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-sm truncate">
-                      {imp.arquivo_nome || "Importação manual"}
+                      {imp.arquivo_nome || tInv("importacoes.manualName")}
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <Badge variant="secondary" className="text-[10px]">
-                        {TIPO_IMPORTACAO_LABEL[imp.tipo] ?? imp.tipo}
+                        {getTipoImportacaoLabel(imp.tipo, tInv)}
                       </Badge>
                       <Badge
                         variant={imp.status === "concluida" ? "secondary" : "outline"}
@@ -143,7 +145,7 @@ function HistoricoImportacoesPage() {
                         {imp.status}
                       </Badge>
                       <span className="text-[11px] text-muted-foreground">
-                        Importado em {data}
+                        {tInv("importacoes.importedOn", { date: data })}
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1.5">
