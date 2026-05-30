@@ -1030,5 +1030,22 @@
       "nothingSaved": "Nada é salvo automaticamente em listas, carrinho ou histórico de preços.",
       "reviewLater": "Você revisará todos os itens antes de qualquer importação futura."
     }
+  },
+  "premiumInline": {
+    "avancado": {
+      "title": "Mercado Inteligente completo",
+      "description": "Acesse histórico de compras, comparação de preços, cesta padrão e mercados salvos para comprar com mais controle.",
+      "cta": "Ver planos"
+    },
+    "importarCupom": {
+      "title": "Importação de cupom é premium",
+      "description": "Importe informações de cupons compatíveis por QR Code/NFC-e para reduzir lançamentos manuais.",
+      "cta": "Ver planos"
+    },
+    "salvarMercado": {
+      "title": "Mercados salvos fazem parte do Mercado completo",
+      "description": "Salve mercados favoritos e acompanhe preços por local com mais organização.",
+      "cta": "Desbloquear recurso"
+    }
   }
 }
