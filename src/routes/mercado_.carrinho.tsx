@@ -225,6 +225,7 @@ function Mini({ label, value }: { label: string; value: React.ReactNode }) {
 function CartMode({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
+  const { can } = usePlan();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
