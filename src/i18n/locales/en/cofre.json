@@ -20,5 +20,25 @@
     "createBlocked": "Creating new items is only available on plans with Personal Vault.",
     "editBlocked": "Editing items is only available on plans with Personal Vault.",
     "settingsBlocked": "Changing sensitive settings is only available on plans with Personal Vault."
+  },
+  "errors": {
+    "unlockFailed": "Could not unlock the Vault. Check your password or PIN and try again.",
+    "invalidPin": "Wrong PIN. Please try again.",
+    "loadFailed": "Could not load the Vault right now. Please try again.",
+    "createFailed": "Could not create the Vault right now. Please try again.",
+    "saveFailed": "Could not save information to the Vault right now. Please try again.",
+    "updateFailed": "Could not update this item right now. Please try again.",
+    "deleteFailed": "Could not delete this item right now. Please try again.",
+    "copyFailed": "Could not copy this information right now.",
+    "exportFailed": "Could not export your data right now. Please try again.",
+    "masterPasswordFailed": "Could not change the master password right now. Please try again.",
+    "quickUnlockFailed": "Could not set up quick unlock right now.",
+    "biometricFailed": "Could not set up biometrics right now. Check your device permissions and try again.",
+    "cryptoFailed": "Could not access protected Vault data. Please try again.",
+    "readOnlyBlocked": "Your Vault is in read-only mode. To create or edit, upgrade your plan.",
+    "listAccessFailed": "Could not list entries right now. Please try again.",
+    "removePinFailed": "Could not remove the PIN right now. Please try again.",
+    "analysisFailed": "Could not analyze this item right now. Please try again.",
+    "openAccessFailed": "Could not open this entry right now. Please try again."
   }
 }
