@@ -9,8 +9,10 @@ import {
   type Ativo,
   atualizarValorAtivo,
   tipoLabel,
+  getTipoInvestimentoLabel,
   formatarDataHora,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export type InvestimentoAtualizarValorFormProps = {
   userId?: string;
@@ -27,6 +29,7 @@ export function InvestimentoAtualizarValorForm({
   onSaved,
   onCancel,
 }: InvestimentoAtualizarValorFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [valorAtual, setValorAtual] = useState("");
   const [precoAtual, setPrecoAtual] = useState("");
   const [quantidade, setQuantidade] = useState("");
@@ -87,7 +90,7 @@ export function InvestimentoAtualizarValorForm({
         <label className="text-xs text-muted-foreground">Investimento</label>
         <div className="text-sm font-medium">{ativo.nome}</div>
         <div className="text-[11px] text-muted-foreground">
-          {tipoLabel(ativo.tipo)}
+          {getTipoInvestimentoLabel(ativo.tipo, tr)}
           {ativo.instituicao ? ` · ${ativo.instituicao}` : ""}
         </div>
       </div>

@@ -18,9 +18,12 @@ import {
   type Rendimento,
   type TipoRendimento,
   tipoLabel,
+  getTipoInvestimentoLabel,
+  getTipoRendimentoLabel,
   criarRendimento,
   atualizarRendimento,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export type InvestimentoRendimentoFormProps = {
   userId?: string;
@@ -41,6 +44,7 @@ export function InvestimentoRendimentoForm({
   onSaved,
   onCancel,
 }: InvestimentoRendimentoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoRendimento>("dividendo");
   const [dataPag, setDataPag] = useState(todayISO());
@@ -113,7 +117,7 @@ export function InvestimentoRendimentoForm({
           <SelectContent>
             {ativos.map((a) => (
               <SelectItem key={a.id} value={a.id}>
-                {a.nome} ({tipoLabel(a.tipo)})
+                {a.nome} ({getTipoInvestimentoLabel(a.tipo, tr)})
               </SelectItem>
             ))}
           </SelectContent>
@@ -128,9 +132,9 @@ export function InvestimentoRendimentoForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TIPOS_RENDIMENTO.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.label}
+              {TIPOS_RENDIMENTO.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {getTipoRendimentoLabel(r.id, tr)}
                 </SelectItem>
               ))}
             </SelectContent>

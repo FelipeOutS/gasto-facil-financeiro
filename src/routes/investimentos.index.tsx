@@ -92,6 +92,10 @@ import {
   distribuicaoPorTipo,
   tipoLabel,
   classeAtivo,
+  getTipoInvestimentoLabel,
+  getTipoInvestimentoClasseLabel,
+  getTipoMovimentacaoLabel,
+  getTipoRendimentoLabel,
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos/")({
@@ -144,6 +148,7 @@ const RENT_TIPOS = [
 
 function InvestimentosPage() {
   const { t } = useTranslation("misc");
+  const { t: tInv } = useTranslation("investimentos");
   const { user } = useAuth();
   const userId = user?.id;
   const isMobile = useIsMobile();
@@ -282,7 +287,7 @@ function InvestimentosPage() {
     if (totais.rendimentosAno > 0)
       out.push(t("investimentos.insights.recebidoAno", { val: formatBRL(totais.rendimentosAno) }));
     if (distribuicao[0] && distribuicao[0].pct >= 40)
-      out.push(t("investimentos.insights.maiorTipo", { label: distribuicao[0].label, pct: distribuicao[0].pct.toFixed(0) }));
+      out.push(t("investimentos.insights.maiorTipo", { label: getTipoInvestimentoLabel(distribuicao[0].tipo, tInv), pct: distribuicao[0].pct.toFixed(0) }));
     if (totais.rendimentosMes === 0) out.push(t("investimentos.insights.semRendMes"));
     if (movs.length < 3) out.push(t("investimentos.insights.poucasMov"));
     return out;
@@ -406,7 +411,7 @@ function InvestimentosPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium truncate">{a.nome}</span>
-                        <Badge variant="secondary" className="text-[10px]">{tipoLabel(a.tipo)}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(a.tipo, tInv)}</Badge>
                         {a.instituicao && (
                           <span className="text-[11px] text-muted-foreground">{a.instituicao}</span>
                         )}
@@ -496,7 +501,7 @@ function InvestimentosPage() {
                 {distribuicao.map((d) => (
                   <li key={d.tipo}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span>{d.label}</span>
+                      <span>{getTipoInvestimentoLabel(d.tipo, tInv)}</span>
                       <span className="text-muted-foreground">{d.pct.toFixed(1)}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -859,6 +864,7 @@ function AddAtivoDialog({
   userId?: string;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [nome, setNome] = useState("");
   const [ticker, setTicker] = useState("");
   const [tipo, setTipo] = useState<TipoInvestimento>("acoes");
@@ -1000,8 +1006,8 @@ function AddAtivoDialog({
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_INVESTIMENTO.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  {TIPOS_INVESTIMENTO.map((it) => (
+                    <SelectItem key={it.id} value={it.id}>{getTipoInvestimentoLabel(it.id, tInv)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1277,6 +1283,7 @@ function HistoricoImportacoesDialog({
   userId?: string;
   onChanged: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [detalhe, setDetalhe] = useState<Importacao | null>(null);
   const [confirmar, setConfirmar] = useState<Importacao | null>(null);
   const [itensDetalhe, setItensDetalhe] = useState<ItensImportacao | null>(null);
@@ -1433,7 +1440,7 @@ function HistoricoImportacoesDialog({
                     {itensDetalhe.ativos.map((a) => (
                       <li key={a.id} className="flex justify-between gap-2">
                         <span className="truncate">{a.nome}</span>
-                        <span className="text-xs text-muted-foreground">{tipoLabel(a.tipo)}</span>
+                        <span className="text-xs text-muted-foreground">{getTipoInvestimentoLabel(a.tipo, tInv)}</span>
                       </li>
                     ))}
                   </ul>
@@ -1610,6 +1617,7 @@ function AtualizarValorDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [valorAtual, setValorAtual] = useState("");
   const [precoAtual, setPrecoAtual] = useState("");
   const [quantidade, setQuantidade] = useState("");
@@ -1692,7 +1700,7 @@ function AtualizarValorDialog({
             <label className="text-xs text-muted-foreground">Investimento</label>
             <div className="text-sm font-medium">{ativo.nome}</div>
             <div className="text-[11px] text-muted-foreground">
-              {tipoLabel(ativo.tipo)}
+              {getTipoInvestimentoLabel(ativo.tipo, tInv)}
               {ativo.instituicao ? ` · ${ativo.instituicao}` : ""}
             </div>
           </div>
@@ -1787,6 +1795,7 @@ function AtualizarLoteDialog({
   userId: string | undefined;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [valores, setValores] = useState<Record<string, { valor: string; preco: string; obs: string }>>({});
   const [data, setData] = useState(todayISO());
   const [salvando, setSalvando] = useState(false);
@@ -1898,7 +1907,7 @@ function AtualizarLoteDialog({
                     <div>
                       <div className="text-sm font-medium">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {tipoLabel(a.tipo)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tInv)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
                       </div>
                     </div>
                     <Badge
@@ -1983,6 +1992,7 @@ function MovimentacaoDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const editing = state.mov;
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoMovimentacao>("compra");
@@ -2097,7 +2107,7 @@ function MovimentacaoDialog({
               <SelectContent>
                 {ativos.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.nome} ({tipoLabel(a.tipo)})
+                    {a.nome} ({getTipoInvestimentoLabel(a.tipo, tInv)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -2112,9 +2122,9 @@ function MovimentacaoDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_MOVIMENTACAO.filter((t) => TIPOS_MOV_PRINCIPAIS.includes(t.id) || t.id === tipo).map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label}
+                  {TIPOS_MOVIMENTACAO.filter((m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {getTipoMovimentacaoLabel(m.id, tInv)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2210,6 +2220,7 @@ function RendimentoDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const editing = state.rend;
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoRendimento>("dividendo");
@@ -2294,7 +2305,7 @@ function RendimentoDialog({
               <SelectContent>
                 {ativos.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.nome} ({tipoLabel(a.tipo)})
+                    {a.nome} ({getTipoInvestimentoLabel(a.tipo, tInv)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -2309,9 +2320,9 @@ function RendimentoDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_RENDIMENTO.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label}
+                  {TIPOS_RENDIMENTO.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {getTipoRendimentoLabel(r.id, tInv)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2386,6 +2397,7 @@ function DetalheAtivoDialog({
   onAddRendimento: (a: Ativo) => void;
   onExcluirAtivo: (a: Ativo) => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   if (!ativo) return null;
 
   const movs = movimentacoes.filter((m) => m.ativo_id === ativo.id);
@@ -2401,10 +2413,10 @@ function DetalheAtivoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{ativo.nome}</span>
-            <Badge variant="secondary" className="text-[10px]">{tipoLabel(ativo.tipo)}</Badge>
+            <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(ativo.tipo, tInv)}</Badge>
           </DialogTitle>
           <DialogDescription>
-            {ativo.instituicao ?? "—"} · {classeAtivo(ativo.tipo)}
+            {ativo.instituicao ?? "—"} · {getTipoInvestimentoClasseLabel(ativo.tipo, tInv)}
           </DialogDescription>
         </DialogHeader>
 

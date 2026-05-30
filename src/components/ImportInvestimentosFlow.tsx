@@ -42,6 +42,8 @@ import {
   TIPOS_MOVIMENTACAO,
   type TipoInvestimento,
   type TipoMovimentacao,
+  getTipoInvestimentoLabel,
+  getTipoMovimentacaoLabel,
   criarAtivo,
   atualizarAtivo,
   criarMovimentacao,
@@ -867,6 +869,7 @@ function PosicaoCard({
   onChange: (patch: Partial<PosicaoEdit>) => void;
 }) {
   const { t: ti } = useTranslation("import-investimentos");
+  const { t: tInv } = useTranslation("investimentos");
   const [editando, setEditando] = useState(false);
   const status = item._ignorado
     ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
@@ -903,7 +906,7 @@ function PosicaoCard({
               </Badge>
             )}
             <Badge variant="secondary" className="text-[10px]">
-              {TIPOS_INVESTIMENTO.find((t) => t.id === item.tipo)?.label || item.tipo}
+              {getTipoInvestimentoLabel(item.tipo, tInv)}
             </Badge>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${status.cls}`}>
               {status.label}
@@ -965,9 +968,9 @@ function PosicaoCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_INVESTIMENTO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_INVESTIMENTO.map((it) => (
+                  <SelectItem key={it.id} value={it.id}>
+                    {getTipoInvestimentoLabel(it.id, tInv)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1048,6 +1051,7 @@ function MovimentacaoCard({
   onChange: (patch: Partial<MovimentacaoEdit>) => void;
 }) {
   const { t: ti } = useTranslation("import-investimentos");
+  const { t: tInv } = useTranslation("investimentos");
   const [editando, setEditando] = useState(false);
   const precisaRevisar = item.confianca === "baixa" || !item.data || !item.valorTotal;
   const status = item._ignorado
@@ -1067,8 +1071,7 @@ function MovimentacaoCard({
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
-  const tipoLabel =
-    TIPOS_MOVIMENTACAO.find((t) => t.id === item.tipo)?.label || item.tipo;
+  const tipoLabel = getTipoMovimentacaoLabel(item.tipo, tInv);
 
   return (
     <div
@@ -1091,8 +1094,7 @@ function MovimentacaoCard({
               </Badge>
             )}
             <Badge variant="outline" className="text-[10px]">
-              {TIPOS_INVESTIMENTO.find((t) => t.id === item.tipoAtivo)?.label ||
-                item.tipoAtivo}
+              {getTipoInvestimentoLabel(item.tipoAtivo, tInv)}
             </Badge>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${status.cls}`}>
               {status.label}
@@ -1143,9 +1145,9 @@ function MovimentacaoCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_MOVIMENTACAO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_MOVIMENTACAO.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {getTipoMovimentacaoLabel(m.id, tInv)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1179,9 +1181,9 @@ function MovimentacaoCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_INVESTIMENTO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_INVESTIMENTO.map((it) => (
+                  <SelectItem key={it.id} value={it.id}>
+                    {getTipoInvestimentoLabel(it.id, tInv)}
                   </SelectItem>
                 ))}
               </SelectContent>

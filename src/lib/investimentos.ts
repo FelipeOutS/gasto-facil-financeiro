@@ -159,6 +159,52 @@ export function classeAtivo(t: string): string {
   return TIPOS_INVESTIMENTO.find((x) => x.id === t)?.classe ?? "Outros";
 }
 
+// ---------- i18n helpers (Etapa 36) ----------
+// Visual-only helpers. IDs internos, values e regras de negócio permanecem inalterados.
+// O parâmetro `t` é a função do react-i18next vinda do componente (não usar hook aqui).
+type TFunc = (key: string, options?: Record<string, unknown>) => string;
+
+const CLASSE_TO_KEY: Record<string, string> = {
+  "Renda variável": "rendaVariavel",
+  "Renda fixa": "rendaFixa",
+  Fundos: "fundos",
+  Cripto: "cripto",
+  Outros: "outros",
+};
+
+export function getTipoInvestimentoLabel(id: string, t?: TFunc): string {
+  const fallback = TIPOS_INVESTIMENTO.find((x) => x.id === id)?.label ?? id;
+  if (!t) return fallback;
+  const key = `investimentos:types.investment.${id}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : fallback;
+}
+
+export function getTipoInvestimentoClasseLabel(id: string, t?: TFunc): string {
+  const classeRaw = TIPOS_INVESTIMENTO.find((x) => x.id === id)?.classe ?? "Outros";
+  if (!t) return classeRaw;
+  const classeKey = CLASSE_TO_KEY[classeRaw] ?? "outros";
+  const key = `investimentos:types.investmentClass.${classeKey}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : classeRaw;
+}
+
+export function getTipoMovimentacaoLabel(id: string, t?: TFunc): string {
+  const fallback = TIPOS_MOVIMENTACAO.find((x) => x.id === id)?.label ?? id;
+  if (!t) return fallback;
+  const key = `investimentos:types.movement.${id}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : fallback;
+}
+
+export function getTipoRendimentoLabel(id: string, t?: TFunc): string {
+  const fallback = TIPOS_RENDIMENTO.find((x) => x.id === id)?.label ?? id;
+  if (!t) return fallback;
+  const key = `investimentos:types.income.${id}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : fallback;
+}
+
 export async function listarAtivos(userId: string): Promise<Ativo[]> {
   const { data, error } = await supabase
     .from("investimentos_ativos" as never)

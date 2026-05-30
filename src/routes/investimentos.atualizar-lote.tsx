@@ -15,8 +15,10 @@ import {
   atualizarValorAtivo,
   descreverUltimaAtualizacao,
   tipoLabel,
+  getTipoInvestimentoLabel,
   type Ativo,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/investimentos/atualizar-lote")({
   head: () => ({ meta: [{ title: "Atualizar valores — Gasto Inteligente" }] }),
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/investimentos/atualizar-lote")({
 
 function AtualizarLotePage() {
   const navigate = useNavigate();
+  const { t: tr } = useTranslation("investimentos");
   const { user } = useAuth();
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +166,7 @@ function AtualizarLotePage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {tipoLabel(a.tipo)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tr)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
                       </div>
                     </div>
                     <Badge

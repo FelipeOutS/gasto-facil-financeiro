@@ -20,7 +20,9 @@ import {
   criarAtivo,
   atualizarAtivo,
   classeAtivo,
+  getTipoInvestimentoLabel,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const RENT_TIPOS = [
   { id: "cdi", label: "% do CDI" },
@@ -60,6 +62,7 @@ export function InvestimentoForm({
   hideFooter,
   submitLabel,
 }: InvestimentoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [nome, setNome] = useState("");
   const [ticker, setTicker] = useState("");
   const [tipo, setTipo] = useState<TipoInvestimento>("acoes");
@@ -193,8 +196,8 @@ export function InvestimentoForm({
             <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {TIPOS_INVESTIMENTO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                {TIPOS_INVESTIMENTO.map((it) => (
+                  <SelectItem key={it.id} value={it.id}>{getTipoInvestimentoLabel(it.id, tr)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -20,10 +20,13 @@ import {
   type TipoMovimentacao,
   isRendaVariavel,
   tipoLabel,
+  getTipoInvestimentoLabel,
+  getTipoMovimentacaoLabel,
   criarMovimentacao,
   atualizarMovimentacao,
   recalcularAtivoPorMovimentacoes,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const TIPOS_MOV_PRINCIPAIS: TipoMovimentacao[] = [
   "compra",
@@ -62,6 +65,7 @@ export function InvestimentoMovimentacaoForm({
   hideHeader,
   hideFooter,
 }: InvestimentoMovimentacaoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoMovimentacao>("compra");
   const [data, setData] = useState(todayISO());
@@ -173,7 +177,7 @@ export function InvestimentoMovimentacaoForm({
             <SelectContent>
               {ativos.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.nome} ({tipoLabel(a.tipo)})
+                  {a.nome} ({getTipoInvestimentoLabel(a.tipo, tr)})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -188,9 +192,9 @@ export function InvestimentoMovimentacaoForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_MOVIMENTACAO.filter((t) => TIPOS_MOV_PRINCIPAIS.includes(t.id) || t.id === tipo).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_MOVIMENTACAO.filter((m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {getTipoMovimentacaoLabel(m.id, tr)}
                   </SelectItem>
                 ))}
               </SelectContent>
