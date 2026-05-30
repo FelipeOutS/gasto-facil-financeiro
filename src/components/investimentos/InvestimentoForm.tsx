@@ -187,13 +187,13 @@ export function InvestimentoForm({
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
             {isRendaVariavel
-              ? "Use quantidade, preço médio e preço atual para calcular os valores automaticamente."
-              : "Use valor aplicado e valor atual. Quantidade e preço médio não são necessários."}
+              ? tr("forms.aux.hintVariable")
+              : tr("forms.aux.hintFixed")}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Tipo *">
+          <Field label={`${tr("forms.labels.type")} *`}>
             <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -203,25 +203,25 @@ export function InvestimentoForm({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Instituição / corretora">
-            <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder="XP, Nubank, Rico…" />
+          <Field label={tr("forms.labels.institution")}>
+            <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder={tr("forms.placeholders.institution")} />
           </Field>
         </div>
 
-        <Field label="Nome do investimento *">
+        <Field label={`${tr("forms.labels.assetName")} *`}>
           <Input
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder={isRendaVariavel ? "Ex.: Maxi Renda FII" : "Ex.: Tesouro Selic 2029"}
+            placeholder={isRendaVariavel ? tr("forms.placeholders.assetNameVariable") : tr("forms.placeholders.assetNameFixed")}
           />
         </Field>
 
         {isRendaVariavel && (
-          <Field label="Ticker / código *">
+          <Field label={`${tr("forms.labels.ticker")} *`}>
             <Input
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              placeholder="MXRF11, PETR4, BTC…"
+              placeholder={tr("forms.placeholders.tickerVariable")}
             />
           </Field>
         )}
@@ -229,25 +229,25 @@ export function InvestimentoForm({
         {isRendaVariavel && (
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Field label="Quantidade">
-                <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
+              <Field label={tr("forms.labels.quantity")}>
+                <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder={tr("forms.placeholders.quantity")} />
               </Field>
-              <Field label="Preço médio">
-                <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder="10,20" />
+              <Field label={tr("forms.labels.avgPrice")}>
+                <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder={tr("forms.placeholders.avgPrice")} />
               </Field>
-              <Field label="Preço atual">
-                <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder="10,50" />
+              <Field label={tr("forms.labels.currentPrice")}>
+                <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder={tr("forms.placeholders.currentPrice")} />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Valor aplicado (auto)">
-                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 102,00" />
+              <Field label={tr("forms.labels.appliedValueAuto")}>
+                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tr("forms.placeholders.appliedValueSmall")} />
               </Field>
-              <Field label="Valor atual (auto)">
-                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 105,00" />
+              <Field label={tr("forms.labels.currentValueAuto")}>
+                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tr("forms.placeholders.currentValueSmall")} />
               </Field>
             </div>
-            <Field label="Data da compra">
+            <Field label={tr("forms.labels.purchaseDate")}>
               <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
             </Field>
           </>
@@ -256,38 +256,38 @@ export function InvestimentoForm({
         {isRendaFixa && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Valor aplicado *">
-                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+              <Field label={`${tr("forms.labels.appliedValue")} *`}>
+                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tr("forms.placeholders.appliedValueLarge")} />
               </Field>
-              <Field label="Valor atual">
-                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+              <Field label={tr("forms.labels.currentValue")}>
+                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tr("forms.placeholders.currentValueLarge")} />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Tipo de rentabilidade">
+              <Field label={tr("forms.labels.rentabilityType")}>
                 <Select value={rentTipo} onValueChange={setRentTipo}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("forms.placeholders.rentabilityDash")} /></SelectTrigger>
                   <SelectContent>
-                    {RENT_TIPOS.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                    {RENT_TIPOS.map((rt) => (
+                      <SelectItem key={rt.id} value={rt.id}>{getRentabilidadeTipoLabel(rt.id, tr)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Percentual / índice">
-                <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder="110% do CDI" />
+              <Field label={tr("forms.labels.rentabilityPct")}>
+                <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder={tr("forms.placeholders.rentabilityPct")} />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Data da aplicação">
+              <Field label={tr("forms.labels.applicationDate")}>
                 <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
               </Field>
-              <Field label="Vencimento">
+              <Field label={tr("forms.labels.maturity")}>
                 <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
               </Field>
             </div>
-            <Field label="Liquidez">
-              <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder="Diária, no vencimento…" />
+            <Field label={tr("forms.labels.liquidity")}>
+              <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder={tr("forms.placeholders.liquidity")} />
             </Field>
 
             <button
@@ -295,21 +295,21 @@ export function InvestimentoForm({
               onClick={() => setShowAvancado((v) => !v)}
               className="text-xs text-brand hover:underline self-start"
             >
-              {showAvancado ? "Ocultar campos avançados" : "Mostrar campos avançados (ticker, quantidade)"}
+              {showAvancado ? tr("forms.aux.hideAdvanced") : tr("forms.aux.showAdvanced")}
             </button>
             {showAvancado && (
               <div className="grid gap-3 rounded-lg border border-dashed border-border/60 p-3">
-                <Field label="Ticker / código (opcional)">
-                  <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="—" />
+                <Field label={tr("forms.labels.tickerOptional")}>
+                  <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder={tr("forms.placeholders.tickerDash")} />
                 </Field>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Field label="Quantidade">
+                  <Field label={tr("forms.labels.quantity")}>
                     <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
                   </Field>
-                  <Field label="Preço médio">
+                  <Field label={tr("forms.labels.avgPrice")}>
                     <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} />
                   </Field>
-                  <Field label="Preço atual">
+                  <Field label={tr("forms.labels.currentPrice")}>
                     <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} />
                   </Field>
                 </div>
@@ -321,20 +321,20 @@ export function InvestimentoForm({
         {!isRendaVariavel && !isRendaFixa && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Valor aplicado">
-                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+              <Field label={tr("forms.labels.appliedValue")}>
+                <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tr("forms.placeholders.appliedValueLarge")} />
               </Field>
-              <Field label="Valor atual">
-                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+              <Field label={tr("forms.labels.currentValue")}>
+                <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tr("forms.placeholders.currentValueLarge")} />
               </Field>
             </div>
-            <Field label="Data da aplicação">
+            <Field label={tr("forms.labels.applicationDate")}>
               <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
             </Field>
           </>
         )}
 
-        <Field label="Observação">
+        <Field label={tr("forms.labels.observation")}>
           <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
         </Field>
       </div>
@@ -343,11 +343,11 @@ export function InvestimentoForm({
         <div className="flex justify-end gap-2 pt-2">
           {onCancel && (
             <Button variant="outline" onClick={onCancel} disabled={saving} className="h-11 sm:h-10">
-              Cancelar
+              {tr("forms.aux.cancel")}
             </Button>
           )}
           <Button onClick={handleSave} disabled={saving} className="h-11 sm:h-10">
-            {saving ? "Salvando…" : submitLabel ?? (editing ? "Salvar" : "Cadastrar")}
+            {saving ? tr("forms.aux.saving") : submitLabel ?? (editing ? tr("forms.aux.save") : tr("forms.aux.register"))}
           </Button>
         </div>
       )}
