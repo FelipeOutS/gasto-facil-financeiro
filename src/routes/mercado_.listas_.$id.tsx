@@ -1191,6 +1191,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
 function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
+  const { can } = usePlan();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
 
