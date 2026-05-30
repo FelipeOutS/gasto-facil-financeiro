@@ -10,5 +10,15 @@
     "title": "O Cofre passou a ser um recurso premium",
     "description": "Seu Cofre possui informações salvas. Para evitar perda de acesso, você ainda pode visualizar seus dados existentes, mas novos cadastros exigem upgrade de plano.",
     "cta": "Melhorar plano"
+  },
+  "readOnly": {
+    "badge": "Modo somente leitura",
+    "title": "Modo somente leitura",
+    "description": "Você ainda pode visualizar e recuperar os dados já salvos no Cofre. Para criar novos itens ou editar informações, faça upgrade para um plano com Cofre Pessoal.",
+    "cta": "Ver planos",
+    "lockedAction": "Recurso disponível em planos com Cofre Pessoal.",
+    "createBlocked": "Criação de novos itens disponível apenas em planos com Cofre Pessoal.",
+    "editBlocked": "Edição de itens disponível apenas em planos com Cofre Pessoal.",
+    "settingsBlocked": "Alteração de configurações sensíveis disponível apenas em planos com Cofre Pessoal."
   }
 }
