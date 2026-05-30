@@ -292,6 +292,16 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.importFatura.title"),
+            description: tc("premium.premiumApi.importFatura.description"),
+            fallbackFeature: "importar_fatura",
+          })
+        ) {
+          setImgLoading(false);
+          return;
+        }
         const msg =
           data?.error ||
           t("errorReadingImage");
