@@ -115,3 +115,37 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+/**
+ * Etapa 7 — Navegação dinâmica por plano.
+ * Filtra os grupos do menu mantendo apenas itens que o usuário pode acessar.
+ * Itens sem `feature` continuam visíveis. Admin Master vê tudo.
+ */
+export function filterVisibleGroups(
+  groups: NavGroup[],
+  can: (f: FeatureKey) => boolean,
+  isAdminMaster: boolean,
+): NavGroup[] {
+  if (isAdminMaster) return groups;
+  return groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => !it.feature || can(it.feature)),
+    }))
+    .filter((g) => g.items.length > 0);
+}
+
+/**
+ * Lista itens bloqueados (com `feature` indisponível no plano atual),
+ * usados nos cards de upgrade em Dashboard / Meu Plano.
+ */
+export function getLockedNavItems(
+  groups: NavGroup[],
+  can: (f: FeatureKey) => boolean,
+  isAdminMaster: boolean,
+): NavLeaf[] {
+  if (isAdminMaster) return [];
+  return groups
+    .filter((g) => !g.adminMasterOnly)
+    .flatMap((g) => g.items.filter((it) => !!it.feature && !can(it.feature)));
+}
