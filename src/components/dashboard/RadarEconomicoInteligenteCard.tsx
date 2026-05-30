@@ -43,6 +43,7 @@ export function RadarEconomicoInteligenteCard({
   className?: string;
   userContext?: UserContext;
 }) {
+  const { t } = useTranslation("common");
   const [data, setData] = useState<BcbRadarResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
