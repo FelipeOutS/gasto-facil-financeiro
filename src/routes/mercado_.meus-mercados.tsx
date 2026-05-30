@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import {
   useMercadosLocais,
   addMercadoLocal,
@@ -119,9 +120,8 @@ function MeusMercadosPage() {
     setForm(EMPTY_FORM);
   }
 
-  function handleRemove(m: MercadoLocal) {
-    if (typeof window === "undefined") return;
-    const ok = window.confirm(t("meusMercados.confirmRemove"));
+  async function handleRemove(m: MercadoLocal) {
+    const ok = await confirmAsync({ title: t("meusMercados.confirmRemove"), destructive: true });
     if (!ok) return;
     const success = removeMercadoLocal(m.id);
     if (success) toast.success(t("meusMercados.toast.removed"));

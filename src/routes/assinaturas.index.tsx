@@ -34,6 +34,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { formatBRL, parseDateLocal } from "@/lib/format";
 import { requireOnline } from "@/lib/use-online-status";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth-context";
 import {
   useStore,
