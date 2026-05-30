@@ -1,5 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import * as XLSX from "@e965/xlsx";
 import {
   Dialog,
@@ -199,6 +202,8 @@ export function ImportInvestimentosFlow({
   onImported: () => void;
   ativosExistentes: Ativo[];
 }) {
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const [step, setStep] = useState<"upload" | "processando" | "preview" | "salvando" | "feito">(
     "upload",
   );
@@ -293,6 +298,16 @@ export function ImportInvestimentosFlow({
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.importInvestimentos.title"),
+            description: tc("premium.premiumApi.importInvestimentos.description"),
+            fallbackFeature: "investimentos",
+          })
+        ) {
+          setStep("upload");
+          return;
+        }
         setErro(data?.error || "Não conseguimos ler este arquivo.");
         setStep("upload");
         return;
@@ -837,6 +852,13 @@ export function ImportInvestimentosFlow({
           )}
         </DialogFooter>
       </DialogContent>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </Dialog>
   );
 }

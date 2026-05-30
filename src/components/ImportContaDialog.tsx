@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
   Upload,
   Loader2,
@@ -126,6 +128,8 @@ export function ImportContaDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const { t } = useTranslation("import-conta");
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const categorias = useStore(() => getCategorias());
   const [aba, setAba] = useState<"imagem" | "texto" | "pdf">("imagem");
   const [texto, setTexto] = useState("");
@@ -195,6 +199,15 @@ export function ImportContaDialog({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (
+          premiumGate.handleResponse(res, json, {
+            title: tc("premium.premiumApi.importConta.title"),
+            description: tc("premium.premiumApi.importConta.description"),
+            fallbackFeature: "importar_conta",
+          })
+        ) {
+          return;
+        }
         toast.error(json?.error ?? t("errors.readFail"));
         return;
       }
@@ -222,6 +235,15 @@ export function ImportContaDialog({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (
+          premiumGate.handleResponse(res, json, {
+            title: tc("premium.premiumApi.importConta.title"),
+            description: tc("premium.premiumApi.importConta.description"),
+            fallbackFeature: "importar_conta",
+          })
+        ) {
+          return;
+        }
         toast.error(json?.error ?? t("errors.readPdfFail"));
         return;
       }
@@ -947,6 +969,13 @@ export function ImportContaDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </Dialog>
   );
 }

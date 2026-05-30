@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
   ImageIcon,
   FileSpreadsheet,
@@ -121,6 +123,8 @@ export function ImportFaturaDialog({
   cartaoIdInicial?: string;
 }) {
   const { t } = useTranslation("import-fatura");
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const cartoes = useStore(() => getCartoes());
   const categorias = useStore(() => getCategorias());
 
@@ -288,6 +292,16 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.importFatura.title"),
+            description: tc("premium.premiumApi.importFatura.description"),
+            fallbackFeature: "importar_fatura",
+          })
+        ) {
+          setImgLoading(false);
+          return;
+        }
         const msg =
           data?.error ||
           t("errorReadingImage");
@@ -360,6 +374,16 @@ export function ImportFaturaDialog({
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (
+          premiumGate.handleResponse(resp, data, {
+            title: tc("premium.premiumApi.importFatura.title"),
+            description: tc("premium.premiumApi.importFatura.description"),
+            fallbackFeature: "importar_fatura",
+          })
+        ) {
+          setPdfLoading(false);
+          return;
+        }
         const msg = data?.error || t("errorReadingPdf");
         setErrorMessage(msg);
         toast.error(msg);
@@ -684,6 +708,13 @@ export function ImportFaturaDialog({
           )}
         </div>
       </DialogContent>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </Dialog>
   );
 }

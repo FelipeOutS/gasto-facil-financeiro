@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
   ImageIcon,
   FileText,
@@ -182,6 +184,8 @@ export function ImportExtratoDialog({
 }) {
   const { t } = useTranslation("import-extrato");
   useStore(() => 0);
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const categorias = getCategorias();
 
   const [step, setStep] = useState<Step>("source");
@@ -336,6 +340,16 @@ export function ImportExtratoDialog({
         });
         const json = await resp.json();
         if (!resp.ok) {
+          if (
+            premiumGate.handleResponse(resp, json, {
+              title: tc("premium.premiumApi.importExtrato.title"),
+              description: tc("premium.premiumApi.importExtrato.description"),
+              fallbackFeature: "importar_extrato",
+            })
+          ) {
+            setLoading(false);
+            return;
+          }
           toast.error(json?.error || t("errors.readFail"));
           setLoading(false);
           return;
@@ -406,6 +420,16 @@ export function ImportExtratoDialog({
         }
 
         if (!resp.ok) {
+          if (
+            premiumGate.handleResponse(resp, json, {
+              title: tc("premium.premiumApi.importExtrato.title"),
+              description: tc("premium.premiumApi.importExtrato.description"),
+              fallbackFeature: "importar_extrato",
+            })
+          ) {
+            setLoading(false);
+            return;
+          }
           toast.error(json?.error || t("errors.readPdfNo"));
           setLoading(false);
           return;
@@ -778,6 +802,13 @@ export function ImportExtratoDialog({
           </div>
         )}
       </DialogContent>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </Dialog>
   );
 }
