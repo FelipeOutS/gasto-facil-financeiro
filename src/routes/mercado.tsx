@@ -13,11 +13,14 @@ import {
   Store,
   MapPin,
   Receipt,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
+import type { FeatureKey } from "@/lib/plans";
 
 export const Route = createFileRoute("/mercado")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.title", { lng: i18n.language }) }] }),
