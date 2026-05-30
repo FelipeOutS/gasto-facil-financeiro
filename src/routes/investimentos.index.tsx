@@ -2397,6 +2397,7 @@ function DetalheAtivoDialog({
   onAddRendimento: (a: Ativo) => void;
   onExcluirAtivo: (a: Ativo) => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   if (!ativo) return null;
 
   const movs = movimentacoes.filter((m) => m.ativo_id === ativo.id);
