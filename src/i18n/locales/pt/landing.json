@@ -869,5 +869,55 @@
       "cards": "Cartões",
       "more": "Mais"
     }
+  },
+  "mercadoInteligente": {
+    "eyebrow": "Mercado Inteligente",
+    "title": "Mercado Inteligente",
+    "subtitle": "Planeje suas compras, acompanhe o carrinho em tempo real e entenda melhor para onde vai o dinheiro do mercado.",
+    "description": "Crie listas de compras, defina um orçamento, acompanhe o total antes de passar no caixa e consulte seu histórico para comparar preços ao longo do tempo. O Mercado Inteligente ajuda você a comprar com mais controle e evitar surpresas no fim do mês.",
+    "highlights": {
+      "list": {
+        "title": "Lista de compras organizada",
+        "text": "Monte listas por tipo de compra e reaproveite sua cesta padrão a cada mês."
+      },
+      "cart": {
+        "title": "Carrinho com total em tempo real",
+        "text": "Acompanhe o valor da compra enquanto adiciona itens — sem surpresa no caixa."
+      },
+      "history": {
+        "title": "Histórico de preços por mercado",
+        "text": "Consulte o que pagou antes pelo mesmo item para comparar ao longo do tempo."
+      },
+      "budget": {
+        "title": "Orçamento para compras do mês",
+        "text": "Defina um teto para o mercado e veja, a cada compra, quanto ainda pode gastar."
+      }
+    },
+    "cta": "Conhecer o Mercado Inteligente"
+  },
+  "importacaoInteligente": {
+    "eyebrow": "Importação inteligente",
+    "title": "Importação inteligente",
+    "subtitle": "Menos digitação manual, mais organização para sua rotina financeira.",
+    "description": "Importe informações de faturas, extratos, imagens e cupons compatíveis para acelerar seus lançamentos. O Gasto Inteligente ajuda a transformar dados financeiros em registros organizados, mantendo você no controle antes de confirmar as informações.",
+    "highlights": {
+      "pdfImage": {
+        "title": "Importação de PDF e imagem",
+        "text": "Envie arquivos compatíveis e reaproveite o conteúdo, sem precisar digitar tudo de novo."
+      },
+      "statements": {
+        "title": "Faturas e extratos compatíveis",
+        "text": "Leia documentos de bancos e cartões suportados para acelerar a organização."
+      },
+      "receipt": {
+        "title": "Cupom fiscal e QR Code",
+        "text": "No Mercado Inteligente, leia cupons compatíveis para registrar a compra mais rápido."
+      },
+      "review": {
+        "title": "Revisão antes de salvar",
+        "text": "Você confere e ajusta os dados importados antes que entrem no seu financeiro."
+      }
+    },
+    "cta": "Ver como funciona"
   }
 }
