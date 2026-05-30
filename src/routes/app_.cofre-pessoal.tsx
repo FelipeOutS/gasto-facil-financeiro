@@ -2354,8 +2354,8 @@ function QuickUnlockSettingsView({
     }
   }
 
-  function handleRemoveBio() {
-    if (!window.confirm("Remover a biometria deste dispositivo?")) return;
+  async function handleRemoveBio() {
+    if (!(await confirmAsync({ title: "Remover a biometria deste dispositivo?", destructive: true, confirmText: "Remover biometria" }))) return;
     disableQuickUnlock(userId);
     refresh();
     toast.success("Biometria removida deste dispositivo");
