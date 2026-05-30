@@ -96,6 +96,7 @@ import {
   getTipoInvestimentoClasseLabel,
   getTipoMovimentacaoLabel,
   getTipoRendimentoLabel,
+  getRentabilidadeTipoLabel,
 } from "@/lib/investimentos";
 
 export const Route = createFileRoute("/investimentos/")({
