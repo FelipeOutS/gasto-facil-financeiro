@@ -1363,7 +1363,7 @@ function HistoricoImportacoesDialog({
                     <div className="flex items-start justify-between gap-2 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-sm truncate">
-                          {imp.arquivo_nome || "Importação manual"}
+                          {imp.arquivo_nome || tInv("importacoes.manualName")}
                         </div>
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <Badge variant="secondary" className="text-[10px]">
