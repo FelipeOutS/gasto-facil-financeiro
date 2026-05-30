@@ -869,6 +869,7 @@ function PosicaoCard({
   onChange: (patch: Partial<PosicaoEdit>) => void;
 }) {
   const { t: ti } = useTranslation("import-investimentos");
+  const { t: tInv } = useTranslation("investimentos");
   const [editando, setEditando] = useState(false);
   const status = item._ignorado
     ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
