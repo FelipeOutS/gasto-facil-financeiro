@@ -63,6 +63,7 @@ const CARDS: CardDef[] = [
 
 function MercadoHubPage() {
   const { t } = useTranslation("mercado");
+  const { can } = usePlan();
 
   return (
     <MobileShell wide>
