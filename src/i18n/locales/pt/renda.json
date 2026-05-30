@@ -264,5 +264,10 @@
     "bonus": "Bônus",
     "outros": "Outros"
   },
+  "notFound": {
+    "title": "Receita não encontrada.",
+    "title_mei": "Faturamento não encontrado.",
+    "title_empresa": "Faturamento não encontrado."
+  },
   "months": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 }
