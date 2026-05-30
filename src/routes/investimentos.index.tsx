@@ -287,7 +287,7 @@ function InvestimentosPage() {
     if (totais.rendimentosAno > 0)
       out.push(t("investimentos.insights.recebidoAno", { val: formatBRL(totais.rendimentosAno) }));
     if (distribuicao[0] && distribuicao[0].pct >= 40)
-      out.push(t("investimentos.insights.maiorTipo", { label: distribuicao[0].label, pct: distribuicao[0].pct.toFixed(0) }));
+      out.push(t("investimentos.insights.maiorTipo", { label: getTipoInvestimentoLabel(distribuicao[0].tipo, tInv), pct: distribuicao[0].pct.toFixed(0) }));
     if (totais.rendimentosMes === 0) out.push(t("investimentos.insights.semRendMes"));
     if (movs.length < 3) out.push(t("investimentos.insights.poucasMov"));
     return out;
