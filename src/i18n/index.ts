@@ -35,6 +35,7 @@ import ptImportInvestimentos from "./locales/pt/import-investimentos.json";
 import ptExtratosImportados from "./locales/pt/extratos-importados.json";
 import ptMercado from "./locales/pt/mercado.json";
 import ptCofre from "./locales/pt/cofre.json";
+import ptInvestimentos from "./locales/pt/investimentos.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
