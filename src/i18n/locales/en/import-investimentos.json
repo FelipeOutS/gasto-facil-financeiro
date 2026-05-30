@@ -1,4 +1,100 @@
 {
+  "origem": {
+    "b3": {
+      "titulo": "Import B3 statement",
+      "descricao": "Upload a file exported from the B3 Investor Area. We'll identify positions and transactions automatically for you to review before saving."
+    },
+    "corretora": {
+      "titulo": "Import broker statement",
+      "descricao": "Upload a statement exported from your broker. We'll identify positions and transactions automatically."
+    },
+    "csv": {
+      "titulo": "Import CSV / spreadsheet",
+      "descricao": "Upload a CSV or XLSX with your assets or transactions. We'll identify everything we can for you to review."
+    },
+    "pdf": {
+      "titulo": "Import PDF",
+      "descricao": "Upload a PDF statement from your broker or B3. We'll identify positions and transactions for you to review before saving."
+    }
+  },
+  "upload": {
+    "dropzone": "Click to choose a file or drag it here",
+    "supportedFormats": "Supported formats: {{formats}}",
+    "downloadTemplate": "Download spreadsheet template",
+    "privacy": "We don't ask for passwords, tax IDs, banking tokens or access to your account. Imports only use files you upload.",
+    "errorEmptyFile": "This file appears to be empty or in an unsupported format.",
+    "errorUnsupported": "Unsupported format. Please upload PDF, CSV, XLSX or XLS.",
+    "errorCantRead": "We couldn't read this file.",
+    "errorNoItems": "We were able to open the file, but couldn't identify investments or transactions automatically. You can try another file or add them manually.",
+    "errorGeneric": "Error processing the file."
+  },
+  "processing": {
+    "title": "Reading the file…",
+    "description": "This can take a few seconds."
+  },
+  "saving": {
+    "title": "Saving your investments…"
+  },
+  "done": {
+    "title": "Import complete",
+    "summary": "{{positions}} position(s), {{movements}} transaction(s), {{ignored}} ignored",
+    "summaryWithErrors": ", {{errors}} with errors"
+  },
+  "preview": {
+    "aviso": {
+      "movsOnly": "We found transactions in the file. Review the data before saving.",
+      "needsReview": "The file was read, but some data needs review before importing."
+    },
+    "badges": {
+      "summary": "Positions: {{positions}} · Transactions: {{movements}}",
+      "ready": "Ready: {{count}}",
+      "review": "Review: {{count}}",
+      "duplicated": "Duplicates: {{count}}",
+      "ignored": "Ignored: {{count}}"
+    },
+    "sections": {
+      "positions": "Investments found",
+      "movements": "Transactions found"
+    }
+  },
+  "status": {
+    "ignored": "Ignored",
+    "duplicated": "Possible duplicate",
+    "needsReview": "Needs review",
+    "ready": "Ready"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "importAnother": "Import another file",
+    "confirm": "Confirm import",
+    "close": "Close",
+    "edit": "Edit",
+    "ignore": "Ignore",
+    "restore": "Restore"
+  },
+  "fields": {
+    "qty": "Qty",
+    "avgPrice": "Avg",
+    "applied": "Invested",
+    "current": "Current",
+    "unit": "Unit",
+    "total": "Total",
+    "name": "Name",
+    "ticker": "Ticker",
+    "type": "Type",
+    "institution": "Institution",
+    "quantity": "Quantity",
+    "avgPriceLabel": "Average price",
+    "appliedValue": "Invested amount",
+    "currentValue": "Current value",
+    "date": "Date",
+    "maturity": "Maturity",
+    "movementType": "Transaction type",
+    "assetName": "Asset name",
+    "assetType": "Asset type",
+    "unitValue": "Unit value",
+    "totalValue": "Total value"
+  },
   "toast": {
     "noneSelected": "No items selected to import.",
     "partialSuccess": "{{positions}} position(s) and {{movements}} transaction(s) imported.",
