@@ -151,6 +151,13 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
 
   // Etapa 14 — Cofre Pessoal: planos pagos exceto Controle Simples.
   cofre_pessoal: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+
+  // Etapa 16 — Mercado Inteligente avançado (histórico, preços, cesta padrão,
+  // mercados favoritos, comparação de preços). MEI Essencial fica de fora
+  // para não canibalizar o MEI Completo.
+  mercado_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Etapa 16 — Importação de cupom fiscal / NFC-e / QR Code.
+  mercado_importar_cupom: ["pessoal_premium", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
