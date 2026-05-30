@@ -280,14 +280,14 @@ export function ImportInvestimentosFlow({
       } else if (ext === "csv" || ext === "xlsx" || ext === "xls") {
         const { colunas, linhas } = await parsePlanilha(arquivo);
         if (linhas.length === 0) {
-          setErro("Esse arquivo parece estar vazio ou em um formato não suportado.");
+          setErro(ti("upload.errorEmptyFile"));
           setStep("upload");
           return;
         }
         payload.colunas = colunas;
         payload.linhas = linhas;
       } else {
-        setErro("Formato não suportado. Envie PDF, CSV, XLSX ou XLS.");
+        setErro(ti("upload.errorUnsupported"));
         setStep("upload");
         return;
       }
