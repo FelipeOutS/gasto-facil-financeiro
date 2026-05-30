@@ -1795,6 +1795,7 @@ function AtualizarLoteDialog({
   userId: string | undefined;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const [valores, setValores] = useState<Record<string, { valor: string; preco: string; obs: string }>>({});
   const [data, setData] = useState(todayISO());
   const [salvando, setSalvando] = useState(false);
