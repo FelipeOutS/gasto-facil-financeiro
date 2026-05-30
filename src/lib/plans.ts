@@ -133,6 +133,11 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   // Contas conectadas: somente planos premium e MEI / Empresa
   contas_conectadas: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
   gasto_ai: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Etapa 7.1 — WhatsApp ainda não está ativo comercialmente.
+  // Mantido como recurso futuro: nenhum plano comercial libera no menu.
+  // Apenas Admin Master (tratado fora da whitelist) consegue acessar para QA.
+  whatsapp: [],
+
   // Empresa Inteligente (consulta de CNPJ e Minha Empresa): MEI e Empresa
   empresa_inteligente: ["mei_essencial", "mei_inteligente", "empresa"],
 };
