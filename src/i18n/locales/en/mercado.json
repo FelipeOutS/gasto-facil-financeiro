@@ -13,8 +13,11 @@
     "status": {
       "soon": "Coming soon",
       "future": "Future",
-      "open": "Open"
+      "open": "Open",
+      "locked": "Premium"
     },
+    "lockedDesc": "Part of the full Smart Grocery experience. Tap to view plans.",
+    "lockedCta": "Unlock on a premium plan",
     "cards": {
       "listas": {
         "title": "Shopping lists",
