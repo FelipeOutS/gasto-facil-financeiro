@@ -309,7 +309,7 @@ export function ImportInvestimentosFlow({
           setStep("upload");
           return;
         }
-        setErro(data?.error || "Não conseguimos ler este arquivo.");
+        setErro(data?.error || ti("upload.errorCantRead"));
         setStep("upload");
         return;
       }
