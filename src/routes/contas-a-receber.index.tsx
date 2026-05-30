@@ -260,6 +260,17 @@ function ContasAReceberPage() {
                   <Plus className="mr-1 h-4 w-4" />
                   {t("empty.addFirst")}
                 </Button>
+              ) : (busca || filtro !== "todas") ? (
+                <Button
+                  variant="outline"
+                  className="min-h-11 rounded-full"
+                  onClick={() => {
+                    setBusca("");
+                    setFiltro("todas");
+                  }}
+                >
+                  {t("empty.clearFilters")}
+                </Button>
               ) : undefined
             }
           />

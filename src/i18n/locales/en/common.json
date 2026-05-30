@@ -26,7 +26,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "loading": "Loading…",
-    "knowMore": "Discover Gasto Inteligente"
+    "knowMore": "Discover Gasto Inteligente",
+    "clearFilters": "Clear filters",
+    "viewAll": "View all"
   },
   "footer": {
     "tagline": "Gasto Inteligente — simple, visual financial control built for your daily life.",

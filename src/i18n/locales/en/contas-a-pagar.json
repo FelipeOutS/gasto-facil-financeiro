@@ -53,7 +53,8 @@
     "label": "Search bills",
     "clear": "Clear search",
     "noResults": "Nothing found for \"{{query}}\".",
-    "emptyFilter": "Nothing in this filter."
+    "emptyFilter": "Nothing in this filter.",
+    "clearFilters": "Clear filters"
   },
   "empty": {
     "title": "No bills chasing you for now",
