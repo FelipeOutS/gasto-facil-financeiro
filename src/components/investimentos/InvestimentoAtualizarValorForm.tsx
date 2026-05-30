@@ -29,6 +29,7 @@ export function InvestimentoAtualizarValorForm({
   onSaved,
   onCancel,
 }: InvestimentoAtualizarValorFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [valorAtual, setValorAtual] = useState("");
   const [precoAtual, setPrecoAtual] = useState("");
   const [quantidade, setQuantidade] = useState("");
