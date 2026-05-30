@@ -184,6 +184,8 @@ export function ImportExtratoDialog({
 }) {
   const { t } = useTranslation("import-extrato");
   useStore(() => 0);
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const categorias = getCategorias();
 
   const [step, setStep] = useState<Step>("source");
