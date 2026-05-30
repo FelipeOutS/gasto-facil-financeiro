@@ -105,13 +105,23 @@
   },
   "toast": {
     "added": "Income added. Nice! 💸",
+    "added_mei": "Revenue added. Nice! 💸",
+    "added_empresa": "Revenue added. ✅",
     "updated": "Income updated. ✅",
+    "updated_mei": "Revenue updated. ✅",
+    "updated_empresa": "Revenue updated. ✅",
     "removed": "Income removed.",
+    "removed_mei": "Revenue removed.",
+    "removed_empresa": "Revenue removed.",
     "fillFields": "Please fill in the description and amount."
   },
   "duplicate": {
     "title": "Similar income found",
+    "title_mei": "Similar revenue found",
+    "title_empresa": "Similar revenue found",
     "body": "There's already a similar income this month: <0>{{descricao}}</0> of <1>{{valor}}</1>. Save anyway?",
+    "body_mei": "There's already similar revenue this month: <0>{{descricao}}</0> of <1>{{valor}}</1>. Save anyway?",
+    "body_empresa": "There's already similar revenue this month: <0>{{descricao}}</0> of <1>{{valor}}</1>. Save anyway?",
     "confirm": "Save anyway",
     "cancel": "Cancel"
   },
@@ -121,14 +131,22 @@
     "average": "Average:",
     "peak": "Peak:",
     "incomeLabel": "Income",
+    "incomeLabel_mei": "Revenue",
+    "incomeLabel_empresa": "Revenue",
     "compositionKicker": "Breakdown",
     "compositionTitle": "By income type",
+    "compositionTitle_mei": "By revenue type",
+    "compositionTitle_empresa": "By revenue type",
     "noData": "No data this month."
   },
   "forecast": {
     "kicker": "Forecast",
     "titleCurrent": "Income for current month",
+    "titleCurrent_mei": "Revenue for current month",
+    "titleCurrent_empresa": "Revenue for current month",
     "titleSelected": "Income for selected month",
+    "titleSelected_mei": "Revenue for selected month",
+    "titleSelected_empresa": "Revenue for selected month",
     "received": "Received",
     "toReceive": "To receive",
     "total": "Total forecast:",
@@ -137,6 +155,8 @@
   "upcoming": {
     "kicker": "Upcoming",
     "title": "Recurring income",
+    "title_mei": "Recurring revenue",
+    "title_empresa": "Recurring revenue",
     "empty": "No upcoming recurring entries."
   },
   "tabs": {
@@ -157,13 +177,23 @@
   },
   "empty": {
     "monthTitle": "No income this month yet",
+    "monthTitle_mei": "No revenue this month yet",
+    "monthTitle_empresa": "No revenue this month yet",
     "monthSubtitle": "Add your first entry and see your month get clearer.",
+    "monthSubtitle_mei": "Add your first revenue entry and see your month get clearer.",
+    "monthSubtitle_empresa": "Add the first revenue entry to track this month.",
     "filterTitle": "No entries match these filters",
+    "filterTitle_mei": "No revenue matches these filters",
+    "filterTitle_empresa": "No revenue matches these filters",
     "filterSubtitle": "Try clearing the search or changing the filter.",
     "recurringTitle": "No recurring entries this month yet",
+    "recurringTitle_mei": "No recurring revenue this month yet",
+    "recurringTitle_empresa": "No recurring revenue this month yet",
     "recurringSubtitle": "Add one and it repeats automatically.",
     "recurringAction": "Add recurring",
     "defaultAction": "Add income",
+    "defaultAction_mei": "Add revenue",
+    "defaultAction_empresa": "Add revenue",
     "examples": {
       "salario": "Salary",
       "freelance": "Freelance",
@@ -174,13 +204,17 @@
   },
   "history": {
     "empty": "Your history is empty. Once you add income, it will appear here grouped by month.",
+    "empty_mei": "Your history is empty. Once you add revenue, it will appear here grouped by month.",
+    "empty_empresa": "History is empty. Once revenue is added, it will appear here grouped by month.",
     "search": "Search by description, type, month, year or amount",
     "noResults": "No results for “{{query}}”.",
     "loadMore": "Load more"
   },
   "forecasts": {
     "title": "Forecast for upcoming months",
-    "subtitle": "Based on active recurring entries."
+    "subtitle": "Based on active recurring entries.",
+    "subtitle_mei": "Based on active recurring revenue.",
+    "subtitle_empresa": "Based on active recurring revenue."
   },
   "item": {
     "rec": "rec",
@@ -192,8 +226,14 @@
   },
   "delete": {
     "title": "Delete income?",
+    "title_mei": "Delete revenue?",
+    "title_empresa": "Delete revenue?",
     "body": "Are you sure you want to delete this income? This action cannot be undone.",
+    "body_mei": "Are you sure you want to delete this revenue? This action cannot be undone.",
+    "body_empresa": "Are you sure you want to delete this revenue? This action cannot be undone.",
     "recurringQuestion": "This income is recurring. What to delete?",
+    "recurringQuestion_mei": "This revenue is recurring. What to delete?",
+    "recurringQuestion_empresa": "This revenue is recurring. What to delete?",
     "scope": {
       "single": "Only this month",
       "forward": "This month and future ones",
