@@ -619,8 +619,8 @@ export function ImportInvestimentosFlow({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{info.titulo}</DialogTitle>
-          <DialogDescription>{info.descricao}</DialogDescription>
+          <DialogTitle>{ti(`origem.${origem}.titulo`)}</DialogTitle>
+          <DialogDescription>{ti(`origem.${origem}.descricao`)}</DialogDescription>
         </DialogHeader>
 
         {step === "upload" && (
