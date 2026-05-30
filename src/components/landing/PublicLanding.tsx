@@ -4742,3 +4742,121 @@ function ContasSection() {
   );
 }
 
+
+/* ============================== MERCADO INTELIGENTE SECTION ============================== */
+
+function MercadoInteligenteSection() {
+  const { t } = useTranslation("landing");
+  const highlights = [
+    { icon: ClipboardList, key: "list" },
+    { icon: ShoppingCart, key: "cart" },
+    { icon: LineChart, key: "history" },
+    { icon: Wallet, key: "budget" },
+  ] as const;
+
+  return (
+    <section id="mercado-inteligente" className="relative overflow-hidden bg-slate-50 py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeader
+          center
+          eyebrow={t("mercadoInteligente.eyebrow")}
+          title={t("mercadoInteligente.title")}
+          subtitle={t("mercadoInteligente.subtitle")}
+        />
+
+        <Reveal className="mt-8">
+          <p className="mx-auto max-w-3xl text-center text-base leading-relaxed text-slate-600 sm:text-lg">
+            {t("mercadoInteligente.description")}
+          </p>
+        </Reveal>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {highlights.map((h, i) => (
+            <Reveal key={h.key} delay={i * 0.04}>
+              <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700">
+                  <h.icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 text-base font-bold text-slate-900">
+                  {t(`mercadoInteligente.highlights.${h.key}.title`)}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  {t(`mercadoInteligente.highlights.${h.key}.text`)}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <LandingAnchorLink
+            section="planos"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
+          >
+            {t("mercadoInteligente.cta")}
+            <ArrowRight className="h-4 w-4" />
+          </LandingAnchorLink>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================== IMPORTACAO INTELIGENTE SECTION ============================== */
+
+function ImportacaoInteligenteSection() {
+  const { t } = useTranslation("landing");
+  const highlights = [
+    { icon: Upload, key: "pdfImage" },
+    { icon: FileText, key: "statements" },
+    { icon: ScanLine, key: "receipt" },
+    { icon: Eye, key: "review" },
+  ] as const;
+
+  return (
+    <section id="importacao-inteligente" className="relative overflow-hidden bg-white py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeader
+          center
+          eyebrow={t("importacaoInteligente.eyebrow")}
+          title={t("importacaoInteligente.title")}
+          subtitle={t("importacaoInteligente.subtitle")}
+        />
+
+        <Reveal className="mt-8">
+          <p className="mx-auto max-w-3xl text-center text-base leading-relaxed text-slate-600 sm:text-lg">
+            {t("importacaoInteligente.description")}
+          </p>
+        </Reveal>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {highlights.map((h, i) => (
+            <Reveal key={h.key} delay={i * 0.04}>
+              <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100/40 text-blue-700">
+                  <h.icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 text-base font-bold text-slate-900">
+                  {t(`importacaoInteligente.highlights.${h.key}.title`)}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  {t(`importacaoInteligente.highlights.${h.key}.text`)}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <LandingAnchorLink
+            section="planos"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
+          >
+            {t("importacaoInteligente.cta")}
+            <ArrowRight className="h-4 w-4" />
+          </LandingAnchorLink>
+        </div>
+      </div>
+    </section>
+  );
+}
