@@ -202,6 +202,8 @@ export function ImportInvestimentosFlow({
   onImported: () => void;
   ativosExistentes: Ativo[];
 }) {
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const [step, setStep] = useState<"upload" | "processando" | "preview" | "salvando" | "feito">(
     "upload",
   );
