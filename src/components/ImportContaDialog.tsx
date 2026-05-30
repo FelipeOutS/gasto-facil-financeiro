@@ -314,7 +314,7 @@ export function ImportContaDialog({
     await processar({ text: texto });
   }
 
-  function handleSalvar() {
+  async function handleSalvar() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) return toast.error(t("errors.needName"));
     if (!Number.isFinite(valor) || valor <= 0)
