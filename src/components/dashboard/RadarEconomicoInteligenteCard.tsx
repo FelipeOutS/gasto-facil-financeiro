@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { LoadErrorState } from "@/components/ui/load-error-state";
 import {
   loadBcbRadar,
   type BcbIndicator,
