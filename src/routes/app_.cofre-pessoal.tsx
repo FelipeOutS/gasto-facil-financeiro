@@ -1639,11 +1639,13 @@ function DetailView({
   onBack,
   onEdit,
   onDeleted,
+  readOnly = false,
 }: {
   entry: DecryptedEntry;
   onBack: () => void;
   onEdit: () => void;
   onDeleted: () => void;
+  readOnly?: boolean;
 }) {
   const [showPwd, setShowPwd] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
