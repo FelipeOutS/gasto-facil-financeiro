@@ -1907,7 +1907,7 @@ function AtualizarLoteDialog({
                     <div>
                       <div className="text-sm font-medium">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {tipoLabel(a.tipo)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tInv)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
                       </div>
                     </div>
                     <Badge
