@@ -34,7 +34,7 @@
   },
   "confirmRevert": {
     "title": "Reverter importação?",
-    "body": "Isso vai apagar <0>todos</0> os {{count}} lançamentos criados nessa importação (despesas, receitas, transferências e reservas) e atualizar Dashboard, Gastos, Minha renda e Guardado.",
+    "body": "Isso vai apagar <0>todos</0> os {{count}} lançamentos criados nessa importação (despesas, receitas, transferências e reservas) e atualizar Dashboard, Gastos, Receitas e Guardado.",
     "editedNote_one": "⚠ {{count}} item foi editado depois da importação e também será apagado.",
     "editedNote_other": "⚠ {{count}} itens foram editados depois da importação e também serão apagados.",
     "cancel": "Cancelar",
@@ -49,7 +49,7 @@
     "confirm": "Remover"
   },
   "toast": {
-    "reverted": "Importação revertida. Dashboard, Gastos, Minha renda e Guardado foram recalculados.",
+    "reverted": "Importação revertida. Dashboard, Gastos, Receitas e Guardado foram recalculados.",
     "revertFail": "Não foi possível reverter essa importação. Tente novamente.",
     "removed": "Registro removido do histórico.",
     "removeFail": "Não foi possível remover esse registro."

@@ -149,7 +149,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas do MEI",
         importarContaTitle: "Importar boleto, Pix ou conta do MEI",
 
-        rendaTitle: "Entradas do MEI",
+        rendaTitle: "Faturamento",
         gastosTitle: "Gastos do MEI",
 
         saldoPositivoMsg: "Seu MEI fechou o mês com saldo positivo.",
@@ -176,7 +176,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas da empresa",
         importarContaTitle: "Importar boleto, Pix ou conta da empresa",
 
-        rendaTitle: "Receitas da empresa",
+        rendaTitle: "Faturamento",
         gastosTitle: "Despesas da empresa",
 
         saldoPositivoMsg: "Sua empresa manteve saldo positivo no período.",
@@ -203,7 +203,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         contasAPagarTitle: "Contas a pagar",
         importarContaTitle: "Importar boleto, Pix ou conta",
 
-        rendaTitle: "Minha renda",
+        rendaTitle: "Receitas",
         gastosTitle: "Gastos",
 
         saldoPositivoMsg: "Você economizou bem este mês.",

@@ -34,7 +34,7 @@
     "noExtra": "You haven't added any extra income this month yet."
   },
   "cta": {
-    "new": "New entry",
+    "new": "New income",
     "quick": {
       "salario": "Salary",
       "freela": "Freelance",
@@ -43,7 +43,7 @@
     }
   },
   "dialog": {
-    "newTitle": "New income entry",
+    "newTitle": "New income",
     "newDescription": "Salary, freelance, commission and more.",
     "editTitle": "Edit income",
     "editDescription": "Update the details of this entry.",
@@ -104,7 +104,7 @@
   },
   "upcoming": {
     "kicker": "Upcoming",
-    "title": "Recurring entries",
+    "title": "Recurring income",
     "empty": "No upcoming recurring entries."
   },
   "tabs": {

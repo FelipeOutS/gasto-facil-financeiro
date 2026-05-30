@@ -1,7 +1,7 @@
 {
   "back": "Voltar",
   "header": {
-    "kicker": "Suas entradas",
+    "kicker": "Suas receitas",
     "subtitle": "Visão completa do que entra todo mês."
   },
   "nav": {
@@ -9,32 +9,32 @@
     "next": "Próximo mês"
   },
   "summary": {
-    "totalLabel": "Total de entradas no mês",
-    "entries_one": "{{count}} entrada registrada",
-    "entries_other": "{{count}} entradas registradas",
+    "totalLabel": "Total de receitas no mês",
+    "entries_one": "{{count}} receita registrada",
+    "entries_other": "{{count}} receitas registradas",
     "variation": "{{sign}}{{value}}% vs mês anterior"
   },
   "miniStat": {
     "salario": "Salário",
-    "extra": "Renda extra",
+    "extra": "Receita extra",
     "recorrentes": "Recorrentes",
     "outras": "Outras",
-    "entries_one": "{{count}} entrada",
-    "entries_other": "{{count}} entradas",
+    "entries_one": "{{count}} receita",
+    "entries_other": "{{count}} receitas",
     "pctMonth": "{{pct}}% do mês"
   },
   "insights": {
-    "empty": "Você ainda não cadastrou entradas neste mês. Que tal começar agora?",
-    "up": "Sua renda subiu {{pct}}% em relação ao mês anterior.",
-    "down": "Sua renda caiu {{pct}}% em relação ao mês anterior.",
-    "topSource": "{{pct}}% da sua renda vem de {{label}}.",
-    "recurring_one": "Você tem {{count}} entrada recorrente este mês ({{value}}).",
-    "recurring_other": "Você tem {{count}} entradas recorrentes este mês ({{value}}).",
-    "extraShare": "Sua renda extra representa {{pct}}% do total do mês.",
-    "noExtra": "Você ainda não cadastrou renda extra este mês."
+    "empty": "Você ainda não cadastrou receitas neste mês. Que tal começar agora?",
+    "up": "Suas receitas subiram {{pct}}% em relação ao mês anterior.",
+    "down": "Suas receitas caíram {{pct}}% em relação ao mês anterior.",
+    "topSource": "{{pct}}% das suas receitas vêm de {{label}}.",
+    "recurring_one": "Você tem {{count}} receita recorrente este mês ({{value}}).",
+    "recurring_other": "Você tem {{count}} receitas recorrentes este mês ({{value}}).",
+    "extraShare": "Sua receita extra representa {{pct}}% do total do mês.",
+    "noExtra": "Você ainda não cadastrou receita extra este mês."
   },
   "cta": {
-    "new": "Nova entrada",
+    "new": "Nova receita",
     "quick": {
       "salario": "Salário",
       "freela": "Freela",
@@ -43,10 +43,10 @@
     }
   },
   "dialog": {
-    "newTitle": "Nova entrada de dinheiro",
+    "newTitle": "Nova receita",
     "newDescription": "Salário, freelance, comissão e mais.",
-    "editTitle": "Editar renda",
-    "editDescription": "Altere os detalhes desta entrada.",
+    "editTitle": "Editar receita",
+    "editDescription": "Altere os detalhes desta receita.",
     "fields": {
       "descricao": "Descrição",
       "descricaoPlaceholder": "Ex.: Salário do mês",
@@ -54,32 +54,32 @@
       "data": "Data",
       "tipo": "Tipo",
       "repeat": "Repetir todo mês",
-      "repeatHint": "Entrada recorrente",
+      "repeatHint": "Receita recorrente",
       "repeatMonths": "Repetir por (meses)"
     },
     "cancel": "Cancelar",
     "save": "Cadastrar",
     "saveEdit": "Salvar",
-    "scopeTitle": "Esta é uma renda recorrente. Como aplicar a alteração?",
+    "scopeTitle": "Esta é uma receita recorrente. Como aplicar a alteração?",
     "scope": {
       "single": "Alterar somente este mês",
       "singleHint": "Não muda os outros meses.",
       "forward": "Alterar este mês e os próximos",
       "forwardHint": "Preserva o histórico anterior.",
       "all": "Alterar toda a recorrência",
-      "allHint": "Atualiza todos os meses ligados a esta renda."
+      "allHint": "Atualiza todos os meses ligados a esta receita."
     },
     "scopeDateNote": "A nova data informada acima só é aplicada nesta receita."
   },
   "toast": {
-    "added": "Renda adicionada. Boa! 💸",
-    "updated": "Renda atualizada. ✅",
-    "removed": "Renda removida.",
+    "added": "Receita adicionada. Boa! 💸",
+    "updated": "Receita atualizada. ✅",
+    "removed": "Receita removida.",
     "fillFields": "Preencha a descrição e o valor."
   },
   "duplicate": {
-    "title": "Renda parecida encontrada",
-    "body": "Já existe uma renda parecida neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
+    "title": "Receita parecida encontrada",
+    "body": "Já existe uma receita parecida neste mês: <0>{{descricao}}</0> de <1>{{valor}}</1>. Deseja salvar mesmo assim?",
     "confirm": "Salvar mesmo assim",
     "cancel": "Cancelar"
   },
@@ -88,15 +88,15 @@
     "evolutionTitle": "Últimos 6 meses",
     "average": "Média:",
     "peak": "Pico:",
-    "incomeLabel": "Renda",
+    "incomeLabel": "Receitas",
     "compositionKicker": "Composição",
-    "compositionTitle": "Por tipo de renda",
+    "compositionTitle": "Por tipo de receita",
     "noData": "Sem dados neste mês."
   },
   "forecast": {
     "kicker": "Previsão",
-    "titleCurrent": "Renda do mês atual",
-    "titleSelected": "Renda do mês selecionado",
+    "titleCurrent": "Receitas do mês atual",
+    "titleSelected": "Receitas do mês selecionado",
     "received": "Já recebido",
     "toReceive": "A receber",
     "total": "Total previsto:",
@@ -104,7 +104,7 @@
   },
   "upcoming": {
     "kicker": "Próximas",
-    "title": "Entradas recorrentes",
+    "title": "Receitas recorrentes",
     "empty": "Sem recorrências futuras cadastradas."
   },
   "tabs": {
@@ -124,14 +124,14 @@
     "sortType": "Por tipo"
   },
   "empty": {
-    "monthTitle": "Sem rendas neste mês ainda",
-    "monthSubtitle": "Cadastre sua primeira entrada e veja seu mês ficar mais claro.",
-    "filterTitle": "Nenhuma entrada com esses filtros",
+    "monthTitle": "Sem receitas neste mês ainda",
+    "monthSubtitle": "Cadastre sua primeira receita e veja seu mês ficar mais claro.",
+    "filterTitle": "Nenhuma receita com esses filtros",
     "filterSubtitle": "Tente limpar a busca ou trocar o filtro.",
-    "recurringTitle": "Você ainda não tem entradas recorrentes neste mês",
+    "recurringTitle": "Você ainda não tem receitas recorrentes neste mês",
     "recurringSubtitle": "Cadastre uma e ela se repete automaticamente.",
     "recurringAction": "Adicionar recorrente",
-    "defaultAction": "Adicionar renda",
+    "defaultAction": "Adicionar receita",
     "examples": {
       "salario": "Salário",
       "freelance": "Freelance",
@@ -141,14 +141,14 @@
     }
   },
   "history": {
-    "empty": "Seu histórico ainda está em branco. Quando você cadastrar rendas, elas aparecem aqui agrupadas por mês.",
+    "empty": "Seu histórico ainda está em branco. Quando você cadastrar receitas, elas aparecem aqui agrupadas por mês.",
     "search": "Buscar por descrição, tipo, mês, ano ou valor",
     "noResults": "Nenhum resultado para “{{query}}”.",
     "loadMore": "Carregar mais"
   },
   "forecasts": {
     "title": "Previsão dos próximos meses",
-    "subtitle": "Baseado nas entradas recorrentes ativas."
+    "subtitle": "Baseado nas receitas recorrentes ativas."
   },
   "item": {
     "rec": "rec",
@@ -159,9 +159,9 @@
     "delete": "Excluir"
   },
   "delete": {
-    "title": "Excluir renda?",
-    "body": "Tem certeza que deseja excluir esta renda? Esta ação não pode ser desfeita.",
-    "recurringQuestion": "Esta renda é recorrente. O que excluir?",
+    "title": "Excluir receita?",
+    "body": "Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.",
+    "recurringQuestion": "Esta receita é recorrente. O que excluir?",
     "scope": {
       "single": "Somente este mês",
       "forward": "Este mês e os próximos",
