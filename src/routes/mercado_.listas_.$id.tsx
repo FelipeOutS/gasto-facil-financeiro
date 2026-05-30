@@ -34,6 +34,7 @@ import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
   computeOrcamentoLista,
