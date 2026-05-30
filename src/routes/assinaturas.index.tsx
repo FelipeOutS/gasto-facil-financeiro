@@ -372,12 +372,18 @@ function AssinaturasPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSync}
+              onClick={() => (canAutomations ? handleSync() : setPremiumOpen(true))}
               disabled={syncing}
+              title={!canAutomations ? t("premium.reanalyzeLocked") : undefined}
             >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {canAutomations ? (
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              ) : (
+                <Lock className="h-4 w-4 text-amber-500" />
+              )}
               <span className="hidden sm:inline">{t("actions.reanalyze")}</span>
             </Button>
+
             <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("actions.new")}</span>
