@@ -968,9 +968,9 @@ function PosicaoCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_INVESTIMENTO.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_INVESTIMENTO.map((it) => (
+                  <SelectItem key={it.id} value={it.id}>
+                    {getTipoInvestimentoLabel(it.id, tInv)}
                   </SelectItem>
                 ))}
               </SelectContent>
