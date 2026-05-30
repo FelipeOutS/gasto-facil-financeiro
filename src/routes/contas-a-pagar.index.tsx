@@ -504,10 +504,25 @@ function ContasAPagarPage() {
         {doMes.length === 0 ? (
           <EmptyState onAdd={openCreate} />
         ) : filtradas.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in">
-            {busca
-              ? t("search.noResults", { query: busca })
-              : t("search.emptyFilter")}
+          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in space-y-3">
+            <p>
+              {busca
+                ? t("search.noResults", { query: busca })
+                : t("search.emptyFilter")}
+            </p>
+            {(busca || filtro !== "todas") && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="min-h-11 rounded-full"
+                onClick={() => {
+                  setBusca("");
+                  setFiltro("todas");
+                }}
+              >
+                {t("search.clearFilters")}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-2.5 stagger">
