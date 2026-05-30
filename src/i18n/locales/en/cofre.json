@@ -1,0 +1,14 @@
+{
+  "gate": {
+    "title": "Personal Vault is a premium feature",
+    "description": "Keep sensitive information safer in a space protected by a PIN.",
+    "cta": "See plans",
+    "back": "Back to home"
+  },
+  "transition": {
+    "badge": "Transition notice",
+    "title": "The Vault is now a premium feature",
+    "description": "Your Vault already has saved information. To avoid losing access, you can still view your existing data, but adding new entries requires a plan upgrade.",
+    "cta": "Upgrade plan"
+  }
+}
