@@ -13,8 +13,11 @@
     "status": {
       "soon": "Em breve",
       "future": "Futuro",
-      "open": "Abrir"
+      "open": "Abrir",
+      "locked": "Premium"
     },
+    "lockedDesc": "Recurso do Mercado Inteligente completo. Toque para ver os planos.",
+    "lockedCta": "Desbloquear no plano premium",
     "cards": {
       "listas": {
         "title": "Listas de compras",
