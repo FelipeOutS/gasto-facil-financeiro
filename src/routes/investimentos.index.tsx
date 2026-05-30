@@ -501,7 +501,7 @@ function InvestimentosPage() {
                 {distribuicao.map((d) => (
                   <li key={d.tipo}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span>{d.label}</span>
+                      <span>{getTipoInvestimentoLabel(d.tipo, tInv)}</span>
                       <span className="text-muted-foreground">{d.pct.toFixed(1)}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
