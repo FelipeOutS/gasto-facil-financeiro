@@ -99,5 +99,20 @@
     "noneSelected": "No items selected to import.",
     "partialSuccess": "{{positions}} position(s) and {{movements}} transaction(s) imported.",
     "partialErrors": "{{count}} item(s) could not be saved."
+  },
+  "template": {
+    "sheetName": "Investments",
+    "fileName": "investment-import-template.xlsx",
+    "headers": {
+      "asset": "Asset",
+      "ticker": "Ticker",
+      "type": "Type",
+      "quantity": "Quantity",
+      "averagePrice": "Average price",
+      "appliedValue": "Invested amount",
+      "currentValue": "Current value",
+      "institution": "Institution",
+      "date": "Date"
+    }
   }
 }
