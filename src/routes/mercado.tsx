@@ -94,10 +94,13 @@ function MercadoHubPage() {
       <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {CARDS.map((card) => {
           const Icon = card.icon;
-          const statusLabel = t(`hub.status.${card.status}`);
-          const isInteractive = !!card.to;
-          const statusClass =
-            card.status === "open"
+          const isLocked = !!card.feature && !can(card.feature);
+          const statusKey: CardStatus | "locked" = isLocked ? "locked" : card.status;
+          const statusLabel = t(`hub.status.${statusKey}`);
+          const isInteractive = !!card.to && !isLocked;
+          const statusClass = isLocked
+            ? "bg-muted text-muted-foreground ring-1 ring-border/60"
+            : card.status === "open"
               ? "bg-brand-grad text-primary-foreground shadow-elevated"
               : card.status === "soon"
                 ? "bg-brand-soft text-brand-on-soft"
@@ -109,19 +112,22 @@ function MercadoHubPage() {
                 <span
                   className={cn(
                     "grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ring-border/60",
-                    isInteractive
-                      ? "bg-brand-soft text-brand"
-                      : "bg-card-elevated text-foreground",
+                    isLocked
+                      ? "bg-muted text-muted-foreground"
+                      : isInteractive
+                        ? "bg-brand-soft text-brand"
+                        : "bg-card-elevated text-foreground",
                   )}
                 >
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-sm font-semibold md:text-base">
-                    {t(`hub.cards.${card.key}.title`)}
+                  <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold md:text-base">
+                    <span className="truncate">{t(`hub.cards.${card.key}.title`)}</span>
+                    {isLocked && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                   </h2>
                   <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
-                    {t(`hub.cards.${card.key}.desc`)}
+                    {isLocked ? t("hub.lockedDesc") : t(`hub.cards.${card.key}.desc`)}
                   </p>
                 </div>
                 {isInteractive && (
@@ -143,6 +149,19 @@ function MercadoHubPage() {
 
           const baseClasses =
             "group flex min-h-[120px] flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5 transition-colors";
+
+          if (isLocked) {
+            return (
+              <Link
+                key={card.key}
+                to="/meu-plano"
+                className={cn(baseClasses, "hover:bg-card-elevated active:scale-[0.99] opacity-90")}
+                aria-label={t("hub.lockedCta")}
+              >
+                {innerBody}
+              </Link>
+            );
+          }
 
           if (isInteractive) {
             return (
