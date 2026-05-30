@@ -42,6 +42,8 @@ import {
   TIPOS_MOVIMENTACAO,
   type TipoInvestimento,
   type TipoMovimentacao,
+  getTipoInvestimentoLabel,
+  getTipoMovimentacaoLabel,
   criarAtivo,
   atualizarAtivo,
   criarMovimentacao,
