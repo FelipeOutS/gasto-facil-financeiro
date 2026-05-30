@@ -73,6 +73,8 @@
     "guardadoSub_other": "{{count}} reserves",
     "fixosEyebrow": "Fixed expenses",
     "fixosPctRenda": "{{pct}}% of income",
+    "fixosPctRenda_mei": "{{pct}}% of revenue",
+    "fixosPctRenda_empresa": "{{pct}}% of revenue",
     "metasEyebrow": "Goals",
     "metasSub": "in progress"
   },

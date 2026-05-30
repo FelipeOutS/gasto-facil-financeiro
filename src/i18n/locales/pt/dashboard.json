@@ -73,6 +73,8 @@
     "guardadoSub_other": "{{count}} reservas",
     "fixosEyebrow": "Gastos fixos",
     "fixosPctRenda": "{{pct}}% da renda",
+    "fixosPctRenda_mei": "{{pct}}% do faturamento",
+    "fixosPctRenda_empresa": "{{pct}}% do faturamento",
     "metasEyebrow": "Metas",
     "metasSub": "em andamento"
   },
