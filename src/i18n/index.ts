@@ -31,6 +31,7 @@ import ptMisc from "./locales/pt/misc.json";
 import ptImportConta from "./locales/pt/import-conta.json";
 import ptImportFatura from "./locales/pt/import-fatura.json";
 import ptImportExtrato from "./locales/pt/import-extrato.json";
+import ptImportInvestimentos from "./locales/pt/import-investimentos.json";
 import ptExtratosImportados from "./locales/pt/extratos-importados.json";
 import ptMercado from "./locales/pt/mercado.json";
 import ptCofre from "./locales/pt/cofre.json";
