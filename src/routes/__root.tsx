@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmDialogHost } from "@/components/ConfirmDialog";
 import { AuthProvider } from "@/lib/auth-context";
 import { AppLockProvider } from "@/lib/app-lock";
 import { ThemeProvider } from "@/lib/theme";
@@ -214,6 +215,7 @@ function RootComponent() {
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
       <Toaster position="top-center" />
+      <ConfirmDialogHost />
     </>
   );
 }

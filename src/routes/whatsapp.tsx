@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
@@ -376,7 +377,7 @@ function WhatsAppPage() {
 
   const [limpando, setLimpando] = useState(false);
   async function limparDuplicados() {
-    if (!confirm("Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?")) return;
+    if (!(await confirmAsync({ title: "Remover duplicados", description: "Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?", confirmText: "Manter o mais antigo" }))) return;
     setLimpando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -805,7 +806,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
 
   async function excluirGasto() {
     if (!msg.gasto_id) return;
-    if (!confirm("Tem certeza que deseja excluir este gasto? Essa ação também atualizará cartões, faturas, dashboard e relatórios.")) return;
+    if (!(await confirmAsync({ title: "Excluir gasto?", description: "Essa ação também atualizará cartões, faturas, dashboard e relatórios.", destructive: true, confirmText: "Excluir" }))) return;
     setBusy("delete-gasto");
     try {
       const { error: delErr } = await supabase.from("gastos").delete().eq("id", msg.gasto_id);
@@ -852,7 +853,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
   }
 
   async function excluirLog() {
-    if (!confirm("Excluir apenas o registro desta mensagem? O gasto não será removido.")) return;
+    if (!(await confirmAsync({ title: "Excluir registro?", description: "Excluir apenas o registro desta mensagem. O gasto não será removido.", destructive: true, confirmText: "Excluir registro" }))) return;
     setBusy("delete-log");
     try {
       const { error } = await supabase.from("whatsapp_messages").delete().eq("id", msg.id);

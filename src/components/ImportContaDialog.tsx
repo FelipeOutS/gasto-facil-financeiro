@@ -42,6 +42,7 @@ import {
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { parseBRLInput, todayISO, formatBRL } from "@/lib/format";
+import { confirmAsync } from "@/components/ConfirmDialog";
 
 type ContaExtraida = {
   nome: string | null;
@@ -313,7 +314,7 @@ export function ImportContaDialog({
     await processar({ text: texto });
   }
 
-  function handleSalvar() {
+  async function handleSalvar() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) return toast.error(t("errors.needName"));
     if (!Number.isFinite(valor) || valor <= 0)
@@ -342,9 +343,10 @@ export function ImportContaDialog({
       beneficiario: beneficiario || undefined,
     });
     if (possivel) {
-      const ok = window.confirm(
-        t("dup.confirm", { name: possivel.nome, date: possivel.dataVencimento }),
-      );
+      const ok = await confirmAsync({
+        title: t("dup.confirm", { name: possivel.nome, date: possivel.dataVencimento }),
+        confirmText: t("dup.confirmYes", { defaultValue: "Salvar mesmo assim" }),
+      });
       if (!ok) return;
     }
 

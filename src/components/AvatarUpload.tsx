@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
+import { confirmAsync } from "@/components/ConfirmDialog";
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -59,7 +60,7 @@ export function AvatarUpload() {
 
   async function handleRemove() {
     if (!user || !profile?.avatar_url) return;
-    if (!confirm("Remover sua foto de perfil?")) return;
+    if (!(await confirmAsync({ title: "Remover sua foto de perfil?", destructive: true, confirmText: "Remover" }))) return;
     setBusy(true);
     try {
       const m = profile.avatar_url.match(/\/avatars\/(.+?)(\?|$)/);

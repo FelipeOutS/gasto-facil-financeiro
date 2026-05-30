@@ -78,6 +78,7 @@ import {
 } from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
 import { extractDomain } from "@/lib/brand/resolver";
+import { confirmAsync } from "@/components/ConfirmDialog";
 import {
   getQuickUnlock,
   disableQuickUnlock,
@@ -2339,7 +2340,7 @@ function QuickUnlockSettingsView({
   }
 
   async function handleRemovePin() {
-    if (!window.confirm("Remover o PIN da sua conta? Você precisará da senha mestra para entrar em todos os dispositivos.")) return;
+    if (!(await confirmAsync({ title: "Remover o PIN da sua conta?", description: "Você precisará da senha mestra para entrar em todos os dispositivos.", destructive: true, confirmText: "Remover PIN" }))) return;
     setBusy(true);
     try {
       await disableServerPin();
@@ -2353,8 +2354,8 @@ function QuickUnlockSettingsView({
     }
   }
 
-  function handleRemoveBio() {
-    if (!window.confirm("Remover a biometria deste dispositivo?")) return;
+  async function handleRemoveBio() {
+    if (!(await confirmAsync({ title: "Remover a biometria deste dispositivo?", destructive: true, confirmText: "Remover biometria" }))) return;
     disableQuickUnlock(userId);
     refresh();
     toast.success("Biometria removida deste dispositivo");
