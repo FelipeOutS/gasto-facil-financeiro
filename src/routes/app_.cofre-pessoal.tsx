@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { Button } from "@/components/ui/button";
@@ -154,7 +155,7 @@ function CofrePessoalPage() {
         else setBootstrapState("ready");
       })
       .catch((e) => {
-        toast.error(tCofre("errors.loadFailed"));
+        toast.error(i18n.t("cofre:errors.loadFailed"));
         setBootstrapState("needs_setup");
       });
   }, [user, isUnlocked]);
@@ -422,7 +423,7 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSett
       toast.success("Cofre criado e desbloqueado");
       onReady(row);
     } catch (e) {
-      toast.error(tCofre("errors.createFailed"));
+      toast.error(i18n.t("cofre:errors.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -594,7 +595,7 @@ function UnlockView({
       onUnlocked();
     } catch (e) {
       setPin("");
-      toast.error(tCofre("errors.unlockFailed"));
+      toast.error(i18n.t("cofre:errors.unlockFailed"));
       // Recarrega status para refletir bloqueio
       try {
         const s = await getServerPinStatus(userId);
@@ -614,7 +615,7 @@ function UnlockView({
       setMasterKey(key);
       onUnlocked();
     } catch (e) {
-      toast.error(tCofre("errors.biometricFailed"));
+      toast.error(i18n.t("cofre:errors.biometricFailed"));
     } finally {
       setBusy(false);
     }
@@ -919,7 +920,7 @@ function VaultMain({
       setEntries(rows);
       void reloadDecryptCache(rows);
     } catch (e) {
-      toast.error(tCofre("errors.listAccessFailed"));
+      toast.error(i18n.t("cofre:errors.listAccessFailed"));
     } finally {
       setLoading(false);
     }
@@ -1494,7 +1495,7 @@ function scheduleClipboardClear(originalText: string) {
 async function copyWithToast(text: string, label: string, sensitive = false) {
   const ok = await copyToClipboard(text);
   if (!ok) {
-    toast.error(tCofre("errors.copyFailed"));
+    toast.error(i18n.t("cofre:errors.copyFailed"));
     return false;
   }
   if (sensitive) {
@@ -1696,7 +1697,7 @@ function DetailView({
       toast.success("Acesso excluído");
       onDeleted();
     } catch (e) {
-      toast.error(tCofre("errors.deleteFailed"));
+      toast.error(i18n.t("cofre:errors.deleteFailed"));
     } finally {
       setDeleting(false);
     }
@@ -1905,7 +1906,7 @@ function EntryForm({
         secret: { username, password, notes },
       });
     } catch (e) {
-      toast.error(tCofre("errors.saveFailed"));
+      toast.error(i18n.t("cofre:errors.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -2175,7 +2176,7 @@ function ChangeMasterView({
       const fresh = await fetchVaultSettings(userId);
       if (fresh) onChanged(fresh);
     } catch (e) {
-      toast.error(tCofre("errors.masterPasswordFailed"));
+      toast.error(i18n.t("cofre:errors.masterPasswordFailed"));
     } finally {
       setBusy(false);
     }
@@ -2315,7 +2316,7 @@ function BackupView({
       URL.revokeObjectURL(url);
       toast.success("Backup exportado");
     } catch (e) {
-      toast.error(tCofre("errors.exportFailed"));
+      toast.error(i18n.t("cofre:errors.exportFailed"));
     } finally {
       setBusy(false);
     }
@@ -2465,7 +2466,7 @@ function QuickUnlockSettingsView({
       resetPanel();
       refresh();
     } catch (e) {
-      toast.error(tCofre("errors.quickUnlockFailed"));
+      toast.error(i18n.t("cofre:errors.quickUnlockFailed"));
     } finally {
       setBusy(false);
     }
@@ -2478,7 +2479,7 @@ function QuickUnlockSettingsView({
       toast.success("Biometria ativada com sucesso neste dispositivo.");
       refresh();
     } catch (e) {
-      toast.error(tCofre("errors.biometricFailed"));
+      toast.error(i18n.t("cofre:errors.biometricFailed"));
     } finally {
       setBusy(false);
     }
@@ -2493,7 +2494,7 @@ function QuickUnlockSettingsView({
       refresh();
       toast.success("PIN removido da conta");
     } catch (e) {
-      toast.error(tCofre("errors.removePinFailed"));
+      toast.error(i18n.t("cofre:errors.removePinFailed"));
     } finally {
       setBusy(false);
     }
@@ -2841,7 +2842,7 @@ function HealthView({
       );
       setReport(rep);
     } catch (e) {
-      toast.error(tCofre("errors.analysisFailed"));
+      toast.error(i18n.t("cofre:errors.analysisFailed"));
     } finally {
       setScanning(false);
       setProgress(null);
@@ -2855,7 +2856,7 @@ function HealthView({
       const dec = await decryptOne(masterKey, row);
       onOpenEntry(dec);
     } catch (e) {
-      toast.error(tCofre("errors.openAccessFailed"));
+      toast.error(i18n.t("cofre:errors.openAccessFailed"));
     }
   }
 
