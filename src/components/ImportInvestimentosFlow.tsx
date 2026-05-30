@@ -280,14 +280,14 @@ export function ImportInvestimentosFlow({
       } else if (ext === "csv" || ext === "xlsx" || ext === "xls") {
         const { colunas, linhas } = await parsePlanilha(arquivo);
         if (linhas.length === 0) {
-          setErro("Esse arquivo parece estar vazio ou em um formato não suportado.");
+          setErro(ti("upload.errorEmptyFile"));
           setStep("upload");
           return;
         }
         payload.colunas = colunas;
         payload.linhas = linhas;
       } else {
-        setErro("Formato não suportado. Envie PDF, CSV, XLSX ou XLS.");
+        setErro(ti("upload.errorUnsupported"));
         setStep("upload");
         return;
       }
@@ -309,7 +309,7 @@ export function ImportInvestimentosFlow({
           setStep("upload");
           return;
         }
-        setErro(data?.error || "Não conseguimos ler este arquivo.");
+        setErro(data?.error || ti("upload.errorCantRead"));
         setStep("upload");
         return;
       }
@@ -323,10 +323,7 @@ export function ImportInvestimentosFlow({
         : [];
 
       if (posBrutas.length === 0 && movBrutas.length === 0) {
-        setErro(
-          data?.observacao ||
-            "Conseguimos abrir o arquivo, mas não identificamos investimentos nem movimentações automaticamente. Você pode tentar outro arquivo ou cadastrar manualmente.",
-        );
+        setErro(data?.observacao || ti("upload.errorNoItems"));
         setStep("upload");
         return;
       }
@@ -337,7 +334,7 @@ export function ImportInvestimentosFlow({
       setMovs(movEdit);
 
       if (posBrutas.length === 0 && movBrutas.length > 0) {
-        setAviso("Encontramos movimentações no arquivo. Revise os dados antes de salvar.");
+        setAviso(ti("preview.aviso.movsOnly"));
       } else {
         const naoProntos =
           posEdit.filter(
@@ -345,15 +342,13 @@ export function ImportInvestimentosFlow({
           ).length +
           movEdit.filter((m) => m.confianca === "baixa" || !m.data || !m.valorTotal).length;
         if (naoProntos > 0) {
-          setAviso(
-            "O arquivo foi lido, mas alguns dados precisam de revisão antes de importar.",
-          );
+          setAviso(ti("preview.aviso.needsReview"));
         }
       }
       setStep("preview");
     } catch (e) {
       console.error(e);
-      setErro(e instanceof Error ? e.message : "Erro ao processar o arquivo.");
+      setErro(e instanceof Error ? e.message : ti("upload.errorGeneric"));
       setStep("upload");
     }
   }
@@ -624,8 +619,8 @@ export function ImportInvestimentosFlow({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{info.titulo}</DialogTitle>
-          <DialogDescription>{info.descricao}</DialogDescription>
+          <DialogTitle>{ti(`origem.${origem}.titulo`)}</DialogTitle>
+          <DialogDescription>{ti(`origem.${origem}.descricao`)}</DialogDescription>
         </DialogHeader>
 
         {step === "upload" && (
@@ -646,10 +641,10 @@ export function ImportInvestimentosFlow({
                 )}
               </div>
               <div className="font-medium text-sm">
-                Clique para escolher um arquivo ou arraste aqui
+                {ti("upload.dropzone")}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Formatos aceitos: {info.aceita.replace(/\./g, "").toUpperCase()}
+                {ti("upload.supportedFormats", { formats: info.aceita.replace(/\./g, "").toUpperCase() })}
               </div>
               <input
                 ref={inputRef}
@@ -668,7 +663,7 @@ export function ImportInvestimentosFlow({
 
             {origem === "csv" && (
               <Button variant="outline" size="sm" onClick={baixarModelo} className="w-full">
-                <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar modelo de planilha
+                <Download className="h-3.5 w-3.5 mr-1.5" /> {ti("upload.downloadTemplate")}
               </Button>
             )}
 
@@ -682,8 +677,7 @@ export function ImportInvestimentosFlow({
             <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <span>
-                Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação
-                usa apenas arquivos enviados por você.
+                {ti("upload.privacy")}
               </span>
             </div>
           </div>
@@ -692,9 +686,9 @@ export function ImportInvestimentosFlow({
         {step === "processando" && (
           <div className="py-10 text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-3" />
-            <div className="text-sm font-medium">Lendo o arquivo…</div>
+            <div className="text-sm font-medium">{ti("processing.title")}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Isso pode levar alguns segundos.
+              {ti("processing.description")}
             </div>
           </div>
         )}
@@ -703,25 +697,25 @@ export function ImportInvestimentosFlow({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="secondary">
-                Posições: {posicoes.length} · Movimentações: {movs.length}
+                {ti("preview.badges.summary", { positions: posicoes.length, movements: movs.length })}
               </Badge>
               {posProntos + movProntas > 0 && (
                 <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
-                  Prontos: {posProntos + movProntas}
+                  {ti("preview.badges.ready", { count: posProntos + movProntas })}
                 </Badge>
               )}
               {posRevisar + movRevisar > 0 && (
                 <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/15">
-                  Revisar: {posRevisar + movRevisar}
+                  {ti("preview.badges.review", { count: posRevisar + movRevisar })}
                 </Badge>
               )}
               {posDup + movDup > 0 && (
                 <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-400 hover:bg-orange-500/15">
-                  Duplicados: {posDup + movDup}
+                  {ti("preview.badges.duplicated", { count: posDup + movDup })}
                 </Badge>
               )}
               {totalIgnorados > 0 && (
-                <Badge variant="outline">Ignorados: {totalIgnorados}</Badge>
+                <Badge variant="outline">{ti("preview.badges.ignored", { count: totalIgnorados })}</Badge>
               )}
             </div>
 
@@ -736,7 +730,7 @@ export function ImportInvestimentosFlow({
               <section className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-primary" />
-                  Investimentos encontrados
+                  {ti("preview.sections.positions")}
                   <span className="text-xs text-muted-foreground font-normal">
                     ({posicoes.length})
                   </span>
@@ -761,7 +755,7 @@ export function ImportInvestimentosFlow({
               <section className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <ArrowDownUp className="h-4 w-4 text-primary" />
-                  Movimentações encontradas
+                  {ti("preview.sections.movements")}
                   <span className="text-xs text-muted-foreground font-normal">
                     ({movs.length})
                   </span>
@@ -787,7 +781,7 @@ export function ImportInvestimentosFlow({
         {step === "salvando" && (
           <div className="py-10 text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-3" />
-            <div className="text-sm font-medium">Salvando seus investimentos…</div>
+            <div className="text-sm font-medium">{ti("saving.title")}</div>
           </div>
         )}
 
@@ -796,11 +790,10 @@ export function ImportInvestimentosFlow({
             <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/15 grid place-items-center">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
-            <div className="text-base font-semibold">Importação concluída</div>
+            <div className="text-base font-semibold">{ti("done.title")}</div>
             <div className="text-sm text-muted-foreground">
-              {resumo.posImportadas} posição(ões), {resumo.movImportadas} movimentação(ões),{" "}
-              {resumo.ignorados} ignorado(s)
-              {resumo.erros > 0 ? `, ${resumo.erros} com erro` : ""}.
+              {ti("done.summary", { positions: resumo.posImportadas, movements: resumo.movImportadas, ignored: resumo.ignorados })}
+              {resumo.erros > 0 ? ti("done.summaryWithErrors", { errors: resumo.erros }) : ""}.
             </div>
           </div>
         )}
@@ -809,7 +802,7 @@ export function ImportInvestimentosFlow({
           {step === "preview" && (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {ti("actions.cancel")}
               </Button>
               <Button
                 variant="outline"
@@ -820,13 +813,13 @@ export function ImportInvestimentosFlow({
                   setStep("upload");
                 }}
               >
-                Importar outro arquivo
+                {ti("actions.importAnother")}
               </Button>
               <Button
                 onClick={confirmar}
                 disabled={posProntos + posDup + movProntas + movDup === 0}
               >
-                Confirmar importação
+                {ti("actions.confirm")}
               </Button>
             </>
           )}
@@ -842,14 +835,14 @@ export function ImportInvestimentosFlow({
                   setStep("upload");
                 }}
               >
-                Importar outro arquivo
+                {ti("actions.importAnother")}
               </Button>
-              <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+              <Button onClick={() => onOpenChange(false)}>{ti("actions.close")}</Button>
             </>
           )}
           {(step === "upload" || step === "processando") && (
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fechar
+              {ti("actions.close")}
             </Button>
           )}
         </DialogFooter>
@@ -872,21 +865,22 @@ function PosicaoCard({
   item: PosicaoEdit;
   onChange: (patch: Partial<PosicaoEdit>) => void;
 }) {
+  const { t: ti } = useTranslation("import-investimentos");
   const [editando, setEditando] = useState(false);
   const status = item._ignorado
-    ? { label: "Ignorado", cls: "bg-muted text-muted-foreground" }
+    ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
     ? {
-        label: "Possível duplicado",
+        label: ti("status.duplicated"),
         cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
       }
     : item.confianca === "baixa" || (!item.valorAplicado && !item.valorAtual)
     ? {
-        label: "Precisa revisar",
+        label: ti("status.needsReview"),
         cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
       }
     : {
-        label: "Pronto",
+        label: ti("status.ready"),
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
@@ -915,12 +909,12 @@ function PosicaoCard({
             </span>
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {item.quantidade != null && <span>Qtd: {item.quantidade}</span>}
-            {item.precoMedio != null && <span>PM: {formatBRL(item.precoMedio)}</span>}
+            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
+            {item.precoMedio != null && <span>{ti("fields.avgPrice")}: {formatBRL(item.precoMedio)}</span>}
             {item.valorAplicado != null && (
-              <span>Aplicado: {formatBRL(item.valorAplicado)}</span>
+              <span>{ti("fields.applied")}: {formatBRL(item.valorAplicado)}</span>
             )}
-            {item.valorAtual != null && <span>Atual: {formatBRL(item.valorAtual)}</span>}
+            {item.valorAtual != null && <span>{ti("fields.current")}: {formatBRL(item.valorAtual)}</span>}
             {item.instituicao && <span>{item.instituicao}</span>}
             {item.dataInicio && <span>{item.dataInicio}</span>}
           </div>
@@ -931,7 +925,7 @@ function PosicaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => setEditando((v) => !v)}
-            title="Editar"
+            title={ti("actions.edit")}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -940,7 +934,7 @@ function PosicaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => onChange({ _ignorado: !item._ignorado })}
-            title={item._ignorado ? "Restaurar" : "Ignorar"}
+            title={item._ignorado ? ti("actions.restore") : ti("actions.ignore")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -949,19 +943,19 @@ function PosicaoCard({
 
       {editando && (
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <Field label="Nome">
+          <Field label={ti("fields.name")}>
             <Input
               value={item.nome ?? ""}
               onChange={(e) => onChange({ nome: e.target.value })}
             />
           </Field>
-          <Field label="Ticker">
+          <Field label={ti("fields.ticker")}>
             <Input
               value={item.ticker ?? ""}
               onChange={(e) => onChange({ ticker: e.target.value.toUpperCase() })}
             />
           </Field>
-          <Field label="Tipo">
+          <Field label={ti("fields.type")}>
             <Select
               value={item.tipo}
               onValueChange={(v) => onChange({ tipo: v as TipoInvestimento })}
@@ -978,13 +972,13 @@ function PosicaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Instituição">
+          <Field label={ti("fields.institution")}>
             <Input
               value={item.instituicao ?? ""}
               onChange={(e) => onChange({ instituicao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade">
+          <Field label={ti("fields.quantity")}>
             <Input
               type="number"
               value={item.quantidade ?? ""}
@@ -993,7 +987,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Preço médio">
+          <Field label={ti("fields.avgPriceLabel")}>
             <Input
               type="number"
               value={item.precoMedio ?? ""}
@@ -1002,7 +996,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Valor aplicado">
+          <Field label={ti("fields.appliedValue")}>
             <Input
               type="number"
               value={item.valorAplicado ?? ""}
@@ -1013,7 +1007,7 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Valor atual">
+          <Field label={ti("fields.currentValue")}>
             <Input
               type="number"
               value={item.valorAtual ?? ""}
@@ -1024,14 +1018,14 @@ function PosicaoCard({
               }
             />
           </Field>
-          <Field label="Data">
+          <Field label={ti("fields.date")}>
             <Input
               type="date"
               value={item.dataInicio ?? ""}
               onChange={(e) => onChange({ dataInicio: e.target.value || null })}
             />
           </Field>
-          <Field label="Vencimento">
+          <Field label={ti("fields.maturity")}>
             <Input
               type="date"
               value={item.dataVencimento ?? ""}
@@ -1044,6 +1038,7 @@ function PosicaoCard({
   );
 }
 
+
 function MovimentacaoCard({
   item,
   onChange,
@@ -1051,22 +1046,23 @@ function MovimentacaoCard({
   item: MovimentacaoEdit;
   onChange: (patch: Partial<MovimentacaoEdit>) => void;
 }) {
+  const { t: ti } = useTranslation("import-investimentos");
   const [editando, setEditando] = useState(false);
   const precisaRevisar = item.confianca === "baixa" || !item.data || !item.valorTotal;
   const status = item._ignorado
-    ? { label: "Ignorado", cls: "bg-muted text-muted-foreground" }
+    ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
     ? {
-        label: "Possível duplicado",
+        label: ti("status.duplicated"),
         cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
       }
     : precisaRevisar
     ? {
-        label: "Precisa revisar",
+        label: ti("status.needsReview"),
         cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
       }
     : {
-        label: "Pronto",
+        label: ti("status.ready"),
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
@@ -1103,12 +1099,12 @@ function MovimentacaoCard({
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {item.data && <span>{item.data}</span>}
-            {item.quantidade != null && <span>Qtd: {item.quantidade}</span>}
+            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
             {item.valorUnitario != null && (
-              <span>Unit.: {formatBRL(item.valorUnitario)}</span>
+              <span>{ti("fields.unit")}: {formatBRL(item.valorUnitario)}</span>
             )}
             {item.valorTotal != null && (
-              <span>Total: {formatBRL(item.valorTotal)}</span>
+              <span>{ti("fields.total")}: {formatBRL(item.valorTotal)}</span>
             )}
             {item.instituicao && <span>{item.instituicao}</span>}
           </div>
@@ -1119,7 +1115,7 @@ function MovimentacaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => setEditando((v) => !v)}
-            title="Editar"
+            title={ti("actions.edit")}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -1128,7 +1124,7 @@ function MovimentacaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => onChange({ _ignorado: !item._ignorado })}
-            title={item._ignorado ? "Restaurar" : "Ignorar"}
+            title={item._ignorado ? ti("actions.restore") : ti("actions.ignore")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -1137,7 +1133,7 @@ function MovimentacaoCard({
 
       {editando && (
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <Field label="Tipo da movimentação">
+          <Field label={ti("fields.movementType")}>
             <Select
               value={item.tipo}
               onValueChange={(v) => onChange({ tipo: v as TipoMovimentacao })}
@@ -1154,26 +1150,26 @@ function MovimentacaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Data">
+          <Field label={ti("fields.date")}>
             <Input
               type="date"
               value={item.data ?? ""}
               onChange={(e) => onChange({ data: e.target.value || null })}
             />
           </Field>
-          <Field label="Nome do ativo">
+          <Field label={ti("fields.assetName")}>
             <Input
               value={item.nome ?? ""}
               onChange={(e) => onChange({ nome: e.target.value })}
             />
           </Field>
-          <Field label="Ticker">
+          <Field label={ti("fields.ticker")}>
             <Input
               value={item.ticker ?? ""}
               onChange={(e) => onChange({ ticker: e.target.value.toUpperCase() })}
             />
           </Field>
-          <Field label="Tipo do ativo">
+          <Field label={ti("fields.assetType")}>
             <Select
               value={item.tipoAtivo}
               onValueChange={(v) => onChange({ tipoAtivo: v as TipoInvestimento })}
@@ -1190,13 +1186,13 @@ function MovimentacaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Instituição">
+          <Field label={ti("fields.institution")}>
             <Input
               value={item.instituicao ?? ""}
               onChange={(e) => onChange({ instituicao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade">
+          <Field label={ti("fields.quantity")}>
             <Input
               type="number"
               value={item.quantidade ?? ""}
@@ -1205,7 +1201,7 @@ function MovimentacaoCard({
               }
             />
           </Field>
-          <Field label="Valor unitário">
+          <Field label={ti("fields.unitValue")}>
             <Input
               type="number"
               value={item.valorUnitario ?? ""}
@@ -1214,7 +1210,7 @@ function MovimentacaoCard({
               }
             />
           </Field>
-          <Field label="Valor total">
+          <Field label={ti("fields.totalValue")}>
             <Input
               type="number"
               value={item.valorTotal ?? ""}
