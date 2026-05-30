@@ -104,7 +104,7 @@ export function UpgradeCardsList({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 text-sm font-semibold leading-tight">
                     <span className="truncate">
-                      {tNav(`items.${item.labelKey}`)}
+                      {item.label}
                     </span>
                     <Lock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                   </span>
