@@ -53,7 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/renda", labelKey: "renda", descKey: "renda", icon: ArrowUp },
       { to: "/contas-a-pagar", labelKey: "contasPagar", descKey: "contasPagar", icon: CalendarClock },
       { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
-      { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat, feature: "assinaturas_recorrencias" },
+      { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat },
       { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart, feature: "orcamento" },
       { to: "/mercado", labelKey: "mercado", descKey: "mercado", icon: ShoppingCart },
     ],
@@ -64,7 +64,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/cartoes", labelKey: "cartoes", descKey: "cartoes", icon: CreditCard, feature: "cartoes" },
       { to: "/investimentos", labelKey: "investimentos", descKey: "investimentos", icon: TrendingUp, feature: "investimentos" },
-      { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target, feature: "metas_visuais" },
+      { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target },
       { to: "/guardado", labelKey: "guardado", descKey: "guardado", icon: Wallet },
     ],
   },
