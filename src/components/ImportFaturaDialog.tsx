@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import {
   ImageIcon,
   FileSpreadsheet,
