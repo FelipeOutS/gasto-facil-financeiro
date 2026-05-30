@@ -65,6 +65,7 @@ export function InvestimentoMovimentacaoForm({
   hideHeader,
   hideFooter,
 }: InvestimentoMovimentacaoFormProps) {
+  const { t: tr } = useTranslation("investimentos");
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoMovimentacao>("compra");
   const [data, setData] = useState(todayISO());
