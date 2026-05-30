@@ -215,6 +215,7 @@ function RootComponent() {
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
       <Toaster position="top-center" />
+      <ConfirmDialogHost />
     </>
   );
 }
