@@ -969,6 +969,13 @@ export function ImportContaDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </Dialog>
   );
 }
