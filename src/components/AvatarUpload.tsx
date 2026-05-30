@@ -60,7 +60,7 @@ export function AvatarUpload() {
 
   async function handleRemove() {
     if (!user || !profile?.avatar_url) return;
-    if (!confirm("Remover sua foto de perfil?")) return;
+    if (!(await confirmAsync({ title: "Remover sua foto de perfil?", destructive: true, confirmText: "Remover" }))) return;
     setBusy(true);
     try {
       const m = profile.avatar_url.match(/\/avatars\/(.+?)(\?|$)/);
