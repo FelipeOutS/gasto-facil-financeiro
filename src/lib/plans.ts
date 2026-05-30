@@ -107,6 +107,8 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   contas_conectadas: "pessoal_premium",
   gasto_ai: "pessoal_premium",
   empresa_inteligente: "mei_essencial",
+  // Etapa 14 — Cofre Pessoal vira recurso premium.
+  cofre_pessoal: "pessoal_premium",
 };
 
 /**
