@@ -71,6 +71,7 @@ import enImportInvestimentos from "./locales/en/import-investimentos.json";
 import enExtratosImportados from "./locales/en/extratos-importados.json";
 import enMercado from "./locales/en/mercado.json";
 import enCofre from "./locales/en/cofre.json";
+import enInvestimentos from "./locales/en/investimentos.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
