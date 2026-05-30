@@ -343,9 +343,10 @@ export function ImportContaDialog({
       beneficiario: beneficiario || undefined,
     });
     if (possivel) {
-      const ok = window.confirm(
-        t("dup.confirm", { name: possivel.nome, date: possivel.dataVencimento }),
-      );
+      const ok = await confirmAsync({
+        title: t("dup.confirm", { name: possivel.nome, date: possivel.dataVencimento }),
+        confirmText: t("dup.confirmYes", { defaultValue: "Salvar mesmo assim" }),
+      });
       if (!ok) return;
     }
 
