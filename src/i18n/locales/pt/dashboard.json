@@ -595,6 +595,10 @@
   "upgradeCards": {
     "title": "Desbloqueie mais recursos",
     "unlockIn": "Disponível no plano {{plan}}",
-    "seeAll": "Ver todos os planos"
+    "seeAll": "Ver todos os planos",
+    "subFeatures": {
+      "metasVisuais": "Metas com visual personalizado",
+      "assinaturasAuto": "Automações de assinaturas"
+    }
   }
 }

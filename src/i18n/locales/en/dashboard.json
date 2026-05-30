@@ -330,10 +330,22 @@
   },
   "smartLimite": {
     "modes": {
-      "variaveis": { "label": "Only variable spending", "desc": "Ignores fixed bills and already-paid invoices" },
-      "hoje": { "label": "From today on", "desc": "How much you can still spend until month end" },
-      "mes": { "label": "Whole month", "desc": "All eligible spending of the month" },
-      "fluxo": { "label": "Cash flow", "desc": "Everything that came in and went out this month" }
+      "variaveis": {
+        "label": "Only variable spending",
+        "desc": "Ignores fixed bills and already-paid invoices"
+      },
+      "hoje": {
+        "label": "From today on",
+        "desc": "How much you can still spend until month end"
+      },
+      "mes": {
+        "label": "Whole month",
+        "desc": "All eligible spending of the month"
+      },
+      "fluxo": {
+        "label": "Cash flow",
+        "desc": "Everything that came in and went out this month"
+      }
     },
     "title": "Your smart limit",
     "byDay": "/ day",
@@ -489,8 +501,14 @@
     "subtitle": "Estimate the value in BRL before completing the purchase.",
     "currency": "Currency",
     "valueIn": "Amount in {{moeda}}",
-    "currencyNames": { "USD": "US dollars", "EUR": "euros" },
-    "placeholder": { "USD": "Ex: 19.90", "EUR": "Ex: 25.00" },
+    "currencyNames": {
+      "USD": "US dollars",
+      "EUR": "euros"
+    },
+    "placeholder": {
+      "USD": "Ex: 19.90",
+      "EUR": "Ex: 25.00"
+    },
     "descLabel": "Description (optional)",
     "descPlaceholder": "E.g. Subscription, hosting…",
     "cardLabel": "Card (optional)",
@@ -577,6 +595,10 @@
   "upgradeCards": {
     "title": "Unlock more features",
     "unlockIn": "Available on the {{plan}} plan",
-    "seeAll": "See all plans"
+    "seeAll": "See all plans",
+    "subFeatures": {
+      "metasVisuais": "Goals with custom visuals",
+      "assinaturasAuto": "Subscription automations"
+    }
   }
 }
