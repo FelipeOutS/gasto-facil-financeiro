@@ -604,7 +604,9 @@
     "seeAll": "Ver todos os planos",
     "subFeatures": {
       "metasVisuais": "Metas com visual personalizado",
-      "assinaturasAuto": "Automações de assinaturas"
+      "assinaturasAuto": "Automações de assinaturas",
+      "mercadoAvancado": "Mercado Inteligente completo",
+      "mercadoImportarCupom": "Importação de cupom/QR Code"
     }
   }
 }
