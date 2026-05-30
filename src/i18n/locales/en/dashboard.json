@@ -220,6 +220,13 @@
     "subtitle": "Log expenses, income and check balances by sending messages — directly on your WhatsApp. No need to open the app.",
     "dispensar": "Dismiss notice"
   },
+  "trialBanner": {
+    "title": "Your free trial is ending soon",
+    "subtitle": "{{days}} days left in your trial. Choose a plan to keep using Gasto Inteligente without interruptions.",
+    "expiresOn": "Expires on {{date}}.",
+    "cta": "View plans",
+    "remindLater": "Remind me later"
+  },
   "connectedBanner": {
     "vendoConta": "You are viewing the account of",
     "voltar": "Back to my account",
