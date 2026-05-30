@@ -143,6 +143,9 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
 
   // Empresa Inteligente (consulta de CNPJ e Minha Empresa): MEI e Empresa
   empresa_inteligente: ["mei_essencial", "mei_inteligente", "empresa"],
+
+  // Etapa 14 — Cofre Pessoal: planos pagos exceto Controle Simples.
+  cofre_pessoal: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
