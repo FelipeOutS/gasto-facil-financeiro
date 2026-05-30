@@ -13,7 +13,7 @@ import { isAdminMasterEmail } from "@/lib/plans";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { UserAvatar } from "@/components/UserAvatar";
-import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
+import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSidebarCollapsed, setSidebarCollapsed } from "@/lib/sidebar-collapsed";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -56,8 +56,13 @@ export function DesktopSidebar() {
   const collapsed = useSidebarCollapsed();
 
   const groups = useMemo(
-    () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
-    [isAdminMaster],
+    () =>
+      filterVisibleGroups(
+        NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
+        can,
+        isAdminMaster,
+      ),
+    [isAdminMaster, can],
   );
 
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
