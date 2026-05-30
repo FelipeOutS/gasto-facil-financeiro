@@ -175,16 +175,25 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // este recurso específico. Não renderiza o conteúdo da rota; mostra o
   // modal padrão de bloqueio premium (mesmo visual de Investimentos).
   if (premiumRule && !plan.loading && !rolesLoading && !featureAllowed) {
+    const i18nKey = routeLockI18nKey(premiumRule.feature);
+    const lockTitle = i18nKey
+      ? t(`premium.routeLocks.${i18nKey}.title`, { defaultValue: premiumRule.title })
+      : premiumRule.title;
+    const lockDescription = i18nKey
+      ? t(`premium.routeLocks.${i18nKey}.description`, {
+          defaultValue: premiumDescription(premiumRule),
+        })
+      : premiumDescription(premiumRule);
     return (
       <>
-        <BrandLoader message={premiumRule.title} className="opacity-70" />
+        <BrandLoader message={lockTitle} className="opacity-70" />
         <PremiumLockModal
           open
           onOpenChange={(v) => {
             if (!v) void navigate({ to: "/meu-plano" });
           }}
-          title={premiumRule.title}
-          description={premiumDescription(premiumRule)}
+          title={lockTitle}
+          description={lockDescription}
           feature={premiumRule.feature}
           showContinue={false}
         />
