@@ -575,6 +575,30 @@ export const TIPO_IMPORTACAO_LABEL: Record<string, string> = {
   manual: "Manual",
 };
 
+export function getTipoImportacaoLabel(tipo: string, t?: TFunc): string {
+  const fallback = TIPO_IMPORTACAO_LABEL[tipo] ?? tipo;
+  if (!t) return fallback;
+  const key = `investimentos:types.importSource.${tipo}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : fallback;
+}
+
+const RENT_TIPOS_FALLBACK: Record<string, string> = {
+  cdi: "% do CDI",
+  ipca: "IPCA +",
+  prefixado: "Prefixado",
+  selic: "Selic",
+  outro: "Outro",
+};
+
+export function getRentabilidadeTipoLabel(id: string, t?: TFunc): string {
+  const fallback = RENT_TIPOS_FALLBACK[id] ?? id;
+  if (!t) return fallback;
+  const key = `investimentos:types.rentability.${id}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : fallback;
+}
+
 // ===== Atualização de valores =====
 
 export type AtualizarValorPayload = {
