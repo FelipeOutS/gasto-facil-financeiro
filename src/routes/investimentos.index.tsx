@@ -58,7 +58,7 @@ import {
   TIPOS_INVESTIMENTO,
   TIPOS_MOVIMENTACAO,
   TIPOS_RENDIMENTO,
-  TIPO_IMPORTACAO_LABEL,
+  getTipoImportacaoLabel,
   type Ativo,
   type Movimentacao,
   type Rendimento,
