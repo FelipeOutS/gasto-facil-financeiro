@@ -23,9 +23,10 @@ import {
   listarImportacoes,
   excluirImportacaoSomenteHistorico,
   excluirImportacaoComDados,
-  TIPO_IMPORTACAO_LABEL,
+  getTipoImportacaoLabel,
   type Importacao,
 } from "@/lib/investimentos";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/investimentos/importacoes")({
   head: () => ({ meta: [{ title: "Histórico de importações — Gasto Inteligente" }] }),
