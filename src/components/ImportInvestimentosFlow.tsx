@@ -401,7 +401,7 @@ export function ImportInvestimentosFlow({
     const movSalvar = movs.filter((m) => !m._ignorado && m.data && m.valorTotal);
 
     if (posSalvar.length === 0 && movSalvar.length === 0) {
-      toast.error("Nenhum item selecionado para importar.");
+      toast.error(ti("toast.noneSelected"));
       return;
     }
     setStep("salvando");
