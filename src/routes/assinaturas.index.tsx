@@ -542,9 +542,20 @@ function AssinaturasPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               {t("empty.hint")}
             </p>
-            <Button className="mt-4 min-h-11" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> {t("empty.cta")}
-            </Button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button className="min-h-11" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> {t("empty.cta")}
+              </Button>
+              {filtroStatus !== "todas" && (
+                <Button
+                  variant="outline"
+                  className="min-h-11"
+                  onClick={() => setFiltroStatus("todas")}
+                >
+                  {t("empty.viewAll")}
+                </Button>
+              )}
+            </div>
             {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
               <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
                 <p>{t("debug.found", { n: debugAnalise.gastos })}</p>
