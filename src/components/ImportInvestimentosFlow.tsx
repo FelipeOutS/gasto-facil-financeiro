@@ -1046,22 +1046,23 @@ function MovimentacaoCard({
   item: MovimentacaoEdit;
   onChange: (patch: Partial<MovimentacaoEdit>) => void;
 }) {
+  const { t: ti } = useTranslation("import-investimentos");
   const [editando, setEditando] = useState(false);
   const precisaRevisar = item.confianca === "baixa" || !item.data || !item.valorTotal;
   const status = item._ignorado
-    ? { label: "Ignorado", cls: "bg-muted text-muted-foreground" }
+    ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
     ? {
-        label: "Possível duplicado",
+        label: ti("status.duplicated"),
         cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
       }
     : precisaRevisar
     ? {
-        label: "Precisa revisar",
+        label: ti("status.needsReview"),
         cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
       }
     : {
-        label: "Pronto",
+        label: ti("status.ready"),
         cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
       };
 
@@ -1098,12 +1099,12 @@ function MovimentacaoCard({
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {item.data && <span>{item.data}</span>}
-            {item.quantidade != null && <span>Qtd: {item.quantidade}</span>}
+            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
             {item.valorUnitario != null && (
-              <span>Unit.: {formatBRL(item.valorUnitario)}</span>
+              <span>{ti("fields.unit")}: {formatBRL(item.valorUnitario)}</span>
             )}
             {item.valorTotal != null && (
-              <span>Total: {formatBRL(item.valorTotal)}</span>
+              <span>{ti("fields.total")}: {formatBRL(item.valorTotal)}</span>
             )}
             {item.instituicao && <span>{item.instituicao}</span>}
           </div>
@@ -1114,7 +1115,7 @@ function MovimentacaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => setEditando((v) => !v)}
-            title="Editar"
+            title={ti("actions.edit")}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -1123,7 +1124,7 @@ function MovimentacaoCard({
             size="icon"
             className="h-7 w-7"
             onClick={() => onChange({ _ignorado: !item._ignorado })}
-            title={item._ignorado ? "Restaurar" : "Ignorar"}
+            title={item._ignorado ? ti("actions.restore") : ti("actions.ignore")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -1132,7 +1133,7 @@ function MovimentacaoCard({
 
       {editando && (
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <Field label="Tipo da movimentação">
+          <Field label={ti("fields.movementType")}>
             <Select
               value={item.tipo}
               onValueChange={(v) => onChange({ tipo: v as TipoMovimentacao })}
@@ -1149,26 +1150,26 @@ function MovimentacaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Data">
+          <Field label={ti("fields.date")}>
             <Input
               type="date"
               value={item.data ?? ""}
               onChange={(e) => onChange({ data: e.target.value || null })}
             />
           </Field>
-          <Field label="Nome do ativo">
+          <Field label={ti("fields.assetName")}>
             <Input
               value={item.nome ?? ""}
               onChange={(e) => onChange({ nome: e.target.value })}
             />
           </Field>
-          <Field label="Ticker">
+          <Field label={ti("fields.ticker")}>
             <Input
               value={item.ticker ?? ""}
               onChange={(e) => onChange({ ticker: e.target.value.toUpperCase() })}
             />
           </Field>
-          <Field label="Tipo do ativo">
+          <Field label={ti("fields.assetType")}>
             <Select
               value={item.tipoAtivo}
               onValueChange={(v) => onChange({ tipoAtivo: v as TipoInvestimento })}
@@ -1185,13 +1186,13 @@ function MovimentacaoCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Instituição">
+          <Field label={ti("fields.institution")}>
             <Input
               value={item.instituicao ?? ""}
               onChange={(e) => onChange({ instituicao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade">
+          <Field label={ti("fields.quantity")}>
             <Input
               type="number"
               value={item.quantidade ?? ""}
@@ -1200,7 +1201,7 @@ function MovimentacaoCard({
               }
             />
           </Field>
-          <Field label="Valor unitário">
+          <Field label={ti("fields.unitValue")}>
             <Input
               type="number"
               value={item.valorUnitario ?? ""}
@@ -1209,7 +1210,7 @@ function MovimentacaoCard({
               }
             />
           </Field>
-          <Field label="Valor total">
+          <Field label={ti("fields.totalValue")}>
             <Input
               type="number"
               value={item.valorTotal ?? ""}
