@@ -12,6 +12,7 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { PremiumInlineLink } from "@/components/mercado/PremiumInlineLink";
 import { cn } from "@/lib/utils";
 import {
   setOrcamentoMercado,
