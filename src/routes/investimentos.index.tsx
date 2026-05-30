@@ -1006,8 +1006,8 @@ function AddAtivoDialog({
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_INVESTIMENTO.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  {TIPOS_INVESTIMENTO.map((it) => (
+                    <SelectItem key={it.id} value={it.id}>{getTipoInvestimentoLabel(it.id, tInv)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
