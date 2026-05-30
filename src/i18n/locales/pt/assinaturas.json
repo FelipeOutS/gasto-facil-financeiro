@@ -148,5 +148,10 @@
   "confirms": {
     "cancel": "Cancelar a recorrência \"{{name}}\"?",
     "delete": "Excluir a recorrência \"{{name}}\"? Essa ação não pode ser desfeita."
+  },
+  "premium": {
+    "title": "Reanálise inteligente de assinaturas",
+    "desc": "A detecção automática de assinaturas e recorrências está disponível nos planos premium.",
+    "reanalyzeLocked": "Reanálise inteligente disponível nos planos premium"
   }
 }
