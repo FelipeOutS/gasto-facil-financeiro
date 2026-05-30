@@ -790,11 +790,10 @@ export function ImportInvestimentosFlow({
             <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/15 grid place-items-center">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
-            <div className="text-base font-semibold">Importação concluída</div>
+            <div className="text-base font-semibold">{ti("done.title")}</div>
             <div className="text-sm text-muted-foreground">
-              {resumo.posImportadas} posição(ões), {resumo.movImportadas} movimentação(ões),{" "}
-              {resumo.ignorados} ignorado(s)
-              {resumo.erros > 0 ? `, ${resumo.erros} com erro` : ""}.
+              {ti("done.summary", { positions: resumo.posImportadas, movements: resumo.movImportadas, ignored: resumo.ignorados })}
+              {resumo.erros > 0 ? ti("done.summaryWithErrors", { errors: resumo.erros }) : ""}.
             </div>
           </div>
         )}
