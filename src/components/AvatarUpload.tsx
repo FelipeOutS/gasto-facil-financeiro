@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
+import { confirmAsync } from "@/components/ConfirmDialog";
 
 const MAX_SIZE = 3 * 1024 * 1024; // 3 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
