@@ -100,7 +100,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "conta",
     labelKey: "groups.conta",
     items: [
-      { to: "/app/cofre-pessoal", labelKey: "cofrePessoal", descKey: "cofrePessoal", icon: LockKeyhole },
+      { to: "/app/cofre-pessoal", labelKey: "cofrePessoal", descKey: "cofrePessoal", icon: LockKeyhole, feature: "cofre_pessoal" },
       { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
       { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
     ],
