@@ -565,12 +565,13 @@ export function ImportInvestimentosFlow({
     setStep("feito");
     if (posOk + movOk > 0) {
       toast.success(
-        `${posOk} posição(ões) e ${movOk} movimentação(ões) importadas.`,
+        ti("toast.partialSuccess", { positions: posOk, movements: movOk }),
       );
     }
-    if (falhas > 0) toast.error(`${falhas} item(ns) não puderam ser salvos.`);
+    if (falhas > 0) toast.error(ti("toast.partialErrors", { count: falhas }));
     onImported();
   }
+
 
   function baixarModelo() {
     const ws = XLSX.utils.aoa_to_sheet([
