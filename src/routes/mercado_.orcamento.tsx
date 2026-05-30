@@ -214,12 +214,15 @@ function OrcamentoPage() {
       <section className="mt-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold md:text-lg">{t("budget.history.title")}</h2>
-          <Link
+          <PremiumInlineLink
+            feature="mercado_avancado"
             to="/mercado/historico"
             className="text-[12px] font-semibold text-brand hover:underline"
+            modalTitle={t("premiumInline.avancado.title")}
+            modalDescription={t("premiumInline.avancado.description")}
           >
             {t("budget.history.seeAll")}
-          </Link>
+          </PremiumInlineLink>
         </div>
 
         {resumo.comprasDoMes.length === 0 ? (
