@@ -461,6 +461,13 @@ function Confirmar() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PremiumLockModal
+        open={premiumGate.state.open}
+        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        title={premiumGate.state.title}
+        description={premiumGate.state.description}
+        feature={premiumGate.state.feature ?? undefined}
+      />
     </MobileShell>
   );
 }
