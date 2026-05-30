@@ -806,7 +806,7 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
 
   async function excluirGasto() {
     if (!msg.gasto_id) return;
-    if (!confirm("Tem certeza que deseja excluir este gasto? Essa ação também atualizará cartões, faturas, dashboard e relatórios.")) return;
+    if (!(await confirmAsync({ title: "Excluir gasto?", description: "Essa ação também atualizará cartões, faturas, dashboard e relatórios.", destructive: true, confirmText: "Excluir" }))) return;
     setBusy("delete-gasto");
     try {
       const { error: delErr } = await supabase.from("gastos").delete().eq("id", msg.gasto_id);
