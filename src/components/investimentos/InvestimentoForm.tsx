@@ -21,6 +21,7 @@ import {
   atualizarAtivo,
   classeAtivo,
   getTipoInvestimentoLabel,
+  getRentabilidadeTipoLabel,
 } from "@/lib/investimentos";
 import { useTranslation } from "react-i18next";
 
