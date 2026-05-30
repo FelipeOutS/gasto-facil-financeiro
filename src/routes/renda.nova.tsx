@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Home, Plus } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ReceitaForm, type ReceitaFormPreset } from "@/components/renda/ReceitaForm";
+import { useAuth } from "@/lib/auth-context";
+import { type TipoCadastro } from "@/lib/profile-utils";
+import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import type { TipoReceita } from "@/lib/types";
 
 type NovaSearch = {
@@ -27,7 +31,12 @@ export const Route = createFileRoute("/renda/nova")({
 });
 
 function NovaReceitaPage() {
-  const { t } = useTranslation("renda");
+  const { t: tBase } = useTranslation("renda");
+  const { profile } = useAuth();
+  const t = useMemo(
+    () => makeRevenueT(tBase, revenueSuffix(profile?.tipo_cadastro as TipoCadastro)),
+    [tBase, profile?.tipo_cadastro],
+  );
   const navigate = useNavigate();
   const search = Route.useSearch();
 
