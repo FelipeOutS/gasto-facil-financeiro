@@ -38,6 +38,7 @@ import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
   computeOrcamentoLista,
