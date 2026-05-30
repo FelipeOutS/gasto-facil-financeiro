@@ -1026,6 +1026,7 @@ function VaultMain({
           await reload();
           setView({ kind: "list" });
         }}
+        readOnly={readOnly}
       />
     );
   }
