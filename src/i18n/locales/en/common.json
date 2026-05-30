@@ -72,6 +72,28 @@
     "trialActivated": "Free trial activated for 10 days.",
     "trialLoginRequired": "Sign in to start your trial.",
     "trialError": "Could not start the trial.",
-    "badge": "Premium"
+    "badge": "Premium",
+    "premiumApi": {
+      "importExtrato": {
+        "title": "Statement import is premium",
+        "description": "Import supported statements to speed up your finances without typing everything manually."
+      },
+      "importFatura": {
+        "title": "Credit card import is premium",
+        "description": "Send supported credit card statements and review entries before saving."
+      },
+      "importConta": {
+        "title": "Bill import is premium",
+        "description": "Send supported bills, PIX and slips to cut manual entry."
+      },
+      "importInvestimentos": {
+        "title": "Investments import is premium",
+        "description": "Import supported broker statements to track your portfolio without typing everything."
+      },
+      "ocrGasto": {
+        "title": "Expense OCR is premium",
+        "description": "Use image reading to turn supported receipts into organized entries."
+      }
+    }
   }
 }

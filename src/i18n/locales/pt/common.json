@@ -72,6 +72,28 @@
     "trialActivated": "Teste grátis ativado por 10 dias.",
     "trialLoginRequired": "Faça login para testar.",
     "trialError": "Erro ao iniciar o teste.",
-    "badge": "Premium"
+    "badge": "Premium",
+    "premiumApi": {
+      "importExtrato": {
+        "title": "Importação de extrato é premium",
+        "description": "Importe extratos compatíveis para acelerar sua organização financeira sem digitar tudo manualmente."
+      },
+      "importFatura": {
+        "title": "Importação de fatura é premium",
+        "description": "Envie faturas compatíveis e revise os lançamentos antes de salvar."
+      },
+      "importConta": {
+        "title": "Importação de contas é premium",
+        "description": "Envie boletos, PIX e contas compatíveis para reduzir lançamentos manuais."
+      },
+      "importInvestimentos": {
+        "title": "Importação de investimentos é premium",
+        "description": "Importe extratos de corretora compatíveis para acompanhar sua carteira sem digitar tudo."
+      },
+      "ocrGasto": {
+        "title": "OCR de gasto é premium",
+        "description": "Use leitura de imagem para transformar comprovantes compatíveis em lançamentos organizados."
+      }
+    }
   }
 }
