@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { UserAvatar } from "@/components/UserAvatar";
-import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
+import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
@@ -36,8 +36,13 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   const isAdminMaster = isAdminMasterEmail(user?.email);
 
   const groups = useMemo(
-    () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
-    [isAdminMaster],
+    () =>
+      filterVisibleGroups(
+        NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
+        can,
+        isAdminMaster,
+      ),
+    [isAdminMaster, can],
   );
 
   function getRule(item: NavLeaf) {

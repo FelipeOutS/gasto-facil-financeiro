@@ -573,5 +573,10 @@
     "novaReceita": "New income",
     "importar": "Import",
     "ia": "Financial AI"
+  },
+  "upgradeCards": {
+    "title": "Unlock more features",
+    "unlockIn": "Available on the {{plan}} plan",
+    "seeAll": "See all plans"
   }
 }

@@ -39,6 +39,7 @@ import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
 import { AvisoTrialExpirandoBanner } from "@/components/AvisoTrialExpirandoBanner";
+import { UpgradeCardsList } from "@/components/UpgradeCardsList";
 import {
   contaPertenceAoMesRef,
   getCategoriaById,
@@ -934,8 +935,9 @@ function Index() {
         </Link>
       </section>
 
-      {/* ===== 9. Banner discreto ao final ===== */}
+      {/* ===== 9. Banners + cards de upgrade ao final ===== */}
       <AvisoTrialExpirandoBanner />
+      <UpgradeCardsList max={4} />
       <AvisoWhatsAppBanner />
 
     </MobileShell>

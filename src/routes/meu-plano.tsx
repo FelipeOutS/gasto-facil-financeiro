@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { UpgradeCardsList } from "@/components/UpgradeCardsList";
 import { requireOnline } from "@/lib/use-online-status";
 import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
 import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
@@ -487,6 +488,10 @@ function MeuPlanoPage() {
           </div>
         )}
       </section>
+
+      {/* Cards de upgrade — recursos premium ainda não liberados no plano atual */}
+      <UpgradeCardsList max={6} />
+
 
       {/* QR Code Pix — exibido após gerar cobrança */}
       {!isAdminMaster && pixCharge && (pixCharge.qr_code_base64 || pixCharge.ticket_url) && (
