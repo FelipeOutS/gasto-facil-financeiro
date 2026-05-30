@@ -1212,7 +1212,8 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
       return;
     }
     toast.success(t("detail.finalize.success"));
-    void navigate({ to: "/mercado/historico" });
+    // Etapa 17 — só leva ao histórico quem tem `mercado_avancado`.
+    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado/listas" });
   }
 
   return (
