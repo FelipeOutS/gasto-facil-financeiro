@@ -1,5 +1,8 @@
 import { apiFetch } from "@/lib/api-fetch";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { usePremiumApiGate } from "@/lib/premium-errors";
+import { PremiumLockModal } from "@/components/PremiumLockModal";
 import * as XLSX from "@e965/xlsx";
 import {
   Dialog,
