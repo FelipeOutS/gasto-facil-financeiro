@@ -1,0 +1,49 @@
+{
+  "types": {
+    "investment": {
+      "acoes": "Stocks",
+      "fii": "Real estate funds (REITs)",
+      "etf": "ETFs",
+      "bdr": "BDRs",
+      "tesouro": "Treasury bonds",
+      "cdb": "CDB",
+      "lci": "LCI",
+      "lca": "LCA",
+      "lc": "LC",
+      "fundo": "Investment fund",
+      "previdencia": "Pension fund",
+      "cripto": "Crypto",
+      "outros": "Other"
+    },
+    "investmentClass": {
+      "rendaVariavel": "Variable income",
+      "rendaFixa": "Fixed income",
+      "fundos": "Funds",
+      "cripto": "Crypto",
+      "outros": "Other"
+    },
+    "movement": {
+      "compra": "Buy",
+      "venda": "Sell",
+      "aplicacao": "Deposit",
+      "resgate": "Withdrawal",
+      "transferencia": "Transfer",
+      "rendimento": "Yield",
+      "dividendo": "Dividend",
+      "jcp": "Interest on equity",
+      "amortizacao": "Amortization",
+      "bonificacao": "Bonus shares",
+      "desdobramento": "Stock split",
+      "grupamento": "Reverse split"
+    },
+    "income": {
+      "dividendo": "Dividend",
+      "jcp": "Interest on equity",
+      "rendimento_fii": "REIT yield",
+      "renda_fixa": "Fixed income",
+      "cupom": "Coupon",
+      "amortizacao": "Amortization",
+      "outro": "Other"
+    }
+  }
+}
