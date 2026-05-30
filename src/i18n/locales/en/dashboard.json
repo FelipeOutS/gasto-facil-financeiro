@@ -201,6 +201,8 @@
     "emAberto": "{{valor}} open",
     "ver": "View →",
     "proximaEntrada": "Next income",
+    "proximaEntrada_mei": "Next revenue",
+    "proximaEntrada_empresa": "Next revenue",
     "atrasada": "{{dias}} day(s) overdue",
     "venceHoje": "due today",
     "venceAmanha": "due tomorrow",
