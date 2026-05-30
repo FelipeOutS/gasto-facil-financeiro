@@ -192,9 +192,9 @@ export function InvestimentoMovimentacaoForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_MOVIMENTACAO.filter((t) => TIPOS_MOV_PRINCIPAIS.includes(t.id) || t.id === tipo).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
+                {TIPOS_MOVIMENTACAO.filter((m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {getTipoMovimentacaoLabel(m.id, tr)}
                   </SelectItem>
                 ))}
               </SelectContent>
