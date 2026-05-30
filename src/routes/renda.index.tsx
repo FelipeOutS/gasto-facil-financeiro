@@ -43,6 +43,7 @@ import {
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
+import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   addReceita,
