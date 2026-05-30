@@ -1367,7 +1367,7 @@ function HistoricoImportacoesDialog({
                         </div>
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <Badge variant="secondary" className="text-[10px]">
-                            {TIPO_IMPORTACAO_LABEL[imp.tipo] ?? imp.tipo}
+                            {getTipoImportacaoLabel(imp.tipo, tInv)}
                           </Badge>
                           <Badge
                             variant={imp.status === "concluida" ? "secondary" : "outline"}
