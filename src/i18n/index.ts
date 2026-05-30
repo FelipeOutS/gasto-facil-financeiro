@@ -31,6 +31,7 @@ import ptMisc from "./locales/pt/misc.json";
 import ptImportConta from "./locales/pt/import-conta.json";
 import ptImportFatura from "./locales/pt/import-fatura.json";
 import ptImportExtrato from "./locales/pt/import-extrato.json";
+import ptImportInvestimentos from "./locales/pt/import-investimentos.json";
 import ptExtratosImportados from "./locales/pt/extratos-importados.json";
 import ptMercado from "./locales/pt/mercado.json";
 import ptCofre from "./locales/pt/cofre.json";
@@ -65,6 +66,7 @@ import enMisc from "./locales/en/misc.json";
 import enImportConta from "./locales/en/import-conta.json";
 import enImportFatura from "./locales/en/import-fatura.json";
 import enImportExtrato from "./locales/en/import-extrato.json";
+import enImportInvestimentos from "./locales/en/import-investimentos.json";
 import enExtratosImportados from "./locales/en/extratos-importados.json";
 import enMercado from "./locales/en/mercado.json";
 import enCofre from "./locales/en/cofre.json";
@@ -99,8 +101,8 @@ function detectInitialLocale(): Locale {
 }
 
 const resources = {
-  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda, assinaturas: ptAssinaturas, "meu-plano": ptMeuPlano, perfil: ptPerfil, empresa: ptEmpresa, onboarding: ptOnboarding, confirmar: ptConfirmar, legal: ptLegal, misc: ptMisc, "import-conta": ptImportConta, "import-fatura": ptImportFatura, "import-extrato": ptImportExtrato, "extratos-importados": ptExtratosImportados, mercado: ptMercado, cofre: ptCofre },
-  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda, assinaturas: enAssinaturas, "meu-plano": enMeuPlano, perfil: enPerfil, empresa: enEmpresa, onboarding: enOnboarding, confirmar: enConfirmar, legal: enLegal, misc: enMisc, "import-conta": enImportConta, "import-fatura": enImportFatura, "import-extrato": enImportExtrato, "extratos-importados": enExtratosImportados, mercado: enMercado, cofre: enCofre },
+  pt: { common: ptCommon, landing: ptLanding, auth: ptAuth, account: ptAccount, nav: ptNav, dashboard: ptDashboard, gastos: ptGastos, cartoes: ptCartoes, "contas-a-pagar": ptContasAPagar, "contas-a-receber": ptContasAReceber, categorias: ptCategorias, clientes: ptClientes, fornecedores: ptFornecedores, metas: ptMetas, orcamento: ptOrcamento, relatorios: ptRelatorios, adicionar: ptAdicionar, guardado: ptGuardado, renda: ptRenda, assinaturas: ptAssinaturas, "meu-plano": ptMeuPlano, perfil: ptPerfil, empresa: ptEmpresa, onboarding: ptOnboarding, confirmar: ptConfirmar, legal: ptLegal, misc: ptMisc, "import-conta": ptImportConta, "import-fatura": ptImportFatura, "import-extrato": ptImportExtrato, "import-investimentos": ptImportInvestimentos, "extratos-importados": ptExtratosImportados, mercado: ptMercado, cofre: ptCofre },
+  en: { common: enCommon, landing: enLanding, auth: enAuth, account: enAccount, nav: enNav, dashboard: enDashboard, gastos: enGastos, cartoes: enCartoes, "contas-a-pagar": enContasAPagar, "contas-a-receber": enContasAReceber, categorias: enCategorias, clientes: enClientes, fornecedores: enFornecedores, metas: enMetas, orcamento: enOrcamento, relatorios: enRelatorios, adicionar: enAdicionar, guardado: enGuardado, renda: enRenda, assinaturas: enAssinaturas, "meu-plano": enMeuPlano, perfil: enPerfil, empresa: enEmpresa, onboarding: enOnboarding, confirmar: enConfirmar, legal: enLegal, misc: enMisc, "import-conta": enImportConta, "import-fatura": enImportFatura, "import-extrato": enImportExtrato, "import-investimentos": enImportInvestimentos, "extratos-importados": enExtratosImportados, mercado: enMercado, cofre: enCofre },
 };
 
 if (!i18n.isInitialized) {
@@ -109,7 +111,7 @@ if (!i18n.isInitialized) {
     lng: detectInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,
     defaultNS: "common",
-    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding", "confirmar", "legal", "misc", "import-conta", "import-fatura", "import-extrato", "extratos-importados", "mercado", "cofre"],
+    ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding", "confirmar", "legal", "misc", "import-conta", "import-fatura", "import-extrato", "import-investimentos", "extratos-importados", "mercado", "cofre"],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });

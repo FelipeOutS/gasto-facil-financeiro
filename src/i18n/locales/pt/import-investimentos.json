@@ -1,0 +1,7 @@
+{
+  "toast": {
+    "noneSelected": "Nenhum item selecionado para importar.",
+    "partialSuccess": "{{positions}} posição(ões) e {{movements}} movimentação(ões) importadas.",
+    "partialErrors": "{{count}} item(ns) não puderam ser salvos."
+  }
+}

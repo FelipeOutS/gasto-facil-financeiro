@@ -1,0 +1,7 @@
+{
+  "toast": {
+    "noneSelected": "No items selected to import.",
+    "partialSuccess": "{{positions}} position(s) and {{movements}} transaction(s) imported.",
+    "partialErrors": "{{count}} item(s) could not be saved."
+  }
+}
