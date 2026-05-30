@@ -2413,10 +2413,10 @@ function DetalheAtivoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{ativo.nome}</span>
-            <Badge variant="secondary" className="text-[10px]">{tipoLabel(ativo.tipo)}</Badge>
+            <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(ativo.tipo, tInv)}</Badge>
           </DialogTitle>
           <DialogDescription>
-            {ativo.instituicao ?? "—"} · {classeAtivo(ativo.tipo)}
+            {ativo.instituicao ?? "—"} · {getTipoInvestimentoClasseLabel(ativo.tipo, tInv)}
           </DialogDescription>
         </DialogHeader>
 
