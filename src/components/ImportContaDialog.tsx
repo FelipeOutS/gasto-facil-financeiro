@@ -128,6 +128,8 @@ export function ImportContaDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const { t } = useTranslation("import-conta");
+  const { t: tc } = useTranslation("common");
+  const premiumGate = usePremiumApiGate();
   const categorias = useStore(() => getCategorias());
   const [aba, setAba] = useState<"imagem" | "texto" | "pdf">("imagem");
   const [texto, setTexto] = useState("");
