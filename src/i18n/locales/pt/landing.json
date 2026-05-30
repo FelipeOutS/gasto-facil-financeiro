@@ -842,8 +842,8 @@
       "theme": "Modo claro e escuro",
       "android": "Otimizado para Android"
     },
-    "whatsappTitle": "Lançamento pelo WhatsApp",
-    "whatsappText": "Registre gastos pelo WhatsApp de forma prática — com confirmação antes de salvar.",
+    "whatsappTitle": "Lançamento pelo WhatsApp (em breve)",
+    "whatsappText": "Em breve você poderá registrar gastos pelo WhatsApp com confirmação antes de salvar. Integração preparada para liberação futura.",
     "whatsappSample": {
       "user": "gastei 35 no uber",
       "bot": "Confirmar: <b>R$ 35,00</b> em Transporte?"
