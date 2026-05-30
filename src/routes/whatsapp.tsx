@@ -377,7 +377,7 @@ function WhatsAppPage() {
 
   const [limpando, setLimpando] = useState(false);
   async function limparDuplicados() {
-    if (!confirm("Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?")) return;
+    if (!(await confirmAsync({ title: "Remover duplicados", description: "Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?", confirmText: "Manter o mais antigo" }))) return;
     setLimpando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
