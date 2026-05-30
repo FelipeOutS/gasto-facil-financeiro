@@ -54,7 +54,9 @@ export type FeatureKey =
   | "contas_conectadas"
   | "gasto_ai"
   | "empresa_inteligente"
-  | "cofre_pessoal";
+  | "cofre_pessoal"
+  | "mercado_avancado"
+  | "mercado_importar_cupom";
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
@@ -109,6 +111,9 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   empresa_inteligente: "mei_essencial",
   // Etapa 14 — Cofre Pessoal vira recurso premium.
   cofre_pessoal: "pessoal_premium",
+  // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
+  mercado_avancado: "pessoal_premium",
+  mercado_importar_cupom: "pessoal_premium",
 };
 
 /**
@@ -146,6 +151,13 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
 
   // Etapa 14 — Cofre Pessoal: planos pagos exceto Controle Simples.
   cofre_pessoal: ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+
+  // Etapa 16 — Mercado Inteligente avançado (histórico, preços, cesta padrão,
+  // mercados favoritos, comparação de preços). MEI Essencial fica de fora
+  // para não canibalizar o MEI Completo.
+  mercado_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
+  // Etapa 16 — Importação de cupom fiscal / NFC-e / QR Code.
+  mercado_importar_cupom: ["pessoal_premium", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {

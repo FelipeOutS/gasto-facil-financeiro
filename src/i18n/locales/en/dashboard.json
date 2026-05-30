@@ -604,7 +604,9 @@
     "seeAll": "See all plans",
     "subFeatures": {
       "metasVisuais": "Goals with custom visuals",
-      "assinaturasAuto": "Subscription automations"
+      "assinaturasAuto": "Subscription automations",
+      "mercadoAvancado": "Full Smart Grocery features",
+      "mercadoImportarCupom": "Receipt / QR Code import"
     }
   }
 }
