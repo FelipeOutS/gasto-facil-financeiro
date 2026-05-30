@@ -543,7 +543,7 @@ function AssinaturasPage() {
               {t("empty.hint")}
             </p>
             <Button className="mt-4 min-h-11" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> {t("actions.new")}
+              <Plus className="h-4 w-4" /> {t("empty.cta")}
             </Button>
             {import.meta.env.DEV && debugAnalise && debugAnalise.encontradas === 0 && (
               <div className="mt-4 rounded-xl border border-border/50 bg-background/40 p-3 text-left text-xs text-muted-foreground">
