@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { LoadErrorState } from "@/components/ui/load-error-state";
 import {
   loadBcbRadar,
   type BcbIndicator,
@@ -117,10 +118,15 @@ export function RadarEconomicoInteligenteCard({
       )}
 
       {errored && !loading && !data?.indicators.length && (
-        <div className="mt-3 rounded-lg border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
-          Não foi possível atualizar os indicadores agora. Tente novamente em instantes.
+        <div className="mt-3">
+          <LoadErrorState
+            variant="compact"
+            description="Não foi possível atualizar os indicadores agora."
+            onRetry={() => carregar(true)}
+          />
         </div>
       )}
+
 
       <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3">
         <IndicadorMini
