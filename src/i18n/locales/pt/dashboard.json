@@ -220,6 +220,13 @@
     "subtitle": "Lance gastos, receitas e consulte saldos enviando mensagens — direto no seu WhatsApp. Sem precisar abrir o app.",
     "dispensar": "Dispensar aviso"
   },
+  "trialBanner": {
+    "title": "Seu período de teste está acabando",
+    "subtitle": "Faltam {{days}} dias para o fim do seu teste. Escolha um plano para continuar usando o Gasto Inteligente sem interrupções.",
+    "expiresOn": "Expira em {{date}}.",
+    "cta": "Ver planos",
+    "remindLater": "Lembrar depois"
+  },
   "connectedBanner": {
     "vendoConta": "Você está vendo a conta de",
     "voltar": "Voltar para minha conta",

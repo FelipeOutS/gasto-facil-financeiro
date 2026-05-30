@@ -38,6 +38,7 @@ import { DashboardCartoesInsights } from "@/components/DashboardCartoesInsights"
 import { SmartLimiteCard } from "@/components/SmartLimiteCard";
 import { SmartMonthSummaryCard } from "@/components/SmartMonthSummaryCard";
 import { AvisoWhatsAppBanner } from "@/components/AvisoWhatsAppBanner";
+import { AvisoTrialExpirandoBanner } from "@/components/AvisoTrialExpirandoBanner";
 import {
   contaPertenceAoMesRef,
   getCategoriaById,
@@ -934,6 +935,7 @@ function Index() {
       </section>
 
       {/* ===== 9. Banner discreto ao final ===== */}
+      <AvisoTrialExpirandoBanner />
       <AvisoWhatsAppBanner />
 
     </MobileShell>
