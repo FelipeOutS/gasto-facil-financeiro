@@ -2220,6 +2220,7 @@ function RendimentoDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t: tInv } = useTranslation("investimentos");
   const editing = state.rend;
   const [ativoId, setAtivoId] = useState<string>("");
   const [tipo, setTipo] = useState<TipoRendimento>("dividendo");
