@@ -34,6 +34,7 @@ import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
   computeOrcamentoLista,
@@ -1190,6 +1191,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
 function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
+  const { can } = usePlan();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
 
@@ -1210,7 +1212,8 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
       return;
     }
     toast.success(t("detail.finalize.success"));
-    void navigate({ to: "/mercado/historico" });
+    // Etapa 17 — só leva ao histórico quem tem `mercado_avancado`.
+    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado/listas" });
   }
 
   return (

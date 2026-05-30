@@ -38,6 +38,7 @@ import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
   computeOrcamentoLista,
@@ -224,6 +225,7 @@ function Mini({ label, value }: { label: string; value: React.ReactNode }) {
 function CartMode({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
+  const { can } = usePlan();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
@@ -258,7 +260,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       return;
     }
     toast.success(t("carrinho.finalize.success"));
-    void navigate({ to: "/mercado/historico" });
+    // Etapa 17 — só leva ao histórico se o usuário tem `mercado_avancado`;
+    // caso contrário volta à hub para evitar o modal premium logo após finalizar.
+    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado" });
   }
 
   return (
