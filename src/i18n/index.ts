@@ -66,6 +66,7 @@ import enMisc from "./locales/en/misc.json";
 import enImportConta from "./locales/en/import-conta.json";
 import enImportFatura from "./locales/en/import-fatura.json";
 import enImportExtrato from "./locales/en/import-extrato.json";
+import enImportInvestimentos from "./locales/en/import-investimentos.json";
 import enExtratosImportados from "./locales/en/extratos-importados.json";
 import enMercado from "./locales/en/mercado.json";
 import enCofre from "./locales/en/cofre.json";
