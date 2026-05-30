@@ -606,7 +606,8 @@
       "metasVisuais": "Goals with custom visuals",
       "assinaturasAuto": "Subscription automations",
       "mercadoAvancado": "Full Smart Grocery features",
-      "mercadoImportarCupom": "Receipt / QR Code import"
+      "mercadoImportarCupom": "Receipt / QR Code import",
+      "importacoes": "Smart import for invoices and statements"
     }
   }
 }
