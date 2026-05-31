@@ -32,9 +32,9 @@
     "title": "Suas categorias",
     "new": "Nova",
     "dialogTitle": "Nova categoria",
-    "dialogDesc": "Personalize ícone e cor.",
+    "dialogDesc": "Escolha um nome, cor e ícone para organizar seus lançamentos.",
     "name": "Nome",
-    "namePlaceholder": "Ex.: Cuidados pessoais",
+    "namePlaceholder": "Ex.: Mercado, Farmácia, Combustível, Serviços",
     "color": "Cor",
     "icon": "Ícone",
     "cancel": "Cancelar",
@@ -42,6 +42,23 @@
     "createdToast": "Categoria criada. 🎨",
     "deletedToast": "Categoria removida.",
     "deleteAria": "Excluir categoria"
+  },
+  "onboarding": {
+    "title": "Organize seus lançamentos por categoria",
+    "description": "Use categorias para entender para onde seu dinheiro está indo e deixar gastos, entradas, orçamentos e relatórios mais claros.",
+    "cta": "Criar categoria",
+    "helper": "Você pode começar com categorias simples, como Alimentação, Mercado, Transporte, Lazer ou Serviços.",
+    "steps": {
+      "create": "Crie categorias",
+      "use": "Use nos lançamentos",
+      "track": "Acompanhe nos relatórios"
+    }
+  },
+  "empty": {
+    "title": "Nenhuma categoria personalizada",
+    "description": "Crie categorias para organizar seus lançamentos e acompanhar melhor seus gastos e entradas.",
+    "cta": "Criar categoria",
+    "helper": "As categorias ajudam a melhorar gráficos, orçamento e relatórios."
   },
   "colors": {
     "Verde": "Verde",

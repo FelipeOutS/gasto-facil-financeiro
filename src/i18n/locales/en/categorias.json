@@ -32,9 +32,9 @@
     "title": "Your categories",
     "new": "New",
     "dialogTitle": "New category",
-    "dialogDesc": "Customize icon and color.",
+    "dialogDesc": "Pick a name, color, and icon to organize your entries.",
     "name": "Name",
-    "namePlaceholder": "E.g.: Personal care",
+    "namePlaceholder": "E.g. Groceries, Pharmacy, Fuel, Services",
     "color": "Color",
     "icon": "Icon",
     "cancel": "Cancel",
@@ -42,6 +42,23 @@
     "createdToast": "Category created. 🎨",
     "deletedToast": "Category removed.",
     "deleteAria": "Delete category"
+  },
+  "onboarding": {
+    "title": "Organize your entries by category",
+    "description": "Use categories to understand where your money is going and make expenses, incoming money, budgets, and reports clearer.",
+    "cta": "Create category",
+    "helper": "You can start with simple categories like Food, Groceries, Transport, Leisure, or Services.",
+    "steps": {
+      "create": "Create categories",
+      "use": "Use them in entries",
+      "track": "Track them in reports"
+    }
+  },
+  "empty": {
+    "title": "No custom categories yet",
+    "description": "Create categories to organize your entries and better track expenses and incoming money.",
+    "cta": "Create category",
+    "helper": "Categories help improve charts, budgets, and reports."
   },
   "colors": {
     "Verde": "Green",
