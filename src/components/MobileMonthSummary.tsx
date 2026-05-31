@@ -43,7 +43,7 @@ export function MobileMonthSummary({
       {/* Cabeçalho — "resumo de {mês}" + switcher */}
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold capitalize tracking-tight">
-          <span className="text-muted-foreground font-normal">resumo de</span>
+          <span className="text-muted-foreground font-normal">{t("mobileSummary.eyebrow")}</span>
           <span>{formatMonthYear(ano, mes)}</span>
         </h2>
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
