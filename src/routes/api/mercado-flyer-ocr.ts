@@ -8,63 +8,15 @@ import {
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 
 /**
- * V2.3.3 — Preço Comunitário: leitura de panfleto/encarte por foto.
+ * V2.3.4 — Preço Comunitário: OCR de panfleto em 2 etapas.
  *
- * Recebe { imageBase64, marketName?, city?, neighborhood? } e devolve
- * { items, warnings, debugInfo }. Nada é salvo — o usuário revisa e
- * confirma antes de gravar via `createCommunityPrices`.
+ *  1) Google Cloud Vision (DOCUMENT_TEXT_DETECTION, pt-BR) → texto bruto.
+ *  2) Lovable AI Gateway (Gemini) → estrutura texto em itens JSON.
  *
- * Estratégia de extração:
- *  1) Primeira tentativa com prompt "completo" e modelo rápido.
- *  2) Se 0 itens, fallback automático com prompt MAIS PERMISSIVO usando
- *     modelo mais forte (gemini-2.5-pro) que pede qualquer par
- *     produto+preço visível.
- *
- * Segurança:
- *  - exige autenticação (Bearer) e plano `mercado_avancado`;
- *  - rate-limit (escopo "import");
- *  - chave da IA só em process.env.LOVABLE_API_KEY;
- *  - imagem NUNCA é persistida;
- *  - debugInfo NÃO contém base64, coordenadas nem PII.
+ * Nada é persistido. Nenhuma chave aparece em logs/respostas. A foto não é
+ * salva. Em dev logamos apenas {provider, rawTextLength, priceCandidatesCount,
+ * itemCount}.
  */
-
-const SYSTEM_PROMPT_PRIMARY = `Você analisa fotos de panfletos, encartes e ofertas de supermercados brasileiros.
-
-OBJETIVO: extrair o MÁXIMO de produtos visíveis com nome e preço. O usuário SEMPRE revisa antes de salvar — prefira retornar a mais do que a menos.
-
-PARA CADA PRODUTO VISÍVEL extraia:
-- productName: nome do produto (string, obrigatório). Se o nome estiver parcialmente legível, retorne o que conseguir ler com confidence menor. Se o preço estiver claro mas o nome não, use "Produto não identificado" e adicione note explicando.
-- price: preço em reais como NÚMERO. "R$ 9,99" → 9.99; "R$ 1.299,90" → 1299.90; "2 por R$ 5,00" → 2.50; "leve 3 pague 2 a R$ 9" → 6.00 (preço unitário efetivo se calculável, senão o de capa).
-- unit: quando aparecer (kg, g, un, pacote, caixa, litro, ml, bandeja, fardo, lata, garrafa, dúzia). Se não souber, deixe null.
-- category: categoria provável (padaria, açougue, hortifruti, laticínios, mercearia, bebidas, limpeza, higiene, congelados, pet, outros). Se não souber, deixe null.
-- marketName: se aparecer no panfleto, senão null.
-- validUntil: data YYYY-MM-DD se aparecer "válido até dd/mm/aaaa", senão null.
-- notes: observações relevantes ("clube", "app", "leve 3 pague 2", "a partir de", "somente unidade selecionada", "promoção"). String curta ou null.
-- confidence: 0.0 a 1.0 indicando sua confiança naquele item específico.
-
-REGRAS IMPORTANTES:
-- NÃO descarte itens só porque não tem categoria ou unidade. Se tem nome (mesmo parcial) E preço, RETORNE.
-- Se a foto tem MUITOS produtos, retorne TODOS que conseguir identificar — não pare nos primeiros.
-- Preços brasileiros: vírgula é decimal, ponto é separador de milhar.
-- NUNCA invente produtos que não estão na imagem.
-- NUNCA retorne dados pessoais, CPF, telefone ou números de cartão.
-
-Se a imagem não é um panfleto de mercado ou está completamente ilegível, retorne items vazio e adicione um warning explicando.`;
-
-const SYSTEM_PROMPT_FALLBACK = `Você está vendo uma foto que PROVAVELMENTE é um panfleto, encarte ou prateleira de mercado.
-
-Sua tarefa: extrair QUALQUER par visual de "nome de produto" e "preço em reais". Não seja conservador. O usuário irá revisar manualmente cada item antes de salvar, então é melhor retornar pares aproximados do que retornar nada.
-
-Para cada par produto+preço visível:
-- productName: o texto do produto. Se ilegível, use "Produto não identificado".
-- price: número em reais (vírgula é decimal).
-- unit, category, marketName, validUntil: null se não tiver certeza.
-- notes: qualquer observação ("clube", "leve X pague Y", etc.) ou null.
-- confidence: baixa (0.2-0.5) é OK quando você está em dúvida.
-
-Retorne o MÁXIMO de itens possível. Não limite a quantidade.
-NUNCA invente produtos que não estão na imagem.
-NUNCA retorne dados pessoais.`;
 
 type DetectedItem = {
   productName: string;
@@ -77,11 +29,30 @@ type DetectedItem = {
   confidence: number | null;
 };
 
+const STRUCTURE_PROMPT = `Você receberá texto extraído por OCR de um panfleto de mercado brasileiro.
+Extraia o MÁXIMO possível de pares produto + preço.
+
+Regras:
+- Não descarte itens por falta de categoria ou unidade.
+- Se o produto estiver parcial, mantenha o nome parcial.
+- Se o preço estiver claro mas o produto estiver confuso, use "Produto não identificado" com baixa confiança (0.2-0.4).
+- Preços brasileiros: vírgula é decimal ("R$ 9,99" → 9.99; "R$ 1.299,90" → 1299.90).
+- "2 por R$ 5,00" → price 2.50; "leve 3 pague 2 a R$ 9" → 6.00 (unitário) ou o preço de capa, o que conseguir calcular.
+- unit: kg, g, un, pacote, caixa, litro, ml, bandeja, fardo, lata, garrafa, dúzia ou null.
+- category: padaria, açougue, hortifruti, laticínios, mercearia, bebidas, limpeza, higiene, congelados, pet, outros, ou null.
+- validUntil: YYYY-MM-DD se houver "válido até dd/mm/aaaa", senão null.
+- notes: observações curtas ("clube", "leve 3 pague 2", "app", "a partir de") ou null.
+- confidence: 0.0 a 1.0.
+- NUNCA invente produtos que não estejam no texto.
+- NUNCA retorne CPF, telefone, e-mail, números de cartão ou outros dados pessoais.
+
+Retorne APENAS via a função registrar_itens_panfleto.`;
+
 const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
     name: "registrar_itens_panfleto",
-    description: "Lista de itens extraídos do panfleto.",
+    description: "Lista de itens estruturados a partir do texto OCR.",
     parameters: {
       type: "object",
       properties: {
@@ -94,12 +65,8 @@ const TOOL_SCHEMA = {
               price: { type: ["number", "null"] },
               unit: { type: ["string", "null"] },
               category: { type: ["string", "null"] },
-              marketName: { type: ["string", "null"] },
-              validUntil: {
-                type: ["string", "null"],
-                description: "Data ISO YYYY-MM-DD ou null.",
-              },
               notes: { type: ["string", "null"] },
+              validUntil: { type: ["string", "null"] },
               confidence: { type: ["number", "null"] },
             },
             required: ["productName"],
@@ -114,13 +81,73 @@ const TOOL_SCHEMA = {
   },
 };
 
-async function callGateway(
+// Regex auxiliar p/ contar candidatos a preço BR no texto OCR.
+const BR_PRICE_RE =
+  /(?:R\$\s*)?\d{1,3}(?:\.\d{3})*(?:,\d{2})|(?:R\$\s*)?\d+,\d{2}|\b\d+\.\d{2}\b/g;
+
+function countPriceCandidates(text: string): number {
+  const m = text.match(BR_PRICE_RE);
+  return m ? m.length : 0;
+}
+
+async function callVision(
   apiKey: string,
-  model: string,
-  systemPrompt: string,
-  userText: string,
-  imageDataUrl: string,
-) {
+  base64: string,
+): Promise<{ ok: true; text: string } | { ok: false; status: number; reason: string }> {
+  const resp = await fetch(
+    `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requests: [
+          {
+            image: { content: base64 },
+            features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+            imageContext: { languageHints: ["pt-BR"] },
+          },
+        ],
+      }),
+    },
+  );
+  if (!resp.ok) {
+    let reason = "vision_http_error";
+    try {
+      const j = await resp.json();
+      reason = String(j?.error?.status ?? j?.error?.message ?? reason).slice(0, 80);
+    } catch {
+      // ignore
+    }
+    return { ok: false, status: resp.status, reason };
+  }
+  let json: any;
+  try {
+    json = await resp.json();
+  } catch {
+    return { ok: false, status: 502, reason: "vision_invalid_json" };
+  }
+  const r0 = json?.responses?.[0];
+  if (r0?.error) {
+    return {
+      ok: false,
+      status: 502,
+      reason: String(r0.error.message ?? "vision_response_error").slice(0, 80),
+    };
+  }
+  const text: string =
+    (typeof r0?.fullTextAnnotation?.text === "string" && r0.fullTextAnnotation.text) ||
+    (Array.isArray(r0?.textAnnotations) && typeof r0.textAnnotations[0]?.description === "string"
+      ? r0.textAnnotations[0].description
+      : "") ||
+    "";
+  return { ok: true, text };
+}
+
+async function callGeminiStructure(
+  apiKey: string,
+  ocrText: string,
+  hint: string,
+): Promise<Response> {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -128,15 +155,12 @@ async function callGateway(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model,
+      model: "google/gemini-2.5-flash",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: STRUCTURE_PROMPT },
         {
           role: "user",
-          content: [
-            { type: "text", text: userText },
-            { type: "image_url", image_url: { url: imageDataUrl } },
-          ],
+          content: `${hint ? hint + "\n\n" : ""}Texto OCR do panfleto:\n"""\n${ocrText.slice(0, 16000)}\n"""`,
         },
       ],
       tools: [TOOL_SCHEMA],
@@ -148,7 +172,7 @@ async function callGateway(
   });
 }
 
-function parseItems(
+function parseStructured(
   argsStr: string,
   fallbackMarketName: string | undefined,
 ): { items: DetectedItem[]; warnings: string[] } {
@@ -166,7 +190,7 @@ function parseItems(
         typeof it.productName === "string" ? it.productName.trim().slice(0, 200) : "";
       if (!productName) return null;
       const priceNum = typeof it.price === "number" ? it.price : Number(it.price);
-      const price = Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : null;
+      const price = Number.isFinite(priceNum) && priceNum > 0 ? priceNum : null;
       return {
         productName,
         price,
@@ -178,10 +202,7 @@ function parseItems(
           typeof it.category === "string" && it.category.trim()
             ? it.category.trim().toLowerCase().slice(0, 40)
             : null,
-        marketName:
-          typeof it.marketName === "string" && it.marketName.trim()
-            ? it.marketName.trim().slice(0, 120)
-            : fallbackMarketName?.trim().slice(0, 120) ?? null,
+        marketName: fallbackMarketName?.trim().slice(0, 120) ?? null,
         validUntil:
           typeof it.validUntil === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.validUntil)
             ? it.validUntil
@@ -196,7 +217,7 @@ function parseItems(
             : null,
       };
     })
-    .filter((x): x is DetectedItem => x !== null)
+    .filter((x): x is DetectedItem => x !== null && x.price !== null)
     .slice(0, 100);
 
   const warnings = Array.isArray(parsed.warnings)
@@ -253,9 +274,22 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         if (rl) return rl;
 
         try {
-          const apiKey = process.env.LOVABLE_API_KEY;
-          if (!apiKey) {
-            return Response.json({ error: "Serviço indisponível no momento." }, { status: 500 });
+          const visionKey = process.env.GOOGLE_VISION_API_KEY;
+          const aiKey = process.env.LOVABLE_API_KEY;
+          if (!visionKey) {
+            return Response.json(
+              {
+                error: "OCR ainda não configurado. Configure GOOGLE_VISION_API_KEY no servidor.",
+                code: "ocr_config_missing",
+                items: [],
+                warnings: ["ocr_config_missing"],
+                debugInfo: { provider: "google_vision", configured: false },
+              },
+              { status: 503 },
+            );
+          }
+          if (!aiKey) {
+            return Response.json({ error: "Serviço de IA indisponível." }, { status: 500 });
           }
 
           const body = (await request.json()) as {
@@ -269,7 +303,6 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
           if (!img || typeof img !== "string") {
             return Response.json({ error: "Envie uma imagem válida." }, { status: 400 });
           }
-          // HEIC / HEIF não é suportado pelos modelos de visão atuais.
           if (/^data:image\/(heic|heif)/i.test(img)) {
             return Response.json(
               {
@@ -279,18 +312,13 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
               { status: 415 },
             );
           }
-          if (!img.startsWith("data:image/")) {
-            return Response.json({ error: "Envie uma imagem válida." }, { status: 400 });
-          }
-          const mimeMatch = img.match(/^data:image\/(jpeg|jpg|png|webp);base64,/i);
+          const mimeMatch = img.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
           if (!mimeMatch) {
             return Response.json(
               { error: "Formato não suportado. Use JPG, PNG ou WEBP." },
               { status: 400 },
             );
           }
-
-          // Limite ~10 MB de imagem (≈14 MB em base64).
           if (img.length > 14 * 1024 * 1024) {
             return Response.json(
               { error: "Imagem muito grande. Use uma foto até 10 MB." },
@@ -298,81 +326,118 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
             );
           }
 
+          const base64 = mimeMatch[2];
+
+          // 1) Google Vision
+          const visionRes = await callVision(visionKey, base64);
+          if (!visionRes.ok) {
+            console.error("[mercado-flyer-ocr] vision", visionRes.status, visionRes.reason);
+            return Response.json(
+              {
+                error: "Erro ao ler a imagem com OCR.",
+                code: "vision_api_error",
+                items: [],
+                warnings: ["vision_api_error"],
+                debugInfo: { provider: "google_vision", status: visionRes.status },
+              },
+              { status: 502 },
+            );
+          }
+
+          const rawText = visionRes.text.trim();
+          const rawTextLength = rawText.length;
+          const priceCandidatesCount = rawText ? countPriceCandidates(rawText) : 0;
+
+          if (!rawText) {
+            return Response.json(
+              {
+                items: [],
+                warnings: ["no_text_detected"],
+                code: "no_text_detected",
+                message:
+                  "Não encontramos texto legível nessa foto. Tente tirar a foto mais perto, com boa luz e sem cortar os preços.",
+                debugInfo: { provider: "google_vision", rawTextLength: 0, priceCandidatesCount: 0 },
+              },
+              { status: 200 },
+            );
+          }
+
+          // 2) Gemini para estruturar
           const hintParts: string[] = [];
           if (body.marketName)
             hintParts.push(`Mercado informado pelo usuário: ${String(body.marketName).slice(0, 80)}.`);
           if (body.city) hintParts.push(`Cidade: ${String(body.city).slice(0, 80)}.`);
           if (body.neighborhood) hintParts.push(`Bairro: ${String(body.neighborhood).slice(0, 80)}.`);
 
-          const userTextPrimary = `Analise este panfleto/encarte e liste TODOS os produtos em oferta que conseguir identificar. ${hintParts.join(" ")}`;
-          const userTextFallback = `Esta imagem é um panfleto/encarte de mercado. Extraia QUALQUER par visual nome+preço que conseguir ver, mesmo com baixa confiança. ${hintParts.join(" ")}`;
-
-          let usedFallback = false;
-          let items: DetectedItem[] = [];
-          let warnings: string[] = [];
-
-          // 1ª tentativa — modelo rápido + prompt principal
-          const r1 = await callGateway(
-            apiKey,
-            "google/gemini-2.5-flash",
-            SYSTEM_PROMPT_PRIMARY,
-            userTextPrimary,
-            img,
-          );
-          if (!r1.ok) {
-            const text = await r1.text();
-            console.error("[mercado-flyer-ocr] gateway #1", r1.status, text.slice(0, 200));
-            if (r1.status === 429) {
+          const r = await callGeminiStructure(aiKey, rawText, hintParts.join(" "));
+          if (!r.ok) {
+            const text = await r.text().catch(() => "");
+            console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 160));
+            if (r.status === 429) {
               return Response.json(
                 { error: "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo." },
                 { status: 429 },
               );
             }
-            if (r1.status === 402) {
+            if (r.status === 402) {
               return Response.json(
                 { error: "Sem créditos da IA. Adicione créditos no workspace para continuar." },
                 { status: 402 },
               );
             }
-            return Response.json({ error: "Não conseguimos ler esse panfleto agora." }, { status: 502 });
+            return Response.json(
+              {
+                error: "Não conseguimos estruturar os itens agora.",
+                items: [],
+                warnings: ["structuring_failed"],
+                debugInfo: {
+                  provider: "google_vision_plus_gemini",
+                  rawTextLength,
+                  priceCandidatesCount,
+                  itemCount: 0,
+                },
+              },
+              { status: 502 },
+            );
           }
-          const j1 = await r1.json();
-          const args1 = j1?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-          if (args1) {
-            const parsed = parseItems(args1, body.marketName);
+
+          const j = await r.json();
+          const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+          let items: DetectedItem[] = [];
+          let warnings: string[] = [];
+          if (args) {
+            const parsed = parseStructured(args, body.marketName);
             items = parsed.items;
             warnings = parsed.warnings;
           }
 
-          // 2ª tentativa (fallback) — modelo mais forte + prompt permissivo
           if (items.length === 0) {
-            usedFallback = true;
-            const r2 = await callGateway(
-              apiKey,
-              "google/gemini-2.5-pro",
-              SYSTEM_PROMPT_FALLBACK,
-              userTextFallback,
-              img,
+            warnings.push("text_found_but_no_items");
+            return Response.json(
+              {
+                items: [],
+                warnings,
+                code: "text_found_but_no_items",
+                message:
+                  "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente. Tente outra foto ou cadastre manualmente.",
+                debugInfo: {
+                  provider: "google_vision_plus_gemini",
+                  rawTextLength,
+                  priceCandidatesCount,
+                  itemCount: 0,
+                },
+              },
+              { status: 200 },
             );
-            if (r2.ok) {
-              const j2 = await r2.json();
-              const args2 = j2?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-              if (args2) {
-                const parsed = parseItems(args2, body.marketName);
-                items = parsed.items;
-                if (parsed.warnings.length) warnings = [...warnings, ...parsed.warnings];
-              }
-            } else {
-              const text = await r2.text();
-              console.error("[mercado-flyer-ocr] gateway #2", r2.status, text.slice(0, 200));
-              if (r2.status === 429 || r2.status === 402) {
-                // Não interrompe — segue retornando 0 itens com warning.
-                warnings.push("fallback_rate_limited");
-              }
-            }
-            if (items.length === 0) {
-              warnings.push("no_items_detected");
-            }
+          }
+
+          if (process.env.NODE_ENV !== "production") {
+            console.log("[mercado-flyer-ocr]", {
+              provider: "google_vision_plus_gemini",
+              rawTextLength,
+              priceCandidatesCount,
+              itemCount: items.length,
+            });
           }
 
           return Response.json(
@@ -380,8 +445,11 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
               items,
               warnings,
               debugInfo: {
-                usedFallback,
+                provider: "google_vision_plus_gemini",
+                rawTextLength,
+                priceCandidatesCount,
                 itemCount: items.length,
+                usedFallback: false,
               },
             },
             { status: 200 },
