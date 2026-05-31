@@ -62,7 +62,7 @@
   },
   "premium": {
     "title": "Premium feature",
-    "defaultDescription": "This feature is available only on eligible plans. Choose a plan to unlock it.",
+    "defaultDescription": "This feature is available on eligible plans. View the plan options to keep using it.",
     "unlockFromPlan": "Available from plan",
     "unlockedFromPlan": "Unlocked from plan",
     "ctaSeePlans": "View plans",

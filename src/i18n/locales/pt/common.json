@@ -62,7 +62,7 @@
   },
   "premium": {
     "title": "Recurso premium",
-    "defaultDescription": "Este recurso está disponível apenas em planos elegíveis. Escolha um plano para liberá-lo.",
+    "defaultDescription": "Este recurso está disponível em planos elegíveis. Veja as opções de plano para continuar usando.",
     "unlockFromPlan": "Disponível a partir do plano",
     "unlockedFromPlan": "Liberado a partir do plano",
     "ctaSeePlans": "Ver planos",
