@@ -2315,7 +2315,7 @@ function RendimentoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Tipo</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.type")}</label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoRendimento)}>
                 <SelectTrigger>
                   <SelectValue />
