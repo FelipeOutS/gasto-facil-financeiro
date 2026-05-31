@@ -44,6 +44,15 @@
       "atencao": "Atenção",
       "informativos": "Informativos"
     },
+    "onboarding": {
+      "title": "Acompanhe seus alertas financeiros",
+      "description": "Veja avisos sobre contas próximas do vencimento, orçamento, limite do cartão e metas importantes.",
+      "cta": "Ver contas a pagar",
+      "secondaryCta": "Ver orçamento",
+      "helper": "Os alertas ficam mais úteis conforme você cadastra lançamentos, contas, cartões, metas e orçamentos.",
+      "inApp": "Os alertas aparecem dentro do app para ajudar você a acompanhar vencimentos, limites e metas."
+    },
+    "emptyHelper": "Tudo certo por enquanto. Continue mantendo seus lançamentos atualizados.",
     "empty": {
       "todos": "Nenhum alerta no momento.",
       "nao_lidos": "Nenhum alerta não lido.",
