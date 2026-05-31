@@ -343,11 +343,14 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <button
         type="button"
         onClick={onCreate}
-        className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
         {t("listas.empty.cta")}
       </button>
+      <p className="mx-auto mt-3 max-w-md text-[11px] text-muted-foreground">
+        {t("listas.empty.helper")}
+      </p>
     </section>
   );
 }
