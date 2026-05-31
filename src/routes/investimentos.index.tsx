@@ -1774,7 +1774,7 @@ function AtualizarValorDialog({
             {tInv("forms.aux.cancel")}
           </Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : "Salvar atualização"}
+            {salvando ? tInv("forms.aux.saving") : tInv("dialogs.updateValue.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>
