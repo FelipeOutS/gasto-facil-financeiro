@@ -60,6 +60,19 @@
       "manual": "Manual"
     }
   },
+  "dialogs": {
+    "addAsset": {
+      "titleCreate": "Adicionar investimento",
+      "titleEdit": "Editar investimento",
+      "description": "Cadastre as informações do ativo. Apenas Nome é obrigatório."
+    },
+    "movement": {
+      "titleCreate": "Nova movimentação",
+      "titleEdit": "Editar movimentação",
+      "description": "Registro manual · não realiza compra ou venda real.",
+      "fixedIncomeHint": "Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente."
+    }
+  },
   "forms": {
     "labels": {
       "type": "Tipo",
@@ -80,10 +93,16 @@
       "liquidity": "Liquidez",
       "rentabilityType": "Tipo de rentabilidade",
       "rentabilityPct": "Percentual / índice",
-      "observation": "Observação"
+      "observation": "Observação",
+      "asset": "Investimento",
+      "movementType": "Tipo",
+      "date": "Data",
+      "unitPrice": "Valor unitário",
+      "totalAmount": "Valor total"
     },
     "placeholders": {
       "institution": "XP, Nubank, Rico…",
+      "institutionAlt": "Ex.: NuInvest, XP, Banco Inter",
       "assetNameVariable": "Ex.: Maxi Renda FII",
       "assetNameFixed": "Ex.: Tesouro Selic 2029",
       "tickerVariable": "MXRF11, PETR4, BTC…",
@@ -97,7 +116,11 @@
       "currentValueLarge": "R$ 1.042,30",
       "rentabilityPct": "110% do CDI",
       "liquidity": "Diária, no vencimento…",
-      "rentabilityDash": "—"
+      "rentabilityDash": "—",
+      "select": "Selecione",
+      "zero": "0",
+      "zeroDecimal": "0,00",
+      "optional": "opcional"
     },
     "aux": {
       "hintVariable": "Use quantidade, preço médio e preço atual para calcular os valores automaticamente.",
@@ -105,17 +128,24 @@
       "showAdvanced": "Mostrar campos avançados (ticker, quantidade)",
       "hideAdvanced": "Ocultar campos avançados",
       "required": "*",
+      "calculated": "(calculado)",
       "cancel": "Cancelar",
       "save": "Salvar",
       "register": "Cadastrar",
+      "add": "Adicionar",
       "saving": "Salvando…",
       "errors": {
         "nameRequired": "Informe o nome do investimento.",
-        "saveFailed": "Não foi possível salvar."
+        "saveFailed": "Não foi possível salvar.",
+        "assetRequired": "Selecione um investimento.",
+        "totalRequired": "Informe um valor total válido.",
+        "movementSaveFailed": "Não foi possível salvar a movimentação."
       },
       "success": {
         "updated": "Investimento atualizado.",
-        "created": "Investimento cadastrado."
+        "created": "Investimento cadastrado.",
+        "movementUpdated": "Movimentação atualizada.",
+        "movementCreated": "Movimentação adicionada."
       }
     }
   },

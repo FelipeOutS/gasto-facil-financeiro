@@ -60,6 +60,19 @@
       "manual": "Manual"
     }
   },
+  "dialogs": {
+    "addAsset": {
+      "titleCreate": "Add investment",
+      "titleEdit": "Edit investment",
+      "description": "Enter the asset details. Only the name is required."
+    },
+    "movement": {
+      "titleCreate": "New transaction",
+      "titleEdit": "Edit transaction",
+      "description": "Manual record · does not perform a real buy or sell.",
+      "fixedIncomeHint": "For fixed income, quantity is not required. Investment totals are recalculated automatically."
+    }
+  },
   "forms": {
     "labels": {
       "type": "Type",
@@ -80,10 +93,16 @@
       "liquidity": "Liquidity",
       "rentabilityType": "Yield type",
       "rentabilityPct": "Percentage / index",
-      "observation": "Notes"
+      "observation": "Notes",
+      "asset": "Investment",
+      "movementType": "Type",
+      "date": "Date",
+      "unitPrice": "Unit price",
+      "totalAmount": "Total amount"
     },
     "placeholders": {
       "institution": "XP, Nubank, Rico…",
+      "institutionAlt": "E.g.: NuInvest, XP, Banco Inter",
       "assetNameVariable": "E.g.: Maxi Renda FII",
       "assetNameFixed": "E.g.: Treasury Selic 2029",
       "tickerVariable": "MXRF11, PETR4, BTC…",
@@ -97,7 +116,11 @@
       "currentValueLarge": "$ 1,042.30",
       "rentabilityPct": "110% of CDI",
       "liquidity": "Daily, at maturity…",
-      "rentabilityDash": "—"
+      "rentabilityDash": "—",
+      "select": "Select",
+      "zero": "0",
+      "zeroDecimal": "0.00",
+      "optional": "optional"
     },
     "aux": {
       "hintVariable": "Use quantity, average price and current price to calculate the values automatically.",
@@ -105,17 +128,24 @@
       "showAdvanced": "Show advanced fields (ticker, quantity)",
       "hideAdvanced": "Hide advanced fields",
       "required": "*",
+      "calculated": "(calculated)",
       "cancel": "Cancel",
       "save": "Save",
       "register": "Create",
+      "add": "Add",
       "saving": "Saving…",
       "errors": {
         "nameRequired": "Enter the investment name.",
-        "saveFailed": "Could not save."
+        "saveFailed": "Could not save.",
+        "assetRequired": "Select an investment.",
+        "totalRequired": "Enter a valid total amount.",
+        "movementSaveFailed": "Could not save the transaction."
       },
       "success": {
         "updated": "Investment updated.",
-        "created": "Investment created."
+        "created": "Investment created.",
+        "movementUpdated": "Transaction updated.",
+        "movementCreated": "Transaction added."
       }
     }
   },
