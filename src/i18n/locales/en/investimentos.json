@@ -80,6 +80,7 @@
     "updateValue": {
       "title": "Update value",
       "description": "Manual update · value provided by the user.",
+      "submit": "Save update",
       "lastUpdate": "Last update: {{date}}"
     }
   },
