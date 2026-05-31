@@ -62,7 +62,7 @@
   },
   "premium": {
     "title": "Recurso premium",
-    "defaultDescription": "Este recurso está disponível apenas em planos elegíveis. Escolha um plano para liberá-lo.",
+    "defaultDescription": "Este recurso está disponível em planos elegíveis. Veja as opções de plano para continuar usando.",
     "unlockFromPlan": "Disponível a partir do plano",
     "unlockedFromPlan": "Liberado a partir do plano",
     "ctaSeePlans": "Ver planos",
@@ -99,85 +99,86 @@
     },
     "routeLocks": {
       "investimentos": {
-        "title": "Investimentos é um recurso premium",
-        "description": "Acompanhe seus ativos, movimentações e evolução patrimonial em um só lugar. Disponível nos planos superiores."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Investimentos está disponível em planos mais completos. Veja as opções para liberar essa funcionalidade."
       },
       "cartoes": {
-        "title": "Cartões e faturas é um recurso premium",
-        "description": "Organize cartões de crédito e acompanhe faturas com mais controle. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Cartões e faturas faz parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "assinaturas": {
-        "title": "Assinaturas é um recurso premium",
-        "description": "Controle suas assinaturas e recorrências em um só lugar. Disponível nos planos superiores."
+        "title": "Recurso disponível em planos superiores",
+        "description": "O controle de assinaturas e recorrências está disponível em planos mais completos. Veja as opções para liberar essa funcionalidade."
       },
       "contasAPagar": {
-        "title": "Contas a pagar é um recurso premium",
-        "description": "Programe e acompanhe contas a pagar sem perder vencimentos. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Contas a pagar faz parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "contasAReceber": {
-        "title": "Contas a receber é um recurso premium",
-        "description": "Acompanhe valores a receber e mantenha o caixa em dia. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Contas a receber faz parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "orcamento": {
-        "title": "Orçamento é um recurso premium",
-        "description": "Defina limites por categoria e acompanhe seus gastos com mais clareza. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Orçamento por categoria faz parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "relatorios": {
-        "title": "Relatórios avançados é um recurso premium",
-        "description": "Compare períodos, visualize gráficos detalhados e acompanhe sua evolução financeira com mais profundidade."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Relatórios avançados estão disponíveis em planos mais completos. Veja as opções para liberar essa funcionalidade."
       },
       "gastoAi": {
-        "title": "IA Financeira é um recurso premium",
-        "description": "Receba análises inteligentes sobre seus gastos, padrões de consumo e oportunidades de economia."
+        "title": "Recurso disponível em planos superiores",
+        "description": "A IA Financeira está disponível em planos mais completos. Veja as opções para liberar essa funcionalidade."
       },
       "metas": {
-        "title": "Metas é um recurso premium",
-        "description": "Crie metas financeiras visuais e acompanhe seu progresso. Disponível nos planos superiores."
+        "title": "Visual personalizado em planos superiores",
+        "description": "As metas básicas continuam liberadas. Capas e visual personalizado estão disponíveis em planos mais completos."
       },
       "whatsapp": {
-        "title": "WhatsApp é um recurso premium",
-        "description": "Registre gastos por WhatsApp de forma rápida e prática. Disponível nos planos superiores."
+        "title": "Lançamento pelo WhatsApp em breve",
+        "description": "O lançamento de gastos pelo WhatsApp ainda não está disponível. Avisaremos quando estiver pronto."
       },
       "renda": {
-        "title": "Receitas é um recurso premium",
-        "description": "Organize suas receitas sem limite de lançamentos. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Receitas e faturamento fazem parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "guardado": {
-        "title": "Guardado é um recurso premium",
-        "description": "Acompanhe valores guardados e reservas com mais controle. Disponível nos planos superiores."
+        "title": "Recurso disponível com plano ativo",
+        "description": "Guardado faz parte dos planos pagos do Gasto Inteligente. Ative ou regularize seu plano para continuar usando."
       },
       "contasConectadas": {
-        "title": "Contas conectadas é um recurso premium",
-        "description": "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos superiores."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Contas conectadas estão disponíveis em planos mais completos. Veja as opções para liberar essa funcionalidade."
       },
       "empresa": {
-        "title": "Empresa Inteligente é um recurso para MEI e Empresa",
-        "description": "Consulte CNPJ e mantenha os dados da sua empresa organizados. Disponível nos planos Essencial para MEI, MEI Completo e Empresa."
+        "title": "Recurso para planos MEI e Empresa",
+        "description": "Este recurso foi pensado para quem controla dados do negócio. Disponível nos planos Essencial para MEI, MEI Completo e Empresa."
       },
       "fornecedores": {
-        "title": "Fornecedores é um recurso para MEI e Empresa",
-        "description": "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais."
+        "title": "Recurso para planos MEI e Empresa",
+        "description": "Cadastro de fornecedores por CNPJ foi pensado para quem gerencia gastos empresariais. Disponível nos planos para MEI e Empresa."
       },
       "clientes": {
-        "title": "Clientes é um recurso para MEI e Empresa",
-        "description": "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais."
+        "title": "Recurso para planos MEI e Empresa",
+        "description": "Cadastro de clientes por CNPJ foi pensado para quem gerencia receitas empresariais. Disponível nos planos para MEI e Empresa."
       },
       "contador": {
-        "title": "Pacote para Contador é um recurso para MEI e Empresa",
-        "description": "Gere um resumo mensal organizado para enviar ao seu contador."
+        "title": "Recurso para planos MEI e Empresa",
+        "description": "O pacote para contador foi pensado para quem precisa enviar um resumo organizado. Disponível nos planos para MEI e Empresa."
       },
       "mercadoAvancado": {
-        "title": "Mercado Inteligente completo é premium",
-        "description": "Acesse histórico de compras, comparação de preços, cesta padrão e mercados salvos para comprar com mais controle."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Mercado Inteligente completo (histórico, comparação de preços, cesta padrão e mercados salvos) está disponível em planos mais completos."
       },
       "mercadoImportarCupom": {
-        "title": "Importação de cupom é um recurso premium",
-        "description": "Importe informações de cupons fiscais por QR Code/NFC-e para reduzir lançamentos manuais."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Importação de cupom fiscal por QR Code/NFC-e está disponível em planos mais completos."
       },
       "importacoes": {
-        "title": "Importação Inteligente é um recurso premium",
-        "description": "Importe faturas, extratos, PDFs e imagens compatíveis para reduzir lançamentos manuais."
+        "title": "Recurso disponível em planos superiores",
+        "description": "Importação Inteligente de faturas, extratos, PDFs e imagens está disponível em planos mais completos."
       }
+
     }
   },
   "errors": {
