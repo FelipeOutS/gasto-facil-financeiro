@@ -109,6 +109,7 @@ function PrecoComunitarioPage() {
 
   // Batch scan wizard
   const [batchOpen, setBatchOpen] = useState(false);
+  const [onlineImportOpen, setOnlineImportOpen] = useState(false);
 
 
   // Manual state
