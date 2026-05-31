@@ -648,7 +648,7 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         }
 
         const rl = await enforceUserRateLimit({
-          scope: "import",
+          scope: "flyerOcr",
           userId: user.id,
           route: "mercado-flyer-ocr",
           request,
