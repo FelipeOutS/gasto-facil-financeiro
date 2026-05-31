@@ -111,9 +111,10 @@
       "deleteConfirmButton": "Excluir lista"
     },
     "empty": {
-      "title": "Nenhuma lista criada ainda",
-      "description": "Crie uma lista para organizar suas compras e evitar gastos fora do planejado.",
-      "cta": "Criar lista"
+      "title": "Nenhuma lista de compras",
+      "description": "Crie uma lista para organizar produtos, quantidades e preços antes ou durante a compra.",
+      "cta": "Criar lista",
+      "helper": "Você pode usar a lista no mercado e acompanhar o total pelo carrinho."
     }
   },
   "nova": {
