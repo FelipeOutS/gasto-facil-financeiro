@@ -178,5 +178,73 @@
   "importacoes": {
     "manualName": "Manual import",
     "importedOn": "Imported on {{date}}"
+  },
+  "dialogs2": {
+    "batchUpdate": {
+      "title": "Update values",
+      "description": "Update the current values of your investments. Value provided by the user.",
+      "updateDate": "Update date",
+      "empty": "No investments registered.",
+      "currentPrice": "Current price",
+      "currentValue": "Current value",
+      "observation": "Notes",
+      "obsPlaceholder": "optional",
+      "appliedShort": "Invested {{value}}",
+      "cancel": "Cancel",
+      "save": "Save updates",
+      "saving": "Saving…",
+      "toast": {
+        "updated": "{{count}} investment(s) updated.",
+        "failed": "{{count}} update(s) failed.",
+        "noChanges": "No changes to save."
+      }
+    },
+    "importHistory": {
+      "title": "Import history",
+      "description": "View all imports performed and remove them when needed.",
+      "emptyTitle": "No imports yet",
+      "emptyDescription": "When you import statements from B3, broker, CSV or PDF, they will appear here.",
+      "importedOn": "Imported on {{date}}",
+      "summary": "{{ativos}} assets · {{movs}} transactions · {{rends}} incomes",
+      "viewDetails": "View details",
+      "deleteAria": "Delete import",
+      "close": "Close",
+      "details": {
+        "title": "Import details",
+        "manualName": "Manual import",
+        "assets": "Assets",
+        "movements": "Transactions",
+        "incomes": "Incomes",
+        "createdAssets": "Assets created",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "title": "Delete this import?",
+        "description": "Choose how you want to remove this import from your records.",
+        "onlyHistoryTitle": "Delete history only",
+        "onlyHistoryDesc1": "Removes this import's record from the history list. The assets, transactions and incomes it created",
+        "onlyHistoryDescStrong": "remain",
+        "onlyHistoryDesc2": "in your portfolio.",
+        "allTitle": "Delete everything related",
+        "allDesc1": "Removes the record",
+        "allDescStrong": "and",
+        "allDesc2": "the assets, transactions and incomes this import created. This action cannot be undone.",
+        "warningStrong": "Manually registered investments are not affected",
+        "warningRest": "— only items linked to this import will be removed.",
+        "cancel": "Cancel",
+        "deleting": "Deleting…",
+        "toast": {
+          "historyDeleted": "Import history deleted.",
+          "allDeleted": "Import and linked data deleted.",
+          "deleteFailed": "Could not delete."
+        }
+      },
+      "status": {
+        "concluida": "Completed",
+        "pendente": "Pending",
+        "erro": "Error",
+        "processando": "Processing"
+      }
+    }
   }
 }
