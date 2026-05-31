@@ -2337,7 +2337,7 @@ function RendimentoDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="recebido">{tInv("forms.labels.statusReceived")}</SelectItem>
-                  <SelectItem value="previsto">Previsto</SelectItem>
+                  <SelectItem value="previsto">{tInv("forms.labels.statusExpected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
