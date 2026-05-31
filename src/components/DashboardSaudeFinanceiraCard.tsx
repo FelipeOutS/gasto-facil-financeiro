@@ -42,7 +42,6 @@ function levelTone(level: FinancialHealthLevel): {
   ring: string;
   iconBg: string;
   iconFg: string;
-  label: string;
 } {
   switch (level) {
     case "critico":
@@ -52,7 +51,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-destructive/40",
         iconBg: "bg-destructive/15",
         iconFg: "text-destructive",
-        label: "Crítico",
       };
     case "atencao":
       return {
@@ -61,7 +59,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-warning/40",
         iconBg: "bg-warning/15",
         iconFg: "text-warning",
-        label: "Atenção",
       };
     case "bom":
       return {
@@ -70,7 +67,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-primary/30",
         iconBg: "bg-primary/10",
         iconFg: "text-primary",
-        label: "Bom",
       };
     case "excelente":
       return {
@@ -79,7 +75,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-success/40",
         iconBg: "bg-success/15",
         iconFg: "text-success",
-        label: "Excelente",
       };
   }
 }
