@@ -81,6 +81,49 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/**
+ * Redimensiona uma imagem mantendo proporção, com o maior lado em até MAX_SIDE.
+ * Mantém qualidade alta (0.85) — panfletos têm textos pequenos.
+ * Se falhar (ex.: HEIC), faz fallback para o arquivo original em base64.
+ */
+const MAX_SIDE = 1800;
+const JPEG_QUALITY = 0.85;
+async function fileToProcessedDataUrl(file: File): Promise<string> {
+  try {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("decode-failed"));
+        i.src = url;
+      });
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (!w || !h) throw new Error("empty-image");
+      const longest = Math.max(w, h);
+      const scale = longest > MAX_SIDE ? MAX_SIDE / longest : 1;
+      const tw = Math.round(w * scale);
+      const th = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("no-context");
+      ctx.drawImage(img, 0, 0, tw, th);
+      // Use JPEG p/ texto pequeno + bom compromisso de tamanho.
+      const out = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      if (!out || out.length < 200) throw new Error("encode-empty");
+      return out;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  } catch {
+    // Fallback: envia original (servidor valida MIME e tamanho).
+    return fileToBase64(file);
+  }
+}
+
 function newId() {
   try {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
