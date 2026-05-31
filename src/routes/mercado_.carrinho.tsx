@@ -137,13 +137,24 @@ function ListPicker({ requestedId }: { requestedId?: string }) {
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
           {t("carrinho.empty.description")}
         </p>
-        <Link
-          to="/mercado/listas/nova"
-          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
-        >
-          <Plus className="h-4 w-4" />
-          {t("carrinho.empty.cta")}
-        </Link>
+        <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+          <Link
+            to="/mercado/listas/nova"
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+          >
+            <Plus className="h-4 w-4" />
+            {t("carrinho.empty.cta")}
+          </Link>
+          <Link
+            to="/mercado/listas"
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-card-elevated"
+          >
+            {t("carrinho.empty.secondaryCta")}
+          </Link>
+        </div>
+        <p className="mx-auto mt-3 max-w-md text-[11px] text-muted-foreground">
+          {t("carrinho.empty.helper")}
+        </p>
       </section>
     );
   }
