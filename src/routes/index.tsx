@@ -42,6 +42,7 @@ import { AvisoTrialExpirandoBanner } from "@/components/AvisoTrialExpirandoBanne
 import { UpgradeCardsList } from "@/components/UpgradeCardsList";
 import {
   contaPertenceAoMesRef,
+  getCartoes,
   getCategoriaById,
   getCategorias,
   getContasAPagar,
