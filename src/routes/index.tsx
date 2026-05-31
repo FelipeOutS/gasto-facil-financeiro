@@ -381,6 +381,7 @@ function Index() {
           />
           <WelcomeCard
             to="/adicionar"
+            search={{ tipo: "gasto" }}
             icon={<Plus className="h-5 w-5" />}
             title={t("empty.cards.gasto")}
             tint="primary"
