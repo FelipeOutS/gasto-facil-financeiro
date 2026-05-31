@@ -70,13 +70,15 @@ export function PrimeirosPassosCard({
         label: t("firstSteps.items.expense"),
         done: gastosCount > 0,
         to: "/adicionar",
+        search: { tipo: "gasto" },
         icon: Plus,
       },
       {
         id: incomeKey,
         label: t(`firstSteps.items.${incomeKey}`),
         done: receitasCount > 0,
-        to: "/renda",
+        to: "/adicionar",
+        search: { tipo: "receita" },
         icon: ArrowUp,
       },
       {
@@ -149,6 +151,7 @@ export function PrimeirosPassosCard({
             <li key={item.id}>
               <Link
                 to={item.to}
+                search={("search" in item ? item.search : undefined) as Record<string, unknown> | undefined}
                 className={cn(
                   "group flex items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-sm transition-colors hover:border-border hover:bg-card-elevated",
                   item.done && "opacity-70",
@@ -183,7 +186,7 @@ export function PrimeirosPassosCard({
       </ul>
 
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        <Link to="/adicionar" className="sm:flex-1">
+        <Link to="/adicionar" search={{ tipo: "gasto" }} className="sm:flex-1">
           <Button
             size="lg"
             className="card-press h-11 w-full rounded-xl bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
@@ -192,7 +195,7 @@ export function PrimeirosPassosCard({
             {t("firstSteps.primaryCta")}
           </Button>
         </Link>
-        <Link to="/renda" className="sm:flex-1">
+        <Link to="/adicionar" search={{ tipo: "receita" }} className="sm:flex-1">
           <Button
             size="lg"
             variant="outline"

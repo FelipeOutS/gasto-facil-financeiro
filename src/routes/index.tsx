@@ -373,8 +373,8 @@ function Index() {
 
         <section className="mt-6 grid grid-cols-2 gap-3">
           <WelcomeCard
-            to="/renda"
-            search={{ ano: ym.ano, mes: ym.mes }}
+            to="/adicionar"
+            search={{ tipo: "receita" }}
             icon={<ArrowUp className="h-5 w-5" />}
             title={t("empty.cards.salario")}
             tint="success"
