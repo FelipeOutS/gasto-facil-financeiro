@@ -32,6 +32,11 @@ import { confirmAsync } from "@/components/ConfirmDialog";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
+import { CommunityPriceSuggestion } from "@/components/mercado/CommunityPriceSuggestion";
+import {
+  getSuggestionsFor,
+  useActiveCommunityPrices,
+} from "@/lib/mercado/community-prices-suggestions";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
