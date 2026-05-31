@@ -54,6 +54,7 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/mercado/meus-mercados", feature: "mercado_avancado", title: "Meus mercados é um recurso premium", description: "Cadastre os mercados onde você costuma comprar e marque favoritos. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
   { path: "/mercado/mercados", feature: "mercado_avancado", title: "Comparativo por mercado é um recurso premium", description: "Descubra onde você costuma pagar melhores preços. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
   { path: "/mercado/importar-cupom", feature: "mercado_importar_cupom", title: "Importação de cupom é um recurso premium", description: "Importe informações de cupons fiscais por QR Code/NFC-e para reduzir lançamentos manuais. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
+  { path: "/mercado/preco-comunitario", feature: "mercado_avancado", title: "Preço Comunitário é um recurso premium", description: "Leia panfletos de mercado por foto e registre preços informados pela comunidade. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {
