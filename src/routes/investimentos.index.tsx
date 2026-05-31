@@ -1738,7 +1738,7 @@ function AtualizarValorDialog({
 
           <div>
             <label className="text-xs text-muted-foreground">
-              Valor atual{isVariavel ? " (calculado)" : ""}
+              {tInv("forms.labels.currentValue")}{isVariavel ? " " + tInv("forms.aux.calculated") : ""}
             </label>
             <Input
               value={valorAtual}
