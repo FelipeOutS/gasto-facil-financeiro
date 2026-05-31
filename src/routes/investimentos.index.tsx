@@ -2254,7 +2254,7 @@ function RendimentoDialog({
   async function salvar() {
     if (!userId) return;
     if (!ativoId) {
-      toast.error("Selecione um investimento.");
+      toast.error(tInv("forms.aux.errors.incomeAssetRequired"));
       return;
     }
     const v = parseBRLInput(valor);
