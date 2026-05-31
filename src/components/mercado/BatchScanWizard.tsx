@@ -46,6 +46,16 @@ type Step = "market" | "photos" | "processing" | "review";
 
 type PhotoStatus = "pending" | "processing" | "done" | "empty" | "error";
 
+type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
+type ErrorReason =
+  | "ocr_config_missing"
+  | "vision_api_error"
+  | "network"
+  | "rate_limited"
+  | "credits"
+  | "generic"
+  | null;
+
 type DetectedItem = {
   productName: string;
   price: number | null;
@@ -63,8 +73,11 @@ type Photo = {
   previewUrl: string;
   status: PhotoStatus;
   errorMessage?: string;
+  emptyReason?: EmptyReason;
+  errorReason?: ErrorReason;
   items: DetectedItem[];
 };
+
 
 type ReviewItem = DetectedItem & {
   id: string;
