@@ -1334,9 +1334,9 @@ function HistoricoImportacoesDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico de importações</DialogTitle>
+            <DialogTitle>{tInv("dialogs2.importHistory.title")}</DialogTitle>
             <DialogDescription>
-              Veja todas as importações realizadas e remova quando precisar.
+              {tInv("dialogs2.importHistory.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1345,16 +1345,19 @@ function HistoricoImportacoesDialog({
               <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-soft/60 grid place-items-center text-brand-on-soft mb-3">
                 <History className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold">Nenhuma importação ainda</h3>
+              <h3 className="font-semibold">{tInv("dialogs2.importHistory.emptyTitle")}</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                Quando você importar extratos da B3, corretora, CSV ou PDF, eles aparecerão aqui.
+                {tInv("dialogs2.importHistory.emptyDescription")}
               </p>
             </div>
           ) : (
             <ul className="space-y-2.5">
               {importacoes.map((imp) => {
                 const r = imp.resumo ?? {};
-                const data = new Date(imp.created_at).toLocaleDateString("pt-BR");
+                const data = new Date(imp.created_at).toLocaleDateString();
+                const statusKey = `dialogs2.importHistory.status.${imp.status}`;
+                const statusTranslated = tInv(statusKey);
+                const statusLabel = statusTranslated === statusKey ? imp.status : statusTranslated;
                 return (
                   <li
                     key={imp.id}
@@ -1373,27 +1376,30 @@ function HistoricoImportacoesDialog({
                             variant={imp.status === "concluida" ? "secondary" : "outline"}
                             className="text-[10px] capitalize"
                           >
-                            {imp.status}
+                            {statusLabel}
                           </Badge>
                           <span className="text-[11px] text-muted-foreground">
-                            Importado em {data}
+                            {tInv("dialogs2.importHistory.importedOn", { date: data })}
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1.5">
-                          {(r.ativos ?? 0)} ativos · {(r.movimentacoes ?? 0)} movimentações ·{" "}
-                          {(r.rendimentos ?? 0)} rendimentos
+                          {tInv("dialogs2.importHistory.summary", {
+                            ativos: r.ativos ?? 0,
+                            movs: r.movimentacoes ?? 0,
+                            rends: r.rendimentos ?? 0,
+                          })}
                         </div>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         <Button size="sm" variant="outline" onClick={() => abrirDetalhe(imp)}>
-                          Ver detalhes
+                          {tInv("dialogs2.importHistory.viewDetails")}
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-rose-500 hover:text-rose-500"
                           onClick={() => setConfirmar(imp)}
-                          aria-label="Excluir importação"
+                          aria-label={tInv("dialogs2.importHistory.deleteAria")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1406,7 +1412,7 @@ function HistoricoImportacoesDialog({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>{tInv("dialogs2.importHistory.close")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
