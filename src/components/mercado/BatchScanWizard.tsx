@@ -536,6 +536,11 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </p>
             </div>
 
+            <div className="rounded-md border border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
+              💡 {t("communityPrices.batch.photoTip")}
+            </div>
+
+
             <input
               ref={fileRef}
               type="file"
