@@ -135,7 +135,15 @@
     "semLancamentos": "Nenhum lançamento financeiro neste dia.",
     "lancamentoSing": "{{count}} lançamento",
     "lancamentoPlur": "{{count}} lançamentos",
-    "weekdays": ["D", "S", "T", "Q", "Q", "S", "S"]
+    "weekdays": [
+      "D",
+      "S",
+      "T",
+      "Q",
+      "Q",
+      "S",
+      "S"
+    ]
   },
   "mobileSummary": {
     "eyebrow": "resumo de",
@@ -255,17 +263,20 @@
     "moedaEstrangeira": "moeda estrangeira"
   },
   "whatsappBanner": {
-    "title": "Em breve: integração com WhatsApp",
-    "novo": "Novo",
-    "subtitle": "Lance gastos, receitas e consulte saldos enviando mensagens — direto no seu WhatsApp. Sem precisar abrir o app.",
-    "dispensar": "Dispensar aviso"
+    "title": "Lançamento pelo WhatsApp em breve",
+    "novo": "Em breve",
+    "subtitle": "Em uma próxima versão, você poderá enviar gastos pelo WhatsApp para facilitar o registro no dia a dia.",
+    "dispensar": "Fechar aviso",
+    "cta": "Entendi"
   },
   "trialBanner": {
-    "title": "Seu período de teste está acabando",
-    "subtitle": "Faltam {{days}} dias para o fim do seu teste. Escolha um plano para continuar usando o Gasto Inteligente sem interrupções.",
+    "title": "Seu teste termina em breve",
+    "subtitle_one": "Falta {{count}} dia para o fim do seu teste. Escolha um plano para continuar usando o Gasto Inteligente sem interrupções.",
+    "subtitle_other": "Faltam {{count}} dias para o fim do seu teste. Escolha um plano para continuar usando o Gasto Inteligente sem interrupções.",
     "expiresOn": "Expira em {{date}}.",
     "cta": "Ver planos",
-    "remindLater": "Lembrar depois"
+    "remindLater": "Lembrar depois",
+    "close": "Fechar aviso"
   },
   "connectedBanner": {
     "vendoConta": "Você está vendo a conta de",
@@ -643,59 +654,59 @@
       "mercadoAvancado": "Mercado Inteligente completo",
       "mercadoImportarCupom": "Importação de cupom/QR Code",
       "importacoes": "Importação Inteligente de faturas e extratos"
-  },
-  "financialHealth": {
-    "title": "Saúde financeira",
-    "empty": "Cadastre sua renda e alguns gastos para calcular sua saúde financeira.",
-    "scoreMax": "/ 100",
-    "scenarioLabel": "Cenário",
-    "levels": {
-      "critico": "Crítico",
-      "atencao": "Atenção",
-      "bom": "Bom",
-      "excelente": "Excelente"
+    },
+    "financialHealth": {
+      "title": "Saúde financeira",
+      "empty": "Cadastre sua renda e alguns gastos para calcular sua saúde financeira.",
+      "scoreMax": "/ 100",
+      "scenarioLabel": "Cenário",
+      "levels": {
+        "critico": "Crítico",
+        "atencao": "Atenção",
+        "bom": "Bom",
+        "excelente": "Excelente"
+      }
+    },
+    "tipsBlock": {
+      "title": "Dicas para economizar",
+      "subtitle": "Sugestões leves baseadas no seu mês.",
+      "tipSing": "dica",
+      "tipPlur": "dicas",
+      "showLess": "Mostrar menos",
+      "showMore": "Ver mais {{count}} {{unit}}",
+      "priority": {
+        "alta": "Atenção",
+        "media": "Importante",
+        "baixa": "Dica"
+      }
+    },
+    "monthlyDiagnosis": {
+      "title": "Diagnóstico mensal",
+      "empty": "Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.",
+      "scenarioLabel": "Cenário econômico:",
+      "levels": {
+        "critico": "Crítico",
+        "atencao": "Atenção",
+        "bom": "Bom",
+        "excelente": "Excelente"
+      }
+    },
+    "radarInteligente": {
+      "aria": "Indicadores econômicos do Banco Central",
+      "title": "Indicadores do Banco Central",
+      "subtitle": "Selic, CDI e IPCA com leitura prática para o seu bolso.",
+      "refresh": "Atualizar",
+      "refreshAria": "Atualizar indicadores (força nova busca)",
+      "refreshTitle": "Forçar atualização ignorando o cache",
+      "stale": "Mostrando últimos dados conhecidos — a fonte pode estar instável.",
+      "source": "Fonte: Banco Central do Brasil (SGS). Dados públicos atualizados a cada poucas horas.",
+      "units": {
+        "perYear": "% a.a.",
+        "perMonth": "% no mês"
+      }
+    },
+    "economicImpact": {
+      "eyebrow": "Impacto do cenário no seu mês"
     }
-  },
-  "tipsBlock": {
-    "title": "Dicas para economizar",
-    "subtitle": "Sugestões leves baseadas no seu mês.",
-    "tipSing": "dica",
-    "tipPlur": "dicas",
-    "showLess": "Mostrar menos",
-    "showMore": "Ver mais {{count}} {{unit}}",
-    "priority": {
-      "alta": "Atenção",
-      "media": "Importante",
-      "baixa": "Dica"
-    }
-  },
-  "monthlyDiagnosis": {
-    "title": "Diagnóstico mensal",
-    "empty": "Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.",
-    "scenarioLabel": "Cenário econômico:",
-    "levels": {
-      "critico": "Crítico",
-      "atencao": "Atenção",
-      "bom": "Bom",
-      "excelente": "Excelente"
-    }
-  },
-  "radarInteligente": {
-    "aria": "Indicadores econômicos do Banco Central",
-    "title": "Indicadores do Banco Central",
-    "subtitle": "Selic, CDI e IPCA com leitura prática para o seu bolso.",
-    "refresh": "Atualizar",
-    "refreshAria": "Atualizar indicadores (força nova busca)",
-    "refreshTitle": "Forçar atualização ignorando o cache",
-    "stale": "Mostrando últimos dados conhecidos — a fonte pode estar instável.",
-    "source": "Fonte: Banco Central do Brasil (SGS). Dados públicos atualizados a cada poucas horas.",
-    "units": {
-      "perYear": "% a.a.",
-      "perMonth": "% no mês"
-    }
-  },
-  "economicImpact": {
-    "eyebrow": "Impacto do cenário no seu mês"
   }
-}
 }
