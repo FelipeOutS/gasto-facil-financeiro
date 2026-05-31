@@ -44,6 +44,15 @@
       "atencao": "Attention",
       "informativos": "Informational"
     },
+    "onboarding": {
+      "title": "Track your financial alerts",
+      "description": "See notices about upcoming bills, budget limits, card limits, and important goals.",
+      "cta": "View bills to pay",
+      "secondaryCta": "View budget",
+      "helper": "Alerts become more useful as you add entries, bills, cards, goals, and budgets.",
+      "inApp": "Alerts appear inside the app to help you track due dates, limits, and goals."
+    },
+    "emptyHelper": "Everything looks fine for now. Keep your entries up to date.",
     "empty": {
       "todos": "No alerts right now.",
       "nao_lidos": "No unread alerts.",
