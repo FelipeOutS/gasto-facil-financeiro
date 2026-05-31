@@ -30,7 +30,8 @@
   "empty": {
     "title": "No cards here yet",
     "subtitle": "Add your first card and stop trying to remember closing and due dates by heart.",
-    "addFirst": "Add first card"
+    "addFirst": "Add first card",
+    "security": "We don’t ask for the full card number, CVV, or password."
   },
   "card": {
     "moreActions": "More actions",
@@ -176,10 +177,37 @@
     "previewType": "Credit",
     "colorLabel": "Color {{color}}",
     "cancel": "Cancel",
-    "save": "Save card"
+    "save": "Save card",
+    "security": "You don’t need to enter your card number, CVV, or password. This setup is only used to organize limits, invoices, and spending inside the app."
   },
   "months": {
-    "abbr": ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"],
-    "full": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    "abbr": [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec"
+    ],
+    "full": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ]
   }
 }

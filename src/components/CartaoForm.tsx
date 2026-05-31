@@ -113,6 +113,11 @@ export function CartaoForm({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:gap-8">
           <div className="space-y-5 animate-rise">
+            {!editing && (
+              <p className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                🔒 {t("form.security")}
+              </p>
+            )}
             <section className="space-y-4">
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {t("form.dataSection")}
