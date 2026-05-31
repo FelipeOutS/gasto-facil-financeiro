@@ -1689,7 +1689,7 @@ function AtualizarValorDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" /> Atualizar valor
+            <RefreshCw className="h-4 w-4" /> {tInv("dialogs.updateValue.title")}
           </DialogTitle>
           <DialogDescription>
             Atualização manual · valor informado pelo usuário.
