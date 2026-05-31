@@ -1186,7 +1186,7 @@ function GastosPage() {
               cta={
                 <div className="flex w-full flex-col items-center gap-4">
                   <Button asChild className="min-h-11 rounded-full font-semibold">
-                    <Link to="/adicionar" search={{ tipo: "gasto" }}>{t("empty.noneCta")}</Link>
+                    <Link to="/adicionar">{t("empty.noneCta")}</Link>
                   </Button>
                   <ol className="grid w-full max-w-sm gap-2 text-left text-xs sm:grid-cols-3">
                     {(["expense", "details", "summary"] as const).map((k, i) => (
