@@ -679,6 +679,23 @@
       "bom": "Bom",
       "excelente": "Excelente"
     }
+  },
+  "radarInteligente": {
+    "aria": "Indicadores econômicos do Banco Central",
+    "title": "Indicadores do Banco Central",
+    "subtitle": "Selic, CDI e IPCA com leitura prática para o seu bolso.",
+    "refresh": "Atualizar",
+    "refreshAria": "Atualizar indicadores (força nova busca)",
+    "refreshTitle": "Forçar atualização ignorando o cache",
+    "stale": "Mostrando últimos dados conhecidos — a fonte pode estar instável.",
+    "source": "Fonte: Banco Central do Brasil (SGS). Dados públicos atualizados a cada poucas horas.",
+    "units": {
+      "perYear": "% a.a.",
+      "perMonth": "% no mês"
+    }
+  },
+  "economicImpact": {
+    "eyebrow": "Impacto do cenário no seu mês"
   }
 }
 }
