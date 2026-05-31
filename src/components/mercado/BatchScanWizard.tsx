@@ -676,6 +676,15 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </p>
             </div>
 
+            {photos.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                {t("communityPrices.batch.readSummary", {
+                  read: withItemsCount,
+                  total: photos.length,
+                })}
+              </div>
+            )}
+
             {allFailed && (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -690,7 +699,8 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             )}
             {noItems && !allFailed && (
               <div className="rounded-md border border-border bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-                {t("communityPrices.batch.noItemsFound")}
+                <p>{t("communityPrices.batch.noItemsFound")}</p>
+                <p className="mt-1 text-[11px]">{t("communityPrices.batch.tryCloserPhoto")}</p>
               </div>
             )}
             {hasDuplicates && reviewItems.length > 0 && (
