@@ -364,9 +364,16 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const doneCount = photos.filter((p) => p.status === "done" || p.status === "empty").length;
   const errorCount = photos.filter((p) => p.status === "error").length;
   const withItemsCount = photos.filter((p) => p.status === "done").length;
+  const noTextCount = photos.filter(
+    (p) => p.status === "empty" && p.emptyReason === "no_text_detected",
+  ).length;
+  const textNoItemsCount = photos.filter(
+    (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_items",
+  ).length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
+
 
   // Duplicate detection (same productName + price)
   const hasDuplicates = useMemo(() => {
