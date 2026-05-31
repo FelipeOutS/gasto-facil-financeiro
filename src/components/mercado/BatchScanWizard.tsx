@@ -372,9 +372,26 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const textNoItemsCount = photos.filter(
     (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_items",
   ).length;
+  const technicalErrorCount = photos.filter((p) => p.status === "error").length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
+
+  function getPhotoIssueLabel(photo: Photo): string {
+    if (photo.status === "empty") {
+      if (photo.emptyReason === "no_text_detected") return t("communityPrices.batch.errorNoText");
+      if (photo.emptyReason === "text_found_but_no_items") return t("communityPrices.batch.errorTextNoItems");
+      return t("communityPrices.batch.photoEmpty");
+    }
+    if (photo.status !== "error") return "";
+    if (photo.errorReason === "ocr_config_missing") return t("communityPrices.batch.errorOcrConfigMissing");
+    if (photo.errorReason === "vision_api_error") return t("communityPrices.batch.errorVisionApi");
+    if (photo.errorReason === "invalid_image_payload") return t("communityPrices.batch.errorInvalidImagePayload");
+    if (photo.errorReason === "rate_limited") return t("communityPrices.batch.errorRateLimited");
+    if (photo.errorReason === "credits") return t("communityPrices.batch.errorCredits");
+    if (photo.errorReason === "network") return t("communityPrices.batch.errorNetwork");
+    return t("communityPrices.batch.errorUnknown");
+  }
 
 
   // Duplicate detection (same productName + price)
