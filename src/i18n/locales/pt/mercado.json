@@ -1057,5 +1057,13 @@
       "description": "Salve mercados favoritos e acompanhe preços por local com mais organização.",
       "cta": "Desbloquear recurso"
     }
+  },
+  "map": {
+    "loadErrorTitle": "Mapa indisponível",
+    "loadErrorDescription": "Não foi possível carregar o mapa agora. Verifique sua conexão ou tente novamente mais tarde.",
+    "keyMissingTitle": "Configuração pendente",
+    "keyMissingDescription": "O mapa ainda não está configurado. Entre em contato com o suporte se o problema persistir.",
+    "loading": "Carregando mapa…",
+    "tryAgain": "Tentar novamente"
   }
 }
