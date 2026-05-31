@@ -199,9 +199,9 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="gastos" name="Gastos" stroke="var(--destructive)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+              <Line type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="saldo" name={labelSaldo} stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
             </LineChart>
           ) : tipo === "bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
