@@ -11,6 +11,32 @@
   "hint": "✨ A leitura por foto/print usa IA pra identificar valor, data e descrição. Você confere e edita tudo antes de salvar.",
   "cancel": "Cancelar",
   "requirePlan": "Para adicionar gastos, escolha um plano ativo.",
+  "guidedEntry": {
+    "title": "Vamos registrar seu primeiro lançamento",
+    "description": "Escolha se você quer adicionar um gasto ou uma receita. Depois, preencha valor, data e descrição para começar a montar seu resumo financeiro.",
+    "descriptionBusiness": "Escolha se você quer adicionar um gasto ou um faturamento. Depois, preencha valor, data e descrição para começar a montar seu resumo financeiro.",
+    "dismiss": "Dispensar guia",
+    "steps": {
+      "chooseType": "Escolha o tipo",
+      "fillDetails": "Preencha os dados",
+      "saveAndTrack": "Salve e acompanhe no Dashboard"
+    },
+    "types": {
+      "expense": {
+        "title": "Adicionar gasto",
+        "description": "Use para registrar compras, contas pagas, despesas do dia a dia ou custos do negócio."
+      },
+      "income": {
+        "title": "Adicionar receita",
+        "description": "Use para registrar salário, freelance, comissões ou outras entradas."
+      },
+      "revenue": {
+        "title": "Adicionar faturamento",
+        "description": "Use para registrar vendas, serviços, contratos ou outras entradas do negócio."
+      }
+    },
+    "hint": "Depois dos primeiros lançamentos, você poderá explorar gráficos, alertas, importações e recursos inteligentes conforme seu plano."
+  },
   "manual": {
     "meta": { "title": "Cadastrar manualmente — Gasto Inteligente" },
     "kicker": "Manual",

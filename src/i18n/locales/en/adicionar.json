@@ -11,6 +11,32 @@
   "hint": "✨ Photo/screenshot reading uses AI to identify amount, date and description. You review and edit everything before saving.",
   "cancel": "Cancel",
   "requirePlan": "To add expenses, choose an active plan.",
+  "guidedEntry": {
+    "title": "Let's add your first entry",
+    "description": "Choose whether you want to add an expense or income. Then fill in the amount, date, and description to start building your financial summary.",
+    "descriptionBusiness": "Choose whether you want to add an expense or revenue. Then fill in the amount, date, and description to start building your financial summary.",
+    "dismiss": "Dismiss guide",
+    "steps": {
+      "chooseType": "Choose the type",
+      "fillDetails": "Fill in the details",
+      "saveAndTrack": "Save and track it on the Dashboard"
+    },
+    "types": {
+      "expense": {
+        "title": "Add expense",
+        "description": "Use it to record purchases, paid bills, daily expenses, or business costs."
+      },
+      "income": {
+        "title": "Add income",
+        "description": "Use it to record salary, freelance work, commissions, or other income."
+      },
+      "revenue": {
+        "title": "Add revenue",
+        "description": "Use it to record sales, services, contracts, or other business revenue."
+      }
+    },
+    "hint": "After your first entries, you can explore charts, alerts, imports, and smart features based on your plan."
+  },
   "manual": {
     "meta": { "title": "Add manually — Gasto Inteligente" },
     "kicker": "Manual",
