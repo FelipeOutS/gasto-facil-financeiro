@@ -1674,7 +1674,7 @@ function AtualizarValorDialog({
         data_atualizacao: new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString(),
         origem: "manual",
       });
-      toast.success("Valor atualizado.");
+      toast.success(tInv("forms.aux.success.valueUpdated"));
       onSaved();
     } catch (e) {
       console.error(e);
