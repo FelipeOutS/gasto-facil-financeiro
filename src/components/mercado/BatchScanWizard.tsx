@@ -666,15 +666,24 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       )}
                       {p.status === "empty" && (
                         <span className="text-amber-700 dark:text-amber-400">
-                          {t("communityPrices.batch.photoEmpty")}
+                          {p.emptyReason === "no_text_detected"
+                            ? t("communityPrices.batch.errorNoText")
+                            : p.emptyReason === "text_found_but_no_items"
+                              ? t("communityPrices.batch.errorTextNoItems")
+                              : t("communityPrices.batch.photoEmpty")}
                         </span>
                       )}
                       {p.status === "error" && (
                         <span className="inline-flex items-center gap-1 text-destructive">
                           <AlertTriangle className="h-3 w-3" />
-                          {t("communityPrices.batch.photoError")}
+                          {p.errorReason === "ocr_config_missing"
+                            ? t("communityPrices.batch.errorOcrConfigMissing")
+                            : p.errorReason === "vision_api_error"
+                              ? t("communityPrices.batch.errorVisionApi")
+                              : t("communityPrices.batch.photoError")}
                         </span>
                       )}
+
                     </p>
                   </div>
                   {p.status === "error" && (
