@@ -693,7 +693,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       {p.status === "done" && (
                         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                           <Check className="h-3 w-3" />
-                          {t("communityPrices.batch.photoDone", { count: p.items.length })}
+                          {p.usedFallback
+                            ? t("communityPrices.batch.photoFallbackDone", { count: p.items.length })
+                            : t("communityPrices.batch.photoDone", { count: p.items.length })}
                         </span>
                       )}
                       {p.status === "empty" && (
@@ -784,6 +786,12 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                   <div>
                     {t("communityPrices.batch.summaryTextNoItems", { count: textNoItemsCount })}
                   </div>
+                )}
+                {textNoPricesCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryTextNoPrices", { count: textNoPricesCount })}</div>
+                )}
+                {fallbackCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryFallback", { count: fallbackCount })}</div>
                 )}
                 {errorCount > 0 && (
                   <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
