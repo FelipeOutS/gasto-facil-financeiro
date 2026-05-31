@@ -1517,10 +1517,10 @@ function HistoricoImportacoesDialog({
               <div className="min-w-0">
                 <DialogHeader className="space-y-1 text-left">
                   <DialogTitle className="text-lg leading-tight">
-                    Excluir esta importação?
+                    {tInv("dialogs2.importHistory.confirm.title")}
                   </DialogTitle>
                   <DialogDescription className="text-sm">
-                    Escolha como deseja remover esta importação dos seus registros.
+                    {tInv("dialogs2.importHistory.confirm.description")}
                   </DialogDescription>
                 </DialogHeader>
               </div>
@@ -1544,11 +1544,11 @@ function HistoricoImportacoesDialog({
                 <History className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm">Excluir apenas histórico</p>
+                <p className="font-semibold text-sm">{tInv("dialogs2.importHistory.confirm.onlyHistoryTitle")}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                  Remove o registro desta importação da lista de histórico.
-                  Os ativos, movimentações e rendimentos criados por ela{" "}
-                  <strong className="text-foreground">permanecem</strong> na sua carteira.
+                  {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc1")}{" "}
+                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.onlyHistoryDescStrong")}</strong>{" "}
+                  {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc2")}
                 </p>
               </div>
             </button>
@@ -1569,12 +1569,12 @@ function HistoricoImportacoesDialog({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm text-destructive">
-                  Excluir tudo relacionado
+                  {tInv("dialogs2.importHistory.confirm.allTitle")}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                  Remove o registro <strong className="text-foreground">e</strong> os
-                  ativos, movimentações e rendimentos que esta importação criou.
-                  Esta ação não pode ser desfeita.
+                  {tInv("dialogs2.importHistory.confirm.allDesc1")}{" "}
+                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.allDescStrong")}</strong>{" "}
+                  {tInv("dialogs2.importHistory.confirm.allDesc2")}
                 </p>
               </div>
             </button>
@@ -1583,9 +1583,8 @@ function HistoricoImportacoesDialog({
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-3">
               <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
               <p className="text-xs text-amber-200/90 leading-relaxed">
-                <strong className="text-amber-300">Investimentos cadastrados manualmente
-                não são afetados</strong> — apenas itens vinculados a esta importação
-                serão removidos.
+                <strong className="text-amber-300">{tInv("dialogs2.importHistory.confirm.warningStrong")}</strong>{" "}
+                {tInv("dialogs2.importHistory.confirm.warningRest")}
               </p>
             </div>
           </div>
@@ -1597,12 +1596,12 @@ function HistoricoImportacoesDialog({
               disabled={excluindo}
               className="w-full sm:w-auto"
             >
-              Cancelar
+              {tInv("dialogs2.importHistory.confirm.cancel")}
             </Button>
             {excluindo && (
               <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
-                Excluindo…
+                {tInv("dialogs2.importHistory.confirm.deleting")}
               </span>
             )}
           </DialogFooter>
