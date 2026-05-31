@@ -1309,6 +1309,36 @@
       "saveSuccess_other": "{{count}} preços salvos em {{market}}.",
       "saveFailed": "Não foi possível salvar os preços."
     },
+    "onlineImport": {
+      "cardTitle": "Importar preços online",
+      "cardDescription": "Busque preços públicos disponíveis online e revise antes de salvar.",
+      "cardCta": "Importar do Joanin Online",
+      "title": "Importar preços online",
+      "description": "Vamos buscar preços públicos do Joanin Online. Revise antes de salvar.",
+      "confirmMessage": "Vamos buscar preços públicos do Joanin Online. Os valores podem variar por loja, região e data. Revise antes de salvar.",
+      "sourceLabel": "Fonte: {{source}}",
+      "sourceTag": "Fonte",
+      "cancel": "Cancelar",
+      "back": "Voltar",
+      "fetchCta": "Buscar preços",
+      "loading": "Buscando preços online…",
+      "reviewSummary": "Encontramos {{count}} preço(s) em {{source}} · Atualizado em {{date}}.",
+      "reviewDisclaimer": "Confira disponibilidade e preço no mercado antes de comprar.",
+      "itemFooter": "Fonte: {{source}} · Atualizado em {{date}}",
+      "oldPriceBadge": "Antes R$ {{value}}",
+      "oldPriceNote": "Preço anterior: R$ {{value}}",
+      "saveReviewed": "Salvar preços revisados",
+      "success_one": "{{count}} preço importado.",
+      "success_other": "{{count}} preços importados.",
+      "errors": {
+        "siteUnavailable": "Não foi possível acessar a fonte online agora.",
+        "noProductsFound": "Nenhum preço foi encontrado nessa busca.",
+        "importFailed": "Não foi possível importar os preços online.",
+        "saveFailed": "Não foi possível salvar os preços revisados.",
+        "rateLimited": "Aguarde um pouco antes de buscar novamente.",
+        "selectAtLeastOne": "Selecione ao menos um item para salvar."
+      }
+    },
     "suggestions": {
       "title": "Preço comunitário encontrado",
       "usePrice": "Usar este preço",
