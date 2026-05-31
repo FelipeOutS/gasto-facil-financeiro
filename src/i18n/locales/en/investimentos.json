@@ -245,6 +245,37 @@
         "erro": "Error",
         "processando": "Processing"
       }
+    },
+    "assetDetail": {
+      "stats": {
+        "applied": "Invested",
+        "current": "Current",
+        "profit": "Profit / Loss",
+        "profitability": "Return"
+      },
+      "labels": {
+        "quantity": "Quantity",
+        "averagePrice": "Average price",
+        "lastUpdate": "Last update: {{value}}",
+        "registeredValue": "value provided at registration",
+        "outdated": "outdated"
+      },
+      "actions": {
+        "edit": "Edit",
+        "updateValue": "Update value",
+        "movement": "Transaction",
+        "income": "Income",
+        "delete": "Delete",
+        "close": "Close"
+      },
+      "sections": {
+        "movements": "Transactions",
+        "income": "Income"
+      },
+      "empty": {
+        "movements": "No transactions.",
+        "income": "No income."
+      }
     }
   }
 }

@@ -2427,69 +2427,70 @@ function DetalheAtivoDialog({
         </DialogHeader>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-          <MiniStat label="Aplicado" value={formatBRL(Number(ativo.valor_aplicado || 0))} />
-          <MiniStat label="Atual" value={formatBRL(Number(ativo.valor_atual || 0))} />
+          <MiniStat label={tInv("dialogs2.assetDetail.stats.applied")} value={formatBRL(Number(ativo.valor_aplicado || 0))} />
+          <MiniStat label={tInv("dialogs2.assetDetail.stats.current")} value={formatBRL(Number(ativo.valor_atual || 0))} />
           <MiniStat
-            label="Lucro / Prejuízo"
+            label={tInv("dialogs2.assetDetail.stats.profit")}
             value={`${lucro >= 0 ? "+" : ""}${formatBRL(lucro)}`}
           />
           <MiniStat
-            label="Rentabilidade"
+            label={tInv("dialogs2.assetDetail.stats.profitability")}
             value={`${rent >= 0 ? "+" : ""}${rent.toFixed(2)}%`}
           />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-xs text-muted-foreground">
           {ativo.quantidade != null && (
-            <div><span className="block uppercase tracking-wide text-[10px]">Quantidade</span>{ativo.quantidade}</div>
+            <div><span className="block uppercase tracking-wide text-[10px]">{tInv("dialogs2.assetDetail.labels.quantity")}</span>{ativo.quantidade}</div>
           )}
           {ativo.preco_medio != null && (
-            <div><span className="block uppercase tracking-wide text-[10px]">Preço médio</span>{formatBRL(Number(ativo.preco_medio))}</div>
+            <div><span className="block uppercase tracking-wide text-[10px]">{tInv("dialogs2.assetDetail.labels.averagePrice")}</span>{formatBRL(Number(ativo.preco_medio))}</div>
           )}
           <div className="col-span-2 md:col-span-2 flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
             <span>
-              Última atualização:{" "}
-              {ativo.ultima_atualizacao ? formatarDataHora(ativo.ultima_atualizacao) : "valor informado no cadastro"}
+              {tInv("dialogs2.assetDetail.labels.lastUpdate", {
+                value: ativo.ultima_atualizacao ? formatarDataHora(ativo.ultima_atualizacao) : tInv("dialogs2.assetDetail.labels.registeredValue"),
+              })}
             </span>
             {ult.desatualizado && ativo.ultima_atualizacao && (
-              <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">desatualizado</Badge>
+              <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">{tInv("dialogs2.assetDetail.labels.outdated")}</Badge>
             )}
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
           <Button size="sm" variant="outline" onClick={() => onEditar(ativo)}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.edit")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAtualizarValor(ativo)}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Atualizar valor
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.updateValue")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAddMovimentacao(ativo)}>
-            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> Movimentação
+            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.movement")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAddRendimento(ativo)}>
-            <HandCoins className="h-3.5 w-3.5 mr-1.5" /> Rendimento
+            <HandCoins className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.income")}
           </Button>
           <Button size="sm" variant="outline" className="text-rose-500 hover:text-rose-500" onClick={() => onExcluirAtivo(ativo)}>
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.delete")}
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <section className="rounded-xl border border-border/40 p-3">
             <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
-              <span>Movimentações</span>
+              <span>{tInv("dialogs2.assetDetail.sections.movements")}</span>
               <span className="text-[10px] text-muted-foreground">{movs.length}</span>
             </h3>
             {movs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem movimentações.</p>
+              <p className="text-xs text-muted-foreground">{tInv("dialogs2.assetDetail.empty.movements")}</p>
             ) : (
               <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
                 {movs.map((m) => (
                   <li key={m.id} className="py-1.5 flex justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-medium capitalize">{m.tipo}</div>
+                      <div className="font-medium">{getTipoMovimentacaoLabel(m.tipo, tInv)}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {formatDataBR(m.data)}{m.instituicao ? ` · ${m.instituicao}` : ""}
                       </div>
@@ -2506,34 +2507,37 @@ function DetalheAtivoDialog({
 
           <section className="rounded-xl border border-border/40 p-3">
             <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
-              <span>Rendimentos</span>
+              <span>{tInv("dialogs2.assetDetail.sections.income")}</span>
               <span className="text-[10px] text-muted-foreground">
                 {totalRends > 0 ? `+${formatBRL(totalRends)}` : "0"}
               </span>
             </h3>
             {rends.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem rendimentos.</p>
+              <p className="text-xs text-muted-foreground">{tInv("dialogs2.assetDetail.empty.income")}</p>
             ) : (
               <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
-                {rends.map((r) => (
-                  <li key={r.id} className="py-1.5 flex justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium capitalize">{r.tipo.replace(/_/g, " ")}</div>
-                      <div className="text-[10px] text-muted-foreground">{formatDataBR(r.data_pagamento)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
-                      <Badge variant="secondary" className="text-[9px]">{r.status}</Badge>
-                    </div>
-                  </li>
-                ))}
+                {rends.map((r) => {
+                  const statusKey = `forms.labels.status${r.status === "recebido" ? "Received" : "Expected"}`;
+                  return (
+                    <li key={r.id} className="py-1.5 flex justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium">{getTipoRendimentoLabel(r.tipo, tInv)}</div>
+                        <div className="text-[10px] text-muted-foreground">{formatDataBR(r.data_pagamento)}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
+                        <Badge variant="secondary" className="text-[9px]">{tInv(statusKey)}</Badge>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button variant="outline" onClick={onClose}>{tInv("dialogs2.assetDetail.actions.close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
