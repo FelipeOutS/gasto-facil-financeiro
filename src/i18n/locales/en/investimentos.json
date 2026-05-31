@@ -156,13 +156,21 @@
         "saveFailed": "Could not save.",
         "assetRequired": "Select an investment.",
         "totalRequired": "Enter a valid total amount.",
-        "movementSaveFailed": "Could not save the transaction."
+        "movementSaveFailed": "Could not save the transaction.",
+        "updateValueInvalid": "Enter a valid current value.",
+        "updateValueFailed": "Could not update the value.",
+        "incomeAssetRequired": "Select an investment.",
+        "incomeValueInvalid": "Enter a valid amount.",
+        "incomeSaveFailed": "Could not save the income."
       },
       "success": {
         "updated": "Investment updated.",
         "created": "Investment created.",
         "movementUpdated": "Transaction updated.",
-        "movementCreated": "Transaction added."
+        "movementCreated": "Transaction added.",
+        "valueUpdated": "Value updated.",
+        "incomeUpdated": "Income updated.",
+        "incomeCreated": "Income added."
       }
     }
   },
