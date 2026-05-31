@@ -2,6 +2,7 @@
 // Roda 100% client-side em cima do store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas mostra um diagnóstico explicável.
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HeartPulse,
   CheckCircle2,
@@ -41,7 +42,6 @@ function levelTone(level: FinancialHealthLevel): {
   ring: string;
   iconBg: string;
   iconFg: string;
-  label: string;
 } {
   switch (level) {
     case "critico":
@@ -51,7 +51,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-destructive/40",
         iconBg: "bg-destructive/15",
         iconFg: "text-destructive",
-        label: "Crítico",
       };
     case "atencao":
       return {
@@ -60,7 +59,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-warning/40",
         iconBg: "bg-warning/15",
         iconFg: "text-warning",
-        label: "Atenção",
       };
     case "bom":
       return {
@@ -69,7 +67,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-primary/30",
         iconBg: "bg-primary/10",
         iconFg: "text-primary",
-        label: "Bom",
       };
     case "excelente":
       return {
@@ -78,7 +75,6 @@ function levelTone(level: FinancialHealthLevel): {
         ring: "border-success/40",
         iconBg: "bg-success/15",
         iconFg: "text-success",
-        label: "Excelente",
       };
   }
 }
@@ -101,6 +97,7 @@ function BulletRow({
 }
 
 export function DashboardSaudeFinanceiraCard({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
     (next: { mes: number; ano: number }) => void,
@@ -220,10 +217,10 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold leading-tight">
-              Saúde financeira
+              {t("financialHealth.title")}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre sua renda e alguns gastos para calcular sua saúde financeira.
+              {t("financialHealth.empty")}
             </p>
           </div>
         </div>
@@ -247,9 +244,9 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Saúde financeira
+              {t("financialHealth.title")}
             </h3>
-            <StatusBadge tone={tone.badge}>{tone.label}</StatusBadge>
+            <StatusBadge tone={tone.badge}>{t(`financialHealth.levels.${health.level}`)}</StatusBadge>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {health.description}
@@ -261,7 +258,7 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
         <span className={cn("text-4xl font-bold leading-none tabular-nums", tone.scoreText)}>
           {health.score}
         </span>
-        <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
+        <span className="pb-1 text-sm text-muted-foreground">{t("financialHealth.scoreMax")}</span>
       </div>
       <p className="mt-1 text-xs font-semibold">{health.title}</p>
 
@@ -291,7 +288,7 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
           <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
             <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Cenário
+              {t("financialHealth.scenarioLabel")}
             </span>
             <span className="text-[11px] leading-snug text-foreground">
               {economicNote}

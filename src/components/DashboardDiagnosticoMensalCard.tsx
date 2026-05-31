@@ -2,6 +2,7 @@
 // Reusa dados que já estão no store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas resume o mês e orienta o usuário.
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   ClipboardList,
@@ -41,7 +42,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
   ring: string;
   iconBg: string;
   iconFg: string;
-  label: string;
 } {
   switch (status) {
     case "critico":
@@ -50,7 +50,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-destructive/40",
         iconBg: "bg-destructive/15",
         iconFg: "text-destructive",
-        label: "Crítico",
       };
     case "atencao":
       return {
@@ -58,7 +57,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-warning/40",
         iconBg: "bg-warning/15",
         iconFg: "text-warning",
-        label: "Atenção",
       };
     case "bom":
       return {
@@ -66,7 +64,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-primary/30",
         iconBg: "bg-primary/10",
         iconFg: "text-primary",
-        label: "Bom",
       };
     case "excelente":
       return {
@@ -74,12 +71,12 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-success/40",
         iconBg: "bg-success/15",
         iconFg: "text-success",
-        label: "Excelente",
       };
   }
 }
 
 export function DashboardDiagnosticoMensalCard({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
     (next: { mes: number; ano: number }) => void,
@@ -215,10 +212,10 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold leading-tight">
-              Diagnóstico mensal
+              {t("monthlyDiagnosis.title")}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.
+              {t("monthlyDiagnosis.empty")}
             </p>
           </div>
         </div>
@@ -242,9 +239,9 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Diagnóstico mensal
+              {t("monthlyDiagnosis.title")}
             </h3>
-            <StatusBadge tone={tone.badge}>{tone.label}</StatusBadge>
+            <StatusBadge tone={tone.badge}>{t(`monthlyDiagnosis.levels.${diag.status}`)}</StatusBadge>
           </div>
           <p className="mt-1 text-sm font-semibold leading-snug">
             {diag.title}
@@ -264,7 +261,7 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
           <Landmark className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
           <div className="min-w-0">
-            <span className="mr-1 font-medium text-foreground">Cenário econômico:</span>
+            <span className="mr-1 font-medium text-foreground">{t("monthlyDiagnosis.scenarioLabel")}</span>
             <span>{macroContexto}</span>
           </div>
         </div>

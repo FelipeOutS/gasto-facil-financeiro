@@ -2,6 +2,7 @@
 // Usa o motor por regra em src/lib/insights/generator.ts. Não persiste nada,
 // não toca em alertas, não dispara notificações.
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   Lightbulb,
@@ -60,13 +61,8 @@ function badgeToneForPriority(p: InsightPriority): StatusTone {
   return "muted";
 }
 
-function priorityLabel(p: InsightPriority): string {
-  if (p === "alta") return "Atenção";
-  if (p === "media") return "Importante";
-  return "Dica";
-}
-
 export function DashboardDicasBloco({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
     (next: { mes: number; ano: number }) => void,
@@ -164,14 +160,14 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Dicas para economizar
+              {t("tipsBlock.title")}
             </h3>
             <span className="text-[11px] text-muted-foreground">
-              {insights.length} {insights.length === 1 ? "dica" : "dicas"}
+              {insights.length} {insights.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur")}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Sugestões leves baseadas no seu mês.
+            {t("tipsBlock.subtitle")}
           </p>
         </div>
       </div>
@@ -194,7 +190,7 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
                       {insight.title}
                     </h4>
                     <StatusBadge tone={badgeToneForPriority(insight.priority)} className="shrink-0">
-                      {priorityLabel(insight.priority)}
+                      {t(`tipsBlock.priority.${insight.priority}`)}
                     </StatusBadge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -229,8 +225,8 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
           className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
         >
           {expanded
-            ? "Mostrar menos"
-            : `Ver mais ${restantes.length} ${restantes.length === 1 ? "dica" : "dicas"}`}
+            ? t("tipsBlock.showLess")
+            : t("tipsBlock.showMore", { count: restantes.length, unit: restantes.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur") })}
           <ChevronDown
             className={cn(
               "h-3.5 w-3.5 transition-transform",

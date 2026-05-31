@@ -643,6 +643,42 @@
       "mercadoAvancado": "Full Smart Grocery features",
       "mercadoImportarCupom": "Receipt / QR Code import",
       "importacoes": "Smart import for invoices and statements"
+  },
+  "financialHealth": {
+    "title": "Financial health",
+    "empty": "Add your income and a few expenses to calculate your financial health.",
+    "scoreMax": "/ 100",
+    "scenarioLabel": "Scenario",
+    "levels": {
+      "critico": "Critical",
+      "atencao": "Attention",
+      "bom": "Good",
+      "excelente": "Excellent"
+    }
+  },
+  "tipsBlock": {
+    "title": "Tips to save",
+    "subtitle": "Light suggestions based on your month.",
+    "tipSing": "tip",
+    "tipPlur": "tips",
+    "showLess": "Show less",
+    "showMore": "Show {{count}} more {{unit}}",
+    "priority": {
+      "alta": "Attention",
+      "media": "Important",
+      "baixa": "Tip"
+    }
+  },
+  "monthlyDiagnosis": {
+    "title": "Monthly diagnosis",
+    "empty": "Add your income and a few expenses to generate your monthly diagnosis.",
+    "scenarioLabel": "Economic scenario:",
+    "levels": {
+      "critico": "Critical",
+      "atencao": "Attention",
+      "bom": "Good",
+      "excelente": "Excellent"
     }
   }
+}
 }
