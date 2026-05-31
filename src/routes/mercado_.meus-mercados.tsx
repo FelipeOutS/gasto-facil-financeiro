@@ -186,7 +186,7 @@ function MeusMercadosPage() {
       </section>
 
       <section className="mt-4">
-        <GoogleMapView height={260} />
+        <NearbyMarkets />
       </section>
 
 
