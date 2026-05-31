@@ -80,6 +80,7 @@
     "updateValue": {
       "title": "Atualizar valor",
       "description": "Atualização manual · valor informado pelo usuário.",
+      "submit": "Salvar atualização",
       "lastUpdate": "Última atualização: {{date}}"
     }
   },
