@@ -126,7 +126,7 @@ export function MobileMonthSummary({
           }
         />
         <KpiTile
-          label="Guardado"
+          label={t("mobileSummary.guardado")}
           value={hidden ? "••••" : formatBRLCompact(guardado)}
           tone="muted"
           icon={<Wallet className="h-3.5 w-3.5" />}
