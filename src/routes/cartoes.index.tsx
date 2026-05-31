@@ -735,7 +735,15 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       variant="premium"
       icon={<CreditCard className="h-6 w-6" />}
       title={t("empty.title")}
-      description={t("empty.subtitle")}
+      description={
+        <span className="block">
+          <span className="block">{t("empty.subtitle")}</span>
+          <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <ShieldCheck className="h-3 w-3" />
+            {t("empty.security")}
+          </span>
+        </span>
+      }
       cta={
         <Button
           onClick={onAdd}
