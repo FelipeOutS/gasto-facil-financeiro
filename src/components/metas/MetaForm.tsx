@@ -267,6 +267,7 @@ export function MetaForm({
                 placeholder="0,00"
                 className="num mt-1 h-11 bg-card-elevated"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.goalValueHelper")}</p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
@@ -279,6 +280,7 @@ export function MetaForm({
                 placeholder="0,00"
                 className="num mt-1 h-11 bg-card-elevated"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.savedValueHelper")}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -290,6 +292,7 @@ export function MetaForm({
                 onChange={(e) => setPrazo(e.target.value)}
                 className="mt-1 h-11 bg-card-elevated"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.deadlineHelper")}</p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">{t("dialog.linkedBank")}</Label>
@@ -304,6 +307,7 @@ export function MetaForm({
                   ))}
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.linkedBankHelper")}</p>
             </div>
           </div>
           <div>
@@ -314,6 +318,7 @@ export function MetaForm({
               placeholder={t("dialog.descriptionPlaceholder")}
               className="mt-1 min-h-[60px] bg-card-elevated"
             />
+            <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.descriptionHelper")}</p>
           </div>
           <div>
             <div className="flex items-center justify-between">

@@ -13,9 +13,19 @@
   },
   "newGoal": "Nova meta",
   "empty": {
-    "title": "Escolha uma meta e acompanhe cada passo até chegar lá.",
-    "subtitle": "Viagem, reserva, troca de carro — qualquer objetivo que valha a pena.",
-    "cta": "Criar primeira meta"
+    "title": "Nenhuma meta cadastrada",
+    "subtitle": "Crie uma meta para acompanhar objetivos como reserva de emergência, viagem, compra importante ou investimento futuro.",
+    "cta": "Criar meta",
+    "helper": "Comece com um objetivo simples e ajuste o valor depois, se precisar."
+  },
+  "onboarding": {
+    "title": "Crie sua primeira meta",
+    "description": "Defina um objetivo, informe o valor que deseja alcançar e acompanhe seu progresso aos poucos.",
+    "steps": {
+      "objective": "Defina o objetivo",
+      "amount": "Informe o valor",
+      "progress": "Acompanhe o progresso"
+    }
   },
   "status": {
     "nao_iniciada": "Não iniciada",
@@ -59,15 +69,20 @@
     "addDesc": "Informe quanto você já juntou até agora para esta meta.",
     "removeDesc": "Remover valor de {{name}}",
     "name": "Nome",
-    "namePlaceholder": "Ex.: Viagem",
+    "namePlaceholder": "Ex.: Reserva de emergência, Viagem, Carro novo",
     "goalValue": "Valor objetivo",
+    "goalValueHelper": "Quanto você quer juntar?",
     "savedValue": "Já guardado",
+    "savedValueHelper": "Quanto você já tem guardado?",
     "accumulatedValue": "Valor acumulado",
     "deadline": "Prazo (opcional)",
+    "deadlineHelper": "Até quando deseja alcançar essa meta?",
     "linkedBank": "Banco vinculado",
+    "linkedBankHelper": "Vincule uma conta, se quiser acompanhar melhor.",
     "none": "Nenhum",
     "description": "Descrição",
-    "descriptionPlaceholder": "Opcional",
+    "descriptionPlaceholder": "Adicione uma observação para lembrar o motivo da meta",
+    "descriptionHelper": "Adicione uma observação para lembrar o motivo da meta.",
     "goalImage": "Imagem da meta",
     "useAutoSuggestion": "Usar sugestão automática",
     "uploading": "Enviando...",
