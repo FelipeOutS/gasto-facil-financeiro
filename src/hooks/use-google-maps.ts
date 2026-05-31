@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+/// <reference types="google.maps" />
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   loadGoogleMaps,
   isGoogleMapsLoaded,
@@ -8,26 +9,43 @@ import {
 } from "@/lib/google-maps";
 
 export type UseGoogleMapsResult = {
-  /** Estado atual do carregamento do Google Maps */
   state: GoogleMapsLoadState;
-  /** Ref para o container onde o mapa será renderizado */
   containerRef: React.RefObject<HTMLDivElement | null>;
-  /** Inicia o carregamento manualmente (lazy) */
   init: () => void;
 };
 
-/**
- * Hook React para carregar o Google Maps de forma lazy e segura.
- * Não carrega o script até que `init()` seja chamado.
- * Retorna o estado atual + uma ref para o container do mapa.
- */
+/** Centro padrão: Brasil (São Paulo) — apenas para validação visual. */
+const DEFAULT_CENTER = { lat: -23.55052, lng: -46.633308 };
+const DEFAULT_ZOOM = 12;
+
 export function useGoogleMaps(): UseGoogleMapsResult {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [state, setState] = useState<GoogleMapsLoadState>(getGoogleMapsLoadState);
 
-  const init = () => {
+  const renderMap = useCallback(() => {
+    if (mapRef.current) return;
+    if (!containerRef.current) return;
+    const maps = (window as unknown as { google?: { maps?: typeof google.maps } })
+      .google?.maps;
+    if (!maps) return;
+    try {
+      mapRef.current = new maps.Map(containerRef.current, {
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        disableDefaultUI: false,
+        clickableIcons: false,
+      });
+    } catch {
+      // erro silencioso — não expõe detalhes em UI/log
+    }
+  }, []);
+
+  const init = useCallback(() => {
     if (isGoogleMapsLoaded()) {
       setState(getGoogleMapsLoadState());
+      // Render no próximo tick, garantindo containerRef montado
+      setTimeout(renderMap, 0);
       return;
     }
     const currentError = getGoogleMapsError();
@@ -37,16 +55,18 @@ export function useGoogleMaps(): UseGoogleMapsResult {
     }
     setState({ status: "loading" });
     loadGoogleMaps()
-      .then(() => setState(getGoogleMapsLoadState()))
+      .then(() => {
+        setState(getGoogleMapsLoadState());
+        setTimeout(renderMap, 0);
+      })
       .catch(() => setState(getGoogleMapsLoadState()));
-  };
+  }, [renderMap]);
 
   useEffect(() => {
-    // Se já estiver carregado por outro componente, sincroniza estado
-    if (isGoogleMapsLoaded() && state.status !== "loaded") {
-      setState(getGoogleMapsLoadState());
+    if (state.status === "loaded") {
+      renderMap();
     }
-  }, [state.status]);
+  }, [state.status, renderMap]);
 
   return { state, containerRef, init };
 }
