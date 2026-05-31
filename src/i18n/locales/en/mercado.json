@@ -111,9 +111,10 @@
       "deleteConfirmButton": "Delete list"
     },
     "empty": {
-      "title": "No lists created yet",
-      "description": "Create a list to organize your shopping and avoid unplanned spending.",
-      "cta": "Create list"
+      "title": "No shopping lists yet",
+      "description": "Create a list to organize products, quantities, and prices before or during shopping.",
+      "cta": "Create list",
+      "helper": "You can use the list at the store and track the total in the cart."
     }
   },
   "nova": {
