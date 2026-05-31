@@ -408,9 +408,11 @@
     "home": "Início",
     "missingList": "A lista escolhida não foi encontrada. Selecione uma lista disponível abaixo.",
     "empty": {
-      "title": "Crie uma lista para usar o carrinho",
-      "description": "O Carrinho Inteligente usa uma das suas listas de compras como base.",
-      "cta": "Criar lista"
+      "title": "Seu carrinho está vazio",
+      "description": "Crie uma lista para começar — o Carrinho Inteligente usa sua lista para acompanhar itens, valores e orçamento durante a compra.",
+      "cta": "Criar lista",
+      "secondaryCta": "Ver listas",
+      "helper": "Use o carrinho durante a compra para evitar passar do orçamento."
     },
     "picker": {
       "title": "Escolha uma lista",
