@@ -1065,5 +1065,22 @@
     "keyMissingDescription": "The map is not configured yet. Contact support if the issue persists.",
     "loading": "Loading map…",
     "tryAgain": "Try again"
+  },
+  "nearby": {
+    "title": "Nearby markets",
+    "description": "Find supermarkets and grocery stores near you using Google Maps.",
+    "useLocation": "Use my location",
+    "locationPrivacy": "Your location is only used on this screen to find nearby markets. Nothing is saved automatically.",
+    "loading": "Searching nearby markets…",
+    "error": "We couldn't search markets right now. Check your connection and try again.",
+    "errorTitle": "Search error",
+    "retry": "Try again",
+    "permissionDeniedTitle": "Location not allowed",
+    "permissionDenied": "You blocked the location permission. Allow it in your browser settings and try again, or add the market manually.",
+    "empty": "No supermarket found in that radius. Try another area or add one manually.",
+    "addMarket": "Add this market",
+    "added": "Added",
+    "selectMarket": "Select {{name}} on the map",
+    "openInMaps": "Open in Google Maps"
   }
 }
