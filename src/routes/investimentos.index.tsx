@@ -2349,7 +2349,7 @@ function RendimentoDialog({
               <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor recebido</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.amountReceived")}</label>
               <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
             </div>
           </div>
