@@ -1,4 +1,17 @@
 {
+  "onboarding": {
+    "title": "Understand your numbers with reports",
+    "description": "Use reports to track expenses, income, categories, and monthly progress more clearly.",
+    "cta": "Add entry",
+    "secondaryCta": "View Dashboard",
+    "helper": "The more entries you add, the more complete your charts and comparisons become."
+  },
+  "empty": {
+    "title": "There isn't enough data to generate reports yet",
+    "description": "Add a few expenses and income entries to view charts, comparisons, and period analysis.",
+    "cta": "Add entry",
+    "helper": "You can start with just a few entries and track progress over time."
+  },
   "meta": {
     "title": "Reports — Gasto Inteligente",
     "description": "Understand where your money went and how to improve next month."
