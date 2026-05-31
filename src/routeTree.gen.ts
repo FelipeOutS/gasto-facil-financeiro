@@ -86,6 +86,7 @@ import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
+import { Route as ApiMercadoJoaninImportRouteImport } from './routes/api/mercado-joanin-import'
 import { Route as ApiMercadoFlyerOcrRouteImport } from './routes/api/mercado-flyer-ocr'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
@@ -520,6 +521,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   path: '/api/ocr-gasto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMercadoJoaninImportRoute = ApiMercadoJoaninImportRouteImport.update({
+  id: '/api/mercado-joanin-import',
+  path: '/api/mercado-joanin-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMercadoFlyerOcrRoute = ApiMercadoFlyerOcrRouteImport.update({
   id: '/api/mercado-flyer-ocr',
   path: '/api/mercado-flyer-ocr',
@@ -814,6 +820,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
+  '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
@@ -939,6 +946,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
+  '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
@@ -1065,6 +1073,7 @@ export interface FileRoutesById {
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
+  '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
@@ -1192,6 +1201,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/mercado-flyer-ocr'
+    | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
     | '/app/cofre-pessoal'
     | '/app/idioma'
@@ -1317,6 +1327,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/mercado-flyer-ocr'
+    | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
     | '/app/cofre-pessoal'
     | '/app/idioma'
@@ -1442,6 +1453,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
     | '/api/mercado-flyer-ocr'
+    | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
     | '/app_/cofre-pessoal'
     | '/app_/idioma'
@@ -1568,6 +1580,7 @@ export interface RootRouteChildren {
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
   ApiMercadoFlyerOcrRoute: typeof ApiMercadoFlyerOcrRoute
+  ApiMercadoJoaninImportRoute: typeof ApiMercadoJoaninImportRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
@@ -2186,6 +2199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOcrGastoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mercado-joanin-import': {
+      id: '/api/mercado-joanin-import'
+      path: '/api/mercado-joanin-import'
+      fullPath: '/api/mercado-joanin-import'
+      preLoaderRoute: typeof ApiMercadoJoaninImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/mercado-flyer-ocr': {
       id: '/api/mercado-flyer-ocr'
       path: '/api/mercado-flyer-ocr'
@@ -2570,6 +2590,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
   ApiMercadoFlyerOcrRoute: ApiMercadoFlyerOcrRoute,
+  ApiMercadoJoaninImportRoute: ApiMercadoJoaninImportRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,

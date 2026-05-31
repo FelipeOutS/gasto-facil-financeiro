@@ -7,6 +7,7 @@ import {
   Home,
   BadgePercent,
   Camera,
+  Cloud,
   Plus,
   Info,
   Trash2,
@@ -27,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
 import { BatchScanWizard } from "@/components/mercado/BatchScanWizard";
+import { OnlineImportWizard } from "@/components/mercado/OnlineImportWizard";
 
 
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
@@ -108,6 +110,7 @@ function PrecoComunitarioPage() {
 
   // Batch scan wizard
   const [batchOpen, setBatchOpen] = useState(false);
+  const [onlineImportOpen, setOnlineImportOpen] = useState(false);
 
 
   // Manual state
@@ -313,6 +316,16 @@ function PrecoComunitarioPage() {
             <Plus className="mr-2 h-4 w-4" /> {t("communityPrices.actions.newManual")}
           </Button>
         </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card sm:col-span-2">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Cloud className="h-4 w-4" /> {t("communityPrices.onlineImport.cardTitle")}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.onlineImport.cardDescription")}</p>
+          <Button className="mt-3 w-full min-h-11" variant="outline" onClick={() => setOnlineImportOpen(true)}>
+            <Cloud className="mr-2 h-4 w-4" /> {t("communityPrices.onlineImport.cardCta")}
+          </Button>
+        </div>
       </section>
 
       {/* Filtros */}
@@ -451,6 +464,7 @@ function PrecoComunitarioPage() {
 
       {/* Batch scan wizard */}
       <BatchScanWizard open={batchOpen} onOpenChange={setBatchOpen} onSaved={reload} />
+      <OnlineImportWizard open={onlineImportOpen} onOpenChange={setOnlineImportOpen} onSaved={reload} />
 
 
 
