@@ -13,7 +13,7 @@ import {
   X,
   Store,
 } from "lucide-react";
-import { GoogleMapView } from "@/components/mercado/GoogleMapView";
+import { NearbyMarkets } from "@/components/mercado/NearbyMarkets";
 import { useState } from "react";
 import { toast } from "sonner";
 import i18n from "@/i18n";
@@ -186,7 +186,7 @@ function MeusMercadosPage() {
       </section>
 
       <section className="mt-4">
-        <GoogleMapView height={260} />
+        <NearbyMarkets />
       </section>
 
 

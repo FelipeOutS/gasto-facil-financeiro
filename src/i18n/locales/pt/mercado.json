@@ -1065,5 +1065,22 @@
     "keyMissingDescription": "O mapa ainda não está configurado. Entre em contato com o suporte se o problema persistir.",
     "loading": "Carregando mapa…",
     "tryAgain": "Tentar novamente"
+  },
+  "nearby": {
+    "title": "Mercados próximos",
+    "description": "Encontre supermercados e mercearias perto de você usando o Google Maps.",
+    "useLocation": "Usar minha localização",
+    "locationPrivacy": "Sua localização será usada apenas nesta tela para buscar mercados próximos. Nada é salvo automaticamente.",
+    "loading": "Buscando mercados próximos…",
+    "error": "Não conseguimos buscar mercados agora. Verifique sua conexão e tente novamente.",
+    "errorTitle": "Erro na busca",
+    "retry": "Tentar novamente",
+    "permissionDeniedTitle": "Localização não autorizada",
+    "permissionDenied": "Você bloqueou a permissão de localização. Libere nas configurações do navegador e tente de novo, ou cadastre o mercado manualmente.",
+    "empty": "Nenhum supermercado encontrado nesse raio. Tente em outra região ou cadastre manualmente.",
+    "addMarket": "Adicionar este mercado",
+    "added": "Adicionado",
+    "selectMarket": "Selecionar {{name}} no mapa",
+    "openInMaps": "Abrir no Google Maps"
   }
 }
