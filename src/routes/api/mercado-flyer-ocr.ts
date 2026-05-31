@@ -510,12 +510,7 @@ async function runOcrPipeline(params: {
         reason: "Falha segura ao chamar Google Vision.",
         items: [],
         warnings: ["vision_api_error"],
-        debugInfo: {
-          hasGoogleVisionKey,
-          visionHttpStatus: visionRes.status,
-          visionErrorCode: visionRes.errorCode,
-          cleanBase64Length: normalized.cleanBase64.length,
-        },
+        debugInfo: safeDiagnosticForResponse(diagnostic),
       },
       { status: 502 },
     );
@@ -554,7 +549,9 @@ async function runOcrPipeline(params: {
   diagnostic.provider = "google_vision_plus_gemini";
   if (!r.ok) {
     const text = await r.text().catch(() => "");
-    console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 120));
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 120));
+    }
     const fallbackItems = extractFallbackItems(rawText, params.marketName);
     diagnostic.stage = fallbackItems.length > 0 ? "fallback" : "gemini";
     diagnostic.status = fallbackItems.length > 0 ? "partial" : "error";
