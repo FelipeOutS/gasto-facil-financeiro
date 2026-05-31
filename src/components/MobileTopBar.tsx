@@ -58,12 +58,19 @@ export function MobileTopBar() {
         <div className="flex items-center gap-1">
           <Link
             to="/alertas"
-            aria-label={t("aria.openAlerts")}
-            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground transition active:scale-95 hover:bg-muted/60 hover:text-foreground"
+            aria-label={
+              unreadCount > 0
+                ? `${t("aria.openAlerts")} (${unreadCount > 9 ? "9+" : unreadCount})`
+                : t("aria.openAlerts")
+            }
+            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground transition active:scale-95 hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5 w-5" aria-hidden="true" />
             {unreadCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground ring-2 ring-background">
+              <span
+                aria-hidden="true"
+                className="absolute right-1 top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground ring-2 ring-background"
+              >
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
