@@ -30,7 +30,8 @@
   "empty": {
     "title": "Nenhum cartão por aqui ainda",
     "subtitle": "Cadastre seu primeiro cartão e pare de tentar lembrar fechamento e vencimento de cabeça.",
-    "addFirst": "Adicionar primeiro cartão"
+    "addFirst": "Adicionar primeiro cartão",
+    "security": "Não pedimos número completo, CVV ou senha."
   },
   "card": {
     "moreActions": "Mais ações",
@@ -176,10 +177,37 @@
     "previewType": "Crédito",
     "colorLabel": "Cor {{color}}",
     "cancel": "Cancelar",
-    "save": "Salvar cartão"
+    "save": "Salvar cartão",
+    "security": "Você não precisa informar número do cartão, CVV ou senha. O cadastro serve apenas para organizar limite, fatura e gastos no app."
   },
   "months": {
-    "abbr": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
-    "full": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    "abbr": [
+      "jan",
+      "fev",
+      "mar",
+      "abr",
+      "mai",
+      "jun",
+      "jul",
+      "ago",
+      "set",
+      "out",
+      "nov",
+      "dez"
+    ],
+    "full": [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro"
+    ]
   }
 }
