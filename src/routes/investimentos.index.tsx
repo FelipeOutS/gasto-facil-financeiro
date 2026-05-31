@@ -1753,7 +1753,7 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Observação</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
