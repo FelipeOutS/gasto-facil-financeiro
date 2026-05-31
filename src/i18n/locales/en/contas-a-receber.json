@@ -29,9 +29,11 @@
     "cancelado": "Cancelled"
   },
   "empty": {
-    "none": "No receivables added yet.",
+    "none": "Add your first receivable",
+    "noneDesc": "Register amounts you expect to receive to track incoming money and organize your month.",
+    "helper": "Use it to track future payments, reimbursements, freelance work, or agreed amounts.",
     "noResults": "No results for these filters.",
-    "addFirst": "Add first receivable",
+    "addFirst": "Add receivable",
     "clearFilters": "Clear filters"
   },
   "card": {
