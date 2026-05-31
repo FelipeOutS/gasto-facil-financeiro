@@ -8,8 +8,14 @@
   "hub": {
     "title": "Smart Grocery",
     "subtitle": "Plan purchases, compare prices and track your grocery spending in a simple way.",
-    "intro": "Start by organizing your grocery shopping. In the next stages, this area will bring together lists, budget, history, cart and price comparisons.",
-    "futureNote": "Ready for future integrations.",
+    "intro": "Create lists, track your cart in real time, set a shopping budget, and see how much is left before checkout.",
+    "futureNote": "Advanced features such as history, price comparison, and receipt import are available on higher plans.",
+    "steps": {
+      "title": "How to get started",
+      "list": "Create a list",
+      "products": "Add products",
+      "track": "Track total and budget"
+    },
     "status": {
       "soon": "Coming soon",
       "future": "Future",
