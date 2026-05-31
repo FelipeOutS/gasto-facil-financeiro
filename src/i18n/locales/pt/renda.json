@@ -214,6 +214,16 @@
       "comissao": "Comissão",
       "aluguel": "Aluguel",
       "vendas": "Vendas"
+    },
+    "helper": "Comece com sua principal entrada mensal e adicione outras depois.",
+    "helper_mei": "Comece pelo faturamento principal e complemente com outras entradas depois.",
+    "helper_empresa": "Comece pelo faturamento principal e complemente com outras entradas depois.",
+    "steps": {
+      "source": "Informe a origem",
+      "amount": "Digite o valor",
+      "summary": "Acompanhe no resumo",
+      "summary_mei": "Acompanhe o faturamento",
+      "summary_empresa": "Acompanhe o faturamento"
     }
   },
   "history": {
