@@ -46,10 +46,11 @@ type Step = "market" | "photos" | "processing" | "review";
 
 type PhotoStatus = "pending" | "processing" | "done" | "empty" | "error";
 
-type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
+type EmptyReason = "no_text_detected" | "text_found_but_no_items" | "text_found_but_no_prices" | null;
 type ErrorReason =
   | "ocr_config_missing"
   | "vision_api_error"
+  | "gemini_gateway_error"
   | "invalid_image_payload"
   | "network"
   | "rate_limited"
@@ -76,6 +77,7 @@ type Photo = {
   errorMessage?: string;
   emptyReason?: EmptyReason;
   errorReason?: ErrorReason;
+  usedFallback?: boolean;
   items: DetectedItem[];
 };
 
@@ -285,8 +287,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         let reason: ErrorReason = "unknown_error";
         if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
         else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (json?.code === "gemini_gateway_error") reason = "gemini_gateway_error";
         else if (json?.code === "invalid_image_payload" || json?.code === "unsupported_image_format") reason = "invalid_image_payload";
-        else if (res.status === 429) reason = "rate_limited";
+        else if (json?.code === "rate_limited" || res.status === 429) reason = "rate_limited";
         else if (res.status === 402) reason = "credits";
         return {
           ...photo,
@@ -303,7 +306,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             ? "no_text_detected"
             : code === "text_found_but_no_items"
               ? "text_found_but_no_items"
-              : null;
+              : code === "text_found_but_no_prices"
+                ? "text_found_but_no_prices"
+                : null;
         return {
           ...photo,
           status: "empty",
@@ -311,6 +316,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
           emptyReason,
           errorReason: undefined,
           errorMessage: undefined,
+          usedFallback: Boolean(json?.debugInfo?.usedFallback),
         };
       }
       return {
@@ -320,6 +326,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         emptyReason: undefined,
         errorReason: undefined,
         errorMessage: undefined,
+        usedFallback: Boolean(json?.debugInfo?.usedFallback),
       };
     } catch (err) {
       console.error("[batch-scan] processPhoto", err);
@@ -372,20 +379,29 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const textNoItemsCount = photos.filter(
     (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_items",
   ).length;
+  const textNoPricesCount = photos.filter(
+    (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_prices",
+  ).length;
+  const fallbackCount = photos.filter((p) => p.status === "done" && p.usedFallback).length;
   const technicalErrorCount = photos.filter((p) => p.status === "error").length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
 
   function getPhotoIssueLabel(photo: Photo): string {
+    if (photo.status === "done" && photo.usedFallback) {
+      return t("communityPrices.batch.errorFallbackUsed");
+    }
     if (photo.status === "empty") {
       if (photo.emptyReason === "no_text_detected") return t("communityPrices.batch.errorNoText");
       if (photo.emptyReason === "text_found_but_no_items") return t("communityPrices.batch.errorTextNoItems");
+      if (photo.emptyReason === "text_found_but_no_prices") return t("communityPrices.batch.errorTextNoPrices");
       return t("communityPrices.batch.photoEmpty");
     }
     if (photo.status !== "error") return "";
     if (photo.errorReason === "ocr_config_missing") return t("communityPrices.batch.errorOcrConfigMissing");
     if (photo.errorReason === "vision_api_error") return t("communityPrices.batch.errorVisionApi");
+    if (photo.errorReason === "gemini_gateway_error") return t("communityPrices.batch.errorGeminiGateway");
     if (photo.errorReason === "invalid_image_payload") return t("communityPrices.batch.errorInvalidImagePayload");
     if (photo.errorReason === "rate_limited") return t("communityPrices.batch.errorRateLimited");
     if (photo.errorReason === "credits") return t("communityPrices.batch.errorCredits");
@@ -680,7 +696,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       {p.status === "done" && (
                         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                           <Check className="h-3 w-3" />
-                          {t("communityPrices.batch.photoDone", { count: p.items.length })}
+                          {p.usedFallback
+                            ? t("communityPrices.batch.photoFallbackDone", { count: p.items.length })
+                            : t("communityPrices.batch.photoDone", { count: p.items.length })}
                         </span>
                       )}
                       {p.status === "empty" && (
@@ -772,6 +790,12 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                     {t("communityPrices.batch.summaryTextNoItems", { count: textNoItemsCount })}
                   </div>
                 )}
+                {textNoPricesCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryTextNoPrices", { count: textNoPricesCount })}</div>
+                )}
+                {fallbackCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryFallback", { count: fallbackCount })}</div>
+                )}
                 {errorCount > 0 && (
                   <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
                 )}
@@ -781,7 +805,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </div>
             )}
 
-            {photos.some((p) => p.status === "error" || p.status === "empty") && (
+            {photos.some((p) => p.status === "error" || p.status === "empty" || p.usedFallback) && (
               <ul className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
                 {photos.map((p, idx) => {
                   const issue = getPhotoIssueLabel(p);

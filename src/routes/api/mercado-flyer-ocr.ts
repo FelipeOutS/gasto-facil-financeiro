@@ -31,6 +31,9 @@ type DetectedItem = {
 
 type OcrDiagnostic = {
   provider: "google_vision" | "google_vision_plus_gemini";
+  stage: "config" | "payload" | "vision" | "gemini" | "fallback" | "done";
+  status: "ok" | "error" | "partial";
+  code: string | null;
   hasGoogleVisionKey: boolean;
   imageMime: string;
   originalFileSize: number;
@@ -43,6 +46,7 @@ type OcrDiagnostic = {
   priceCandidatesCount: number;
   geminiItemCount: number;
   finalItemCount: number;
+  usedFallback: boolean;
 };
 
 const STRUCTURE_PROMPT = `Você receberá texto extraído por OCR de um panfleto de mercado brasileiro.
@@ -106,6 +110,72 @@ function countPriceCandidates(text: string): number {
   return m ? m.length : 0;
 }
 
+function parseBrazilianPrice(value: string): number | null {
+  const cleaned = value.replace(/R\$\s*/i, "").trim();
+  const normalized = cleaned.includes(",")
+    ? cleaned.replace(/\./g, "").replace(",", ".")
+    : cleaned;
+  const price = Number(normalized);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+function isUnsafeFallbackLine(line: string): boolean {
+  return /(@|https?:\/\/|www\.|cpf|cnpj|telefone|whats|whatsapp|sac|ouvidoria|cart[aã]o|pix)/i.test(line);
+}
+
+function cleanFallbackProductName(line: string): string {
+  return line
+    .replace(BR_PRICE_RE, " ")
+    .replace(/\b(oferta|promo[cç][aã]o|por|cada|apenas|r\$)\b/gi, " ")
+    .replace(/[^\p{L}\p{N}\s.,/%-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+}
+
+function extractFallbackItems(rawText: string, fallbackMarketName: string | undefined): DetectedItem[] {
+  const lines = rawText
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const items: DetectedItem[] = [];
+  const seen = new Set<string>();
+
+  for (let index = 0; index < lines.length && items.length < 60; index++) {
+    const line = lines[index];
+    const matches = line.match(BR_PRICE_RE) ?? [];
+    for (const match of matches) {
+      const price = parseBrazilianPrice(match);
+      if (price == null) continue;
+
+      const sameLineName = cleanFallbackProductName(line);
+      const prevLine = index > 0 ? lines[index - 1] : "";
+      const prevName = prevLine && !isUnsafeFallbackLine(prevLine) ? cleanFallbackProductName(prevLine) : "";
+      const productName = sameLineName.length >= 3 && !isUnsafeFallbackLine(sameLineName)
+        ? sameLineName
+        : prevName.length >= 3
+          ? prevName
+          : "Produto não identificado";
+
+      const key = `${productName.toLowerCase()}|${price.toFixed(2)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({
+        productName,
+        price,
+        unit: null,
+        category: null,
+        marketName: fallbackMarketName?.trim().slice(0, 120) ?? null,
+        validUntil: null,
+        notes: "Fallback OCR · revise manualmente",
+        confidence: 0.28,
+      });
+    }
+  }
+
+  return items.slice(0, 60);
+}
+
 function estimateBytesFromBase64(base64: string): number {
   const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
   return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
@@ -113,6 +183,9 @@ function estimateBytesFromBase64(base64: string): number {
 
 function createDiagnostic(params: {
   provider?: OcrDiagnostic["provider"];
+  stage?: OcrDiagnostic["stage"];
+  status?: OcrDiagnostic["status"];
+  code?: string | null;
   hasGoogleVisionKey: boolean;
   imageMime?: string;
   originalFileSize?: number;
@@ -121,6 +194,9 @@ function createDiagnostic(params: {
 }): OcrDiagnostic {
   return {
     provider: params.provider ?? "google_vision",
+    stage: params.stage ?? "config",
+    status: params.status ?? "ok",
+    code: params.code ?? null,
     hasGoogleVisionKey: params.hasGoogleVisionKey,
     imageMime: params.imageMime ?? "unknown",
     originalFileSize: params.originalFileSize ?? 0,
@@ -133,28 +209,34 @@ function createDiagnostic(params: {
     priceCandidatesCount: 0,
     geminiItemCount: 0,
     finalItemCount: 0,
+    usedFallback: false,
   };
 }
 
 function safeDiagnosticForResponse(diagnostic: OcrDiagnostic) {
   return {
+    stage: diagnostic.stage,
+    code: diagnostic.code,
     provider: diagnostic.provider,
-    hasGoogleVisionKey: diagnostic.hasGoogleVisionKey,
-    imageMime: diagnostic.imageMime,
-    originalFileSize: diagnostic.originalFileSize,
-    processedDataUrlLength: diagnostic.processedDataUrlLength,
-    cleanBase64Length: diagnostic.cleanBase64Length,
-    visionHttpStatus: diagnostic.visionHttpStatus,
-    visionErrorCode: diagnostic.visionErrorCode,
     rawTextLength: diagnostic.rawTextLength,
     priceCandidatesCount: diagnostic.priceCandidatesCount,
-    geminiItemCount: diagnostic.geminiItemCount,
-    finalItemCount: diagnostic.finalItemCount,
+    itemCount: diagnostic.finalItemCount,
+    usedFallback: diagnostic.usedFallback,
   };
 }
 
 function logOcrDiagnostic(diagnostic: OcrDiagnostic) {
-  console.info("[mercado-flyer-ocr][diagnostic]", diagnostic);
+  if (process.env.NODE_ENV === "production") return;
+  console.info("[mercado-flyer-ocr][diagnostic]", {
+    stage: diagnostic.stage,
+    status: diagnostic.status,
+    code: diagnostic.code,
+    rawTextLength: diagnostic.rawTextLength,
+    priceCandidatesCount: diagnostic.priceCandidatesCount,
+    itemCount: diagnostic.finalItemCount,
+    usedFallback: diagnostic.usedFallback,
+    provider: diagnostic.provider,
+  });
 }
 
 function normalizeImagePayload(img: string):
@@ -362,7 +444,7 @@ async function runOcrPipeline(params: {
 }) {
   const hasGoogleVisionKey = Boolean(params.visionKey);
   if (!params.visionKey) {
-    const diagnostic = createDiagnostic({ hasGoogleVisionKey });
+    const diagnostic = createDiagnostic({ hasGoogleVisionKey, stage: "config", status: "error", code: "ocr_config_missing" });
     logOcrDiagnostic(diagnostic);
     return Response.json(
       {
@@ -383,6 +465,7 @@ async function runOcrPipeline(params: {
   const normalized = normalizeImagePayload(params.imageBase64);
   const diagnostic = createDiagnostic({
     hasGoogleVisionKey,
+    stage: "payload",
     imageMime: normalized.imageMime,
     processedDataUrlLength: params.imageBase64.length,
     cleanBase64Length: normalized.cleanBase64.length,
@@ -390,6 +473,8 @@ async function runOcrPipeline(params: {
   });
 
   if (!normalized.ok) {
+    diagnostic.status = "error";
+    diagnostic.code = normalized.code;
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, error: normalized.reason, code: normalized.code, items: [], warnings: [normalized.code], debugInfo: safeDiagnosticForResponse(diagnostic) },
@@ -398,6 +483,8 @@ async function runOcrPipeline(params: {
   }
 
   if (params.imageBase64.length > 18 * 1024 * 1024) {
+    diagnostic.status = "error";
+    diagnostic.code = "image_too_large";
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, error: "Imagem muito grande. Use uma foto até 10 MB.", code: "image_too_large", items: [], debugInfo: safeDiagnosticForResponse(diagnostic) },
@@ -405,9 +492,12 @@ async function runOcrPipeline(params: {
     );
   }
 
+  diagnostic.stage = "vision";
   const visionRes = await callVision(params.visionKey, normalized.cleanBase64);
   diagnostic.visionHttpStatus = visionRes.status;
   if (!visionRes.ok) {
+    diagnostic.status = "error";
+    diagnostic.code = "vision_api_error";
     diagnostic.visionErrorCode = visionRes.errorCode;
     diagnostic.visionErrorMessage = visionRes.errorMessage;
     logOcrDiagnostic(diagnostic);
@@ -420,12 +510,7 @@ async function runOcrPipeline(params: {
         reason: "Falha segura ao chamar Google Vision.",
         items: [],
         warnings: ["vision_api_error"],
-        debugInfo: {
-          hasGoogleVisionKey,
-          visionHttpStatus: visionRes.status,
-          visionErrorCode: visionRes.errorCode,
-          cleanBase64Length: normalized.cleanBase64.length,
-        },
+        debugInfo: safeDiagnosticForResponse(diagnostic),
       },
       { status: 502 },
     );
@@ -435,9 +520,21 @@ async function runOcrPipeline(params: {
   diagnostic.rawTextLength = rawText.length;
   diagnostic.priceCandidatesCount = rawText ? countPriceCandidates(rawText) : 0;
   if (!rawText) {
+    diagnostic.status = "error";
+    diagnostic.code = "no_text_detected";
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, items: [], warnings: ["no_text_detected"], code: "no_text_detected", message: "Não encontramos texto legível nessa foto.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+      { status: 200 },
+    );
+  }
+
+  if (diagnostic.priceCandidatesCount === 0) {
+    diagnostic.status = "partial";
+    diagnostic.code = "text_found_but_no_prices";
+    logOcrDiagnostic(diagnostic);
+    return Response.json(
+      { success: false, items: [], warnings: ["text_found_but_no_prices"], code: "text_found_but_no_prices", message: "Encontramos texto no panfleto, mas nenhum preço claro foi detectado.", debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: 200 },
     );
   }
@@ -447,13 +544,28 @@ async function runOcrPipeline(params: {
   if (params.city) hintParts.push(`Cidade: ${String(params.city).slice(0, 80)}.`);
   if (params.neighborhood) hintParts.push(`Bairro: ${String(params.neighborhood).slice(0, 80)}.`);
 
+  diagnostic.stage = "gemini";
   const r = await callGeminiStructure(params.aiKey, rawText, hintParts.join(" "));
   diagnostic.provider = "google_vision_plus_gemini";
   if (!r.ok) {
     const text = await r.text().catch(() => "");
-    console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 120));
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 120));
+    }
+    const fallbackItems = extractFallbackItems(rawText, params.marketName);
+    diagnostic.stage = fallbackItems.length > 0 ? "fallback" : "gemini";
+    diagnostic.status = fallbackItems.length > 0 ? "partial" : "error";
+    diagnostic.code = r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "gemini_gateway_error";
+    diagnostic.usedFallback = fallbackItems.length > 0;
+    diagnostic.finalItemCount = fallbackItems.length;
     logOcrDiagnostic(diagnostic);
-    const code = r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "structuring_failed";
+    if (fallbackItems.length > 0 && r.status !== 429 && r.status !== 402) {
+      return Response.json(
+        { success: true, code: "gemini_gateway_error", items: fallbackItems, warnings: ["gemini_gateway_error", "fallback_regex_used"], message: "O texto foi lido, mas a IA não conseguiu organizar os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        { status: 200 },
+      );
+    }
+    const code = diagnostic.code;
     return Response.json(
       { success: false, error: r.status === 429 ? "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo." : "Não conseguimos estruturar os itens agora.", code, items: [], warnings: [code], debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: r.status === 429 || r.status === 402 ? r.status : 502 },
@@ -465,15 +577,34 @@ async function runOcrPipeline(params: {
   const parsed = args ? parseStructured(args, params.marketName) : { items: [], warnings: ["missing_tool_call"] };
   diagnostic.geminiItemCount = parsed.items.length;
   diagnostic.finalItemCount = parsed.items.length;
-  logOcrDiagnostic(diagnostic);
 
   if (parsed.items.length === 0) {
+    const fallbackItems = extractFallbackItems(rawText, params.marketName);
+    if (fallbackItems.length > 0) {
+      diagnostic.stage = "fallback";
+      diagnostic.status = "partial";
+      diagnostic.code = "text_found_but_no_items";
+      diagnostic.usedFallback = true;
+      diagnostic.finalItemCount = fallbackItems.length;
+      logOcrDiagnostic(diagnostic);
+      return Response.json(
+        { success: true, items: fallbackItems, warnings: [...parsed.warnings, "text_found_but_no_items", "fallback_regex_used"], code: "text_found_but_no_items", message: "O texto foi lido, mas a IA não estruturou os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        { status: 200 },
+      );
+    }
+    diagnostic.status = "partial";
+    diagnostic.code = "text_found_but_no_items";
+    logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, items: [], warnings: [...parsed.warnings, "text_found_but_no_items"], code: "text_found_but_no_items", message: "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente.", debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: 200 },
     );
   }
 
+  diagnostic.stage = "done";
+  diagnostic.status = "ok";
+  diagnostic.code = "success";
+  logOcrDiagnostic(diagnostic);
   return Response.json({ success: true, items: parsed.items, warnings: parsed.warnings, debugInfo: safeDiagnosticForResponse(diagnostic) }, { status: 200 });
 }
 
@@ -514,7 +645,7 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         }
 
         const rl = await enforceUserRateLimit({
-          scope: "import",
+          scope: "flyerOcr",
           userId: user.id,
           route: "mercado-flyer-ocr",
           request,
