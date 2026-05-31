@@ -164,6 +164,8 @@
   },
   "upcoming": {
     "kicker": "Upcoming",
+    "kicker_mei": "Upcoming",
+    "kicker_empresa": "Upcoming",
     "title": "Recurring income",
     "title_mei": "Recurring revenue",
     "title_empresa": "Recurring revenue",
