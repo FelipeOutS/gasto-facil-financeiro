@@ -1,37 +1,39 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, AlertTriangle, RefreshCw } from "lucide-react";
-import { useGoogleMaps } from "@/hooks/use-google-maps";
+import { useGoogleMaps, type MapMarkerInput } from "@/hooks/use-google-maps";
 import { cn } from "@/lib/utils";
 
-export type GoogleMapViewProps = {
-  /** Altura do container do mapa */
-  height?: string | number;
-  /** Classe adicional para o container */
-  className?: string;
+export type GoogleMapViewHandle = {
+  panTo: (lat: number, lng: number, zoom?: number) => void;
 };
 
-/**
- * Componente seguro de visualização de mapa para o Mercado Inteligente.
- * Carrega o Google Maps JS API de forma lazy, apenas quando montado.
- * Exibe estados de loading, erro e mensagem amigável se a chave estiver ausente.
- */
-export function GoogleMapView({
-  height = 320,
-  className,
-}: GoogleMapViewProps) {
-  const { t } = useTranslation("mercado");
-  const { state, containerRef, init } = useGoogleMaps();
+export type GoogleMapViewProps = {
+  height?: string | number;
+  className?: string;
+  markers?: MapMarkerInput[];
+};
 
-  // Inicia o carregamento automaticamente na primeira montagem
+export const GoogleMapView = React.forwardRef<
+  GoogleMapViewHandle,
+  GoogleMapViewProps
+>(function GoogleMapView({ height = 320, className, markers }, ref) {
+  const { t } = useTranslation("mercado");
+  const { state, containerRef, init, setMarkers, panTo } = useGoogleMaps();
+
   React.useEffect(() => {
-    if (state.status === "idle") {
-      init();
-    }
+    if (state.status === "idle") init();
   }, [state.status, init]);
 
-  const heightStyle =
-    typeof height === "number" ? `${height}px` : height;
+  React.useEffect(() => {
+    if (state.status === "loaded") {
+      setMarkers(markers ?? []);
+    }
+  }, [state.status, markers, setMarkers]);
+
+  React.useImperativeHandle(ref, () => ({ panTo }), [panTo]);
+
+  const heightStyle = typeof height === "number" ? `${height}px` : height;
 
   if (state.status === "loading") {
     return (
@@ -90,7 +92,6 @@ export function GoogleMapView({
     );
   }
 
-  // Estado loaded ou idle (ainda não iniciado)
   return (
     <div
       ref={containerRef}
@@ -102,4 +103,4 @@ export function GoogleMapView({
       aria-label={t("map.loading")}
     />
   );
-}
+});
