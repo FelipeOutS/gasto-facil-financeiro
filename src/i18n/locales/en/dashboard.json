@@ -6,14 +6,16 @@
   },
   "empty": {
     "eyebrow": "Gasto Inteligente",
-    "title": "Let's get started? 🚀",
-    "subtitle": "Your money clearer, no fuss. Pick where to start:",
+    "title": "Welcome to Gasto Inteligente 🚀",
+    "subtitle": "Start by adding your first expense or income to see your financial summary, charts, and alerts.",
     "footer": "Everything is saved in your account. 🔒",
     "cards": {
-      "salario": "Add salary",
-      "gasto": "Log expense",
-      "guardado": "Money saved",
-      "meta": "Create first goal"
+      "salario": "Add income",
+      "salario_mei": "Add revenue",
+      "salario_empresa": "Add revenue",
+      "gasto": "Add expense",
+      "guardado": "Save money",
+      "meta": "Create goal"
     }
   },
   "firstSteps": {

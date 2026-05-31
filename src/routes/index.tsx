@@ -362,11 +362,11 @@ function Index() {
       <MobileShell wide>
         <header className="pt-2 animate-rise">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Gasto Inteligente
+            {t("empty.eyebrow")}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Bora começar? 🚀</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">{t("empty.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Seu dinheiro mais claro, sem complicação. Escolha por onde começar:
+            {t("empty.subtitle")}
           </p>
         </header>
 
@@ -375,31 +375,31 @@ function Index() {
             to="/renda"
             search={{ ano: ym.ano, mes: ym.mes }}
             icon={<ArrowUp className="h-5 w-5" />}
-            title="Cadastrar salário"
+            title={t("empty.cards.salario")}
             tint="success"
           />
           <WelcomeCard
             to="/adicionar"
             icon={<Plus className="h-5 w-5" />}
-            title="Lançar gasto"
+            title={t("empty.cards.gasto")}
             tint="primary"
           />
           <WelcomeCard
             to="/guardado"
             icon={<Wallet className="h-5 w-5" />}
-            title="Dinheiro guardado"
+            title={t("empty.cards.guardado")}
             tint="muted"
           />
           <WelcomeCard
             to="/metas"
             icon={<Target className="h-5 w-5" />}
-            title="Criar primeira meta"
+            title={t("empty.cards.meta")}
             tint="muted"
           />
         </section>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Tudo fica salvo na sua conta. 🔒
+          {t("empty.footer")}
         </p>
       </MobileShell>
     );
