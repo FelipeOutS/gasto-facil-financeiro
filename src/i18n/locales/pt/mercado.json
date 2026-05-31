@@ -361,8 +361,9 @@
   },
   "budget": {
     "metaTitle": "Orçamento de mercado — Mercado Inteligente",
-    "title": "Orçamento de mercado",
-    "subtitle": "Defina um limite mensal e acompanhe suas compras de mercado localmente.",
+    "title": "Defina um orçamento para a compra",
+    "subtitle": "Informe quanto pretende gastar e acompanhe se o carrinho ainda está dentro do limite.",
+    "helper": "Esse orçamento ajuda durante a compra e não altera o orçamento mensal geral.",
     "back": "Voltar",
     "home": "Início",
     "form": {
