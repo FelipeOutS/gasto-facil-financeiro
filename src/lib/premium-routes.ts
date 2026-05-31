@@ -34,7 +34,10 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/orcamento", feature: "orcamento", title: "Orçamento é um recurso premium" },
   { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
   { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/metas", feature: "metas_visuais", title: "Metas é um recurso premium" },
+  // Etapa 66 — /metas é liberada para todos os planos pagos (metas básicas).
+  // O gate de `metas_visuais` permanece DENTRO do MetaForm para proteger
+  // upload de capa / galeria / visual personalizado. Não bloqueamos a rota
+  // inteira para não barrar o Controle Simples Pessoal por URL direta.
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
   { path: "/renda", feature: "lancamentos_ilimitados", title: "Receitas é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
