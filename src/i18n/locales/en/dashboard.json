@@ -509,6 +509,7 @@
     "addMais": "Add more expenses to get personalized insights.",
     "tudoCerto": "All good here. No important alerts right now.",
     "maiorUso": "Most used cards",
+    "usadoDe": "{{usado}} of {{limite}}",
     "verTodos": "View all →",
     "compraSing": "purchase",
     "compraPlur": "purchases",

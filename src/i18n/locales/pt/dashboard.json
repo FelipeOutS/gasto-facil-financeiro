@@ -509,6 +509,7 @@
     "addMais": "Adicione mais gastos para receber insights personalizados.",
     "tudoCerto": "Tudo certo por aqui. Nenhum alerta importante no momento.",
     "maiorUso": "Cartões com maior uso",
+    "usadoDe": "{{usado}} de {{limite}}",
     "verTodos": "Ver todos →",
     "compraSing": "compra",
     "compraPlur": "compras",

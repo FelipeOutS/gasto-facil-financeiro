@@ -357,7 +357,7 @@ export function DashboardCartoesInsights({
                       <p className="truncate text-[11px] text-muted-foreground">
                         {u.qtd} {u.qtd === 1 ? t("cartoesInsights.compraSing") : t("cartoesInsights.compraPlur")} ·{" "}
                         {u.limite > 0
-                          ? `${formatBRL(u.usado)} ${i18n.resolvedLanguage?.startsWith("en") ? "of" : "de"} ${formatBRL(u.limite)}`
+                          ? t("cartoesInsights.usadoDe", { usado: formatBRL(u.usado), limite: formatBRL(u.limite) })
                           : formatBRL(u.usado)}
                       </p>
                     </div>
