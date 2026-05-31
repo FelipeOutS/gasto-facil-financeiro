@@ -3,7 +3,9 @@
  * Google Maps Loader — helper seguro para carregar a Google Maps JS API
  * ----------------------------------------------------------------------------
  * Regras:
- * - Lê a chave de `import.meta.env.VITE_GOOGLE_MAPS_API_KEY` (build-time).
+ * - Lê a chave gerenciada do connector Lovable:
+ *   `import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY`.
+ * - Tracking ID opcional via `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID`.
  * - NUNCA expõe a chave em logs, UI ou requisições.
  * - Carrega o script apenas uma vez (singleton + deduplicação).
  * - Retorna erro controlado se a chave estiver ausente ou o load falhar.
