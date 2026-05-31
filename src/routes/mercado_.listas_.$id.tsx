@@ -1117,6 +1117,10 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
               codigoBarras={item.codigoBarras}
               precoUnitario={parseNumber(precoEstimado)}
             />
+            <CommunityPriceSuggestion
+              suggestions={suggestions}
+              onUse={applyCommunityPrice}
+            />
           </div>
         </div>
         <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
