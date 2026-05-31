@@ -1104,5 +1104,128 @@
     "noAddressFound": "We couldn't find that address. Try being more specific.",
     "invalidSearch": "Type at least 3 characters to search.",
     "lastSearchLabel": "Searching near: {{location}}"
+  },
+  "communityPrices": {
+    "title": "Community Price",
+    "subtitle": "Scan flyers by photo or record prices manually. Reading is assisted — always review before saving.",
+    "back": "Back",
+    "home": "Home",
+    "disclaimer": "Price reported by a user. May vary by store, region and date. Double-check at the store before buying.",
+    "itemHint": "Double-check at the store before buying.",
+    "actions": {
+      "scanTitle": "Scan a flyer photo",
+      "scanDescription": "Automatic reading can make mistakes. You review each item before saving.",
+      "marketLabel": "Market (optional)",
+      "marketPlaceholder": "e.g.: Walmart, Costco",
+      "pick": "Choose image",
+      "reading": "Reading image…",
+      "manualTitle": "Enter manually",
+      "manualDescription": "No flyer? Record a price you saw at the store.",
+      "newManual": "New manual price"
+    },
+    "filters": {
+      "title": "Filters",
+      "product": "Search by product",
+      "market": "Filter by market",
+      "category": "Filter by category",
+      "source": "Source",
+      "sort": "Sort by",
+      "allSources": "All sources",
+      "sortOptions": {
+        "recent": "Most recent",
+        "lowest": "Lowest price",
+        "highest": "Highest price",
+        "expiring": "Expiring soon"
+      },
+      "clear": "Clear filters"
+    },
+    "source": {
+      "flyer": "Flyer",
+      "store": "Store",
+      "receipt": "Receipt",
+      "manual": "Manual"
+    },
+    "list": {
+      "seenOn": "Seen on {{date}}",
+      "validUntil": "valid until {{date}}",
+      "edit": "Edit price",
+      "remove": "Remove price",
+      "confirmRemove": "Remove this price?"
+    },
+    "empty": {
+      "none": {
+        "title": "No prices here yet",
+        "description": "Use “Scan a flyer photo” or add one manually to get started."
+      },
+      "noResults": {
+        "title": "No results for these filters",
+        "description": "Adjust product, market or source to see more prices."
+      }
+    },
+    "errors": {
+      "loadFailed": "Could not load prices.",
+      "invalidImage": "Use a JPG, PNG or WEBP image.",
+      "imageTooLarge": "Image too large. Maximum 10 MB.",
+      "ocrFailed": "Could not read the flyer. Try a sharper, well-lit photo.",
+      "noItems": "We couldn't detect prices in this image. Try a sharper photo.",
+      "uploadFailed": "Error uploading image. Try again.",
+      "selectAtLeastOne": "Select at least one item to save.",
+      "missingFields": "Fill in product, price greater than zero and market for every checked item.",
+      "saveFailed": "Could not save.",
+      "manualRequired": "Fill in product, market and price greater than zero.",
+      "removeFailed": "Could not remove."
+    },
+    "success": {
+      "saved_one": "{{count}} price saved.",
+      "saved_other": "{{count}} prices saved.",
+      "manualSaved": "Price saved.",
+      "removed": "Price removed.",
+      "updated": "Price updated."
+    },
+    "review": {
+      "title": "Review detected items",
+      "description": "Automatic reading can confuse names, prices or units. Review before saving.",
+      "warning": "Edit anything that's wrong, uncheck what you don't want to save, and confirm only the correct items.",
+      "include": "Include",
+      "remove": "Remove item",
+      "fields": {
+        "product": "Product",
+        "price": "Price ($)",
+        "unit": "Unit",
+        "unitPlaceholder": "ea, kg, L…",
+        "market": "Market",
+        "category": "Category",
+        "validUntil": "Valid until"
+      },
+      "confidence": "Confidence: {{value}}%",
+      "invalidPrice": "Enter a price greater than zero.",
+      "missingProduct": "Enter the product name.",
+      "missingMarket": "Enter the market.",
+      "cancel": "Cancel",
+      "save": "Save reviewed prices"
+    },
+    "manual": {
+      "title": "New manual price",
+      "editTitle": "Edit price",
+      "description": "Enter a price you saw at a store, receipt or flyer.",
+      "fields": {
+        "product": "Product *",
+        "price": "Price ($) *",
+        "unit": "Unit",
+        "unitPlaceholder": "ea, kg, L…",
+        "market": "Market *",
+        "category": "Category",
+        "source": "Source",
+        "seenAt": "Date seen",
+        "validUntil": "Promotion valid until",
+        "city": "City",
+        "neighborhood": "Neighborhood",
+        "notes": "Note",
+        "notesPlaceholder": "e.g.: buy 3 pay 2, club price…"
+      },
+      "cancel": "Cancel",
+      "save": "Save"
+    }
   }
 }
+

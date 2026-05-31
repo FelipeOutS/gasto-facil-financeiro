@@ -1104,5 +1104,128 @@
     "noAddressFound": "Não encontramos esse endereço. Tente ser mais específico.",
     "invalidSearch": "Digite pelo menos 3 caracteres para buscar.",
     "lastSearchLabel": "Buscando perto de: {{location}}"
+  },
+  "communityPrices": {
+    "title": "Preço Comunitário",
+    "subtitle": "Leia panfletos por foto ou registre preços manualmente. A leitura é assistida — sempre revise antes de salvar.",
+    "back": "Voltar",
+    "home": "Início",
+    "disclaimer": "Preço informado por usuário. Pode variar por loja, região e data. Confira no mercado antes de comprar.",
+    "itemHint": "Confira no mercado antes de comprar.",
+    "actions": {
+      "scanTitle": "Ler panfleto por foto",
+      "scanDescription": "A leitura automática pode cometer erros. Você revisa cada item antes de salvar.",
+      "marketLabel": "Mercado (opcional)",
+      "marketPlaceholder": "Ex.: Assaí, Atacadão",
+      "pick": "Escolher imagem",
+      "reading": "Lendo imagem…",
+      "manualTitle": "Informar manualmente",
+      "manualDescription": "Sem panfleto? Cadastre o preço que você viu na loja.",
+      "newManual": "Novo preço manual"
+    },
+    "filters": {
+      "title": "Filtros",
+      "product": "Buscar por produto",
+      "market": "Filtrar por mercado",
+      "category": "Filtrar por categoria",
+      "source": "Origem",
+      "sort": "Ordenar por",
+      "allSources": "Todas as origens",
+      "sortOptions": {
+        "recent": "Mais recentes",
+        "lowest": "Menor preço",
+        "highest": "Maior preço",
+        "expiring": "Validade próxima"
+      },
+      "clear": "Limpar filtros"
+    },
+    "source": {
+      "flyer": "Panfleto",
+      "store": "Loja",
+      "receipt": "Cupom",
+      "manual": "Manual"
+    },
+    "list": {
+      "seenOn": "Visto em {{date}}",
+      "validUntil": "válido até {{date}}",
+      "edit": "Editar preço",
+      "remove": "Remover preço",
+      "confirmRemove": "Remover este preço?"
+    },
+    "empty": {
+      "none": {
+        "title": "Nenhum preço por aqui ainda",
+        "description": "Use “Ler panfleto por foto” ou cadastre manualmente para começar."
+      },
+      "noResults": {
+        "title": "Nenhum resultado para esses filtros",
+        "description": "Ajuste produto, mercado ou origem para ver mais preços."
+      }
+    },
+    "errors": {
+      "loadFailed": "Não foi possível carregar os preços.",
+      "invalidImage": "Use uma imagem JPG, PNG ou WEBP.",
+      "imageTooLarge": "Imagem muito grande. Máximo de 10 MB.",
+      "ocrFailed": "Não foi possível ler o panfleto. Tente uma foto mais nítida e bem iluminada.",
+      "noItems": "Não conseguimos identificar preços nessa imagem. Tente uma foto mais nítida.",
+      "uploadFailed": "Erro ao enviar imagem. Tente novamente.",
+      "selectAtLeastOne": "Selecione ao menos um item para salvar.",
+      "missingFields": "Preencha produto, preço maior que zero e mercado em todos os itens marcados.",
+      "saveFailed": "Não foi possível salvar.",
+      "manualRequired": "Preencha produto, mercado e preço maior que zero.",
+      "removeFailed": "Não foi possível remover."
+    },
+    "success": {
+      "saved_one": "{{count}} preço salvo.",
+      "saved_other": "{{count}} preços salvos.",
+      "manualSaved": "Preço salvo.",
+      "removed": "Preço removido.",
+      "updated": "Preço atualizado."
+    },
+    "review": {
+      "title": "Revisar itens detectados",
+      "description": "A leitura automática pode confundir nomes, preços ou unidades. Revise antes de salvar.",
+      "warning": "Edite o que estiver errado, desmarque o que não deseja salvar e confirme apenas os itens corretos.",
+      "include": "Incluir",
+      "remove": "Remover item",
+      "fields": {
+        "product": "Produto",
+        "price": "Preço (R$)",
+        "unit": "Unidade",
+        "unitPlaceholder": "un, kg, L…",
+        "market": "Mercado",
+        "category": "Categoria",
+        "validUntil": "Válido até"
+      },
+      "confidence": "Confiança: {{value}}%",
+      "invalidPrice": "Informe um preço maior que zero.",
+      "missingProduct": "Informe o nome do produto.",
+      "missingMarket": "Informe o mercado.",
+      "cancel": "Cancelar",
+      "save": "Salvar preços revisados"
+    },
+    "manual": {
+      "title": "Novo preço manual",
+      "editTitle": "Editar preço",
+      "description": "Informe um preço que você viu no mercado, cupom ou panfleto.",
+      "fields": {
+        "product": "Produto *",
+        "price": "Preço (R$) *",
+        "unit": "Unidade",
+        "unitPlaceholder": "un, kg, L…",
+        "market": "Mercado *",
+        "category": "Categoria",
+        "source": "Origem",
+        "seenAt": "Data em que viu",
+        "validUntil": "Validade da promoção",
+        "city": "Cidade",
+        "neighborhood": "Bairro",
+        "notes": "Observação",
+        "notesPlaceholder": "Ex.: leve 3 pague 2, no clube…"
+      },
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    }
   }
 }
+
