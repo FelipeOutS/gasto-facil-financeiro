@@ -41,7 +41,8 @@ type CardDef = {
     | "cesta"
     | "mercados"
     | "meusMercados"
-    | "importarCupom";
+    | "importarCupom"
+    | "precoComunitario";
   icon: LucideIcon;
   status: CardStatus;
   to?: string;
@@ -56,6 +57,7 @@ const CARDS: CardDef[] = [
   { key: "historico", icon: History, status: "open", to: "/mercado/historico", feature: "mercado_avancado" },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
   { key: "importarCupom", icon: Receipt, status: "open", to: "/mercado/importar-cupom", feature: "mercado_importar_cupom" },
+  { key: "precoComunitario", icon: BadgePercent, status: "open", to: "/mercado/preco-comunitario", feature: "mercado_avancado" },
   { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados", feature: "mercado_avancado" },
   { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados", feature: "mercado_avancado" },
   { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos", feature: "mercado_avancado" },
