@@ -2291,7 +2291,7 @@ function RendimentoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HandCoins className="h-4 w-4" />
-            {editing ? "Editar rendimento" : "Novo rendimento"}
+            {editing ? tInv("dialogs.income.titleEdit") : tInv("dialogs.income.titleCreate")}
           </DialogTitle>
           <DialogDescription>Registro manual · valor informado pelo usuário.</DialogDescription>
         </DialogHeader>
