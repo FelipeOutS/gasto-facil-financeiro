@@ -1748,7 +1748,7 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Data da atualização</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.updateDate")}</label>
             <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </div>
 
