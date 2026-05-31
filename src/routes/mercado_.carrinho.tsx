@@ -397,6 +397,13 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           </ul>
         )}
       </section>
+      <CommunityPriceSavingsSummary
+        items={lista.entries.map((it) => ({
+          nome: it.nome,
+          quantidade: it.quantidade,
+          precoEstimado: it.precoEstimado,
+        }))}
+      />
     </>
   );
 }
