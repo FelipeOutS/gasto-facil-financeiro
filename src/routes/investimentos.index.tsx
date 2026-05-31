@@ -2259,7 +2259,7 @@ function RendimentoDialog({
     }
     const v = parseBRLInput(valor);
     if (!Number.isFinite(v) || v <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(tInv("forms.aux.errors.incomeValueInvalid"));
       return;
     }
     const payload: Partial<Rendimento> = {
