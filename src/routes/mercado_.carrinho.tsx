@@ -512,6 +512,12 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           precoUnitario={Number(valor.replace(",", ".")) || undefined}
         />
       )}
+      {!item.comprado && suggestions.length > 0 ? (
+        <CommunityPriceSuggestion
+          suggestions={suggestions}
+          onUse={applyCommunityPrice}
+        />
+      ) : null}
     </li>
   );
 }
