@@ -178,5 +178,73 @@
   "importacoes": {
     "manualName": "Importação manual",
     "importedOn": "Importado em {{date}}"
+  },
+  "dialogs2": {
+    "batchUpdate": {
+      "title": "Atualizar valores",
+      "description": "Atualize os valores atuais dos seus investimentos. Valor informado pelo usuário.",
+      "updateDate": "Data da atualização",
+      "empty": "Nenhum investimento cadastrado.",
+      "currentPrice": "Preço atual",
+      "currentValue": "Valor atual",
+      "observation": "Observação",
+      "obsPlaceholder": "opcional",
+      "appliedShort": "Aplicado {{value}}",
+      "cancel": "Cancelar",
+      "save": "Salvar atualizações",
+      "saving": "Salvando…",
+      "toast": {
+        "updated": "{{count}} investimento(s) atualizado(s).",
+        "failed": "{{count}} falha(s) ao atualizar.",
+        "noChanges": "Nenhuma alteração para salvar."
+      }
+    },
+    "importHistory": {
+      "title": "Histórico de importações",
+      "description": "Veja todas as importações realizadas e remova quando precisar.",
+      "emptyTitle": "Nenhuma importação ainda",
+      "emptyDescription": "Quando você importar extratos da B3, corretora, CSV ou PDF, eles aparecerão aqui.",
+      "importedOn": "Importado em {{date}}",
+      "summary": "{{ativos}} ativos · {{movs}} movimentações · {{rends}} rendimentos",
+      "viewDetails": "Ver detalhes",
+      "deleteAria": "Excluir importação",
+      "close": "Fechar",
+      "details": {
+        "title": "Detalhes da importação",
+        "manualName": "Importação manual",
+        "assets": "Ativos",
+        "movements": "Movimentações",
+        "incomes": "Rendimentos",
+        "createdAssets": "Ativos criados",
+        "delete": "Excluir"
+      },
+      "confirm": {
+        "title": "Excluir esta importação?",
+        "description": "Escolha como deseja remover esta importação dos seus registros.",
+        "onlyHistoryTitle": "Excluir apenas histórico",
+        "onlyHistoryDesc1": "Remove o registro desta importação da lista de histórico. Os ativos, movimentações e rendimentos criados por ela",
+        "onlyHistoryDescStrong": "permanecem",
+        "onlyHistoryDesc2": "na sua carteira.",
+        "allTitle": "Excluir tudo relacionado",
+        "allDesc1": "Remove o registro",
+        "allDescStrong": "e",
+        "allDesc2": "os ativos, movimentações e rendimentos que esta importação criou. Esta ação não pode ser desfeita.",
+        "warningStrong": "Investimentos cadastrados manualmente não são afetados",
+        "warningRest": "— apenas itens vinculados a esta importação serão removidos.",
+        "cancel": "Cancelar",
+        "deleting": "Excluindo…",
+        "toast": {
+          "historyDeleted": "Histórico da importação excluído.",
+          "allDeleted": "Importação e dados vinculados excluídos.",
+          "deleteFailed": "Não foi possível excluir."
+        }
+      },
+      "status": {
+        "concluida": "Concluída",
+        "pendente": "Pendente",
+        "erro": "Erro",
+        "processando": "Processando"
+      }
+    }
   }
 }
