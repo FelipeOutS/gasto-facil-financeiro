@@ -656,59 +656,59 @@
       "mercadoAvancado": "Full Smart Grocery features",
       "mercadoImportarCupom": "Receipt / QR Code import",
       "importacoes": "Smart import for invoices and statements"
-    },
-    "financialHealth": {
-      "title": "Financial health",
-      "empty": "Add your income and a few expenses to calculate your financial health.",
-      "scoreMax": "/ 100",
-      "scenarioLabel": "Scenario",
-      "levels": {
-        "critico": "Critical",
-        "atencao": "Attention",
-        "bom": "Good",
-        "excelente": "Excellent"
-      }
-    },
-    "tipsBlock": {
-      "title": "Tips to save",
-      "subtitle": "Light suggestions based on your month.",
-      "tipSing": "tip",
-      "tipPlur": "tips",
-      "showLess": "Show less",
-      "showMore": "Show {{count}} more {{unit}}",
-      "priority": {
-        "alta": "Attention",
-        "media": "Important",
-        "baixa": "Tip"
-      }
-    },
-    "monthlyDiagnosis": {
-      "title": "Monthly diagnosis",
-      "empty": "Add your income and a few expenses to generate your monthly diagnosis.",
-      "scenarioLabel": "Economic scenario:",
-      "levels": {
-        "critico": "Critical",
-        "atencao": "Attention",
-        "bom": "Good",
-        "excelente": "Excellent"
-      }
-    },
-    "radarInteligente": {
-      "aria": "Central Bank economic indicators",
-      "title": "Central Bank indicators",
-      "subtitle": "Selic, CDI and IPCA with practical insights for your wallet.",
-      "refresh": "Refresh",
-      "refreshAria": "Refresh indicators (force new fetch)",
-      "refreshTitle": "Force refresh ignoring the cache",
-      "stale": "Showing last known data — the source may be unstable.",
-      "source": "Source: Central Bank of Brazil (SGS). Public data updated every few hours.",
-      "units": {
-        "perYear": "% p.a.",
-        "perMonth": "% this month"
-      }
-    },
-    "economicImpact": {
-      "eyebrow": "Scenario impact on your month"
     }
+  },
+  "financialHealth": {
+    "title": "Financial health",
+    "empty": "Add your income and a few expenses to calculate your financial health.",
+    "scoreMax": "/ 100",
+    "scenarioLabel": "Scenario",
+    "levels": {
+      "critico": "Critical",
+      "atencao": "Attention",
+      "bom": "Good",
+      "excelente": "Excellent"
+    }
+  },
+  "tipsBlock": {
+    "title": "Tips to save",
+    "subtitle": "Light suggestions based on your month.",
+    "tipSing": "tip",
+    "tipPlur": "tips",
+    "showLess": "Show less",
+    "showMore": "Show {{count}} more {{unit}}",
+    "priority": {
+      "alta": "Attention",
+      "media": "Important",
+      "baixa": "Tip"
+    }
+  },
+  "monthlyDiagnosis": {
+    "title": "Monthly diagnosis",
+    "empty": "Add your income and a few expenses to generate your monthly diagnosis.",
+    "scenarioLabel": "Economic scenario:",
+    "levels": {
+      "critico": "Critical",
+      "atencao": "Attention",
+      "bom": "Good",
+      "excelente": "Excellent"
+    }
+  },
+  "radarInteligente": {
+    "aria": "Central Bank economic indicators",
+    "title": "Central Bank indicators",
+    "subtitle": "Selic, CDI and IPCA with practical insights for your wallet.",
+    "refresh": "Refresh",
+    "refreshAria": "Refresh indicators (force new fetch)",
+    "refreshTitle": "Force refresh ignoring the cache",
+    "stale": "Showing last known data — the source may be unstable.",
+    "source": "Source: Central Bank of Brazil (SGS). Public data updated every few hours.",
+    "units": {
+      "perYear": "% p.a.",
+      "perMonth": "% this month"
+    }
+  },
+  "economicImpact": {
+    "eyebrow": "Scenario impact on your month"
   }
 }
