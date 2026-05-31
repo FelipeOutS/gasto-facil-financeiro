@@ -36,6 +36,12 @@ import { MobileShell } from "@/components/MobileShell";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
+import { CommunityPriceSuggestion } from "@/components/mercado/CommunityPriceSuggestion";
+import { CommunityPriceSavingsSummary } from "@/components/mercado/CommunityPriceSavingsSummary";
+import {
+  getSuggestionsFor,
+  useActiveCommunityPrices,
+} from "@/lib/mercado/community-prices-suggestions";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
