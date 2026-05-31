@@ -1,14 +1,14 @@
 {
-  "meta": { "title": "Adicionar gasto — Gasto Inteligente" },
-  "header": { "kicker": "Novo", "title": "Adicionar gasto", "back": "Voltar" },
-  "subtitle": "Manda o print, tira foto ou digita. Eu adianto, você confere antes de salvar.",
+  "meta": { "title": "Adicionar — Gasto Inteligente" },
+  "header": { "kicker": "Novo", "title": "O que você quer adicionar?", "back": "Voltar" },
+  "subtitle": "Escolha o tipo de lançamento para registrar manualmente, importar ou continuar por um fluxo guiado.",
   "options": {
     "photo": { "title": "Tirar foto", "desc": "Comprovante, nota, recibo" },
     "gallery": { "title": "Enviar print da galeria", "desc": "Pix, boleto, fatura, screenshot" },
     "whatsapp": { "title": "Colar mensagem do WhatsApp", "desc": "Ex.: \"Spotify 19,90 Nubank\"" },
     "manual": { "title": "Cadastrar manualmente", "desc": "Digite os dados do gasto" }
   },
-  "hint": "✨ A leitura por foto/print usa IA pra identificar valor, data e descrição. Você confere e edita tudo antes de salvar.",
+  "hint": "Importe quando quiser acelerar o preenchimento. Você sempre poderá revisar antes de salvar.",
   "cancel": "Cancelar",
   "requirePlan": "Para adicionar gastos, escolha um plano ativo.",
   "guidedEntry": {
@@ -24,15 +24,15 @@
     "types": {
       "expense": {
         "title": "Adicionar gasto",
-        "description": "Use para registrar compras, contas pagas, despesas do dia a dia ou custos do negócio."
+        "description": "Registre uma despesa do dia a dia, compra, conta paga ou saída de dinheiro."
       },
       "income": {
         "title": "Adicionar receita",
-        "description": "Use para registrar salário, freelance, comissões ou outras entradas."
+        "description": "Registre salário, freela, reembolso ou outra entrada de dinheiro."
       },
       "revenue": {
         "title": "Adicionar faturamento",
-        "description": "Use para registrar vendas, serviços, contratos ou outras entradas do negócio."
+        "description": "Registre venda, serviço, contrato ou outra entrada do negócio."
       }
     },
     "hint": "Depois dos primeiros lançamentos, você poderá explorar gráficos, alertas, importações e recursos inteligentes conforme seu plano."
