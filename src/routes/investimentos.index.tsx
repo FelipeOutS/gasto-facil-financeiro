@@ -1726,7 +1726,7 @@ function AtualizarValorDialog({
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Quantidade</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.quantity")}</label>
                 <Input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
