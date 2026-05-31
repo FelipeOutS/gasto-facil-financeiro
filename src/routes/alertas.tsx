@@ -366,6 +366,33 @@ function AlertasPage() {
         </PremiumCard>
       )}
 
+      {/* Onboarding leve — somente quando não há alertas */}
+      {!loading && stats.total === 0 && (
+        <section className="mt-3 rounded-2xl border border-border/60 bg-card-elevated/60 p-4 animate-rise">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("alertas.onboarding.title")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("alertas.onboarding.description")}
+          </p>
+          <p className="mt-1 text-[12px] text-muted-foreground/90">
+            {t("alertas.onboarding.inApp")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild size="sm" className="min-h-11">
+              <Link to="/contas-a-pagar">{t("alertas.onboarding.cta")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="min-h-11">
+              <Link to="/orcamento">{t("alertas.onboarding.secondaryCta")}</Link>
+            </Button>
+          </div>
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            {t("alertas.onboarding.helper")}
+          </p>
+        </section>
+      )}
+
+
       {/* Filtros */}
       <div className="mt-4 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 overflow-x-auto">
         <div className="flex w-max items-center gap-2 pb-1">
