@@ -1698,7 +1698,7 @@ function AtualizarValorDialog({
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground">Investimento</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <div className="text-sm font-medium">{ativo.nome}</div>
             <div className="text-[11px] text-muted-foreground">
               {getTipoInvestimentoLabel(ativo.tipo, tInv)}
