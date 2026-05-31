@@ -2279,7 +2279,7 @@ function RendimentoDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível salvar o rendimento.");
+      toastFromError(e, tInv("forms.aux.errors.incomeSaveFailed"));
     } finally {
       setSalvando(false);
     }
