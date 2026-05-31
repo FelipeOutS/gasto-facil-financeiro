@@ -45,6 +45,10 @@ export function FluxoCaixaChart({
   const [tipo, setTipo] = useState<ChartKind>("area");
   const locale = i18n.resolvedLanguage || i18n.language || "pt";
 
+  const labelEntradas = t("fluxo.entradas");
+  const labelGastos = t("fluxo.gastos");
+  const labelSaldo = t("fluxo.saldo");
+
   const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
     { id: "area", label: t("fluxo.types.area"), Icon: TrendingUp },
     { id: "line", label: t("fluxo.types.line"), Icon: Activity },
