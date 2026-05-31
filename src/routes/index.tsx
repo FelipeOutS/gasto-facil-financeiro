@@ -454,6 +454,18 @@ function Index() {
         />
       </div>
 
+      {/* Onboarding leve — Primeiros passos (some quando checklist completo ou dispensado) */}
+      <div className="mt-3 lg:mt-4">
+        <PrimeirosPassosCard
+          gastosCount={gastos.length}
+          receitasCount={receitas.length}
+          cartoesCount={cartoes.length}
+          metasCount={metas.length}
+        />
+      </div>
+
+
+
       {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
       <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">
         <div className="lg:col-span-5">
