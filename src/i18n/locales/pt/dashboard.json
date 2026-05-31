@@ -63,7 +63,13 @@
     "lancamentoPlur": "lançamentos",
     "atrasada": "atrasada(s)",
     "pendente": "pendente(s)",
-    "tudoEmDia": "tudo em dia"
+    "tudoEmDia": "tudo em dia",
+    "total": "Total",
+    "receitaPreservada": "{{pct}}% da receita preservada"
+  },
+  "loader": {
+    "biometricValidating": "Validando biometria…",
+    "biometricOpening": "Abrindo entrada por biometria…"
   },
   "saldoNegativoAlerta": "Ops, você passou {{valor}} do que recebeu este mês.",
   "ctaLancar": "Lançar gasto",

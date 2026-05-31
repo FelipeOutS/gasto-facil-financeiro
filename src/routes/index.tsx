@@ -113,6 +113,7 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexGate() {
+  const { t } = useTranslation("dashboard");
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const needsBiometricUnlock = !!session && isLoginBioUnlockRequired();
@@ -129,9 +130,9 @@ function IndexGate() {
   }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
-  if (!session && bioLoginInProgress) return <BrandLoader message="Validando biometria…" />;
-  if (needsBiometricUnlock) return <BrandLoader message="Validando biometria…" />;
-  if (shouldShowBiometricLogin) return <BrandLoader message="Abrindo entrada por biometria…" />;
+  if (!session && bioLoginInProgress) return <BrandLoader message={t("loader.biometricValidating")} />;
+  if (needsBiometricUnlock) return <BrandLoader message={t("loader.biometricValidating")} />;
+  if (shouldShowBiometricLogin) return <BrandLoader message={t("loader.biometricOpening")} />;
   if (!session) return <PublicLanding />;
   return <Index />;
 }
@@ -776,7 +777,7 @@ function Index() {
                       <div className="pointer-events-none absolute inset-0 grid place-items-center">
                         <div className="text-center">
                           <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                            Total
+                            {t("kpi.total")}
                           </p>
                           <p className="num text-sm font-semibold">
                             {formatBRLCompact(total)}
@@ -1113,7 +1114,7 @@ function SaldoHeroCard({
 
       {entradas > 0 && !negativo && (
         <p className="num relative mt-3 text-[11px] text-muted-foreground">
-          {Math.round(pctReceita)}% da receita preservada
+          {t("kpi.receitaPreservada", { pct: Math.round(pctReceita) })}
         </p>
       )}
     </div>
