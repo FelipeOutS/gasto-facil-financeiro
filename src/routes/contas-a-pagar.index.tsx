@@ -840,10 +840,15 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       title={t("empty.title")}
       description={t("empty.subtitle")}
       cta={
-        <Button className="card-press min-h-11 rounded-full font-semibold" onClick={onAdd}>
-          <Plus className="mr-1 h-4 w-4" />
-          {t("empty.addFirst")}
-        </Button>
+        <div className="flex flex-col items-center gap-2">
+          <Button className="card-press min-h-11 rounded-full font-semibold" onClick={onAdd}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t("empty.addFirst")}
+          </Button>
+          <p className="max-w-xs text-center text-[11px] text-muted-foreground">
+            {t("empty.helper")}
+          </p>
+        </div>
       }
     />
   );
