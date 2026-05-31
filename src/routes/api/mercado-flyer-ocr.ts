@@ -444,7 +444,7 @@ async function runOcrPipeline(params: {
 }) {
   const hasGoogleVisionKey = Boolean(params.visionKey);
   if (!params.visionKey) {
-    const diagnostic = createDiagnostic({ hasGoogleVisionKey });
+    const diagnostic = createDiagnostic({ hasGoogleVisionKey, stage: "config", status: "error", code: "ocr_config_missing" });
     logOcrDiagnostic(diagnostic);
     return Response.json(
       {
@@ -465,6 +465,7 @@ async function runOcrPipeline(params: {
   const normalized = normalizeImagePayload(params.imageBase64);
   const diagnostic = createDiagnostic({
     hasGoogleVisionKey,
+    stage: "payload",
     imageMime: normalized.imageMime,
     processedDataUrlLength: params.imageBase64.length,
     cleanBase64Length: normalized.cleanBase64.length,
@@ -472,6 +473,8 @@ async function runOcrPipeline(params: {
   });
 
   if (!normalized.ok) {
+    diagnostic.status = "error";
+    diagnostic.code = normalized.code;
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, error: normalized.reason, code: normalized.code, items: [], warnings: [normalized.code], debugInfo: safeDiagnosticForResponse(diagnostic) },
@@ -480,6 +483,8 @@ async function runOcrPipeline(params: {
   }
 
   if (params.imageBase64.length > 18 * 1024 * 1024) {
+    diagnostic.status = "error";
+    diagnostic.code = "image_too_large";
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, error: "Imagem muito grande. Use uma foto até 10 MB.", code: "image_too_large", items: [], debugInfo: safeDiagnosticForResponse(diagnostic) },
@@ -487,9 +492,12 @@ async function runOcrPipeline(params: {
     );
   }
 
+  diagnostic.stage = "vision";
   const visionRes = await callVision(params.visionKey, normalized.cleanBase64);
   diagnostic.visionHttpStatus = visionRes.status;
   if (!visionRes.ok) {
+    diagnostic.status = "error";
+    diagnostic.code = "vision_api_error";
     diagnostic.visionErrorCode = visionRes.errorCode;
     diagnostic.visionErrorMessage = visionRes.errorMessage;
     logOcrDiagnostic(diagnostic);
@@ -517,9 +525,21 @@ async function runOcrPipeline(params: {
   diagnostic.rawTextLength = rawText.length;
   diagnostic.priceCandidatesCount = rawText ? countPriceCandidates(rawText) : 0;
   if (!rawText) {
+    diagnostic.status = "error";
+    diagnostic.code = "no_text_detected";
     logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, items: [], warnings: ["no_text_detected"], code: "no_text_detected", message: "Não encontramos texto legível nessa foto.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+      { status: 200 },
+    );
+  }
+
+  if (diagnostic.priceCandidatesCount === 0) {
+    diagnostic.status = "partial";
+    diagnostic.code = "text_found_but_no_prices";
+    logOcrDiagnostic(diagnostic);
+    return Response.json(
+      { success: false, items: [], warnings: ["text_found_but_no_prices"], code: "text_found_but_no_prices", message: "Encontramos texto no panfleto, mas nenhum preço claro foi detectado.", debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: 200 },
     );
   }
@@ -529,13 +549,26 @@ async function runOcrPipeline(params: {
   if (params.city) hintParts.push(`Cidade: ${String(params.city).slice(0, 80)}.`);
   if (params.neighborhood) hintParts.push(`Bairro: ${String(params.neighborhood).slice(0, 80)}.`);
 
+  diagnostic.stage = "gemini";
   const r = await callGeminiStructure(params.aiKey, rawText, hintParts.join(" "));
   diagnostic.provider = "google_vision_plus_gemini";
   if (!r.ok) {
     const text = await r.text().catch(() => "");
     console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 120));
+    const fallbackItems = extractFallbackItems(rawText, params.marketName);
+    diagnostic.stage = fallbackItems.length > 0 ? "fallback" : "gemini";
+    diagnostic.status = fallbackItems.length > 0 ? "partial" : "error";
+    diagnostic.code = r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "gemini_gateway_error";
+    diagnostic.usedFallback = fallbackItems.length > 0;
+    diagnostic.finalItemCount = fallbackItems.length;
     logOcrDiagnostic(diagnostic);
-    const code = r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "structuring_failed";
+    if (fallbackItems.length > 0 && r.status !== 429 && r.status !== 402) {
+      return Response.json(
+        { success: true, code: "gemini_gateway_error", items: fallbackItems, warnings: ["gemini_gateway_error", "fallback_regex_used"], message: "O texto foi lido, mas a IA não conseguiu organizar os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        { status: 200 },
+      );
+    }
+    const code = diagnostic.code;
     return Response.json(
       { success: false, error: r.status === 429 ? "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo." : "Não conseguimos estruturar os itens agora.", code, items: [], warnings: [code], debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: r.status === 429 || r.status === 402 ? r.status : 502 },
@@ -547,15 +580,34 @@ async function runOcrPipeline(params: {
   const parsed = args ? parseStructured(args, params.marketName) : { items: [], warnings: ["missing_tool_call"] };
   diagnostic.geminiItemCount = parsed.items.length;
   diagnostic.finalItemCount = parsed.items.length;
-  logOcrDiagnostic(diagnostic);
 
   if (parsed.items.length === 0) {
+    const fallbackItems = extractFallbackItems(rawText, params.marketName);
+    if (fallbackItems.length > 0) {
+      diagnostic.stage = "fallback";
+      diagnostic.status = "partial";
+      diagnostic.code = "text_found_but_no_items";
+      diagnostic.usedFallback = true;
+      diagnostic.finalItemCount = fallbackItems.length;
+      logOcrDiagnostic(diagnostic);
+      return Response.json(
+        { success: true, items: fallbackItems, warnings: [...parsed.warnings, "text_found_but_no_items", "fallback_regex_used"], code: "text_found_but_no_items", message: "O texto foi lido, mas a IA não estruturou os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        { status: 200 },
+      );
+    }
+    diagnostic.status = "partial";
+    diagnostic.code = "text_found_but_no_items";
+    logOcrDiagnostic(diagnostic);
     return Response.json(
       { success: false, items: [], warnings: [...parsed.warnings, "text_found_but_no_items"], code: "text_found_but_no_items", message: "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente.", debugInfo: safeDiagnosticForResponse(diagnostic) },
       { status: 200 },
     );
   }
 
+  diagnostic.stage = "done";
+  diagnostic.status = "ok";
+  diagnostic.code = "success";
+  logOcrDiagnostic(diagnostic);
   return Response.json({ success: true, items: parsed.items, warnings: parsed.warnings, debugInfo: safeDiagnosticForResponse(diagnostic) }, { status: 200 });
 }
 
