@@ -46,6 +46,16 @@ type Step = "market" | "photos" | "processing" | "review";
 
 type PhotoStatus = "pending" | "processing" | "done" | "empty" | "error";
 
+type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
+type ErrorReason =
+  | "ocr_config_missing"
+  | "vision_api_error"
+  | "network"
+  | "rate_limited"
+  | "credits"
+  | "generic"
+  | null;
+
 type DetectedItem = {
   productName: string;
   price: number | null;
@@ -63,8 +73,11 @@ type Photo = {
   previewUrl: string;
   status: PhotoStatus;
   errorMessage?: string;
+  emptyReason?: EmptyReason;
+  errorReason?: ErrorReason;
   items: DetectedItem[];
 };
+
 
 type ReviewItem = DetectedItem & {
   id: string;
@@ -266,22 +279,52 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64: base64, marketName: marketName || undefined }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        return { ...photo, status: "error", errorMessage: json?.error || "" };
+        let reason: ErrorReason = "generic";
+        if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
+        else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (res.status === 429) reason = "rate_limited";
+        else if (res.status === 402) reason = "credits";
+        return {
+          ...photo,
+          status: "error",
+          errorReason: reason,
+          errorMessage: json?.error || "",
+        };
       }
       const items: DetectedItem[] = Array.isArray(json.items) ? json.items : [];
+      if (items.length === 0) {
+        const code = json?.code as string | undefined;
+        const emptyReason: EmptyReason =
+          code === "no_text_detected"
+            ? "no_text_detected"
+            : code === "text_found_but_no_items"
+              ? "text_found_but_no_items"
+              : null;
+        return {
+          ...photo,
+          status: "empty",
+          items: [],
+          emptyReason,
+          errorReason: undefined,
+          errorMessage: undefined,
+        };
+      }
       return {
         ...photo,
-        status: items.length === 0 ? "empty" : "done",
+        status: "done",
         items,
+        emptyReason: undefined,
+        errorReason: undefined,
         errorMessage: undefined,
       };
     } catch (err) {
       console.error("[batch-scan] processPhoto", err);
-      return { ...photo, status: "error", errorMessage: "network" };
+      return { ...photo, status: "error", errorReason: "network", errorMessage: "network" };
     }
   }
+
 
   async function runQueue() {
     setStep("processing");
@@ -321,9 +364,16 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const doneCount = photos.filter((p) => p.status === "done" || p.status === "empty").length;
   const errorCount = photos.filter((p) => p.status === "error").length;
   const withItemsCount = photos.filter((p) => p.status === "done").length;
+  const noTextCount = photos.filter(
+    (p) => p.status === "empty" && p.emptyReason === "no_text_detected",
+  ).length;
+  const textNoItemsCount = photos.filter(
+    (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_items",
+  ).length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
+
 
   // Duplicate detection (same productName + price)
   const hasDuplicates = useMemo(() => {
@@ -486,6 +536,11 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </p>
             </div>
 
+            <div className="rounded-md border border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
+              💡 {t("communityPrices.batch.photoTip")}
+            </div>
+
+
             <input
               ref={fileRef}
               type="file"
@@ -611,15 +666,24 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       )}
                       {p.status === "empty" && (
                         <span className="text-amber-700 dark:text-amber-400">
-                          {t("communityPrices.batch.photoEmpty")}
+                          {p.emptyReason === "no_text_detected"
+                            ? t("communityPrices.batch.errorNoText")
+                            : p.emptyReason === "text_found_but_no_items"
+                              ? t("communityPrices.batch.errorTextNoItems")
+                              : t("communityPrices.batch.photoEmpty")}
                         </span>
                       )}
                       {p.status === "error" && (
                         <span className="inline-flex items-center gap-1 text-destructive">
                           <AlertTriangle className="h-3 w-3" />
-                          {t("communityPrices.batch.photoError")}
+                          {p.errorReason === "ocr_config_missing"
+                            ? t("communityPrices.batch.errorOcrConfigMissing")
+                            : p.errorReason === "vision_api_error"
+                              ? t("communityPrices.batch.errorVisionApi")
+                              : t("communityPrices.batch.photoError")}
                         </span>
                       )}
+
                     </p>
                   </div>
                   {p.status === "error" && (
@@ -677,13 +741,28 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             </div>
 
             {photos.length > 0 && (
-              <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
-                {t("communityPrices.batch.readSummary", {
-                  read: withItemsCount,
-                  total: photos.length,
-                })}
+              <div className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                <div>
+                  {t("communityPrices.batch.readSummary", {
+                    read: withItemsCount,
+                    total: photos.length,
+                  })}
+                </div>
+                <div>{t("communityPrices.batch.summaryItemsFound", { count: reviewItems.length })}</div>
+                {noTextCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryNoText", { count: noTextCount })}</div>
+                )}
+                {textNoItemsCount > 0 && (
+                  <div>
+                    {t("communityPrices.batch.summaryTextNoItems", { count: textNoItemsCount })}
+                  </div>
+                )}
+                {errorCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
+                )}
               </div>
             )}
+
 
             {allFailed && (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
