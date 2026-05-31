@@ -27,7 +27,7 @@ type EventoDia = {
   href: string;
 };
 
-const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAYS_FALLBACK = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 function isoToKey(d: string): string {
   return d.length >= 10 ? d.slice(0, 10) : d;
