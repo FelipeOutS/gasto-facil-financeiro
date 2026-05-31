@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -12,8 +12,6 @@ import {
   Trash2,
   Save,
   Loader2,
-  AlertTriangle,
-  X,
   Filter,
   Pencil,
 } from "lucide-react";
@@ -28,7 +26,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
-import { apiFetch } from "@/lib/api-fetch";
+import { BatchScanWizard } from "@/components/mercado/BatchScanWizard";
+
 
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
   head: () => ({
@@ -58,19 +57,6 @@ type CommunityPrice = {
   status: string;
   created_at: string;
 };
-
-type DetectedItem = {
-  productName: string;
-  price: number | null;
-  unit: string | null;
-  category: string | null;
-  marketName: string | null;
-  validUntil: string | null;
-  notes: string | null;
-  confidence: number | null;
-};
-
-type ReviewItem = DetectedItem & { id: string; include: boolean };
 
 type ManualForm = {
   productName: string;
@@ -103,14 +89,6 @@ const emptyManualForm = (): ManualForm => ({
   notes: "",
 });
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.readAsDataURL(file);
-  });
-}
 
 function PrecoComunitarioPage() {
   const { t, i18n: i18nInst } = useTranslation("mercado");
@@ -128,11 +106,9 @@ function PrecoComunitarioPage() {
   const [filterSource, setFilterSource] = useState<SourceKey | "">("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
 
-  // Scan state
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [scanLoading, setScanLoading] = useState(false);
-  const [scanMarket, setScanMarket] = useState("");
-  const [review, setReview] = useState<ReviewItem[] | null>(null);
+  // Batch scan wizard
+  const [batchOpen, setBatchOpen] = useState(false);
+
 
   // Manual state
   const [manualOpen, setManualOpen] = useState(false);
@@ -197,99 +173,8 @@ function PrecoComunitarioPage() {
     setSortBy("recent");
   }
 
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!/^image\/(jpeg|jpg|png|webp)$/.test(file.type)) {
-      toast.error(t("communityPrices.errors.invalidImage"));
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error(t("communityPrices.errors.imageTooLarge"));
-      return;
-    }
-    setScanLoading(true);
-    try {
-      const imageBase64 = await fileToBase64(file);
-      const res = await apiFetch("/api/mercado-flyer-ocr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, marketName: scanMarket || undefined }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(json?.message || t("communityPrices.errors.ocrFailed"));
-        return;
-      }
-      const detected: DetectedItem[] = json.items ?? [];
-      if (!detected.length) {
-        toast.info(t("communityPrices.errors.noItems"));
-        return;
-      }
-      setReview(
-        detected.map((d, idx) => ({
-          ...d,
-          id: `r-${idx}-${Date.now()}`,
-          include: true,
-          marketName: d.marketName || scanMarket || null,
-        })),
-      );
-    } catch (err) {
-      console.error("[preco-comunitario] scan", err);
-      toast.error(t("communityPrices.errors.uploadFailed"));
-    } finally {
-      setScanLoading(false);
-    }
-  }
 
-  function isReviewItemValid(r: ReviewItem) {
-    return (
-      r.productName.trim().length > 0 &&
-      r.price != null &&
-      Number.isFinite(r.price) &&
-      r.price > 0 &&
-      !!r.marketName?.trim()
-    );
-  }
 
-  async function saveReview() {
-    if (!user || !review) return;
-    const toSave = review.filter((r) => r.include);
-    if (!toSave.length) {
-      toast.error(t("communityPrices.errors.selectAtLeastOne"));
-      return;
-    }
-    const invalid = toSave.filter((r) => !isReviewItemValid(r));
-    if (invalid.length) {
-      toast.error(t("communityPrices.errors.missingFields"));
-      return;
-    }
-    const rows = toSave.map((r) => ({
-      user_id: user.id,
-      product_name: r.productName.trim(),
-      normalized_product_name: r.productName.trim().toLowerCase(),
-      category: r.category,
-      price: r.price,
-      unit: r.unit,
-      market_name: r.marketName!.trim(),
-      source: "flyer",
-      seen_at: new Date().toISOString().slice(0, 10),
-      valid_until: r.validUntil,
-      notes: r.notes,
-      confidence: r.confidence,
-    }));
-    const { error } = await (supabase.from(TABLE as never) as any).insert(rows);
-    if (error) {
-      console.error("[preco-comunitario] insert", error.message);
-      toast.error(t("communityPrices.errors.saveFailed"));
-      return;
-    }
-    toast.success(t("communityPrices.success.saved", { count: rows.length }));
-    setReview(null);
-    setScanMarket("");
-    reload();
-  }
 
   function openManual(item?: CommunityPrice) {
     if (item) {
@@ -414,29 +299,11 @@ function PrecoComunitarioPage() {
             <Camera className="h-4 w-4" /> {t("communityPrices.actions.scanTitle")}
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.actions.scanDescription")}</p>
-          <Label htmlFor="scanMarket" className="mt-3 block text-xs">{t("communityPrices.actions.marketLabel")}</Label>
-          <Input
-            id="scanMarket"
-            value={scanMarket}
-            onChange={(e) => setScanMarket(e.target.value)}
-            placeholder={t("communityPrices.actions.marketPlaceholder")}
-          />
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            capture="environment"
-            className="hidden"
-            onChange={onPickFile}
-          />
-          <Button className="mt-3 w-full min-h-11" onClick={() => fileRef.current?.click()} disabled={scanLoading}>
-            {scanLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("communityPrices.actions.reading")}</>
-            ) : (
-              <><Camera className="mr-2 h-4 w-4" /> {t("communityPrices.actions.pick")}</>
-            )}
+          <Button className="mt-3 w-full min-h-11" onClick={() => setBatchOpen(true)}>
+            <Camera className="mr-2 h-4 w-4" /> {t("communityPrices.batch.openCta")}
           </Button>
         </div>
+
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Plus className="h-4 w-4" /> {t("communityPrices.actions.manualTitle")}
@@ -582,149 +449,10 @@ function PrecoComunitarioPage() {
         )}
       </section>
 
-      {/* Review dialog */}
-      <Dialog open={review !== null} onOpenChange={(o) => !o && setReview(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{t("communityPrices.review.title")}</DialogTitle>
-            <DialogDescription>{t("communityPrices.review.description")}</DialogDescription>
-          </DialogHeader>
-          <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[12px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span>{t("communityPrices.review.warning")}</span>
-          </div>
-          <ul className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
-            {review?.map((r, idx) => {
-              const invalidPrice = r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);
-              const missingProduct = r.include && !r.productName.trim();
-              const missingMarket = r.include && !r.marketName?.trim();
-              return (
-                <li
-                  key={r.id}
-                  className={`rounded-xl border p-3 ${r.include ? "border-border" : "border-dashed border-muted opacity-60"}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={r.include}
-                        onChange={(e) =>
-                          setReview((cur) => cur!.map((x, i) => (i === idx ? { ...x, include: e.target.checked } : x)))
-                        }
-                      />
-                      {t("communityPrices.review.include")}
-                      {typeof r.confidence === "number" && (
-                        <span className="ml-2 text-[10px] text-muted-foreground">
-                          {t("communityPrices.review.confidence", { value: Math.round(r.confidence * 100) })}
-                        </span>
-                      )}
-                    </label>
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => setReview((cur) => cur!.filter((_, i) => i !== idx))}
-                      aria-label={t("communityPrices.review.remove")}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.product")}</Label>
-                      <Input
-                        value={r.productName}
-                        onChange={(e) =>
-                          setReview((cur) => cur!.map((x, i) => (i === idx ? { ...x, productName: e.target.value } : x)))
-                        }
-                      />
-                      {missingProduct && (
-                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.missingProduct")}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.price")}</Label>
-                      <Input
-                        inputMode="decimal"
-                        value={r.price ?? ""}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(",", ".");
-                          const n = v === "" ? null : Number(v);
-                          setReview((cur) =>
-                            cur!.map((x, i) =>
-                              i === idx ? { ...x, price: Number.isFinite(n as number) ? (n as number) : null } : x,
-                            ),
-                          );
-                        }}
-                      />
-                      {invalidPrice && (
-                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.invalidPrice")}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.unit")}</Label>
-                      <Input
-                        value={r.unit ?? ""}
-                        onChange={(e) =>
-                          setReview((cur) =>
-                            cur!.map((x, i) => (i === idx ? { ...x, unit: e.target.value || null } : x)),
-                          )
-                        }
-                        placeholder={t("communityPrices.review.fields.unitPlaceholder")}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.market")}</Label>
-                      <Input
-                        value={r.marketName ?? ""}
-                        onChange={(e) =>
-                          setReview((cur) =>
-                            cur!.map((x, i) => (i === idx ? { ...x, marketName: e.target.value || null } : x)),
-                          )
-                        }
-                      />
-                      {missingMarket && (
-                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.missingMarket")}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.category")}</Label>
-                      <Input
-                        value={r.category ?? ""}
-                        onChange={(e) =>
-                          setReview((cur) =>
-                            cur!.map((x, i) => (i === idx ? { ...x, category: e.target.value || null } : x)),
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("communityPrices.review.fields.validUntil")}</Label>
-                      <Input
-                        type="date"
-                        value={r.validUntil ?? ""}
-                        onChange={(e) =>
-                          setReview((cur) =>
-                            cur!.map((x, i) => (i === idx ? { ...x, validUntil: e.target.value || null } : x)),
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                  {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={() => setReview(null)} className="min-h-11">
-              {t("communityPrices.review.cancel")}
-            </Button>
-            <Button onClick={saveReview} className="min-h-11">
-              <Save className="mr-2 h-4 w-4" /> {t("communityPrices.review.save")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Batch scan wizard */}
+      <BatchScanWizard open={batchOpen} onOpenChange={setBatchOpen} onSaved={reload} />
+
+
 
       {/* Manual dialog */}
       <Dialog open={manualOpen} onOpenChange={(o) => { setManualOpen(o); if (!o) setEditingId(null); }}>
