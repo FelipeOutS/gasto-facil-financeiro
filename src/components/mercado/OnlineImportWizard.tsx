@@ -337,6 +337,7 @@ export function OnlineImportWizard({
                   date: formattedFetchedAt,
                 })}
               </p>
+              <p className="mt-1">{t("communityPrices.onlineImport.reviewScopeNote")}</p>
               <p className="mt-1">{t("communityPrices.onlineImport.reviewDisclaimer")}</p>
             </div>
 
