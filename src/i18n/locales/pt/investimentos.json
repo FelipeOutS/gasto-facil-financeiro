@@ -71,6 +71,16 @@
       "titleEdit": "Editar movimentação",
       "description": "Registro manual · não realiza compra ou venda real.",
       "fixedIncomeHint": "Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente."
+    },
+    "income": {
+      "titleCreate": "Novo rendimento",
+      "titleEdit": "Editar rendimento",
+      "description": "Registro manual · valor informado pelo usuário."
+    },
+    "updateValue": {
+      "title": "Atualizar valor",
+      "description": "Atualização manual · valor informado pelo usuário.",
+      "lastUpdate": "Última atualização: {{date}}"
     }
   },
   "forms": {
