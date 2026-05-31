@@ -6,14 +6,16 @@
   },
   "empty": {
     "eyebrow": "Gasto Inteligente",
-    "title": "Bora começar? 🚀",
-    "subtitle": "Seu dinheiro mais claro, sem complicação. Escolha por onde começar:",
+    "title": "Bem-vindo ao Gasto Inteligente 🚀",
+    "subtitle": "Comece registrando seu primeiro gasto ou sua primeira receita para visualizar seu resumo financeiro, gráficos e alertas.",
     "footer": "Tudo fica salvo na sua conta. 🔒",
     "cards": {
-      "salario": "Cadastrar salário",
-      "gasto": "Lançar gasto",
-      "guardado": "Dinheiro guardado",
-      "meta": "Criar primeira meta"
+      "salario": "Adicionar receita",
+      "salario_mei": "Adicionar faturamento",
+      "salario_empresa": "Adicionar faturamento",
+      "gasto": "Adicionar gasto",
+      "guardado": "Guardar dinheiro",
+      "meta": "Criar meta"
     }
   },
   "firstSteps": {
