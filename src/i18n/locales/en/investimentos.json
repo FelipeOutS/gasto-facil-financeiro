@@ -71,6 +71,16 @@
       "titleEdit": "Edit transaction",
       "description": "Manual record · does not perform a real buy or sell.",
       "fixedIncomeHint": "For fixed income, quantity is not required. Investment totals are recalculated automatically."
+    },
+    "income": {
+      "titleCreate": "New income",
+      "titleEdit": "Edit income",
+      "description": "Manual record · value provided by the user."
+    },
+    "updateValue": {
+      "title": "Update value",
+      "description": "Manual update · value provided by the user.",
+      "lastUpdate": "Last update: {{date}}"
     }
   },
   "forms": {
