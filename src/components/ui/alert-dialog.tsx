@@ -31,7 +31,7 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100vh-2rem)] w-auto max-w-lg gap-4 overflow-y-auto rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
+        "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100dvh-2rem)] w-auto max-w-lg gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
         className,
       )}
       {...props}
