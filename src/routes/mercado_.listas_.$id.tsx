@@ -1148,62 +1148,70 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   return (
     <article
       className={cn(
-        "flex items-center gap-3 rounded-3xl border border-border/60 bg-card p-3 shadow-card transition-colors md:p-4",
+        "rounded-3xl border border-border/60 bg-card p-3 shadow-card transition-colors md:p-4",
         item.comprado && "opacity-80",
       )}
     >
-      <button
-        type="button"
-        onClick={handleToggle}
-        aria-label={item.comprado ? t("detail.item.markPending") : t("detail.item.markBought")}
-        aria-pressed={item.comprado}
-        className={cn(
-          "grid h-11 w-11 shrink-0 place-items-center rounded-2xl border transition-all active:scale-95",
-          item.comprado
-            ? "border-success/40 bg-success/15 text-success"
-            : "border-border bg-card-elevated text-muted-foreground hover:text-foreground",
-        )}
-      >
-        {item.comprado ? <Check className="h-5 w-5" /> : <CircleDashed className="h-5 w-5" />}
-      </button>
-      <div className="min-w-0 flex-1">
-        <p
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleToggle}
+          aria-label={item.comprado ? t("detail.item.markPending") : t("detail.item.markBought")}
+          aria-pressed={item.comprado}
           className={cn(
-            "truncate text-sm font-semibold text-foreground sm:text-base",
-            item.comprado && "line-through text-muted-foreground",
+            "grid h-11 w-11 shrink-0 place-items-center rounded-2xl border transition-all active:scale-95",
+            item.comprado
+              ? "border-success/40 bg-success/15 text-success"
+              : "border-border bg-card-elevated text-muted-foreground hover:text-foreground",
           )}
         >
-          {item.nome}
-        </p>
-        <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-          {item.quantidade}
-          {item.unidade ? ` ${item.unidade}` : ""}
-          {item.precoEstimado != null ? (
-            <>
-              {" · "}
-              <Money value={item.precoEstimado * (item.quantidade || 1)} />
-            </>
-          ) : null}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        <button
-          type="button"
-          onClick={startEdit}
-          aria-label={t("detail.item.edit")}
-          className="grid h-10 w-10 place-items-center rounded-2xl border border-border bg-card-elevated text-muted-foreground transition-colors hover:text-foreground active:scale-95"
-        >
-          <Pencil className="h-4 w-4" />
+          {item.comprado ? <Check className="h-5 w-5" /> : <CircleDashed className="h-5 w-5" />}
         </button>
-        <button
-          type="button"
-          onClick={handleRemove}
-          aria-label={t("detail.item.remove")}
-          className="grid h-10 w-10 place-items-center rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "truncate text-sm font-semibold text-foreground sm:text-base",
+              item.comprado && "line-through text-muted-foreground",
+            )}
+          >
+            {item.nome}
+          </p>
+          <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+            {item.quantidade}
+            {item.unidade ? ` ${item.unidade}` : ""}
+            {item.precoEstimado != null ? (
+              <>
+                {" · "}
+                <Money value={item.precoEstimado * (item.quantidade || 1)} />
+              </>
+            ) : null}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={startEdit}
+            aria-label={t("detail.item.edit")}
+            className="grid h-10 w-10 place-items-center rounded-2xl border border-border bg-card-elevated text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleRemove}
+            aria-label={t("detail.item.remove")}
+            className="grid h-10 w-10 place-items-center rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive transition-colors hover:bg-destructive/15 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+      {!item.comprado && suggestions.length > 0 ? (
+        <CommunityPriceSuggestion
+          suggestions={suggestions}
+          onUse={applyCommunityPrice}
+        />
+      ) : null}
     </article>
   );
 }
