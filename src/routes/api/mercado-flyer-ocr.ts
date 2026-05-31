@@ -522,189 +522,32 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         if (rl) return rl;
 
         try {
-          const visionKey = process.env.GOOGLE_VISION_API_KEY;
-          const aiKey = process.env.LOVABLE_API_KEY;
-          if (!visionKey) {
-            return Response.json(
-              {
-                error: "OCR ainda não configurado. Configure GOOGLE_VISION_API_KEY no servidor.",
-                code: "ocr_config_missing",
-                items: [],
-                warnings: ["ocr_config_missing"],
-                debugInfo: { provider: "google_vision", configured: false },
-              },
-              { status: 503 },
-            );
-          }
-          if (!aiKey) {
-            return Response.json({ error: "Serviço de IA indisponível." }, { status: 500 });
-          }
-
           const body = (await request.json()) as {
             imageBase64?: string;
             marketName?: string;
             city?: string;
             neighborhood?: string;
+            internalOcrSmokeTest?: boolean;
           };
 
-          const img = body?.imageBase64;
+          const img = body?.internalOcrSmokeTest
+            ? `data:image/png;base64,${SIMPLE_FLYER_TEST_IMAGE_BASE64}`
+            : body?.imageBase64;
           if (!img || typeof img !== "string") {
-            return Response.json({ error: "Envie uma imagem válida." }, { status: 400 });
-          }
-          if (/^data:image\/(heic|heif)/i.test(img)) {
-            return Response.json(
-              {
-                error:
-                  "Formato HEIC/HEIF não suportado. Converta para JPG, PNG ou WEBP antes de enviar.",
-              },
-              { status: 415 },
-            );
-          }
-          const mimeMatch = img.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
-          if (!mimeMatch) {
-            return Response.json(
-              { error: "Formato não suportado. Use JPG, PNG ou WEBP." },
-              { status: 400 },
-            );
-          }
-          if (img.length > 14 * 1024 * 1024) {
-            return Response.json(
-              { error: "Imagem muito grande. Use uma foto até 10 MB." },
-              { status: 413 },
-            );
+            return Response.json({ success: false, error: "Envie uma imagem válida.", code: "invalid_image_payload" }, { status: 400 });
           }
 
-          const base64 = mimeMatch[2];
-
-          // 1) Google Vision
-          const visionRes = await callVision(visionKey, base64);
-          if (!visionRes.ok) {
-            console.error("[mercado-flyer-ocr] vision", visionRes.status, visionRes.reason);
-            return Response.json(
-              {
-                error: "Erro ao ler a imagem com OCR.",
-                code: "vision_api_error",
-                items: [],
-                warnings: ["vision_api_error"],
-                debugInfo: { provider: "google_vision", status: visionRes.status },
-              },
-              { status: 502 },
-            );
-          }
-
-          const rawText = visionRes.text.trim();
-          const rawTextLength = rawText.length;
-          const priceCandidatesCount = rawText ? countPriceCandidates(rawText) : 0;
-
-          if (!rawText) {
-            return Response.json(
-              {
-                items: [],
-                warnings: ["no_text_detected"],
-                code: "no_text_detected",
-                message:
-                  "Não encontramos texto legível nessa foto. Tente tirar a foto mais perto, com boa luz e sem cortar os preços.",
-                debugInfo: { provider: "google_vision", rawTextLength: 0, priceCandidatesCount: 0 },
-              },
-              { status: 200 },
-            );
-          }
-
-          // 2) Gemini para estruturar
-          const hintParts: string[] = [];
-          if (body.marketName)
-            hintParts.push(`Mercado informado pelo usuário: ${String(body.marketName).slice(0, 80)}.`);
-          if (body.city) hintParts.push(`Cidade: ${String(body.city).slice(0, 80)}.`);
-          if (body.neighborhood) hintParts.push(`Bairro: ${String(body.neighborhood).slice(0, 80)}.`);
-
-          const r = await callGeminiStructure(aiKey, rawText, hintParts.join(" "));
-          if (!r.ok) {
-            const text = await r.text().catch(() => "");
-            console.error("[mercado-flyer-ocr] gemini", r.status, text.slice(0, 160));
-            if (r.status === 429) {
-              return Response.json(
-                { error: "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo." },
-                { status: 429 },
-              );
-            }
-            if (r.status === 402) {
-              return Response.json(
-                { error: "Sem créditos da IA. Adicione créditos no workspace para continuar." },
-                { status: 402 },
-              );
-            }
-            return Response.json(
-              {
-                error: "Não conseguimos estruturar os itens agora.",
-                items: [],
-                warnings: ["structuring_failed"],
-                debugInfo: {
-                  provider: "google_vision_plus_gemini",
-                  rawTextLength,
-                  priceCandidatesCount,
-                  itemCount: 0,
-                },
-              },
-              { status: 502 },
-            );
-          }
-
-          const j = await r.json();
-          const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-          let items: DetectedItem[] = [];
-          let warnings: string[] = [];
-          if (args) {
-            const parsed = parseStructured(args, body.marketName);
-            items = parsed.items;
-            warnings = parsed.warnings;
-          }
-
-          if (items.length === 0) {
-            warnings.push("text_found_but_no_items");
-            return Response.json(
-              {
-                items: [],
-                warnings,
-                code: "text_found_but_no_items",
-                message:
-                  "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente. Tente outra foto ou cadastre manualmente.",
-                debugInfo: {
-                  provider: "google_vision_plus_gemini",
-                  rawTextLength,
-                  priceCandidatesCount,
-                  itemCount: 0,
-                },
-              },
-              { status: 200 },
-            );
-          }
-
-          if (process.env.NODE_ENV !== "production") {
-            console.log("[mercado-flyer-ocr]", {
-              provider: "google_vision_plus_gemini",
-              rawTextLength,
-              priceCandidatesCount,
-              itemCount: items.length,
-            });
-          }
-
-          return Response.json(
-            {
-              items,
-              warnings,
-              debugInfo: {
-                provider: "google_vision_plus_gemini",
-                rawTextLength,
-                priceCandidatesCount,
-                itemCount: items.length,
-                usedFallback: false,
-              },
-            },
-            { status: 200 },
-          );
+          return runOcrPipeline({
+            imageBase64: img,
+            marketName: body.marketName,
+            city: body.city,
+            neighborhood: body.neighborhood,
+            visionKey: process.env.GOOGLE_VISION_API_KEY,
+            aiKey: process.env.LOVABLE_API_KEY,
+          });
         } catch (err) {
           console.error("[mercado-flyer-ocr] erro", err);
-          return Response.json({ error: "Erro inesperado ao ler o panfleto." }, { status: 500 });
+          return Response.json({ success: false, error: "Erro inesperado ao ler o panfleto.", code: "unknown_error" }, { status: 500 });
         }
       },
     },
