@@ -81,6 +81,49 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/**
+ * Redimensiona uma imagem mantendo proporção, com o maior lado em até MAX_SIDE.
+ * Mantém qualidade alta (0.85) — panfletos têm textos pequenos.
+ * Se falhar (ex.: HEIC), faz fallback para o arquivo original em base64.
+ */
+const MAX_SIDE = 1800;
+const JPEG_QUALITY = 0.85;
+async function fileToProcessedDataUrl(file: File): Promise<string> {
+  try {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("decode-failed"));
+        i.src = url;
+      });
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (!w || !h) throw new Error("empty-image");
+      const longest = Math.max(w, h);
+      const scale = longest > MAX_SIDE ? MAX_SIDE / longest : 1;
+      const tw = Math.round(w * scale);
+      const th = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("no-context");
+      ctx.drawImage(img, 0, 0, tw, th);
+      // Use JPEG p/ texto pequeno + bom compromisso de tamanho.
+      const out = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      if (!out || out.length < 200) throw new Error("encode-empty");
+      return out;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  } catch {
+    // Fallback: envia original (servidor valida MIME e tamanho).
+    return fileToBase64(file);
+  }
+}
+
 function newId() {
   try {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -217,7 +260,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
 
   async function processPhoto(photo: Photo): Promise<Photo> {
     try {
-      const base64 = await fileToBase64(photo.file);
+      const base64 = await fileToProcessedDataUrl(photo.file);
       const res = await apiFetch("/api/mercado-flyer-ocr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -277,6 +320,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
 
   const doneCount = photos.filter((p) => p.status === "done" || p.status === "empty").length;
   const errorCount = photos.filter((p) => p.status === "error").length;
+  const withItemsCount = photos.filter((p) => p.status === "done").length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
@@ -632,6 +676,15 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </p>
             </div>
 
+            {photos.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                {t("communityPrices.batch.readSummary", {
+                  read: withItemsCount,
+                  total: photos.length,
+                })}
+              </div>
+            )}
+
             {allFailed && (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -646,7 +699,8 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             )}
             {noItems && !allFailed && (
               <div className="rounded-md border border-border bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-                {t("communityPrices.batch.noItemsFound")}
+                <p>{t("communityPrices.batch.noItemsFound")}</p>
+                <p className="mt-1 text-[11px]">{t("communityPrices.batch.tryCloserPhoto")}</p>
               </div>
             )}
             {hasDuplicates && reviewItems.length > 0 && (
@@ -661,13 +715,14 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 {reviewItems.map((r, idx) => {
                   const invalidPrice = r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);
                   const missingProduct = r.include && !r.productName.trim();
+                  const lowConfidence = typeof r.confidence === "number" && r.confidence < 0.5;
                   return (
                     <li
                       key={r.id}
                       className={`rounded-xl border p-3 ${r.include ? "border-border" : "border-dashed border-muted opacity-60"}`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <label className="flex items-center gap-2 text-xs">
+                        <label className="flex flex-wrap items-center gap-2 text-xs">
                           <input
                             type="checkbox"
                             checked={r.include}
@@ -686,6 +741,12 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                               {t("communityPrices.review.confidence", { value: Math.round(r.confidence * 100) })}
                             </span>
                           )}
+                          {lowConfidence && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                              <AlertTriangle className="h-3 w-3" />
+                              {t("communityPrices.batch.lowConfidenceBadge")}
+                            </span>
+                          )}
                         </label>
                         <button
                           type="button"
@@ -696,6 +757,11 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           <X className="h-4 w-4" />
                         </button>
                       </div>
+                      {lowConfidence && (
+                        <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-400">
+                          {t("communityPrices.batch.lowConfidenceHint")}
+                        </p>
+                      )}
                       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <div>
                           <Label className="text-xs">{t("communityPrices.review.fields.product")}</Label>
