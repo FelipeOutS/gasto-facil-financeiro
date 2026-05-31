@@ -1114,7 +1114,7 @@ function SaldoHeroCard({
 
       {entradas > 0 && !negativo && (
         <p className="num relative mt-3 text-[11px] text-muted-foreground">
-          {Math.round(pctReceita)}% da receita preservada
+          {t("kpi.receitaPreservada", { pct: Math.round(pctReceita) })}
         </p>
       )}
     </div>
