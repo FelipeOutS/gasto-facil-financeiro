@@ -63,7 +63,13 @@
     "lancamentoPlur": "transactions",
     "atrasada": "overdue",
     "pendente": "pending",
-    "tudoEmDia": "all up to date"
+    "tudoEmDia": "all up to date",
+    "total": "Total",
+    "receitaPreservada": "{{pct}}% of income preserved"
+  },
+  "loader": {
+    "biometricValidating": "Validating biometrics…",
+    "biometricOpening": "Opening biometric sign-in…"
   },
   "saldoNegativoAlerta": "You spent {{valor}} more than you received this month.",
   "ctaLancar": "Log expense",
