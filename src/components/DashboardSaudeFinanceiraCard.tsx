@@ -244,9 +244,9 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Saúde financeira
+              {t("financialHealth.title")}
             </h3>
-            <StatusBadge tone={tone.badge}>{tone.label}</StatusBadge>
+            <StatusBadge tone={tone.badge}>{t(`financialHealth.levels.${health.level}`)}</StatusBadge>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {health.description}
