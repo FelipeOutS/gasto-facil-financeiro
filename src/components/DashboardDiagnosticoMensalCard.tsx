@@ -261,7 +261,7 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
           <Landmark className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
           <div className="min-w-0">
-            <span className="mr-1 font-medium text-foreground">Cenário econômico:</span>
+            <span className="mr-1 font-medium text-foreground">{t("monthlyDiagnosis.scenarioLabel")}</span>
             <span>{macroContexto}</span>
           </div>
         </div>
