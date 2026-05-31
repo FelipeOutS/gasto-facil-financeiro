@@ -2,6 +2,7 @@
 // Roda 100% client-side em cima do store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas mostra um diagnóstico explicável.
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HeartPulse,
   CheckCircle2,
