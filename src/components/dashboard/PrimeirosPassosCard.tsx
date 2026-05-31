@@ -70,13 +70,15 @@ export function PrimeirosPassosCard({
         label: t("firstSteps.items.expense"),
         done: gastosCount > 0,
         to: "/adicionar",
+        search: { tipo: "gasto" },
         icon: Plus,
       },
       {
         id: incomeKey,
         label: t(`firstSteps.items.${incomeKey}`),
         done: receitasCount > 0,
-        to: "/renda",
+        to: "/adicionar",
+        search: { tipo: "receita" },
         icon: ArrowUp,
       },
       {
