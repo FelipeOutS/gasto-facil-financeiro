@@ -940,7 +940,7 @@ function AddAtivoDialog({
   async function handleSave() {
     if (!userId) return;
     if (!nome.trim()) {
-      toast.error("Informe o nome do investimento.");
+      toast.error(tInv("forms.aux.errors.nameRequired"));
       return;
     }
     const aplicado = parseBRLInput(valorAplicado) || 0;
@@ -969,15 +969,15 @@ function AddAtivoDialog({
     try {
       if (editing) {
         await atualizarAtivo(editing.id, payload);
-        toast.success("Investimento atualizado.");
+        toast.success(tInv("forms.aux.success.updated"));
       } else {
         await criarAtivo(userId, payload);
-        toast.success("Investimento cadastrado.");
+        toast.success(tInv("forms.aux.success.created"));
       }
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível salvar.");
+      toastFromError(e, tInv("forms.aux.errors.saveFailed"));
     } finally {
       setSaving(false);
     }
