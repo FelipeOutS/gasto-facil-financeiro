@@ -2301,7 +2301,7 @@ function RendimentoDialog({
             <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <Select value={ativoId} onValueChange={setAtivoId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={tInv("forms.placeholders.select")} />
               </SelectTrigger>
               <SelectContent>
                 {ativos.map((a) => (
