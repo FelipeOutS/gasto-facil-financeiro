@@ -389,6 +389,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const noItems = step === "review" && reviewItems.length === 0;
 
   function getPhotoIssueLabel(photo: Photo): string {
+    if (photo.status === "done" && photo.usedFallback) {
+      return t("communityPrices.batch.errorFallbackUsed");
+    }
     if (photo.status === "empty") {
       if (photo.emptyReason === "no_text_detected") return t("communityPrices.batch.errorNoText");
       if (photo.emptyReason === "text_found_but_no_items") return t("communityPrices.batch.errorTextNoItems");
@@ -802,7 +805,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </div>
             )}
 
-            {photos.some((p) => p.status === "error" || p.status === "empty") && (
+            {photos.some((p) => p.status === "error" || p.status === "empty" || p.usedFallback) && (
               <ul className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
                 {photos.map((p, idx) => {
                   const issue = getPhotoIssueLabel(p);
