@@ -50,10 +50,11 @@ type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
 type ErrorReason =
   | "ocr_config_missing"
   | "vision_api_error"
+  | "invalid_image_payload"
   | "network"
   | "rate_limited"
   | "credits"
-  | "generic"
+  | "unknown_error"
   | null;
 
 type DetectedItem = {
@@ -96,11 +97,11 @@ function fileToBase64(file: File): Promise<string> {
 
 /**
  * Redimensiona uma imagem mantendo proporção, com o maior lado em até MAX_SIDE.
- * Mantém qualidade alta (0.85) — panfletos têm textos pequenos.
+ * Mantém qualidade alta (0.92) — panfletos têm textos pequenos.
  * Se falhar (ex.: HEIC), faz fallback para o arquivo original em base64.
  */
-const MAX_SIDE = 1800;
-const JPEG_QUALITY = 0.85;
+const MAX_SIDE = 2800;
+const JPEG_QUALITY = 0.92;
 async function fileToProcessedDataUrl(file: File): Promise<string> {
   try {
     const url = URL.createObjectURL(file);
@@ -281,9 +282,10 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
       });
       const json = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        let reason: ErrorReason = "generic";
+        let reason: ErrorReason = "unknown_error";
         if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
         else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (json?.code === "invalid_image_payload" || json?.code === "unsupported_image_format") reason = "invalid_image_payload";
         else if (res.status === 429) reason = "rate_limited";
         else if (res.status === 402) reason = "credits";
         return {
