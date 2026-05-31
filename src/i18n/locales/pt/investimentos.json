@@ -156,13 +156,21 @@
         "saveFailed": "Não foi possível salvar.",
         "assetRequired": "Selecione um investimento.",
         "totalRequired": "Informe um valor total válido.",
-        "movementSaveFailed": "Não foi possível salvar a movimentação."
+        "movementSaveFailed": "Não foi possível salvar a movimentação.",
+        "updateValueInvalid": "Informe um valor atual válido.",
+        "updateValueFailed": "Não foi possível atualizar o valor.",
+        "incomeAssetRequired": "Selecione um investimento.",
+        "incomeValueInvalid": "Informe um valor válido.",
+        "incomeSaveFailed": "Não foi possível salvar o rendimento."
       },
       "success": {
         "updated": "Investimento atualizado.",
         "created": "Investimento cadastrado.",
         "movementUpdated": "Movimentação atualizada.",
-        "movementCreated": "Movimentação adicionada."
+        "movementCreated": "Movimentação adicionada.",
+        "valueUpdated": "Valor atualizado.",
+        "incomeUpdated": "Rendimento atualizado.",
+        "incomeCreated": "Rendimento adicionado."
       }
     }
   },
