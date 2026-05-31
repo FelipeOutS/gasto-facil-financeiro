@@ -29,6 +29,22 @@ type DetectedItem = {
   confidence: number | null;
 };
 
+type OcrDiagnostic = {
+  provider: "google_vision" | "google_vision_plus_gemini";
+  hasGoogleVisionKey: boolean;
+  imageMime: string;
+  originalFileSize: number;
+  processedDataUrlLength: number;
+  cleanBase64Length: number;
+  visionHttpStatus: number | null;
+  visionErrorCode: string | null;
+  visionErrorMessage: string | null;
+  rawTextLength: number;
+  priceCandidatesCount: number;
+  geminiItemCount: number;
+  finalItemCount: number;
+};
+
 const STRUCTURE_PROMPT = `Você receberá texto extraído por OCR de um panfleto de mercado brasileiro.
 Extraia o MÁXIMO possível de pares produto + preço.
 
@@ -90,10 +106,106 @@ function countPriceCandidates(text: string): number {
   return m ? m.length : 0;
 }
 
+function estimateBytesFromBase64(base64: string): number {
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+}
+
+function createDiagnostic(params: {
+  provider?: OcrDiagnostic["provider"];
+  hasGoogleVisionKey: boolean;
+  imageMime?: string;
+  originalFileSize?: number;
+  processedDataUrlLength?: number;
+  cleanBase64Length?: number;
+}): OcrDiagnostic {
+  return {
+    provider: params.provider ?? "google_vision",
+    hasGoogleVisionKey: params.hasGoogleVisionKey,
+    imageMime: params.imageMime ?? "unknown",
+    originalFileSize: params.originalFileSize ?? 0,
+    processedDataUrlLength: params.processedDataUrlLength ?? 0,
+    cleanBase64Length: params.cleanBase64Length ?? 0,
+    visionHttpStatus: null,
+    visionErrorCode: null,
+    visionErrorMessage: null,
+    rawTextLength: 0,
+    priceCandidatesCount: 0,
+    geminiItemCount: 0,
+    finalItemCount: 0,
+  };
+}
+
+function safeDiagnosticForResponse(diagnostic: OcrDiagnostic) {
+  return {
+    provider: diagnostic.provider,
+    hasGoogleVisionKey: diagnostic.hasGoogleVisionKey,
+    imageMime: diagnostic.imageMime,
+    originalFileSize: diagnostic.originalFileSize,
+    processedDataUrlLength: diagnostic.processedDataUrlLength,
+    cleanBase64Length: diagnostic.cleanBase64Length,
+    visionHttpStatus: diagnostic.visionHttpStatus,
+    visionErrorCode: diagnostic.visionErrorCode,
+    rawTextLength: diagnostic.rawTextLength,
+    priceCandidatesCount: diagnostic.priceCandidatesCount,
+    geminiItemCount: diagnostic.geminiItemCount,
+    finalItemCount: diagnostic.finalItemCount,
+  };
+}
+
+function logOcrDiagnostic(diagnostic: OcrDiagnostic) {
+  console.info("[mercado-flyer-ocr][diagnostic]", diagnostic);
+}
+
+function normalizeImagePayload(img: string):
+  | { ok: true; cleanBase64: string; imageMime: string }
+  | { ok: false; code: "unsupported_image_format" | "invalid_image_payload"; reason: string; imageMime: string; cleanBase64: string } {
+  const trimmed = img.trim();
+  const dataUrlMatch = trimmed.match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
+  const heicMatch = trimmed.match(/^data:(image\/(?:heic|heif));base64,/i);
+  if (heicMatch) {
+    return {
+      ok: false,
+      code: "unsupported_image_format",
+      reason: "Formato HEIC/HEIF não suportado.",
+      imageMime: heicMatch[1].toLowerCase(),
+      cleanBase64: "",
+    };
+  }
+
+  const imageMime = dataUrlMatch?.[1]?.toLowerCase() ?? "unknown";
+  const cleanBase64 = (dataUrlMatch ? dataUrlMatch[2] : trimmed.includes(",") ? trimmed.split(",").pop() : trimmed)?.replace(/\s/g, "") ?? "";
+
+  if (!dataUrlMatch && !/^[A-Za-z0-9+/]+={0,2}$/.test(cleanBase64)) {
+    return {
+      ok: false,
+      code: "invalid_image_payload",
+      reason: "Imagem inválida. Envie JPG, PNG ou WEBP em base64.",
+      imageMime,
+      cleanBase64,
+    };
+  }
+
+  if (cleanBase64.length <= 1000) {
+    return {
+      ok: false,
+      code: "invalid_image_payload",
+      reason: "Base64 da imagem inválido ou muito curto.",
+      imageMime,
+      cleanBase64,
+    };
+  }
+
+  return { ok: true, cleanBase64, imageMime };
+}
+
 async function callVision(
   apiKey: string,
   base64: string,
-): Promise<{ ok: true; text: string } | { ok: false; status: number; reason: string }> {
+): Promise<
+  | { ok: true; text: string; status: number }
+  | { ok: false; status: number; errorCode: string | null; errorMessage: string | null; reason: string }
+> {
   const resp = await fetch(
     `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(apiKey)}`,
     {
@@ -104,7 +216,7 @@ async function callVision(
           {
             image: { content: base64 },
             features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
-            imageContext: { languageHints: ["pt-BR"] },
+            imageContext: { languageHints: ["pt-BR", "pt"] },
           },
         ],
       }),
@@ -112,26 +224,34 @@ async function callVision(
   );
   if (!resp.ok) {
     let reason = "vision_http_error";
+    let errorCode: string | null = null;
+    let errorMessage: string | null = null;
     try {
       const j = await resp.json();
-      reason = String(j?.error?.status ?? j?.error?.message ?? reason).slice(0, 80);
+      errorCode = String(j?.error?.status ?? j?.error?.code ?? "").slice(0, 80) || null;
+      errorMessage = String(j?.error?.message ?? "").slice(0, 160) || null;
+      reason = String(errorCode ?? errorMessage ?? reason).slice(0, 80);
     } catch {
       // ignore
     }
-    return { ok: false, status: resp.status, reason };
+    return { ok: false, status: resp.status, errorCode, errorMessage, reason };
   }
   let json: any;
   try {
     json = await resp.json();
   } catch {
-    return { ok: false, status: 502, reason: "vision_invalid_json" };
+    return { ok: false, status: 502, errorCode: "vision_invalid_json", errorMessage: null, reason: "vision_invalid_json" };
   }
   const r0 = json?.responses?.[0];
   if (r0?.error) {
+    const errorCode = String(r0.error.status ?? r0.error.code ?? "vision_response_error").slice(0, 80);
+    const errorMessage = String(r0.error.message ?? "vision_response_error").slice(0, 160);
     return {
       ok: false,
       status: 502,
-      reason: String(r0.error.message ?? "vision_response_error").slice(0, 80),
+      errorCode,
+      errorMessage,
+      reason: errorCode,
     };
   }
   const text: string =
@@ -140,7 +260,7 @@ async function callVision(
       ? r0.textAnnotations[0].description
       : "") ||
     "";
-  return { ok: true, text };
+  return { ok: true, text, status: resp.status };
 }
 
 async function callGeminiStructure(
