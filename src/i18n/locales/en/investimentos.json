@@ -136,7 +136,8 @@
       "select": "Select",
       "zero": "0",
       "zeroDecimal": "0.00",
-      "optional": "optional"
+      "optional": "optional",
+      "updateValueObs": "E.g.: quote checked at the broker"
     },
     "aux": {
       "hintVariable": "Use quantity, average price and current price to calculate the values automatically.",
