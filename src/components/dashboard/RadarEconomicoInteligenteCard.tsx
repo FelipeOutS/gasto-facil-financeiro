@@ -44,6 +44,7 @@ export function RadarEconomicoInteligenteCard({
   userContext?: UserContext;
 }) {
   const { t } = useTranslation("common");
+  const { t: tD } = useTranslation("dashboard");
   const [data, setData] = useState<BcbRadarResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
@@ -83,7 +84,7 @@ export function RadarEconomicoInteligenteCard({
         "flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm",
         className,
       )}
-      aria-label="Indicadores econômicos do Banco Central"
+      aria-label={tD("radarInteligente.aria")}
     >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -91,10 +92,10 @@ export function RadarEconomicoInteligenteCard({
             <span className="rounded-lg bg-primary/10 p-1.5 text-primary">
               <Landmark className="h-4 w-4" />
             </span>
-            <h3 className="text-sm font-semibold">Indicadores do Banco Central</h3>
+            <h3 className="text-sm font-semibold">{tD("radarInteligente.title")}</h3>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Selic, CDI e IPCA com leitura prática para o seu bolso.
+            {tD("radarInteligente.subtitle")}
           </p>
         </div>
         <Button
@@ -104,18 +105,18 @@ export function RadarEconomicoInteligenteCard({
           onClick={() => void carregar(true)}
           disabled={loading}
           className="h-7 shrink-0 px-2 text-xs"
-          aria-label="Atualizar indicadores (força nova busca)"
-          title="Forçar atualização ignorando o cache"
+          aria-label={tD("radarInteligente.refreshAria")}
+          title={tD("radarInteligente.refreshTitle")}
         >
           <RefreshCw className={cn("mr-1 h-3 w-3", loading && "animate-spin")} />
-          Atualizar
+          {tD("radarInteligente.refresh")}
         </Button>
       </header>
 
       {stale && !loading && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 p-2 text-[11px] text-warning">
           <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-          <span>Mostrando últimos dados conhecidos — a fonte pode estar instável.</span>
+          <span>{tD("radarInteligente.stale")}</span>
         </div>
       )}
 
@@ -136,7 +137,7 @@ export function RadarEconomicoInteligenteCard({
           ind={selic}
           titulo="Selic"
           icone={<Percent className="h-3.5 w-3.5" />}
-          unidade="% a.a."
+          unidade={tD("radarInteligente.units.perYear")}
           interpretacao={
             selic ? interpretarSelic(selic.value) : "Taxa básica de juros da economia."
           }
@@ -146,7 +147,7 @@ export function RadarEconomicoInteligenteCard({
           ind={cdi}
           titulo="CDI"
           icone={<LineChart className="h-3.5 w-3.5" />}
-          unidade="% a.a."
+          unidade={tD("radarInteligente.units.perYear")}
           interpretacao={
             cdi ? interpretarCdi(cdi.value) : "Referência para investimentos conservadores."
           }
@@ -156,7 +157,7 @@ export function RadarEconomicoInteligenteCard({
           ind={ipca}
           titulo="IPCA"
           icone={<LineChart className="h-3.5 w-3.5" />}
-          unidade="% no mês"
+          unidade={tD("radarInteligente.units.perMonth")}
           interpretacao={
             ipca ? interpretarIpca(ipca.value) : "Inflação oficial do consumidor."
           }
@@ -171,7 +172,7 @@ export function RadarEconomicoInteligenteCard({
       )}
 
       <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-        Fonte: Banco Central do Brasil (SGS). Dados públicos atualizados a cada poucas horas.
+        {tD("radarInteligente.source")}
       </p>
     </section>
   );
