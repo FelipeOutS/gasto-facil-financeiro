@@ -1359,7 +1359,8 @@
         "saveFailed": "Couldn't save the reviewed prices.",
         "rateLimited": "Please wait a moment before searching again.",
         "selectAtLeastOne": "Select at least one item to save."
-      }
+      },
+      "scopeNotice": "Showing public homepage highlights from Joanin Online ({{count}} products). The full catalog is only available inside the official site."
     }
   }
 }
