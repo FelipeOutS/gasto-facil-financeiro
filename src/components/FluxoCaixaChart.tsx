@@ -210,8 +210,8 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="entradas" name="Entradas" fill="var(--success)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="gastos" name="Gastos" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="entradas" name={labelEntradas} fill="var(--success)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="gastos" name={labelGastos} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
             </BarChart>
           ) : (
             <PieChart>
