@@ -115,9 +115,15 @@
     "monthTitle": "Nada por aqui ainda",
     "monthSub": "Seus gastos de {{month}} aparecerão aqui.",
     "monthCta": "Adicionar gasto em {{month}}",
-    "noneTitle": "Nenhum gasto por aqui ainda",
-    "noneSub": "Quando você lançar um gasto, ele aparece aqui bonitinho pra você acompanhar.",
-    "noneCta": "Adicionar meu primeiro gasto"
+    "noneTitle": "Nenhum gasto cadastrado",
+    "noneSub": "Cadastre despesas do dia a dia, compras, contas pagas ou saídas de dinheiro para acompanhar melhor seu mês.",
+    "noneCta": "Adicionar gasto",
+    "helper": "Comece por um gasto recente, como mercado, transporte, alimentação ou uma conta paga.",
+    "steps": {
+      "expense": "Informe o gasto",
+      "details": "Escolha categoria e data",
+      "summary": "Acompanhe no resumo"
+    }
   },
   "item": {
     "at": "às",
