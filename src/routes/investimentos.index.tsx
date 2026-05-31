@@ -1313,17 +1313,17 @@ function HistoricoImportacoesDialog({
     try {
       if (modo === "historico") {
         await excluirImportacaoSomenteHistorico(confirmar.id);
-        toast.success("Histórico da importação excluído.");
+        toast.success(tInv("dialogs2.importHistory.confirm.toast.historyDeleted"));
       } else {
         await excluirImportacaoComDados(userId, confirmar.id);
-        toast.success("Importação e dados vinculados excluídos.");
+        toast.success(tInv("dialogs2.importHistory.confirm.toast.allDeleted"));
       }
       setConfirmar(null);
       setDetalhe(null);
       onChanged();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível excluir.");
+      toastFromError(e, tInv("dialogs2.importHistory.confirm.toast.deleteFailed"));
     } finally {
       setExcluindo(false);
     }
