@@ -27,7 +27,10 @@ const CALLBACK_NAME = "__gastoInteligenteMapsInit__";
 function getApiKey(): string | undefined {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const key = (import.meta.env as any).VITE_GOOGLE_MAPS_API_KEY;
+    const env = import.meta.env as any;
+    const key =
+      env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ??
+      env.VITE_GOOGLE_MAPS_API_KEY; // fallback legado, sem expor
     return typeof key === "string" && key.trim().length > 0
       ? key.trim()
       : undefined;
@@ -36,11 +39,23 @@ function getApiKey(): string | undefined {
   }
 }
 
+function getTrackingId(): string | undefined {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const id = (import.meta.env as any).VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+    return typeof id === "string" && id.trim().length > 0 ? id.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function createScript(apiKey: string): HTMLScriptElement {
   const script = document.createElement("script");
+  const tracking = getTrackingId();
+  const channel = tracking ? `&channel=${encodeURIComponent(tracking)}` : "";
   script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
     apiKey,
-  )}&loading=async&callback=${CALLBACK_NAME}`;
+  )}&loading=async&callback=${CALLBACK_NAME}${channel}`;
   script.async = true;
   script.defer = true;
   return script;
