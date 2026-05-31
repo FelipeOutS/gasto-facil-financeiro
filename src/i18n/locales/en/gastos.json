@@ -115,9 +115,15 @@
     "monthTitle": "Nothing here yet",
     "monthSub": "Your expenses for {{month}} will show up here.",
     "monthCta": "Add expense in {{month}}",
-    "noneTitle": "No expenses yet",
-    "noneSub": "When you log an expense, it shows up here nicely for you to track.",
-    "noneCta": "Add my first expense"
+    "noneTitle": "No expenses added yet",
+    "noneSub": "Add daily expenses, purchases, paid bills, or money outflows to better track your month.",
+    "noneCta": "Add expense",
+    "helper": "Start with a recent expense, such as groceries, transport, food, or a paid bill.",
+    "steps": {
+      "expense": "Enter the expense",
+      "details": "Choose category and date",
+      "summary": "Track it in your summary"
+    }
   },
   "item": {
     "at": "at",
