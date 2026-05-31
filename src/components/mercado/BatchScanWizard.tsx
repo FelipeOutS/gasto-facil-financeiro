@@ -695,11 +695,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       {p.status === "error" && (
                         <span className="inline-flex items-center gap-1 text-destructive">
                           <AlertTriangle className="h-3 w-3" />
-                          {p.errorReason === "ocr_config_missing"
-                            ? t("communityPrices.batch.errorOcrConfigMissing")
-                            : p.errorReason === "vision_api_error"
-                              ? t("communityPrices.batch.errorVisionApi")
-                              : t("communityPrices.batch.photoError")}
+                          {getPhotoIssueLabel(p)}
                         </span>
                       )}
 
@@ -779,7 +775,25 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 {errorCount > 0 && (
                   <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
                 )}
+                {technicalErrorCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryTechnicalErrors", { count: technicalErrorCount })}</div>
+                )}
               </div>
+            )}
+
+            {photos.some((p) => p.status === "error" || p.status === "empty") && (
+              <ul className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                {photos.map((p, idx) => {
+                  const issue = getPhotoIssueLabel(p);
+                  if (!issue) return null;
+                  return (
+                    <li key={p.id} className="flex items-start gap-1">
+                      <span className="font-semibold">{t("communityPrices.batch.photoLabel", { index: idx + 1 })}:</span>
+                      <span>{issue}</span>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
 
 
