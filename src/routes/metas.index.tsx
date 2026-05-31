@@ -59,7 +59,6 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { MetaFormDialog, type MetaDialogMode } from "@/components/metas/MetaForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 
