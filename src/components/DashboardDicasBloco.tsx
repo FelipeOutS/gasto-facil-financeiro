@@ -190,7 +190,7 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
                       {insight.title}
                     </h4>
                     <StatusBadge tone={badgeToneForPriority(insight.priority)} className="shrink-0">
-                      {priorityLabel(insight.priority)}
+                      {t(`tipsBlock.priority.${insight.priority}`)}
                     </StatusBadge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
