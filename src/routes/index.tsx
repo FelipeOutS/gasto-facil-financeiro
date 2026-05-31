@@ -158,6 +158,7 @@ function Index() {
   const metas = useStore(() => getMetas());
   const contas = useStore(() => getContasAPagar());
   const categorias = useStore(() => getCategorias());
+  const cartoes = useStore(() => getCartoes());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
   // Re-render quando limites mudam
   useStore(() => getLimites().length);
