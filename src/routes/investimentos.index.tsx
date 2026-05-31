@@ -1757,7 +1757,7 @@ function AtualizarValorDialog({
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
-              placeholder="Ex.: cotação consultada na corretora"
+              placeholder={tInv("forms.placeholders.updateValueObs")}
               rows={2}
             />
           </div>
