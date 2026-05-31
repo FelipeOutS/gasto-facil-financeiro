@@ -2,6 +2,7 @@
 // Reusa dados que já estão no store. Não persiste, não notifica,
 // não duplica alertas/dicas — apenas resume o mês e orienta o usuário.
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   ClipboardList,
