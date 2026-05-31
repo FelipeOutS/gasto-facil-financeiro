@@ -29,9 +29,11 @@
     "cancelado": "Canceladas"
   },
   "empty": {
-    "none": "Nenhuma conta a receber cadastrada ainda.",
+    "none": "Cadastre sua primeira conta a receber",
+    "noneDesc": "Registre valores que você espera receber para acompanhar previsões de entrada e organizar melhor seu mês.",
+    "helper": "Use para acompanhar recebimentos futuros, reembolsos, freelas ou valores combinados.",
     "noResults": "Nenhum resultado para os filtros.",
-    "addFirst": "Adicionar primeira conta",
+    "addFirst": "Adicionar conta a receber",
     "clearFilters": "Limpar filtros"
   },
   "card": {
