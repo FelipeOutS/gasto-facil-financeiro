@@ -1764,7 +1764,7 @@ function AtualizarValorDialog({
 
           {ativo.ultima_atualizacao && (
             <div className="text-[11px] text-muted-foreground">
-              Última atualização: {formatarDataHora(ativo.ultima_atualizacao)}
+              {tInv("dialogs.updateValue.lastUpdate", { date: formatarDataHora(ativo.ultima_atualizacao) })}
             </div>
           )}
         </div>
