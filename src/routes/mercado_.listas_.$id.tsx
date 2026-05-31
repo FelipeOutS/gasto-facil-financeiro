@@ -1009,6 +1009,17 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   const [precoEstimado, setPrecoEstimado] = useState(
     item.precoEstimado != null ? String(item.precoEstimado) : "",
   );
+  const { pool } = useActiveCommunityPrices();
+  const suggestions = useMemo(
+    () => getSuggestionsFor(item.nome, pool),
+    [item.nome, pool],
+  );
+
+  function applyCommunityPrice(price: number) {
+    setPrecoEstimado(String(price));
+    updateItemLista(listaId, item.id, { precoEstimado: price });
+    toast.success(t("communityPrices.suggestions.applied"));
+  }
 
   function startEdit() {
     setNome(item.nome);
