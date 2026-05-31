@@ -1,14 +1,14 @@
 {
-  "meta": { "title": "Add expense — Gasto Inteligente" },
-  "header": { "kicker": "New", "title": "Add expense", "back": "Back" },
-  "subtitle": "Send a screenshot, take a photo, or type it. I'll do the work, you review before saving.",
+  "meta": { "title": "Add — Gasto Inteligente" },
+  "header": { "kicker": "New", "title": "What do you want to add?", "back": "Back" },
+  "subtitle": "Choose the entry type to add it manually, import it, or continue through a guided flow.",
   "options": {
     "photo": { "title": "Take a photo", "desc": "Receipt, invoice, slip" },
     "gallery": { "title": "Upload from gallery", "desc": "Pix, bill, invoice, screenshot" },
     "whatsapp": { "title": "Paste WhatsApp message", "desc": "e.g. \"Spotify 19.90 Nubank\"" },
     "manual": { "title": "Enter manually", "desc": "Type the expense details" }
   },
-  "hint": "✨ Photo/screenshot reading uses AI to identify amount, date and description. You review and edit everything before saving.",
+  "hint": "Import when you want to speed up entry. You'll always be able to review before saving.",
   "cancel": "Cancel",
   "requirePlan": "To add expenses, choose an active plan.",
   "guidedEntry": {
@@ -24,15 +24,15 @@
     "types": {
       "expense": {
         "title": "Add expense",
-        "description": "Use it to record purchases, paid bills, daily expenses, or business costs."
+        "description": "Record a daily expense, purchase, paid bill, or money outflow."
       },
       "income": {
         "title": "Add income",
-        "description": "Use it to record salary, freelance work, commissions, or other income."
+        "description": "Record salary, freelance work, reimbursement, or another money inflow."
       },
       "revenue": {
         "title": "Add revenue",
-        "description": "Use it to record sales, services, contracts, or other business revenue."
+        "description": "Record a sale, service, contract, or another business inflow."
       }
     },
     "hint": "After your first entries, you can explore charts, alerts, imports, and smart features based on your plan."
