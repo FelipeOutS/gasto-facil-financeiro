@@ -1057,5 +1057,13 @@
       "description": "Save favorite markets and track prices by location with more organization.",
       "cta": "Unlock feature"
     }
+  },
+  "map": {
+    "loadErrorTitle": "Map unavailable",
+    "loadErrorDescription": "Could not load the map right now. Check your connection and try again later.",
+    "keyMissingTitle": "Configuration pending",
+    "keyMissingDescription": "The map is not configured yet. Contact support if the issue persists.",
+    "loading": "Loading map…",
+    "tryAgain": "Try again"
   }
 }
