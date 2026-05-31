@@ -1678,7 +1678,7 @@ function AtualizarValorDialog({
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível atualizar o valor.");
+      toastFromError(e, tInv("forms.aux.errors.updateValueFailed"));
     } finally {
       setSalvando(false);
     }
