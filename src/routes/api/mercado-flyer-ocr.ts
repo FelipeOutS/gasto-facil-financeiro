@@ -31,6 +31,9 @@ type DetectedItem = {
 
 type OcrDiagnostic = {
   provider: "google_vision" | "google_vision_plus_gemini";
+  stage: "config" | "payload" | "vision" | "gemini" | "fallback" | "done";
+  status: "ok" | "error" | "partial";
+  code: string | null;
   hasGoogleVisionKey: boolean;
   imageMime: string;
   originalFileSize: number;
@@ -43,6 +46,7 @@ type OcrDiagnostic = {
   priceCandidatesCount: number;
   geminiItemCount: number;
   finalItemCount: number;
+  usedFallback: boolean;
 };
 
 const STRUCTURE_PROMPT = `Você receberá texto extraído por OCR de um panfleto de mercado brasileiro.
@@ -113,6 +117,9 @@ function estimateBytesFromBase64(base64: string): number {
 
 function createDiagnostic(params: {
   provider?: OcrDiagnostic["provider"];
+  stage?: OcrDiagnostic["stage"];
+  status?: OcrDiagnostic["status"];
+  code?: string | null;
   hasGoogleVisionKey: boolean;
   imageMime?: string;
   originalFileSize?: number;
@@ -121,6 +128,9 @@ function createDiagnostic(params: {
 }): OcrDiagnostic {
   return {
     provider: params.provider ?? "google_vision",
+    stage: params.stage ?? "config",
+    status: params.status ?? "ok",
+    code: params.code ?? null,
     hasGoogleVisionKey: params.hasGoogleVisionKey,
     imageMime: params.imageMime ?? "unknown",
     originalFileSize: params.originalFileSize ?? 0,
@@ -133,28 +143,34 @@ function createDiagnostic(params: {
     priceCandidatesCount: 0,
     geminiItemCount: 0,
     finalItemCount: 0,
+    usedFallback: false,
   };
 }
 
 function safeDiagnosticForResponse(diagnostic: OcrDiagnostic) {
   return {
+    stage: diagnostic.stage,
+    code: diagnostic.code,
     provider: diagnostic.provider,
-    hasGoogleVisionKey: diagnostic.hasGoogleVisionKey,
-    imageMime: diagnostic.imageMime,
-    originalFileSize: diagnostic.originalFileSize,
-    processedDataUrlLength: diagnostic.processedDataUrlLength,
-    cleanBase64Length: diagnostic.cleanBase64Length,
-    visionHttpStatus: diagnostic.visionHttpStatus,
-    visionErrorCode: diagnostic.visionErrorCode,
     rawTextLength: diagnostic.rawTextLength,
     priceCandidatesCount: diagnostic.priceCandidatesCount,
-    geminiItemCount: diagnostic.geminiItemCount,
-    finalItemCount: diagnostic.finalItemCount,
+    itemCount: diagnostic.finalItemCount,
+    usedFallback: diagnostic.usedFallback,
   };
 }
 
 function logOcrDiagnostic(diagnostic: OcrDiagnostic) {
-  console.info("[mercado-flyer-ocr][diagnostic]", diagnostic);
+  if (process.env.NODE_ENV === "production") return;
+  console.info("[mercado-flyer-ocr][diagnostic]", {
+    stage: diagnostic.stage,
+    status: diagnostic.status,
+    code: diagnostic.code,
+    rawTextLength: diagnostic.rawTextLength,
+    priceCandidatesCount: diagnostic.priceCandidatesCount,
+    itemCount: diagnostic.finalItemCount,
+    usedFallback: diagnostic.usedFallback,
+    provider: diagnostic.provider,
+  });
 }
 
 function normalizeImagePayload(img: string):
