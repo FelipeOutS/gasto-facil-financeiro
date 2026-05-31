@@ -239,9 +239,9 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Diagnóstico mensal
+              {t("monthlyDiagnosis.title")}
             </h3>
-            <StatusBadge tone={tone.badge}>{tone.label}</StatusBadge>
+            <StatusBadge tone={tone.badge}>{t(`monthlyDiagnosis.levels.${diag.status}`)}</StatusBadge>
           </div>
           <p className="mt-1 text-sm font-semibold leading-snug">
             {diag.title}
