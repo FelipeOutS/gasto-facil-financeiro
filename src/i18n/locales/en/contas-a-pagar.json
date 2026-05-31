@@ -57,9 +57,10 @@
     "clearFilters": "Clear filters"
   },
   "empty": {
-    "title": "No bills chasing you for now",
-    "subtitle": "Add a bill and let the app remind you before it's due.",
-    "addFirst": "Add first bill"
+    "title": "Add your first bill to pay",
+    "subtitle": "Add bills, subscriptions, installments, or future expenses to track due dates and avoid delays.",
+    "addFirst": "Add bill to pay",
+    "helper": "Start with fixed monthly bills, such as rent, internet, card payments, or suppliers."
   },
   "card": {
     "dueShort": "Due {{date}}",
