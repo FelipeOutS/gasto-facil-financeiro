@@ -1280,8 +1280,29 @@
       "saveSuccess_one": "{{count}} price saved at {{market}}.",
       "saveSuccess_other": "{{count}} prices saved at {{market}}.",
       "saveFailed": "Could not save the prices."
+    },
+    "suggestions": {
+      "title": "Community price found",
+      "usePrice": "Use this price",
+      "otherOptions_one": "See {{count}} more option",
+      "otherOptions_other": "See {{count}} more options",
+      "seenOn": "seen on {{date}}",
+      "validUntil": "valid until {{date}}",
+      "disclaimer": "Price reported by the community. Double-check at the store before buying.",
+      "noGuarantee": "May vary by store, region and date. We do not guarantee the lowest price.",
+      "applied": "Suggested price applied to the item.",
+      "estimatedSavings": "Estimated savings from community prices",
+      "savingsHint_one": "Comparing {{count}} item in your list with community prices.",
+      "savingsHint_other": "Comparing {{count}} items in your list with community prices.",
+      "source_flyer": "Flyer",
+      "source_manual": "Manual",
+      "source_store": "Store",
+      "source_receipt": "Receipt",
+      "imageAlt": "Product image",
+      "imageMissing": "No image available",
+      "productImage": "Product image",
+      "categoryPlaceholder": "No image"
     }
-
   }
 }
 
