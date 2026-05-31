@@ -2366,7 +2366,7 @@ function RendimentoDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>{tInv("forms.aux.cancel")}</Button>
           <Button onClick={salvar} disabled={salvando}>
             {salvando ? "Salvando…" : editing ? "Salvar" : "Adicionar"}
           </Button>
