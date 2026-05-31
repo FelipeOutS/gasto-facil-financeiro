@@ -260,7 +260,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
 
   async function processPhoto(photo: Photo): Promise<Photo> {
     try {
-      const base64 = await fileToBase64(photo.file);
+      const base64 = await fileToProcessedDataUrl(photo.file);
       const res = await apiFetch("/api/mercado-flyer-ocr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
