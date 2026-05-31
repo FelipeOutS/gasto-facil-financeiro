@@ -8,8 +8,14 @@
   "hub": {
     "title": "Mercado Inteligente",
     "subtitle": "Planeje compras, compare preços e acompanhe seus gastos de mercado de forma simples.",
-    "intro": "Comece organizando suas compras de mercado. Nas próximas etapas, este espaço poderá reunir listas, orçamento, histórico, carrinho e comparações de preço.",
-    "futureNote": "Preparado para futuras integrações.",
+    "intro": "Crie listas, acompanhe o carrinho em tempo real, defina um orçamento de compra e veja quanto falta para fechar.",
+    "futureNote": "Recursos avançados como histórico, comparação de preços e importação de cupom estão disponíveis em planos superiores.",
+    "steps": {
+      "title": "Como começar",
+      "list": "Crie uma lista",
+      "products": "Adicione produtos",
+      "track": "Acompanhe total e orçamento"
+    },
     "status": {
       "soon": "Em breve",
       "future": "Futuro",
