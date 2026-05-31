@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   X,
   Filter,
+  Pencil,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -36,6 +37,9 @@ export const Route = createFileRoute("/mercado_/preco-comunitario")({
   component: PrecoComunitarioPage,
 });
 
+type SourceKey = "flyer" | "store" | "receipt" | "manual";
+type SortKey = "recent" | "lowest" | "highest" | "expiring";
+
 type CommunityPrice = {
   id: string;
   user_id: string;
@@ -44,7 +48,7 @@ type CommunityPrice = {
   price: number;
   unit: string | null;
   market_name: string;
-  source: "flyer" | "store" | "receipt" | "manual";
+  source: SourceKey;
   seen_at: string;
   valid_until: string | null;
   city: string | null;
@@ -68,13 +72,36 @@ type DetectedItem = {
 
 type ReviewItem = DetectedItem & { id: string; include: boolean };
 
-const TABLE = "community_market_prices" as const;
-const SOURCE_LABEL: Record<string, string> = {
-  flyer: "Panfleto",
-  store: "Loja",
-  receipt: "Cupom",
-  manual: "Manual",
+type ManualForm = {
+  productName: string;
+  price: string;
+  unit: string;
+  category: string;
+  marketName: string;
+  source: SourceKey;
+  seenAt: string;
+  validUntil: string;
+  city: string;
+  neighborhood: string;
+  notes: string;
 };
+
+const TABLE = "community_market_prices" as const;
+const SOURCE_KEYS: SourceKey[] = ["flyer", "store", "receipt", "manual"];
+
+const emptyManualForm = (): ManualForm => ({
+  productName: "",
+  price: "",
+  unit: "",
+  category: "",
+  marketName: "",
+  source: "manual",
+  seenAt: new Date().toISOString().slice(0, 10),
+  validUntil: "",
+  city: "",
+  neighborhood: "",
+  notes: "",
+});
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -86,12 +113,20 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 function PrecoComunitarioPage() {
-  const { t } = useTranslation("mercado");
+  const { t, i18n: i18nInst } = useTranslation("mercado");
+  const dateLocale = i18nInst.language?.startsWith("en") ? "en-US" : "pt-BR";
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale);
+
   const { user } = useAuth();
   const [items, setItems] = useState<CommunityPrice[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters
   const [filterProduct, setFilterProduct] = useState("");
   const [filterMarket, setFilterMarket] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterSource, setFilterSource] = useState<SourceKey | "">("");
+  const [sortBy, setSortBy] = useState<SortKey>("recent");
 
   // Scan state
   const fileRef = useRef<HTMLInputElement>(null);
@@ -101,19 +136,8 @@ function PrecoComunitarioPage() {
 
   // Manual state
   const [manualOpen, setManualOpen] = useState(false);
-  const [manualForm, setManualForm] = useState({
-    productName: "",
-    price: "",
-    unit: "",
-    category: "",
-    marketName: "",
-    source: "manual" as "flyer" | "store" | "receipt" | "manual",
-    seenAt: new Date().toISOString().slice(0, 10),
-    validUntil: "",
-    city: "",
-    neighborhood: "",
-    notes: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [manualForm, setManualForm] = useState<ManualForm>(emptyManualForm());
 
   async function reload() {
     setLoading(true);
@@ -124,7 +148,7 @@ function PrecoComunitarioPage() {
       .limit(200);
     if (error) {
       console.error("[preco-comunitario] load", error.message);
-      toast.error("Não foi possível carregar os preços.");
+      toast.error(t("communityPrices.errors.loadFailed"));
     } else {
       setItems((data ?? []) as CommunityPrice[]);
     }
@@ -133,26 +157,56 @@ function PrecoComunitarioPage() {
 
   useEffect(() => {
     reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
-    return items.filter((it) => {
-      if (filterProduct && !it.product_name.toLowerCase().includes(filterProduct.toLowerCase())) return false;
-      if (filterMarket && !it.market_name.toLowerCase().includes(filterMarket.toLowerCase())) return false;
+    const p = filterProduct.trim().toLowerCase();
+    const m = filterMarket.trim().toLowerCase();
+    const c = filterCategory.trim().toLowerCase();
+    const arr = items.filter((it) => {
+      if (p && !it.product_name.toLowerCase().includes(p)) return false;
+      if (m && !it.market_name.toLowerCase().includes(m)) return false;
+      if (c && !(it.category ?? "").toLowerCase().includes(c)) return false;
+      if (filterSource && it.source !== filterSource) return false;
       return true;
     });
-  }, [items, filterProduct, filterMarket]);
+    const sorted = [...arr];
+    if (sortBy === "lowest") sorted.sort((a, b) => a.price - b.price);
+    else if (sortBy === "highest") sorted.sort((a, b) => b.price - a.price);
+    else if (sortBy === "expiring") {
+      sorted.sort((a, b) => {
+        const av = a.valid_until ? new Date(a.valid_until).getTime() : Number.POSITIVE_INFINITY;
+        const bv = b.valid_until ? new Date(b.valid_until).getTime() : Number.POSITIVE_INFINITY;
+        return av - bv;
+      });
+    } else {
+      sorted.sort((a, b) => new Date(b.seen_at).getTime() - new Date(a.seen_at).getTime());
+    }
+    return sorted;
+  }, [items, filterProduct, filterMarket, filterCategory, filterSource, sortBy]);
+
+  const hasFilters =
+    !!filterProduct || !!filterMarket || !!filterCategory || !!filterSource || sortBy !== "recent";
+
+  function clearFilters() {
+    setFilterProduct("");
+    setFilterMarket("");
+    setFilterCategory("");
+    setFilterSource("");
+    setSortBy("recent");
+  }
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     if (!/^image\/(jpeg|jpg|png|webp)$/.test(file.type)) {
-      toast.error("Use JPG, PNG ou WEBP.");
+      toast.error(t("communityPrices.errors.invalidImage"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máx. 10 MB.");
+      toast.error(t("communityPrices.errors.imageTooLarge"));
       return;
     }
     setScanLoading(true);
@@ -163,14 +217,14 @@ function PrecoComunitarioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64, marketName: scanMarket || undefined }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(json?.message || json?.error || "Não foi possível ler o panfleto.");
+        toast.error(json?.message || t("communityPrices.errors.ocrFailed"));
         return;
       }
       const detected: DetectedItem[] = json.items ?? [];
       if (!detected.length) {
-        toast.info("Não conseguimos identificar preços nessa imagem. Tente uma foto mais nítida.");
+        toast.info(t("communityPrices.errors.noItems"));
         return;
       }
       setReview(
@@ -183,22 +237,32 @@ function PrecoComunitarioPage() {
       );
     } catch (err) {
       console.error("[preco-comunitario] scan", err);
-      toast.error("Erro ao enviar imagem.");
+      toast.error(t("communityPrices.errors.uploadFailed"));
     } finally {
       setScanLoading(false);
     }
+  }
+
+  function isReviewItemValid(r: ReviewItem) {
+    return (
+      r.productName.trim().length > 0 &&
+      r.price != null &&
+      Number.isFinite(r.price) &&
+      r.price > 0 &&
+      !!r.marketName?.trim()
+    );
   }
 
   async function saveReview() {
     if (!user || !review) return;
     const toSave = review.filter((r) => r.include);
     if (!toSave.length) {
-      toast.error("Selecione ao menos um item.");
+      toast.error(t("communityPrices.errors.selectAtLeastOne"));
       return;
     }
-    const missing = toSave.filter((r) => !r.productName.trim() || r.price == null || r.price <= 0 || !(r.marketName?.trim()));
-    if (missing.length) {
-      toast.error("Preencha produto, preço e mercado nos itens marcados.");
+    const invalid = toSave.filter((r) => !isReviewItemValid(r));
+    if (invalid.length) {
+      toast.error(t("communityPrices.errors.missingFields"));
       return;
     }
     const rows = toSave.map((r) => ({
@@ -218,24 +282,46 @@ function PrecoComunitarioPage() {
     const { error } = await (supabase.from(TABLE as never) as any).insert(rows);
     if (error) {
       console.error("[preco-comunitario] insert", error.message);
-      toast.error("Não foi possível salvar.");
+      toast.error(t("communityPrices.errors.saveFailed"));
       return;
     }
-    toast.success(`${rows.length} preço(s) salvo(s).`);
+    toast.success(t("communityPrices.success.saved", { count: rows.length }));
     setReview(null);
     setScanMarket("");
     reload();
+  }
+
+  function openManual(item?: CommunityPrice) {
+    if (item) {
+      setEditingId(item.id);
+      setManualForm({
+        productName: item.product_name,
+        price: String(item.price).replace(".", ","),
+        unit: item.unit ?? "",
+        category: item.category ?? "",
+        marketName: item.market_name,
+        source: item.source,
+        seenAt: item.seen_at,
+        validUntil: item.valid_until ?? "",
+        city: item.city ?? "",
+        neighborhood: item.neighborhood ?? "",
+        notes: item.notes ?? "",
+      });
+    } else {
+      setEditingId(null);
+      setManualForm(emptyManualForm());
+    }
+    setManualOpen(true);
   }
 
   async function saveManual() {
     if (!user) return;
     const price = Number(manualForm.price.replace(",", "."));
     if (!manualForm.productName.trim() || !manualForm.marketName.trim() || !Number.isFinite(price) || price <= 0) {
-      toast.error("Preencha produto, mercado e preço.");
+      toast.error(t("communityPrices.errors.manualRequired"));
       return;
     }
-    const { error } = await (supabase.from(TABLE as never) as any).insert({
-      user_id: user.id,
+    const payload: Record<string, unknown> = {
       product_name: manualForm.productName.trim(),
       normalized_product_name: manualForm.productName.trim().toLowerCase(),
       category: manualForm.category || null,
@@ -248,34 +334,60 @@ function PrecoComunitarioPage() {
       city: manualForm.city || null,
       neighborhood: manualForm.neighborhood || null,
       notes: manualForm.notes || null,
-    });
-    if (error) {
-      console.error("[preco-comunitario] manual insert", error.message);
-      toast.error("Não foi possível salvar.");
-      return;
+    };
+    if (editingId) {
+      const { error } = await (supabase.from(TABLE as never) as any)
+        .update(payload)
+        .eq("id", editingId)
+        .eq("user_id", user.id);
+      if (error) {
+        console.error("[preco-comunitario] update", error.message);
+        toast.error(t("communityPrices.errors.saveFailed"));
+        return;
+      }
+      toast.success(t("communityPrices.success.updated"));
+    } else {
+      payload.user_id = user.id;
+      const { error } = await (supabase.from(TABLE as never) as any).insert(payload);
+      if (error) {
+        console.error("[preco-comunitario] manual insert", error.message);
+        toast.error(t("communityPrices.errors.saveFailed"));
+        return;
+      }
+      toast.success(t("communityPrices.success.manualSaved"));
     }
-    toast.success("Preço salvo.");
     setManualOpen(false);
-    setManualForm((f) => ({ ...f, productName: "", price: "", notes: "" }));
+    setEditingId(null);
+    setManualForm(emptyManualForm());
     reload();
   }
 
   async function removeItem(id: string) {
-    const { error } = await (supabase.from(TABLE as never) as any).delete().eq("id", id);
+    if (!user) return;
+    if (!window.confirm(t("communityPrices.list.confirmRemove"))) return;
+    const { error } = await (supabase.from(TABLE as never) as any)
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
     if (error) {
-      toast.error("Não foi possível remover.");
+      console.error("[preco-comunitario] delete", error.message);
+      toast.error(t("communityPrices.errors.removeFailed"));
       return;
     }
     setItems((curr) => curr.filter((it) => it.id !== id));
+    toast.success(t("communityPrices.success.removed"));
   }
+
+  const sourceLabel = (s: string) =>
+    t(`communityPrices.source.${s}`, { defaultValue: s });
 
   return (
     <MobileShell wide>
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="icon" aria-label="Voltar">
+        <Button asChild variant="ghost" size="icon" aria-label={t("communityPrices.back")}>
           <Link to="/mercado"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <Button asChild variant="ghost" size="icon" aria-label="Início">
+        <Button asChild variant="ghost" size="icon" aria-label={t("communityPrices.home")}>
           <Link to="/"><Home className="h-5 w-5" /></Link>
         </Button>
       </div>
@@ -285,89 +397,187 @@ function PrecoComunitarioPage() {
           <BadgePercent className="h-6 w-6" />
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Preço Comunitário</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Leia panfletos por foto ou registre preços manualmente. A leitura é assistida — sempre revise antes de salvar.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("communityPrices.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("communityPrices.subtitle")}</p>
         </div>
       </header>
 
       <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-300/50 bg-amber-50/60 p-3 text-[13px] text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>Os preços são informados por usuários e podem mudar sem aviso. Sempre confirme no mercado antes de comprar.</p>
+        <p>{t("communityPrices.disclaimer")}</p>
       </div>
 
       {/* Ações */}
       <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-          <h2 className="flex items-center gap-2 text-sm font-semibold"><Camera className="h-4 w-4" /> Ler panfleto por foto</h2>
-          <p className="mt-1 text-xs text-muted-foreground">A IA tenta identificar produtos, preços e validade. Você revisa antes de salvar.</p>
-          <Label htmlFor="scanMarket" className="mt-3 block text-xs">Mercado (opcional)</Label>
-          <Input id="scanMarket" value={scanMarket} onChange={(e) => setScanMarket(e.target.value)} placeholder="Ex.: Assaí, Atacadão" />
-          <input ref={fileRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" capture="environment" className="hidden" onChange={onPickFile} />
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Camera className="h-4 w-4" /> {t("communityPrices.actions.scanTitle")}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.actions.scanDescription")}</p>
+          <Label htmlFor="scanMarket" className="mt-3 block text-xs">{t("communityPrices.actions.marketLabel")}</Label>
+          <Input
+            id="scanMarket"
+            value={scanMarket}
+            onChange={(e) => setScanMarket(e.target.value)}
+            placeholder={t("communityPrices.actions.marketPlaceholder")}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            capture="environment"
+            className="hidden"
+            onChange={onPickFile}
+          />
           <Button className="mt-3 w-full min-h-11" onClick={() => fileRef.current?.click()} disabled={scanLoading}>
-            {scanLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lendo imagem…</> : <><Camera className="mr-2 h-4 w-4" /> Escolher imagem</>}
+            {scanLoading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("communityPrices.actions.reading")}</>
+            ) : (
+              <><Camera className="mr-2 h-4 w-4" /> {t("communityPrices.actions.pick")}</>
+            )}
           </Button>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-          <h2 className="flex items-center gap-2 text-sm font-semibold"><Plus className="h-4 w-4" /> Informar manualmente</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Sem panfleto? Cadastre o preço que você viu na loja.</p>
-          <Button className="mt-3 w-full min-h-11" variant="secondary" onClick={() => setManualOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Novo preço manual
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Plus className="h-4 w-4" /> {t("communityPrices.actions.manualTitle")}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.actions.manualDescription")}</p>
+          <Button className="mt-3 w-full min-h-11" variant="secondary" onClick={() => openManual()}>
+            <Plus className="mr-2 h-4 w-4" /> {t("communityPrices.actions.newManual")}
           </Button>
         </div>
       </section>
 
       {/* Filtros */}
       <section className="mt-5 rounded-2xl border border-border/60 bg-card p-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-          <Filter className="h-3.5 w-3.5" /> Filtros
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <Filter className="h-3.5 w-3.5" /> {t("communityPrices.filters.title")}
+          </div>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-[11px] font-semibold text-brand hover:underline"
+            >
+              {t("communityPrices.filters.clear")}
+            </button>
+          )}
         </div>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Input placeholder="Filtrar por produto" value={filterProduct} onChange={(e) => setFilterProduct(e.target.value)} />
-          <Input placeholder="Filtrar por mercado" value={filterMarket} onChange={(e) => setFilterMarket(e.target.value)} />
+          <Input
+            placeholder={t("communityPrices.filters.product")}
+            value={filterProduct}
+            onChange={(e) => setFilterProduct(e.target.value)}
+          />
+          <Input
+            placeholder={t("communityPrices.filters.market")}
+            value={filterMarket}
+            onChange={(e) => setFilterMarket(e.target.value)}
+          />
+          <Input
+            placeholder={t("communityPrices.filters.category")}
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          />
+          <select
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+            value={filterSource}
+            onChange={(e) => setFilterSource(e.target.value as SourceKey | "")}
+            aria-label={t("communityPrices.filters.source")}
+          >
+            <option value="">{t("communityPrices.filters.allSources")}</option>
+            {SOURCE_KEYS.map((s) => (
+              <option key={s} value={s}>{sourceLabel(s)}</option>
+            ))}
+          </select>
+          <select
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm sm:col-span-2"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            aria-label={t("communityPrices.filters.sort")}
+          >
+            <option value="recent">{t("communityPrices.filters.sortOptions.recent")}</option>
+            <option value="lowest">{t("communityPrices.filters.sortOptions.lowest")}</option>
+            <option value="highest">{t("communityPrices.filters.sortOptions.highest")}</option>
+            <option value="expiring">{t("communityPrices.filters.sortOptions.expiring")}</option>
+          </select>
         </div>
       </section>
 
       {/* Lista */}
       <section className="mt-4">
         {loading ? (
-          <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          <div className="grid place-items-center py-10 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : filtered.length === 0 ? (
-          <EmptyState
-            title="Nenhum preço por aqui ainda"
-            description="Use “Ler panfleto por foto” ou cadastre manualmente para começar."
-          />
+          items.length === 0 ? (
+            <EmptyState
+              title={t("communityPrices.empty.none.title")}
+              description={t("communityPrices.empty.none.description")}
+            />
+          ) : (
+            <EmptyState
+              title={t("communityPrices.empty.noResults.title")}
+              description={t("communityPrices.empty.noResults.description")}
+            />
+          )
         ) : (
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {filtered.map((it) => (
-              <li key={it.id} className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{it.product_name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {it.market_name}{it.unit ? ` · ${it.unit}` : ""}{it.category ? ` · ${it.category}` : ""}
-                    </p>
+            {filtered.map((it) => {
+              const owned = user?.id === it.user_id;
+              return (
+                <li key={it.id} className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{it.product_name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {it.market_name}
+                        {it.unit ? ` · ${it.unit}` : ""}
+                        {it.category ? ` · ${it.category}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-bold text-brand">{formatBRL(it.price)}</p>
+                      <span className="mt-0.5 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-on-soft">
+                        {sourceLabel(it.source)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-base font-bold text-brand">{formatBRL(it.price)}</p>
-                    <span className="mt-0.5 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-on-soft">
-                      {SOURCE_LABEL[it.source] ?? it.source}
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span className="min-w-0 truncate">
+                      {t("communityPrices.list.seenOn", { date: fmtDate(it.seen_at) })}
+                      {it.valid_until
+                        ? ` · ${t("communityPrices.list.validUntil", { date: fmtDate(it.valid_until) })}`
+                        : ""}
                     </span>
+                    {owned && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openManual(it)}
+                          className="rounded p-1 text-muted-foreground hover:text-brand"
+                          aria-label={t("communityPrices.list.edit")}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(it.id)}
+                          className="rounded p-1 text-muted-foreground hover:text-destructive"
+                          aria-label={t("communityPrices.list.remove")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Visto em {new Date(it.seen_at).toLocaleDateString("pt-BR")}{it.valid_until ? ` · válido até ${new Date(it.valid_until).toLocaleDateString("pt-BR")}` : ""}</span>
-                  {user?.id === it.user_id && (
-                    <button type="button" onClick={() => removeItem(it.id)} className="rounded p-1 text-muted-foreground hover:text-destructive" aria-label="Remover">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                {it.notes && <p className="mt-1 text-[11px] text-muted-foreground">{it.notes}</p>}
-                <p className="mt-2 text-[10px] italic text-muted-foreground">Confira no mercado antes de comprar.</p>
-              </li>
-            ))}
+                  {it.notes && <p className="mt-1 text-[11px] text-muted-foreground">{it.notes}</p>}
+                  <p className="mt-2 text-[10px] italic text-muted-foreground">{t("communityPrices.itemHint")}</p>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -376,146 +586,252 @@ function PrecoComunitarioPage() {
       <Dialog open={review !== null} onOpenChange={(o) => !o && setReview(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Revisar itens detectados</DialogTitle>
-            <DialogDescription>
-              Revise os itens antes de salvar. A leitura automática pode confundir nomes, preços ou unidades.
-            </DialogDescription>
+            <DialogTitle>{t("communityPrices.review.title")}</DialogTitle>
+            <DialogDescription>{t("communityPrices.review.description")}</DialogDescription>
           </DialogHeader>
           <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[12px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span>Edite o que estiver errado, desmarque o que não deseja salvar e confirme apenas os itens corretos.</span>
+            <span>{t("communityPrices.review.warning")}</span>
           </div>
           <ul className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
-            {review?.map((r, idx) => (
-              <li key={r.id} className={`rounded-xl border p-3 ${r.include ? "border-border" : "border-dashed border-muted opacity-60"}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={r.include}
-                      onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, include: e.target.checked } : x))}
-                    />
-                    Incluir
-                  </label>
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => setReview((cur) => cur!.filter((_, i) => i !== idx))}
-                    aria-label="Remover item"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div>
-                    <Label className="text-xs">Produto</Label>
-                    <Input value={r.productName} onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, productName: e.target.value } : x))} />
+            {review?.map((r, idx) => {
+              const invalidPrice = r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);
+              const missingProduct = r.include && !r.productName.trim();
+              const missingMarket = r.include && !r.marketName?.trim();
+              return (
+                <li
+                  key={r.id}
+                  className={`rounded-xl border p-3 ${r.include ? "border-border" : "border-dashed border-muted opacity-60"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={r.include}
+                        onChange={(e) =>
+                          setReview((cur) => cur!.map((x, i) => (i === idx ? { ...x, include: e.target.checked } : x)))
+                        }
+                      />
+                      {t("communityPrices.review.include")}
+                      {typeof r.confidence === "number" && (
+                        <span className="ml-2 text-[10px] text-muted-foreground">
+                          {t("communityPrices.review.confidence", { value: Math.round(r.confidence * 100) })}
+                        </span>
+                      )}
+                    </label>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setReview((cur) => cur!.filter((_, i) => i !== idx))}
+                      aria-label={t("communityPrices.review.remove")}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <div>
-                    <Label className="text-xs">Preço (R$)</Label>
-                    <Input
-                      inputMode="decimal"
-                      value={r.price ?? ""}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(",", ".");
-                        const n = v === "" ? null : Number(v);
-                        setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, price: Number.isFinite(n as number) ? (n as number) : null } : x));
-                      }}
-                    />
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.product")}</Label>
+                      <Input
+                        value={r.productName}
+                        onChange={(e) =>
+                          setReview((cur) => cur!.map((x, i) => (i === idx ? { ...x, productName: e.target.value } : x)))
+                        }
+                      />
+                      {missingProduct && (
+                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.missingProduct")}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.price")}</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={r.price ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(",", ".");
+                          const n = v === "" ? null : Number(v);
+                          setReview((cur) =>
+                            cur!.map((x, i) =>
+                              i === idx ? { ...x, price: Number.isFinite(n as number) ? (n as number) : null } : x,
+                            ),
+                          );
+                        }}
+                      />
+                      {invalidPrice && (
+                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.invalidPrice")}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.unit")}</Label>
+                      <Input
+                        value={r.unit ?? ""}
+                        onChange={(e) =>
+                          setReview((cur) =>
+                            cur!.map((x, i) => (i === idx ? { ...x, unit: e.target.value || null } : x)),
+                          )
+                        }
+                        placeholder={t("communityPrices.review.fields.unitPlaceholder")}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.market")}</Label>
+                      <Input
+                        value={r.marketName ?? ""}
+                        onChange={(e) =>
+                          setReview((cur) =>
+                            cur!.map((x, i) => (i === idx ? { ...x, marketName: e.target.value || null } : x)),
+                          )
+                        }
+                      />
+                      {missingMarket && (
+                        <p className="mt-1 text-[11px] text-destructive">{t("communityPrices.review.missingMarket")}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.category")}</Label>
+                      <Input
+                        value={r.category ?? ""}
+                        onChange={(e) =>
+                          setReview((cur) =>
+                            cur!.map((x, i) => (i === idx ? { ...x, category: e.target.value || null } : x)),
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">{t("communityPrices.review.fields.validUntil")}</Label>
+                      <Input
+                        type="date"
+                        value={r.validUntil ?? ""}
+                        onChange={(e) =>
+                          setReview((cur) =>
+                            cur!.map((x, i) => (i === idx ? { ...x, validUntil: e.target.value || null } : x)),
+                          )
+                        }
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-xs">Unidade</Label>
-                    <Input value={r.unit ?? ""} onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, unit: e.target.value || null } : x))} placeholder="un, kg, L…" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Mercado</Label>
-                    <Input value={r.marketName ?? ""} onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, marketName: e.target.value || null } : x))} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Categoria</Label>
-                    <Input value={r.category ?? ""} onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, category: e.target.value || null } : x))} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Válido até</Label>
-                    <Input type="date" value={r.validUntil ?? ""} onChange={(e) => setReview((cur) => cur!.map((x, i) => i === idx ? { ...x, validUntil: e.target.value || null } : x))} />
-                  </div>
-                </div>
-                {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
-              </li>
-            ))}
+                  {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
+                </li>
+              );
+            })}
           </ul>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={() => setReview(null)}>Cancelar</Button>
-            <Button onClick={saveReview}><Save className="mr-2 h-4 w-4" /> Salvar preços revisados</Button>
+            <Button variant="ghost" onClick={() => setReview(null)} className="min-h-11">
+              {t("communityPrices.review.cancel")}
+            </Button>
+            <Button onClick={saveReview} className="min-h-11">
+              <Save className="mr-2 h-4 w-4" /> {t("communityPrices.review.save")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Manual dialog */}
-      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+      <Dialog open={manualOpen} onOpenChange={(o) => { setManualOpen(o); if (!o) setEditingId(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo preço manual</DialogTitle>
-            <DialogDescription>Informe um preço que você viu no mercado, cupom ou panfleto.</DialogDescription>
+            <DialogTitle>
+              {editingId ? t("communityPrices.manual.editTitle") : t("communityPrices.manual.title")}
+            </DialogTitle>
+            <DialogDescription>{t("communityPrices.manual.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label className="text-xs">Produto *</Label>
-              <Input value={manualForm.productName} onChange={(e) => setManualForm((f) => ({ ...f, productName: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.product")}</Label>
+              <Input
+                value={manualForm.productName}
+                onChange={(e) => setManualForm((f) => ({ ...f, productName: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Preço (R$) *</Label>
-              <Input inputMode="decimal" value={manualForm.price} onChange={(e) => setManualForm((f) => ({ ...f, price: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.price")}</Label>
+              <Input
+                inputMode="decimal"
+                value={manualForm.price}
+                onChange={(e) => setManualForm((f) => ({ ...f, price: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Unidade</Label>
-              <Input value={manualForm.unit} onChange={(e) => setManualForm((f) => ({ ...f, unit: e.target.value }))} placeholder="un, kg, L…" />
+              <Label className="text-xs">{t("communityPrices.manual.fields.unit")}</Label>
+              <Input
+                value={manualForm.unit}
+                onChange={(e) => setManualForm((f) => ({ ...f, unit: e.target.value }))}
+                placeholder={t("communityPrices.manual.fields.unitPlaceholder")}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-xs">Mercado *</Label>
-              <Input value={manualForm.marketName} onChange={(e) => setManualForm((f) => ({ ...f, marketName: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.market")}</Label>
+              <Input
+                value={manualForm.marketName}
+                onChange={(e) => setManualForm((f) => ({ ...f, marketName: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Categoria</Label>
-              <Input value={manualForm.category} onChange={(e) => setManualForm((f) => ({ ...f, category: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.category")}</Label>
+              <Input
+                value={manualForm.category}
+                onChange={(e) => setManualForm((f) => ({ ...f, category: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Origem</Label>
+              <Label className="text-xs">{t("communityPrices.manual.fields.source")}</Label>
               <select
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                 value={manualForm.source}
-                onChange={(e) => setManualForm((f) => ({ ...f, source: e.target.value as typeof f.source }))}
+                onChange={(e) => setManualForm((f) => ({ ...f, source: e.target.value as SourceKey }))}
               >
-                <option value="manual">Manual</option>
-                <option value="flyer">Panfleto</option>
-                <option value="store">Loja</option>
-                <option value="receipt">Cupom</option>
+                {SOURCE_KEYS.map((s) => (
+                  <option key={s} value={s}>{sourceLabel(s)}</option>
+                ))}
               </select>
             </div>
             <div>
-              <Label className="text-xs">Data em que viu</Label>
-              <Input type="date" value={manualForm.seenAt} onChange={(e) => setManualForm((f) => ({ ...f, seenAt: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.seenAt")}</Label>
+              <Input
+                type="date"
+                value={manualForm.seenAt}
+                onChange={(e) => setManualForm((f) => ({ ...f, seenAt: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Validade da promoção</Label>
-              <Input type="date" value={manualForm.validUntil} onChange={(e) => setManualForm((f) => ({ ...f, validUntil: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.validUntil")}</Label>
+              <Input
+                type="date"
+                value={manualForm.validUntil}
+                onChange={(e) => setManualForm((f) => ({ ...f, validUntil: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Cidade</Label>
-              <Input value={manualForm.city} onChange={(e) => setManualForm((f) => ({ ...f, city: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.city")}</Label>
+              <Input
+                value={manualForm.city}
+                onChange={(e) => setManualForm((f) => ({ ...f, city: e.target.value }))}
+              />
             </div>
             <div>
-              <Label className="text-xs">Bairro</Label>
-              <Input value={manualForm.neighborhood} onChange={(e) => setManualForm((f) => ({ ...f, neighborhood: e.target.value }))} />
+              <Label className="text-xs">{t("communityPrices.manual.fields.neighborhood")}</Label>
+              <Input
+                value={manualForm.neighborhood}
+                onChange={(e) => setManualForm((f) => ({ ...f, neighborhood: e.target.value }))}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-xs">Observação</Label>
-              <Textarea rows={2} value={manualForm.notes} onChange={(e) => setManualForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Ex.: leve 3 pague 2, no clube…" />
+              <Label className="text-xs">{t("communityPrices.manual.fields.notes")}</Label>
+              <Textarea
+                rows={2}
+                value={manualForm.notes}
+                onChange={(e) => setManualForm((f) => ({ ...f, notes: e.target.value }))}
+                placeholder={t("communityPrices.manual.fields.notesPlaceholder")}
+              />
             </div>
           </div>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={() => setManualOpen(false)}>Cancelar</Button>
-            <Button onClick={saveManual}><Save className="mr-2 h-4 w-4" /> Salvar</Button>
+            <Button variant="ghost" onClick={() => { setManualOpen(false); setEditingId(null); }} className="min-h-11">
+              {t("communityPrices.manual.cancel")}
+            </Button>
+            <Button onClick={saveManual} className="min-h-11">
+              <Save className="mr-2 h-4 w-4" /> {t("communityPrices.manual.save")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
