@@ -116,6 +116,7 @@ export function rateLimitedResponse(retryAfterSeconds: number): Response {
   return new Response(
     JSON.stringify({
       error: "rate_limited",
+      code: "rate_limited",
       message: "Muitas tentativas. Tente novamente em alguns instantes.",
     }),
     {
@@ -135,6 +136,7 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
   return new Response(
     JSON.stringify({
       error: "rate_limited",
+      code: "rate_limited",
       message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente.",
     }),
     {
