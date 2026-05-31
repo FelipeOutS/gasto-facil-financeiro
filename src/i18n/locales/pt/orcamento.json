@@ -10,9 +10,15 @@
   "pageSubtitle": "Planeje seus limites e acompanhe quanto já foi usado no mês.",
   "empty": {
     "title": "Crie seu primeiro orçamento",
-    "subtitle": "Defina limites por categoria e acompanhe para onde seu dinheiro está indo.",
+    "subtitle": "Defina limites para acompanhar seus gastos do mês e receber alertas quando estiver perto de ultrapassar.",
     "create": "Criar orçamento",
-    "copyPrev": "Copiar do mês anterior"
+    "copyPrev": "Copiar do mês anterior",
+    "helper": "Comece com uma categoria importante, como mercado, alimentação, transporte ou lazer. Você pode ajustar depois.",
+    "steps": {
+      "category": "Escolha a categoria",
+      "limit": "Defina o limite",
+      "track": "Acompanhe durante o mês"
+    }
   },
   "summary": {
     "planned": "Planejado",
