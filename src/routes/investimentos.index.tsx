@@ -1421,10 +1421,10 @@ function HistoricoImportacoesDialog({
       <Dialog open={!!detalhe} onOpenChange={(v) => !v && setDetalhe(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes da importação</DialogTitle>
+            <DialogTitle>{tInv("dialogs2.importHistory.details.title")}</DialogTitle>
             <DialogDescription>
-              {detalhe?.arquivo_nome || "Importação manual"} ·{" "}
-              {detalhe ? new Date(detalhe.created_at).toLocaleDateString("pt-BR") : ""}
+              {detalhe?.arquivo_nome || tInv("dialogs2.importHistory.details.manualName")} ·{" "}
+              {detalhe ? new Date(detalhe.created_at).toLocaleDateString() : ""}
             </DialogDescription>
           </DialogHeader>
 
@@ -1433,15 +1433,15 @@ function HistoricoImportacoesDialog({
           ) : itensDetalhe ? (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <MiniStat label="Ativos" value={String(itensDetalhe.ativos.length)} />
-                <MiniStat label="Movimentações" value={String(itensDetalhe.movimentacoes.length)} />
-                <MiniStat label="Rendimentos" value={String(itensDetalhe.rendimentos.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.assets")} value={String(itensDetalhe.ativos.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.movements")} value={String(itensDetalhe.movimentacoes.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.incomes")} value={String(itensDetalhe.rendimentos.length)} />
               </div>
 
               {itensDetalhe.ativos.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Ativos criados
+                    {tInv("dialogs2.importHistory.details.createdAssets")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.ativos.map((a) => (
@@ -1457,12 +1457,12 @@ function HistoricoImportacoesDialog({
               {itensDetalhe.movimentacoes.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Movimentações
+                    {tInv("dialogs2.importHistory.details.movements")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.movimentacoes.map((m) => (
                       <li key={m.id} className="flex justify-between gap-2">
-                        <span className="capitalize">{m.tipo}</span>
+                        <span>{getTipoMovimentacaoLabel(m.tipo, tInv)}</span>
                         <span className="text-xs text-muted-foreground">{m.data}</span>
                       </li>
                     ))}
@@ -1473,12 +1473,12 @@ function HistoricoImportacoesDialog({
               {itensDetalhe.rendimentos.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Rendimentos
+                    {tInv("dialogs2.importHistory.details.incomes")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.rendimentos.map((r) => (
                       <li key={r.id} className="flex justify-between gap-2">
-                        <span className="capitalize">{r.tipo.replace("_", " ")}</span>
+                        <span>{getTipoRendimentoLabel(r.tipo, tInv)}</span>
                         <span className="text-xs text-muted-foreground">{r.data_pagamento}</span>
                       </li>
                     ))}
@@ -1495,10 +1495,10 @@ function HistoricoImportacoesDialog({
           ) : null}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDetalhe(null)}>Fechar</Button>
+            <Button variant="outline" onClick={() => setDetalhe(null)}>{tInv("dialogs2.importHistory.close")}</Button>
             {detalhe && (
               <Button variant="destructive" onClick={() => setConfirmar(detalhe)}>
-                <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
+                <Trash2 className="h-4 w-4 mr-1.5" /> {tInv("dialogs2.importHistory.details.delete")}
               </Button>
             )}
           </DialogFooter>
