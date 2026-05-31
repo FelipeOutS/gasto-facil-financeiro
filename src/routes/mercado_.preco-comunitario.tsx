@@ -7,6 +7,7 @@ import {
   Home,
   BadgePercent,
   Camera,
+  Cloud,
   Plus,
   Info,
   Trash2,
