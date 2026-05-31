@@ -108,7 +108,13 @@
       "movementType": "Type",
       "date": "Date",
       "unitPrice": "Unit price",
-      "totalAmount": "Total amount"
+      "totalAmount": "Total amount",
+      "paymentDate": "Payment date",
+      "amountReceived": "Amount received",
+      "status": "Status",
+      "statusReceived": "Received",
+      "statusExpected": "Expected",
+      "updateDate": "Update date"
     },
     "placeholders": {
       "institution": "XP, Nubank, Rico…",
