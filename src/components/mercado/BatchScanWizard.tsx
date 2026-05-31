@@ -46,10 +46,11 @@ type Step = "market" | "photos" | "processing" | "review";
 
 type PhotoStatus = "pending" | "processing" | "done" | "empty" | "error";
 
-type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
+type EmptyReason = "no_text_detected" | "text_found_but_no_items" | "text_found_but_no_prices" | null;
 type ErrorReason =
   | "ocr_config_missing"
   | "vision_api_error"
+  | "gemini_gateway_error"
   | "invalid_image_payload"
   | "network"
   | "rate_limited"
@@ -76,6 +77,7 @@ type Photo = {
   errorMessage?: string;
   emptyReason?: EmptyReason;
   errorReason?: ErrorReason;
+  usedFallback?: boolean;
   items: DetectedItem[];
 };
 
@@ -285,8 +287,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         let reason: ErrorReason = "unknown_error";
         if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
         else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (json?.code === "gemini_gateway_error") reason = "gemini_gateway_error";
         else if (json?.code === "invalid_image_payload" || json?.code === "unsupported_image_format") reason = "invalid_image_payload";
-        else if (res.status === 429) reason = "rate_limited";
+        else if (json?.code === "rate_limited" || res.status === 429) reason = "rate_limited";
         else if (res.status === 402) reason = "credits";
         return {
           ...photo,
@@ -303,7 +306,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             ? "no_text_detected"
             : code === "text_found_but_no_items"
               ? "text_found_but_no_items"
-              : null;
+              : code === "text_found_but_no_prices"
+                ? "text_found_but_no_prices"
+                : null;
         return {
           ...photo,
           status: "empty",
@@ -311,6 +316,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
           emptyReason,
           errorReason: undefined,
           errorMessage: undefined,
+          usedFallback: Boolean(json?.debugInfo?.usedFallback),
         };
       }
       return {
@@ -320,6 +326,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         emptyReason: undefined,
         errorReason: undefined,
         errorMessage: undefined,
+        usedFallback: Boolean(json?.debugInfo?.usedFallback),
       };
     } catch (err) {
       console.error("[batch-scan] processPhoto", err);
