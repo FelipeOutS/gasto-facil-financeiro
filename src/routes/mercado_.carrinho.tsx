@@ -407,6 +407,11 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
   const [valor, setValor] = useState<string>(
     item.precoEstimado != null ? String(item.precoEstimado) : "",
   );
+  const { pool } = useActiveCommunityPrices();
+  const suggestions = useMemo(
+    () => getSuggestionsFor(item.nome, pool),
+    [item.nome, pool],
+  );
 
   function handleToggle() {
     toggleItemComprado(listaId, item.id);
@@ -419,6 +424,12 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
       precoEstimado: Number.isFinite(parsed) && parsed > 0 ? parsed : undefined,
     });
     setEditing(false);
+  }
+
+  function applyCommunityPrice(price: number) {
+    setValor(String(price));
+    updateItemLista(listaId, item.id, { precoEstimado: price });
+    toast.success(t("communityPrices.suggestions.applied"));
   }
 
   const subtotal = (item.precoEstimado ?? 0) * (item.quantidade || 1);
