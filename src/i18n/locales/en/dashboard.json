@@ -7,7 +7,9 @@
   "empty": {
     "eyebrow": "Gasto Inteligente",
     "title": "Welcome to Gasto Inteligente 🚀",
-    "subtitle": "Start by adding your first expense or income to see your financial summary, charts, and alerts.",
+    "subtitle": "Start by adding an expense or income entry to build your financial summary.",
+    "subtitle_mei": "Start by adding an expense or revenue entry to build your financial summary.",
+    "subtitle_empresa": "Start by adding an expense or revenue entry to build your financial summary.",
     "footer": "Everything is saved in your account. 🔒",
     "cards": {
       "salario": "Add income",
