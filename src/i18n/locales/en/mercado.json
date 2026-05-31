@@ -64,6 +64,10 @@
       "importarCupom": {
         "title": "Import receipt",
         "desc": "Scan the receipt QR Code to prepare importing the purchase."
+      },
+      "precoComunitario": {
+        "title": "Community Price",
+        "desc": "Scan flyers by photo and record prices shared by the community."
       }
     }
   },
