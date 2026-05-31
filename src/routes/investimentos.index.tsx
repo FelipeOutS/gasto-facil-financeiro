@@ -2275,7 +2275,7 @@ function RendimentoDialog({
     try {
       if (editing) await atualizarRendimento(editing.id, payload);
       else await criarRendimento(userId, payload);
-      toast.success(editing ? "Rendimento atualizado." : "Rendimento adicionado.");
+      toast.success(editing ? tInv("forms.aux.success.incomeUpdated") : tInv("forms.aux.success.incomeCreated"));
       onSaved();
     } catch (e) {
       console.error(e);
