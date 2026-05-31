@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 /**
  * Google Maps Loader — helper seguro para carregar a Google Maps JS API
  * ----------------------------------------------------------------------------
