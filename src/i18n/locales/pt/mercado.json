@@ -1337,7 +1337,8 @@
         "saveFailed": "Não foi possível salvar os preços revisados.",
         "rateLimited": "Aguarde um pouco antes de buscar novamente.",
         "selectAtLeastOne": "Selecione ao menos um item para salvar."
-      }
+      },
+      "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial."
     },
     "suggestions": {
       "title": "Preço comunitário encontrado",
@@ -1363,4 +1364,3 @@
     }
   }
 }
-
