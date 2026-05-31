@@ -2045,12 +2045,12 @@ function MovimentacaoDialog({
   async function salvar() {
     if (!userId) return;
     if (!ativoId) {
-      toast.error("Selecione um investimento.");
+      toast.error(tInv("forms.aux.errors.assetRequired"));
       return;
     }
     const vt = parseBRLInput(valorTotal);
     if (!Number.isFinite(vt) || vt < 0) {
-      toast.error("Informe um valor total válido.");
+      toast.error(tInv("forms.aux.errors.totalRequired"));
       return;
     }
     const payload: Partial<Movimentacao> = {
@@ -2077,11 +2077,11 @@ function MovimentacaoDialog({
         await criarMovimentacao(userId, payload);
       }
       await recalcularAtivoPorMovimentacoes(userId, ativoId);
-      toast.success(editing ? "Movimentação atualizada." : "Movimentação adicionada.");
+      toast.success(editing ? tInv("forms.aux.success.movementUpdated") : tInv("forms.aux.success.movementCreated"));
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível salvar a movimentação.");
+      toastFromError(e, tInv("forms.aux.errors.movementSaveFailed"));
     } finally {
       setSalvando(false);
     }
@@ -2093,17 +2093,17 @@ function MovimentacaoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-4 w-4" />
-            {editing ? "Editar movimentação" : "Nova movimentação"}
+            {editing ? tInv("dialogs.movement.titleEdit") : tInv("dialogs.movement.titleCreate")}
           </DialogTitle>
-          <DialogDescription>Registro manual · não realiza compra ou venda real.</DialogDescription>
+          <DialogDescription>{tInv("dialogs.movement.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground">Investimento</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <Select value={ativoId} onValueChange={setAtivoId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={tInv("forms.placeholders.select")} />
               </SelectTrigger>
               <SelectContent>
                 {ativos.map((a) => (
@@ -2117,7 +2117,7 @@ function MovimentacaoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Tipo</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.movementType")}</label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoMovimentacao)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -2132,7 +2132,7 @@ function MovimentacaoDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Data</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.date")}</label>
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
           </div>
@@ -2140,19 +2140,19 @@ function MovimentacaoDialog({
           {variavel && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">Quantidade</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.quantity")}</label>
                 <Input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
-                  placeholder="0"
+                  placeholder={tInv("forms.placeholders.zero")}
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Valor unitário</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.unitPrice")}</label>
                 <Input
                   value={valorUnitario}
                   onChange={(e) => setValorUnitario(e.target.value)}
-                  placeholder="0,00"
+                  placeholder={tInv("forms.placeholders.zeroDecimal")}
                 />
               </div>
             </div>
@@ -2160,46 +2160,46 @@ function MovimentacaoDialog({
 
           <div>
             <label className="text-xs text-muted-foreground">
-              Valor total{variavel ? " (calculado)" : ""}
+              {tInv("forms.labels.totalAmount")}{variavel ? ` ${tInv("forms.aux.calculated")}` : ""}
             </label>
             <Input
               value={valorTotal}
               onChange={(e) => setValorTotal(e.target.value)}
-              placeholder="0,00"
+              placeholder={tInv("forms.placeholders.zeroDecimal")}
             />
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Instituição / corretora</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.institution")}</label>
             <Input
               value={instituicao}
               onChange={(e) => setInstituicao(e.target.value)}
-              placeholder="Ex.: NuInvest, XP, Banco Inter"
+              placeholder={tInv("forms.placeholders.institutionAlt")}
             />
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Observação</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               rows={2}
-              placeholder="opcional"
+              placeholder={tInv("forms.placeholders.optional")}
             />
           </div>
 
           {ativoSelecionado && !variavel && (
             <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
               <Info className="h-3 w-3 mt-0.5 shrink-0" />
-              Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente.
+              {tInv("dialogs.movement.fixedIncomeHint")}
             </p>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>{tInv("forms.aux.cancel")}</Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : editing ? "Salvar" : "Adicionar"}
+            {salvando ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
