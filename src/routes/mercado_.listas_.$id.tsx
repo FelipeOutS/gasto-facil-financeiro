@@ -266,11 +266,20 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           </p>
         </section>
       ) : (
-        <section className="mt-5 flex flex-col gap-3">
-          {lista.entries.map((item) => (
-            <ItemRow key={item.id} item={item} listaId={lista.id} />
-          ))}
-        </section>
+        <>
+          <section className="mt-5 flex flex-col gap-3">
+            {lista.entries.map((item) => (
+              <ItemRow key={item.id} item={item} listaId={lista.id} />
+            ))}
+          </section>
+          <CommunityPriceSavingsSummary
+            items={lista.entries.map((it) => ({
+              nome: it.nome,
+              quantidade: it.quantidade,
+              precoEstimado: it.precoEstimado,
+            }))}
+          />
+        </>
       )}
 
       {/* Finalize */}
