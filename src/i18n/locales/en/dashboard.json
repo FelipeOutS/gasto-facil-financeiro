@@ -16,6 +16,25 @@
       "meta": "Create first goal"
     }
   },
+  "firstSteps": {
+    "title": "Start with your first entry",
+    "description": "Add an expense or income to start seeing your financial summary, charts, and smart alerts.",
+    "dismiss": "Dismiss",
+    "primaryCta": "Add expense",
+    "secondaryCtaIncome": "Add income",
+    "secondaryCtaRevenue": "Add revenue",
+    "exploreCta": "Explore all features",
+    "hint": "After your first entry, you can explore imports, reports, and smart features based on your plan.",
+    "items": {
+      "expense": "Add your first expense",
+      "income": "Add your first income",
+      "revenue": "Add your first revenue",
+      "card": "Add a card",
+      "goal": "Create a goal",
+      "client": "Add a client",
+      "supplier": "Add a supplier"
+    }
+  },
   "completeProfile": {
     "title": "Complete your profile",
     "subtitle": "Personalize your experience: Individual, Freelancer or Business.",

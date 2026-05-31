@@ -42,6 +42,7 @@ import { AvisoTrialExpirandoBanner } from "@/components/AvisoTrialExpirandoBanne
 import { UpgradeCardsList } from "@/components/UpgradeCardsList";
 import {
   contaPertenceAoMesRef,
+  getCartoes,
   getCategoriaById,
   getCategorias,
   getContasAPagar,
@@ -70,6 +71,7 @@ import { DashboardDiagnosticoMensalCard } from "@/components/DashboardDiagnostic
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { RadarEconomicoInteligenteCard } from "@/components/dashboard/RadarEconomicoInteligenteCard";
 import { EconomicMonthImpactCard } from "@/components/dashboard/EconomicMonthImpactCard";
+import { PrimeirosPassosCard } from "@/components/dashboard/PrimeirosPassosCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
@@ -156,6 +158,7 @@ function Index() {
   const metas = useStore(() => getMetas());
   const contas = useStore(() => getContasAPagar());
   const categorias = useStore(() => getCategorias());
+  const cartoes = useStore(() => getCartoes());
   const limiteTotal = useStore(() => getLimite("total", ym.mes, ym.ano));
   // Re-render quando limites mudam
   useStore(() => getLimites().length);
@@ -450,6 +453,18 @@ function Index() {
           monthSwitcher={monthSwitcher}
         />
       </div>
+
+      {/* Onboarding leve — Primeiros passos (some quando checklist completo ou dispensado) */}
+      <div className="mt-3 lg:mt-4">
+        <PrimeirosPassosCard
+          gastosCount={gastos.length}
+          receitasCount={receitas.length}
+          cartoesCount={cartoes.length}
+          metasCount={metas.length}
+        />
+      </div>
+
+
 
       {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
       <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">

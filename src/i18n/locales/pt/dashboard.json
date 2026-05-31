@@ -16,6 +16,25 @@
       "meta": "Criar primeira meta"
     }
   },
+  "firstSteps": {
+    "title": "Comece pelo primeiro lançamento",
+    "description": "Registre um gasto ou uma receita para começar a visualizar seu resumo financeiro, gráficos e alertas inteligentes.",
+    "dismiss": "Dispensar",
+    "primaryCta": "Adicionar gasto",
+    "secondaryCtaIncome": "Adicionar receita",
+    "secondaryCtaRevenue": "Adicionar faturamento",
+    "exploreCta": "Ver todos os recursos",
+    "hint": "Depois do primeiro lançamento, você pode explorar importações, relatórios e recursos inteligentes conforme seu plano.",
+    "items": {
+      "expense": "Adicionar primeiro gasto",
+      "income": "Adicionar primeira receita",
+      "revenue": "Adicionar primeiro faturamento",
+      "card": "Cadastrar um cartão",
+      "goal": "Criar uma meta",
+      "client": "Cadastrar cliente",
+      "supplier": "Cadastrar fornecedor"
+    }
+  },
   "completeProfile": {
     "title": "Complete seu perfil",
     "subtitle": "Personalize sua experiência: Pessoa física, MEI ou Empresa.",
