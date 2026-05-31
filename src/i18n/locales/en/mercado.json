@@ -1072,15 +1072,33 @@
     "useLocation": "Use my location",
     "locationPrivacy": "Your location is only used on this screen to find nearby markets. Nothing is saved automatically.",
     "loading": "Searching nearby markets…",
+    "geocoding": "Looking up address…",
     "error": "We couldn't search markets right now. Check your connection and try again.",
     "errorTitle": "Search error",
     "retry": "Try again",
     "permissionDeniedTitle": "Location not allowed",
     "permissionDenied": "You blocked the location permission. Allow it in your browser settings and try again, or add the market manually.",
+    "locationDeniedManualHint": "No problem — you can search manually by typing a city, neighborhood, or address below.",
     "empty": "No supermarket found in that radius. Try another area or add one manually.",
     "addMarket": "Add this market",
     "added": "Added",
     "selectMarket": "Select {{name}} on the map",
-    "openInMaps": "Open in Google Maps"
+    "openInMaps": "Open in Google Maps",
+    "manualSearchTitle": "Search by address",
+    "manualSearchDescription": "Type a city, neighborhood, or address to find markets in that area.",
+    "searchPlaceholder": "e.g.: Brooklyn, Downtown, 1000 Main St",
+    "searchButton": "Search this location",
+    "radiusLabel": "Search radius",
+    "radiusOptions": {
+      "1": "1 km",
+      "2.5": "2.5 km",
+      "5": "5 km",
+      "10": "10 km"
+    },
+    "distanceMeters": "{{value}} m away",
+    "distanceKm": "{{value}} km away",
+    "noAddressFound": "We couldn't find that address. Try being more specific.",
+    "invalidSearch": "Type at least 3 characters to search.",
+    "lastSearchLabel": "Searching near: {{location}}"
   }
 }

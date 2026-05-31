@@ -1072,15 +1072,33 @@
     "useLocation": "Usar minha localização",
     "locationPrivacy": "Sua localização será usada apenas nesta tela para buscar mercados próximos. Nada é salvo automaticamente.",
     "loading": "Buscando mercados próximos…",
+    "geocoding": "Procurando endereço…",
     "error": "Não conseguimos buscar mercados agora. Verifique sua conexão e tente novamente.",
     "errorTitle": "Erro na busca",
     "retry": "Tentar novamente",
     "permissionDeniedTitle": "Localização não autorizada",
     "permissionDenied": "Você bloqueou a permissão de localização. Libere nas configurações do navegador e tente de novo, ou cadastre o mercado manualmente.",
+    "locationDeniedManualHint": "Sem problemas — você pode buscar manualmente digitando uma cidade, bairro ou endereço abaixo.",
     "empty": "Nenhum supermercado encontrado nesse raio. Tente em outra região ou cadastre manualmente.",
     "addMarket": "Adicionar este mercado",
     "added": "Adicionado",
     "selectMarket": "Selecionar {{name}} no mapa",
-    "openInMaps": "Abrir no Google Maps"
+    "openInMaps": "Abrir no Google Maps",
+    "manualSearchTitle": "Buscar por endereço",
+    "manualSearchDescription": "Digite uma cidade, bairro ou endereço para procurar mercados na região.",
+    "searchPlaceholder": "Ex.: Itaquaquecetuba, Vila Mariana, Av. Paulista 1000",
+    "searchButton": "Buscar neste local",
+    "radiusLabel": "Raio da busca",
+    "radiusOptions": {
+      "1": "1 km",
+      "2.5": "2,5 km",
+      "5": "5 km",
+      "10": "10 km"
+    },
+    "distanceMeters": "A {{value}} m",
+    "distanceKm": "A {{value}} km",
+    "noAddressFound": "Não encontramos esse endereço. Tente ser mais específico.",
+    "invalidSearch": "Digite pelo menos 3 caracteres para buscar.",
+    "lastSearchLabel": "Buscando perto de: {{location}}"
   }
 }
