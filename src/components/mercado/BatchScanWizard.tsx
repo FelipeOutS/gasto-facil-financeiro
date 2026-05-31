@@ -741,13 +741,28 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             </div>
 
             {photos.length > 0 && (
-              <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
-                {t("communityPrices.batch.readSummary", {
-                  read: withItemsCount,
-                  total: photos.length,
-                })}
+              <div className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                <div>
+                  {t("communityPrices.batch.readSummary", {
+                    read: withItemsCount,
+                    total: photos.length,
+                  })}
+                </div>
+                <div>{t("communityPrices.batch.summaryItemsFound", { count: reviewItems.length })}</div>
+                {noTextCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryNoText", { count: noTextCount })}</div>
+                )}
+                {textNoItemsCount > 0 && (
+                  <div>
+                    {t("communityPrices.batch.summaryTextNoItems", { count: textNoItemsCount })}
+                  </div>
+                )}
+                {errorCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
+                )}
               </div>
             )}
+
 
             {allFailed && (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
