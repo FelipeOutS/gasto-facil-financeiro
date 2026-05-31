@@ -1661,7 +1661,7 @@ function AtualizarValorDialog({
     if (!ativo || !userId) return;
     const valorNovo = parseBRLInput(valorAtual);
     if (!Number.isFinite(valorNovo) || valorNovo < 0) {
-      toast.error("Informe um valor atual válido.");
+      toast.error(tInv("forms.aux.errors.updateValueInvalid"));
       return;
     }
     setSalvando(true);
