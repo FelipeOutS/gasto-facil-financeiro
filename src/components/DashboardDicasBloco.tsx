@@ -225,8 +225,8 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
           className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
         >
           {expanded
-            ? "Mostrar menos"
-            : `Ver mais ${restantes.length} ${restantes.length === 1 ? "dica" : "dicas"}`}
+            ? t("tipsBlock.showLess")
+            : t("tipsBlock.showMore", { count: restantes.length, unit: restantes.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur") })}
           <ChevronDown
             className={cn(
               "h-3.5 w-3.5 transition-transform",
