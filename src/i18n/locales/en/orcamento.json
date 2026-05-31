@@ -10,9 +10,15 @@
   "pageSubtitle": "Plan your limits and track how much you've used this month.",
   "empty": {
     "title": "Create your first budget",
-    "subtitle": "Set limits per category and track where your money is going.",
+    "subtitle": "Set limits to track your monthly spending and receive alerts when you're close to going over.",
     "create": "Create budget",
-    "copyPrev": "Copy from previous month"
+    "copyPrev": "Copy from previous month",
+    "helper": "Start with an important category, such as groceries, food, transport, or leisure. You can adjust later.",
+    "steps": {
+      "category": "Choose the category",
+      "limit": "Set the limit",
+      "track": "Track it during the month"
+    }
   },
   "summary": {
     "planned": "Planned",
