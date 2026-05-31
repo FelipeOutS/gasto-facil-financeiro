@@ -160,14 +160,14 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">
-              Dicas para economizar
+              {t("tipsBlock.title")}
             </h3>
             <span className="text-[11px] text-muted-foreground">
-              {insights.length} {insights.length === 1 ? "dica" : "dicas"}
+              {insights.length} {insights.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur")}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Sugestões leves baseadas no seu mês.
+            {t("tipsBlock.subtitle")}
           </p>
         </div>
       </div>
