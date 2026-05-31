@@ -2298,7 +2298,7 @@ function RendimentoDialog({
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground">Investimento</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <Select value={ativoId} onValueChange={setAtivoId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
