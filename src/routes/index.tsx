@@ -777,7 +777,7 @@ function Index() {
                       <div className="pointer-events-none absolute inset-0 grid place-items-center">
                         <div className="text-center">
                           <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                            Total
+                            {t("kpi.total")}
                           </p>
                           <p className="num text-sm font-semibold">
                             {formatBRLCompact(total)}
