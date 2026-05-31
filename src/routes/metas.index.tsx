@@ -173,12 +173,29 @@ function MetasPage() {
 
       <section className="mt-5 space-y-3">
         {ordenadas.length === 0 ? (
-          <PremiumEmptyState
-            variant="premium"
-            icon={<Target className="h-6 w-6" />}
-            title={t("empty.title")}
-            description={t("empty.subtitle")}
-            cta={
+          <div className="flex flex-col items-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-6 text-center animate-rise">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary animate-pop">
+              <Target className="h-6 w-6" />
+            </div>
+            <h3 className="mt-3 text-base font-semibold">{t("onboarding.title")}</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">{t("onboarding.description")}</p>
+
+            <div className="mt-4 flex items-center gap-3 sm:gap-4">
+              {[
+                t("onboarding.steps.objective"),
+                t("onboarding.steps.amount"),
+                t("onboarding.steps.progress"),
+              ].map((label, i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {i + 1}
+                  </span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <Button
                 className="card-press min-h-11 rounded-full font-semibold"
                 onClick={openCreate}
@@ -186,8 +203,9 @@ function MetasPage() {
                 <Plus className="mr-1 h-4 w-4" />
                 {t("empty.cta")}
               </Button>
-            }
-          />
+            </div>
+            <p className="mt-2 max-w-xs text-xs text-muted-foreground">{t("empty.helper")}</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 stagger md:grid-cols-2 xl:grid-cols-3">
             {ordenadas.map((m) => (
