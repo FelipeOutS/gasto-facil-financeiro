@@ -13,6 +13,7 @@ import {
   Store,
   MapPin,
   Receipt,
+  BadgePercent,
   Lock,
   type LucideIcon,
 } from "lucide-react";
