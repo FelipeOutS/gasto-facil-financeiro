@@ -1330,7 +1330,36 @@
       "imageMissing": "No image available",
       "productImage": "Product image",
       "categoryPlaceholder": "No image"
+    },
+    "onlineImport": {
+      "cardTitle": "Import online prices",
+      "cardDescription": "Fetch public prices available online and review before saving.",
+      "cardCta": "Import from Joanin Online",
+      "title": "Import online prices",
+      "description": "We will fetch public prices from Joanin Online. Review before saving.",
+      "confirmMessage": "We'll fetch public prices from Joanin Online. Values may vary by store, region and date. Review before saving.",
+      "sourceLabel": "Source: {{source}}",
+      "sourceTag": "Source",
+      "cancel": "Cancel",
+      "back": "Back",
+      "fetchCta": "Fetch prices",
+      "loading": "Fetching online prices…",
+      "reviewSummary": "Found {{count}} price(s) on {{source}} · Updated on {{date}}.",
+      "reviewDisclaimer": "Check availability and price at the store before buying.",
+      "itemFooter": "Source: {{source}} · Updated on {{date}}",
+      "oldPriceBadge": "Was R$ {{value}}",
+      "oldPriceNote": "Previous price: R$ {{value}}",
+      "saveReviewed": "Save reviewed prices",
+      "success_one": "{{count}} price imported.",
+      "success_other": "{{count}} prices imported.",
+      "errors": {
+        "siteUnavailable": "Couldn't reach the online source right now.",
+        "noProductsFound": "No prices were found in this search.",
+        "importFailed": "Couldn't import the online prices.",
+        "saveFailed": "Couldn't save the reviewed prices.",
+        "rateLimited": "Please wait a moment before searching again.",
+        "selectAtLeastOne": "Select at least one item to save."
+      }
     }
   }
 }
-
