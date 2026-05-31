@@ -1313,17 +1313,17 @@ function HistoricoImportacoesDialog({
     try {
       if (modo === "historico") {
         await excluirImportacaoSomenteHistorico(confirmar.id);
-        toast.success("Histórico da importação excluído.");
+        toast.success(tInv("dialogs2.importHistory.confirm.toast.historyDeleted"));
       } else {
         await excluirImportacaoComDados(userId, confirmar.id);
-        toast.success("Importação e dados vinculados excluídos.");
+        toast.success(tInv("dialogs2.importHistory.confirm.toast.allDeleted"));
       }
       setConfirmar(null);
       setDetalhe(null);
       onChanged();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível excluir.");
+      toastFromError(e, tInv("dialogs2.importHistory.confirm.toast.deleteFailed"));
     } finally {
       setExcluindo(false);
     }
@@ -1334,9 +1334,9 @@ function HistoricoImportacoesDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico de importações</DialogTitle>
+            <DialogTitle>{tInv("dialogs2.importHistory.title")}</DialogTitle>
             <DialogDescription>
-              Veja todas as importações realizadas e remova quando precisar.
+              {tInv("dialogs2.importHistory.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1345,16 +1345,19 @@ function HistoricoImportacoesDialog({
               <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-soft/60 grid place-items-center text-brand-on-soft mb-3">
                 <History className="h-5 w-5" />
               </div>
-              <h3 className="font-semibold">Nenhuma importação ainda</h3>
+              <h3 className="font-semibold">{tInv("dialogs2.importHistory.emptyTitle")}</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                Quando você importar extratos da B3, corretora, CSV ou PDF, eles aparecerão aqui.
+                {tInv("dialogs2.importHistory.emptyDescription")}
               </p>
             </div>
           ) : (
             <ul className="space-y-2.5">
               {importacoes.map((imp) => {
                 const r = imp.resumo ?? {};
-                const data = new Date(imp.created_at).toLocaleDateString("pt-BR");
+                const data = new Date(imp.created_at).toLocaleDateString();
+                const statusKey = `dialogs2.importHistory.status.${imp.status}`;
+                const statusTranslated = tInv(statusKey);
+                const statusLabel = statusTranslated === statusKey ? imp.status : statusTranslated;
                 return (
                   <li
                     key={imp.id}
@@ -1373,27 +1376,30 @@ function HistoricoImportacoesDialog({
                             variant={imp.status === "concluida" ? "secondary" : "outline"}
                             className="text-[10px] capitalize"
                           >
-                            {imp.status}
+                            {statusLabel}
                           </Badge>
                           <span className="text-[11px] text-muted-foreground">
-                            Importado em {data}
+                            {tInv("dialogs2.importHistory.importedOn", { date: data })}
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1.5">
-                          {(r.ativos ?? 0)} ativos · {(r.movimentacoes ?? 0)} movimentações ·{" "}
-                          {(r.rendimentos ?? 0)} rendimentos
+                          {tInv("dialogs2.importHistory.summary", {
+                            ativos: r.ativos ?? 0,
+                            movs: r.movimentacoes ?? 0,
+                            rends: r.rendimentos ?? 0,
+                          })}
                         </div>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         <Button size="sm" variant="outline" onClick={() => abrirDetalhe(imp)}>
-                          Ver detalhes
+                          {tInv("dialogs2.importHistory.viewDetails")}
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-rose-500 hover:text-rose-500"
                           onClick={() => setConfirmar(imp)}
-                          aria-label="Excluir importação"
+                          aria-label={tInv("dialogs2.importHistory.deleteAria")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1406,7 +1412,7 @@ function HistoricoImportacoesDialog({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>{tInv("dialogs2.importHistory.close")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1415,10 +1421,10 @@ function HistoricoImportacoesDialog({
       <Dialog open={!!detalhe} onOpenChange={(v) => !v && setDetalhe(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes da importação</DialogTitle>
+            <DialogTitle>{tInv("dialogs2.importHistory.details.title")}</DialogTitle>
             <DialogDescription>
-              {detalhe?.arquivo_nome || "Importação manual"} ·{" "}
-              {detalhe ? new Date(detalhe.created_at).toLocaleDateString("pt-BR") : ""}
+              {detalhe?.arquivo_nome || tInv("dialogs2.importHistory.details.manualName")} ·{" "}
+              {detalhe ? new Date(detalhe.created_at).toLocaleDateString() : ""}
             </DialogDescription>
           </DialogHeader>
 
@@ -1427,15 +1433,15 @@ function HistoricoImportacoesDialog({
           ) : itensDetalhe ? (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <MiniStat label="Ativos" value={String(itensDetalhe.ativos.length)} />
-                <MiniStat label="Movimentações" value={String(itensDetalhe.movimentacoes.length)} />
-                <MiniStat label="Rendimentos" value={String(itensDetalhe.rendimentos.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.assets")} value={String(itensDetalhe.ativos.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.movements")} value={String(itensDetalhe.movimentacoes.length)} />
+                <MiniStat label={tInv("dialogs2.importHistory.details.incomes")} value={String(itensDetalhe.rendimentos.length)} />
               </div>
 
               {itensDetalhe.ativos.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Ativos criados
+                    {tInv("dialogs2.importHistory.details.createdAssets")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.ativos.map((a) => (
@@ -1451,12 +1457,12 @@ function HistoricoImportacoesDialog({
               {itensDetalhe.movimentacoes.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Movimentações
+                    {tInv("dialogs2.importHistory.details.movements")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.movimentacoes.map((m) => (
                       <li key={m.id} className="flex justify-between gap-2">
-                        <span className="capitalize">{m.tipo}</span>
+                        <span>{getTipoMovimentacaoLabel(m.tipo, tInv)}</span>
                         <span className="text-xs text-muted-foreground">{m.data}</span>
                       </li>
                     ))}
@@ -1467,12 +1473,12 @@ function HistoricoImportacoesDialog({
               {itensDetalhe.rendimentos.length > 0 && (
                 <section>
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    Rendimentos
+                    {tInv("dialogs2.importHistory.details.incomes")}
                   </div>
                   <ul className="space-y-1">
                     {itensDetalhe.rendimentos.map((r) => (
                       <li key={r.id} className="flex justify-between gap-2">
-                        <span className="capitalize">{r.tipo.replace("_", " ")}</span>
+                        <span>{getTipoRendimentoLabel(r.tipo, tInv)}</span>
                         <span className="text-xs text-muted-foreground">{r.data_pagamento}</span>
                       </li>
                     ))}
@@ -1489,10 +1495,10 @@ function HistoricoImportacoesDialog({
           ) : null}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDetalhe(null)}>Fechar</Button>
+            <Button variant="outline" onClick={() => setDetalhe(null)}>{tInv("dialogs2.importHistory.close")}</Button>
             {detalhe && (
               <Button variant="destructive" onClick={() => setConfirmar(detalhe)}>
-                <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
+                <Trash2 className="h-4 w-4 mr-1.5" /> {tInv("dialogs2.importHistory.details.delete")}
               </Button>
             )}
           </DialogFooter>
@@ -1511,10 +1517,10 @@ function HistoricoImportacoesDialog({
               <div className="min-w-0">
                 <DialogHeader className="space-y-1 text-left">
                   <DialogTitle className="text-lg leading-tight">
-                    Excluir esta importação?
+                    {tInv("dialogs2.importHistory.confirm.title")}
                   </DialogTitle>
                   <DialogDescription className="text-sm">
-                    Escolha como deseja remover esta importação dos seus registros.
+                    {tInv("dialogs2.importHistory.confirm.description")}
                   </DialogDescription>
                 </DialogHeader>
               </div>
@@ -1538,11 +1544,11 @@ function HistoricoImportacoesDialog({
                 <History className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm">Excluir apenas histórico</p>
+                <p className="font-semibold text-sm">{tInv("dialogs2.importHistory.confirm.onlyHistoryTitle")}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                  Remove o registro desta importação da lista de histórico.
-                  Os ativos, movimentações e rendimentos criados por ela{" "}
-                  <strong className="text-foreground">permanecem</strong> na sua carteira.
+                  {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc1")}{" "}
+                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.onlyHistoryDescStrong")}</strong>{" "}
+                  {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc2")}
                 </p>
               </div>
             </button>
@@ -1563,12 +1569,12 @@ function HistoricoImportacoesDialog({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm text-destructive">
-                  Excluir tudo relacionado
+                  {tInv("dialogs2.importHistory.confirm.allTitle")}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                  Remove o registro <strong className="text-foreground">e</strong> os
-                  ativos, movimentações e rendimentos que esta importação criou.
-                  Esta ação não pode ser desfeita.
+                  {tInv("dialogs2.importHistory.confirm.allDesc1")}{" "}
+                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.allDescStrong")}</strong>{" "}
+                  {tInv("dialogs2.importHistory.confirm.allDesc2")}
                 </p>
               </div>
             </button>
@@ -1577,9 +1583,8 @@ function HistoricoImportacoesDialog({
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-3">
               <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
               <p className="text-xs text-amber-200/90 leading-relaxed">
-                <strong className="text-amber-300">Investimentos cadastrados manualmente
-                não são afetados</strong> — apenas itens vinculados a esta importação
-                serão removidos.
+                <strong className="text-amber-300">{tInv("dialogs2.importHistory.confirm.warningStrong")}</strong>{" "}
+                {tInv("dialogs2.importHistory.confirm.warningRest")}
               </p>
             </div>
           </div>
@@ -1591,12 +1596,12 @@ function HistoricoImportacoesDialog({
               disabled={excluindo}
               className="w-full sm:w-auto"
             >
-              Cancelar
+              {tInv("dialogs2.importHistory.confirm.cancel")}
             </Button>
             {excluindo && (
               <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
-                Excluindo…
+                {tInv("dialogs2.importHistory.confirm.deleting")}
               </span>
             )}
           </DialogFooter>
@@ -1864,9 +1869,9 @@ function AtualizarLoteDialog({
       }
     }
     setSalvando(false);
-    if (ok > 0) toast.success(`${ok} investimento(s) atualizado(s).`);
-    if (erros > 0) toast.error(`${erros} falha(s) ao atualizar.`);
-    if (ok === 0 && erros === 0) toast.info("Nenhuma alteração para salvar.");
+    if (ok > 0) toast.success(tInv("dialogs2.batchUpdate.toast.updated", { count: ok }));
+    if (erros > 0) toast.error(tInv("dialogs2.batchUpdate.toast.failed", { count: erros }));
+    if (ok === 0 && erros === 0) toast.info(tInv("dialogs2.batchUpdate.toast.noChanges"));
     onSaved();
   }
 
@@ -1875,15 +1880,15 @@ function AtualizarLoteDialog({
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" /> Atualizar valores
+            <RefreshCw className="h-4 w-4" /> {tInv("dialogs2.batchUpdate.title")}
           </DialogTitle>
           <DialogDescription>
-            Atualize os valores atuais dos seus investimentos. Valor informado pelo usuário.
+            {tInv("dialogs2.batchUpdate.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs text-muted-foreground">Data da atualização</label>
+          <label className="text-xs text-muted-foreground">{tInv("dialogs2.batchUpdate.updateDate")}</label>
           <Input
             type="date"
             value={data}
@@ -1895,7 +1900,7 @@ function AtualizarLoteDialog({
         <div className="space-y-3">
           {ativos.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Nenhum investimento cadastrado.
+              {tInv("dialogs2.batchUpdate.empty")}
             </p>
           ) : (
             ativos.map((a) => {
@@ -1908,7 +1913,7 @@ function AtualizarLoteDialog({
                     <div>
                       <div className="text-sm font-medium">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {getTipoInvestimentoLabel(a.tipo, tInv)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tInv)} · {tInv("dialogs2.batchUpdate.appliedShort", { value: formatBRL(Number(a.valor_aplicado || 0)) })}
                       </div>
                     </div>
                     <Badge
@@ -1922,7 +1927,7 @@ function AtualizarLoteDialog({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {isVariavel && (
                       <div>
-                        <label className="text-[11px] text-muted-foreground">Preço atual</label>
+                        <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.currentPrice")}</label>
                         <Input
                           value={entry.preco}
                           onChange={(e) => setCampo(a.id, "preco", e.target.value)}
@@ -1931,7 +1936,7 @@ function AtualizarLoteDialog({
                       </div>
                     )}
                     <div className={isVariavel ? "" : "md:col-span-2"}>
-                      <label className="text-[11px] text-muted-foreground">Valor atual</label>
+                      <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.currentValue")}</label>
                       <Input
                         value={entry.valor}
                         onChange={(e) => setCampo(a.id, "valor", e.target.value)}
@@ -1939,11 +1944,11 @@ function AtualizarLoteDialog({
                       />
                     </div>
                     <div className={isVariavel ? "" : "md:col-span-1"}>
-                      <label className="text-[11px] text-muted-foreground">Observação</label>
+                      <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.observation")}</label>
                       <Input
                         value={entry.obs}
                         onChange={(e) => setCampo(a.id, "obs", e.target.value)}
-                        placeholder="opcional"
+                        placeholder={tInv("dialogs2.batchUpdate.obsPlaceholder")}
                       />
                     </div>
                   </div>
@@ -1955,10 +1960,10 @@ function AtualizarLoteDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvando}>
-            Cancelar
+            {tInv("dialogs2.batchUpdate.cancel")}
           </Button>
           <Button onClick={salvarTodos} disabled={salvando || ativos.length === 0}>
-            {salvando ? "Salvando…" : "Salvar atualizações"}
+            {salvando ? tInv("dialogs2.batchUpdate.saving") : tInv("dialogs2.batchUpdate.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
