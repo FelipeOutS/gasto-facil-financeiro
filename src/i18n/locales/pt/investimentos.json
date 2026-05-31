@@ -136,7 +136,8 @@
       "select": "Selecione",
       "zero": "0",
       "zeroDecimal": "0,00",
-      "optional": "opcional"
+      "optional": "opcional",
+      "updateValueObs": "Ex.: cotação consultada na corretora"
     },
     "aux": {
       "hintVariable": "Use quantidade, preço médio e preço atual para calcular os valores automaticamente.",
