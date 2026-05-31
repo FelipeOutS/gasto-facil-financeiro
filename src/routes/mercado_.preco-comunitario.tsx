@@ -315,6 +315,16 @@ function PrecoComunitarioPage() {
             <Plus className="mr-2 h-4 w-4" /> {t("communityPrices.actions.newManual")}
           </Button>
         </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card sm:col-span-2">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Cloud className="h-4 w-4" /> {t("communityPrices.onlineImport.cardTitle")}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.onlineImport.cardDescription")}</p>
+          <Button className="mt-3 w-full min-h-11" variant="outline" onClick={() => setOnlineImportOpen(true)}>
+            <Cloud className="mr-2 h-4 w-4" /> {t("communityPrices.onlineImport.cardCta")}
+          </Button>
+        </div>
       </section>
 
       {/* Filtros */}
