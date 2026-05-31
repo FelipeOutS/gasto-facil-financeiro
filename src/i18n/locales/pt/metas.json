@@ -13,9 +13,19 @@
   },
   "newGoal": "Nova meta",
   "empty": {
-    "title": "Escolha uma meta e acompanhe cada passo até chegar lá.",
-    "subtitle": "Viagem, reserva, troca de carro — qualquer objetivo que valha a pena.",
-    "cta": "Criar primeira meta"
+    "title": "Nenhuma meta cadastrada",
+    "subtitle": "Crie uma meta para acompanhar objetivos como reserva de emergência, viagem, compra importante ou investimento futuro.",
+    "cta": "Criar meta",
+    "helper": "Comece com um objetivo simples e ajuste o valor depois, se precisar."
+  },
+  "onboarding": {
+    "title": "Crie sua primeira meta",
+    "description": "Defina um objetivo, informe o valor que deseja alcançar e acompanhe seu progresso aos poucos.",
+    "steps": {
+      "objective": "Defina o objetivo",
+      "amount": "Informe o valor",
+      "progress": "Acompanhe o progresso"
+    }
   },
   "status": {
     "nao_iniciada": "Não iniciada",
