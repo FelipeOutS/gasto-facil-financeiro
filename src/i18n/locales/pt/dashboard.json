@@ -643,6 +643,42 @@
       "mercadoAvancado": "Mercado Inteligente completo",
       "mercadoImportarCupom": "Importação de cupom/QR Code",
       "importacoes": "Importação Inteligente de faturas e extratos"
+  },
+  "financialHealth": {
+    "title": "Saúde financeira",
+    "empty": "Cadastre sua renda e alguns gastos para calcular sua saúde financeira.",
+    "scoreMax": "/ 100",
+    "scenarioLabel": "Cenário",
+    "levels": {
+      "critico": "Crítico",
+      "atencao": "Atenção",
+      "bom": "Bom",
+      "excelente": "Excelente"
+    }
+  },
+  "tipsBlock": {
+    "title": "Dicas para economizar",
+    "subtitle": "Sugestões leves baseadas no seu mês.",
+    "tipSing": "dica",
+    "tipPlur": "dicas",
+    "showLess": "Mostrar menos",
+    "showMore": "Ver mais {{count}} {{unit}}",
+    "priority": {
+      "alta": "Atenção",
+      "media": "Importante",
+      "baixa": "Dica"
+    }
+  },
+  "monthlyDiagnosis": {
+    "title": "Diagnóstico mensal",
+    "empty": "Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.",
+    "scenarioLabel": "Cenário econômico:",
+    "levels": {
+      "critico": "Crítico",
+      "atencao": "Atenção",
+      "bom": "Bom",
+      "excelente": "Excelente"
     }
   }
+}
 }
