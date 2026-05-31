@@ -18,6 +18,10 @@
     "totalLabel_empresa": "Total revenue this month",
     "entries_one": "{{count}} entry recorded",
     "entries_other": "{{count}} entries recorded",
+    "entries_one_mei": "{{count}} entry recorded",
+    "entries_other_mei": "{{count}} entries recorded",
+    "entries_one_empresa": "{{count}} entry recorded",
+    "entries_other_empresa": "{{count}} entries recorded",
     "variation": "{{sign}}{{value}}% vs last month"
   },
   "miniStat": {
@@ -31,6 +35,10 @@
     "outras": "Other",
     "entries_one": "{{count}} entry",
     "entries_other": "{{count}} entries",
+    "entries_one_mei": "{{count}} entry",
+    "entries_other_mei": "{{count}} entries",
+    "entries_one_empresa": "{{count}} entry",
+    "entries_other_empresa": "{{count}} entries",
     "pctMonth": "{{pct}}% of month"
   },
   "insights": {
@@ -156,6 +164,8 @@
   },
   "upcoming": {
     "kicker": "Upcoming",
+    "kicker_mei": "Upcoming",
+    "kicker_empresa": "Upcoming",
     "title": "Recurring income",
     "title_mei": "Recurring revenue",
     "title_empresa": "Recurring revenue",
@@ -192,6 +202,8 @@
     "recurringTitle_mei": "No recurring revenue this month yet",
     "recurringTitle_empresa": "No recurring revenue this month yet",
     "recurringSubtitle": "Add one and it repeats automatically.",
+    "recurringSubtitle_mei": "Add one and it repeats automatically.",
+    "recurringSubtitle_empresa": "Add one and it repeats automatically.",
     "recurringAction": "Add recurring",
     "defaultAction": "Add income",
     "defaultAction_mei": "Add revenue",
