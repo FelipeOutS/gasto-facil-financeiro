@@ -140,6 +140,109 @@ export const searchNearbyMarkets = createServerFn({ method: "POST" })
   });
 
 // ---------------------------------------------------------------------------
+// Geocoding — busca manual por endereço/cidade/bairro
+// ---------------------------------------------------------------------------
+
+const GeocodeInputSchema = z.object({
+  query: z.string().trim().min(3).max(200),
+});
+
+export type GeocodeResult = {
+  latitude: number | null;
+  longitude: number | null;
+  formattedAddress: string | null;
+  error: string | null;
+};
+
+export const geocodeMarketSearchLocation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => GeocodeInputSchema.parse(input))
+  .handler(async ({ data }): Promise<GeocodeResult> => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const mapsKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    if (!lovableKey || !mapsKey) {
+      console.error("[geocode] maps credentials missing");
+      return {
+        latitude: null,
+        longitude: null,
+        formattedAddress: null,
+        error: "maps_not_configured",
+      };
+    }
+
+    try {
+      const res = await fetch(`${GATEWAY_URL}/places/v1/places:searchText`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": mapsKey,
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask":
+            "places.formattedAddress,places.location,places.displayName",
+        },
+        body: JSON.stringify({
+          textQuery: data.query,
+          maxResultCount: 1,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error(`[geocode] searchText failed: ${res.status}`);
+        return {
+          latitude: null,
+          longitude: null,
+          formattedAddress: null,
+          error: "geocode_request_failed",
+        };
+      }
+
+      const json = (await res.json()) as {
+        places?: Array<{
+          formattedAddress?: string;
+          displayName?: { text?: string };
+          location?: { latitude?: number; longitude?: number };
+        }>;
+      };
+
+      const place = json.places?.[0];
+      if (
+        !place ||
+        typeof place.location?.latitude !== "number" ||
+        typeof place.location?.longitude !== "number"
+      ) {
+        return {
+          latitude: null,
+          longitude: null,
+          formattedAddress: null,
+          error: "no_address_found",
+        };
+      }
+
+      return {
+        latitude: place.location.latitude,
+        longitude: place.location.longitude,
+        formattedAddress:
+          place.formattedAddress?.trim() ||
+          place.displayName?.text?.trim() ||
+          null,
+        error: null,
+      };
+    } catch (err) {
+      console.error(
+        "[geocode] unexpected error",
+        err instanceof Error ? err.message : "unknown",
+      );
+      return {
+        latitude: null,
+        longitude: null,
+        formattedAddress: null,
+        error: "geocode_request_failed",
+      };
+    }
+  });
+
+// ---------------------------------------------------------------------------
 // Back-compat: shim exigido por nearby-markets-api.ts
 // ---------------------------------------------------------------------------
 import type {
