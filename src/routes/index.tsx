@@ -70,6 +70,7 @@ import { DashboardDiagnosticoMensalCard } from "@/components/DashboardDiagnostic
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
 import { RadarEconomicoInteligenteCard } from "@/components/dashboard/RadarEconomicoInteligenteCard";
 import { EconomicMonthImpactCard } from "@/components/dashboard/EconomicMonthImpactCard";
+import { PrimeirosPassosCard } from "@/components/dashboard/PrimeirosPassosCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import {
