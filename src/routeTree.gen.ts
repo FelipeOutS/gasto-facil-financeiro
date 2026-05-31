@@ -85,6 +85,7 @@ import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
+import { Route as ApiMercadoFlyerOcrRouteImport } from './routes/api/mercado-flyer-ocr'
 import { Route as ApiImportInvestimentosRouteImport } from './routes/api/import-investimentos'
 import { Route as ApiImportFaturaPdfRouteImport } from './routes/api/import-fatura-pdf'
 import { Route as ApiImportFaturaImagemRouteImport } from './routes/api/import-fatura-imagem'
@@ -513,6 +514,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   path: '/api/ocr-gasto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMercadoFlyerOcrRoute = ApiMercadoFlyerOcrRouteImport.update({
+  id: '/api/mercado-flyer-ocr',
+  path: '/api/mercado-flyer-ocr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiImportInvestimentosRoute = ApiImportInvestimentosRouteImport.update({
   id: '/api/import-investimentos',
   path: '/api/import-investimentos',
@@ -801,6 +807,7 @@ export interface FileRoutesByFullPath {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
+  '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
@@ -924,6 +931,7 @@ export interface FileRoutesByTo {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
+  '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
@@ -1048,6 +1056,7 @@ export interface FileRoutesById {
   '/api/import-fatura-imagem': typeof ApiImportFaturaImagemRoute
   '/api/import-fatura-pdf': typeof ApiImportFaturaPdfRoute
   '/api/import-investimentos': typeof ApiImportInvestimentosRoute
+  '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
@@ -1173,6 +1182,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
+    | '/api/mercado-flyer-ocr'
     | '/api/ocr-gasto'
     | '/app/cofre-pessoal'
     | '/app/idioma'
@@ -1296,6 +1306,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
+    | '/api/mercado-flyer-ocr'
     | '/api/ocr-gasto'
     | '/app/cofre-pessoal'
     | '/app/idioma'
@@ -1419,6 +1430,7 @@ export interface FileRouteTypes {
     | '/api/import-fatura-imagem'
     | '/api/import-fatura-pdf'
     | '/api/import-investimentos'
+    | '/api/mercado-flyer-ocr'
     | '/api/ocr-gasto'
     | '/app_/cofre-pessoal'
     | '/app_/idioma'
@@ -1543,6 +1555,7 @@ export interface RootRouteChildren {
   ApiImportFaturaImagemRoute: typeof ApiImportFaturaImagemRoute
   ApiImportFaturaPdfRoute: typeof ApiImportFaturaPdfRoute
   ApiImportInvestimentosRoute: typeof ApiImportInvestimentosRoute
+  ApiMercadoFlyerOcrRoute: typeof ApiMercadoFlyerOcrRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
@@ -2153,6 +2166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOcrGastoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mercado-flyer-ocr': {
+      id: '/api/mercado-flyer-ocr'
+      path: '/api/mercado-flyer-ocr'
+      fullPath: '/api/mercado-flyer-ocr'
+      preLoaderRoute: typeof ApiMercadoFlyerOcrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/import-investimentos': {
       id: '/api/import-investimentos'
       path: '/api/import-investimentos'
@@ -2529,6 +2549,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiImportFaturaImagemRoute: ApiImportFaturaImagemRoute,
   ApiImportFaturaPdfRoute: ApiImportFaturaPdfRoute,
   ApiImportInvestimentosRoute: ApiImportInvestimentosRoute,
+  ApiMercadoFlyerOcrRoute: ApiMercadoFlyerOcrRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,
