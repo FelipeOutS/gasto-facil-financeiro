@@ -99,85 +99,86 @@
     },
     "routeLocks": {
       "investimentos": {
-        "title": "Investments is a premium feature",
-        "description": "Track assets, transactions and wealth growth in one place. Available on higher plans."
+        "title": "Feature available on higher plans",
+        "description": "Investments is available on more complete plans. View the available options to unlock it."
       },
       "cartoes": {
-        "title": "Cards and statements is a premium feature",
-        "description": "Organize credit cards and follow statements with more control. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Cards and statements is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "assinaturas": {
-        "title": "Subscriptions is a premium feature",
-        "description": "Control subscriptions and recurring charges in one place. Available on higher plans."
+        "title": "Feature available on higher plans",
+        "description": "Subscriptions and recurring charges control is available on more complete plans. View the available options to unlock it."
       },
       "contasAPagar": {
-        "title": "Bills to pay is a premium feature",
-        "description": "Schedule and follow bills to pay without missing due dates. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Bills to pay is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "contasAReceber": {
-        "title": "Bills to receive is a premium feature",
-        "description": "Track expected income and keep your cash flow healthy. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Bills to receive is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "orcamento": {
-        "title": "Budget is a premium feature",
-        "description": "Set category limits and follow spending with more clarity. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Budget by category is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "relatorios": {
-        "title": "Advanced reports is a premium feature",
-        "description": "Compare periods, view detailed charts and follow your financial evolution in more depth."
+        "title": "Feature available on higher plans",
+        "description": "Advanced reports are available on more complete plans. View the available options to unlock it."
       },
       "gastoAi": {
-        "title": "Financial AI is a premium feature",
-        "description": "Get smart insights about your spending, patterns and savings opportunities."
+        "title": "Feature available on higher plans",
+        "description": "Financial AI is available on more complete plans. View the available options to unlock it."
       },
       "metas": {
-        "title": "Goals is a premium feature",
-        "description": "Create visual financial goals and follow your progress. Available on higher plans."
+        "title": "Custom visuals on higher plans",
+        "description": "Basic goals remain available. Covers and custom visuals are available on more complete plans."
       },
       "whatsapp": {
-        "title": "WhatsApp is a premium feature",
-        "description": "Log expenses by WhatsApp quickly and easily. Available on higher plans."
+        "title": "WhatsApp entries coming soon",
+        "description": "Logging expenses via WhatsApp is not available yet. We'll let you know when it's ready."
       },
       "renda": {
-        "title": "Income is a premium feature",
-        "description": "Organize your income without entry limits. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Income and revenue is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "guardado": {
-        "title": "Savings is a premium feature",
-        "description": "Follow saved amounts and reserves with more control. Available on higher plans."
+        "title": "Feature available with an active plan",
+        "description": "Savings is included in Gasto Inteligente paid plans. Activate or update your plan to keep using it."
       },
       "contasConectadas": {
-        "title": "Connected accounts is a premium feature",
-        "description": "Invite someone by email and follow their account with permission. Available on higher plans."
+        "title": "Feature available on higher plans",
+        "description": "Connected accounts are available on more complete plans. View the available options to unlock it."
       },
       "empresa": {
-        "title": "Smart Company is for MEI and Company plans",
-        "description": "Look up CNPJ and keep your company data organized. Available on Essencial for MEI, MEI Completo and Empresa plans."
+        "title": "Feature for MEI and Business plans",
+        "description": "This feature is designed for users who manage business data. Available on Essencial for MEI, MEI Completo and Empresa plans."
       },
       "fornecedores": {
-        "title": "Suppliers is for MEI and Company plans",
-        "description": "Register suppliers by CNPJ and organize business expenses better."
+        "title": "Feature for MEI and Business plans",
+        "description": "Supplier registration by CNPJ is designed for users who manage business expenses. Available on MEI and Business plans."
       },
       "clientes": {
-        "title": "Clients is for MEI and Company plans",
-        "description": "Register clients by CNPJ and organize business income better."
+        "title": "Feature for MEI and Business plans",
+        "description": "Client registration by CNPJ is designed for users who manage business income. Available on MEI and Business plans."
       },
       "contador": {
-        "title": "Accountant package is for MEI and Company plans",
-        "description": "Generate an organized monthly summary to send to your accountant."
+        "title": "Feature for MEI and Business plans",
+        "description": "The accountant package is designed for users who need to send an organized summary. Available on MEI and Business plans."
       },
       "mercadoAvancado": {
-        "title": "Full Smart Market is a premium feature",
-        "description": "Access purchase history, price comparison, default basket and saved markets to shop with more control."
+        "title": "Feature available on higher plans",
+        "description": "Full Smart Market (history, price comparison, default basket and saved markets) is available on more complete plans."
       },
       "mercadoImportarCupom": {
-        "title": "Receipt import is a premium feature",
-        "description": "Import receipts via QR Code/NFC-e to cut manual entry."
+        "title": "Feature available on higher plans",
+        "description": "Receipt import via QR Code/NFC-e is available on more complete plans."
       },
       "importacoes": {
-        "title": "Smart Import is a premium feature",
-        "description": "Import supported invoices, statements, PDFs and images to cut manual entry."
+        "title": "Feature available on higher plans",
+        "description": "Smart Import of invoices, statements, PDFs and images is available on more complete plans."
       }
+
     }
   },
   "errors": {
