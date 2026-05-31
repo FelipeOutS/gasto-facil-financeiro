@@ -113,6 +113,7 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexGate() {
+  const { t } = useTranslation("dashboard");
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const needsBiometricUnlock = !!session && isLoginBioUnlockRequired();
@@ -129,9 +130,9 @@ function IndexGate() {
   }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
-  if (!session && bioLoginInProgress) return <BrandLoader message="Validando biometria…" />;
-  if (needsBiometricUnlock) return <BrandLoader message="Validando biometria…" />;
-  if (shouldShowBiometricLogin) return <BrandLoader message="Abrindo entrada por biometria…" />;
+  if (!session && bioLoginInProgress) return <BrandLoader message={t("loader.biometricValidating")} />;
+  if (needsBiometricUnlock) return <BrandLoader message={t("loader.biometricValidating")} />;
+  if (shouldShowBiometricLogin) return <BrandLoader message={t("loader.biometricOpening")} />;
   if (!session) return <PublicLanding />;
   return <Index />;
 }
