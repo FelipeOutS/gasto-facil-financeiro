@@ -258,7 +258,7 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
         <span className={cn("text-4xl font-bold leading-none tabular-nums", tone.scoreText)}>
           {health.score}
         </span>
-        <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
+        <span className="pb-1 text-sm text-muted-foreground">{t("financialHealth.scoreMax")}</span>
       </div>
       <p className="mt-1 text-xs font-semibold">{health.title}</p>
 
