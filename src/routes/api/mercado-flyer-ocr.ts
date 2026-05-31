@@ -110,6 +110,72 @@ function countPriceCandidates(text: string): number {
   return m ? m.length : 0;
 }
 
+function parseBrazilianPrice(value: string): number | null {
+  const cleaned = value.replace(/R\$\s*/i, "").trim();
+  const normalized = cleaned.includes(",")
+    ? cleaned.replace(/\./g, "").replace(",", ".")
+    : cleaned;
+  const price = Number(normalized);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+function isUnsafeFallbackLine(line: string): boolean {
+  return /(@|https?:\/\/|www\.|cpf|cnpj|telefone|whats|whatsapp|sac|ouvidoria|cart[aã]o|pix)/i.test(line);
+}
+
+function cleanFallbackProductName(line: string): string {
+  return line
+    .replace(BR_PRICE_RE, " ")
+    .replace(/\b(oferta|promo[cç][aã]o|por|cada|apenas|r\$)\b/gi, " ")
+    .replace(/[^\p{L}\p{N}\s.,/%-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+}
+
+function extractFallbackItems(rawText: string, fallbackMarketName: string | undefined): DetectedItem[] {
+  const lines = rawText
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const items: DetectedItem[] = [];
+  const seen = new Set<string>();
+
+  for (let index = 0; index < lines.length && items.length < 60; index++) {
+    const line = lines[index];
+    const matches = line.match(BR_PRICE_RE) ?? [];
+    for (const match of matches) {
+      const price = parseBrazilianPrice(match);
+      if (price == null) continue;
+
+      const sameLineName = cleanFallbackProductName(line);
+      const prevLine = index > 0 ? lines[index - 1] : "";
+      const prevName = prevLine && !isUnsafeFallbackLine(prevLine) ? cleanFallbackProductName(prevLine) : "";
+      const productName = sameLineName.length >= 3 && !isUnsafeFallbackLine(sameLineName)
+        ? sameLineName
+        : prevName.length >= 3
+          ? prevName
+          : "Produto não identificado";
+
+      const key = `${productName.toLowerCase()}|${price.toFixed(2)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({
+        productName,
+        price,
+        unit: null,
+        category: null,
+        marketName: fallbackMarketName?.trim().slice(0, 120) ?? null,
+        validUntil: null,
+        notes: "Fallback OCR · revise manualmente",
+        confidence: 0.28,
+      });
+    }
+  }
+
+  return items.slice(0, 60);
+}
+
 function estimateBytesFromBase64(base64: string): number {
   const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
   return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
