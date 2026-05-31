@@ -76,6 +76,7 @@ function statusTone(status: MonthlyDiagnosisStatus): {
 }
 
 export function DashboardDiagnosticoMensalCard({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
     (next: { mes: number; ano: number }) => void,
