@@ -1707,7 +1707,7 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Valor aplicado</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.appliedValue")}</label>
             <Input
               value={formatBRL(Number(ativo.valor_aplicado || 0))}
               disabled
