@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   TrendingUp,
   AlertTriangle,
@@ -84,6 +85,7 @@ export function EconomicMonthImpactCard({
   recorrenciasTotal,
 }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation("dashboard");
   const [indicators, setIndicators] = useState<BcbIndicator[]>([]);
 
   useEffect(() => {
@@ -149,7 +151,7 @@ export function EconomicMonthImpactCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Impacto do cenário no seu mês
+            {t("economicImpact.eyebrow")}
           </p>
           <h3 className="mt-0.5 text-sm font-semibold text-foreground">
             {impact.title}
