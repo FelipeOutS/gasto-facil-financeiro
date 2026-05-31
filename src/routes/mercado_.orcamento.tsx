@@ -107,6 +107,9 @@ function OrcamentoPage() {
           <p className="mt-1 text-sm leading-snug text-muted-foreground md:text-base">
             {t("budget.subtitle")}
           </p>
+          <p className="mt-1 text-[11px] text-muted-foreground/80 md:text-xs">
+            {t("budget.helper")}
+          </p>
         </div>
       </header>
 
