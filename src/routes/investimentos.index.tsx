@@ -1692,7 +1692,7 @@ function AtualizarValorDialog({
             <RefreshCw className="h-4 w-4" /> {tInv("dialogs.updateValue.title")}
           </DialogTitle>
           <DialogDescription>
-            Atualização manual · valor informado pelo usuário.
+            {tInv("dialogs.updateValue.description")}
           </DialogDescription>
         </DialogHeader>
 
