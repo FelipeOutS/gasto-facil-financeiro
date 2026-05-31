@@ -251,15 +251,21 @@ function ContasAReceberPage() {
             variant={lista.length === 0 ? "premium" : "default"}
             icon={<HandCoins className="h-6 w-6" />}
             title={lista.length === 0 ? t("empty.none") : t("empty.noResults")}
+            description={lista.length === 0 ? t("empty.noneDesc") : undefined}
             cta={
               lista.length === 0 ? (
-                <Button
-                  className="min-h-11 rounded-full font-semibold"
-                  onClick={openCreate}
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t("empty.addFirst")}
-                </Button>
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    className="min-h-11 rounded-full font-semibold"
+                    onClick={openCreate}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    {t("empty.addFirst")}
+                  </Button>
+                  <p className="max-w-xs text-center text-[11px] text-muted-foreground">
+                    {t("empty.helper")}
+                  </p>
+                </div>
               ) : (busca || filtro !== "todas") ? (
                 <Button
                   variant="outline"
@@ -274,6 +280,8 @@ function ContasAReceberPage() {
               ) : undefined
             }
           />
+
+
 
         ) : (
           listaFiltrada.map((c) => (
