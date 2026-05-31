@@ -8,8 +8,14 @@
   "hub": {
     "title": "Mercado Inteligente",
     "subtitle": "Planeje compras, compare preços e acompanhe seus gastos de mercado de forma simples.",
-    "intro": "Comece organizando suas compras de mercado. Nas próximas etapas, este espaço poderá reunir listas, orçamento, histórico, carrinho e comparações de preço.",
-    "futureNote": "Preparado para futuras integrações.",
+    "intro": "Crie listas, acompanhe o carrinho em tempo real, defina um orçamento de compra e veja quanto falta para fechar.",
+    "futureNote": "Recursos avançados como histórico, comparação de preços e importação de cupom estão disponíveis em planos superiores.",
+    "steps": {
+      "title": "Como começar",
+      "list": "Crie uma lista",
+      "products": "Adicione produtos",
+      "track": "Acompanhe total e orçamento"
+    },
     "status": {
       "soon": "Em breve",
       "future": "Futuro",
@@ -105,9 +111,10 @@
       "deleteConfirmButton": "Excluir lista"
     },
     "empty": {
-      "title": "Nenhuma lista criada ainda",
-      "description": "Crie uma lista para organizar suas compras e evitar gastos fora do planejado.",
-      "cta": "Criar lista"
+      "title": "Nenhuma lista de compras",
+      "description": "Crie uma lista para organizar produtos, quantidades e preços antes ou durante a compra.",
+      "cta": "Criar lista",
+      "helper": "Você pode usar a lista no mercado e acompanhar o total pelo carrinho."
     }
   },
   "nova": {
@@ -354,8 +361,9 @@
   },
   "budget": {
     "metaTitle": "Orçamento de mercado — Mercado Inteligente",
-    "title": "Orçamento de mercado",
-    "subtitle": "Defina um limite mensal e acompanhe suas compras de mercado localmente.",
+    "title": "Defina um orçamento para a compra",
+    "subtitle": "Informe quanto pretende gastar e acompanhe se o carrinho ainda está dentro do limite.",
+    "helper": "Esse orçamento ajuda durante a compra e não altera o orçamento mensal geral.",
     "back": "Voltar",
     "home": "Início",
     "form": {
@@ -401,9 +409,11 @@
     "home": "Início",
     "missingList": "A lista escolhida não foi encontrada. Selecione uma lista disponível abaixo.",
     "empty": {
-      "title": "Crie uma lista para usar o carrinho",
-      "description": "O Carrinho Inteligente usa uma das suas listas de compras como base.",
-      "cta": "Criar lista"
+      "title": "Seu carrinho está vazio",
+      "description": "Crie uma lista para começar — o Carrinho Inteligente usa sua lista para acompanhar itens, valores e orçamento durante a compra.",
+      "cta": "Criar lista",
+      "secondaryCta": "Ver listas",
+      "helper": "Use o carrinho durante a compra para evitar passar do orçamento."
     },
     "picker": {
       "title": "Escolha uma lista",

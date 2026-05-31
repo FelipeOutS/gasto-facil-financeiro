@@ -84,12 +84,26 @@ function MercadoHubPage() {
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-card-elevated text-brand ring-1 ring-border/60">
             <Sparkles className="h-4 w-4" />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm leading-snug text-foreground md:text-[15px]">{t("hub.intro")}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground md:text-xs">{t("hub.futureNote")}</p>
+            <ol className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {(["list", "products", "track"] as const).map((key, idx) => (
+                <li
+                  key={key}
+                  className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card-elevated/60 p-2.5 text-[12px]"
+                >
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand/10 text-[10px] font-bold text-brand">
+                    {idx + 1}
+                  </span>
+                  <span className="leading-tight">{t(`hub.steps.${key}`)}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-[11px] text-muted-foreground md:text-xs">{t("hub.futureNote")}</p>
           </div>
         </div>
       </section>
+
 
       <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {CARDS.map((card) => {

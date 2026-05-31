@@ -8,8 +8,14 @@
   "hub": {
     "title": "Smart Grocery",
     "subtitle": "Plan purchases, compare prices and track your grocery spending in a simple way.",
-    "intro": "Start by organizing your grocery shopping. In the next stages, this area will bring together lists, budget, history, cart and price comparisons.",
-    "futureNote": "Ready for future integrations.",
+    "intro": "Create lists, track your cart in real time, set a shopping budget, and see how much is left before checkout.",
+    "futureNote": "Advanced features such as history, price comparison, and receipt import are available on higher plans.",
+    "steps": {
+      "title": "How to get started",
+      "list": "Create a list",
+      "products": "Add products",
+      "track": "Track total and budget"
+    },
     "status": {
       "soon": "Coming soon",
       "future": "Future",
@@ -105,9 +111,10 @@
       "deleteConfirmButton": "Delete list"
     },
     "empty": {
-      "title": "No lists created yet",
-      "description": "Create a list to organize your shopping and avoid unplanned spending.",
-      "cta": "Create list"
+      "title": "No shopping lists yet",
+      "description": "Create a list to organize products, quantities, and prices before or during shopping.",
+      "cta": "Create list",
+      "helper": "You can use the list at the store and track the total in the cart."
     }
   },
   "nova": {
@@ -354,8 +361,9 @@
   },
   "budget": {
     "metaTitle": "Grocery budget — Smart Market",
-    "title": "Grocery budget",
-    "subtitle": "Set a monthly limit and follow your grocery spending locally.",
+    "title": "Set a shopping budget",
+    "subtitle": "Enter how much you plan to spend and track whether your cart is still within the limit.",
+    "helper": "This budget helps during shopping and doesn't change your general monthly budget.",
     "back": "Back",
     "home": "Home",
     "form": {
@@ -401,9 +409,11 @@
     "home": "Home",
     "missingList": "The selected list was not found. Pick one of the available lists below.",
     "empty": {
-      "title": "Create a list to use the cart",
-      "description": "Smart Cart uses one of your shopping lists as its base.",
-      "cta": "Create list"
+      "title": "Your cart is empty",
+      "description": "Create a list to get started — Smart Cart uses your list to track items, prices, and budget during shopping.",
+      "cta": "Create list",
+      "secondaryCta": "View lists",
+      "helper": "Use the cart while shopping to avoid going over budget."
     },
     "picker": {
       "title": "Choose a list",
