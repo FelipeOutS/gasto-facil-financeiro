@@ -219,7 +219,7 @@ export function OnlineImportWizard({
         const dup = existingMap.get(key);
         const noteParts = [
           r.notes,
-          `${t("communityPrices.onlineImport.sourceTag")}: ${r.sourceName}`,
+          t("communityPrices.onlineImport.noteSourceLine"),
         ];
         if (r.oldPrice && r.oldPrice !== r.price) {
           noteParts.push(
