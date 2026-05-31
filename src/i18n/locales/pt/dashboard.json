@@ -7,7 +7,9 @@
   "empty": {
     "eyebrow": "Gasto Inteligente",
     "title": "Bem-vindo ao Gasto Inteligente 🚀",
-    "subtitle": "Comece registrando seu primeiro gasto ou sua primeira receita para visualizar seu resumo financeiro, gráficos e alertas.",
+    "subtitle": "Comece cadastrando um gasto ou uma receita para montar seu resumo financeiro.",
+    "subtitle_mei": "Comece cadastrando um gasto ou um faturamento para montar seu resumo financeiro.",
+    "subtitle_empresa": "Comece cadastrando um gasto ou um faturamento para montar seu resumo financeiro.",
     "footer": "Tudo fica salvo na sua conta. 🔒",
     "cards": {
       "salario": "Adicionar receita",
