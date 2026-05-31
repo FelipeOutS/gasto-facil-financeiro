@@ -245,6 +245,37 @@
         "erro": "Erro",
         "processando": "Processando"
       }
+    },
+    "assetDetail": {
+      "stats": {
+        "applied": "Aplicado",
+        "current": "Atual",
+        "profit": "Lucro / Prejuízo",
+        "profitability": "Rentabilidade"
+      },
+      "labels": {
+        "quantity": "Quantidade",
+        "averagePrice": "Preço médio",
+        "lastUpdate": "Última atualização: {{value}}",
+        "registeredValue": "valor informado no cadastro",
+        "outdated": "desatualizado"
+      },
+      "actions": {
+        "edit": "Editar",
+        "updateValue": "Atualizar valor",
+        "movement": "Movimentação",
+        "income": "Rendimento",
+        "delete": "Excluir",
+        "close": "Fechar"
+      },
+      "sections": {
+        "movements": "Movimentações",
+        "income": "Rendimentos"
+      },
+      "empty": {
+        "movements": "Sem movimentações.",
+        "income": "Sem rendimentos."
+      }
     }
   }
 }
