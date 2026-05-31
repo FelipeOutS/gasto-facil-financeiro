@@ -98,7 +98,7 @@ export function AvisoTrialExpirandoBanner() {
         <button
           type="button"
           onClick={dismiss}
-          aria-label={t("trialBanner.remindLater")}
+          aria-label={t("trialBanner.close")}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
         >
           <X className="h-4 w-4" />
