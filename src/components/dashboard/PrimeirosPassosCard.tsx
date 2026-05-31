@@ -186,7 +186,7 @@ export function PrimeirosPassosCard({
       </ul>
 
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        <Link to="/adicionar" className="sm:flex-1">
+        <Link to="/adicionar" search={{ tipo: "gasto" }} className="sm:flex-1">
           <Button
             size="lg"
             className="card-press h-11 w-full rounded-xl bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
@@ -195,7 +195,7 @@ export function PrimeirosPassosCard({
             {t("firstSteps.primaryCta")}
           </Button>
         </Link>
-        <Link to="/renda" className="sm:flex-1">
+        <Link to="/adicionar" search={{ tipo: "receita" }} className="sm:flex-1">
           <Button
             size="lg"
             variant="outline"
