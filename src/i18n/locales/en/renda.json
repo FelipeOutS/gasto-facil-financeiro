@@ -202,6 +202,16 @@
       "comissao": "Commission",
       "aluguel": "Rent",
       "vendas": "Sales"
+    },
+    "helper": "Start with your main monthly inflow and add others later.",
+    "helper_mei": "Start with your main revenue source and add other inflows later.",
+    "helper_empresa": "Start with your main revenue source and add other inflows later.",
+    "steps": {
+      "source": "Enter the source",
+      "amount": "Add the amount",
+      "summary": "Track it in your summary",
+      "summary_mei": "Track revenue",
+      "summary_empresa": "Track revenue"
     }
   },
   "history": {

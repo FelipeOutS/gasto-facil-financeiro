@@ -1133,6 +1133,7 @@ function RendaPage() {
                   : t("empty.filterSubtitle")
               }
               onAction={doMes.length === 0 ? () => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)) : undefined}
+              showSteps={doMes.length === 0}
             />
           ) : (
             <ul className="space-y-2">
@@ -1402,14 +1403,17 @@ function EmptyRenda({
   subtitle,
   onAction,
   actionLabel,
+  showSteps,
 }: {
   title: string;
   subtitle: string;
   onAction?: () => void;
   actionLabel?: string;
+  showSteps?: boolean;
 }) {
   const { t } = useTranslation("renda");
   const exampleKeys = ["salario", "freelance", "comissao", "aluguel", "vendas"] as const;
+  const stepKeys = ["source", "amount", "summary"] as const;
   return (
     <div className="rounded-3xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground animate-rise">
       <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-success/15 text-success animate-pop">
@@ -1426,10 +1430,30 @@ function EmptyRenda({
       </div>
       {onAction && (
         <div className="mt-4">
-          <Button size="sm" onClick={onAction} className="card-press rounded-full">
+          <Button size="sm" onClick={onAction} className="card-press rounded-full min-h-11">
             <Plus className="mr-1 h-4 w-4" /> {actionLabel ?? t("empty.defaultAction")}
           </Button>
         </div>
+      )}
+      {showSteps && (
+        <>
+          <ol className="mx-auto mt-5 grid max-w-sm gap-2 text-left text-xs sm:grid-cols-3">
+            {stepKeys.map((key, idx) => (
+              <li
+                key={key}
+                className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card-elevated px-3 py-2"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-success/15 text-[11px] font-semibold text-success">
+                  {idx + 1}
+                </span>
+                <span className="text-foreground">{t(`empty.steps.${key}`)}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mx-auto mt-3 max-w-sm text-[11px] text-muted-foreground">
+            {t("empty.helper")}
+          </p>
+        </>
       )}
     </div>
   );
