@@ -42,7 +42,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
   ring: string;
   iconBg: string;
   iconFg: string;
-  label: string;
 } {
   switch (status) {
     case "critico":
@@ -51,7 +50,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-destructive/40",
         iconBg: "bg-destructive/15",
         iconFg: "text-destructive",
-        label: "Crítico",
       };
     case "atencao":
       return {
@@ -59,7 +57,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-warning/40",
         iconBg: "bg-warning/15",
         iconFg: "text-warning",
-        label: "Atenção",
       };
     case "bom":
       return {
@@ -67,7 +64,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-primary/30",
         iconBg: "bg-primary/10",
         iconFg: "text-primary",
-        label: "Bom",
       };
     case "excelente":
       return {
@@ -75,7 +71,6 @@ function statusTone(status: MonthlyDiagnosisStatus): {
         ring: "border-success/40",
         iconBg: "bg-success/15",
         iconFg: "text-success",
-        label: "Excelente",
       };
   }
 }
