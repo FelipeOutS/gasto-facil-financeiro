@@ -444,22 +444,27 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     }
     setSaving(true);
     const today = new Date().toISOString().slice(0, 10);
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const safeMarketId = marketId && UUID_RE.test(marketId) ? marketId : null;
+    const cleanDate = (v: string | null | undefined) =>
+      v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
     const rows = toSave.map((r) => ({
       user_id: user.id,
       product_name: r.productName.trim(),
       normalized_product_name: r.productName.trim().toLowerCase(),
-      category: r.category,
+      category: r.category?.trim() ? r.category.trim() : null,
       price: r.price,
-      unit: r.unit,
+      unit: r.unit?.trim() ? r.unit.trim() : null,
       market_name: marketName,
-      market_id: marketId,
+      market_id: safeMarketId,
       source: "flyer",
+      status: "active",
       seen_at: today,
-      valid_until: r.validUntil,
+      valid_until: cleanDate(r.validUntil),
       notes: r.notes
         ? `${r.notes} · ${t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex })}`
         : t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex }),
-      confidence: r.confidence,
+      confidence: typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : null,
     }));
     const { error } = await (supabase.from(TABLE as never) as any).insert(rows);
     setSaving(false);
