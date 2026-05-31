@@ -408,9 +408,11 @@
     "home": "Home",
     "missingList": "The selected list was not found. Pick one of the available lists below.",
     "empty": {
-      "title": "Create a list to use the cart",
-      "description": "Smart Cart uses one of your shopping lists as its base.",
-      "cta": "Create list"
+      "title": "Your cart is empty",
+      "description": "Create a list to get started — Smart Cart uses your list to track items, prices, and budget during shopping.",
+      "cta": "Create list",
+      "secondaryCta": "View lists",
+      "helper": "Use the cart while shopping to avoid going over budget."
     },
     "picker": {
       "title": "Choose a list",
