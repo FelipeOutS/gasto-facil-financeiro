@@ -21,6 +21,7 @@ export const RATE_LIMIT_PRESETS = {
   publicApi: { limit: 60, windowSeconds: 60 },
   aiPerUser: { limit: 20, windowSeconds: 3600 },
   importPerUser: { limit: 10, windowSeconds: 3600 },
+  flyerOcrPerUser: { limit: 40, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
 
@@ -155,13 +156,17 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
  *      if (blocked) return blocked;  // (em server route)
  */
 export async function enforceUserRateLimit(params: {
-  scope: "ai" | "import";
+  scope: "ai" | "import" | "flyerOcr";
   userId: string;
   route: string;
   request?: Request;
 }): Promise<Response | null> {
   const preset =
-    params.scope === "ai" ? RATE_LIMIT_PRESETS.aiPerUser : RATE_LIMIT_PRESETS.importPerUser;
+    params.scope === "ai"
+      ? RATE_LIMIT_PRESETS.aiPerUser
+      : params.scope === "flyerOcr"
+        ? RATE_LIMIT_PRESETS.flyerOcrPerUser
+        : RATE_LIMIT_PRESETS.importPerUser;
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
 
@@ -184,7 +189,12 @@ export async function enforceUserRateLimit(params: {
     await logAuditEvent({
       actor_user_id: params.userId,
       target_user_id: params.userId,
-      action: params.scope === "ai" ? "rate_limit_blocked_ai" : "rate_limit_blocked_import",
+      action:
+        params.scope === "ai"
+          ? "rate_limit_blocked_ai"
+          : params.scope === "flyerOcr"
+            ? "rate_limit_blocked_flyer_ocr"
+            : "rate_limit_blocked_import",
       entity_type: "rate_limit",
       metadata: { route: params.route, limit: preset.limit, window_seconds: preset.windowSeconds },
     });
