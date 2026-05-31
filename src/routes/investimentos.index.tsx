@@ -2360,7 +2360,7 @@ function RendimentoDialog({
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               rows={2}
-              placeholder="opcional"
+              placeholder={tInv("forms.placeholders.optional")}
             />
           </div>
         </div>
