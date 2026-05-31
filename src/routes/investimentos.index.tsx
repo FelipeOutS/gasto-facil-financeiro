@@ -1718,7 +1718,7 @@ function AtualizarValorDialog({
           {isVariavel && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">Preço atual</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.currentPrice")}</label>
                 <Input
                   value={precoAtual}
                   onChange={(e) => setPrecoAtual(e.target.value)}
