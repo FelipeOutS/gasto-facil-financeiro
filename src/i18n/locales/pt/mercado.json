@@ -1280,8 +1280,29 @@
       "saveSuccess_one": "{{count}} preço salvo em {{market}}.",
       "saveSuccess_other": "{{count}} preços salvos em {{market}}.",
       "saveFailed": "Não foi possível salvar os preços."
+    },
+    "suggestions": {
+      "title": "Preço comunitário encontrado",
+      "usePrice": "Usar este preço",
+      "otherOptions_one": "Ver mais {{count}} opção",
+      "otherOptions_other": "Ver mais {{count}} opções",
+      "seenOn": "visto em {{date}}",
+      "validUntil": "válido até {{date}}",
+      "disclaimer": "Preço informado pela comunidade. Confira no mercado antes de comprar.",
+      "noGuarantee": "Pode variar por loja, região e data. Não garantimos menor preço.",
+      "applied": "Preço sugerido aplicado ao item.",
+      "estimatedSavings": "Economia estimada com preços comunitários",
+      "savingsHint_one": "Comparando {{count}} item da sua lista com preços comunitários.",
+      "savingsHint_other": "Comparando {{count}} itens da sua lista com preços comunitários.",
+      "source_flyer": "Panfleto",
+      "source_manual": "Manual",
+      "source_store": "Loja",
+      "source_receipt": "Cupom",
+      "imageAlt": "Imagem do produto",
+      "imageMissing": "Sem imagem disponível",
+      "productImage": "Imagem do produto",
+      "categoryPlaceholder": "Sem imagem"
     }
-
   }
 }
 

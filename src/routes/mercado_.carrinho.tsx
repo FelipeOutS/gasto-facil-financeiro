@@ -36,6 +36,12 @@ import { MobileShell } from "@/components/MobileShell";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
+import { CommunityPriceSuggestion } from "@/components/mercado/CommunityPriceSuggestion";
+import { CommunityPriceSavingsSummary } from "@/components/mercado/CommunityPriceSavingsSummary";
+import {
+  getSuggestionsFor,
+  useActiveCommunityPrices,
+} from "@/lib/mercado/community-prices-suggestions";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
@@ -391,6 +397,13 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           </ul>
         )}
       </section>
+      <CommunityPriceSavingsSummary
+        items={lista.entries.map((it) => ({
+          nome: it.nome,
+          quantidade: it.quantidade,
+          precoEstimado: it.precoEstimado,
+        }))}
+      />
     </>
   );
 }
@@ -400,6 +413,11 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
   const [editing, setEditing] = useState(false);
   const [valor, setValor] = useState<string>(
     item.precoEstimado != null ? String(item.precoEstimado) : "",
+  );
+  const { pool } = useActiveCommunityPrices();
+  const suggestions = useMemo(
+    () => getSuggestionsFor(item.nome, pool),
+    [item.nome, pool],
   );
 
   function handleToggle() {
@@ -413,6 +431,12 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
       precoEstimado: Number.isFinite(parsed) && parsed > 0 ? parsed : undefined,
     });
     setEditing(false);
+  }
+
+  function applyCommunityPrice(price: number) {
+    setValor(String(price));
+    updateItemLista(listaId, item.id, { precoEstimado: price });
+    toast.success(t("communityPrices.suggestions.applied"));
   }
 
   const subtotal = (item.precoEstimado ?? 0) * (item.quantidade || 1);
@@ -495,6 +519,12 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           precoUnitario={Number(valor.replace(",", ".")) || undefined}
         />
       )}
+      {!item.comprado && suggestions.length > 0 ? (
+        <CommunityPriceSuggestion
+          suggestions={suggestions}
+          onUse={applyCommunityPrice}
+        />
+      ) : null}
     </li>
   );
 }
