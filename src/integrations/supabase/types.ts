@@ -445,6 +445,72 @@ export type Database = {
         }
         Relationships: []
       }
+      community_market_prices: {
+        Row: {
+          category: string | null
+          city: string | null
+          confidence: number | null
+          created_at: string
+          id: string
+          market_id: string | null
+          market_name: string
+          neighborhood: string | null
+          normalized_product_name: string | null
+          notes: string | null
+          price: number
+          product_name: string
+          seen_at: string
+          source: string
+          status: string
+          unit: string | null
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          market_id?: string | null
+          market_name: string
+          neighborhood?: string | null
+          normalized_product_name?: string | null
+          notes?: string | null
+          price: number
+          product_name: string
+          seen_at?: string
+          source?: string
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          market_id?: string | null
+          market_name?: string
+          neighborhood?: string | null
+          normalized_product_name?: string | null
+          notes?: string | null
+          price?: number
+          product_name?: string
+          seen_at?: string
+          source?: string
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       connected_accounts: {
         Row: {
           accepted_at: string | null

@@ -64,6 +64,10 @@
       "importarCupom": {
         "title": "Importar cupom fiscal",
         "desc": "Leia o QR Code do cupom para preparar a importação da compra."
+      },
+      "precoComunitario": {
+        "title": "Preço Comunitário",
+        "desc": "Leia panfletos por foto e registre preços informados pela comunidade."
       }
     }
   },
