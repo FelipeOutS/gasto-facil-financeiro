@@ -61,13 +61,8 @@ function badgeToneForPriority(p: InsightPriority): StatusTone {
   return "muted";
 }
 
-function priorityLabel(p: InsightPriority): string {
-  if (p === "alta") return "Atenção";
-  if (p === "media") return "Importante";
-  return "Dica";
-}
-
 export function DashboardDicasBloco({ className }: { className?: string }) {
+  const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
     (next: { mes: number; ano: number }) => void,
