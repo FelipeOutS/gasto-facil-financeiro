@@ -987,8 +987,8 @@ function AddAtivoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar investimento" : "Adicionar investimento"}</DialogTitle>
-          <DialogDescription>Cadastre as informações do ativo. Apenas Nome é obrigatório.</DialogDescription>
+          <DialogTitle>{editing ? tInv("dialogs.addAsset.titleEdit") : tInv("dialogs.addAsset.titleCreate")}</DialogTitle>
+          <DialogDescription>{tInv("dialogs.addAsset.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3">
@@ -997,13 +997,13 @@ function AddAtivoDialog({
             <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span>
               {isRendaVariavel
-                ? "Use quantidade, preço médio e preço atual para calcular os valores automaticamente."
-                : "Use valor aplicado e valor atual. Quantidade e preço médio não são necessários."}
+                ? tInv("forms.aux.hintVariable")
+                : tInv("forms.aux.hintFixed")}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tipo *">
+            <Field label={`${tInv("forms.labels.type")} ${tInv("forms.aux.required")}`}>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -1013,26 +1013,26 @@ function AddAtivoDialog({
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Instituição / corretora">
-              <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder="XP, Nubank, Rico…" />
+            <Field label={tInv("forms.labels.institution")}>
+              <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder={tInv("forms.placeholders.institution")} />
             </Field>
           </div>
 
-          <Field label="Nome do investimento *">
+          <Field label={`${tInv("forms.labels.assetName")} ${tInv("forms.aux.required")}`}>
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder={isRendaVariavel ? "Ex.: Maxi Renda FII" : "Ex.: Tesouro Selic 2029"}
+              placeholder={isRendaVariavel ? tInv("forms.placeholders.assetNameVariable") : tInv("forms.placeholders.assetNameFixed")}
             />
           </Field>
 
           {/* Ticker — destaque para renda variável, opcional/escondido para renda fixa */}
           {isRendaVariavel && (
-            <Field label="Ticker / código *">
+            <Field label={`${tInv("forms.labels.ticker")} ${tInv("forms.aux.required")}`}>
               <Input
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="MXRF11, PETR4, BTC…"
+                placeholder={tInv("forms.placeholders.tickerVariable")}
               />
             </Field>
           )}
@@ -1041,25 +1041,25 @@ function AddAtivoDialog({
           {isRendaVariavel && (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Field label="Quantidade">
-                  <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="10" />
+                <Field label={tInv("forms.labels.quantity")}>
+                  <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder={tInv("forms.placeholders.quantity")} />
                 </Field>
-                <Field label="Preço médio">
-                  <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder="10,20" />
+                <Field label={tInv("forms.labels.avgPrice")}>
+                  <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder={tInv("forms.placeholders.avgPrice")} />
                 </Field>
-                <Field label="Preço atual">
-                  <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder="10,50" />
+                <Field label={tInv("forms.labels.currentPrice")}>
+                  <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentPrice")} />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Valor aplicado (auto)">
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 102,00" />
+                <Field label={tInv("forms.labels.appliedValueAuto")}>
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueSmall")} />
                 </Field>
-                <Field label="Valor atual (auto)">
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 105,00" />
+                <Field label={tInv("forms.labels.currentValueAuto")}>
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueSmall")} />
                 </Field>
               </div>
-              <Field label="Data da compra">
+              <Field label={tInv("forms.labels.purchaseDate")}>
                 <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
               </Field>
             </>
@@ -1069,17 +1069,17 @@ function AddAtivoDialog({
           {isRendaFixa && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Valor aplicado *">
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+                <Field label={`${tInv("forms.labels.appliedValue")} ${tInv("forms.aux.required")}`}>
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueLarge")} />
                 </Field>
-                <Field label="Valor atual">
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+                <Field label={tInv("forms.labels.currentValue")}>
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueLarge")} />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Tipo de rentabilidade">
+                <Field label={tInv("forms.labels.rentabilityType")}>
                   <Select value={rentTipo} onValueChange={setRentTipo}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tInv("forms.placeholders.rentabilityDash")} /></SelectTrigger>
                     <SelectContent>
                       {RENT_TIPOS.map((rt) => (
                         <SelectItem key={rt.id} value={rt.id}>{getRentabilidadeTipoLabel(rt.id, tInv)}</SelectItem>
@@ -1087,20 +1087,20 @@ function AddAtivoDialog({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Percentual / índice">
-                  <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder="110% do CDI" />
+                <Field label={tInv("forms.labels.rentabilityPct")}>
+                  <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder={tInv("forms.placeholders.rentabilityPct")} />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Data da aplicação">
+                <Field label={tInv("forms.labels.applicationDate")}>
                   <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </Field>
-                <Field label="Vencimento">
+                <Field label={tInv("forms.labels.maturity")}>
                   <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
                 </Field>
               </div>
-              <Field label="Liquidez">
-                <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder="Diária, no vencimento…" />
+              <Field label={tInv("forms.labels.liquidity")}>
+                <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder={tInv("forms.placeholders.liquidity")} />
               </Field>
 
               {/* Avançado: ticker/quantidade/preços ocultos por padrão */}
@@ -1109,21 +1109,21 @@ function AddAtivoDialog({
                 onClick={() => setShowAvancado((v) => !v)}
                 className="text-xs text-brand hover:underline self-start"
               >
-                {showAvancado ? "Ocultar campos avançados" : "Mostrar campos avançados (ticker, quantidade)"}
+                {showAvancado ? tInv("forms.aux.hideAdvanced") : tInv("forms.aux.showAdvanced")}
               </button>
               {showAvancado && (
                 <div className="grid gap-3 rounded-lg border border-dashed border-border/60 p-3">
-                  <Field label="Ticker / código (opcional)">
-                    <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="—" />
+                  <Field label={tInv("forms.labels.tickerOptional")}>
+                    <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder={tInv("forms.placeholders.tickerDash")} />
                   </Field>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <Field label="Quantidade">
+                    <Field label={tInv("forms.labels.quantity")}>
                       <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
                     </Field>
-                    <Field label="Preço médio">
+                    <Field label={tInv("forms.labels.avgPrice")}>
                       <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} />
                     </Field>
-                    <Field label="Preço atual">
+                    <Field label={tInv("forms.labels.currentPrice")}>
                       <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} />
                     </Field>
                   </div>
@@ -1136,28 +1136,28 @@ function AddAtivoDialog({
           {!isRendaVariavel && !isRendaFixa && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Valor aplicado">
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder="R$ 1.000,00" />
+                <Field label={tInv("forms.labels.appliedValue")}>
+                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueLarge")} />
                 </Field>
-                <Field label="Valor atual">
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder="R$ 1.042,30" />
+                <Field label={tInv("forms.labels.currentValue")}>
+                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueLarge")} />
                 </Field>
               </div>
-              <Field label="Data da aplicação">
+              <Field label={tInv("forms.labels.applicationDate")}>
                 <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
               </Field>
             </>
           )}
 
-          <Field label="Observação">
+          <Field label={tInv("forms.labels.observation")}>
             <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
           </Field>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tInv("forms.aux.cancel")}</Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Salvando…" : editing ? "Salvar" : "Cadastrar"}
+            {saving ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.register")}
           </Button>
         </DialogFooter>
       </DialogContent>
