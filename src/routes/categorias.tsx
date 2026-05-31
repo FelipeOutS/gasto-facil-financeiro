@@ -60,6 +60,7 @@ function CategoriasPage() {
   const { theme, setTheme } = useTheme();
   const { accent, setAccent } = useAccent();
   const categorias = useStore(() => getCategorias());
+  const customCount = categorias.filter((c) => c.criadaPeloUsuario).length;
   const today = new Date();
   const mes = today.getMonth() + 1;
   const ano = today.getFullYear();
