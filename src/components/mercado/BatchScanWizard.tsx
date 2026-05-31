@@ -279,22 +279,52 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64: base64, marketName: marketName || undefined }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        return { ...photo, status: "error", errorMessage: json?.error || "" };
+        let reason: ErrorReason = "generic";
+        if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
+        else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (res.status === 429) reason = "rate_limited";
+        else if (res.status === 402) reason = "credits";
+        return {
+          ...photo,
+          status: "error",
+          errorReason: reason,
+          errorMessage: json?.error || "",
+        };
       }
       const items: DetectedItem[] = Array.isArray(json.items) ? json.items : [];
+      if (items.length === 0) {
+        const code = json?.code as string | undefined;
+        const emptyReason: EmptyReason =
+          code === "no_text_detected"
+            ? "no_text_detected"
+            : code === "text_found_but_no_items"
+              ? "text_found_but_no_items"
+              : null;
+        return {
+          ...photo,
+          status: "empty",
+          items: [],
+          emptyReason,
+          errorReason: undefined,
+          errorMessage: undefined,
+        };
+      }
       return {
         ...photo,
-        status: items.length === 0 ? "empty" : "done",
+        status: "done",
         items,
+        emptyReason: undefined,
+        errorReason: undefined,
         errorMessage: undefined,
       };
     } catch (err) {
       console.error("[batch-scan] processPhoto", err);
-      return { ...photo, status: "error", errorMessage: "network" };
+      return { ...photo, status: "error", errorReason: "network", errorMessage: "network" };
     }
   }
+
 
   async function runQueue() {
     setStep("processing");
