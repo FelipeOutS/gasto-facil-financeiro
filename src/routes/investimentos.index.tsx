@@ -2345,7 +2345,7 @@ function RendimentoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Data de pagamento</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.paymentDate")}</label>
               <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} />
             </div>
             <div>
