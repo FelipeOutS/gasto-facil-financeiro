@@ -76,7 +76,7 @@ export function AvisoTrialExpirandoBanner() {
             {t("trialBanner.title")}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {t("trialBanner.subtitle", { days: trialDaysLeft })}
+            {t("trialBanner.subtitle", { count: trialDaysLeft })}
             {formattedDate ? ` ${t("trialBanner.expiresOn", { date: formattedDate })}` : ""}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
