@@ -2330,7 +2330,7 @@ function RendimentoDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Status</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.status")}</label>
               <Select value={status} onValueChange={(v) => setStatus(v as "recebido" | "previsto")}>
                 <SelectTrigger>
                   <SelectValue />
