@@ -50,10 +50,11 @@ type EmptyReason = "no_text_detected" | "text_found_but_no_items" | null;
 type ErrorReason =
   | "ocr_config_missing"
   | "vision_api_error"
+  | "invalid_image_payload"
   | "network"
   | "rate_limited"
   | "credits"
-  | "generic"
+  | "unknown_error"
   | null;
 
 type DetectedItem = {
@@ -96,11 +97,11 @@ function fileToBase64(file: File): Promise<string> {
 
 /**
  * Redimensiona uma imagem mantendo proporção, com o maior lado em até MAX_SIDE.
- * Mantém qualidade alta (0.85) — panfletos têm textos pequenos.
+ * Mantém qualidade alta (0.92) — panfletos têm textos pequenos.
  * Se falhar (ex.: HEIC), faz fallback para o arquivo original em base64.
  */
-const MAX_SIDE = 1800;
-const JPEG_QUALITY = 0.85;
+const MAX_SIDE = 2800;
+const JPEG_QUALITY = 0.92;
 async function fileToProcessedDataUrl(file: File): Promise<string> {
   try {
     const url = URL.createObjectURL(file);
@@ -281,9 +282,10 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
       });
       const json = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        let reason: ErrorReason = "generic";
+        let reason: ErrorReason = "unknown_error";
         if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
         else if (json?.code === "vision_api_error") reason = "vision_api_error";
+        else if (json?.code === "invalid_image_payload" || json?.code === "unsupported_image_format") reason = "invalid_image_payload";
         else if (res.status === 429) reason = "rate_limited";
         else if (res.status === 402) reason = "credits";
         return {
@@ -370,9 +372,26 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
   const textNoItemsCount = photos.filter(
     (p) => p.status === "empty" && p.emptyReason === "text_found_but_no_items",
   ).length;
+  const technicalErrorCount = photos.filter((p) => p.status === "error").length;
   const allFailed = photos.length > 0 && errorCount === photos.length;
   const someFailed = errorCount > 0 && errorCount < photos.length;
   const noItems = step === "review" && reviewItems.length === 0;
+
+  function getPhotoIssueLabel(photo: Photo): string {
+    if (photo.status === "empty") {
+      if (photo.emptyReason === "no_text_detected") return t("communityPrices.batch.errorNoText");
+      if (photo.emptyReason === "text_found_but_no_items") return t("communityPrices.batch.errorTextNoItems");
+      return t("communityPrices.batch.photoEmpty");
+    }
+    if (photo.status !== "error") return "";
+    if (photo.errorReason === "ocr_config_missing") return t("communityPrices.batch.errorOcrConfigMissing");
+    if (photo.errorReason === "vision_api_error") return t("communityPrices.batch.errorVisionApi");
+    if (photo.errorReason === "invalid_image_payload") return t("communityPrices.batch.errorInvalidImagePayload");
+    if (photo.errorReason === "rate_limited") return t("communityPrices.batch.errorRateLimited");
+    if (photo.errorReason === "credits") return t("communityPrices.batch.errorCredits");
+    if (photo.errorReason === "network") return t("communityPrices.batch.errorNetwork");
+    return t("communityPrices.batch.errorUnknown");
+  }
 
 
   // Duplicate detection (same productName + price)
@@ -676,11 +695,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       {p.status === "error" && (
                         <span className="inline-flex items-center gap-1 text-destructive">
                           <AlertTriangle className="h-3 w-3" />
-                          {p.errorReason === "ocr_config_missing"
-                            ? t("communityPrices.batch.errorOcrConfigMissing")
-                            : p.errorReason === "vision_api_error"
-                              ? t("communityPrices.batch.errorVisionApi")
-                              : t("communityPrices.batch.photoError")}
+                          {getPhotoIssueLabel(p)}
                         </span>
                       )}
 
@@ -760,7 +775,25 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 {errorCount > 0 && (
                   <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
                 )}
+                {technicalErrorCount > 0 && (
+                  <div>{t("communityPrices.batch.summaryTechnicalErrors", { count: technicalErrorCount })}</div>
+                )}
               </div>
+            )}
+
+            {photos.some((p) => p.status === "error" || p.status === "empty") && (
+              <ul className="space-y-1 rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                {photos.map((p, idx) => {
+                  const issue = getPhotoIssueLabel(p);
+                  if (!issue) return null;
+                  return (
+                    <li key={p.id} className="flex items-start gap-1">
+                      <span className="font-semibold">{t("communityPrices.batch.photoLabel", { index: idx + 1 })}:</span>
+                      <span>{issue}</span>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
 
 
