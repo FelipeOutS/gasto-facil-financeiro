@@ -212,10 +212,10 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold leading-tight">
-              Diagnóstico mensal
+              {t("monthlyDiagnosis.title")}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre sua renda e alguns gastos para gerar seu diagnóstico mensal.
+              {t("monthlyDiagnosis.empty")}
             </p>
           </div>
         </div>
