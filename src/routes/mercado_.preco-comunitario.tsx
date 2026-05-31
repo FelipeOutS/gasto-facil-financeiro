@@ -464,6 +464,7 @@ function PrecoComunitarioPage() {
 
       {/* Batch scan wizard */}
       <BatchScanWizard open={batchOpen} onOpenChange={setBatchOpen} onSaved={reload} />
+      <OnlineImportWizard open={onlineImportOpen} onOpenChange={setOnlineImportOpen} onSaved={reload} />
 
 
 
