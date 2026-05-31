@@ -71,6 +71,17 @@
       "titleEdit": "Editar movimentação",
       "description": "Registro manual · não realiza compra ou venda real.",
       "fixedIncomeHint": "Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente."
+    },
+    "income": {
+      "titleCreate": "Novo rendimento",
+      "titleEdit": "Editar rendimento",
+      "description": "Registro manual · valor informado pelo usuário."
+    },
+    "updateValue": {
+      "title": "Atualizar valor",
+      "description": "Atualização manual · valor informado pelo usuário.",
+      "submit": "Salvar atualização",
+      "lastUpdate": "Última atualização: {{date}}"
     }
   },
   "forms": {
@@ -98,7 +109,13 @@
       "movementType": "Tipo",
       "date": "Data",
       "unitPrice": "Valor unitário",
-      "totalAmount": "Valor total"
+      "totalAmount": "Valor total",
+      "paymentDate": "Data de pagamento",
+      "amountReceived": "Valor recebido",
+      "status": "Status",
+      "statusReceived": "Recebido",
+      "statusExpected": "Previsto",
+      "updateDate": "Data da atualização"
     },
     "placeholders": {
       "institution": "XP, Nubank, Rico…",
@@ -120,7 +137,8 @@
       "select": "Selecione",
       "zero": "0",
       "zeroDecimal": "0,00",
-      "optional": "opcional"
+      "optional": "opcional",
+      "updateValueObs": "Ex.: cotação consultada na corretora"
     },
     "aux": {
       "hintVariable": "Use quantidade, preço médio e preço atual para calcular os valores automaticamente.",
@@ -139,13 +157,21 @@
         "saveFailed": "Não foi possível salvar.",
         "assetRequired": "Selecione um investimento.",
         "totalRequired": "Informe um valor total válido.",
-        "movementSaveFailed": "Não foi possível salvar a movimentação."
+        "movementSaveFailed": "Não foi possível salvar a movimentação.",
+        "updateValueInvalid": "Informe um valor atual válido.",
+        "updateValueFailed": "Não foi possível atualizar o valor.",
+        "incomeAssetRequired": "Selecione um investimento.",
+        "incomeValueInvalid": "Informe um valor válido.",
+        "incomeSaveFailed": "Não foi possível salvar o rendimento."
       },
       "success": {
         "updated": "Investimento atualizado.",
         "created": "Investimento cadastrado.",
         "movementUpdated": "Movimentação atualizada.",
-        "movementCreated": "Movimentação adicionada."
+        "movementCreated": "Movimentação adicionada.",
+        "valueUpdated": "Valor atualizado.",
+        "incomeUpdated": "Rendimento atualizado.",
+        "incomeCreated": "Rendimento adicionado."
       }
     }
   },

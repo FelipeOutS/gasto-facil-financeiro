@@ -71,6 +71,17 @@
       "titleEdit": "Edit transaction",
       "description": "Manual record · does not perform a real buy or sell.",
       "fixedIncomeHint": "For fixed income, quantity is not required. Investment totals are recalculated automatically."
+    },
+    "income": {
+      "titleCreate": "New income",
+      "titleEdit": "Edit income",
+      "description": "Manual record · value provided by the user."
+    },
+    "updateValue": {
+      "title": "Update value",
+      "description": "Manual update · value provided by the user.",
+      "submit": "Save update",
+      "lastUpdate": "Last update: {{date}}"
     }
   },
   "forms": {
@@ -98,7 +109,13 @@
       "movementType": "Type",
       "date": "Date",
       "unitPrice": "Unit price",
-      "totalAmount": "Total amount"
+      "totalAmount": "Total amount",
+      "paymentDate": "Payment date",
+      "amountReceived": "Amount received",
+      "status": "Status",
+      "statusReceived": "Received",
+      "statusExpected": "Expected",
+      "updateDate": "Update date"
     },
     "placeholders": {
       "institution": "XP, Nubank, Rico…",
@@ -120,7 +137,8 @@
       "select": "Select",
       "zero": "0",
       "zeroDecimal": "0.00",
-      "optional": "optional"
+      "optional": "optional",
+      "updateValueObs": "E.g.: quote checked at the broker"
     },
     "aux": {
       "hintVariable": "Use quantity, average price and current price to calculate the values automatically.",
@@ -139,13 +157,21 @@
         "saveFailed": "Could not save.",
         "assetRequired": "Select an investment.",
         "totalRequired": "Enter a valid total amount.",
-        "movementSaveFailed": "Could not save the transaction."
+        "movementSaveFailed": "Could not save the transaction.",
+        "updateValueInvalid": "Enter a valid current value.",
+        "updateValueFailed": "Could not update the value.",
+        "incomeAssetRequired": "Select an investment.",
+        "incomeValueInvalid": "Enter a valid amount.",
+        "incomeSaveFailed": "Could not save the income."
       },
       "success": {
         "updated": "Investment updated.",
         "created": "Investment created.",
         "movementUpdated": "Transaction updated.",
-        "movementCreated": "Transaction added."
+        "movementCreated": "Transaction added.",
+        "valueUpdated": "Value updated.",
+        "incomeUpdated": "Income updated.",
+        "incomeCreated": "Income added."
       }
     }
   },

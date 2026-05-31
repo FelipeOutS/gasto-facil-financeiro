@@ -1661,7 +1661,7 @@ function AtualizarValorDialog({
     if (!ativo || !userId) return;
     const valorNovo = parseBRLInput(valorAtual);
     if (!Number.isFinite(valorNovo) || valorNovo < 0) {
-      toast.error("Informe um valor atual válido.");
+      toast.error(tInv("forms.aux.errors.updateValueInvalid"));
       return;
     }
     setSalvando(true);
@@ -1674,11 +1674,11 @@ function AtualizarValorDialog({
         data_atualizacao: new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString(),
         origem: "manual",
       });
-      toast.success("Valor atualizado.");
+      toast.success(tInv("forms.aux.success.valueUpdated"));
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível atualizar o valor.");
+      toastFromError(e, tInv("forms.aux.errors.updateValueFailed"));
     } finally {
       setSalvando(false);
     }
@@ -1689,16 +1689,16 @@ function AtualizarValorDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" /> Atualizar valor
+            <RefreshCw className="h-4 w-4" /> {tInv("dialogs.updateValue.title")}
           </DialogTitle>
           <DialogDescription>
-            Atualização manual · valor informado pelo usuário.
+            {tInv("dialogs.updateValue.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground">Investimento</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <div className="text-sm font-medium">{ativo.nome}</div>
             <div className="text-[11px] text-muted-foreground">
               {getTipoInvestimentoLabel(ativo.tipo, tInv)}
@@ -1707,7 +1707,7 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Valor aplicado</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.appliedValue")}</label>
             <Input
               value={formatBRL(Number(ativo.valor_aplicado || 0))}
               disabled
@@ -1718,7 +1718,7 @@ function AtualizarValorDialog({
           {isVariavel && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">Preço atual</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.currentPrice")}</label>
                 <Input
                   value={precoAtual}
                   onChange={(e) => setPrecoAtual(e.target.value)}
@@ -1726,7 +1726,7 @@ function AtualizarValorDialog({
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Quantidade</label>
+                <label className="text-xs text-muted-foreground">{tInv("forms.labels.quantity")}</label>
                 <Input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
@@ -1738,7 +1738,7 @@ function AtualizarValorDialog({
 
           <div>
             <label className="text-xs text-muted-foreground">
-              Valor atual{isVariavel ? " (calculado)" : ""}
+              {tInv("forms.labels.currentValue")}{isVariavel ? " " + tInv("forms.aux.calculated") : ""}
             </label>
             <Input
               value={valorAtual}
@@ -1748,33 +1748,33 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Data da atualização</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.updateDate")}</label>
             <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Observação</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
-              placeholder="Ex.: cotação consultada na corretora"
+              placeholder={tInv("forms.placeholders.updateValueObs")}
               rows={2}
             />
           </div>
 
           {ativo.ultima_atualizacao && (
             <div className="text-[11px] text-muted-foreground">
-              Última atualização: {formatarDataHora(ativo.ultima_atualizacao)}
+              {tInv("dialogs.updateValue.lastUpdate", { date: formatarDataHora(ativo.ultima_atualizacao) })}
             </div>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={salvando}>
-            Cancelar
+            {tInv("forms.aux.cancel")}
           </Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : "Salvar atualização"}
+            {salvando ? tInv("forms.aux.saving") : tInv("dialogs.updateValue.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2254,12 +2254,12 @@ function RendimentoDialog({
   async function salvar() {
     if (!userId) return;
     if (!ativoId) {
-      toast.error("Selecione um investimento.");
+      toast.error(tInv("forms.aux.errors.incomeAssetRequired"));
       return;
     }
     const v = parseBRLInput(valor);
     if (!Number.isFinite(v) || v <= 0) {
-      toast.error("Informe um valor válido.");
+      toast.error(tInv("forms.aux.errors.incomeValueInvalid"));
       return;
     }
     const payload: Partial<Rendimento> = {
@@ -2275,11 +2275,11 @@ function RendimentoDialog({
     try {
       if (editing) await atualizarRendimento(editing.id, payload);
       else await criarRendimento(userId, payload);
-      toast.success(editing ? "Rendimento atualizado." : "Rendimento adicionado.");
+      toast.success(editing ? tInv("forms.aux.success.incomeUpdated") : tInv("forms.aux.success.incomeCreated"));
       onSaved();
     } catch (e) {
       console.error(e);
-      toastFromError(e, "Não foi possível salvar o rendimento.");
+      toastFromError(e, tInv("forms.aux.errors.incomeSaveFailed"));
     } finally {
       setSalvando(false);
     }
@@ -2291,17 +2291,17 @@ function RendimentoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HandCoins className="h-4 w-4" />
-            {editing ? "Editar rendimento" : "Novo rendimento"}
+            {editing ? tInv("dialogs.income.titleEdit") : tInv("dialogs.income.titleCreate")}
           </DialogTitle>
-          <DialogDescription>Registro manual · valor informado pelo usuário.</DialogDescription>
+          <DialogDescription>{tInv("dialogs.income.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground">Investimento</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.asset")}</label>
             <Select value={ativoId} onValueChange={setAtivoId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder={tInv("forms.placeholders.select")} />
               </SelectTrigger>
               <SelectContent>
                 {ativos.map((a) => (
@@ -2315,7 +2315,7 @@ function RendimentoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Tipo</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.type")}</label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoRendimento)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -2330,14 +2330,14 @@ function RendimentoDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Status</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.status")}</label>
               <Select value={status} onValueChange={(v) => setStatus(v as "recebido" | "previsto")}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recebido">Recebido</SelectItem>
-                  <SelectItem value="previsto">Previsto</SelectItem>
+                  <SelectItem value="recebido">{tInv("forms.labels.statusReceived")}</SelectItem>
+                  <SelectItem value="previsto">{tInv("forms.labels.statusExpected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -2345,30 +2345,30 @@ function RendimentoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">Data de pagamento</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.paymentDate")}</label>
               <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Valor recebido</label>
+              <label className="text-xs text-muted-foreground">{tInv("forms.labels.amountReceived")}</label>
               <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Observação</label>
+            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               rows={2}
-              placeholder="opcional"
+              placeholder={tInv("forms.placeholders.optional")}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>{tInv("forms.aux.cancel")}</Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : editing ? "Salvar" : "Adicionar"}
+            {salvando ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
