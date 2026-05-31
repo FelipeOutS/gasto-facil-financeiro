@@ -13,9 +13,19 @@
   },
   "newGoal": "New goal",
   "empty": {
-    "title": "Choose a goal and track every step until you get there.",
-    "subtitle": "Trip, emergency fund, new car — any objective worth pursuing.",
-    "cta": "Create first goal"
+    "title": "No goals created yet",
+    "subtitle": "Create a goal to track objectives like an emergency fund, a trip, an important purchase, or future investment.",
+    "cta": "Create goal",
+    "helper": "Start with a simple goal and adjust the amount later if needed."
+  },
+  "onboarding": {
+    "title": "Create your first goal",
+    "description": "Set a goal, enter the amount you want to reach, and track your progress over time.",
+    "steps": {
+      "objective": "Set the objective",
+      "amount": "Enter the amount",
+      "progress": "Track progress"
+    }
   },
   "status": {
     "nao_iniciada": "Not started",
@@ -59,15 +69,20 @@
     "addDesc": "Tell us how much you've saved so far for this goal.",
     "removeDesc": "Remove value from {{name}}",
     "name": "Name",
-    "namePlaceholder": "e.g. Trip",
+    "namePlaceholder": "E.g. Emergency fund, Trip, New car",
     "goalValue": "Target value",
+    "goalValueHelper": "How much do you want to save?",
     "savedValue": "Already saved",
+    "savedValueHelper": "How much have you already saved?",
     "accumulatedValue": "Accumulated value",
     "deadline": "Deadline (optional)",
+    "deadlineHelper": "When do you want to reach this goal?",
     "linkedBank": "Linked bank",
+    "linkedBankHelper": "Link an account if you want better tracking.",
     "none": "None",
     "description": "Description",
-    "descriptionPlaceholder": "Optional",
+    "descriptionPlaceholder": "Add a note to remember why this goal matters",
+    "descriptionHelper": "Add a note to remember why this goal matters.",
     "goalImage": "Goal image",
     "useAutoSuggestion": "Use auto suggestion",
     "uploading": "Uploading...",
