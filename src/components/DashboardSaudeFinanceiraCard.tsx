@@ -217,10 +217,10 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold leading-tight">
-              Saúde financeira
+              {t("financialHealth.title")}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cadastre sua renda e alguns gastos para calcular sua saúde financeira.
+              {t("financialHealth.empty")}
             </p>
           </div>
         </div>
