@@ -417,7 +417,7 @@ function OrcamentoPage() {
 
       {/* Estado vazio: nenhum limite configurado neste mês */}
       {!temOrcamento && (limiteTotal ?? 0) <= 0 && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
           <EmptyState
             icon={<PieChartIcon className="h-6 w-6" />}
             title={t("empty.title")}
@@ -442,8 +442,25 @@ function OrcamentoPage() {
               </Button>
             }
           />
+          <ol className="mx-auto grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-3">
+            {(["category", "limit", "track"] as const).map((key, idx) => (
+              <li
+                key={key}
+                className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card/50 p-3 text-xs"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                  {idx + 1}
+                </span>
+                <span className="leading-tight">{t(`empty.steps.${key}`)}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mx-auto max-w-md text-center text-[11px] text-muted-foreground">
+            {t("empty.helper")}
+          </p>
         </div>
       )}
+
 
       {/* Resumo superior — só quando já existe algum orçamento ou limite total */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
