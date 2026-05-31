@@ -13,6 +13,7 @@ import {
   X,
   Store,
 } from "lucide-react";
+import { GoogleMapView } from "@/components/mercado/GoogleMapView";
 import { useState } from "react";
 import { toast } from "sonner";
 import i18n from "@/i18n";
@@ -183,6 +184,12 @@ function MeusMercadosPage() {
           </p>
         </div>
       </section>
+
+      <section className="mt-4">
+        <GoogleMapView height={260} />
+      </section>
+
+
 
       {mode === "list" && (
         <div className="mt-5 flex items-center justify-between gap-3">
