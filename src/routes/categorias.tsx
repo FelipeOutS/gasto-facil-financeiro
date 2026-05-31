@@ -337,6 +337,40 @@ function CategoriasPage() {
           </Dialog>
         </div>
 
+        {customCount === 0 && (
+          <div className="mt-3 rounded-2xl border border-dashed border-border bg-card-elevated/40 p-4">
+            <p className="text-sm font-semibold">{t("onboarding.title")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("onboarding.description")}</p>
+            <ol className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {(["create", "use", "track"] as const).map((key, idx) => (
+                <li
+                  key={key}
+                  className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card/50 p-2.5 text-[12px]"
+                >
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                    {idx + 1}
+                  </span>
+                  <span className="leading-tight">{t(`onboarding.steps.${key}`)}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-3 flex flex-col items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-full"
+                onClick={() => setOpen(true)}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t("onboarding.cta")}
+              </Button>
+              <p className="max-w-xs text-center text-[11px] text-muted-foreground">
+                {t("onboarding.helper")}
+              </p>
+            </div>
+          </div>
+        )}
+
         <ul className="mt-3 space-y-2">
           {categorias.map((c) => (
             <li
