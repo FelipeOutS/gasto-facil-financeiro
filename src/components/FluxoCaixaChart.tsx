@@ -189,8 +189,8 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
-              <Area type="monotone" dataKey="gastos" name="Gastos" stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
+              <Area type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
+              <Area type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
             </AreaChart>
           ) : tipo === "line" ? (
             <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
