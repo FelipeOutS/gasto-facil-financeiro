@@ -134,7 +134,14 @@
     "nenhumProximo": "No upcoming due dates. 🎉",
     "semLancamentos": "No financial entries on this day.",
     "lancamentoSing": "{{count}} entry",
-    "lancamentoPlur": "{{count}} entries"
+    "lancamentoPlur": "{{count}} entries",
+    "weekdays": ["S", "M", "T", "W", "T", "F", "S"]
+  },
+  "mobileSummary": {
+    "eyebrow": "summary of",
+    "show": "Show values",
+    "hide": "Hide values",
+    "guardado": "Saved"
   },
   "atividade": {
     "eyebrow": "Activity",
