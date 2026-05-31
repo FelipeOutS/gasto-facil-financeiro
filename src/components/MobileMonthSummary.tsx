@@ -91,7 +91,7 @@ export function MobileMonthSummary({
             type="button"
             onClick={() => setHidden((v) => !v)}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted active:scale-95"
-            aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+            aria-label={hidden ? t("mobileSummary.show") : t("mobileSummary.hide")}
           >
             {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
