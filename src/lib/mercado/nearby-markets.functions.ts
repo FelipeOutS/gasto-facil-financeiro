@@ -138,3 +138,78 @@ export const searchNearbyMarkets = createServerFn({ method: "POST" })
       return { markets: [], error: "places_request_failed" };
     }
   });
+
+// ---------------------------------------------------------------------------
+// Back-compat: shim exigido por nearby-markets-api.ts
+// ---------------------------------------------------------------------------
+import type {
+  MercadoNearbyQuery,
+  MercadoNearbyResponse,
+} from "./nearby-markets-api";
+
+const LegacyInputSchema = z
+  .object({
+    cep: z.string().optional(),
+    cidade: z.string().optional(),
+    uf: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    radiusKm: z.number().optional(),
+  })
+  .passthrough();
+
+/**
+ * Wrapper de compatibilidade. Atualmente delega para o Google Places (New)
+ * quando há latitude/longitude. Para CEP/cidade sem coords, retorna
+ * provider_unavailable e a UI cai no fluxo manual.
+ */
+export const findNearbyMarketsServerFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => LegacyInputSchema.parse(input) as MercadoNearbyQuery)
+  .handler(async ({ data }): Promise<MercadoNearbyResponse> => {
+    if (
+      typeof data.latitude !== "number" ||
+      typeof data.longitude !== "number" ||
+      !Number.isFinite(data.latitude) ||
+      !Number.isFinite(data.longitude)
+    ) {
+      return {
+        ok: false,
+        provider: "google_places",
+        error: { code: "provider_unavailable" },
+      };
+    }
+    const radiusMeters = Math.min(
+      Math.max(Math.round((data.radiusKm ?? 2.5) * 1000), 50),
+      50000,
+    );
+    const result = await searchNearbyMarkets({
+      data: {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        radiusMeters,
+      },
+    });
+    if (result.error) {
+      return {
+        ok: false,
+        provider: "google_places",
+        error: { code: "provider_unavailable" },
+      };
+    }
+    return {
+      ok: true,
+      provider: "google_places",
+      results: result.markets.map((m) => ({
+        id: m.placeId,
+        placeId: m.placeId,
+        nome: m.name,
+        endereco: m.address ?? undefined,
+        latitude: m.latitude ?? undefined,
+        longitude: m.longitude ?? undefined,
+        fonte: "google_places",
+      })),
+      radiusKmUsed: radiusMeters / 1000,
+      sourceLabel: "Google Places",
+    };
+  });
