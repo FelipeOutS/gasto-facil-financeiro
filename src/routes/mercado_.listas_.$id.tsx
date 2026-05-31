@@ -33,6 +33,7 @@ import { Money } from "@/components/Money";
 import { PrecoInsight } from "@/components/mercado/PrecoInsight";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 import { CommunityPriceSuggestion } from "@/components/mercado/CommunityPriceSuggestion";
+import { CommunityPriceSavingsSummary } from "@/components/mercado/CommunityPriceSavingsSummary";
 import {
   getSuggestionsFor,
   useActiveCommunityPrices,
