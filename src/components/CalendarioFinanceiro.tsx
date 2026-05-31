@@ -27,7 +27,7 @@ type EventoDia = {
   href: string;
 };
 
-const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAYS_FALLBACK = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 function isoToKey(d: string): string {
   return d.length >= 10 ? d.slice(0, 10) : d;
@@ -64,6 +64,10 @@ export function CalendarioFinanceiro({
   compact?: boolean;
 }) {
   const { t, i18n } = useTranslation("dashboard");
+  const weekdaysRaw = t("calendario.weekdays", { returnObjects: true }) as unknown;
+  const WEEKDAYS: string[] = Array.isArray(weekdaysRaw) && weekdaysRaw.length === 7
+    ? (weekdaysRaw as string[])
+    : WEEKDAYS_FALLBACK;
   const { user } = useAuth();
   const contas = useStore(() => getContasAPagar());
   const [receber, setReceber] = useState<ContaReceber[]>([]);

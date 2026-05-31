@@ -134,7 +134,14 @@
     "nenhumProximo": "Nenhum vencimento próximo. 🎉",
     "semLancamentos": "Nenhum lançamento financeiro neste dia.",
     "lancamentoSing": "{{count}} lançamento",
-    "lancamentoPlur": "{{count}} lançamentos"
+    "lancamentoPlur": "{{count}} lançamentos",
+    "weekdays": ["D", "S", "T", "Q", "Q", "S", "S"]
+  },
+  "mobileSummary": {
+    "eyebrow": "resumo de",
+    "show": "Mostrar valores",
+    "hide": "Ocultar valores",
+    "guardado": "Guardado"
   },
   "atividade": {
     "eyebrow": "Atividade",

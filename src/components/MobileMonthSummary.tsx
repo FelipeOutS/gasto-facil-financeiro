@@ -43,7 +43,7 @@ export function MobileMonthSummary({
       {/* Cabeçalho — "resumo de {mês}" + switcher */}
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold capitalize tracking-tight">
-          <span className="text-muted-foreground font-normal">resumo de</span>
+          <span className="text-muted-foreground font-normal">{t("mobileSummary.eyebrow")}</span>
           <span>{formatMonthYear(ano, mes)}</span>
         </h2>
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-0.5">
@@ -91,7 +91,7 @@ export function MobileMonthSummary({
             type="button"
             onClick={() => setHidden((v) => !v)}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted active:scale-95"
-            aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+            aria-label={hidden ? t("mobileSummary.show") : t("mobileSummary.hide")}
           >
             {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -126,7 +126,7 @@ export function MobileMonthSummary({
           }
         />
         <KpiTile
-          label="Guardado"
+          label={t("mobileSummary.guardado")}
           value={hidden ? "••••" : formatBRLCompact(guardado)}
           tone="muted"
           icon={<Wallet className="h-3.5 w-3.5" />}

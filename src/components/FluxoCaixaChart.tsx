@@ -45,6 +45,10 @@ export function FluxoCaixaChart({
   const [tipo, setTipo] = useState<ChartKind>("area");
   const locale = i18n.resolvedLanguage || i18n.language || "pt";
 
+  const labelEntradas = t("fluxo.entradas");
+  const labelGastos = t("fluxo.gastos");
+  const labelSaldo = t("fluxo.saldo");
+
   const TYPES: { id: ChartKind; label: string; Icon: typeof TrendingUp }[] = [
     { id: "area", label: t("fluxo.types.area"), Icon: TrendingUp },
     { id: "line", label: t("fluxo.types.line"), Icon: Activity },
@@ -185,8 +189,8 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
-              <Area type="monotone" dataKey="gastos" name="Gastos" stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
+              <Area type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
+              <Area type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
             </AreaChart>
           ) : tipo === "line" ? (
             <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -195,9 +199,9 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="entradas" name="Entradas" stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="gastos" name="Gastos" stroke="var(--destructive)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+              <Line type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="saldo" name={labelSaldo} stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
             </LineChart>
           ) : tipo === "bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -206,8 +210,8 @@ export function FluxoCaixaChart({
               <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
               <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="entradas" name="Entradas" fill="var(--success)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="gastos" name="Gastos" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="entradas" name={labelEntradas} fill="var(--success)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="gastos" name={labelGastos} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
             </BarChart>
           ) : (
             <PieChart>
