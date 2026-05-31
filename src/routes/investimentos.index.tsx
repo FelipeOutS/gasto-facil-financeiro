@@ -2293,7 +2293,7 @@ function RendimentoDialog({
             <HandCoins className="h-4 w-4" />
             {editing ? tInv("dialogs.income.titleEdit") : tInv("dialogs.income.titleCreate")}
           </DialogTitle>
-          <DialogDescription>Registro manual · valor informado pelo usuário.</DialogDescription>
+          <DialogDescription>{tInv("dialogs.income.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
