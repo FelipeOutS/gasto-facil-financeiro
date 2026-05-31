@@ -2,6 +2,7 @@
 // Usa o motor por regra em src/lib/insights/generator.ts. Não persiste nada,
 // não toca em alertas, não dispara notificações.
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   Lightbulb,
