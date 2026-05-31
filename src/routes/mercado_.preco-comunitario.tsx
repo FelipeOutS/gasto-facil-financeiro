@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
 import { BatchScanWizard } from "@/components/mercado/BatchScanWizard";
+import { OnlineImportWizard } from "@/components/mercado/OnlineImportWizard";
 
 
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
