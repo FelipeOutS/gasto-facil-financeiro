@@ -539,9 +539,36 @@ function RelatoriosPage() {
         </section>
       )}
 
+      {/* ===== Onboarding / Empty State (somente quando não há nenhum lançamento) ===== */}
+      {gastos.length === 0 && receitas.length === 0 && (
+        <section className="mt-4 rounded-2xl border border-border/60 bg-card-elevated/60 p-4 animate-rise print:hidden">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {t("onboarding.title")}
+          </p>
+          <h2 className="mt-1 text-base font-semibold leading-snug">
+            {t("empty.title")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("onboarding.description")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild size="sm" className="min-h-11">
+              <Link to="/adicionar">{t("onboarding.cta")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="min-h-11">
+              <Link to="/">{t("onboarding.secondaryCta")}</Link>
+            </Button>
+          </div>
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            {t("onboarding.helper")}
+          </p>
+        </section>
+      )}
+
       {/* ===== KPIs principais ===== */}
       <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+
         <Kpi label={t("kpi.receitas")} valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
         <Kpi label={t("kpi.despesas")} valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
         <Kpi

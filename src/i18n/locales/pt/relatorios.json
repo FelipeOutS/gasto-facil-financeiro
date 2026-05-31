@@ -1,4 +1,17 @@
 {
+  "onboarding": {
+    "title": "Entenda seus números com relatórios",
+    "description": "Use os relatórios para acompanhar gastos, receitas, categorias e evolução do mês com mais clareza.",
+    "cta": "Adicionar lançamento",
+    "secondaryCta": "Ver Dashboard",
+    "helper": "Quanto mais lançamentos você cadastrar, mais completos ficam os gráficos e comparativos."
+  },
+  "empty": {
+    "title": "Ainda não há dados para gerar relatórios",
+    "description": "Cadastre alguns gastos e receitas para visualizar gráficos, comparativos e análises do período.",
+    "cta": "Adicionar lançamento",
+    "helper": "Você pode começar com poucos lançamentos e acompanhar a evolução aos poucos."
+  },
   "meta": {
     "title": "Relatórios — Gasto Inteligente",
     "description": "Entenda para onde seu dinheiro foi e como melhorar no próximo mês."
