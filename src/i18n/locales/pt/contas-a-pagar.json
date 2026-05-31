@@ -57,9 +57,10 @@
     "clearFilters": "Limpar filtros"
   },
   "empty": {
-    "title": "Sem boletos te perseguindo por enquanto",
-    "subtitle": "Cadastre uma conta e deixe o app lembrar por você antes de vencer.",
-    "addFirst": "Adicionar primeira conta"
+    "title": "Cadastre sua primeira conta a pagar",
+    "subtitle": "Adicione boletos, assinaturas, parcelas ou despesas futuras para acompanhar vencimentos e evitar atrasos.",
+    "addFirst": "Adicionar conta a pagar",
+    "helper": "Comece pelas contas fixas do mês, como aluguel, internet, cartão ou fornecedores."
   },
   "card": {
     "dueShort": "Vence {{date}}",
