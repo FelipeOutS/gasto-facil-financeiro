@@ -1117,6 +1117,22 @@
     "home": "Início",
     "disclaimer": "Preço informado por usuário. Pode variar por loja, região e data. Confira no mercado antes de comprar.",
     "itemHint": "Confira no mercado antes de comprar.",
+    "image": {
+      "searchImage": "Buscar imagem automaticamente",
+      "searching": "Procurando imagem do produto…",
+      "imageFound": "Imagem sugerida encontrada",
+      "noImageFound": "Não encontramos uma imagem para esse produto. Você pode salvar mesmo assim.",
+      "removeImage": "Remover imagem",
+      "illustrativeImage": "Imagem apenas ilustrativa. Pode variar por embalagem, marca, versão ou região.",
+      "suggestedImage": "Imagem sugerida",
+      "brandLogo": "Logo da marca",
+      "brand": "Marca (opcional)",
+      "brandPlaceholder": "Ex.: Nestlé, Tirol, Bauducco",
+      "barcode": "Código de barras (opcional)",
+      "barcodePlaceholder": "Ex.: 7891000100103",
+      "previewAlt": "Imagem sugerida para {{name}}",
+      "previewHint": "Revise antes de salvar."
+    },
     "actions": {
       "scanTitle": "Ler panfleto por foto",
       "scanDescription": "A leitura automática pode cometer erros. Você revisa cada item antes de salvar.",
