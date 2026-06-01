@@ -1,5 +1,56 @@
 {
   "back": "Voltar",
+  "v3": {
+    "header": {
+      "title": "Receitas",
+      "title_mei": "Faturamento",
+      "title_empresa": "Faturamento",
+      "description": "Acompanhe salários, ganhos extras, recorrências e entradas do mês.",
+      "description_mei": "Acompanhe vendas, serviços, contratos, recorrências e entradas do negócio.",
+      "description_empresa": "Acompanhe vendas, serviços, contratos, recorrências e entradas da empresa."
+    },
+    "banner": {
+      "title": "Tenha clareza de tudo que entra",
+      "title_mei": "Tenha clareza de todo o faturamento",
+      "title_empresa": "Tenha clareza de todo o faturamento",
+      "subtitle": "Organize salários, ganhos extras e recorrências para enxergar o mês completo.",
+      "subtitle_mei": "Organize recebimentos, vendas e contratos para enxergar o faturamento do mês.",
+      "subtitle_empresa": "Organize recebimentos, contratos e vendas para enxergar o faturamento da empresa.",
+      "cta": "Adicionar receita",
+      "cta_mei": "Adicionar faturamento",
+      "cta_empresa": "Adicionar faturamento",
+      "alt": "Ilustração de entradas e receitas"
+    },
+    "summary": {
+      "total": "Total no mês",
+      "count": "Entradas no mês",
+      "next": "Próxima entrada",
+      "recurring": "Recorrentes"
+    },
+    "sections": {
+      "listTitle": "Suas entradas",
+      "forecastTitle": "Previsão",
+      "upcomingTitle": "Próximas entradas"
+    },
+    "empty": {
+      "title": "Cadastre sua primeira receita",
+      "title_mei": "Cadastre seu primeiro faturamento",
+      "title_empresa": "Cadastre seu primeiro faturamento",
+      "description": "Em menos de um minuto você já vê tudo organizado no resumo do mês.",
+      "description_mei": "Em menos de um minuto você já vê o faturamento organizado no resumo do mês.",
+      "description_empresa": "Em menos de um minuto você já vê o faturamento organizado no resumo do mês.",
+      "cta": "Adicionar receita",
+      "cta_mei": "Adicionar faturamento",
+      "cta_empresa": "Adicionar faturamento",
+      "steps": {
+        "source": "Informe a origem",
+        "amount": "Defina valor e data",
+        "summary": "Acompanhe no resumo do mês",
+        "summary_mei": "Acompanhe no faturamento do mês",
+        "summary_empresa": "Acompanhe no faturamento do mês"
+      }
+    }
+  },
   "header": {
     "kicker": "Suas receitas",
     "kicker_mei": "Seu faturamento",
