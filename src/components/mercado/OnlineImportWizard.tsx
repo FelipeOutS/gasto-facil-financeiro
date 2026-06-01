@@ -442,6 +442,9 @@ export function OnlineImportWizard({
           <div className="space-y-3">
             <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
               <p>
+                {t("communityPrices.onlineImport.foundOnPage", { count: items.length })}
+              </p>
+              <p className="mt-1">
                 {t("communityPrices.onlineImport.reviewSummary", {
                   count: items.length,
                   source: "Joanin Online",
@@ -451,6 +454,29 @@ export function OnlineImportWizard({
               <p className="mt-1">{t("communityPrices.onlineImport.reviewScopeNote")}</p>
               <p className="mt-1">{t("communityPrices.onlineImport.reviewDisclaimer")}</p>
             </div>
+
+            {diagnostics && diagnostics.warnings.length > 0 && (
+              <div className="space-y-1.5">
+                {diagnostics.warnings.includes("placement_client_rendered_only") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.placementClientRenderedOnly")}</span>
+                  </div>
+                )}
+                {diagnostics.warnings.includes("pagination_private_blocked") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.paginationPrivateBlocked")}</span>
+                  </div>
+                )}
+                {diagnostics.warnings.includes("path_unsupported_use_home_or_category") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.pathUnsupported")}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <ul className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
               {items.map((r, idx) => {
