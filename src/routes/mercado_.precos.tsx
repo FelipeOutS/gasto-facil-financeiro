@@ -17,6 +17,8 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
 
 export const Route = createFileRoute("/mercado_/precos")({
   head: () => ({
