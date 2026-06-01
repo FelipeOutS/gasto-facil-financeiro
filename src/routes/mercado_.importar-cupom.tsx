@@ -34,6 +34,7 @@ import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
@@ -1670,6 +1671,7 @@ function ImportarCupomPage() {
           title={t("receiptImportV2.banner.title")}
           subtitle={t("receiptImportV2.banner.subtitle")}
           imageSrc={bannerOrcamento}
+          imageSrcWebp={bannerOrcamentoWebp}
           tone="community"
         />
       </div>

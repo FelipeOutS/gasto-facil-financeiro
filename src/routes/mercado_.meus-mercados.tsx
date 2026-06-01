@@ -15,6 +15,7 @@ import {
 import { NearbyMarkets } from "@/components/mercado/NearbyMarkets";
 import { MercadoBanner, SectionBlock } from "@/components/mercado/shell";
 import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
+import bannerMercadosWebp from "@/assets/mercado/banner-mercados.webp";
 import { useState } from "react";
 import { toast } from "sonner";
 import i18n from "@/i18n";
@@ -169,6 +170,7 @@ function MeusMercadosPage() {
         title={t("marketsV2.banner.title")}
         subtitle={t("marketsV2.banner.subtitle")}
         imageSrc={bannerMercados}
+        imageSrcWebp={bannerMercadosWebp}
         imageAlt={t("marketsV2.banner.title")}
         tone="brand"
         className="mt-4"

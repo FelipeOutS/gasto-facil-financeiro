@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import bannerCesta from "@/assets/mercado/hero-home.jpg";
+import bannerCestaWebp from "@/assets/mercado/hero-home.webp";
 import {
   type CestaTipo,
   type MercadoCestaPadrao,
@@ -110,6 +111,7 @@ function CestaPadraoPage() {
           title={t("basketV2.banner.title")}
           subtitle={t("basketV2.banner.subtitle")}
           imageSrc={bannerCesta}
+          imageSrcWebp={bannerCestaWebp}
           tone="pantry"
         />
       </div>

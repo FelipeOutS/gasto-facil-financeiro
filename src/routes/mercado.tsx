@@ -42,8 +42,11 @@ import {
 } from "@/components/mercado/shell";
 
 import heroHome from "@/assets/mercado/hero-home.jpg";
+import heroHomeWebp from "@/assets/mercado/hero-home.webp";
 import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
+import bannerMercadosWebp from "@/assets/mercado/banner-mercados.webp";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
 import catHortifruti from "@/assets/mercado/cat-hortifruti.webp";
 import catAcougue from "@/assets/mercado/cat-acougue.webp";
@@ -247,6 +250,7 @@ function MercadoHubPage() {
         <MercadoBanner
           tone="community"
           imageSrc={heroHome}
+          imageSrcWebp={heroHomeWebp}
           imageAlt={t("homeV2.heroTitle")}
           title={t("homeV2.heroTitle")}
           subtitle={t("homeV2.heroSubtitle")}
@@ -496,6 +500,7 @@ function MercadoHubPage() {
           <MercadoBanner
             tone="meat"
             imageSrc={bannerMercados}
+            imageSrcWebp={bannerMercadosWebp}
             title={t("homeV2.marketsTitle")}
             subtitle={t("homeV2.marketsDesc")}
             cta={
@@ -558,6 +563,7 @@ function MercadoHubPage() {
         <MercadoBanner
           tone="bakery"
           imageSrc={bannerOrcamento}
+          imageSrcWebp={bannerOrcamentoWebp}
           title={t("homeV2.budgetTitle")}
           subtitle={t("homeV2.budgetDesc")}
           cta={

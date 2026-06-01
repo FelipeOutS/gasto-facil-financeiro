@@ -46,7 +46,9 @@ import {
 import { cn } from "@/lib/utils";
 import { MercadoBanner } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { usePlan } from "@/lib/use-plan";
 import {
@@ -297,6 +299,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
         title={t("cartV2.bannerTitle")}
         subtitle={t("cartV2.bannerSubtitle")}
         imageSrc={bannerOrcamento}
+        imageSrcWebp={bannerOrcamentoWebp}
         imageAlt={t("cartV2.emptyImageAlt")}
         tone="brand"
         className="mt-4"

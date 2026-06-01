@@ -17,6 +17,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/mercado_/calculadoras")({
@@ -108,6 +109,7 @@ function CalculadorasPage() {
           title={t("calculatorsV2.banner.title")}
           subtitle={t("calculatorsV2.banner.subtitle")}
           imageSrc={bannerComunitario}
+          imageSrcWebp={bannerComunitarioWebp}
         />
       </div>
 
