@@ -249,20 +249,29 @@ function normalizeLookupTerms(raw: string, brand: string | null): string {
   return normalizeMarketProductTerms(raw, brand);
 }
 
-function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null): string[] {
+const BEER_BRANDS = ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn", "corona", "original", "bohemia", "serramalte"];
+const SOFT_DRINK_BRANDS = ["coca cola", "coca-cola", "coca", "pepsi", "fanta", "sprite", "sukita", "guarana antarctica", "schweppes", "del valle"];
+const COFFEE_BRANDS = ["pilao", "melitta", "tres coracoes", "nescafe", "3 coracoes"];
+const FLOUR_BRANDS = ["adria", "renata", "dona benta", "sol", "anaconda"];
+const CHOCOLATE_BRANDS = ["nescau", "toddy", "toddynho", "ovomaltine"];
+
+function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null, brand?: string | null): string[] {
   const text = normalizeForKey(name);
+  const brandKey = normalizeForKey(brand);
   const terms: string[] = [];
-  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager"])) {
+  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager", "long", "neck"]) || BEER_BRANDS.includes(brandKey)) {
     terms.push("cerveja", "beer", "lager");
   }
   if (
     hasToken(text, ["refrigerante", "refri", "soda", "cola"]) ||
-    /\b(coca|pepsi|fanta|sprite|sukita|schweppes|guarana)\b/.test(text)
+    /\b(coca|pepsi|fanta|sprite|sukita|schweppes|guarana)\b/.test(text) ||
+    SOFT_DRINK_BRANDS.includes(brandKey)
   ) {
-    terms.push("refrigerante", "soda", "soft drink", "cola");
+    terms.push("refrigerante", "soda", "soft drink");
   }
-  if (hasToken(text, ["cafe", "pilao", "melitta"])) terms.push("cafe", "coffee");
-  if (hasToken(text, ["farinha", "trigo", "adria"])) terms.push("farinha trigo", "flour");
+  if (hasToken(text, ["cafe", "pilao", "melitta"]) || COFFEE_BRANDS.includes(brandKey)) terms.push("cafe", "coffee");
+  if (hasToken(text, ["farinha", "trigo"]) || FLOUR_BRANDS.includes(brandKey)) terms.push("farinha", "farinha trigo", "flour");
+  if (hasToken(text, ["achocolatado", "nescau", "toddy"]) || CHOCOLATE_BRANDS.includes(brandKey)) terms.push("achocolatado", "chocolate milk");
   if (hasToken(text, ["linguica", "ling", "sadia"])) terms.push("linguica", "sausage");
   return unique(terms);
 }
