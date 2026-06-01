@@ -3,6 +3,8 @@ import { Plus, ShoppingBasket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MarketBadge } from "./MarketBadge";
+import { useProductImage } from "@/lib/mercado/use-product-image";
+import type { MercadoCategoryKey } from "./MercadoCategoryChips";
 
 export type ProductSource =
   | "online"
@@ -18,6 +20,7 @@ export interface ProductCardProps {
   priceLabel: string;
   /** Texto curto da unidade (ex.: "kg", "L", "un"). */
   unitLabel?: string;
+  /** Imagem explícita (vinda do banco/usuário). Tem prioridade absoluta. */
   imageUrl?: string | null;
   marketName?: string | null;
   marketLogoUrl?: string | null;
@@ -30,6 +33,12 @@ export interface ProductCardProps {
   /** Slot livre no canto inferior direito (ex.: badge custom). */
   extra?: ReactNode;
   className?: string;
+  /** Dados opcionais usados para sugerir imagem automaticamente quando `imageUrl` não vier. */
+  brand?: string | null;
+  barcode?: string | null;
+  category?: MercadoCategoryKey | null;
+  /** Desliga o lookup automático de imagem (default: ligado). */
+  disableImageLookup?: boolean;
 }
 
 export function ProductCard({
@@ -45,11 +54,34 @@ export function ProductCard({
   onAdd,
   extra,
   className,
+  brand,
+  barcode,
+  category,
+  disableImageLookup = false,
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
   const [imgErrored, setImgErrored] = useState(false);
-  const showImage = !!imageUrl && !imgErrored;
+  const [suggestedErrored, setSuggestedErrored] = useState(false);
+
+  // Imagem explícita tem prioridade — nunca sobrescrever escolha do usuário.
+  const hasExplicit = !!imageUrl && !imgErrored;
+  const lookupEnabled = !hasExplicit && !disableImageLookup;
+  const suggestion = useProductImage(
+    { productName: name, brand, barcode, category },
+    { enabled: lookupEnabled },
+  );
+
+  const suggestedUrl =
+    !hasExplicit && !suggestedErrored ? suggestion.data?.imageUrl ?? null : null;
+  const finalImage = hasExplicit ? imageUrl! : suggestedUrl;
+  const showImage = !!finalImage;
+  const isSuggested = !hasExplicit && !!suggestedUrl;
+  const isBrandLogo = isSuggested && suggestion.data?.source === "brand_logo";
+  const suggestedBadgeLabel = isBrandLogo
+    ? t("shell.product.brandLogoHint", { defaultValue: "logo da marca" })
+    : t("shell.product.suggestedImage", { defaultValue: "imagem sugerida" });
+
   const initial = (name || "").trim().charAt(0).toUpperCase() || "•";
 
   const Fallback = ({ size }: { size: "sm" | "lg" }) => (
@@ -71,6 +103,11 @@ export function ProductCard({
     </div>
   );
 
+  const onImgError = () => {
+    if (hasExplicit) setImgErrored(true);
+    else setSuggestedErrored(true);
+  };
+
   if (layout === "list") {
     return (
       <article
@@ -81,14 +118,27 @@ export function ProductCard({
       >
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
           {showImage ? (
-            <img
-              src={imageUrl!}
-              alt={t("shell.product.imageAlt", { name })}
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              className="h-full w-full object-cover"
-              onError={() => setImgErrored(true)}
-            />
+            <>
+              <img
+                src={finalImage!}
+                alt={t("shell.product.imageAlt", { name })}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                className={cn(
+                  "h-full w-full",
+                  isBrandLogo ? "object-contain p-1.5" : "object-cover",
+                )}
+                onError={onImgError}
+              />
+              {isSuggested && (
+                <span
+                  className="absolute inset-x-0 bottom-0 bg-background/85 px-1 py-0.5 text-center text-[8px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur"
+                  title={suggestedBadgeLabel}
+                >
+                  {isBrandLogo ? "logo" : "auto"}
+                </span>
+              )}
+            </>
           ) : (
             <Fallback size="sm" />
           )}
@@ -143,12 +193,15 @@ export function ProductCard({
       <div className="relative aspect-square w-full bg-muted">
         {showImage ? (
           <img
-            src={imageUrl!}
+            src={finalImage!}
             alt={t("shell.product.imageAlt", { name })}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="h-full w-full object-cover"
-            onError={() => setImgErrored(true)}
+            className={cn(
+              "h-full w-full",
+              isBrandLogo ? "object-contain p-4" : "object-cover",
+            )}
+            onError={onImgError}
           />
         ) : (
           <Fallback size="lg" />
@@ -156,6 +209,11 @@ export function ProductCard({
         {sourceLabel && (
           <span className="absolute left-2 top-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
             {sourceLabel}
+          </span>
+        )}
+        {isSuggested && (
+          <span className="absolute bottom-2 left-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur">
+            {suggestedBadgeLabel}
           </span>
         )}
       </div>

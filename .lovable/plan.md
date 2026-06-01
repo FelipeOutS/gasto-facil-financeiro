@@ -1,213 +1,105 @@
+# Imagens automáticas de produtos — plano em 2 fases
 
-# Reformulação UX/UI — Mercado Inteligente
+Objetivo: enriquecer cards/vitrines/listas/carrinho do Mercado Inteligente com fotos reais quando disponíveis, mantendo fallback bonito e sem quebrar nada.
 
-Objetivo: transformar o módulo em uma experiência com cara de app de supermercado moderno (mobile-first, visual, comercial), preservando 100% da lógica, integrações, planos, gates, OCR, importações, Mercado Pago, WhatsApp e Maps.
-
----
-
-## 1. Auditoria do módulo atual
-
-Telas hoje (em `src/routes/`):
-
-- `mercado.tsx` — hub com 11 cards genéricos em grid (ícone + título + status). Funcional, mas tem cara de "menu de configurações", não de app de supermercado.
-- `mercado_.listas.tsx` / `mercado_.listas_.$id.tsx` / `mercado_.listas_.nova.tsx` — listas de compras.
-- `mercado_.carrinho.tsx` — carrinho ativo.
-- `mercado_.orcamento.tsx` — orçamento mensal de mercado.
-- `mercado_.historico.tsx` — histórico de compras (premium).
-- `mercado_.calculadoras.tsx` — preço por kg/L, comparador.
-- `mercado_.mercados.tsx` — mercados próximos (Google Maps).
-- `mercado_.meus-mercados.tsx` — mercados favoritos.
-- `mercado_.precos.tsx` / `mercado_.precos-historico.tsx` — preços (premium).
-- `mercado_.cesta.tsx` — cesta básica de referência.
-- `mercado_.importar-cupom.tsx` — OCR de cupom fiscal.
-- `mercado_.preco-comunitario.tsx` — preço comunitário + importador Joanin Online.
-
-Diagnóstico:
-- Hub atual = grid de 11 cards equivalentes. Sem hierarquia, sem vitrine, sem produtos. Não comunica "supermercado".
-- Não existe busca global de produto/preço.
-- Não existe "mercado atual" persistido visível em todas as telas do módulo.
-- Sem banners, sem ilustrações contextuais, sem categorias visuais.
-- Telas internas são sólidas funcionalmente mas visualmente isoladas — cada uma com seu padrão.
-- Não há tela única de "Produto" — o produto vive disperso (carrinho, lista, preço comunitário) e não como protagonista.
-
-O que NÃO será tocado:
-- Schemas Supabase, RLS, migrations, FeatureKeys, `usePlan().can()`, `PremiumLockModal`, `AuthGate`, Mercado Pago, WhatsApp, OCR Vision/Gemini, Google Maps, importador Joanin, rate-limit.
+A entrega é dividida em 2 fases para evitar uma única PR enorme que toca em 6 fluxos de cadastro + schema + UX ao mesmo tempo. Cada fase é independente e gera valor.
 
 ---
 
-## 2. Nova arquitetura de navegação
+## Fase 1 — Fundação (sem schema novo, valor imediato)
 
-Mantém as rotas existentes (sem renomear nada para não quebrar links/preload), e introduz uma camada visual unificada:
+### 1.1 Endpoint server-side seguro
+Criar `src/lib/mercado/product-image.functions.ts` com `lookupProductImage` (server fn `POST`, protegido por `requireSupabaseAuth`).
 
-```text
-/mercado                       → Home estilo app supermercado (redesign)
-  ├─ busca global (header)     → /mercado/buscar (novo, opcional fase 3)
-  ├─ chips de categoria        → filtros sobre produtos/preço comunitário
-  ├─ atalhos rápidos           → listas, carrinho, mercados, importar
-  ├─ vitrines                  → ofertas, comunitário, em destaque
-  └─ blocos contextuais        → lista atual, orçamento, mercado preferido
+Entrada (Zod):
+- `productName: string` (min 2, max 200)
+- `brand?: string` (max 100)
+- `barcode?: string` (apenas dígitos, 8–14)
+- `category?: string` (uma das chaves de `MercadoCategoryKey`)
 
-Rotas existentes (mantidas):
-  /mercado/listas, /mercado/carrinho, /mercado/orcamento,
-  /mercado/historico, /mercado/calculadoras, /mercado/mercados,
-  /mercado/meus-mercados, /mercado/precos, /mercado/cesta,
-  /mercado/importar-cupom, /mercado/preco-comunitario
+Saída:
+```ts
+{
+  imageUrl: string | null;
+  source: "off_barcode" | "off_search" | "brand_logo" | "fallback" | null;
+  confidence: "high" | "medium" | "low" | null;
+  origin: "openfoodfacts" | "local" | null;
+  checkedAt: string; // ISO
+}
 ```
 
-Componentes novos compartilhados (em `src/components/mercado/shell/`):
-- `MercadoHeader` — header sticky com saudação, mercado atual selecionável e campo de busca.
-- `MercadoCategoryChips` — chips visuais (Hortifruti, Açougue, Padaria, Bebidas, Laticínios, Limpeza, Mercearia, Utilidades).
-- `MercadoBanner` — banner responsivo com slot para imagem/ilustração + CTA.
-- `MercadoShowcase` — vitrine horizontal (scroll-snap) de cards.
-- `ProductCard` — card unificado de produto (imagem, nome, preço, unidade, mercado, origem, data, CTA "+ lista").
-- `MarketBadge` — badge do mercado (logo + nome curto).
-- `SectionBlock` — wrapper padronizado para seções da home (título + ver todos).
+### 1.2 Estratégia de busca (ordem)
+1. **OFF por barcode** — `https://world.openfoodfacts.org/api/v2/product/{barcode}.json` → `image_front_url` → `high` / `off_barcode`.
+2. **OFF por nome+marca** — `https://world.openfoodfacts.org/cgi/search.pl?...&json=1&page_size=3`, pega o primeiro com imagem e nome similar (similaridade ≥ 0.55 via Dice/Levenshtein curto) → `medium` / `off_search`.
+3. **Logo de marca local** — se `brand` casar (case-insensitive) com algum SVG em `public/logos/empresas/*.svg`, devolve URL do logo → `low` / `brand_logo` (sempre marcado como "logo de marca", não foto do produto).
+4. **Sem imagem** → `null` (o front cai no fallback visual por categoria já existente no `ProductCard`).
 
-Tudo consumindo tokens semânticos de `src/styles.css` (sem cores hardcoded).
+Regras de segurança server-side:
+- Validação Zod estrita (sem chars de injeção em URL — usar `URL`/`encodeURIComponent`).
+- Whitelist de hosts permitidos no retorno (`images.openfoodfacts.org`, `world.openfoodfacts.org`, `/logos/empresas/*`). Qualquer outra origem é descartada.
+- Timeout de 4s por chamada externa (`AbortSignal.timeout(4000)`).
+- Nenhum secret usado (OFF é público); nada exposto ao client além da URL pública final.
+- Em qualquer erro/timeout: retorna `{ imageUrl: null, ... }` sem propagar exception.
 
----
+### 1.3 Cache
+- **Server-side (in-memory por worker)** — `Map<string, { value, expiresAt }>` com TTL de 24h e cap de 500 entradas (LRU simples). Chave: `normalize(name) + "|" + normalize(brand) + "|" + barcode`. Evita rebatimento em rajadas.
+- **Client-side** — wrapper `useProductImage(input)` (React Query) com `staleTime: 1h`, `gcTime: 24h`, `queryKey` igual à chave acima. Garante deduplicação e lazy fetch.
 
-## 3. Linguagem visual unificada
+### 1.4 Hook + componente de imagem
+Criar `src/lib/mercado/use-product-image.ts` (`useProductImage`) e atualizar `ProductCard` para:
+- Se `imageUrl` (prop, já vindo do banco/usuário) existir → usa direto (prioridade máxima, nunca sobrescrever).
+- Senão, chamar `useProductImage({ name, brand, barcode, category })` lazy (apenas quando o card entra no viewport via `IntersectionObserver` simples ou `loading="lazy"` no `<img>`).
+- Se a hook retornar URL → renderiza com badge discreto "imagem sugerida" (chip `text-[10px]` no canto inferior esquerdo).
+- Se falhar a carregar → cai no `Fallback` por categoria já implementado.
+- `ProductCard` ganha props opcionais novas: `brand?`, `barcode?`, `category?: MercadoCategoryKey`. Compatível para trás (todos os call-sites continuam funcionando sem mudança).
 
-- **Tokens**: adicionar em `src/styles.css` (oklch) tokens específicos do módulo: `--mercado-fresh` (hortifruti), `--mercado-meat`, `--mercado-bakery`, `--mercado-drinks`, `--mercado-cleaning`, `--mercado-pantry`, mapeando para acentos coerentes com `--brand`.
-- **Cantos**: `rounded-2xl/3xl` consistente (já é o padrão do hub).
-- **Sombras**: `shadow-card` e `shadow-elevated` já existentes.
-- **Tipografia**: títulos `text-2xl md:text-3xl font-bold tracking-tight`; section headers `text-base font-semibold`.
-- **Áreas de toque**: mínimo 44px (mantém padrão atual do `BottomNav`/`MobileTopBar`).
-- **Mobile-first**: 1 coluna < md, 2 colunas md, 3 colunas xl (mesma grade do hub atual).
+### 1.5 Aplicação inicial (read-only, sem mudar store)
+Atualizar os 3 call-sites de `ProductCard` para passar `brand/barcode/category` quando o registro tiver esses dados:
+- `src/routes/mercado_.precos.tsx` (recent finds + results) — passa `brand`, `barcode` se vierem da tabela.
+- `src/routes/mercado_.preco-comunitario.tsx`
+- `src/routes/mercado.tsx` (home vitrine)
 
----
+Nenhuma migration nesta fase. Nenhum store alterado. A imagem é puramente derivada/cacheada — se falhar, o fallback bonito atual continua.
 
-## 4. Nova Home — `/mercado`
-
-Hierarquia proposta (mobile-first, top→bottom):
-
-```text
-┌─────────────────────────────────────┐
-│ Header: "Olá, {nome}"               │
-│ [Mercado atual ▾]   [🔔]            │
-│ [🔍 Buscar produto, marca ou preço] │
-├─────────────────────────────────────┤
-│ BANNER principal (ilustração + CTA) │
-│ "Economize na sua próxima compra"   │
-├─────────────────────────────────────┤
-│ Chips: Hortifruti · Açougue · …     │
-├─────────────────────────────────────┤
-│ Atalhos rápidos (grid 4 col mobile):│
-│ Lista · Carrinho · Importar · Cesta │
-├─────────────────────────────────────┤
-│ Vitrine: Preço Comunitário em alta  │
-│ → ProductCard horizontal scroll     │
-├─────────────────────────────────────┤
-│ Bloco: Sua lista em andamento       │
-│ (ou empty state "Criar lista")      │
-├─────────────────────────────────────┤
-│ Bloco: Orçamento do mês             │
-│ barra de progresso + restante       │
-├─────────────────────────────────────┤
-│ Bloco: Mercados próximos (mini-map) │
-│ + 3 cards de mercados favoritos     │
-├─────────────────────────────────────┤
-│ Vitrine: Importar/cadastrar preços  │
-│ (Cupom · Panfleto · Online · Manual)│
-├─────────────────────────────────────┤
-│ Rodapé: explorar tudo (link p/ hub  │
-│ completo com os 11 cards atuais)    │
-└─────────────────────────────────────┘
-```
-
-O hub atual de 11 cards vira `/mercado/explorar` (mesma rota técnica, view alternativa) ou um collapse "Ver todas as ferramentas" no fim da home — mantendo descoberta sem poluir.
+### 1.6 i18n PT/EN
+Adicionar em `src/i18n/locales/{pt,en}/mercado.json` no namespace `shell.product`:
+- `suggestedImage`: "imagem sugerida" / "suggested image"
+- `brandLogoHint`: "logo da marca" / "brand logo"
 
 ---
 
-## 5. Redesign por tela (resumo)
+## Fase 2 — Persistência e enriquecimento (depois que Fase 1 estiver validada)
 
-| Tela | Mudança UX/UI |
-|---|---|
-| Home `/mercado` | Reescrita conforme §4. |
-| Listas | Header com chip de mercado, agrupamento por categoria, ProductCard, totalizador sticky. |
-| Carrinho | Layout estilo checkout (itens + resumo + CTA), subtotal por categoria. |
-| Orçamento | Barra de progresso grande, anel/gráfico, comparativo mês anterior. |
-| Histórico | Timeline visual por compra com totais e mercado. |
-| Calculadoras | Tabs internas; inputs grandes; resultado destacado. |
-| Mercados próximos | Mini-mapa fixo no topo + lista cards com logo + distância + CTA favoritar. |
-| Meus mercados | Cards grandes com logo, "definir como atual", endereço, ações. |
-| Preço Comunitário | ProductCard com selo "Comunitário", origem (Joanin/Cupom/Manual), data, foto futura. Estados vazios ilustrados. Fluxo de importação com banner contextual. |
-| Importar Cupom/Panfleto/Online/Manual | Wizard unificado com banner ilustrado por origem; passos numerados. |
-| Cesta básica | Cards de produto agrupados por categoria com totais. |
-| Busca (novo) | Campo dedicado, sugestões, filtros (mercado, categoria, origem), resultados em ProductCard. |
-| Produto (novo, opcional) | Tela de detalhe com imagem, histórico simples de preço, mercados onde foi visto, CTA adicionar à lista. |
+Adiada conscientemente para uma segunda etapa porque exige migration + ajustes em múltiplos stores. **Não será feita agora.**
+
+Escopo previsto:
+- Migration adicionando colunas em `community_prices` (e tabelas análogas se houver): `image_url`, `image_source`, `image_confidence`, `image_origin`, `image_checked_at`.
+- Server fn `enrichProductImage` que, ao gravar um item novo, faz lookup em background e atualiza a linha (não bloqueia o INSERT).
+- Aplicação nos 6 fluxos de cadastro citados (Preço Comunitário, Importação online, OCR panfleto, Lista, Carrinho, Cadastro manual).
+- UI de revisão/remover/trocar imagem sugerida no fluxo OCR.
+- Quando Fase 2 chegar, a Fase 1 continua útil: ela serve como fallback dinâmico para registros antigos sem imagem persistida.
 
 ---
 
-## 6. Banners e ilustrações
+## Arquivos da Fase 1
 
-Gerar com `imagegen` (premium para hero, fast para demais), salvar em `src/assets/mercado/`:
-- `hero-home.jpg` — sacola, carrinho moderno, paleta brand.
-- `cat-hortifruti.png` (transparente) — frutas/verduras estilizadas.
-- `cat-acougue.png`, `cat-padaria.png`, `cat-bebidas.png`, `cat-laticinios.png`, `cat-limpeza.png`, `cat-mercearia.png`, `cat-utilidades.png`.
-- `banner-comunitario.jpg` — etiquetas/panfleto, sensação colaborativa.
-- `banner-mercados.jpg` — mapa + pin + carrinho.
-- `banner-orcamento.jpg` — economia/planejamento.
-- `empty-lista.png`, `empty-carrinho.png`, `empty-comunitario.png` — estados vazios amigáveis.
+Criados:
+- `src/lib/mercado/product-image.functions.ts` — server fn `lookupProductImage`
+- `src/lib/mercado/product-image-cache.server.ts` — LRU server-side
+- `src/lib/mercado/use-product-image.ts` — hook React Query
 
-Todos responsivos, `loading="lazy"`, com fallback em cor sólida do token.
+Alterados:
+- `src/components/mercado/shell/ProductCard.tsx` — props opcionais + integração com hook + badge "sugerida"
+- `src/routes/mercado_.precos.tsx`, `mercado_.preco-comunitario.tsx`, `mercado.tsx` — passar `brand/barcode/category`
+- `src/i18n/locales/pt/mercado.json`, `src/i18n/locales/en/mercado.json` — chaves novas
 
----
-
-## 7. i18n
-
-Todas as strings novas vão para `src/i18n/locales/pt/mercado.json` e `en/mercado.json` mantendo paridade total. Nenhum texto hardcoded. Namespaces sugeridos: `mercado:home.hero`, `mercado:home.shortcuts`, `mercado:home.showcase.*`, `mercado:categories.*`, `mercado:product.*`, `mercado:search.*`.
+Preservado integralmente: RLS, Auth, planos, FeatureKeys, AuthGate, PremiumLockModal, Mercado Pago, WhatsApp, OCR Vision/Gemini, Joanin Import, Google Maps, stores (`listas-store`, `mercados-store`, `community-prices-suggestions`), cálculos, validações, rotas existentes, schema do banco.
 
 ---
 
-## 8. Plano de execução em etapas
+## Por que dividir assim
 
-Cada etapa é independente, mergeável e não quebra as anteriores.
+- Fase 1 entrega ~70% do valor visual (cards passam a mostrar fotos reais quando OFF tem) com risco mínimo: sem migration, sem alterar stores, sem alterar fluxos de cadastro.
+- Fase 2 fica isolada para quando você quiser persistir + permitir override manual, que é onde mora a complexidade real (RLS por tabela, UI de revisão, backfill).
 
-**Etapa 1 — Fundação visual (sem mudar telas)**
-- Adicionar tokens de categoria em `src/styles.css`.
-- Criar `src/components/mercado/shell/` com `MercadoHeader`, `SectionBlock`, `MercadoCategoryChips`, `MercadoBanner`, `MercadoShowcase`, `ProductCard`, `MarketBadge`.
-- Gerar primeiro lote de assets (hero + 8 categorias + 3 banners + 3 empty states).
-- Adicionar chaves i18n base PT/EN.
-
-**Etapa 2 — Nova Home `/mercado`**
-- Reescrever `src/routes/mercado.tsx` com a hierarquia da §4.
-- Reaproveitar dados já disponíveis (lista atual, orçamento, mercados favoritos, preço comunitário recente) — apenas leitura, sem novas mutações.
-- Manter acesso aos 11 destinos atuais via atalhos + bloco "Explorar tudo" no fim.
-
-**Etapa 3 — Preço Comunitário (continuidade do trabalho recente)**
-- Aplicar `ProductCard`, banners e estados vazios ilustrados em `mercado_.preco-comunitario.tsx`.
-- Não tocar no `OnlineImportWizard`/API Joanin/migration de source.
-
-**Etapa 4 — Listas & Carrinho**
-- Agrupar por categoria, totalizador sticky, ProductCard.
-
-**Etapa 5 — Mercados próximos & Meus mercados**
-- Mini-mapa no topo, cards grandes, seletor de mercado atual unificado com o header.
-
-**Etapa 6 — Orçamento, Histórico, Cesta, Calculadoras**
-- Aplicar `SectionBlock`, hierarquia e ilustrações.
-
-**Etapa 7 — Busca global (novo) e tela de Produto (novo)**
-- Adicionar rotas `/mercado/buscar` e `/mercado/produto/$id` (opcional, após validação das etapas 1-6).
-
-**Etapa 8 — Polimento**
-- Animações leves (framer-motion já no projeto), revisão de contraste, QA mobile/Android WebView, auditoria de paridade i18n.
-
----
-
-## 9. Riscos e mitigação
-
-- **Regressão de planos/gates**: todos os atalhos novos passam por `usePlan().can(feature)` igual ao hub atual; lock continua via `PremiumLockModal`.
-- **Performance mobile**: assets `lazy`, `srcset` quando aplicável, ilustrações PNG transparentes pequenas (<60kb).
-- **Quebra de links**: rotas existentes preservadas; apenas a view do hub muda.
-- **i18n**: PR só passa se PT/EN tiverem as mesmas chaves (checar antes de cada etapa).
-
----
-
-## 10. O que entrego ao aprovar este plano
-
-Começo pela **Etapa 1 (fundação visual)** + **Etapa 2 (nova Home)** no próximo turno: tokens, componentes do shell, primeiros assets gerados via IA, nova `mercado.tsx`, i18n PT/EN. Sem tocar em lógica de negócio, sem migrations, sem mexer em integrações.
-
-Confirma que posso seguir por aí, ou prefere reordenar (ex.: começar por Preço Comunitário antes da Home)?
+Posso começar pela Fase 1 assim que aprovar?
