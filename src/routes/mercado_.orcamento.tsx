@@ -115,7 +115,42 @@ function OrcamentoPage() {
         </div>
       </header>
 
+      <div className="mt-4">
+        <MercadoBanner
+          tone="brand"
+          title={t("budgetV2.banner.title")}
+          subtitle={t("budgetV2.banner.subtitle")}
+          imageSrc={bannerOrcamento}
+        />
+      </div>
+
+      <p className="mt-3 rounded-2xl border border-border/60 bg-card-elevated/60 p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+        {t("budgetV2.config.helper")}
+      </p>
+
+      {!resumo.hasBudget && (
+        <section className="mt-4 rounded-3xl border border-dashed border-border bg-card p-5 shadow-card">
+          <h2 className="text-base font-semibold md:text-lg">{t("budgetV2.steps.title")}</h2>
+          <ol className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {["define", "addItems", "track"].map((k, i) => (
+              <li
+                key={k}
+                className="flex items-start gap-3 rounded-2xl border border-border/60 bg-card-elevated/60 p-3"
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-brand-soft text-sm font-bold text-brand ring-1 ring-border/60">
+                  {i + 1}
+                </span>
+                <p className="text-sm leading-snug text-foreground">
+                  {t(`budgetV2.steps.${k}`)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       <section className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
+
         {/* Form */}
         <form
           onSubmit={handleSubmit}
