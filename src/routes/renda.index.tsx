@@ -1136,21 +1136,45 @@ function RendaPage() {
           </div>
 
           {doMesFiltrado.length === 0 ? (
-            <EmptyRenda
-              title={
-                doMes.length === 0
-                  ? t("empty.monthTitle")
-                  : t("empty.filterTitle")
-              }
-              subtitle={
-                doMes.length === 0
-                  ? t("empty.monthSubtitle")
-                  : t("empty.filterSubtitle")
-              }
-              onAction={doMes.length === 0 ? () => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)) : undefined}
-              showSteps={doMes.length === 0}
-            />
-          ) : (
+            doMes.length === 0 ? (
+              <AppEmptyStateVisual
+                tone="receitas"
+                icon={<TrendingUp className="h-6 w-6" />}
+                title={t("v3.empty.title")}
+                description={t("v3.empty.description")}
+                action={
+                  <div className="flex w-full flex-col items-center gap-4">
+                    <Button
+                      size="sm"
+                      onClick={() => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true))}
+                      className="min-h-11 rounded-full font-semibold"
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      {t("v3.empty.cta")}
+                    </Button>
+                    <ol className="grid w-full max-w-sm gap-2 text-left text-xs sm:grid-cols-3">
+                      {(["source", "amount", "summary"] as const).map((k, i) => (
+                        <li
+                          key={k}
+                          className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card-elevated px-3 py-2"
+                        >
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-success/15 text-[11px] font-semibold text-success">
+                            {i + 1}
+                          </span>
+                          <span className="text-foreground">{t(`v3.empty.steps.${k}`)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                }
+              />
+            ) : (
+              <EmptyRenda
+                title={t("empty.filterTitle")}
+                subtitle={t("empty.filterSubtitle")}
+              />
+            )
+
             <ul className="space-y-2">
               <AnimatePresence initial={false}>
                 {doMesFiltrado.map((r, i) => (
