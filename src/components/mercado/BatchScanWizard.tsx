@@ -1016,6 +1016,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                         productName={r.productName}
                         brand={r.brand}
                         barcode={r.barcode}
+                        category={r.category}
                         removed={r.imageRemoved}
                         enabled={r.include && r.productName.trim().length >= 2}
                         onRemove={() =>

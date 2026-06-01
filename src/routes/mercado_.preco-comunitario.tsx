@@ -190,6 +190,7 @@ function PrecoComunitarioPage() {
           productName: name,
           brand: manualForm.brand.trim() || null,
           barcode: manualForm.barcode.trim() || null,
+          category: (manualForm.category || null) as MercadoCategoryKey | null,
         },
       });
       const persistable = toPersistableImage(result);
@@ -299,6 +300,7 @@ function PrecoComunitarioPage() {
                 productName: it.product_name,
                 brand: it.brand,
                 barcode: it.barcode,
+                category: (it.category ?? null) as MercadoCategoryKey | null,
               },
             });
             const persistable = toPersistableImage(result);

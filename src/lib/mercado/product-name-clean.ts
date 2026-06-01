@@ -17,7 +17,7 @@ import { normalizeForKey } from "./product-image-key";
 // Lista curada de marcas BR comuns em supermercado. Não precisa ser
 // exaustiva — serve para melhorar a precisão do lookup quando o usuário
 // digita a marca dentro do nome do produto.
-const KNOWN_BRANDS: string[] = [
+export const KNOWN_BRANDS: string[] = [
   // carnes/frios
   "sadia",
   "perdigao",
@@ -34,6 +34,7 @@ const KNOWN_BRANDS: string[] = [
   "danone",
   "itambe",
   "piracanjuba",
+  "italac",
   "elege",
   "parmalat",
   "ninho",
@@ -149,6 +150,7 @@ const KNOWN_BRANDS: string[] = [
   "skol",
   "brahma",
   "antarctica",
+  "ambev",
   "heineken",
   "stella artois",
   "budweiser",
@@ -176,9 +178,54 @@ const KNOWN_BRANDS: string[] = [
   "oreo",
 ];
 
+export const STRONG_MARKET_BRANDS: string[] = [
+  "heineken",
+  "coca cola",
+  "coca",
+  "pepsi",
+  "brahma",
+  "skol",
+  "antarctica",
+  "itaipava",
+  "ambev",
+  "nestle",
+  "nescau",
+  "toddynho",
+  "piracanjuba",
+  "italac",
+  "sadia",
+  "perdigao",
+  "seara",
+  "aurora",
+  "adria",
+  "pilao",
+  "melitta",
+  "tres coracoes",
+  "ype",
+  "omo",
+  "ariel",
+  "veja",
+  "bombril",
+  "assolan",
+  "coquel",
+  "limpol",
+  "minuano",
+  "claybom",
+  "polenghi",
+  "tirol",
+  "batavo",
+  "piraque",
+];
+
 // Ordenamos por comprimento desc para casar primeiro marcas multi-palavra
 // (ex.: "tres coracoes" antes de "coracoes").
 const SORTED_BRANDS = [...KNOWN_BRANDS].sort((a, b) => b.length - a.length);
+
+export function isStrongMarketBrand(brand: string | null | undefined): boolean {
+  const normalized = normalizeForKey(brand);
+  if (!normalized) return false;
+  return STRONG_MARKET_BRANDS.some((b) => normalizeForKey(b) === normalized);
+}
 
 // Tokens a remover: unidades, embalagens, adjetivos promocionais comuns.
 const NOISE_TOKENS = new Set([
@@ -244,6 +291,11 @@ const NOISE_TOKENS = new Set([
   "fatiadas",
   "tipo",
   "ling", // abreviação comum de "linguiça" em cupom
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
 ]);
 
 // Remove padrões numéricos com unidade (1kg, 500g, 2 l, 1.5l, 12x350ml...).

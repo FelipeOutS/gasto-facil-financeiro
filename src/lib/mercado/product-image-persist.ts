@@ -35,6 +35,7 @@ export function toPersistableImage(
   result: ProductImageResult | null | undefined,
 ): PersistableImage {
   if (!result || !result.imageUrl) return EMPTY;
+  if (result.persistable === false) return EMPTY;
   const v = validateImageUrl(result.imageUrl);
   if (!v.ok) return EMPTY;
   // Logos locais não satisfazem a constraint de URL — pular persistência.

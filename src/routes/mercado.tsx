@@ -400,6 +400,7 @@ function MercadoHubPage() {
                 imageUrl={r.image_url ?? undefined}
                 brand={r.brand}
                 barcode={r.barcode}
+                category={(r.category ?? null) as MercadoCategoryKey | null}
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
