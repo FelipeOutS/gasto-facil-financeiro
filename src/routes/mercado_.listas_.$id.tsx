@@ -137,6 +137,47 @@ const statusToneMap: Record<ListaStatus, string> = {
   done: "bg-success/10 text-success ring-1 ring-success/20",
 };
 
+type CategoryGroupKey = MercadoCategoryKey | "outros";
+
+const CATEGORY_GROUP_ORDER: CategoryGroupKey[] = [
+  "hortifruti",
+  "acougue",
+  "padaria",
+  "bebidas",
+  "laticinios",
+  "limpeza",
+  "mercearia",
+  "utilidades",
+  "outros",
+];
+
+const CATEGORY_KEYWORDS: Record<MercadoCategoryKey, string[]> = {
+  hortifruti: ["hortifruti", "fruta", "verdura", "legume", "tomate", "alface", "banana", "maca", "maçã", "cebola", "batata", "cenoura"],
+  acougue: ["acougue", "açougue", "carne", "frango", "boi", "porco", "linguica", "linguiça", "bife", "file", "filé", "peito", "coxa"],
+  padaria: ["padaria", "pao", "pão", "bolo", "biscoito", "torrada", "croissant", "rosca"],
+  bebidas: ["bebida", "refrigerante", "suco", "agua", "água", "cerveja", "vinho", "cafe", "café", "cha", "chá", "leite condensado"],
+  laticinios: ["laticinio", "laticínio", "leite", "queijo", "iogurte", "manteiga", "requeijao", "requeijão", "creme de leite"],
+  limpeza: ["limpeza", "detergente", "sabao", "sabão", "amaciante", "desinfetante", "esponja", "agua sanitaria", "água sanitária", "alvejante"],
+  mercearia: ["mercearia", "arroz", "feijao", "feijão", "macarrao", "macarrão", "azeite", "oleo", "óleo", "sal", "acucar", "açúcar", "farinha", "molho"],
+  utilidades: ["utilidade", "papel higienico", "papel higiênico", "guardanapo", "fralda", "absorvente", "escova", "pasta de dente", "sabonete", "shampoo"],
+};
+
+function detectCategory(item: ListaItem): CategoryGroupKey {
+  const explicit = item.categoria?.toLowerCase().trim();
+  if (explicit) {
+    for (const key of Object.keys(CATEGORY_KEYWORDS) as MercadoCategoryKey[]) {
+      if (explicit.includes(key) || CATEGORY_KEYWORDS[key].some((k) => explicit.includes(k))) {
+        return key;
+      }
+    }
+  }
+  const name = item.nome.toLowerCase();
+  for (const key of Object.keys(CATEGORY_KEYWORDS) as MercadoCategoryKey[]) {
+    if (CATEGORY_KEYWORDS[key].some((k) => name.includes(k))) return key;
+  }
+  return "outros";
+}
+
 function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => void }) {
   const { t, i18n: i18next } = useTranslation("mercado");
   const resumo = useMemo(() => computeResumo(lista), [lista]);
