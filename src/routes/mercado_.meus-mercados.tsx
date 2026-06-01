@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Home,
-  MapPin,
   Info,
   Plus,
   Star,
