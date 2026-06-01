@@ -307,3 +307,37 @@ function Tile({
     </div>
   );
 }
+
+function SummaryTile({
+  icon,
+  label,
+  value,
+  truncate = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border border-border/60 bg-card p-3 shadow-card">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand ring-1 ring-border/60">
+          {icon}
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-widest">
+          {label}
+        </span>
+      </div>
+      <p
+        className={cn(
+          "text-base font-bold tabular-nums text-foreground md:text-lg",
+          truncate && "truncate",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
