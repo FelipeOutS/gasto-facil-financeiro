@@ -145,7 +145,7 @@ function MeusMercadosPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-start gap-3 pt-1">
+      <header className="flex items-center gap-2 pt-1">
         <button
           type="button"
           onClick={handleBack}
@@ -161,20 +161,19 @@ function MeusMercadosPage() {
         >
           <Home className="h-5 w-5" />
         </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
-              {t("meusMercados.title")}
-            </h1>
-          </div>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground md:text-base">
-            {t("meusMercados.localNotice")}
-          </p>
-        </div>
+        <h1 className="ml-1 min-w-0 truncate text-lg font-semibold tracking-tight md:text-xl">
+          {t("meusMercados.title")}
+        </h1>
       </header>
+
+      <MercadoBanner
+        title={t("marketsV2.banner.title")}
+        subtitle={t("marketsV2.banner.subtitle")}
+        imageSrc={bannerMercados}
+        imageAlt={t("marketsV2.banner.title")}
+        tone="brand"
+        className="mt-4"
+      />
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">
@@ -190,6 +189,7 @@ function MeusMercadosPage() {
       <section className="mt-4">
         <NearbyMarkets />
       </section>
+
 
 
 
