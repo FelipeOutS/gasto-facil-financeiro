@@ -778,30 +778,89 @@ function CompactKpi({
   );
 }
 
+function QuickAction({
+  icon,
+  label,
+  onClick,
+  primary = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "card-press flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-[11px] font-semibold leading-tight transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        primary
+          ? "border-transparent bg-brand-grad text-primary-foreground shadow-elevated hover:opacity-95"
+          : "border-border bg-card text-foreground hover:bg-accent",
+      )}
+    >
+      <span
+        className={cn(
+          "grid h-8 w-8 place-items-center rounded-full",
+          primary ? "bg-white/15 text-primary-foreground" : "bg-brand-soft text-brand-on-soft",
+        )}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <span className="line-clamp-1">{label}</span>
+    </button>
+  );
+}
+
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("cartoes");
+  const steps = [
+    t("v3.empty.steps.name"),
+    t("v3.empty.steps.limit"),
+    t("v3.empty.steps.track"),
+  ];
   return (
-    <PremiumEmptyState
-      className="mt-4"
-      variant="premium"
-      icon={<CreditCard className="h-6 w-6" />}
-      title={t("empty.title")}
+    <AppEmptyStateVisual
+      tone="cartoes"
+      icon={<CreditCard className="h-5 w-5" />}
+      title={t("v3.empty.title", { defaultValue: t("empty.title") })}
       description={
-        <span className="block">
-          <span className="block">{t("empty.subtitle")}</span>
+        <span className="block space-y-3">
+          <span className="block">
+            {t("v3.empty.description", { defaultValue: t("empty.subtitle") })}
+          </span>
+          <ol className="mx-auto mt-2 grid max-w-xs gap-1.5 text-left text-xs">
+            {steps.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span
+                  className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: "color-mix(in oklab, var(--module-cartoes) 18%, transparent)",
+                    color: "var(--module-cartoes)",
+                  }}
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground">{s}</span>
+              </li>
+            ))}
+          </ol>
           <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" />
-            {t("empty.security")}
+            <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+            {t("v3.empty.security", { defaultValue: t("empty.security") })}
           </span>
         </span>
       }
-      cta={
+      action={
         <Button
           onClick={onAdd}
           className="card-press min-h-11 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
         >
           <Plus className="mr-1 h-4 w-4" />
-          {t("empty.addFirst")}
+          {t("v3.empty.cta", { defaultValue: t("empty.addFirst") })}
         </Button>
       }
     />
