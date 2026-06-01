@@ -499,6 +499,19 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
     toast.success(t("communityPrices.suggestions.applied"));
   }
 
+  async function handleRemove() {
+    const ok = await confirmAsync({
+      title: t("carrinho.items.removeConfirmTitle"),
+      description: t("carrinho.items.removeConfirmDescription", { name: item.nome }),
+      confirmText: t("carrinho.items.remove"),
+      cancelText: t("carrinho.items.cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    removeItemLista(listaId, item.id);
+    toast.success(t("carrinho.items.removed"));
+  }
+
   const subtotal = (item.precoEstimado ?? 0) * (item.quantidade || 1);
 
   return (
