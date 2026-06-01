@@ -371,19 +371,19 @@
     "back": "Back",
     "home": "Home",
     "form": {
-      "title": "Monthly limit",
+      "title": "Shopping budget",
       "monthHint": "Reference month: {{month}}",
-      "amountLabel": "Budget amount",
+      "amountLabel": "Shopping limit amount",
       "amountPlaceholder": "e.g.: 1200",
       "save": "Save budget",
       "saved": "Budget updated."
     },
     "summary": {
-      "title": "Month summary",
-      "limit": "Budget",
-      "spent": "Spent this month",
-      "remaining": "Remaining",
-      "used": "Used"
+      "title": "Shopping summary",
+      "limit": "Shopping budget",
+      "spent": "Estimated total",
+      "remaining": "Still available",
+      "used": "Used from budget"
     },
     "status": {
       "sem_orcamento": "No budget",

@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { Plus, ImageOff } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { Plus, ShoppingBasket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MarketBadge } from "./MarketBadge";
@@ -48,6 +48,28 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
+  const [imgErrored, setImgErrored] = useState(false);
+  const showImage = !!imageUrl && !imgErrored;
+  const initial = (name || "").trim().charAt(0).toUpperCase() || "•";
+
+  const Fallback = ({ size }: { size: "sm" | "lg" }) => (
+    <div
+      className="grid h-full w-full place-items-center bg-brand-soft text-brand"
+      aria-hidden="true"
+    >
+      <div className="flex flex-col items-center gap-1">
+        <ShoppingBasket className={size === "lg" ? "h-7 w-7" : "h-5 w-5"} />
+        <span
+          className={cn(
+            "font-bold leading-none opacity-70",
+            size === "lg" ? "text-sm" : "text-[10px]",
+          )}
+        >
+          {initial}
+        </span>
+      </div>
+    </div>
+  );
 
   if (layout === "list") {
     return (
@@ -58,21 +80,17 @@ export function ProductCard({
         )}
       >
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-          {imageUrl ? (
+          {showImage ? (
             <img
-              src={imageUrl}
+              src={imageUrl!}
               alt={t("shell.product.imageAlt", { name })}
               loading="lazy"
               referrerPolicy="no-referrer"
               className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
+              onError={() => setImgErrored(true)}
             />
           ) : (
-            <div className="grid h-full w-full place-items-center text-muted-foreground">
-              <ImageOff className="h-5 w-5" aria-hidden="true" />
-            </div>
+            <Fallback size="sm" />
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -123,21 +141,17 @@ export function ProductCard({
       )}
     >
       <div className="relative aspect-square w-full bg-muted">
-        {imageUrl ? (
+        {showImage ? (
           <img
-            src={imageUrl}
+            src={imageUrl!}
             alt={t("shell.product.imageAlt", { name })}
             loading="lazy"
             referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
+            onError={() => setImgErrored(true)}
           />
         ) : (
-          <div className="grid h-full w-full place-items-center text-muted-foreground">
-            <ImageOff className="h-6 w-6" aria-hidden="true" />
-          </div>
+          <Fallback size="lg" />
         )}
         {sourceLabel && (
           <span className="absolute left-2 top-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">

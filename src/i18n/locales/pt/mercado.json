@@ -371,19 +371,19 @@
     "back": "Voltar",
     "home": "Início",
     "form": {
-      "title": "Limite mensal",
+      "title": "Orçamento da compra",
       "monthHint": "Mês de referência: {{month}}",
-      "amountLabel": "Valor do orçamento",
+      "amountLabel": "Valor limite da compra",
       "amountPlaceholder": "Ex.: 1200",
       "save": "Salvar orçamento",
       "saved": "Orçamento atualizado."
     },
     "summary": {
-      "title": "Resumo do mês",
-      "limit": "Orçamento",
-      "spent": "Gasto no mês",
-      "remaining": "Saldo restante",
-      "used": "Usado"
+      "title": "Resumo da compra",
+      "limit": "Orçamento da compra",
+      "spent": "Total estimado",
+      "remaining": "Ainda disponível",
+      "used": "Usado do orçamento"
     },
     "status": {
       "sem_orcamento": "Sem orçamento",

@@ -111,7 +111,7 @@ function CarrinhoPage() {
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
               <ShoppingCart className="h-4 w-4" />
             </span>
-            <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
+            <h1 className="text-xl font-bold leading-tight tracking-tight line-clamp-2 md:text-3xl">
               {t("carrinho.title")}
             </h1>
           </div>

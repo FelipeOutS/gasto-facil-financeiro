@@ -590,6 +590,9 @@ body {
 /* Hide scrollbar utility for horizontal pill rows */
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+/* Alias usado nos componentes do Mercado (mesmo efeito) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Banks marquee — infinite horizontal scroll */
 @keyframes banks-marquee {
