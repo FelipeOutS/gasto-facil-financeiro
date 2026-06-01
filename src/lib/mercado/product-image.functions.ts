@@ -56,12 +56,28 @@ export type ProductImageSource =
 
 export type ProductImageConfidence = "high" | "medium" | "low" | null;
 
+export type ProductImageDebug = {
+  productName: string;
+  cleanedName: string;
+  extractedBrand: string | null;
+  barcode: string | null;
+  attempts: Array<{
+    query: string;
+    brand: string | null;
+    candidates: number;
+    bestScore: number | null;
+    rejected: string | null;
+  }>;
+  pickedFrom: "barcode" | "search" | "brand_logo" | "none";
+};
+
 export type ProductImageResult = {
   imageUrl: string | null;
   source: ProductImageSource;
   confidence: ProductImageConfidence;
   origin: "openfoodfacts" | "local" | null;
   checkedAt: string;
+  debug?: ProductImageDebug;
 };
 
 const EMPTY_RESULT: Omit<ProductImageResult, "checkedAt"> = {
@@ -171,9 +187,13 @@ async function lookupByBarcode(
 async function lookupByName(
   productName: string,
   brand: string | null,
+  onDiag?: (d: { candidates: number; bestScore: number | null; rejected: string | null }) => void,
 ): Promise<Pick<ProductImageResult, "imageUrl" | "source" | "confidence" | "origin"> | null> {
   const q = [productName, brand].filter(Boolean).join(" ").slice(0, 120);
-  if (q.length < 3) return null;
+  if (q.length < 3) {
+    onDiag?.({ candidates: 0, bestScore: null, rejected: "query_too_short" });
+    return null;
+  }
   const params = new URLSearchParams({
     search_terms: q,
     json: "1",
@@ -182,7 +202,10 @@ async function lookupByName(
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
   const data = await fetchJson<OFFSearch>(url);
-  if (!data?.products?.length) return null;
+  if (!data?.products?.length) {
+    onDiag?.({ candidates: 0, bestScore: null, rejected: "no_results" });
+    return null;
+  }
   const normalizedQuery = normalizeForKey(productName);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
   let best: { img: string; score: number } | null = null;
@@ -198,22 +221,23 @@ async function lookupByName(
       const brandSubstr =
         candidateBrands.includes(normalizedBrand) ||
         candidateName.includes(normalizedBrand);
-      if (brandSubstr) {
-        score += 0.25;
-      } else if (brandSim > 0.6) {
-        score += 0.15;
-      } else {
-        // marca esperada não aparece no candidato — penaliza forte para
-        // evitar imagem de outro fabricante.
-        score -= 0.25;
-      }
+      if (brandSubstr) score += 0.25;
+      else if (brandSim > 0.6) score += 0.15;
+      else score -= 0.25;
     }
     if (!best || score > best.score) best = { img, score };
   }
-  if (!best) return null;
-  if (best.score < 0.5) return null;
+  if (!best) {
+    onDiag?.({ candidates: data.products.length, bestScore: null, rejected: "no_image_in_results" });
+    return null;
+  }
+  if (best.score < 0.5) {
+    onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: "score_below_threshold" });
+    return null;
+  }
   const confidence: ProductImageConfidence =
     best.score >= 0.85 ? "high" : best.score >= 0.6 ? "medium" : "low";
+  onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: null });
   return {
     imageUrl: best.img,
     source: "off_search",
@@ -244,11 +268,7 @@ function lookupBrandLogo(
 
 async function lookupCore(input: ProductImageInput): Promise<ProductImageResult> {
   const now = new Date().toISOString();
-
-  if (input.barcode) {
-    const hit = await lookupByBarcode(input.barcode);
-    if (hit) return { ...hit, checkedAt: now };
-  }
+  const isDev = process.env.NODE_ENV !== "production";
 
   const { cleanedName, extractedBrand } = cleanProductName(
     input.productName,
@@ -256,6 +276,32 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   );
   const effectiveBrand = extractedBrand || input.brand || null;
   const rawName = normalizeForKey(input.productName);
+
+  const debug: ProductImageDebug | undefined = isDev
+    ? {
+        productName: input.productName,
+        cleanedName,
+        extractedBrand: effectiveBrand,
+        barcode: input.barcode ?? null,
+        attempts: [],
+        pickedFrom: "none",
+      }
+    : undefined;
+
+  if (input.barcode) {
+    const hit = await lookupByBarcode(input.barcode);
+    if (hit) {
+      if (debug) debug.pickedFrom = "barcode";
+      return { ...hit, checkedAt: now, debug };
+    }
+    debug?.attempts.push({
+      query: input.barcode,
+      brand: null,
+      candidates: 0,
+      bestScore: null,
+      rejected: "barcode_no_match",
+    });
+  }
 
   // Sequência de tentativas, da mais específica para a mais ampla.
   const attempts: Array<{ name: string; brand: string | null }> = [];
@@ -267,20 +313,27 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   if (rawName && rawName !== cleanedName)
     attempts.push({ name: rawName, brand: null });
 
-  // Dedup
   const seen = new Set<string>();
   for (const a of attempts) {
     const key = `${a.name}|${a.brand ?? ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const hit = await lookupByName(a.name, a.brand);
-    if (hit) return { ...hit, checkedAt: now };
+    const hit = await lookupByName(a.name, a.brand, (d) => {
+      debug?.attempts.push({ query: a.name, brand: a.brand, ...d });
+    });
+    if (hit) {
+      if (debug) debug.pickedFrom = "search";
+      return { ...hit, checkedAt: now, debug };
+    }
   }
 
   const byBrand = lookupBrandLogo(effectiveBrand);
-  if (byBrand) return { ...byBrand, checkedAt: now };
+  if (byBrand) {
+    if (debug) debug.pickedFrom = "brand_logo";
+    return { ...byBrand, checkedAt: now, debug };
+  }
 
-  return { ...EMPTY_RESULT, checkedAt: now };
+  return { ...EMPTY_RESULT, checkedAt: now, debug };
 }
 
 export const lookupProductImage = createServerFn({ method: "POST" })
