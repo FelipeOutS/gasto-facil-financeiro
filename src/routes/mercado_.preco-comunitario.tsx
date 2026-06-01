@@ -655,7 +655,7 @@ function PrecoComunitarioPage() {
             aria-label={t("communityPrices.v2.bestFinds.title")}
           >
             {bestFinds.map((it) => (
-              <div key={`best-${it.id}`} className="w-[180px] shrink-0 snap-start">
+              <div key={`best-${it.id}`} className="w-[150px] shrink-0 snap-start">
                 <ProductCard
                   name={it.product_name}
                   priceLabel={formatBRL(it.price)}
