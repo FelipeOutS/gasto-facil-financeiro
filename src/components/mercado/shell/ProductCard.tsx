@@ -214,14 +214,14 @@ export function ProductCard({
         className,
       )}
     >
-      <div className="relative aspect-square w-full bg-gradient-to-br from-muted/60 to-muted">
+      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-muted/60 to-muted">
         {showImage ? (
           <img
             src={finalImage!}
             alt={t("shell.product.imageAlt", { name })}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="h-full w-full object-contain p-2.5"
+            className="absolute inset-0 h-full w-full object-contain p-2.5"
             onError={onImgError}
           />
         ) : (

@@ -762,6 +762,7 @@ function PrecoComunitarioPage() {
             {bestFinds.map((it) => (
               <div key={`best-${it.id}`} className="w-[150px] shrink-0 snap-start">
                 <ProductCard
+                  className="h-full"
                   name={it.product_name}
                   priceLabel={formatBRL(it.price)}
                   unitLabel={it.unit ?? undefined}
@@ -836,15 +837,16 @@ function PrecoComunitarioPage() {
             </div>
           )
         ) : (
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <ul className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {filtered.map((it) => {
               const owned = user?.id === it.user_id;
               const validUntilLabel = it.valid_until
                 ? t("communityPrices.list.validUntil", { date: fmtDate(it.valid_until) })
                 : null;
               return (
-                <li key={it.id} className="relative">
+                <li key={it.id} className="relative h-full">
                   <ProductCard
+                    className="h-full"
                     name={it.product_name}
                     priceLabel={formatBRL(it.price)}
                     unitLabel={it.unit ?? undefined}
