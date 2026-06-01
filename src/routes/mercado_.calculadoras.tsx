@@ -91,7 +91,7 @@ function CalculadorasPage() {
           <Home className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
+          <h1 className="text-xl font-bold leading-tight tracking-tight line-clamp-2 md:text-3xl">
             {t("calculators.title")}
           </h1>
           <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground md:text-base">
