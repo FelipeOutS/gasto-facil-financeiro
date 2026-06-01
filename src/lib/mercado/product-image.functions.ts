@@ -302,10 +302,10 @@ async function lookupByBarcode(
 ): Promise<ProductImageHit | null> {
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
-  )}.json?fields=image_front_url,image_url,product_name,brands`;
+  )}.json?fields=image_front_url,image_url,product_name,brands,selected_images`;
   const data = await fetchJson<OFFByBarcode>(url);
   if (!data || data.status !== 1 || !data.product) return null;
-  const img = safeUrl(data.product.image_front_url || data.product.image_url);
+  const img = pickProductImage(data.product);
   if (!img) return null;
   return {
     imageUrl: img,
