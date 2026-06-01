@@ -235,6 +235,39 @@ function PrecoComunitarioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auditoria dev-only: resumo da cobertura de imagens dos itens renderizados.
+  // Roda só uma vez por mudança de tamanho da lista para evitar spam.
+  const auditedSize = useRef(-1);
+  useEffect(() => {
+    if (import.meta.env.PROD) return;
+    if (loading || items.length === 0) return;
+    if (auditedSize.current === items.length) return;
+    auditedSize.current = items.length;
+    const total = items.length;
+    const withSaved = items.filter((i) => !!i.image_url).length;
+    const withBrand = items.filter((i) => !!i.brand).length;
+    const withBarcode = items.filter((i) => !!i.barcode).length;
+    // eslint-disable-next-line no-console
+    console.groupCollapsed(
+      `[mercado/image-audit] ${withSaved}/${total} com imagem salva`,
+    );
+    // eslint-disable-next-line no-console
+    console.table({
+      total,
+      com_image_url_salva: withSaved,
+      com_brand: withBrand,
+      com_barcode: withBarcode,
+      sem_imagem_salva: total - withSaved,
+    });
+    // eslint-disable-next-line no-console
+    console.info(
+      "Itens sem image_url tentarão lookup automático via ProductCard (runtime) + backfill (somente owner, confiança média/alta).",
+    );
+    // eslint-disable-next-line no-console
+    console.groupEnd();
+  }, [items, loading]);
+
+
   // Backfill incremental de imagem para itens do próprio usuário sem
   // image_url salvo. Roda lazy, em segundo plano, com concorrência baixa.
   // Cada id é tentado no máximo uma vez por sessão (sucesso ou falha).
