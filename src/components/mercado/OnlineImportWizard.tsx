@@ -88,7 +88,18 @@ export type OnlineImportWizardProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
+  onOpenFlyerScan?: () => void;
 };
+
+const HOME_URL = "https://joaninonline.com.br/";
+function isProtectedJoaninUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw.trim());
+    return /^\/p\//.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
 
 function normalize(value: string): string {
   return value
