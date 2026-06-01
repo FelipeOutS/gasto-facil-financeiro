@@ -233,6 +233,11 @@ export function OnlineImportWizard({
       toast.error(t("communityPrices.onlineImport.errors.selectAtLeastOne"));
       return;
     }
+    const matchedMercado = savedMercados.find(
+      (m) => m.nome.trim().toLowerCase() === marketName.trim().toLowerCase(),
+    );
+    const resolvedMarketId =
+      matchedMercado && UUID_RE.test(matchedMercado.id) ? matchedMercado.id : null;
     setSaving(true);
     const today = new Date().toISOString().slice(0, 10);
 
