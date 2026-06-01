@@ -105,6 +105,15 @@ function CestaPadraoPage() {
         </button>
       </header>
 
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("basketV2.banner.title")}
+          subtitle={t("basketV2.banner.subtitle")}
+          imageSrc={bannerCesta}
+          tone="pantry"
+        />
+      </div>
+
       <section className="mt-5 flex items-start gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
           <PackageCheck className="h-6 w-6" />
