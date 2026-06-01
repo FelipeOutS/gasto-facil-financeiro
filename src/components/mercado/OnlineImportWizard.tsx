@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
 import { useMercadosLocais } from "@/lib/mercado/mercados-store";
+import { validateImageUrl } from "@/lib/mercado/image-url-whitelist";
 
 const TABLE = "community_market_prices" as const;
 const DEFAULT_MARKET = "Supermercados Joanin";
