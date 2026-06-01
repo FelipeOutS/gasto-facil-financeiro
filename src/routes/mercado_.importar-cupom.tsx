@@ -31,6 +31,9 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
 import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
+import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
@@ -51,6 +54,7 @@ import {
 
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 
