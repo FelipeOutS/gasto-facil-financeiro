@@ -813,6 +813,10 @@ function PrecoComunitarioPage() {
                     name={it.product_name}
                     priceLabel={formatBRL(it.price)}
                     unitLabel={it.unit ?? undefined}
+                    imageUrl={it.image_url ?? undefined}
+                    brand={it.brand}
+                    barcode={it.barcode}
+                    category={(it.category ?? null) as MercadoCategoryKey | null}
                     marketName={it.market_name}
                     source={SOURCE_MAP[it.source] ?? "community"}
                     seenAtLabel={fmtDate(it.seen_at)}
