@@ -15,6 +15,8 @@ export interface MercadoBannerProps {
   className?: string;
   /** Altura compacta para banners secundários. */
   compact?: boolean;
+  /** Marca a imagem como crítica (LCP): carrega eager e com fetchPriority alta. Use apenas no banner principal acima da dobra. */
+  priority?: boolean;
 }
 
 const TONE_VAR: Record<NonNullable<MercadoBannerProps["tone"]>, string> = {
