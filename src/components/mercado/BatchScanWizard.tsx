@@ -90,6 +90,12 @@ type ReviewItem = DetectedItem & {
   id: string;
   include: boolean;
   sourcePhotoIndex: number; // 1-based
+  brand: string | null;
+  barcode: string | null;
+  imageUrl: string | null;
+  imageSource: string | null;
+  imageConfidence: number | null;
+  imageRemoved: boolean;
 };
 
 function fileToBase64(file: File): Promise<string> {
