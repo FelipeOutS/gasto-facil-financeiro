@@ -463,7 +463,3 @@ function CTACard({
   );
 }
 
-{
-  /* Unused Store import kept for future market grouping section */
-}
-void Store;
