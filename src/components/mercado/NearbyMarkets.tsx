@@ -11,6 +11,9 @@ import {
   Store,
   Star,
   Search,
+  Check,
+  ShieldCheck,
+  Navigation,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -88,6 +91,7 @@ export function NearbyMarkets() {
   const [manualQuery, setManualQuery] = React.useState("");
   const [manualError, setManualError] = React.useState<string | null>(null);
   const mapRef = React.useRef<GoogleMapViewHandle>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
   const search = useServerFn(searchNearbyMarkets);
   const geocode = useServerFn(geocodeMarketSearchLocation);
 
@@ -233,7 +237,7 @@ export function NearbyMarkets() {
       next.add(m.placeId);
       return next;
     });
-    toast.success(t("nearby.added"));
+    toast.success(t("marketsV2.nearby.card.added"));
   };
 
   const isBusy =
@@ -241,287 +245,348 @@ export function NearbyMarkets() {
     status.kind === "geocoding" ||
     status.kind === "searching";
 
+  const tk = (suffix: string, opts?: Record<string, unknown>) =>
+    t(`marketsV2.nearby.${suffix}`, opts);
+
+  const lang = i18n.language || "pt-BR";
+
   return (
-    <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 shadow-card md:p-5">
-      <div className="flex items-start gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-          <Compass className="h-4 w-4" />
+    <section className="mt-4 overflow-hidden rounded-3xl border border-border/60 bg-card-elevated shadow-card">
+      {/* Header */}
+      <div className="flex items-start gap-3 border-b border-border/60 bg-gradient-to-br from-brand-soft/60 to-transparent p-4 md:p-5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand text-brand-foreground shadow-sm">
+          <Compass className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-base font-semibold md:text-lg">
-            {t("nearby.title")}
+            {tk("title")}
           </h2>
           <p className="mt-1 text-sm leading-snug text-muted-foreground">
-            {t("nearby.description")}
+            {tk("description")}
           </p>
         </div>
       </div>
 
-      <div className="mt-4">
-        <GoogleMapView ref={mapRef} height={260} markers={markers} />
-      </div>
-
-      {/* Manual search */}
-      <form onSubmit={handleManualSearch} className="mt-4 flex flex-col gap-2">
-        <label htmlFor="nearby-manual-search" className="text-sm font-medium">
-          {t("nearby.manualSearchTitle")}
-        </label>
-        <p className="text-xs leading-snug text-muted-foreground">
-          {t("nearby.manualSearchDescription")}
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            id="nearby-manual-search"
-            type="text"
-            inputMode="search"
-            autoComplete="off"
-            maxLength={200}
-            value={manualQuery}
-            onChange={(e) => {
-              setManualQuery(e.target.value);
-              if (manualError) setManualError(null);
-            }}
-            placeholder={t("nearby.searchPlaceholder")}
-            disabled={isBusy}
-            className="min-h-11 flex-1"
-          />
-          <Button
-            type="submit"
-            disabled={isBusy || manualQuery.trim().length < 3}
-            className="min-h-11 rounded-full font-semibold"
-          >
-            <Search className="h-4 w-4" />
-            {t("nearby.searchButton")}
-          </Button>
+      <div className="space-y-5 p-4 md:p-5">
+        {/* Privacy notice */}
+        <div className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-xs leading-snug text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+          <span>{tk("privacy")}</span>
         </div>
-        {manualError && (
-          <p className="text-xs text-destructive">{manualError}</p>
-        )}
-      </form>
 
-      {/* Radius selector */}
-      <div className="mt-4">
-        <p id="nearby-radius-label" className="text-sm font-medium">
-          {t("nearby.radiusLabel")}
-        </p>
-        <div
-          role="radiogroup"
-          aria-labelledby="nearby-radius-label"
-          className="mt-2 flex flex-wrap gap-2"
-        >
-          {RADIUS_OPTIONS.map((r) => {
-            const active = radius === r;
-            const key = r === 2.5 ? "2.5" : String(r);
-            return (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                disabled={isBusy}
-                onClick={() => setRadius(r)}
-                className={
-                  "min-h-10 rounded-full border px-4 text-sm font-medium transition-colors " +
-                  (active
-                    ? "border-brand bg-brand text-brand-foreground"
-                    : "border-border bg-card text-foreground hover:bg-card-elevated")
-                }
+        {/* Search controls */}
+        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+          <form
+            onSubmit={handleManualSearch}
+            className="flex flex-col gap-2"
+            aria-busy={isBusy}
+          >
+            <label
+              htmlFor="nearby-manual-search"
+              className="text-sm font-medium"
+            >
+              {tk("manualSearchLabel")}
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="nearby-manual-search"
+                  type="text"
+                  inputMode="search"
+                  autoComplete="off"
+                  maxLength={200}
+                  value={manualQuery}
+                  onChange={(e) => {
+                    setManualQuery(e.target.value);
+                    if (manualError) setManualError(null);
+                  }}
+                  placeholder={tk("searchPlaceholder")}
+                  disabled={isBusy}
+                  className="min-h-11 pl-9"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isBusy || manualQuery.trim().length < 3}
+                className="min-h-11 rounded-full font-semibold"
               >
-                {t(`nearby.radiusOptions.${key}`)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Use my location */}
-      <div className="mt-4 flex flex-col gap-2">
-        <p className="text-xs leading-snug text-muted-foreground">
-          {t("nearby.locationPrivacy")}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={requestLocation}
-          disabled={isBusy}
-          className="min-h-11 self-start rounded-full font-semibold"
-        >
-          <MapPin className="h-4 w-4" />
-          {t("nearby.useLocation")}
-        </Button>
-      </div>
-
-      {/* Busy states */}
-      {(status.kind === "locating" || status.kind === "searching") && (
-        <div
-          className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
-          role="status"
-          aria-live="polite"
-        >
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {t("nearby.loading")}
-        </div>
-      )}
-
-      {status.kind === "geocoding" && (
-        <div
-          className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
-          role="status"
-          aria-live="polite"
-        >
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {t("nearby.geocoding")}
-        </div>
-      )}
-
-      {status.kind === "denied" && (
-        <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-500" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                {t("nearby.permissionDeniedTitle")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("nearby.permissionDenied")}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t("nearby.locationDeniedManualHint")}
-              </p>
+                <Search className="h-4 w-4" />
+                {tk("searchButton")}
+              </Button>
             </div>
+            {manualError && (
+              <p className="text-xs text-destructive">{manualError}</p>
+            )}
+          </form>
+
+          <div className="mt-4 flex flex-col gap-2 border-t border-border/40 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={requestLocation}
+              disabled={isBusy}
+              className="min-h-11 self-start rounded-full font-semibold"
+            >
+              <MapPin className="h-4 w-4" />
+              {tk("useLocation")}
+            </Button>
           </div>
-        </div>
-      )}
 
-      {status.kind === "error" && (
-        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-destructive/40 bg-card p-4">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                {t("nearby.errorTitle")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("nearby.error")}
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              if (status.reason === "geocode") {
-                void handleManualSearch();
-              } else {
-                requestLocation();
-              }
-            }}
-            className="min-h-11 self-start rounded-full"
-          >
-            {t("nearby.retry")}
-          </Button>
-        </div>
-      )}
-
-      {status.kind === "empty" && (
-        <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
-          {status.locationLabel && (
-            <p className="mb-2 text-xs">
-              {t("nearby.lastSearchLabel", { location: status.locationLabel })}
+          <div className="mt-4">
+            <p id="nearby-radius-label" className="text-sm font-medium">
+              {tk("radiusLabel")}
             </p>
-          )}
-          {t("nearby.empty")}
-        </div>
-      )}
-
-      {status.kind === "ok" && (
-        <>
-          {status.locationLabel && (
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t("nearby.lastSearchLabel", { location: status.locationLabel })}
-            </p>
-          )}
-          <ul className="mt-2 flex flex-col gap-2">
-            {status.markets.map((m) => {
-              const selected = selectedId === m.placeId;
-              const saved = savedIds.has(m.placeId);
-              return (
-                <li
-                  key={m.placeId}
-                  className={
-                    "rounded-2xl border bg-card p-3 transition-colors " +
-                    (selected
-                      ? "border-brand/60 ring-1 ring-brand/40"
-                      : "border-border/60")
-                  }
-                >
+            <div
+              role="radiogroup"
+              aria-labelledby="nearby-radius-label"
+              className="mt-2 flex flex-wrap gap-2"
+            >
+              {RADIUS_OPTIONS.map((r) => {
+                const active = radius === r;
+                const key = r === 2.5 ? "2.5" : String(r);
+                return (
                   <button
+                    key={key}
                     type="button"
-                    onClick={() => handleSelect(m)}
-                    className="flex w-full items-start gap-3 text-left"
-                    aria-label={t("nearby.selectMarket", { name: m.name })}
+                    role="radio"
+                    aria-checked={active}
+                    disabled={isBusy}
+                    onClick={() => setRadius(r)}
+                    className={
+                      "min-h-10 rounded-full border px-4 text-sm font-medium transition-colors " +
+                      (active
+                        ? "border-brand bg-brand text-brand-foreground shadow-sm"
+                        : "border-border bg-card text-foreground hover:bg-card-elevated")
+                    }
                   >
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-                      <Store className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{m.name}</p>
-                      {m.address && (
-                        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                          {m.address}
-                        </p>
-                      )}
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        {m.distanceMeters != null && (
-                          <span className="font-medium text-foreground">
-                            {formatDistance(
-                              m.distanceMeters,
-                              t,
-                              i18n.language || "pt-BR",
+                    {t(`nearby.radiusOptions.${key}`)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Loading inline status */}
+        {(status.kind === "locating" ||
+          status.kind === "searching" ||
+          status.kind === "geocoding") && (
+          <div
+            className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card p-3 text-sm text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="h-4 w-4 animate-spin text-brand" />
+            {status.kind === "locating"
+              ? tk("locating")
+              : status.kind === "geocoding"
+                ? t("nearby.geocoding")
+                : tk("searching")}
+          </div>
+        )}
+
+        {/* Denied */}
+        {status.kind === "denied" && (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  {tk("deniedTitle")}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {tk("deniedDescription")}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {status.kind === "error" && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  {tk("errorTitle")}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {tk("errorDescription")}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (status.reason === "geocode") {
+                  void handleManualSearch();
+                } else {
+                  requestLocation();
+                }
+              }}
+              className="min-h-11 self-start rounded-full"
+            >
+              {tk("retry")}
+            </Button>
+          </div>
+        )}
+
+        {/* Empty */}
+        {status.kind === "empty" && (
+          <div className="rounded-2xl border border-border/60 bg-card p-5 text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-brand-soft text-brand">
+              <Store className="h-6 w-6" />
+            </div>
+            <p className="mt-3 text-sm font-semibold">{tk("emptyTitle")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {tk("emptyDescription")}
+            </p>
+            {status.locationLabel && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {t("nearby.lastSearchLabel", {
+                  location: status.locationLabel,
+                })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Results: map + list */}
+        {status.kind === "ok" && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold md:text-base">
+                  {tk("resultsTitle")}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {tk("resultsCount", { count: status.markets.length })}
+                </p>
+              </div>
+              {status.locationLabel && (
+                <p className="text-[11px] text-muted-foreground">
+                  {t("nearby.lastSearchLabel", {
+                    location: status.locationLabel,
+                  })}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+                <GoogleMapView ref={mapRef} height={280} markers={markers} />
+              </div>
+
+              <div
+                ref={listRef}
+                className="flex max-h-[420px] flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[280px]"
+              >
+                {status.markets.map((m) => {
+                  const selected = selectedId === m.placeId;
+                  const saved = savedIds.has(m.placeId);
+                  return (
+                    <article
+                      key={m.placeId}
+                      className={
+                        "rounded-2xl border bg-card p-3 transition-colors " +
+                        (selected
+                          ? "border-brand/60 ring-1 ring-brand/40"
+                          : "border-border/60 hover:border-border")
+                      }
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(m)}
+                        className="flex w-full items-start gap-3 text-left"
+                        aria-label={t("nearby.selectMarket", { name: m.name })}
+                      >
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+                          <Store className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">
+                            {m.name}
+                          </p>
+                          {m.address && (
+                            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                              {m.address}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            {m.distanceMeters != null && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand">
+                                <Navigation className="h-3 w-3" />
+                                {formatDistance(m.distanceMeters, t, lang)}
+                              </span>
                             )}
-                          </span>
-                        )}
-                        {typeof m.rating === "number" && (
-                          <span className="inline-flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                            {m.rating.toFixed(1)}
-                            {typeof m.userRatingCount === "number" &&
-                              ` · ${m.userRatingCount}`}
-                          </span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
+                              {tk("card.sourceGoogle")}
+                            </span>
+                            {typeof m.rating === "number" && (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                                <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                                {m.rating.toFixed(1)}
+                                {typeof m.userRatingCount === "number" &&
+                                  ` · ${m.userRatingCount}`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleAdd(m)}
+                          disabled={saved}
+                          className="min-h-10 rounded-full"
+                        >
+                          {saved ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              {tk("card.added")}
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4" />
+                              {tk("card.add")}
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSelect(m)}
+                          className="min-h-10 rounded-full"
+                        >
+                          <MapPin className="h-4 w-4" />
+                          {tk("card.viewOnMap")}
+                        </Button>
+                        {m.googleMapsUri && (
+                          <a
+                            href={m.googleMapsUri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-card-elevated"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            {t("nearby.openInMaps")}
+                          </a>
                         )}
                       </div>
-                    </div>
-                  </button>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleAdd(m)}
-                      disabled={saved}
-                      className="min-h-10 rounded-full"
-                    >
-                      <Plus className="h-4 w-4" />
-                      {saved ? t("nearby.added") : t("nearby.addMarket")}
-                    </Button>
-                    {m.googleMapsUri && (
-                      <a
-                        href={m.googleMapsUri}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-card-elevated"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        {t("nearby.openInMaps")}
-                      </a>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
