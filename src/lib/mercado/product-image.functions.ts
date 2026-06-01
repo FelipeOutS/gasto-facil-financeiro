@@ -278,12 +278,23 @@ function buildNameAliases(name: string, brand: string | null, category?: Product
   const categories = inferCategoryTerms(`${name} ${brand ?? ""}`, category);
   const packs = packagingTerms(normalized);
   const aliases = [normalized];
-  if (hasToken(normalized, ["cerveja", "beer", "lager", "long", "neck"]) || normalizeForKey(brand) === "heineken") {
-    aliases.push("long neck", "longneck", "garrafa", "330ml", "355ml", "cerveja", "beer", "lager", "lager beer", "original", "premium pure malt");
+  const brandKey = normalizeForKey(brand);
+  const isBeer =
+    hasToken(normalized, ["cerveja", "beer", "lager", "long", "neck"]) ||
+    ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambep", "stella artois", "budweiser", "amstel", "eisenbahn", "corona"].includes(brandKey);
+  const isSoftDrink =
+    hasToken(normalized, ["refrigerante", "refri", "soda", "cola"]) ||
+    ["coca cola", "coca", "pepsi", "fanta", "sprite", "sukita", "guarana antarctica", "schweppes"].includes(brandKey);
+  if (isBeer) {
+    aliases.push("long neck", "longneck", "garrafa", "lata", "330ml", "355ml", "cerveja", "beer", "lager", "lager beer");
+  }
+  if (isSoftDrink) {
+    aliases.push("lata", "can", "garrafa", "pet", "350ml", "355ml", "330ml", "2l", "2 litros", "refrigerante", "soda", "soft drink", "cola");
   }
   if (hasToken(normalized, ["refrigerante", "refri"])) aliases.push("refrigerante", "soda", "soft drink", "pet", "2l", "2 litros");
   return unique([...aliases, ...packs, ...categories]);
 }
+
 
 async function lookupByBarcode(
   barcode: string,
