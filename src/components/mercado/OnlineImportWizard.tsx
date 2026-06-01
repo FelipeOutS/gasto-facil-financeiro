@@ -148,17 +148,19 @@ export function OnlineImportWizard({
   }, [fetchedAt, dateLocale]);
 
   async function runImport() {
+    const trimmedUrl = url.trim() || DEFAULT_URL;
+    const trimmedMarket = marketName.trim() || DEFAULT_MARKET;
     setStep("loading");
     try {
       const res = await apiFetch("/api/mercado-joanin-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ url: trimmedUrl, marketName: trimmedMarket }),
       });
       const json = await res.json().catch(() => ({} as Record<string, unknown>));
       if (res.status === 429) {
         toast.error(t("communityPrices.onlineImport.errors.rateLimited"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       if (res.status === 403) {
@@ -169,21 +171,33 @@ export function OnlineImportWizard({
         onOpenChange(false);
         return;
       }
+      if (res.status === 400) {
+        toast.error(t("communityPrices.onlineImport.errors.invalidUrl"));
+        setStep("confirm");
+        return;
+      }
       if (!res.ok) {
         toast.error(t("communityPrices.onlineImport.errors.importFailed"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       const code = (json as { code?: string }).code;
       const incoming = (json as { items?: ImportedItem[] }).items ?? [];
+      const diag = (json as { diagnostics?: Diagnostics }).diagnostics ?? null;
+      setDiagnostics(diag);
       if (code === "site_unavailable") {
         toast.error(t("communityPrices.onlineImport.errors.siteUnavailable"));
-        onOpenChange(false);
+        setStep("confirm");
+        return;
+      }
+      if (code === "placement_no_public_data") {
+        toast.warning(t("communityPrices.onlineImport.errors.placementNoPublicData"));
+        setStep("confirm");
         return;
       }
       if (code === "no_products_found" || incoming.length === 0) {
         toast.warning(t("communityPrices.onlineImport.errors.noProductsFound"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       const fetchedAtIso = (json as { fetchedAt?: string }).fetchedAt ?? new Date().toISOString();
@@ -199,7 +213,7 @@ export function OnlineImportWizard({
     } catch (err) {
       console.error("[online-import] erro", err);
       toast.error(t("communityPrices.onlineImport.errors.importFailed"));
-      onOpenChange(false);
+      setStep("confirm");
     }
   }
 
