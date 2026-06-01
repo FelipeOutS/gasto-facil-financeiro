@@ -351,9 +351,9 @@ async function lookupByName(
     fields: "image_front_url,image_url,product_name,brands,selected_images",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
-  const data = await fetchJson<OFFSearch>(url);
+  const { data, reason } = await fetchJson<OFFSearch>(url);
   if (!data?.products?.length) {
-    onDiag?.({ candidates: 0, bestScore: null, rejected: "no_results" });
+    onDiag?.({ candidates: 0, bestScore: null, rejected: reason ?? "no_results" });
     return null;
   }
   const normalizedQuery = normalizeForKey(query);
