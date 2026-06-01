@@ -285,11 +285,20 @@ async function lookupByBarcode(
 }
 
 async function lookupByName(
-  productName: string,
+  query: string,
   brand: string | null,
-  onDiag?: (d: { candidates: number; bestScore: number | null; rejected: string | null }) => void,
-): Promise<Pick<ProductImageResult, "imageUrl" | "source" | "confidence" | "origin"> | null> {
-  const q = [productName, brand].filter(Boolean).join(" ").slice(0, 120);
+  expectedCategoryTerms: string[] = [],
+  expectedPackagingTerms: string[] = [],
+  onDiag?: (d: {
+    candidates: number;
+    bestScore: number | null;
+    bestCandidate?: string | null;
+    bestBrands?: string | null;
+    hadImage?: boolean;
+    rejected: string | null;
+  }) => void,
+): Promise<ProductImageHit | null> {
+  const q = query.slice(0, 120);
   if (q.length < 3) {
     onDiag?.({ candidates: 0, bestScore: null, rejected: "query_too_short" });
     return null;
@@ -297,7 +306,7 @@ async function lookupByName(
   const params = new URLSearchParams({
     search_terms: q,
     json: "1",
-    page_size: "8",
+    page_size: "20",
     fields: "image_front_url,image_url,product_name,brands",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
@@ -306,42 +315,87 @@ async function lookupByName(
     onDiag?.({ candidates: 0, bestScore: null, rejected: "no_results" });
     return null;
   }
-  const normalizedQuery = normalizeForKey(productName);
+  const normalizedQuery = normalizeForKey(query);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
-  let best: { img: string; score: number } | null = null;
+  const strongBrand = isStrongMarketBrand(normalizedBrand);
+  let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
+  let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
   for (const p of data.products) {
     const img = safeUrl(p.image_front_url || p.image_url);
-    if (!img) continue;
     const candidateName = normalizeForKey(p.product_name);
     const candidateBrands = normalizeForKey(p.brands);
     const nameSim = similarity(normalizedQuery, candidateName);
-    let score = nameSim;
+    const candidateText = `${candidateName} ${candidateBrands}`;
+    let score = Math.min(nameSim, 0.45);
+    const partialTokens = normalizedQuery.split(/\s+/).filter((tok) => tok.length >= 3);
+    const partialHits = partialTokens.filter((tok) => candidateText.includes(tok)).length;
+    if (partialTokens.length > 0) score += Math.min(0.25, (partialHits / partialTokens.length) * 0.25);
+    let brandMatched = false;
     if (normalizedBrand) {
       const brandSim = similarity(normalizedBrand, candidateBrands);
       const brandSubstr =
         candidateBrands.includes(normalizedBrand) ||
         candidateName.includes(normalizedBrand);
-      if (brandSubstr) score += 0.25;
-      else if (brandSim > 0.6) score += 0.15;
-      else score -= 0.25;
+      brandMatched = brandSubstr || brandSim > 0.78;
+      if (brandSubstr) score += strongBrand ? 0.7 : 0.5;
+      else if (brandSim > 0.78) score += strongBrand ? 0.45 : 0.3;
+      else if (candidateBrands) score -= strongBrand ? 0.9 : 0.55;
     }
-    if (!best || score > best.score) best = { img, score };
+    if (img) score += 0.08;
+    const categoryMatched = expectedCategoryTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    const packagingMatched = expectedPackagingTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    if (categoryMatched) score += 0.18;
+    if (packagingMatched) score += 0.08;
+    if (!img) {
+      if (!bestNoImage || score > bestNoImage.score) {
+        bestNoImage = { score, name: p.product_name ?? null, brands: p.brands ?? null };
+      }
+      continue;
+    }
+    if (!best || score > best.score) {
+      best = { img, score, name: p.product_name ?? null, brands: p.brands ?? null, brandMatched };
+    }
   }
   if (!best) {
-    onDiag?.({ candidates: data.products.length, bestScore: null, rejected: "no_image_in_results" });
+    onDiag?.({
+      candidates: data.products.length,
+      bestScore: bestNoImage?.score ?? null,
+      bestCandidate: bestNoImage?.name ?? null,
+      bestBrands: bestNoImage?.brands ?? null,
+      hadImage: false,
+      rejected: "no_image_in_results",
+    });
     return null;
   }
-  if (best.score < 0.5) {
-    onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: "score_below_threshold" });
+  const threshold = normalizedBrand && strongBrand ? 0.48 : normalizedBrand ? 0.58 : 0.62;
+  if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.46) {
+    // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
+  } else if (best.score < threshold) {
+    onDiag?.({
+      candidates: data.products.length,
+      bestScore: best.score,
+      bestCandidate: best.name,
+      bestBrands: best.brands,
+      hadImage: true,
+      rejected: "score_below_threshold",
+    });
     return null;
   }
   const confidence: ProductImageConfidence =
-    best.score >= 0.85 ? "high" : best.score >= 0.6 ? "medium" : "low";
-  onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: null });
+    best.score >= 0.9 ? "high" : best.score >= 0.62 ? "medium" : "low";
+  onDiag?.({
+    candidates: data.products.length,
+    bestScore: best.score,
+    bestCandidate: best.name,
+    bestBrands: best.brands,
+    hadImage: true,
+    rejected: null,
+  });
   return {
     imageUrl: best.img,
     source: "off_search",
     confidence,
+    persistable: confidence === "high" || (confidence === "medium" && (!strongBrand || best.brandMatched)) || (confidence === "low" && false),
     origin: "openfoodfacts",
   };
 }
