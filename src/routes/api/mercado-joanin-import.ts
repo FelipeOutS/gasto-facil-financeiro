@@ -6,6 +6,7 @@ import {
   premiumForbiddenResponse,
 } from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
+import { validateImageUrl } from "@/lib/mercado/image-url-whitelist";
 
 /**
  * V2.3.3 — Preço Comunitário: importação de preços públicos do Joanin Online.
