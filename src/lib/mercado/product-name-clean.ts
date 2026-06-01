@@ -364,6 +364,7 @@ export function normalizeMarketProductTerms(
     .replace(/\bachoc\s*po\b/g, " achocolatado em po ")
     .replace(/\bachocolatado\s*po\b/g, " achocolatado em po ")
     .replace(/\bling\b/g, " linguica ")
+    .replace(/\blatinhas?\b/g, " lata ")
     .replace(/\bcx\b/g, " caixa ")
     .replace(/\bpct\b/g, " pacote ")
     .replace(/\b(?:lt|litro|litros)\b/g, " l ")
