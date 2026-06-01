@@ -28,7 +28,7 @@ import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useMercadoListas } from "@/lib/mercado/listas-store";
-import { useMercadosLocais } from "@/lib/mercado/mercados-store";
+import { useMercadosLocais, updateMercadoLocal } from "@/lib/mercado/mercados-store";
 import { useMercadoOrcamento } from "@/lib/mercado/orcamento-store";
 import {
   MercadoHeader,
