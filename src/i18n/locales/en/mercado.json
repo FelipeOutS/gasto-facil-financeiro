@@ -1579,8 +1579,8 @@
     "stickyGoCart": "Go to cart"
   },
   "cartV2": {
-    "bannerTitle": "Your cart",
-    "bannerSubtitle": "Track quantity, prices and finalize the shop.",
+    "bannerTitle": "Your grocery cart",
+    "bannerSubtitle": "Track products, quantities, and estimated total before finishing your shopping.",
     "emptyTitle": "Empty cart",
     "emptyDesc": "Pick a list to start checking off items while you shop.",
     "emptyCta": "View my lists",
