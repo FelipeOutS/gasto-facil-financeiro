@@ -190,39 +190,39 @@ export function ProductCard({
         className,
       )}
     >
-      <div className="relative aspect-square w-full bg-muted">
+      <div className="relative aspect-square w-full bg-gradient-to-br from-muted/60 to-muted">
         {showImage ? (
           <img
             src={finalImage!}
             alt={t("shell.product.imageAlt", { name })}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className={cn(
-              "h-full w-full",
-              isBrandLogo ? "object-contain p-4" : "object-cover",
-            )}
+            className="h-full w-full object-contain p-2.5"
             onError={onImgError}
           />
         ) : (
           <Fallback size="lg" />
         )}
         {sourceLabel && (
-          <span className="absolute left-2 top-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
+          <span className="absolute left-1.5 top-1.5 inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
             {sourceLabel}
           </span>
         )}
         {isSuggested && (
-          <span className="absolute bottom-2 left-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur">
-            {suggestedBadgeLabel}
+          <span
+            className="absolute bottom-1.5 right-1.5 inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur"
+            title={suggestedBadgeLabel}
+          >
+            {isBrandLogo ? "logo" : "auto"}
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-[13px] font-semibold leading-tight text-foreground">
+      <div className="flex flex-1 flex-col gap-1 p-2.5">
+        <h3 className="line-clamp-2 min-h-[2.1rem] text-[12px] font-semibold leading-tight text-foreground">
           {name}
         </h3>
         <div className="flex items-baseline gap-1">
-          <span className="num text-base font-bold text-foreground">{priceLabel}</span>
+          <span className="num text-sm font-bold text-foreground">{priceLabel}</span>
           {unitLabel && (
             <span className="text-[10px] text-muted-foreground">/ {unitLabel}</span>
           )}
