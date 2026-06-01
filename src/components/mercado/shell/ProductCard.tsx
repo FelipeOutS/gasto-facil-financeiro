@@ -84,17 +84,44 @@ export function ProductCard({
 
   const initial = (name || "").trim().charAt(0).toUpperCase() || "•";
 
+  const CATEGORY_TINT: Record<string, string> = {
+    hortifruti: "var(--color-mercado-fresh)",
+    acougue: "var(--color-mercado-meat)",
+    padaria: "var(--color-mercado-bakery)",
+    bebidas: "var(--color-mercado-drinks)",
+    laticinios: "var(--color-mercado-dairy)",
+    limpeza: "var(--color-mercado-cleaning)",
+    mercearia: "var(--color-mercado-pantry)",
+    utilidades: "var(--color-mercado-household)",
+  };
+  const tint = (category && CATEGORY_TINT[category]) || "var(--color-mercado-community)";
+
   const Fallback = ({ size }: { size: "sm" | "lg" }) => (
     <div
-      className="grid h-full w-full place-items-center bg-brand-soft text-brand"
+      className="grid h-full w-full place-items-center"
+      style={{
+        background: `radial-gradient(circle at 30% 25%, color-mix(in oklab, ${tint} 18%, var(--card)) 0%, var(--card) 75%)`,
+      }}
       aria-hidden="true"
     >
-      <div className="flex flex-col items-center gap-1">
-        <ShoppingBasket className={size === "lg" ? "h-7 w-7" : "h-5 w-5"} />
+      <div className="flex flex-col items-center gap-1.5">
+        <span
+          className="grid place-items-center rounded-full ring-1"
+          style={{
+            backgroundColor: `color-mix(in oklab, ${tint} 16%, var(--card))`,
+            color: tint,
+            // @ts-expect-error CSS var for ring color
+            "--tw-ring-color": `color-mix(in oklab, ${tint} 35%, transparent)`,
+            width: size === "lg" ? "2.5rem" : "1.75rem",
+            height: size === "lg" ? "2.5rem" : "1.75rem",
+          }}
+        >
+          <ShoppingBasket className={size === "lg" ? "h-5 w-5" : "h-3.5 w-3.5"} />
+        </span>
         <span
           className={cn(
-            "font-bold leading-none opacity-70",
-            size === "lg" ? "text-sm" : "text-[10px]",
+            "font-semibold leading-none text-muted-foreground",
+            size === "lg" ? "text-[11px]" : "text-[9px]",
           )}
         >
           {initial}
