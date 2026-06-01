@@ -41,6 +41,9 @@ import {
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
+import { lookupProductImage } from "@/lib/mercado/product-image.functions";
+import { toPersistableImage } from "@/lib/mercado/product-image-persist";
+import { ImageOff, Search as SearchIcon, X as XIcon } from "lucide-react";
 
 
 
