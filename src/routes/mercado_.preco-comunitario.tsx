@@ -89,6 +89,25 @@ type ManualForm = {
 const TABLE = "community_market_prices" as const;
 const SOURCE_KEYS: SourceKey[] = ["flyer", "store", "receipt", "manual"];
 
+const CATEGORY_MATCHERS: Record<MercadoCategoryKey, string[]> = {
+  hortifruti: ["hortifruti", "fruta", "verdura", "legume", "horti"],
+  acougue: ["açougue", "acougue", "carne", "frango", "peixe", "bovino", "suíno", "suino"],
+  padaria: ["padaria", "pão", "pao", "bolo", "confeitaria"],
+  bebidas: ["bebida", "refrigerante", "suco", "cerveja", "vinho", "água", "agua"],
+  laticinios: ["laticínio", "laticinio", "leite", "queijo", "iogurte", "manteiga"],
+  limpeza: ["limpeza", "sabão", "sabao", "detergente", "amaciante", "desinfetante"],
+  mercearia: ["mercearia", "arroz", "feijão", "feijao", "massa", "macarrão", "macarrao", "óleo", "oleo", "açúcar", "acucar"],
+  utilidades: ["utilidade", "utensílio", "utensilio", "papel", "descart", "higiene"],
+};
+
+const SOURCE_MAP: Record<string, ProductSource> = {
+  flyer: "flyer",
+  store: "store",
+  receipt: "receipt",
+  manual: "manual",
+};
+
+
 const emptyManualForm = (): ManualForm => ({
   productName: "",
   price: "",
