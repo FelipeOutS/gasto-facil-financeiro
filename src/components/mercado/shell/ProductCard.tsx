@@ -104,7 +104,7 @@ export function ProductCard({
             type="button"
             onClick={onAdd}
             aria-label={t("shell.product.addToList")}
-            className="grid h-10 w-10 shrink-0 self-center place-items-center rounded-full bg-brand-grad text-primary-foreground shadow-elevated transition active:scale-95"
+            className="grid h-11 w-11 shrink-0 self-center place-items-center rounded-full bg-brand-grad text-primary-foreground shadow-elevated transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Plus className="h-5 w-5" aria-hidden="true" />
           </button>
