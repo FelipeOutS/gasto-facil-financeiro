@@ -37,6 +37,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
 import { useMercadosLocais } from "@/lib/mercado/mercados-store";
+import { ProductImageReview } from "@/components/mercado/ProductImageReview";
+import { toPersistableImage } from "@/lib/mercado/product-image-persist";
+import { cleanProductName } from "@/lib/mercado/product-name-clean";
+import type { ProductImageResult } from "@/lib/mercado/product-image.functions";
 
 const MAX_PHOTOS = 20;
 const MAX_BYTES = 10 * 1024 * 1024;
