@@ -57,6 +57,7 @@ import {
   computeOrcamentoLista,
   computeResumo,
   finalizarListaCompra,
+  removeItemLista,
   toggleItemComprado,
   updateItemLista,
   useMercadoLista,
