@@ -53,6 +53,11 @@ type CommunityPriceRow = {
   market_name: string;
   source: string;
   seen_at: string;
+  image_url: string | null;
+  image_source: string | null;
+  image_confidence: number | null;
+  brand: string | null;
+  barcode: string | null;
 };
 
 const SOURCE_MAP: Record<string, ProductSource> = {
