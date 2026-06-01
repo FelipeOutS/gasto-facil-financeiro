@@ -1174,8 +1174,9 @@ function RendaPage() {
                 subtitle={t("empty.filterSubtitle")}
               />
             )
-
+          ) : (
             <ul className="space-y-2">
+
               <AnimatePresence initial={false}>
                 {doMesFiltrado.map((r, i) => (
                   <motion.div
