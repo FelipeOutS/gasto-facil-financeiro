@@ -272,12 +272,21 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     const out: ReviewItem[] = [];
     currentPhotos.forEach((photo, idx) => {
       photo.items.forEach((it, k) => {
+        // Tenta extrair marca a partir do nome do produto detectado pelo OCR.
+        // O lookup de imagem usa essa marca, mas o nome original é preservado.
+        const { extractedBrand } = cleanProductName(it.productName);
         out.push({
           ...it,
           id: `${photo.id}-${k}`,
           include: true,
           sourcePhotoIndex: idx + 1,
           marketName: marketName || it.marketName,
+          brand: extractedBrand,
+          barcode: null,
+          imageUrl: null,
+          imageSource: null,
+          imageConfidence: null,
+          imageRemoved: false,
         });
       });
     });
