@@ -11,12 +11,13 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ImageOff, Loader2, X } from "lucide-react";
 import { useProductImage } from "@/lib/mercado/use-product-image";
-import type { ProductImageResult } from "@/lib/mercado/product-image.functions";
+import type { ProductImageInput, ProductImageResult } from "@/lib/mercado/product-image.functions";
 
 export type ProductImageReviewProps = {
   productName: string;
   brand?: string | null;
   barcode?: string | null;
+  category?: ProductImageInput["category"] | string | null;
   removed: boolean;
   onRemove: () => void;
   onResult?: (result: ProductImageResult | null) => void;
@@ -28,6 +29,7 @@ export function ProductImageReview({
   productName,
   brand,
   barcode,
+  category,
   removed,
   onRemove,
   onResult,
@@ -36,7 +38,7 @@ export function ProductImageReview({
   const { t } = useTranslation("mercado");
   const active = enabled && !removed && productName.trim().length >= 2;
   const { data, isLoading } = useProductImage(
-    { productName, brand, barcode },
+    { productName, brand, barcode, category: category as ProductImageInput["category"] | null },
     { enabled: active },
   );
 
