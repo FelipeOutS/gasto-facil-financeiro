@@ -390,7 +390,8 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         }
 
         if (parsed.items.length === 0) {
-          const code = origin === "placement" ? "placement_no_public_data" : "no_products_found";
+          const dynamicOnly = parsed.skeletons > 0 && (origin === "placement" || origin === "category");
+          const code = dynamicOnly ? "placement_no_public_data" : "no_products_found";
           return Response.json(
             {
               success: false,
@@ -399,7 +400,7 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
               diagnostics,
               message:
                 code === "placement_no_public_data"
-                  ? "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis."
+                  ? "Esta página usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis."
                   : "Nenhum preço foi encontrado nessa busca.",
             },
             { status: 200 },
