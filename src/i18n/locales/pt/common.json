@@ -178,7 +178,6 @@
         "title": "Recurso disponível em planos superiores",
         "description": "Importação Inteligente de faturas, extratos, PDFs e imagens está disponível em planos mais completos."
       }
-
     }
   },
   "errors": {
@@ -246,5 +245,16 @@
     "alerts": "Não foi possível carregar seus alertas.",
     "connectedAccounts": "Não foi possível carregar suas contas conectadas.",
     "bcbIndicators": "Não foi possível atualizar os indicadores agora."
+  },
+  "appV2": {
+    "banner": {
+      "imageAlt": "Ilustração do módulo"
+    },
+    "filters": {
+      "aria": "Filtros disponíveis"
+    },
+    "empty": {
+      "default": "Nenhum item para exibir."
+    }
   }
 }
