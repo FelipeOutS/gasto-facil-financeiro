@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -234,6 +234,76 @@ function PrecoComunitarioPage() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Backfill incremental de imagem para itens do próprio usuário sem
+  // image_url salvo. Roda lazy, em segundo plano, com concorrência baixa.
+  // Cada id é tentado no máximo uma vez por sessão (sucesso ou falha).
+  const backfillAttempted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user || loading || items.length === 0) return;
+    const candidates = items.filter(
+      (it) =>
+        it.user_id === user.id &&
+        !it.image_url &&
+        !backfillAttempted.current.has(it.id) &&
+        (it.product_name?.trim().length ?? 0) >= 2,
+    );
+    if (candidates.length === 0) return;
+
+    let cancelled = false;
+    const queue = candidates.slice(0, 24); // proteção: lote pequeno por render
+    queue.forEach((it) => backfillAttempted.current.add(it.id));
+
+    (async () => {
+      const CONCURRENCY = 2;
+      let cursor = 0;
+      const workers = Array.from({ length: CONCURRENCY }, async () => {
+        while (!cancelled && cursor < queue.length) {
+          const it = queue[cursor++];
+          try {
+            const result = await lookupProductImage({
+              data: {
+                productName: it.product_name,
+                brand: it.brand,
+                barcode: it.barcode,
+              },
+            });
+            const persistable = toPersistableImage(result);
+            if (!persistable.image_url || cancelled) continue;
+            const { error } = await (supabase.from(TABLE as never) as any)
+              .update({
+                image_url: persistable.image_url,
+                image_source: persistable.image_source,
+                image_confidence: persistable.image_confidence,
+              })
+              .eq("id", it.id)
+              .eq("user_id", user.id)
+              .is("image_url", null);
+            if (error || cancelled) continue;
+            setItems((curr) =>
+              curr.map((row) =>
+                row.id === it.id
+                  ? {
+                      ...row,
+                      image_url: persistable.image_url,
+                      image_source: persistable.image_source,
+                      image_confidence: persistable.image_confidence,
+                    }
+                  : row,
+              ),
+            );
+          } catch {
+            // silencioso — backfill é best-effort
+          }
+        }
+      });
+      await Promise.all(workers);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items, loading, user]);
 
   const filtered = useMemo(() => {
     const p = filterProduct.trim().toLowerCase();
@@ -655,7 +725,7 @@ function PrecoComunitarioPage() {
             aria-label={t("communityPrices.v2.bestFinds.title")}
           >
             {bestFinds.map((it) => (
-              <div key={`best-${it.id}`} className="w-[180px] shrink-0 snap-start">
+              <div key={`best-${it.id}`} className="w-[150px] shrink-0 snap-start">
                 <ProductCard
                   name={it.product_name}
                   priceLabel={formatBRL(it.price)}
@@ -726,7 +796,7 @@ function PrecoComunitarioPage() {
             </div>
           )
         ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {filtered.map((it) => {
               const owned = user?.id === it.user_id;
               const validUntilLabel = it.valid_until
@@ -756,22 +826,22 @@ function PrecoComunitarioPage() {
                     }
                   />
                   {owned && (
-                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => openManual(it)}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-brand"
+                        className="grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-brand"
                         aria-label={t("communityPrices.list.edit")}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-3 w-3" />
                       </button>
                       <button
                         type="button"
                         onClick={() => removeItem(it.id)}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-destructive"
+                        className="grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-destructive"
                         aria-label={t("communityPrices.list.remove")}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   )}
