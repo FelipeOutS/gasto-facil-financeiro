@@ -97,6 +97,12 @@ import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trans, useTranslation } from "react-i18next";
+import {
+  AppPageHeader,
+  AppModuleBanner,
+  AppSummaryCard,
+  AppEmptyStateVisual,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/gastos")({
   head: () => ({ meta: [{ title: "Gastos — Gasto Inteligente" }] }),
