@@ -296,7 +296,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       <MercadoBanner
         title={t("cartV2.bannerTitle")}
         subtitle={t("cartV2.bannerSubtitle")}
-        image={bannerOrcamento}
+        imageSrc={bannerOrcamento}
+        imageAlt={t("cartV2.emptyImageAlt")}
+        tone="brand"
         className="mt-4"
       />
       {/* Summary */}
